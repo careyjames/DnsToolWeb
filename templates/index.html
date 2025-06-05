@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DNS Analysis Tool</title>
+    <link href="https://cdn.replit.com/agent/bootstrap-agent-dark-theme.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/custom.css') }}" rel="stylesheet">
+</head>
+<body>
+    <div class="container my-5">
+        <!-- Header -->
+        <div class="text-center mb-5">
+            <h1 class="display-4 mb-3">
+                <i class="fas fa-globe me-3"></i>DNS Analysis Tool
+            </h1>
+            <p class="lead text-muted">
+                Comprehensive DNS record analysis, email security validation, and domain information lookup
+            </p>
+        </div>
+
+        <!-- Flash messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ 'danger' if category == 'danger' else 'warning' if category == 'warning' else 'success' }} alert-dismissible fade show" role="alert">
+                        <i class="fas fa-{{ 'exclamation-triangle' if category in ['danger', 'warning'] else 'check-circle' }} me-2"></i>
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <!-- Main form -->
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <div class="card shadow-sm">
+                    <div class="card-body p-4">
+                        <form method="POST" action="{{ url_for('analyze') }}" id="domainForm">
+                            <div class="mb-4">
+                                <label for="domain" class="form-label h5">
+                                    <i class="fas fa-search me-2"></i>Domain Name
+                                </label>
+                                <div class="input-group input-group-lg">
+                                    <input type="text" 
+                                           class="form-control" 
+                                           id="domain" 
+                                           name="domain" 
+                                           placeholder="example.com" 
+                                           required
+                                           autocomplete="off">
+                                    <button class="btn btn-primary" type="submit" id="analyzeBtn">
+                                        <i class="fas fa-search me-2"></i>Analyze
+                                    </button>
+                                </div>
+                                <div class="form-text">
+                                    <i class="fas fa-info-circle me-1"></i>
+                                    Enter a domain name to analyze DNS records, email security settings, and registrar information
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Features overview -->
+        <div class="row mt-5">
+            <div class="col-12">
+                <h3 class="text-center mb-4">What We Analyze</h3>
+            </div>
+            <div class="col-md-6 col-lg-3 mb-4">
+                <div class="card h-100 border-0 bg-transparent">
+                    <div class="card-body text-center">
+                        <div class="feature-icon mb-3">
+                            <i class="fas fa-server fa-2x text-primary"></i>
+                        </div>
+                        <h5 class="card-title">DNS Records</h5>
+                        <p class="card-text text-muted">A, AAAA, MX, TXT, NS, and CNAME records from multiple resolvers</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 col-lg-3 mb-4">
+                <div class="card h-100 border-0 bg-transparent">
+                    <div class="card-body text-center">
+                        <div class="feature-icon mb-3">
+                            <i class="fas fa-shield-alt fa-2x text-success"></i>
+                        </div>
+                        <h5 class="card-title">Email Security</h5>
+                        <p class="card-text text-muted">SPF, DMARC, and DKIM validation with security recommendations</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 col-lg-3 mb-4">
+                <div class="card h-100 border-0 bg-transparent">
+                    <div class="card-body text-center">
+                        <div class="feature-icon mb-3">
+                            <i class="fas fa-building fa-2x text-info"></i>
+                        </div>
+                        <h5 class="card-title">Registrar Info</h5>
+                        <p class="card-text text-muted">Domain registration details via RDAP and WHOIS lookup</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 col-lg-3 mb-4">
+                <div class="card h-100 border-0 bg-transparent">
+                    <div class="card-body text-center">
+                        <div class="feature-icon mb-3">
+                            <i class="fas fa-network-wired fa-2x text-warning"></i>
+                        </div>
+                        <h5 class="card-title">Authoritative</h5>
+                        <p class="card-text text-muted">Direct queries to authoritative nameservers for accuracy</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>
