@@ -23,13 +23,14 @@ try:
     HAS_IDNA = True
 except ImportError:
     HAS_IDNA = False
+    idna = None
 
 class DNSAnalyzer:
     """DNS analysis tool for domain records and email security."""
     
     def __init__(self):
-        self.dns_timeout = 3
-        self.dns_tries = 2
+        self.dns_timeout = 2
+        self.dns_tries = 1
         self.default_resolvers = ["1.1.1.1", "8.8.8.8", "9.9.9.9"]
         self.resolvers = self.default_resolvers.copy()
         self.iana_rdap_map = {}
@@ -40,8 +41,9 @@ class DNSAnalyzer:
         domain = domain.rstrip(".")
         if HAS_IDNA:
             try:
+                import idna
                 return idna.encode(domain).decode("ascii")
-            except idna.IDNAError:
+            except Exception:
                 pass
         return domain
     
@@ -88,6 +90,18 @@ class DNSAnalyzer:
             try:
                 answer = resolver.resolve(domain, record_type)
                 return [str(rr) for rr in answer]
+            except dns.resolver.NXDOMAIN:
+                # Domain doesn't exist
+                logging.debug(f"Domain {domain} not found for {record_type}")
+                return []
+            except dns.resolver.NoAnswer:
+                # No records of this type
+                logging.debug(f"No {record_type} records for {domain}")
+                continue
+            except dns.resolver.Timeout:
+                # Timeout - try next resolver
+                logging.debug(f"Timeout querying {resolver_ip} for {domain} {record_type}")
+                continue
             except Exception as e:
                 logging.debug(f"DNS query error with {resolver_ip}: {e}")
                 continue
@@ -109,33 +123,38 @@ class DNSAnalyzer:
         record_types = ["A", "AAAA", "MX", "TXT"]
         results = {t: [] for t in record_types}
         
-        # Get nameservers
-        ns_hosts = self.dns_query("NS", domain)
-        if not ns_hosts:
-            return results
-        
-        # Get IP addresses of nameservers
-        ns_ips = []
-        for host in ns_hosts:
-            h = host.rstrip(".")
-            ns_ips.extend(self.dns_query("A", h))
-            ns_ips.extend(self.dns_query("AAAA", h))
-        
-        # Query each authoritative nameserver
-        for ip in ns_ips:
-            resolver = dns.resolver.Resolver(configure=False)
-            resolver.nameservers = [ip]
-            resolver.timeout = self.dns_timeout
-            resolver.lifetime = self.dns_timeout * self.dns_tries
+        try:
+            # Get nameservers
+            ns_hosts = self.dns_query("NS", domain)
+            if not ns_hosts:
+                return results
             
-            for record_type in record_types:
-                try:
-                    answer = resolver.resolve(domain, record_type)
-                    for rr in [str(r) for r in answer]:
-                        if rr not in results[record_type]:
-                            results[record_type].append(rr)
-                except Exception:
-                    continue
+            # Get IP addresses of nameservers (limit to first 2 for speed)
+            ns_ips = []
+            for host in ns_hosts[:2]:  # Limit to first 2 nameservers
+                h = host.rstrip(".")
+                ns_ips.extend(self.dns_query("A", h)[:1])  # Only get first A record
+            
+            # Query each authoritative nameserver
+            for ip in ns_ips[:2]:  # Limit to first 2 IPs
+                resolver = dns.resolver.Resolver(configure=False)
+                resolver.nameservers = [ip]
+                resolver.timeout = 1  # Shorter timeout for authoritative
+                resolver.lifetime = 1
+                
+                for record_type in record_types:
+                    try:
+                        answer = resolver.resolve(domain, record_type)
+                        for rr in [str(r) for r in answer]:
+                            if rr not in results[record_type]:
+                                results[record_type].append(rr)
+                        break  # If successful, move to next IP
+                    except (dns.resolver.Timeout, dns.resolver.NXDOMAIN, dns.resolver.NoAnswer):
+                        continue
+                    except Exception:
+                        continue
+        except Exception as e:
+            logging.debug(f"Authoritative lookup error: {e}")
         
         return results
     
