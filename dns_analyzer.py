@@ -76,11 +76,76 @@ class DNSAnalyzer:
         """Return the top-level domain from domain in lowercase."""
         return domain.rsplit(".", 1)[-1].lower()
     
+    def _dns_over_https_query(self, domain: str, record_type: str) -> List[str]:
+        """Query DNS records using DNS-over-HTTPS."""
+        # Use Cloudflare's DNS-over-HTTPS service
+        url = "https://cloudflare-dns.com/dns-query"
+        
+        # Map record types to numeric values
+        type_map = {
+            'A': 1, 'NS': 2, 'CNAME': 5, 'SOA': 6, 'PTR': 12,
+            'MX': 15, 'TXT': 16, 'AAAA': 28, 'SRV': 33, 'CAA': 257
+        }
+        
+        record_type_num = type_map.get(record_type.upper())
+        if not record_type_num:
+            return []
+        
+        params = {
+            'name': domain,
+            'type': record_type_num,
+            'ct': 'application/dns-json'
+        }
+        
+        try:
+            response = requests.get(url, params=params, timeout=10)
+            response.raise_for_status()
+            data = response.json()
+            
+            if data.get('Status') != 0:  # NOERROR
+                return []
+            
+            answers = data.get('Answer', [])
+            results = []
+            
+            for answer in answers:
+                if answer.get('type') == record_type_num:
+                    record_data = answer.get('data', '')
+                    if record_data:
+                        # Handle different record types
+                        if record_type.upper() == 'MX':
+                            # MX records have priority, format as "priority hostname"
+                            parts = record_data.split()
+                            if len(parts) >= 2:
+                                results.append(f"{parts[0]} {parts[1]}")
+                            else:
+                                results.append(record_data)
+                        elif record_type.upper() == 'TXT':
+                            # Remove quotes from TXT records
+                            results.append(record_data.strip('"'))
+                        else:
+                            results.append(record_data)
+            
+            return results
+            
+        except Exception as e:
+            logging.debug(f"DNS-over-HTTPS query failed: {e}")
+            return []
+    
     def dns_query(self, record_type: str, domain: str) -> List[str]:
-        """Query domain for record type using several resolvers."""
+        """Query domain for record type using DNS-over-HTTPS fallback."""
         if not domain or not record_type:
             return []
         
+        # Try DNS-over-HTTPS first as it works better in restricted environments
+        try:
+            results = self._dns_over_https_query(domain, record_type)
+            if results:
+                return results
+        except Exception as e:
+            logging.debug(f"DNS-over-HTTPS failed: {e}")
+        
+        # Fallback to traditional DNS if DoH fails
         for resolver_ip in self.resolvers:
             resolver = dns.resolver.Resolver(configure=False)
             resolver.nameservers = [resolver_ip]
@@ -91,15 +156,12 @@ class DNSAnalyzer:
                 answer = resolver.resolve(domain, record_type)
                 return [str(rr) for rr in answer]
             except dns.resolver.NXDOMAIN:
-                # Domain doesn't exist
                 logging.debug(f"Domain {domain} not found for {record_type}")
                 return []
             except dns.resolver.NoAnswer:
-                # No records of this type
                 logging.debug(f"No {record_type} records for {domain}")
                 continue
             except dns.resolver.Timeout:
-                # Timeout - try next resolver
                 logging.debug(f"Timeout querying {resolver_ip} for {domain} {record_type}")
                 continue
             except Exception as e:
