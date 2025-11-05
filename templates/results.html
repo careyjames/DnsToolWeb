@@ -163,7 +163,7 @@
 
         <!-- DNS Records Section -->
         <div class="row">
-            <div class="col-lg-6 mb-4">
+            <div class="col-12 mb-4">
                 <div class="card">
                     <div class="card-header">
                         <h5 class="mb-0">
@@ -171,45 +171,11 @@
                         </h5>
                     </div>
                     <div class="card-body">
-                        {% for record_type, records in results.basic_records.items() %}
-                            <div class="mb-3">
-                                <h6 class="d-flex align-items-center">
-                                    <span class="badge bg-secondary me-2">{{ record_type }}</span>
-                                    {% if records %}
-                                        <small class="text-success">{{ records|length }} record{{ 's' if records|length > 1 else '' }}</small>
-                                    {% else %}
-                                        <small class="text-muted">No records</small>
-                                    {% endif %}
-                                </h6>
-                                {% if records %}
-                                    {% for record in records %}
-                                        <div class="code-block">{{ record }}</div>
-                                    {% endfor %}
-                                {% else %}
-                                    <div class="text-muted">
-                                        <i class="fas fa-minus me-1"></i>No {{ record_type }} records found
-                                    </div>
-                                {% endif %}
-                            </div>
-                        {% endfor %}
-                    </div>
-                </div>
-            </div>
-
-            <!-- Authoritative Records -->
-            <div class="col-lg-6 mb-4">
-                <div class="card">
-                    <div class="card-header">
-                        <h5 class="mb-0">
-                            <i class="fas fa-network-wired me-2"></i>Authoritative Records
-                        </h5>
-                    </div>
-                    <div class="card-body">
-                        {% if results.authoritative_records %}
-                            {% for record_type, records in results.authoritative_records.items() %}
-                                <div class="mb-3">
+                        <div class="row">
+                            {% for record_type, records in results.basic_records.items() %}
+                                <div class="col-md-6 mb-3">
                                     <h6 class="d-flex align-items-center">
-                                        <span class="badge bg-primary me-2">{{ record_type }}</span>
+                                        <span class="badge bg-secondary me-2">{{ record_type }}</span>
                                         {% if records %}
                                             <small class="text-success">{{ records|length }} record{{ 's' if records|length > 1 else '' }}</small>
                                         {% else %}
@@ -227,12 +193,7 @@
                                     {% endif %}
                                 </div>
                             {% endfor %}
-                        {% else %}
-                            <div class="text-muted">
-                                <i class="fas fa-exclamation-triangle me-2"></i>
-                                Unable to query authoritative nameservers
-                            </div>
-                        {% endif %}
+                        </div>
                     </div>
                 </div>
             </div>
