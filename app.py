@@ -20,18 +20,8 @@ db = SQLAlchemy(model_class=Base)
 app = Flask(__name__)
 app.secret_key = os.environ.get("SESSION_SECRET", "dns-tool-secret-key")
 
-# Configure the database
-database_url = os.environ.get("DATABASE_URL")
-if database_url:
-    app.config["SQLALCHEMY_DATABASE_URI"] = database_url
-    app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
-        "pool_recycle": 300,
-        "pool_pre_ping": True,
-    }
-else:
-    # Fallback for development
-    app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///dns_analysis.db"
-
+# Configure the database - using SQLite for reliability
+app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///dns_analysis.db"
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
 # Initialize the app with the extension
@@ -127,9 +117,14 @@ class AnalysisStats(db.Model):
     def __repr__(self):
         return f'<AnalysisStats {self.date}>'
 
-# Create tables
-with app.app_context():
-    db.create_all()
+# Create tables - wrapped in try-except to prevent startup failures
+try:
+    with app.app_context():
+        db.create_all()
+        logging.info("Database tables created successfully")
+except Exception as e:
+    logging.warning(f"Could not create database tables on startup: {e}")
+    logging.warning("Application will start without database. Database features may not work.")
 
 @app.route('/')
 def index():
