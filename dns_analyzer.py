@@ -78,53 +78,44 @@ class DNSAnalyzer:
     
     def _dns_over_https_query(self, domain: str, record_type: str) -> List[str]:
         """Query DNS records using DNS-over-HTTPS."""
-        # Use Cloudflare's DNS-over-HTTPS service
-        url = "https://cloudflare-dns.com/dns-query"
-        
-        # Map record types to numeric values
-        type_map = {
-            'A': 1, 'NS': 2, 'CNAME': 5, 'SOA': 6, 'PTR': 12,
-            'MX': 15, 'TXT': 16, 'AAAA': 28, 'SRV': 33, 'CAA': 257
-        }
-        
-        record_type_num = type_map.get(record_type.upper())
-        if not record_type_num:
-            return []
+        # Use Google's DNS-over-HTTPS service (more reliable)
+        url = "https://dns.google/resolve"
         
         params = {
             'name': domain,
-            'type': record_type_num,
-            'ct': 'application/dns-json'
+            'type': record_type.upper()
         }
         
         try:
-            response = requests.get(url, params=params, timeout=3)
+            response = requests.get(url, params=params, timeout=5, headers={
+                'Accept': 'application/dns-json'
+            })
             response.raise_for_status()
             data = response.json()
             
-            if data.get('Status') != 0:  # NOERROR
+            # Check for successful response (0 = NOERROR)
+            if data.get('Status') != 0:
                 return []
             
             answers = data.get('Answer', [])
-            results = []
+            if not answers:
+                return []
             
+            results = []
             for answer in answers:
-                if answer.get('type') == record_type_num:
-                    record_data = answer.get('data', '')
-                    if record_data:
-                        # Handle different record types
-                        if record_type.upper() == 'MX':
-                            # MX records have priority, format as "priority hostname"
-                            parts = record_data.split()
-                            if len(parts) >= 2:
-                                results.append(f"{parts[0]} {parts[1]}")
-                            else:
-                                results.append(record_data)
-                        elif record_type.upper() == 'TXT':
-                            # Remove quotes from TXT records
-                            results.append(record_data.strip('"'))
-                        else:
-                            results.append(record_data)
+                record_data = answer.get('data', '').strip()
+                if not record_data:
+                    continue
+                
+                # Handle different record types
+                if record_type.upper() == 'TXT':
+                    # Remove quotes from TXT records
+                    record_data = record_data.strip('"')
+                
+                # For MX records, format is already "priority hostname"
+                # For other records, just use the data as-is
+                if record_data and record_data not in results:
+                    results.append(record_data)
             
             return results
             
