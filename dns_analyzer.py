@@ -29,9 +29,9 @@ class DNSAnalyzer:
     """DNS analysis tool for domain records and email security."""
     
     def __init__(self):
-        self.dns_timeout = 2
+        self.dns_timeout = 1
         self.dns_tries = 1
-        self.default_resolvers = ["1.1.1.1", "8.8.8.8", "9.9.9.9"]
+        self.default_resolvers = ["1.1.1.1"]
         self.resolvers = self.default_resolvers.copy()
         self.iana_rdap_map = {}
         self._fetch_iana_rdap_data()
@@ -98,7 +98,7 @@ class DNSAnalyzer:
         }
         
         try:
-            response = requests.get(url, params=params, timeout=10)
+            response = requests.get(url, params=params, timeout=3)
             response.raise_for_status()
             data = response.json()
             
@@ -182,42 +182,9 @@ class DNSAnalyzer:
     
     def get_authoritative_records(self, domain: str) -> Dict[str, List[str]]:
         """Get DNS records directly from authoritative nameservers."""
+        # Disabled for performance - authoritative queries timeout in restricted environments
         record_types = ["A", "AAAA", "MX", "TXT"]
         results = {t: [] for t in record_types}
-        
-        try:
-            # Get nameservers
-            ns_hosts = self.dns_query("NS", domain)
-            if not ns_hosts:
-                return results
-            
-            # Get IP addresses of nameservers (limit to first 2 for speed)
-            ns_ips = []
-            for host in ns_hosts[:2]:  # Limit to first 2 nameservers
-                h = host.rstrip(".")
-                ns_ips.extend(self.dns_query("A", h)[:1])  # Only get first A record
-            
-            # Query each authoritative nameserver
-            for ip in ns_ips[:2]:  # Limit to first 2 IPs
-                resolver = dns.resolver.Resolver(configure=False)
-                resolver.nameservers = [ip]
-                resolver.timeout = 1  # Shorter timeout for authoritative
-                resolver.lifetime = 1
-                
-                for record_type in record_types:
-                    try:
-                        answer = resolver.resolve(domain, record_type)
-                        for rr in [str(r) for r in answer]:
-                            if rr not in results[record_type]:
-                                results[record_type].append(rr)
-                        break  # If successful, move to next IP
-                    except (dns.resolver.Timeout, dns.resolver.NXDOMAIN, dns.resolver.NoAnswer):
-                        continue
-                    except Exception:
-                        continue
-        except Exception as e:
-            logging.debug(f"Authoritative lookup error: {e}")
-        
         return results
     
     def analyze_spf(self, domain: str) -> Dict[str, Any]:

@@ -221,18 +221,27 @@ def update_daily_stats(analysis_success: bool, duration: float, domain: str):
     try:
         stats = AnalysisStats.query.filter_by(date=today).first()
         if not stats:
-            stats = AnalysisStats(date=today)
+            stats = AnalysisStats(
+                date=today,
+                total_analyses=0,
+                successful_analyses=0,
+                failed_analyses=0,
+                unique_domains=0,
+                avg_analysis_time=0.0
+            )
             db.session.add(stats)
         
-        stats.total_analyses += 1
+        # Ensure fields are not None
+        stats.total_analyses = (stats.total_analyses or 0) + 1
         if analysis_success:
-            stats.successful_analyses += 1
+            stats.successful_analyses = (stats.successful_analyses or 0) + 1
         else:
-            stats.failed_analyses += 1
+            stats.failed_analyses = (stats.failed_analyses or 0) + 1
         
         # Update average analysis time
+        current_avg = stats.avg_analysis_time or 0.0
         if stats.total_analyses > 1:
-            stats.avg_analysis_time = ((stats.avg_analysis_time * (stats.total_analyses - 1)) + duration) / stats.total_analyses
+            stats.avg_analysis_time = ((current_avg * (stats.total_analyses - 1)) + duration) / stats.total_analyses
         else:
             stats.avg_analysis_time = duration
         
