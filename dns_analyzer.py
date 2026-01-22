@@ -430,14 +430,12 @@ class DNSAnalyzer:
         }
     
     def _rdap_lookup(self, domain: str) -> Dict:
-        """Return RDAP JSON data for domain - fast and reliable."""
-        tld = self._get_tld(domain)
-        logging.info(f"[RDAP] Looking up domain {domain}, TLD: {tld}")
+        """Return RDAP JSON data for domain using curl for maximum compatibility."""
+        import subprocess
+        import json
         
-        headers = {
-            'Accept': 'application/rdap+json',
-            'User-Agent': 'Mozilla/5.0 (compatible; DNS-Analyzer/1.0)'
-        }
+        tld = self._get_tld(domain)
+        logging.warning(f"[RDAP] Looking up {domain}, TLD: {tld}")
         
         # Direct RDAP endpoints for common TLDs
         direct_endpoints = {
@@ -456,58 +454,43 @@ class DNSAnalyzer:
             'de': 'https://rdap.denic.de/',
         }
         
-        # Get the best endpoint for this TLD
+        # Get endpoint for this TLD
         endpoint = direct_endpoints.get(tld)
         if not endpoint and tld in self.iana_rdap_map and self.iana_rdap_map[tld]:
             endpoint = self.iana_rdap_map[tld][0]
         if not endpoint:
             endpoint = 'https://rdap.org/'
         
-        url = f"{endpoint.rstrip('/')}/domain/{domain}"
+        urls_to_try = [
+            f"{endpoint.rstrip('/')}/domain/{domain}",
+            f"https://rdap.org/domain/{domain}"
+        ]
         
-        # Try with longer timeout for production reliability
-        try:
-            logging.warning(f"[RDAP] === STARTING RDAP REQUEST === URL: {url}")
-            resp = requests.get(url, timeout=15, headers=headers, allow_redirects=True)
-            logging.warning(f"[RDAP] === RESPONSE RECEIVED === Status: {resp.status_code}")
-            if resp.status_code < 400:
-                data = resp.json()
-                if "errorCode" not in data and (data.get("ldhName") or data.get("objectClassName") == "domain"):
-                    logging.warning(f"[RDAP] === SUCCESS === Got valid RDAP data")
-                    return data
-                else:
-                    logging.warning(f"[RDAP] Invalid response: errorCode={data.get('errorCode')}")
-            else:
-                logging.warning(f"[RDAP] HTTP error: {resp.status_code}")
-        except requests.exceptions.Timeout as e:
-            logging.warning(f"[RDAP] === TIMEOUT === {e}")
-        except requests.exceptions.ConnectionError as e:
-            logging.warning(f"[RDAP] === CONNECTION ERROR === {e}")
-        except Exception as e:
-            logging.warning(f"[RDAP] === EXCEPTION === {type(e).__name__}: {e}")
-        
-        # Fallback to rdap.org
-        if endpoint != 'https://rdap.org/':
+        for url in urls_to_try:
             try:
-                url = f"https://rdap.org/domain/{domain}"
-                logging.info(f"[RDAP] Fallback: {url}")
-                resp = requests.get(url, timeout=10, headers=headers, allow_redirects=True)
-                logging.info(f"[RDAP] Fallback response: {resp.status_code}")
-                if resp.status_code < 400:
-                    data = resp.json()
+                logging.warning(f"[RDAP] Trying curl: {url}")
+                result = subprocess.run(
+                    ['curl', '-s', '-L', '--max-time', '12',
+                     '-H', 'Accept: application/rdap+json',
+                     '-H', 'User-Agent: DNS-Analyzer/1.0',
+                     url],
+                    capture_output=True, text=True, timeout=15
+                )
+                if result.returncode == 0 and result.stdout.strip():
+                    data = json.loads(result.stdout)
                     if "errorCode" not in data and (data.get("ldhName") or data.get("objectClassName") == "domain"):
-                        logging.info(f"[RDAP] Fallback SUCCESS")
+                        logging.warning(f"[RDAP] SUCCESS via curl from {url}")
                         return data
                     else:
-                        logging.warning(f"[RDAP] Fallback invalid: errorCode={data.get('errorCode')}")
+                        logging.warning(f"[RDAP] Invalid data from {url}")
                 else:
-                    logging.warning(f"[RDAP] Fallback HTTP error: {resp.status_code}")
-            except requests.exceptions.Timeout as e:
-                logging.warning(f"[RDAP] Fallback TIMEOUT: {e}")
-            except requests.exceptions.ConnectionError as e:
-                logging.warning(f"[RDAP] Fallback CONNECTION ERROR: {e}")
+                    logging.warning(f"[RDAP] curl failed: returncode={result.returncode}")
+            except subprocess.TimeoutExpired:
+                logging.warning(f"[RDAP] curl TIMEOUT for {url}")
+            except json.JSONDecodeError as e:
+                logging.warning(f"[RDAP] JSON parse error: {e}")
             except Exception as e:
-                logging.warning(f"[RDAP] Fallback failed: {type(e).__name__}: {e}")
+                logging.warning(f"[RDAP] curl exception: {type(e).__name__}: {e}")
         
         logging.warning(f"[RDAP] All lookups failed for {domain}")
         return {}
