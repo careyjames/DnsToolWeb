@@ -413,13 +413,26 @@ class DNSAnalyzer:
         entities = rdap_data.get("entities", [])
         for entity in entities:
             roles = entity.get("roles", [])
-            if "registrar" in [r.lower() for r in roles]:
+            if any(r.lower() == "registrar" for r in roles):
                 vcard = entity.get("vcardArray", [])
                 if len(vcard) == 2 and isinstance(vcard[1], list):
                     for item in vcard[1]:
-                        if len(item) == 4 and item[0] == "fn":
+                        if len(item) >= 4 and item[0] == "fn":
                             return item[3]
-                return entity.get("handle") or entity.get("name") or ""
+                val = entity.get("handle") or entity.get("name")
+                if val and not val.isdigit():
+                    return val
+        
+        # Secondary scan for sub-entities
+        for entity in entities:
+            for sub in entity.get("entities", []):
+                roles = sub.get("roles", [])
+                if any(r.lower() == "registrar" for r in roles):
+                    vcard = sub.get("vcardArray", [])
+                    if len(vcard) == 2 and isinstance(vcard[1], list):
+                        for item in vcard[1]:
+                            if len(item) >= 4 and item[0] == "fn":
+                                return item[3]
         return None
     
     def _whois_lookup_registrar(self, domain: str) -> Optional[str]:
@@ -440,20 +453,20 @@ class DNSAnalyzer:
             
             for line in result.stdout.splitlines():
                 line = line.strip()
-                # Lookup Registrar
+                # Better registrar matching
                 if not registrar:
-                    if re.search(r"(?i)^(registrar|sponsoring registrar):", line):
+                    if re.search(r"(?i)^(registrar|sponsoring registrar|registrar name)\s*:", line):
                         parts = line.split(":", 1)
-                        if len(parts) == 2:
+                        if len(parts) == 2 and parts[1].strip():
                             registrar = parts[1].strip()
                 
-                # Lookup Registrant/Organization
+                # Better registrant matching
                 if not registrant:
-                    if re.search(r"(?i)^(registrant organization|registrant|org):", line):
+                    if re.search(r"(?i)^(registrant organization|registrant|org|registrant name)\s*:", line):
                         parts = line.split(":", 1)
                         if len(parts) == 2:
                             val = parts[1].strip()
-                            if val and val.lower() not in ["redacted", "data protected", "not disclosed"]:
+                            if val and val.lower() not in ["redacted", "data protected", "not disclosed", "withheld"]:
                                 registrant = val
             
             if registrar and registrant:
@@ -474,6 +487,7 @@ class DNSAnalyzer:
         dns_providers = {
             'cloudflare': 'Cloudflare',
             'awsdns': 'Amazon Route 53',
+            'route53': 'Amazon Route 53',
             'googledomains': 'Google Domains',
             'google': 'Google Cloud DNS',
             'azure-dns': 'Azure DNS',
@@ -485,7 +499,8 @@ class DNSAnalyzer:
             'domaincontrol.com': 'GoDaddy',
             'bluehost': 'Bluehost',
             'hostgator': 'HostGator',
-            'registrar-servers': 'Namecheap'
+            'registrar-servers': 'Namecheap',
+            'porkbun': 'Porkbun'
         }
         
         for key, name in dns_providers.items():
@@ -501,6 +516,10 @@ class DNSAnalyzer:
             # Common Cloudflare IPs
             if ip.startswith(('104.16.', '104.17.', '104.18.', '172.64.', '172.67.', '108.162.', '190.93.', '197.234.', '198.41.')):
                 hosting = "Cloudflare"
+            elif ip.startswith(('34.', '35.', '104.196.')):
+                hosting = "Google Cloud"
+            elif ip.startswith(('3.', '13.', '15.', '18.', '52.', '54.')):
+                hosting = "AWS / Amazon"
             elif dns_hosting != "Standard":
                 hosting = dns_hosting # Often the same
         
