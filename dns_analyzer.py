@@ -430,13 +430,13 @@ class DNSAnalyzer:
         }
     
     def _rdap_lookup(self, domain: str) -> Dict:
-        """Return RDAP JSON data for domain using curl with retries."""
-        import subprocess
-        import json
-        import time
-        
+        """Return RDAP JSON data for domain - simple and fast."""
         tld = self._get_tld(domain)
-        logging.warning(f"[RDAP] Looking up {domain}, TLD: {tld}")
+        
+        headers = {
+            'Accept': 'application/rdap+json',
+            'User-Agent': 'DNS-Analyzer/1.0'
+        }
         
         # Direct RDAP endpoints for common TLDs
         direct_endpoints = {
@@ -462,45 +462,30 @@ class DNSAnalyzer:
         if not endpoint:
             endpoint = 'https://rdap.org/'
         
-        urls_to_try = [
-            f"{endpoint.rstrip('/')}/domain/{domain}",
-            f"https://rdap.org/domain/{domain}"
-        ]
+        url = f"{endpoint.rstrip('/')}/domain/{domain}"
         
-        # Try each URL with retries
-        for url in urls_to_try:
-            for attempt in range(3):  # 3 attempts per URL
-                try:
-                    logging.warning(f"[RDAP] Attempt {attempt+1}/3: {url}")
-                    result = subprocess.run(
-                        ['curl', '-s', '-L', '--max-time', '20', '--retry', '2',
-                         '-H', 'Accept: application/rdap+json',
-                         '-H', 'User-Agent: DNS-Analyzer/1.0',
-                         url],
-                        capture_output=True, text=True, timeout=25
-                    )
-                    if result.returncode == 0 and result.stdout.strip():
-                        data = json.loads(result.stdout)
-                        if "errorCode" not in data and (data.get("ldhName") or data.get("objectClassName") == "domain"):
-                            logging.warning(f"[RDAP] SUCCESS on attempt {attempt+1} from {url}")
-                            return data
-                        else:
-                            logging.warning(f"[RDAP] Invalid data from {url}")
-                            break  # Don't retry if we got invalid data
-                    else:
-                        logging.warning(f"[RDAP] curl failed: returncode={result.returncode}, stderr={result.stderr[:100] if result.stderr else 'none'}")
-                except subprocess.TimeoutExpired:
-                    logging.warning(f"[RDAP] TIMEOUT attempt {attempt+1} for {url}")
-                except json.JSONDecodeError as e:
-                    logging.warning(f"[RDAP] JSON error: {e}")
-                    break  # Don't retry JSON errors
-                except Exception as e:
-                    logging.warning(f"[RDAP] Exception: {type(e).__name__}: {e}")
-                
-                if attempt < 2:
-                    time.sleep(0.5)  # Brief pause between retries
+        # Single request with reasonable timeout
+        try:
+            resp = requests.get(url, timeout=10, headers=headers, allow_redirects=True)
+            if resp.status_code < 400:
+                data = resp.json()
+                if "errorCode" not in data and (data.get("ldhName") or data.get("objectClassName") == "domain"):
+                    return data
+        except Exception:
+            pass
         
-        logging.warning(f"[RDAP] All lookups failed for {domain}")
+        # Fallback to rdap.org
+        if endpoint != 'https://rdap.org/':
+            try:
+                url = f"https://rdap.org/domain/{domain}"
+                resp = requests.get(url, timeout=10, headers=headers, allow_redirects=True)
+                if resp.status_code < 400:
+                    data = resp.json()
+                    if "errorCode" not in data and (data.get("ldhName") or data.get("objectClassName") == "domain"):
+                        return data
+            except Exception:
+                pass
+        
         return {}
     
     def _extract_registrar_from_rdap(self, rdap_data: Dict) -> Optional[str]:
