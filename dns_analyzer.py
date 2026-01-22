@@ -659,9 +659,10 @@ class DNSAnalyzer:
             return None
     
     def get_hosting_info(self, domain: str, results: Dict) -> Dict[str, str]:
-        """Identify hosting and DNS providers."""
+        """Identify hosting, DNS, and email providers."""
         hosting = "Unknown"
         dns_hosting = "Standard"
+        email_hosting = "Unknown"
         
         # 1. Detect DNS Hosting from NS records
         ns_records = results.get('basic_records', {}).get('NS', [])
@@ -698,9 +699,7 @@ class DNSAnalyzer:
         # 2. Detect Web Hosting from A records
         a_records = results.get('basic_records', {}).get('A', [])
         if a_records:
-            # For simplicity in fast mode, we use the first IP
             ip = a_records[0]
-            # Common Cloudflare IPs
             if ip.startswith(('104.16.', '104.17.', '104.18.', '172.64.', '172.67.', '108.162.', '190.93.', '197.234.', '198.41.')):
                 hosting = "Cloudflare"
             elif ip.startswith(('34.', '35.', '104.196.')):
@@ -708,11 +707,57 @@ class DNSAnalyzer:
             elif ip.startswith(('3.', '13.', '15.', '18.', '52.', '54.')):
                 hosting = "AWS / Amazon"
             elif dns_hosting != "Standard":
-                hosting = dns_hosting # Often the same
+                hosting = dns_hosting
+        
+        # 3. Detect Email Hosting from MX records
+        mx_records = results.get('basic_records', {}).get('MX', [])
+        mx_str = " ".join(mx_records).lower()
+        
+        email_providers = {
+            'google': 'Google Workspace',
+            'googlemail': 'Google Workspace',
+            'gmail': 'Google Workspace',
+            'outlook': 'Microsoft 365',
+            'microsoft': 'Microsoft 365',
+            'protection.outlook': 'Microsoft 365',
+            'pphosted': 'Proofpoint',
+            'mimecast': 'Mimecast',
+            'barracuda': 'Barracuda',
+            'zoho': 'Zoho Mail',
+            'mailgun': 'Mailgun',
+            'sendgrid': 'SendGrid',
+            'amazonses': 'Amazon SES',
+            'yahoodns': 'Yahoo Mail',
+            'icloud': 'iCloud Mail',
+            'fastmail': 'Fastmail',
+            'protonmail': 'ProtonMail',
+            'privateemail': 'Namecheap Email',
+            'secureserver': 'GoDaddy Email',
+            'hover': 'Hover',
+            'hostgator': 'HostGator',
+            'bluehost': 'Bluehost',
+            'dreamhost': 'DreamHost',
+            'mx.cloudflare': 'Cloudflare Email',
+        }
+        
+        for key, name in email_providers.items():
+            if key in mx_str:
+                email_hosting = name
+                break
+        
+        # If no match but MX exists, show first MX server
+        if email_hosting == "Unknown" and mx_records:
+            first_mx = mx_records[0].split()[-1] if mx_records else ""
+            if first_mx:
+                # Clean up and shorten
+                parts = first_mx.rstrip('.').split('.')
+                if len(parts) >= 2:
+                    email_hosting = '.'.join(parts[-2:]).title()
         
         return {
             'hosting': hosting,
-            'dns_hosting': dns_hosting
+            'dns_hosting': dns_hosting,
+            'email_hosting': email_hosting
         }
 
     def analyze_domain(self, domain: str) -> Dict[str, Any]:

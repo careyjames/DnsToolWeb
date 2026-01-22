@@ -72,16 +72,12 @@
                                 <small class="text-muted d-block" style="font-size: 0.65rem;">Where you pay to own domain</small>
                             </div>
                             <div class="col-md-3 border-end border-primary border-opacity-10">
-                                <small class="text-uppercase text-muted fw-bold d-block" style="font-size: 0.7rem;">Registrant</small>
+                                <small class="text-uppercase text-muted fw-bold d-block" style="font-size: 0.7rem;">Email Hosting</small>
                                 <div class="text-truncate">
-                                    <i class="fas fa-user text-primary me-2"></i>
-                                    {% if '(' in (results.registrar_info.registrar or '') %}
-                                        <strong>{{ results.registrar_info.registrar.split('Registrant:')[1].strip(') ') if 'Registrant:' in results.registrar_info.registrar else 'Private' }}</strong>
-                                    {% else %}
-                                        <strong>Private / Redacted</strong>
-                                    {% endif %}
+                                    <i class="fas fa-envelope text-primary me-2"></i>
+                                    <strong>{{ results.hosting_summary.email_hosting if results.hosting_summary and results.hosting_summary.email_hosting else 'Unknown' }}</strong>
                                 </div>
-                                <small class="text-muted d-block" style="font-size: 0.65rem;">Domain owner</small>
+                                <small class="text-muted d-block" style="font-size: 0.65rem;">Where email is hosted (MX)</small>
                             </div>
                             <div class="col-md-3 border-end border-primary border-opacity-10">
                                 <small class="text-uppercase text-muted fw-bold d-block" style="font-size: 0.7rem;">Web Hosting</small>
