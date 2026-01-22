@@ -1217,40 +1217,51 @@ class DNSAnalyzer:
         dmarc = results.get('dmarc_analysis', {})
         dmarc_policy = dmarc.get('policy', '').lower()
         if dmarc.get('status') != 'success':
-            issues.append('No DMARC policy')
+            issues.append('No DMARC policy (email can be spoofed)')
         elif dmarc_policy == 'none':
-            monitoring_items.append('DMARC policy is monitoring-only (p=none)')
+            monitoring_items.append('DMARC in monitoring mode (p=none) - spoofed mail may still deliver')
         elif dmarc_policy == 'quarantine':
-            monitoring_items.append('DMARC policy is quarantine (p=reject recommended)')
+            monitoring_items.append('DMARC quarantine (spoofed mail goes to spam, p=reject recommended)')
         
         # Check SPF
         spf = results.get('spf_analysis', {})
         if spf.get('status') != 'success':
-            issues.append('No SPF record')
+            issues.append('No SPF record (no sender verification)')
         
         # Check DNSSEC
         dnssec = results.get('dnssec_analysis', {})
         chain = dnssec.get('chain_of_trust', 'none')
         if chain == 'broken':
-            issues.append('DNSSEC chain of trust broken')
+            issues.append('DNSSEC chain broken (DNS responses cannot be verified)')
         elif chain == 'none' or dnssec.get('status') != 'success':
-            issues.append('DNSSEC not enabled')
+            issues.append('DNSSEC not enabled (DNS responses can be spoofed)')
         
         # Check NS delegation
         ns_del = results.get('ns_delegation_analysis', {})
         if ns_del.get('delegation_ok') == False:
-            issues.append('NS delegation issue')
+            issues.append('NS delegation issue (DNS may not resolve correctly)')
         
         # Check CAA
         caa = results.get('caa_analysis', {})
         if caa.get('status') != 'success':
-            monitoring_items.append('No CAA records (any CA can issue certs)')
+            issues.append('No CAA record (any CA can issue SSL certificates)')
         
         # Check MTA-STS
         mta_sts = results.get('mta_sts_analysis', {})
-        if mta_sts.get('status') == 'success':
-            if mta_sts.get('mode') != 'enforce':
-                monitoring_items.append('MTA-STS not in enforce mode')
+        if mta_sts.get('status') != 'success':
+            monitoring_items.append('No MTA-STS (email TLS not enforced)')
+        elif mta_sts.get('mode') != 'enforce':
+            monitoring_items.append('MTA-STS in testing mode (email TLS not yet enforced)')
+        
+        # Check TLS-RPT
+        tls_rpt = results.get('tls_rpt_analysis', {})
+        if tls_rpt.get('status') != 'success':
+            monitoring_items.append('No TLS-RPT (no TLS delivery reporting)')
+        
+        # Check BIMI
+        bimi = results.get('bimi_analysis', {})
+        if bimi.get('status') != 'success':
+            monitoring_items.append('No BIMI (brand logo not displayed in inboxes)')
         
         # Determine posture state
         if not issues and not monitoring_items:

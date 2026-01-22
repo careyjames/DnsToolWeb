@@ -89,6 +89,51 @@
                 </div>
             </div>
         </div>
+        
+        <!-- Findings Summary Block -->
+        {% if results.posture and (results.posture.issues or results.posture.monitoring) %}
+        <div class="row mb-3">
+            <div class="col-12">
+                <div class="card border-0 bg-dark bg-opacity-50">
+                    <div class="card-body py-3">
+                        <h6 class="mb-2 text-muted"><i class="fas fa-clipboard-list me-2"></i>Findings Summary</h6>
+                        <div class="row">
+                            {% if results.posture.issues %}
+                            <div class="col-md-6 mb-2 mb-md-0">
+                                <div class="small text-danger fw-bold mb-1">
+                                    <i class="fas fa-exclamation-circle me-1"></i>Action Required:
+                                </div>
+                                <ul class="list-unstyled mb-0 ms-3 small">
+                                    {% for issue in results.posture.issues %}
+                                    <li class="mb-1">
+                                        <i class="fas fa-times text-danger me-1"></i>
+                                        {{ issue }}
+                                    </li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                            {% endif %}
+                            {% if results.posture.monitoring %}
+                            <div class="col-md-6">
+                                <div class="small text-info fw-bold mb-1">
+                                    <i class="fas fa-eye me-1"></i>Monitoring / Optional:
+                                </div>
+                                <ul class="list-unstyled mb-0 ms-3 small">
+                                    {% for item in results.posture.monitoring %}
+                                    <li class="mb-1">
+                                        <i class="fas fa-info-circle text-info me-1"></i>
+                                        {{ item }}
+                                    </li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
         {% endif %}
 
         <!-- Domain Summary Section -->
