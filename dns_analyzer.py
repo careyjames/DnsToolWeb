@@ -391,6 +391,94 @@ class DNSAnalyzer:
             'selectors': found_selectors
         }
     
+    def analyze_mta_sts(self, domain: str) -> Dict[str, Any]:
+        """Check MTA-STS (Mail Transfer Agent Strict Transport Security) for domain."""
+        mta_sts_domain = f"_mta-sts.{domain}"
+        records = self.dns_query("TXT", mta_sts_domain)
+        
+        if not records:
+            return {
+                'status': 'warning',
+                'message': 'No MTA-STS record found',
+                'record': None,
+                'mode': None
+            }
+        
+        valid_records = [r for r in records if r.lower().startswith("v=stsv1")]
+        
+        if not valid_records:
+            return {
+                'status': 'warning', 
+                'message': 'No valid MTA-STS record found',
+                'record': None,
+                'mode': None
+            }
+        
+        record = valid_records[0]
+        mode = None
+        
+        if "mode=enforce" in record.lower():
+            mode = 'enforce'
+            status = 'success'
+            message = 'MTA-STS enforced - TLS required for mail delivery'
+        elif "mode=testing" in record.lower():
+            mode = 'testing'
+            status = 'warning'
+            message = 'MTA-STS in testing mode'
+        elif "mode=none" in record.lower():
+            mode = 'none'
+            status = 'warning'
+            message = 'MTA-STS disabled (mode=none)'
+        else:
+            status = 'success'
+            message = 'MTA-STS record found'
+        
+        return {
+            'status': status,
+            'message': message,
+            'record': record,
+            'mode': mode
+        }
+    
+    def analyze_tlsrpt(self, domain: str) -> Dict[str, Any]:
+        """Check TLS-RPT (TLS Reporting) for domain."""
+        tlsrpt_domain = f"_smtp._tls.{domain}"
+        records = self.dns_query("TXT", tlsrpt_domain)
+        
+        if not records:
+            return {
+                'status': 'warning',
+                'message': 'No TLS-RPT record found',
+                'record': None,
+                'rua': None
+            }
+        
+        valid_records = [r for r in records if r.lower().startswith("v=tlsrptv1")]
+        
+        if not valid_records:
+            return {
+                'status': 'warning',
+                'message': 'No valid TLS-RPT record found', 
+                'record': None,
+                'rua': None
+            }
+        
+        record = valid_records[0]
+        rua = None
+        
+        # Extract reporting URI
+        import re
+        rua_match = re.search(r'rua=([^;\s]+)', record, re.IGNORECASE)
+        if rua_match:
+            rua = rua_match.group(1)
+        
+        return {
+            'status': 'success',
+            'message': 'TLS-RPT configured - receiving TLS delivery reports',
+            'record': record,
+            'rua': rua
+        }
+    
     def get_registrar_info(self, domain: str) -> Dict[str, Any]:
         """Get registrar information via RDAP (primary) with WHOIS (backup)."""
         logging.info(f"[REGISTRAR] Getting registrar info for {domain}")
@@ -764,13 +852,15 @@ class DNSAnalyzer:
         """Perform complete DNS analysis of domain with parallel lookups for speed."""
         
         # Run all lookups in parallel for speed (5-10s target)
-        with ThreadPoolExecutor(max_workers=6) as executor:
+        with ThreadPoolExecutor(max_workers=8) as executor:
             futures = {
                 executor.submit(self.get_basic_records, domain): 'basic',
                 executor.submit(self.get_authoritative_records, domain): 'auth',
                 executor.submit(self.analyze_spf, domain): 'spf',
                 executor.submit(self.analyze_dmarc, domain): 'dmarc',
                 executor.submit(self.analyze_dkim, domain): 'dkim',
+                executor.submit(self.analyze_mta_sts, domain): 'mta_sts',
+                executor.submit(self.analyze_tlsrpt, domain): 'tlsrpt',
                 executor.submit(self.get_registrar_info, domain): 'registrar',
             }
             
@@ -812,6 +902,8 @@ class DNSAnalyzer:
             'spf_analysis': results_map.get('spf', {'status': 'error'}),
             'dmarc_analysis': results_map.get('dmarc', {'status': 'error'}),
             'dkim_analysis': results_map.get('dkim', {'status': 'error'}),
+            'mta_sts_analysis': results_map.get('mta_sts', {'status': 'warning'}),
+            'tlsrpt_analysis': results_map.get('tlsrpt', {'status': 'warning'}),
             'registrar_info': results_map.get('registrar', {'status': 'error', 'registrar': None})
         }
         

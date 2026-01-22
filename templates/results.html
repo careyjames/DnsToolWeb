@@ -182,6 +182,40 @@
                                 {% endif %}
                             </div>
                         </div>
+                        
+                        <!-- Second Row: MTA-STS and TLS-RPT -->
+                        <div class="row mt-4 pt-3 border-top">
+                            <!-- MTA-STS Analysis -->
+                            <div class="col-md-6 mb-3 mb-md-0">
+                                <h6 class="d-flex align-items-center">
+                                    <i class="fas fa-shield-alt me-2"></i>MTA-STS
+                                    <span class="badge bg-{{ 'success' if results.mta_sts_analysis.status == 'success' else 'warning' }} ms-2">
+                                        {{ results.mta_sts_analysis.status|title }}
+                                    </span>
+                                    {% if results.mta_sts_analysis.mode %}
+                                        <span class="badge bg-{{ 'success' if results.mta_sts_analysis.mode == 'enforce' else 'warning' }} ms-1">{{ results.mta_sts_analysis.mode|upper }}</span>
+                                    {% endif %}
+                                </h6>
+                                <p class="text-muted mb-2 small">{{ results.mta_sts_analysis.message }}</p>
+                                {% if results.mta_sts_analysis.record %}
+                                    <div class="code-block small">{{ results.mta_sts_analysis.record }}</div>
+                                {% endif %}
+                            </div>
+
+                            <!-- TLS-RPT Analysis -->
+                            <div class="col-md-6">
+                                <h6 class="d-flex align-items-center">
+                                    <i class="fas fa-file-alt me-2"></i>TLS-RPT
+                                    <span class="badge bg-{{ 'success' if results.tlsrpt_analysis.status == 'success' else 'warning' }} ms-2">
+                                        {{ results.tlsrpt_analysis.status|title }}
+                                    </span>
+                                </h6>
+                                <p class="text-muted mb-2 small">{{ results.tlsrpt_analysis.message }}</p>
+                                {% if results.tlsrpt_analysis.record %}
+                                    <div class="code-block small">{{ results.tlsrpt_analysis.record }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
