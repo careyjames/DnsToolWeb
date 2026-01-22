@@ -347,7 +347,13 @@
                     <div class="card-header">
                         <h5 class="mb-0 d-flex align-items-center justify-content-between flex-wrap">
                             <span><i class="fas fa-certificate me-2"></i>Brand Security</span>
-                            <small class="text-muted">Can my brand be convincingly faked?</small>
+                            <small class="text-muted">Can my brand be convincingly faked?
+                                {% if results.posture and results.posture.verdicts.brand_secure %}
+                                    <span class="badge bg-success ms-1">No</span>
+                                {% elif results.posture and results.posture.verdicts.brand %}
+                                    <span class="badge bg-warning ms-1">Partially</span>
+                                {% endif %}
+                            </small>
                         </h5>
                     </div>
                     <div class="card-body">
@@ -442,7 +448,11 @@
                     <div class="card-header">
                         <h5 class="mb-0 d-flex align-items-center justify-content-between flex-wrap">
                             <span><i class="fas fa-shield-alt me-2"></i>Domain Security</span>
-                            <small class="text-muted">Can DNS itself be tampered with?</small>
+                            <small class="text-muted">Can DNS itself be tampered with?
+                                {% if results.posture and results.posture.verdicts.domain_answer %}
+                                    <span class="badge bg-{{ 'success' if results.posture.verdicts.domain_answer == 'No' else 'warning' }} ms-1">{{ results.posture.verdicts.domain_answer }}</span>
+                                {% endif %}
+                            </small>
                         </h5>
                     </div>
                     <div class="card-body">

@@ -1258,7 +1258,7 @@ class DNSAnalyzer:
         # Check TLS-RPT (runtime-dependent - record presence only)
         tls_rpt = results.get('tlsrpt_analysis', {})  # Note: key is 'tlsrpt_analysis' not 'tls_rpt_analysis'
         if tls_rpt.get('status') == 'success':
-            configured_items.append('TLS-RPT (reporting enabled)')
+            configured_items.append('TLS-RPT (reporting configured)')
         else:
             absent_items.append('TLS-RPT (TLS delivery reporting)')
         
@@ -1358,11 +1358,15 @@ class DNSAnalyzer:
         
         if dnssec_ok and ns_ok:
             verdicts['domain'] = 'DNS responses are authenticated from the root downward. Delegation is verified.'
+            verdicts['domain_answer'] = 'No'
         elif dnssec_ok:
             verdicts['domain'] = 'DNS responses are signed but delegation verification had issues.'
+            verdicts['domain_answer'] = 'Mostly No'
         elif ns_ok:
             verdicts['domain'] = 'Delegation is verified but DNS responses are unsigned and could be spoofed.'
+            verdicts['domain_answer'] = 'Partially'
         else:
             verdicts['domain'] = 'DNS responses are unsigned and delegation may have issues.'
+            verdicts['domain_answer'] = 'Yes'
         
         return verdicts
