@@ -64,7 +64,7 @@
                     <div class="card-body py-3">
                         <div class="row align-items-center">
                             <div class="col-md-3 border-end border-primary border-opacity-10">
-                                <small class="text-uppercase text-muted fw-bold d-block" style="font-size: 0.7rem;">Registrar</small>
+                                <small class="text-uppercase text-muted fw-bold d-block" style="font-size: 0.7rem;">Registrar <span class="text-info">({{ results.registrar_info.source|upper if results.registrar_info.source else '?' }})</span></small>
                                 <div class="text-truncate" title="{{ results.registrar_info.registrar or 'Unknown' }}">
                                     <i class="fas fa-id-card text-primary me-2"></i>
                                     <strong>{{ results.registrar_info.registrar.split('(')[0].strip() if results.registrar_info.registrar else 'Unknown' }}</strong>
@@ -72,12 +72,12 @@
                                 <small class="text-muted d-block" style="font-size: 0.65rem;">Where you pay to own domain</small>
                             </div>
                             <div class="col-md-3 border-end border-primary border-opacity-10">
-                                <small class="text-uppercase text-muted fw-bold d-block" style="font-size: 0.7rem;">Email Hosting</small>
+                                <small class="text-uppercase text-muted fw-bold d-block" style="font-size: 0.7rem;">Email Service Provider <span class="text-info">(MX)</span></small>
                                 <div class="text-truncate">
                                     <i class="fas fa-envelope text-primary me-2"></i>
                                     <strong>{{ results.hosting_summary.email_hosting if results.hosting_summary and results.hosting_summary.email_hosting else 'Unknown' }}</strong>
                                 </div>
-                                <small class="text-muted d-block" style="font-size: 0.65rem;">Where email is hosted (MX)</small>
+                                <small class="text-muted d-block" style="font-size: 0.65rem;">Handles incoming email</small>
                             </div>
                             <div class="col-md-3 border-end border-primary border-opacity-10">
                                 <small class="text-uppercase text-muted fw-bold d-block" style="font-size: 0.7rem;">Web Hosting</small>
