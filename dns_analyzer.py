@@ -394,17 +394,35 @@ class DNSAnalyzer:
         """Return RDAP JSON data for domain using IANA endpoints."""
         tld = self._get_tld(domain)
         
-        # Primary lookup using IANA mapping
-        endpoints = self.iana_rdap_map.get(tld, [])
+        # Hardcoded RDAP endpoints for common TLDs (fallback if IANA map fails)
+        hardcoded_endpoints = {
+            'com': ['https://rdap.verisign.com/com/v1/'],
+            'net': ['https://rdap.verisign.com/net/v1/'],
+            'org': ['https://rdap.publicinterestregistry.net/rdap/'],
+            'io': ['https://rdap.nic.io/'],
+            'tech': ['https://rdap.centralnic.com/tech/'],
+            'dev': ['https://rdap.nic.google/'],
+            'app': ['https://rdap.nic.google/'],
+            'co': ['https://rdap.nic.co/'],
+            'info': ['https://rdap.afilias.net/rdap/info/'],
+            'biz': ['https://rdap.nic.biz/'],
+            'me': ['https://rdap.nic.me/'],
+            'uk': ['https://rdap.nominet.uk/uk/'],
+            'de': ['https://rdap.denic.de/'],
+        }
+        
+        # Use IANA map first, then hardcoded endpoints
+        endpoints = self.iana_rdap_map.get(tld, []) or hardcoded_endpoints.get(tld, [])
+        
+        headers = {
+            'Accept': 'application/rdap+json',
+            'User-Agent': 'Mozilla/5.0 DNS-Analyzer'
+        }
+        
         for endpoint in endpoints:
             url = f"{endpoint.rstrip('/')}/domain/{domain}"
             try:
                 logging.debug(f"RDAP lookup: {url}")
-                # Use a specific User-Agent and Accept header
-                headers = {
-                    'Accept': 'application/rdap+json',
-                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
-                }
                 resp = requests.get(url, timeout=10, headers=headers)
                 if resp.status_code < 400:
                     data = resp.json()
@@ -414,25 +432,17 @@ class DNSAnalyzer:
             except Exception as e:
                 logging.debug(f"RDAP lookup error for {url}: {e}")
         
-        # Fallback 1: Common RDAP servers for tech and other TLDs
-        fallbacks = [
-            f"https://rdap.centralnic.com/{tld}/domain/{domain}",
-            f"https://rdap.verisign.com/com/v1/domain/{domain}",
-            f"https://rdap.publicinterestregistry.net/rdap/domain/{domain}",
-            f"https://rdap.markmonitor.com/rdap/domain/{domain}",
-            f"https://rdap.org/domain/{domain}"
-        ]
-        
-        for url in fallbacks:
-            try:
-                logging.debug(f"RDAP fallback lookup: {url}")
-                resp = requests.get(url, timeout=10, headers={'Accept': 'application/rdap+json'})
-                if resp.status_code < 400:
-                    data = resp.json()
-                    if "errorCode" not in data:
-                        return data
-            except Exception as e:
-                logging.debug(f"RDAP fallback lookup error for {url}: {e}")
+        # Universal fallback: rdap.org (redirects to correct registry)
+        try:
+            url = f"https://rdap.org/domain/{domain}"
+            logging.debug(f"RDAP universal fallback: {url}")
+            resp = requests.get(url, timeout=10, headers=headers, allow_redirects=True)
+            if resp.status_code < 400:
+                data = resp.json()
+                if "errorCode" not in data:
+                    return data
+        except Exception as e:
+            logging.debug(f"RDAP universal fallback error: {e}")
         
         return {}
     
