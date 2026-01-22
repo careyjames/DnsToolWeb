@@ -8,6 +8,9 @@ from sqlalchemy.orm import DeclarativeBase
 from sqlalchemy import JSON
 from dns_analyzer import DNSAnalyzer
 
+# App version
+APP_VERSION = "2.2"
+
 # Configure logging
 logging.basicConfig(level=logging.DEBUG)
 
@@ -29,6 +32,11 @@ db.init_app(app)
 
 # Initialize DNS analyzer
 dns_analyzer = DNSAnalyzer()
+
+@app.context_processor
+def inject_version():
+    """Inject app version into all templates."""
+    return {'app_version': APP_VERSION}
 
 class DomainAnalysis(db.Model):
     """Store DNS analysis results for domains."""
