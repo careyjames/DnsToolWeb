@@ -430,65 +430,69 @@ class DNSAnalyzer:
         }
     
     def _rdap_lookup(self, domain: str) -> Dict:
-        """Return RDAP JSON data for domain - tries ALL sources with robust retries."""
+        """Return RDAP JSON data for domain - fast and reliable."""
         tld = self._get_tld(domain)
         logging.info(f"[RDAP] Looking up domain {domain}, TLD: {tld}")
-        
-        # Create robust session with automatic retries
-        session = create_robust_session()
         
         headers = {
             'Accept': 'application/rdap+json',
             'User-Agent': 'Mozilla/5.0 (compatible; DNS-Analyzer/1.0)'
         }
         
-        # Build list of ALL RDAP endpoints to try
-        hardcoded_endpoints = {
-            'com': ['https://rdap.verisign.com/com/v1/'],
-            'net': ['https://rdap.verisign.com/net/v1/'],
-            'org': ['https://rdap.publicinterestregistry.net/rdap/'],
-            'io': ['https://rdap.nic.io/'],
-            'tech': ['https://rdap.centralnic.com/tech/'],
-            'dev': ['https://rdap.nic.google/'],
-            'app': ['https://rdap.nic.google/'],
-            'co': ['https://rdap.nic.co/'],
-            'info': ['https://rdap.afilias.net/rdap/info/'],
-            'biz': ['https://rdap.nic.biz/'],
-            'me': ['https://rdap.nic.me/'],
-            'uk': ['https://rdap.nominet.uk/uk/'],
-            'de': ['https://rdap.denic.de/'],
+        # Direct RDAP endpoints for common TLDs
+        direct_endpoints = {
+            'com': 'https://rdap.verisign.com/com/v1/',
+            'net': 'https://rdap.verisign.com/net/v1/',
+            'org': 'https://rdap.publicinterestregistry.net/rdap/',
+            'io': 'https://rdap.nic.io/',
+            'tech': 'https://rdap.centralnic.com/tech/',
+            'dev': 'https://rdap.nic.google/',
+            'app': 'https://rdap.nic.google/',
+            'co': 'https://rdap.nic.co/',
+            'info': 'https://rdap.afilias.net/rdap/info/',
+            'biz': 'https://rdap.nic.biz/',
+            'me': 'https://rdap.nic.me/',
+            'uk': 'https://rdap.nominet.uk/uk/',
+            'de': 'https://rdap.denic.de/',
         }
         
-        # Collect all possible endpoints - TLD-specific FIRST for reliability
-        all_endpoints = []
-        if tld in hardcoded_endpoints:
-            all_endpoints.extend(hardcoded_endpoints[tld])
-        all_endpoints.append('https://rdap.org/')  # Universal fallback
-        if tld in self.iana_rdap_map:
-            for ep in self.iana_rdap_map[tld]:
-                if ep not in all_endpoints:
-                    all_endpoints.append(ep)
+        # Get the best endpoint for this TLD
+        endpoint = direct_endpoints.get(tld)
+        if not endpoint and tld in self.iana_rdap_map and self.iana_rdap_map[tld]:
+            endpoint = self.iana_rdap_map[tld][0]
+        if not endpoint:
+            endpoint = 'https://rdap.org/'
         
-        logging.info(f"[RDAP] Will try {len(all_endpoints)} endpoints sequentially with retries")
+        url = f"{endpoint.rstrip('/')}/domain/{domain}"
         
-        # Try endpoints SEQUENTIALLY (more reliable than parallel in restricted environments)
-        for endpoint in all_endpoints:
-            url = f"{endpoint.rstrip('/')}/domain/{domain}"
+        # Try with short timeout first
+        try:
+            logging.info(f"[RDAP] Trying: {url}")
+            resp = requests.get(url, timeout=8, headers=headers, allow_redirects=True)
+            logging.info(f"[RDAP] Response {resp.status_code}")
+            if resp.status_code < 400:
+                data = resp.json()
+                if "errorCode" not in data and (data.get("ldhName") or data.get("objectClassName") == "domain"):
+                    logging.info(f"[RDAP] SUCCESS")
+                    return data
+        except Exception as e:
+            logging.warning(f"[RDAP] Primary failed: {type(e).__name__}")
+        
+        # Fallback to rdap.org
+        if endpoint != 'https://rdap.org/':
             try:
-                logging.info(f"[RDAP] Trying: {url}")
-                resp = session.get(url, timeout=20, headers=headers, allow_redirects=True)
-                logging.info(f"[RDAP] Response {resp.status_code} from {endpoint}")
+                url = f"https://rdap.org/domain/{domain}"
+                logging.info(f"[RDAP] Fallback: {url}")
+                resp = requests.get(url, timeout=10, headers=headers, allow_redirects=True)
                 if resp.status_code < 400:
                     data = resp.json()
                     if "errorCode" not in data and (data.get("ldhName") or data.get("objectClassName") == "domain"):
-                        logging.info(f"[RDAP] SUCCESS from {endpoint}")
-                        session.close()
+                        logging.info(f"[RDAP] Fallback SUCCESS")
                         return data
             except Exception as e:
-                logging.warning(f"[RDAP] Error from {endpoint}: {type(e).__name__}: {e}")
+                logging.warning(f"[RDAP] Fallback failed: {type(e).__name__}")
         
-        session.close()
-        logging.warning(f"[RDAP] All {len(all_endpoints)} endpoints failed for {domain}")
+        logging.warning(f"[RDAP] All lookups failed for {domain}")
         return {}
     
     def _extract_registrar_from_rdap(self, rdap_data: Dict) -> Optional[str]:
