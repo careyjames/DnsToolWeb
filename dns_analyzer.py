@@ -370,40 +370,59 @@ class DNSAnalyzer:
         }
     
     def get_registrar_info(self, domain: str) -> Dict[str, Any]:
-        """Get registrar information via RDAP or WHOIS."""
+        """Get registrar information via RDAP and WHOIS in parallel for speed and redundancy."""
         logging.info(f"[REGISTRAR] Getting registrar info for {domain}")
-        logging.info(f"[REGISTRAR] IANA RDAP map has {len(self.iana_rdap_map)} entries")
         
-        # Try RDAP first
-        rdap_data = self._rdap_lookup(domain)
-        logging.info(f"[REGISTRAR] RDAP data retrieved: {bool(rdap_data)}, keys: {list(rdap_data.keys()) if rdap_data else []}")
+        rdap_result = None
+        whois_result = None
         
-        if rdap_data:
-            registrar_name = self._extract_registrar_from_rdap(rdap_data)
-            logging.info(f"[REGISTRAR] Extracted registrar from RDAP: {registrar_name}")
-            if registrar_name and not registrar_name.isdigit():
-                registrant_name = self._extract_registrant_from_rdap(rdap_data)
-                reg_str = registrar_name
-                if registrant_name:
-                    reg_str += f" (Registrant: {registrant_name})"
-                logging.info(f"[REGISTRAR] SUCCESS via RDAP: {reg_str}")
-                return {
-                    'status': 'success',
-                    'source': 'RDAP',
-                    'registrar': reg_str
-                }
+        # Run RDAP and WHOIS in parallel for speed and redundancy
+        def do_rdap():
+            try:
+                rdap_data = self._rdap_lookup(domain)
+                if rdap_data:
+                    registrar_name = self._extract_registrar_from_rdap(rdap_data)
+                    if registrar_name and not registrar_name.isdigit():
+                        registrant_name = self._extract_registrant_from_rdap(rdap_data)
+                        reg_str = registrar_name
+                        if registrant_name:
+                            reg_str += f" (Registrant: {registrant_name})"
+                        return ('RDAP', reg_str)
+            except Exception as e:
+                logging.warning(f"[REGISTRAR] RDAP error: {e}")
+            return None
         
-        # Fallback to WHOIS
-        logging.info(f"[REGISTRAR] Falling back to WHOIS for {domain}")
-        whois_registrar = self._whois_lookup_registrar(domain)
-        logging.info(f"[REGISTRAR] WHOIS result: {whois_registrar}")
-        if whois_registrar:
-            logging.info(f"[REGISTRAR] SUCCESS via WHOIS: {whois_registrar}")
-            return {
-                'status': 'success',
-                'source': 'WHOIS',
-                'registrar': whois_registrar
-            }
+        def do_whois():
+            try:
+                result = self._whois_lookup_registrar(domain)
+                if result:
+                    return ('WHOIS', result)
+            except Exception as e:
+                logging.warning(f"[REGISTRAR] WHOIS error: {e}")
+            return None
+        
+        with ThreadPoolExecutor(max_workers=2) as executor:
+            rdap_future = executor.submit(do_rdap)
+            whois_future = executor.submit(do_whois)
+            
+            try:
+                rdap_result = rdap_future.result(timeout=5)
+            except:
+                pass
+            
+            try:
+                whois_result = whois_future.result(timeout=5)
+            except:
+                pass
+        
+        # Prefer RDAP, fallback to WHOIS
+        if rdap_result:
+            logging.info(f"[REGISTRAR] SUCCESS via RDAP: {rdap_result[1]}")
+            return {'status': 'success', 'source': 'RDAP', 'registrar': rdap_result[1]}
+        
+        if whois_result:
+            logging.info(f"[REGISTRAR] SUCCESS via WHOIS: {whois_result[1]}")
+            return {'status': 'success', 'source': 'WHOIS', 'registrar': whois_result[1]}
         
         logging.warning(f"[REGISTRAR] FAILED - No registrar info found for {domain}")
         return {
