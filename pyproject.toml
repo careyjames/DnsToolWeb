@@ -13,4 +13,6 @@ dependencies = [
     "prompt-toolkit>=3.0.51",
     "psycopg2-binary>=2.9.10",
     "requests>=2.32.3",
+    "sqlalchemy>=2.0.41",
+    "whodap>=0.1.14",
 ]

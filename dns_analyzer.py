@@ -430,15 +430,25 @@ class DNSAnalyzer:
         }
     
     def _rdap_lookup(self, domain: str) -> Dict:
-        """Return RDAP JSON data for domain - simple and fast."""
-        tld = self._get_tld(domain)
+        """Return RDAP JSON data for domain using whodap library."""
+        import whodap
         
+        tld = self._get_tld(domain)
+        domain_name = domain.rsplit('.', 1)[0] if '.' in domain else domain
+        
+        try:
+            response = whodap.lookup_domain(domain=domain_name, tld=tld)
+            # Convert to dict for our extraction methods
+            return response.to_dict()
+        except Exception as e:
+            logging.warning(f"[RDAP] whodap lookup failed: {e}")
+        
+        # Fallback to direct requests if whodap fails
         headers = {
             'Accept': 'application/rdap+json',
             'User-Agent': 'DNS-Analyzer/1.0'
         }
         
-        # Direct RDAP endpoints for common TLDs
         direct_endpoints = {
             'com': 'https://rdap.verisign.com/com/v1/',
             'net': 'https://rdap.verisign.com/net/v1/',
@@ -447,44 +457,19 @@ class DNSAnalyzer:
             'tech': 'https://rdap.centralnic.com/tech/',
             'dev': 'https://rdap.nic.google/',
             'app': 'https://rdap.nic.google/',
-            'co': 'https://rdap.nic.co/',
-            'info': 'https://rdap.afilias.net/rdap/info/',
-            'biz': 'https://rdap.nic.biz/',
-            'me': 'https://rdap.nic.me/',
-            'uk': 'https://rdap.nominet.uk/uk/',
-            'de': 'https://rdap.denic.de/',
         }
         
-        # Get endpoint for this TLD
-        endpoint = direct_endpoints.get(tld)
-        if not endpoint and tld in self.iana_rdap_map and self.iana_rdap_map[tld]:
-            endpoint = self.iana_rdap_map[tld][0]
-        if not endpoint:
-            endpoint = 'https://rdap.org/'
-        
+        endpoint = direct_endpoints.get(tld, 'https://rdap.org/')
         url = f"{endpoint.rstrip('/')}/domain/{domain}"
         
-        # Single request with reasonable timeout
         try:
             resp = requests.get(url, timeout=10, headers=headers, allow_redirects=True)
             if resp.status_code < 400:
                 data = resp.json()
-                if "errorCode" not in data and (data.get("ldhName") or data.get("objectClassName") == "domain"):
+                if "errorCode" not in data:
                     return data
         except Exception:
             pass
-        
-        # Fallback to rdap.org
-        if endpoint != 'https://rdap.org/':
-            try:
-                url = f"https://rdap.org/domain/{domain}"
-                resp = requests.get(url, timeout=10, headers=headers, allow_redirects=True)
-                if resp.status_code < 400:
-                    data = resp.json()
-                    if "errorCode" not in data and (data.get("ldhName") or data.get("objectClassName") == "domain"):
-                        return data
-            except Exception:
-                pass
         
         return {}
     

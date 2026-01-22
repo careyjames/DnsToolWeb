@@ -1,0 +1,38 @@
+Yes — Python is the right “best practice” choice for an app. Not because “Python > curl”, but because RDAP is just HTTPS + JSON, and you want a real HTTP client inside your program (timeouts, retries, redirects, caching, structured parsing, tests), not a shell-out. RDAP is explicitly designed as a RESTful web service over HTTP.  ￼
+
+What you should tell Replit (technical reality)
+	•	cURL is fine for debugging or a quick prototype, but shelling out to curl from Python is usually the wrong architecture:
+	•	extra process spawn overhead
+	•	harder error handling (exit codes, stderr parsing)
+	•	quoting/escaping footguns
+	•	security risk if any input ever touches the shell
+	•	painful to unit test
+	•	Use a native HTTP client: httpx (modern) or requests (ubiquitous). Either is correct.
+
+The real RDAP pain point (and how to fix it)
+
+Most “RDAP is hard” complaints are actually bootstrapping: figuring out which RDAP server to query for a given TLD.
+
+Do it the standards way:
+	1.	Bootstrap from IANA (authoritative mapping of TLD → RDAP base URL).  ￼
+	2.	Cache that mapping (hours/days).
+	3.	For a domain example.tld, pick the server for .tld, then query:
+	•	/domain/example.tld
+	4.	Handle:
+	•	HTTP redirects (some servers redirect you to registrar/registry-specific endpoints)
+	•	rate limits (429), backoff
+	•	timeouts and retries
+	•	“privacy-redacted” responses (expected; registrant contact data is often hidden)
+
+RDAP vs WHOIS (pragmatic)
+
+RDAP is the current direction and (for gTLD registration data under ICANN’s ecosystem) it’s the “definitive” path as WHOIS is being sunset in favor of RDAP.  ￼
+So: RDAP first, WHOIS only as fallback if you explicitly want coverage for weird legacy corners.
+
+Minimal recommendation
+	•	Implement RDAP in Python with httpx/requests.
+	•	Use IANA bootstrap + caching.
+	•	Keep a WHOIS fallback only if you care about edge cases.
+	•	In your tool UI: surface “RDAP source (registry/registrar)” + timestamps + notices, and treat missing registrant details as normal, not failure.
+
+If you want, paste what Replit currently implemented (even pseudocode), and I’ll point out exactly where it’s going wrong and what to change.
