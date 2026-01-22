@@ -186,13 +186,13 @@ class DNSAnalyzer:
     
     def get_basic_records(self, domain: str) -> Dict[str, List[str]]:
         """Get basic DNS records for domain (parallel for speed)."""
-        record_types = ["A", "AAAA", "MX", "TXT", "NS", "CNAME"]
+        record_types = ["A", "AAAA", "MX", "TXT", "NS", "CNAME", "SRV"]
         records = {t: [] for t in record_types}
         
         def query_type(rtype):
             return (rtype, self.dns_query(rtype, domain))
         
-        with ThreadPoolExecutor(max_workers=6) as executor:
+        with ThreadPoolExecutor(max_workers=7) as executor:
             futures = {executor.submit(query_type, t): t for t in record_types}
             for future in as_completed(futures, timeout=5):
                 try:

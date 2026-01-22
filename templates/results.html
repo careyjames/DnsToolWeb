@@ -404,6 +404,121 @@
             </div>
         </div>
 
+        <!-- Traffic & Routing Section -->
+        <div class="row">
+            <div class="col-12 mb-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="fas fa-route me-2"></i>Traffic & Routing
+                            <small class="text-muted ms-2">Where traffic flows &amp; how services resolve</small>
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <!-- A Records (IPv4) -->
+                            <div class="col-md-3 mb-3">
+                                <h6 class="d-flex align-items-center">
+                                    <span class="badge bg-primary me-2">A</span>IPv4 Address
+                                </h6>
+                                {% if results.basic_records.A %}
+                                    {% for record in results.basic_records.A %}
+                                        <div class="code-block small mb-1">{{ record }}</div>
+                                    {% endfor %}
+                                    <small class="text-muted">Where the domain points for web traffic</small>
+                                {% else %}
+                                    <div class="text-muted small"><i class="fas fa-minus me-1"></i>No A records</div>
+                                    <small class="text-info">Domain may use AAAA (IPv6) only or CNAME</small>
+                                {% endif %}
+                            </div>
+
+                            <!-- AAAA Records (IPv6) -->
+                            <div class="col-md-3 mb-3">
+                                <h6 class="d-flex align-items-center">
+                                    <span class="badge bg-info me-2">AAAA</span>IPv6 Address
+                                </h6>
+                                {% if results.basic_records.AAAA %}
+                                    {% for record in results.basic_records.AAAA %}
+                                        <div class="code-block small mb-1">{{ record }}</div>
+                                    {% endfor %}
+                                    <small class="text-success"><i class="fas fa-check me-1"></i>IPv6 ready</small>
+                                {% else %}
+                                    <div class="text-muted small"><i class="fas fa-minus me-1"></i>No AAAA records</div>
+                                    <small class="text-muted">IPv6 not configured</small>
+                                {% endif %}
+                            </div>
+
+                            <!-- MX Records (Mail) -->
+                            <div class="col-md-3 mb-3">
+                                <h6 class="d-flex align-items-center">
+                                    <span class="badge bg-warning text-dark me-2">MX</span>Mail Servers
+                                </h6>
+                                {% if results.basic_records.MX %}
+                                    {% for record in results.basic_records.MX %}
+                                        <div class="code-block small mb-1">{{ record }}</div>
+                                    {% endfor %}
+                                    <small class="text-muted">Priority + mail server for email delivery</small>
+                                {% else %}
+                                    <div class="text-muted small"><i class="fas fa-minus me-1"></i>No MX records</div>
+                                    <small class="text-warning">Domain cannot receive email</small>
+                                {% endif %}
+                            </div>
+
+                            <!-- SRV Records (Services) -->
+                            <div class="col-md-3 mb-3">
+                                <h6 class="d-flex align-items-center">
+                                    <span class="badge bg-secondary me-2">SRV</span>Services
+                                </h6>
+                                {% if results.basic_records.SRV %}
+                                    {% for record in results.basic_records.SRV %}
+                                        <div class="code-block small mb-1">{{ record }}</div>
+                                    {% endfor %}
+                                    <small class="text-muted">SIP, XMPP, or other service endpoints</small>
+                                {% else %}
+                                    <div class="text-muted small"><i class="fas fa-minus me-1"></i>No SRV records</div>
+                                    <small class="text-muted">No service-specific routing configured</small>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Summary bar -->
+                        <div class="border-top pt-3 mt-2">
+                            <div class="d-flex flex-wrap gap-3 small">
+                                <span>
+                                    <i class="fas fa-globe me-1 text-primary"></i>
+                                    <strong>Web:</strong>
+                                    {% if results.basic_records.A or results.basic_records.AAAA %}
+                                        <span class="text-success">Reachable</span>
+                                        ({{ results.basic_records.A|length if results.basic_records.A else 0 }} IPv4, {{ results.basic_records.AAAA|length if results.basic_records.AAAA else 0 }} IPv6)
+                                    {% else %}
+                                        <span class="text-warning">No direct IP</span>
+                                    {% endif %}
+                                </span>
+                                <span>
+                                    <i class="fas fa-envelope me-1 text-warning"></i>
+                                    <strong>Mail:</strong>
+                                    {% if results.basic_records.MX %}
+                                        <span class="text-success">{{ results.basic_records.MX|length }} server{{ 's' if results.basic_records.MX|length > 1 else '' }}</span>
+                                    {% else %}
+                                        <span class="text-danger">Not configured</span>
+                                    {% endif %}
+                                </span>
+                                <span>
+                                    <i class="fas fa-cogs me-1 text-secondary"></i>
+                                    <strong>Services:</strong>
+                                    {% if results.basic_records.SRV %}
+                                        <span class="text-success">{{ results.basic_records.SRV|length }} endpoint{{ 's' if results.basic_records.SRV|length > 1 else '' }}</span>
+                                    {% else %}
+                                        <span class="text-muted">None</span>
+                                    {% endif %}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- DNS Records Section -->
         <div class="row">
             <div class="col-lg-6 mb-4">
