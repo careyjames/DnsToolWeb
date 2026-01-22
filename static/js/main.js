@@ -48,11 +48,15 @@ document.addEventListener('DOMContentLoaded', function() {
             this.classList.remove('is-invalid');
         });
         
-        // Handle Enter key
+        // Handle Enter key - use requestSubmit for proper form submission
         domainInput.addEventListener('keypress', function(e) {
             if (e.key === 'Enter') {
                 e.preventDefault();
-                domainForm.dispatchEvent(new Event('submit'));
+                if (domainForm.requestSubmit) {
+                    domainForm.requestSubmit();
+                } else {
+                    analyzeBtn.click();
+                }
             }
         });
     }
