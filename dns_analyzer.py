@@ -416,11 +416,12 @@ class DNSAnalyzer:
             'de': ['https://rdap.denic.de/'],
         }
         
-        # Use IANA map first, then hardcoded endpoints
-        iana_endpoints = self.iana_rdap_map.get(tld, [])
+        # Prioritize hardcoded endpoints (more reliable), then IANA map
         hardcoded = hardcoded_endpoints.get(tld, [])
-        endpoints = iana_endpoints or hardcoded
-        logging.info(f"[RDAP] IANA endpoints: {len(iana_endpoints)}, Hardcoded: {len(hardcoded)}, Using: {len(endpoints)}")
+        iana_endpoints = self.iana_rdap_map.get(tld, [])
+        # For common TLDs, prefer hardcoded; for others, use IANA
+        endpoints = hardcoded if hardcoded else iana_endpoints
+        logging.info(f"[RDAP] Hardcoded: {len(hardcoded)}, IANA endpoints: {len(iana_endpoints)}, Using: {len(endpoints)}")
         
         headers = {
             'Accept': 'application/rdap+json',
