@@ -189,8 +189,8 @@ class DNSAnalyzer:
             if not ns_records:
                 return results
 
-            # 2. Query each nameserver for redundancy
-            for ns_host in ns_records:
+            # 2. Query nameservers (limit to top 2 for performance)
+            for ns_host in ns_records[:2]:
                 try:
                     # Resolve NS hostname to IP
                     ns_ips = self.dns_query("A", ns_host.rstrip("."))
@@ -199,10 +199,13 @@ class DNSAnalyzer:
                         
                     resolver = dns.resolver.Resolver(configure=False)
                     resolver.nameservers = ns_ips
-                    resolver.timeout = 2
-                    resolver.lifetime = 2
+                    resolver.timeout = 1.5
+                    resolver.lifetime = 1.5
                     
                     for rtype in record_types:
+                        # If we already have results for this type from a previous NS, 
+                        # we can skip it to save time, or keep it for redundancy.
+                        # Let's keep it but ensure we don't hang.
                         try:
                             answer = resolver.resolve(domain, rtype)
                             for rr in answer:
