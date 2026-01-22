@@ -7,7 +7,18 @@
     <link href="https://cdn.replit.com/agent/bootstrap-agent-dark-theme.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <link href="{{ url_for('static', filename='css/custom.css') }}" rel="stylesheet">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <style>
+        @media print {
+            .navbar, .btn, button, #exportBtn, .no-print { display: none !important; }
+            body { background: white !important; color: black !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            .container { max-width: 100% !important; padding: 0 !important; margin: 0 !important; }
+            .card { break-inside: avoid; margin-bottom: 15px !important; border: 1px solid #dee2e6 !important; }
+            .card-header { background-color: #e9ecef !important; }
+            .code-block { background-color: #f8f9fa !important; border: 1px solid #dee2e6 !important; }
+            .badge { border: 1px solid currentColor; }
+            a { text-decoration: none !important; }
+        }
+    </style>
 </head>
 <body>
     <!-- Navigation -->
@@ -829,96 +840,7 @@
     <script src="{{ url_for('static', filename='js/main.js') }}"></script>
     <script>
         function exportToPDF() {
-            const btn = document.getElementById('exportBtn');
-            const originalText = btn.innerHTML;
-            btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Generating...';
-            btn.disabled = true;
-            
-            // Get the main content container
-            const element = document.querySelector('.container.my-4');
-            
-            // Clone and prepare for PDF
-            const clone = element.cloneNode(true);
-            
-            // Remove buttons from the clone
-            const buttons = clone.querySelectorAll('.btn, button');
-            buttons.forEach(b => b.style.display = 'none');
-            
-            // Configure PDF options
-            const opt = {
-                margin: [10, 10, 10, 10],
-                filename: '{{ domain }}_dns_analysis.pdf',
-                image: { type: 'jpeg', quality: 0.98 },
-                html2canvas: { 
-                    scale: 2,
-                    useCORS: true,
-                    logging: false,
-                    backgroundColor: '#1a1a2e'
-                },
-                jsPDF: { 
-                    unit: 'mm', 
-                    format: 'a4', 
-                    orientation: 'portrait' 
-                },
-                pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
-            };
-            
-            // Create a temporary container with light theme for better PDF output
-            const tempContainer = document.createElement('div');
-            tempContainer.style.cssText = 'position: absolute; left: -9999px; background: #ffffff; color: #000000; padding: 20px;';
-            tempContainer.innerHTML = `
-                <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: #000;">
-                    <h1 style="color: #000; border-bottom: 2px solid #007bff; padding-bottom: 10px; margin-bottom: 20px;">
-                        DNS Analysis Report: {{ domain }}
-                    </h1>
-                    <p style="color: #666; margin-bottom: 20px;">Generated: ${new Date().toLocaleString()} | DNS Tool v{{ app_version }}</p>
-                    ${clone.innerHTML}
-                </div>
-            `;
-            document.body.appendChild(tempContainer);
-            
-            // Style adjustments for PDF
-            const cards = tempContainer.querySelectorAll('.card');
-            cards.forEach(card => {
-                card.style.backgroundColor = '#f8f9fa';
-                card.style.border = '1px solid #dee2e6';
-                card.style.marginBottom = '15px';
-            });
-            
-            const cardHeaders = tempContainer.querySelectorAll('.card-header');
-            cardHeaders.forEach(h => {
-                h.style.backgroundColor = '#e9ecef';
-                h.style.color = '#000';
-            });
-            
-            const badges = tempContainer.querySelectorAll('.badge');
-            badges.forEach(b => {
-                b.style.color = '#fff';
-            });
-            
-            const textMuted = tempContainer.querySelectorAll('.text-muted');
-            textMuted.forEach(t => t.style.color = '#6c757d');
-            
-            const codeBlocks = tempContainer.querySelectorAll('.code-block');
-            codeBlocks.forEach(cb => {
-                cb.style.backgroundColor = '#e9ecef';
-                cb.style.color = '#000';
-                cb.style.padding = '8px';
-                cb.style.borderRadius = '4px';
-            });
-            
-            // Generate PDF
-            html2pdf().set(opt).from(tempContainer.firstElementChild).save().then(() => {
-                document.body.removeChild(tempContainer);
-                btn.innerHTML = originalText;
-                btn.disabled = false;
-            }).catch(err => {
-                console.error('PDF generation failed:', err);
-                document.body.removeChild(tempContainer);
-                btn.innerHTML = originalText;
-                btn.disabled = false;
-                alert('PDF generation failed. Please try again.');
-            });
+            window.print();
         }
     </script>
 </body>
