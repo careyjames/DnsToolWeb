@@ -183,10 +183,10 @@
                             </div>
                         </div>
                         
-                        <!-- Second Row: MTA-STS, TLS-RPT, and BIMI -->
+                        <!-- Second Row: MTA-STS and TLS-RPT -->
                         <div class="row mt-4 pt-3 border-top">
                             <!-- MTA-STS Analysis -->
-                            <div class="col-md-4 mb-3 mb-md-0">
+                            <div class="col-md-6 mb-3 mb-md-0">
                                 <h6 class="d-flex align-items-center">
                                     <i class="fas fa-shield-alt me-2"></i>MTA-STS
                                     <span class="badge bg-{{ 'success' if results.mta_sts_analysis.status == 'success' else 'warning' }} ms-2">
@@ -203,7 +203,7 @@
                             </div>
 
                             <!-- TLS-RPT Analysis -->
-                            <div class="col-md-4 mb-3 mb-md-0">
+                            <div class="col-md-6">
                                 <h6 class="d-flex align-items-center">
                                     <i class="fas fa-file-alt me-2"></i>TLS-RPT
                                     <span class="badge bg-{{ 'success' if results.tlsrpt_analysis.status == 'success' else 'warning' }} ms-2">
@@ -215,11 +215,27 @@
                                     <div class="code-block small">{{ results.tlsrpt_analysis.record }}</div>
                                 {% endif %}
                             </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
 
+        <!-- Brand Security Section -->
+        <div class="row">
+            <div class="col-12 mb-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="fas fa-certificate me-2"></i>Brand Security
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
                             <!-- BIMI Analysis -->
-                            <div class="col-md-4">
+                            <div class="col-md-6 mb-3 mb-md-0">
                                 <h6 class="d-flex align-items-center">
-                                    <i class="fas fa-image me-2"></i>BIMI
+                                    <i class="fas fa-image me-2"></i>BIMI (Brand Logo)
                                     <span class="badge bg-{{ 'success' if results.bimi_analysis.status == 'success' else 'warning' }} ms-2">
                                         {{ results.bimi_analysis.status|title }}
                                     </span>
@@ -232,9 +248,48 @@
                                     <div class="code-block small">{{ results.bimi_analysis.record }}</div>
                                 {% endif %}
                                 {% if results.bimi_analysis.logo_url %}
-                                    <div class="mt-2">
-                                        <small class="text-info"><i class="fas fa-external-link-alt me-1"></i>Logo: {{ results.bimi_analysis.logo_url[:50] }}{% if results.bimi_analysis.logo_url|length > 50 %}...{% endif %}</small>
+                                    <div class="mt-3 d-flex align-items-start">
+                                        <div class="me-3" style="flex-shrink: 0;">
+                                            <img src="{{ results.bimi_analysis.logo_url }}" 
+                                                 alt="BIMI Logo" 
+                                                 style="max-width: 64px; max-height: 64px; background: #fff; border-radius: 8px; padding: 4px;"
+                                                 onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                                            <div style="display: none; width: 64px; height: 64px; background: #374151; border-radius: 8px;" class="align-items-center justify-content-center">
+                                                <i class="fas fa-image text-muted"></i>
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <small class="text-info d-block"><i class="fas fa-external-link-alt me-1"></i>Logo URL:</small>
+                                            <small class="text-muted" style="word-break: break-all;">{{ results.bimi_analysis.logo_url }}</small>
+                                        </div>
                                     </div>
+                                {% endif %}
+                            </div>
+
+                            <!-- CAA Analysis -->
+                            <div class="col-md-6">
+                                <h6 class="d-flex align-items-center">
+                                    <i class="fas fa-lock me-2"></i>CAA (Certificate Authority)
+                                    <span class="badge bg-{{ 'success' if results.caa_analysis.status == 'success' else 'warning' }} ms-2">
+                                        {{ results.caa_analysis.status|title }}
+                                    </span>
+                                    {% if results.caa_analysis.has_iodef %}
+                                        <span class="badge bg-info ms-1">IODEF</span>
+                                    {% endif %}
+                                </h6>
+                                <p class="text-muted mb-2 small">{{ results.caa_analysis.message }}</p>
+                                {% if results.caa_analysis.issuers %}
+                                    <div class="mb-2">
+                                        <small class="text-muted">Authorized CAs:</small>
+                                        {% for issuer in results.caa_analysis.issuers %}
+                                            <span class="badge bg-primary ms-1">{{ issuer }}</span>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                                {% if results.caa_analysis.records %}
+                                    {% for record in results.caa_analysis.records %}
+                                        <div class="code-block small mb-1">{{ record }}</div>
+                                    {% endfor %}
                                 {% endif %}
                             </div>
                         </div>

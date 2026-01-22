@@ -479,6 +479,61 @@ class DNSAnalyzer:
             'rua': rua
         }
     
+    def analyze_caa(self, domain: str) -> Dict[str, Any]:
+        """Check CAA (Certificate Authority Authorization) records for domain."""
+        records = self.dns_query("CAA", domain)
+        
+        if not records:
+            return {
+                'status': 'warning',
+                'message': 'No CAA records found - any CA can issue certificates',
+                'records': [],
+                'issuers': [],
+                'has_wildcard': False,
+                'has_iodef': False
+            }
+        
+        issuers = []
+        has_wildcard = False
+        has_iodef = False
+        
+        for record in records:
+            lower = record.lower()
+            if 'issue ' in lower or 'issue"' in lower:
+                # Extract issuer
+                if 'letsencrypt' in lower:
+                    issuers.append('Let\'s Encrypt')
+                elif 'digicert' in lower:
+                    issuers.append('DigiCert')
+                elif 'sectigo' in lower or 'comodo' in lower:
+                    issuers.append('Sectigo')
+                elif 'globalsign' in lower:
+                    issuers.append('GlobalSign')
+                elif 'amazon' in lower:
+                    issuers.append('Amazon')
+                elif 'google' in lower:
+                    issuers.append('Google Trust Services')
+                else:
+                    # Generic extraction
+                    parts = record.split()
+                    if len(parts) >= 3:
+                        issuers.append(parts[-1].strip('"'))
+            if 'issuewild' in lower:
+                has_wildcard = True
+            if 'iodef' in lower:
+                has_iodef = True
+        
+        issuers = list(set(issuers))  # Remove duplicates
+        
+        return {
+            'status': 'success',
+            'message': f'CAA configured - only {", ".join(issuers) if issuers else "specified CAs"} can issue certificates',
+            'records': records,
+            'issuers': issuers,
+            'has_wildcard': has_wildcard,
+            'has_iodef': has_iodef
+        }
+    
     def analyze_bimi(self, domain: str) -> Dict[str, Any]:
         """Check BIMI (Brand Indicators for Message Identification) for domain."""
         import re
@@ -909,7 +964,7 @@ class DNSAnalyzer:
         """Perform complete DNS analysis of domain with parallel lookups for speed."""
         
         # Run all lookups in parallel for speed (5-10s target)
-        with ThreadPoolExecutor(max_workers=9) as executor:
+        with ThreadPoolExecutor(max_workers=10) as executor:
             futures = {
                 executor.submit(self.get_basic_records, domain): 'basic',
                 executor.submit(self.get_authoritative_records, domain): 'auth',
@@ -919,6 +974,7 @@ class DNSAnalyzer:
                 executor.submit(self.analyze_mta_sts, domain): 'mta_sts',
                 executor.submit(self.analyze_tlsrpt, domain): 'tlsrpt',
                 executor.submit(self.analyze_bimi, domain): 'bimi',
+                executor.submit(self.analyze_caa, domain): 'caa',
                 executor.submit(self.get_registrar_info, domain): 'registrar',
             }
             
@@ -963,6 +1019,7 @@ class DNSAnalyzer:
             'mta_sts_analysis': results_map.get('mta_sts', {'status': 'warning'}),
             'tlsrpt_analysis': results_map.get('tlsrpt', {'status': 'warning'}),
             'bimi_analysis': results_map.get('bimi', {'status': 'warning'}),
+            'caa_analysis': results_map.get('caa', {'status': 'warning'}),
             'registrar_info': results_map.get('registrar', {'status': 'error', 'registrar': None})
         }
         
