@@ -9,9 +9,25 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 
 try:
     import requests
+    from requests.adapters import HTTPAdapter
+    from urllib3.util.retry import Retry
 except ImportError:
     print("Error: the 'requests' package is required.")
     sys.exit(1)
+
+def create_robust_session():
+    """Create a requests session with retry logic."""
+    session = requests.Session()
+    retry_strategy = Retry(
+        total=3,
+        backoff_factor=0.5,
+        status_forcelist=[429, 500, 502, 503, 504],
+        allowed_methods=["GET"]
+    )
+    adapter = HTTPAdapter(max_retries=retry_strategy)
+    session.mount("https://", adapter)
+    session.mount("http://", adapter)
+    return session
 
 try:
     import dns.resolver
@@ -414,9 +430,12 @@ class DNSAnalyzer:
         }
     
     def _rdap_lookup(self, domain: str) -> Dict:
-        """Return RDAP JSON data for domain - tries ALL sources in parallel."""
+        """Return RDAP JSON data for domain - tries ALL sources with robust retries."""
         tld = self._get_tld(domain)
         logging.info(f"[RDAP] Looking up domain {domain}, TLD: {tld}")
+        
+        # Create robust session with automatic retries
+        session = create_robust_session()
         
         headers = {
             'Accept': 'application/rdap+json',
@@ -440,51 +459,36 @@ class DNSAnalyzer:
             'de': ['https://rdap.denic.de/'],
         }
         
-        # Collect all possible endpoints
+        # Collect all possible endpoints - TLD-specific FIRST for reliability
         all_endpoints = []
-        all_endpoints.append('https://rdap.org/')  # Universal fallback first
         if tld in hardcoded_endpoints:
             all_endpoints.extend(hardcoded_endpoints[tld])
+        all_endpoints.append('https://rdap.org/')  # Universal fallback
         if tld in self.iana_rdap_map:
-            all_endpoints.extend(self.iana_rdap_map[tld])
+            for ep in self.iana_rdap_map[tld]:
+                if ep not in all_endpoints:
+                    all_endpoints.append(ep)
         
-        # Remove duplicates while preserving order
-        seen = set()
-        unique_endpoints = []
-        for ep in all_endpoints:
-            if ep not in seen:
-                seen.add(ep)
-                unique_endpoints.append(ep)
+        logging.info(f"[RDAP] Will try {len(all_endpoints)} endpoints sequentially with retries")
         
-        logging.info(f"[RDAP] Will try {len(unique_endpoints)} endpoints in parallel")
-        
-        def try_endpoint(endpoint):
+        # Try endpoints SEQUENTIALLY (more reliable than parallel in restricted environments)
+        for endpoint in all_endpoints:
             url = f"{endpoint.rstrip('/')}/domain/{domain}"
             try:
                 logging.info(f"[RDAP] Trying: {url}")
-                resp = requests.get(url, timeout=15, headers=headers, allow_redirects=True)
+                resp = session.get(url, timeout=20, headers=headers, allow_redirects=True)
                 logging.info(f"[RDAP] Response {resp.status_code} from {endpoint}")
                 if resp.status_code < 400:
                     data = resp.json()
-                    if "errorCode" not in data and data.get("ldhName") or data.get("objectClassName") == "domain":
+                    if "errorCode" not in data and (data.get("ldhName") or data.get("objectClassName") == "domain"):
                         logging.info(f"[RDAP] SUCCESS from {endpoint}")
+                        session.close()
                         return data
             except Exception as e:
-                logging.warning(f"[RDAP] Error from {endpoint}: {type(e).__name__}")
-            return None
+                logging.warning(f"[RDAP] Error from {endpoint}: {type(e).__name__}: {e}")
         
-        # Try ALL endpoints in parallel - return first success
-        with ThreadPoolExecutor(max_workers=min(len(unique_endpoints), 8)) as executor:
-            futures = {executor.submit(try_endpoint, ep): ep for ep in unique_endpoints}
-            for future in as_completed(futures, timeout=20):
-                try:
-                    result = future.result()
-                    if result:
-                        return result
-                except Exception as e:
-                    logging.warning(f"[RDAP] Future error: {type(e).__name__}")
-        
-        logging.warning(f"[RDAP] All {len(unique_endpoints)} endpoints failed for {domain}")
+        session.close()
+        logging.warning(f"[RDAP] All {len(all_endpoints)} endpoints failed for {domain}")
         return {}
     
     def _extract_registrar_from_rdap(self, rdap_data: Dict) -> Optional[str]:
