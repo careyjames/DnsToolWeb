@@ -131,9 +131,12 @@ def index():
     """Main page with domain input form."""
     return render_template('index.html')
 
-@app.route('/analyze', methods=['POST'])
+@app.route('/analyze', methods=['GET', 'POST'])
 def analyze():
     """Analyze DNS records for the submitted domain."""
+    if request.method == 'GET':
+        return redirect(url_for('index'))
+        
     domain = request.form.get('domain', '').strip()
     
     if not domain:
