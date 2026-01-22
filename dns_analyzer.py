@@ -358,10 +358,14 @@ class DNSAnalyzer:
         if rdap_data:
             registrar_name = self._extract_registrar_from_rdap(rdap_data)
             if registrar_name and not registrar_name.isdigit():
+                registrant_name = self._extract_registrant_from_rdap(rdap_data)
+                reg_str = registrar_name
+                if registrant_name:
+                    reg_str += f" (Registrant: {registrant_name})"
                 return {
                     'status': 'success',
                     'source': 'RDAP',
-                    'registrar': registrar_name
+                    'registrar': reg_str
                 }
         
         # Fallback to WHOIS
@@ -411,30 +415,59 @@ class DNSAnalyzer:
     def _extract_registrar_from_rdap(self, rdap_data: Dict) -> Optional[str]:
         """Extract registrar name from RDAP data."""
         entities = rdap_data.get("entities", [])
-        for entity in entities:
-            roles = entity.get("roles", [])
-            if any(r.lower() == "registrar" for r in roles):
-                vcard = entity.get("vcardArray", [])
-                if len(vcard) == 2 and isinstance(vcard[1], list):
-                    for item in vcard[1]:
-                        if len(item) >= 4 and item[0] == "fn":
-                            return item[3]
-                val = entity.get("handle") or entity.get("name")
-                if val and not val.isdigit():
-                    return val
-        
-        # Secondary scan for sub-entities
-        for entity in entities:
-            for sub in entity.get("entities", []):
-                roles = sub.get("roles", [])
-                if any(r.lower() == "registrar" for r in roles):
-                    vcard = sub.get("vcardArray", [])
+        if not entities:
+            return None
+            
+        def find_registrar(entity_list):
+            for entity in entity_list:
+                roles = [r.lower() for r in entity.get("roles", [])]
+                if "registrar" in roles:
+                    vcard = entity.get("vcardArray", [])
                     if len(vcard) == 2 and isinstance(vcard[1], list):
                         for item in vcard[1]:
                             if len(item) >= 4 and item[0] == "fn":
                                 return item[3]
-        return None
-    
+                    name = entity.get("name") or entity.get("handle")
+                    if name and not name.isdigit():
+                        return name
+                
+                # Check nested entities recursively
+                sub = entity.get("entities", [])
+                if sub:
+                    res = find_registrar(sub)
+                    if res:
+                        return res
+            return None
+            
+        return find_registrar(entities)
+
+    def _extract_registrant_from_rdap(self, rdap_data: Dict) -> Optional[str]:
+        """Extract registrant name from RDAP data."""
+        entities = rdap_data.get("entities", [])
+        if not entities:
+            return None
+            
+        def find_registrant(entity_list):
+            for entity in entity_list:
+                roles = [r.lower() for r in entity.get("roles", [])]
+                if "registrant" in roles:
+                    vcard = entity.get("vcardArray", [])
+                    if len(vcard) == 2 and isinstance(vcard[1], list):
+                        for item in vcard[1]:
+                            if len(item) >= 4 and item[0] == "fn":
+                                val = item[3]
+                                if val and val.lower() not in ["redacted", "data protected", "not disclosed", "withheld"]:
+                                    return val
+                
+                sub = entity.get("entities", [])
+                if sub:
+                    res = find_registrant(sub)
+                    if res:
+                        return res
+            return None
+            
+        return find_registrant(entities)
+
     def _whois_lookup_registrar(self, domain: str) -> Optional[str]:
         """Return registrar name and registrant using the whois command."""
         if not shutil.which("whois"):
@@ -453,20 +486,22 @@ class DNSAnalyzer:
             
             for line in result.stdout.splitlines():
                 line = line.strip()
-                # Better registrar matching
+                # Wider registrar matching
                 if not registrar:
-                    if re.search(r"(?i)^(registrar|sponsoring registrar|registrar name)\s*:", line):
-                        parts = line.split(":", 1)
-                        if len(parts) == 2 and parts[1].strip():
-                            registrar = parts[1].strip()
-                
-                # Better registrant matching
-                if not registrant:
-                    if re.search(r"(?i)^(registrant organization|registrant|org|registrant name)\s*:", line):
+                    if re.search(r"(?i)^(registrar|sponsoring registrar|registrar name|registrar\:)\s*:", line):
                         parts = line.split(":", 1)
                         if len(parts) == 2:
                             val = parts[1].strip()
-                            if val and val.lower() not in ["redacted", "data protected", "not disclosed", "withheld"]:
+                            if val and not val.lower().startswith('http') and val.lower() != 'not available':
+                                registrar = val
+                
+                # Wider registrant matching
+                if not registrant:
+                    if re.search(r"(?i)^(registrant organization|registrant|org|registrant name|registrant\:)\s*:", line):
+                        parts = line.split(":", 1)
+                        if len(parts) == 2:
+                            val = parts[1].strip()
+                            if val and val.lower() not in ["redacted", "data protected", "not disclosed", "withheld", "selectively withheld"]:
                                 registrant = val
             
             if registrar and registrant:
@@ -500,7 +535,11 @@ class DNSAnalyzer:
             'bluehost': 'Bluehost',
             'hostgator': 'HostGator',
             'registrar-servers': 'Namecheap',
-            'porkbun': 'Porkbun'
+            'porkbun': 'Porkbun',
+            'dreamhost': 'DreamHost',
+            'wixdns': 'Wix',
+            'wordpress': 'WordPress',
+            'squarespace': 'Squarespace'
         }
         
         for key, name in dns_providers.items():
