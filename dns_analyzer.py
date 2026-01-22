@@ -370,13 +370,13 @@ class DNSAnalyzer:
         }
     
     def get_registrar_info(self, domain: str) -> Dict[str, Any]:
-        """Get registrar information via RDAP and WHOIS in parallel for speed and redundancy."""
+        """Get registrar information via RDAP (primary) with WHOIS (backup)."""
         logging.info(f"[REGISTRAR] Getting registrar info for {domain}")
         
+        # Start both in parallel but prefer RDAP
         rdap_result = None
         whois_result = None
         
-        # Run RDAP and WHOIS in parallel for speed and redundancy
         def do_rdap():
             try:
                 rdap_data = self._rdap_lookup(domain)
@@ -401,27 +401,30 @@ class DNSAnalyzer:
                 logging.warning(f"[REGISTRAR] WHOIS error: {e}")
             return None
         
+        # Start both lookups in parallel
         with ThreadPoolExecutor(max_workers=2) as executor:
             rdap_future = executor.submit(do_rdap)
             whois_future = executor.submit(do_whois)
             
+            # Wait for RDAP first (primary source) with 10s timeout
             try:
                 rdap_result = rdap_future.result(timeout=10)
             except:
-                pass
+                logging.warning(f"[REGISTRAR] RDAP timed out for {domain}")
             
+            # If RDAP succeeded, use it immediately
+            if rdap_result:
+                logging.info(f"[REGISTRAR] SUCCESS via RDAP: {rdap_result[1]}")
+                return {'status': 'success', 'source': 'RDAP', 'registrar': rdap_result[1]}
+            
+            # RDAP failed, wait for WHOIS backup
             try:
                 whois_result = whois_future.result(timeout=10)
             except:
-                pass
-        
-        # Prefer RDAP, fallback to WHOIS
-        if rdap_result:
-            logging.info(f"[REGISTRAR] SUCCESS via RDAP: {rdap_result[1]}")
-            return {'status': 'success', 'source': 'RDAP', 'registrar': rdap_result[1]}
+                logging.warning(f"[REGISTRAR] WHOIS timed out for {domain}")
         
         if whois_result:
-            logging.info(f"[REGISTRAR] SUCCESS via WHOIS: {whois_result[1]}")
+            logging.info(f"[REGISTRAR] SUCCESS via WHOIS (backup): {whois_result[1]}")
             return {'status': 'success', 'source': 'WHOIS', 'registrar': whois_result[1]}
         
         logging.warning(f"[REGISTRAR] FAILED - No registrar info found for {domain}")
