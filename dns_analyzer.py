@@ -475,8 +475,16 @@ class DNSAnalyzer:
                 if "errorCode" not in data and (data.get("ldhName") or data.get("objectClassName") == "domain"):
                     logging.info(f"[RDAP] SUCCESS")
                     return data
+                else:
+                    logging.warning(f"[RDAP] Invalid response: errorCode={data.get('errorCode')}")
+            else:
+                logging.warning(f"[RDAP] HTTP error: {resp.status_code}")
+        except requests.exceptions.Timeout as e:
+            logging.warning(f"[RDAP] Primary TIMEOUT: {e}")
+        except requests.exceptions.ConnectionError as e:
+            logging.warning(f"[RDAP] Primary CONNECTION ERROR: {e}")
         except Exception as e:
-            logging.warning(f"[RDAP] Primary failed: {type(e).__name__}")
+            logging.warning(f"[RDAP] Primary failed: {type(e).__name__}: {e}")
         
         # Fallback to rdap.org
         if endpoint != 'https://rdap.org/':
@@ -484,13 +492,22 @@ class DNSAnalyzer:
                 url = f"https://rdap.org/domain/{domain}"
                 logging.info(f"[RDAP] Fallback: {url}")
                 resp = requests.get(url, timeout=10, headers=headers, allow_redirects=True)
+                logging.info(f"[RDAP] Fallback response: {resp.status_code}")
                 if resp.status_code < 400:
                     data = resp.json()
                     if "errorCode" not in data and (data.get("ldhName") or data.get("objectClassName") == "domain"):
                         logging.info(f"[RDAP] Fallback SUCCESS")
                         return data
+                    else:
+                        logging.warning(f"[RDAP] Fallback invalid: errorCode={data.get('errorCode')}")
+                else:
+                    logging.warning(f"[RDAP] Fallback HTTP error: {resp.status_code}")
+            except requests.exceptions.Timeout as e:
+                logging.warning(f"[RDAP] Fallback TIMEOUT: {e}")
+            except requests.exceptions.ConnectionError as e:
+                logging.warning(f"[RDAP] Fallback CONNECTION ERROR: {e}")
             except Exception as e:
-                logging.warning(f"[RDAP] Fallback failed: {type(e).__name__}")
+                logging.warning(f"[RDAP] Fallback failed: {type(e).__name__}: {e}")
         
         logging.warning(f"[RDAP] All lookups failed for {domain}")
         return {}
