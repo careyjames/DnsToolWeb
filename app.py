@@ -9,7 +9,7 @@ from sqlalchemy import JSON
 from dns_analyzer import DNSAnalyzer
 
 # App version - format: YY.M.patch (bump last number for small changes)
-APP_VERSION = "26.1.35"
+APP_VERSION = "26.1.36"
 
 # Configure logging
 logging.basicConfig(level=logging.DEBUG)
