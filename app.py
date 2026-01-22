@@ -316,6 +316,9 @@ def view_analysis(analysis_id):
             status = "propagating"
         propagation_status[rtype] = {'status': status}
     results['propagation_status'] = propagation_status
+
+    # Re-calculate hosting summary for view
+    results['hosting_summary'] = dns_analyzer.get_hosting_info(analysis.domain, results)
     
     return render_template('results.html',
                          domain=analysis.domain,

@@ -462,6 +462,53 @@ class DNSAnalyzer:
         except Exception:
             return None
     
+    def get_hosting_info(self, domain: str, results: Dict) -> Dict[str, str]:
+        """Identify hosting and DNS providers."""
+        hosting = "Unknown"
+        dns_hosting = "Standard"
+        
+        # 1. Detect DNS Hosting from NS records
+        ns_records = results.get('basic_records', {}).get('NS', [])
+        ns_str = " ".join(ns_records).lower()
+        
+        dns_providers = {
+            'cloudflare': 'Cloudflare',
+            'awsdns': 'Amazon Route 53',
+            'googledomains': 'Google Domains',
+            'google': 'Google Cloud DNS',
+            'azure-dns': 'Azure DNS',
+            'digitalocean': 'DigitalOcean',
+            'linode': 'Linode',
+            'namesilo': 'NameSilo',
+            'namecheap': 'Namecheap',
+            'godaddy': 'GoDaddy',
+            'domaincontrol.com': 'GoDaddy',
+            'bluehost': 'Bluehost',
+            'hostgator': 'HostGator',
+            'registrar-servers': 'Namecheap'
+        }
+        
+        for key, name in dns_providers.items():
+            if key in ns_str:
+                dns_hosting = name
+                break
+
+        # 2. Detect Web Hosting from A records
+        a_records = results.get('basic_records', {}).get('A', [])
+        if a_records:
+            # For simplicity in fast mode, we use the first IP
+            ip = a_records[0]
+            # Common Cloudflare IPs
+            if ip.startswith(('104.16.', '104.17.', '104.18.', '172.64.', '172.67.', '108.162.', '190.93.', '197.234.', '198.41.')):
+                hosting = "Cloudflare"
+            elif dns_hosting != "Standard":
+                hosting = dns_hosting # Often the same
+        
+        return {
+            'hosting': hosting,
+            'dns_hosting': dns_hosting
+        }
+
     def analyze_domain(self, domain: str) -> Dict[str, Any]:
         """Perform complete DNS analysis of domain."""
         basic = self.get_basic_records(domain)
@@ -495,5 +542,8 @@ class DNSAnalyzer:
             'dkim_analysis': self.analyze_dkim(domain),
             'registrar_info': self.get_registrar_info(domain)
         }
+        
+        # Add Hosting/Who summary
+        results['hosting_summary'] = self.get_hosting_info(domain, results)
         
         return results
