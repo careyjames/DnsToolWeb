@@ -414,17 +414,45 @@ class DNSAnalyzer:
         }
     
     def _rdap_lookup(self, domain: str) -> Dict:
-        """Return RDAP JSON data for domain using IANA endpoints."""
+        """Return RDAP JSON data for domain using IANA endpoints with retries."""
         tld = self._get_tld(domain)
         logging.info(f"[RDAP] Looking up domain {domain}, TLD: {tld}")
         
-        # Hardcoded RDAP endpoints for common TLDs (multiple for redundancy)
+        headers = {
+            'Accept': 'application/rdap+json',
+            'User-Agent': 'Mozilla/5.0 DNS-Analyzer/1.0'
+        }
+        
+        # Try rdap.org FIRST - it's the most reliable universal service
+        for attempt in range(2):
+            try:
+                url = f"https://rdap.org/domain/{domain}"
+                logging.info(f"[RDAP] Primary attempt {attempt+1}: {url}")
+                resp = requests.get(url, timeout=12, headers=headers, allow_redirects=True)
+                logging.info(f"[RDAP] Response status: {resp.status_code}")
+                if resp.status_code < 400:
+                    data = resp.json()
+                    if "errorCode" not in data and data.get("objectClassName") == "domain":
+                        logging.info(f"[RDAP] SUCCESS from rdap.org")
+                        return data
+            except requests.exceptions.Timeout:
+                logging.warning(f"[RDAP] Timeout attempt {attempt+1}")
+            except requests.exceptions.ConnectionError:
+                logging.warning(f"[RDAP] Connection error attempt {attempt+1}")
+            except Exception as e:
+                logging.warning(f"[RDAP] Error attempt {attempt+1}: {type(e).__name__}")
+            
+            if attempt == 0:
+                import time
+                time.sleep(0.5)  # Brief pause before retry
+        
+        # Fallback to TLD-specific endpoints
         hardcoded_endpoints = {
             'com': ['https://rdap.verisign.com/com/v1/'],
             'net': ['https://rdap.verisign.com/net/v1/'],
             'org': ['https://rdap.publicinterestregistry.net/rdap/'],
             'io': ['https://rdap.nic.io/'],
-            'tech': ['https://rdap.centralnic.com/tech/', 'https://rdap.org/'],
+            'tech': ['https://rdap.centralnic.com/tech/'],
             'dev': ['https://rdap.nic.google/'],
             'app': ['https://rdap.nic.google/'],
             'co': ['https://rdap.nic.co/'],
@@ -435,67 +463,22 @@ class DNSAnalyzer:
             'de': ['https://rdap.denic.de/'],
         }
         
-        # Prioritize hardcoded endpoints (more reliable), then IANA map
         hardcoded = hardcoded_endpoints.get(tld, [])
         iana_endpoints = self.iana_rdap_map.get(tld, [])
-        # For common TLDs, prefer hardcoded; for others, use IANA
         endpoints = hardcoded if hardcoded else iana_endpoints
-        logging.info(f"[RDAP] Hardcoded: {len(hardcoded)}, IANA endpoints: {len(iana_endpoints)}, Using: {len(endpoints)}")
         
-        headers = {
-            'Accept': 'application/rdap+json',
-            'User-Agent': 'Mozilla/5.0 DNS-Analyzer'
-        }
-        
-        # Try all endpoints in parallel for speed
-        def try_endpoint(endpoint):
-            url = f"{endpoint.rstrip('/')}/domain/{domain}"
+        for endpoint in endpoints:
             try:
-                logging.info(f"[RDAP] Trying: {url}")
-                resp = requests.get(url, timeout=6, headers=headers)
-                logging.info(f"[RDAP] Response status: {resp.status_code} from {url}")
+                url = f"{endpoint.rstrip('/')}/domain/{domain}"
+                logging.info(f"[RDAP] Fallback trying: {url}")
+                resp = requests.get(url, timeout=10, headers=headers)
                 if resp.status_code < 400:
                     data = resp.json()
                     if "errorCode" not in data:
                         logging.info(f"[RDAP] SUCCESS from {url}")
                         return data
-            except requests.exceptions.Timeout:
-                logging.warning(f"[RDAP] Timeout for {url}")
-            except requests.exceptions.ConnectionError as e:
-                logging.warning(f"[RDAP] Connection error for {url}")
             except Exception as e:
-                logging.warning(f"[RDAP] Error for {url}: {type(e).__name__}")
-            return None
-        
-        # Query all endpoints in parallel, return first success
-        if endpoints:
-            with ThreadPoolExecutor(max_workers=min(len(endpoints), 5)) as executor:
-                futures = {executor.submit(try_endpoint, ep): ep for ep in endpoints}
-                for future in as_completed(futures, timeout=10):
-                    try:
-                        result = future.result()
-                        if result:
-                            return result
-                    except:
-                        pass
-        
-        # Universal fallback: rdap.org (redirects to correct registry)
-        try:
-            url = f"https://rdap.org/domain/{domain}"
-            logging.info(f"[RDAP] Universal fallback: {url}")
-            resp = requests.get(url, timeout=8, headers=headers, allow_redirects=True)
-            logging.info(f"[RDAP] Fallback response status: {resp.status_code}")
-            if resp.status_code < 400:
-                data = resp.json()
-                if "errorCode" not in data:
-                    logging.info(f"[RDAP] SUCCESS from universal fallback")
-                    return data
-        except requests.exceptions.Timeout:
-            logging.warning(f"[RDAP] Universal fallback timeout")
-        except requests.exceptions.ConnectionError as e:
-            logging.warning(f"[RDAP] Universal fallback connection error: {e}")
-        except Exception as e:
-            logging.warning(f"[RDAP] Universal fallback error: {type(e).__name__}: {e}")
+                logging.warning(f"[RDAP] Fallback error for {url}: {type(e).__name__}")
         
         logging.warning(f"[RDAP] All lookups failed for {domain}")
         return {}
