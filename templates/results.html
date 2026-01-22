@@ -174,12 +174,27 @@
                         <div class="row">
                             {% for record_type, records in results.basic_records.items() %}
                                 <div class="col-12 mb-3">
-                                    <h6 class="d-flex align-items-center">
-                                        <span class="badge bg-secondary me-2">{{ record_type }}</span>
-                                        {% if records %}
-                                            <small class="text-success">{{ records|length }} record{{ 's' if records|length > 1 else '' }}</small>
-                                        {% else %}
-                                            <small class="text-muted">No records</small>
+                                    <h6 class="d-flex align-items-center justify-content-between">
+                                        <div class="d-flex align-items-center">
+                                            <span class="badge bg-secondary me-2">{{ record_type }}</span>
+                                            {% if records %}
+                                                <small class="text-success">{{ records|length }} record{{ 's' if records|length > 1 else '' }}</small>
+                                            {% else %}
+                                                <small class="text-muted">No records</small>
+                                            {% endif %}
+                                        </div>
+                                        
+                                        {% if results.propagation_status and record_type in results.propagation_status %}
+                                            {% set p_info = results.propagation_status[record_type] %}
+                                            {% if p_info.status == 'synchronized' %}
+                                                <span class="badge bg-success-subtle text-success border border-success-subtle px-2 py-1" style="font-size: 0.65rem;">
+                                                    <i class="fas fa-check-double me-1"></i>Synchronized
+                                                </span>
+                                            {% elif p_info.status == 'propagating' %}
+                                                <span class="badge bg-warning-subtle text-warning border border-warning-subtle px-2 py-1" style="font-size: 0.65rem;" title="Public resolver does not match authoritative nameserver">
+                                                    <i class="fas fa-clock me-1"></i>Still Propagating
+                                                </span>
+                                            {% endif %}
                                         {% endif %}
                                     </h6>
                                     {% if records %}

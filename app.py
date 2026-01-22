@@ -178,6 +178,9 @@ def analyze():
             analysis_duration=analysis_duration
         )
         
+        # Add propagation data to results for template if not stored in DB
+        # We don't change the model schema in fast mode to avoid migration issues
+        
         db.session.add(analysis)
         db.session.commit()
         
@@ -297,6 +300,22 @@ def view_analysis(analysis_id):
             'source': analysis.registrar_source
         }
     }
+
+    # Re-calculate propagation status for view since it's not stored
+    propagation_status = {}
+    basic = results['basic_records']
+    auth = results['authoritative_records']
+    for rtype in basic.keys():
+        b_set = set(basic.get(rtype, []))
+        a_set = set(auth.get(rtype, []))
+        if not a_set:
+            status = "unknown"
+        elif b_set == a_set:
+            status = "synchronized"
+        else:
+            status = "propagating"
+        propagation_status[rtype] = {'status': status}
+    results['propagation_status'] = propagation_status
     
     return render_template('results.html',
                          domain=analysis.domain,

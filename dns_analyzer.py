@@ -461,9 +461,32 @@ class DNSAnalyzer:
     
     def analyze_domain(self, domain: str) -> Dict[str, Any]:
         """Perform complete DNS analysis of domain."""
+        basic = self.get_basic_records(domain)
+        auth = self.get_authoritative_records(domain)
+        
+        # Determine propagation status
+        propagation_status = {}
+        for rtype in basic.keys():
+            b_set = set(basic.get(rtype, []))
+            a_set = set(auth.get(rtype, []))
+            
+            if not a_set:
+                status = "unknown"
+            elif b_set == a_set:
+                status = "synchronized"
+            else:
+                status = "propagating"
+            
+            propagation_status[rtype] = {
+                'status': status,
+                'synced': status == "synchronized",
+                'mismatch': status == "propagating"
+            }
+
         results = {
-            'basic_records': self.get_basic_records(domain),
-            'authoritative_records': self.get_authoritative_records(domain),
+            'basic_records': basic,
+            'authoritative_records': auth,
+            'propagation_status': propagation_status,
             'spf_analysis': self.analyze_spf(domain),
             'dmarc_analysis': self.analyze_dmarc(domain),
             'dkim_analysis': self.analyze_dkim(domain),
