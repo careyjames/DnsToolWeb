@@ -578,42 +578,77 @@ class DNSAnalyzer:
         return find_registrant(entities)
 
     def _whois_lookup_registrar(self, domain: str) -> Optional[str]:
-        """Return registrar name and registrant using the whois command."""
-        if not shutil.which("whois"):
+        """Return registrar name using direct socket WHOIS query (port 43)."""
+        import socket
+        
+        tld = self._get_tld(domain)
+        
+        # Map TLDs to their WHOIS servers
+        whois_servers = {
+            'com': 'whois.verisign-grs.com',
+            'net': 'whois.verisign-grs.com',
+            'org': 'whois.pir.org',
+            'info': 'whois.afilias.net',
+            'io': 'whois.nic.io',
+            'tech': 'whois.nic.tech',
+            'dev': 'whois.nic.google',
+            'app': 'whois.nic.google',
+            'co': 'whois.nic.co',
+            'me': 'whois.nic.me',
+            'biz': 'whois.biz',
+            'uk': 'whois.nic.uk',
+            'de': 'whois.denic.de',
+        }
+        
+        server = whois_servers.get(tld)
+        if not server:
+            logging.warning(f"[WHOIS] No server for TLD: {tld}")
             return None
         
         try:
-            result = subprocess.run(
-                ["whois", domain], 
-                capture_output=True, 
-                text=True, 
-                timeout=5
-            )
+            logging.info(f"[WHOIS] Socket query to {server} for {domain}")
+            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            sock.settimeout(8)
+            sock.connect((server, 43))
+            sock.send(f"{domain}\r\n".encode())
+            
+            response = b""
+            while True:
+                try:
+                    data = sock.recv(4096)
+                    if not data:
+                        break
+                    response += data
+                except socket.timeout:
+                    break
+            sock.close()
+            
+            output = response.decode('utf-8', errors='ignore')
+            logging.info(f"[WHOIS] Got {len(output)} bytes from {server}")
             
             registrar = None
             registrant = None
             
-            output = result.stdout
-            
-            # Wider registrar matching with refined patterns
-            registrar_match = re.search(r"(?i)^(?:registrar|sponsoring registrar|registrar name|registrar\:|registrar\s+url)\s*:\s*(.+)$", output, re.MULTILINE)
+            # Parse registrar
+            registrar_match = re.search(r"(?i)^(?:registrar|sponsoring registrar|registrar name)\s*:\s*(.+)$", output, re.MULTILINE)
             if registrar_match:
                 val = registrar_match.group(1).strip()
                 if val and not val.lower().startswith('http') and val.lower() != 'not available':
                     registrar = val
-                    
-            # Wider registrant matching
-            registrant_match = re.search(r"(?i)^(?:registrant organization|registrant|org|registrant name|registrant\:)\s*:\s*(.+)$", output, re.MULTILINE)
+            
+            # Parse registrant
+            registrant_match = re.search(r"(?i)^(?:registrant organization|registrant name|registrant)\s*:\s*(.+)$", output, re.MULTILINE)
             if registrant_match:
                 val = registrant_match.group(1).strip()
-                if val and val.lower() not in ["redacted", "data protected", "not disclosed", "withheld", "selectively withheld"]:
+                if val and val.lower() not in ["redacted", "data protected", "not disclosed", "withheld"]:
                     registrant = val
             
             if registrar and registrant:
                 return f"{registrar} (Registrant: {registrant})"
             return registrar or registrant
+            
         except Exception as e:
-            logging.error(f"WHOIS lookup error for {domain}: {e}")
+            logging.error(f"[WHOIS] Socket error for {domain}: {e}")
             return None
     
     def get_hosting_info(self, domain: str, results: Dict) -> Dict[str, str]:
