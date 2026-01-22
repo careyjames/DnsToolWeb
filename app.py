@@ -139,6 +139,62 @@ def index():
     """Main page with domain input form."""
     return render_template('index.html')
 
+@app.route('/debug-rdap/<domain>')
+def debug_rdap(domain):
+    """Debug endpoint to test RDAP directly."""
+    import requests
+    results = []
+    
+    # Test endpoints
+    endpoints = [
+        ('CentralNic .tech', f'https://rdap.centralnic.com/tech/domain/{domain}'),
+        ('rdap.org', f'https://rdap.org/domain/{domain}'),
+        ('Verisign .com', f'https://rdap.verisign.com/com/v1/domain/{domain}'),
+    ]
+    
+    headers = {'Accept': 'application/rdap+json', 'User-Agent': 'DNS-Analyzer/1.0'}
+    
+    for name, url in endpoints:
+        start = time.time()
+        try:
+            resp = requests.get(url, timeout=10, headers=headers, allow_redirects=True)
+            elapsed = time.time() - start
+            if resp.status_code < 400:
+                data = resp.json()
+                registrar = None
+                for ent in data.get('entities', []):
+                    if 'registrar' in [r.lower() for r in ent.get('roles', [])]:
+                        registrar = ent.get('handle') or ent.get('name')
+                        break
+                results.append({
+                    'name': name,
+                    'url': url,
+                    'status': resp.status_code,
+                    'time': f'{elapsed:.2f}s',
+                    'registrar': registrar,
+                    'success': True
+                })
+            else:
+                results.append({
+                    'name': name,
+                    'url': url,
+                    'status': resp.status_code,
+                    'time': f'{elapsed:.2f}s',
+                    'success': False,
+                    'error': f'HTTP {resp.status_code}'
+                })
+        except Exception as e:
+            elapsed = time.time() - start
+            results.append({
+                'name': name,
+                'url': url,
+                'time': f'{elapsed:.2f}s',
+                'success': False,
+                'error': f'{type(e).__name__}: {str(e)[:100]}'
+            })
+    
+    return jsonify({'domain': domain, 'results': results})
+
 @app.route('/analyze', methods=['GET', 'POST'])
 def analyze():
     """Analyze DNS records for the submitted domain."""
