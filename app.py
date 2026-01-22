@@ -9,7 +9,7 @@ from sqlalchemy import JSON
 from dns_analyzer import DNSAnalyzer
 
 # App version - format: YY.M.patch (bump last number for small changes)
-APP_VERSION = "26.1.15"
+APP_VERSION = "26.1.16"
 
 # Configure logging
 logging.basicConfig(level=logging.DEBUG)
@@ -194,6 +194,57 @@ def debug_rdap(domain):
             })
     
     return jsonify({'domain': domain, 'results': results})
+
+@app.route('/debug-whodap/<domain>')
+def debug_whodap(domain):
+    """Debug endpoint to test whodap library directly."""
+    import whodap
+    
+    # Parse domain
+    parts = domain.rsplit('.', 1)
+    if len(parts) != 2:
+        return jsonify({'error': 'Invalid domain format'})
+    
+    domain_name, tld = parts[0], parts[1]
+    
+    try:
+        start = time.time()
+        response = whodap.lookup_domain(domain=domain_name, tld=tld)
+        elapsed = time.time() - start
+        
+        # Get the raw dict
+        data = response.to_dict()
+        
+        # Extract registrar
+        registrar = None
+        entities = data.get('entities', [])
+        for ent in entities:
+            roles = [r.lower() for r in ent.get('roles', [])]
+            if 'registrar' in roles:
+                vcard = ent.get('vcardArray', [])
+                if len(vcard) == 2 and isinstance(vcard[1], list):
+                    for item in vcard[1]:
+                        if len(item) >= 4 and item[0] == 'fn':
+                            registrar = item[3]
+                            break
+                if not registrar:
+                    registrar = ent.get('handle')
+                break
+        
+        return jsonify({
+            'success': True,
+            'domain': domain,
+            'time': f'{elapsed:.2f}s',
+            'registrar': registrar,
+            'entity_count': len(entities),
+            'keys': list(data.keys())
+        })
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'domain': domain,
+            'error': f'{type(e).__name__}: {str(e)}'
+        })
 
 @app.route('/analyze', methods=['GET', 'POST'])
 def analyze():

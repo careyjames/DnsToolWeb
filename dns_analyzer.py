@@ -436,12 +436,15 @@ class DNSAnalyzer:
         tld = self._get_tld(domain)
         domain_name = domain.rsplit('.', 1)[0] if '.' in domain else domain
         
+        logging.warning(f"[RDAP] whodap lookup: domain={domain_name}, tld={tld}")
+        
         try:
             response = whodap.lookup_domain(domain=domain_name, tld=tld)
-            # Convert to dict for our extraction methods
-            return response.to_dict()
+            data = response.to_dict()
+            logging.warning(f"[RDAP] whodap SUCCESS - got {len(data)} keys")
+            return data
         except Exception as e:
-            logging.warning(f"[RDAP] whodap lookup failed: {e}")
+            logging.warning(f"[RDAP] whodap FAILED: {type(e).__name__}: {e}")
         
         # Fallback to direct requests if whodap fails
         headers = {
