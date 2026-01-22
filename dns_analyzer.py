@@ -479,6 +479,63 @@ class DNSAnalyzer:
             'rua': rua
         }
     
+    def analyze_bimi(self, domain: str) -> Dict[str, Any]:
+        """Check BIMI (Brand Indicators for Message Identification) for domain."""
+        import re
+        bimi_domain = f"default._bimi.{domain}"
+        records = self.dns_query("TXT", bimi_domain)
+        
+        if not records:
+            return {
+                'status': 'warning',
+                'message': 'No BIMI record found',
+                'record': None,
+                'logo_url': None,
+                'vmc_url': None
+            }
+        
+        valid_records = [r for r in records if r.lower().startswith("v=bimi1")]
+        
+        if not valid_records:
+            return {
+                'status': 'warning',
+                'message': 'No valid BIMI record found',
+                'record': None,
+                'logo_url': None,
+                'vmc_url': None
+            }
+        
+        record = valid_records[0]
+        logo_url = None
+        vmc_url = None
+        
+        # Extract logo URL (l=)
+        logo_match = re.search(r'l=([^;\s]+)', record, re.IGNORECASE)
+        if logo_match:
+            logo_url = logo_match.group(1)
+        
+        # Extract VMC certificate URL (a=)
+        vmc_match = re.search(r'a=([^;\s]+)', record, re.IGNORECASE)
+        if vmc_match:
+            vmc_url = vmc_match.group(1)
+        
+        status = 'success'
+        if vmc_url:
+            message = 'BIMI configured with VMC certificate - brand logo will display in supported email clients'
+        elif logo_url:
+            message = 'BIMI configured - brand logo available (VMC recommended for Gmail)'
+        else:
+            status = 'warning'
+            message = 'BIMI record found but missing logo URL'
+        
+        return {
+            'status': status,
+            'message': message,
+            'record': record,
+            'logo_url': logo_url,
+            'vmc_url': vmc_url
+        }
+    
     def get_registrar_info(self, domain: str) -> Dict[str, Any]:
         """Get registrar information via RDAP (primary) with WHOIS (backup)."""
         logging.info(f"[REGISTRAR] Getting registrar info for {domain}")
@@ -852,7 +909,7 @@ class DNSAnalyzer:
         """Perform complete DNS analysis of domain with parallel lookups for speed."""
         
         # Run all lookups in parallel for speed (5-10s target)
-        with ThreadPoolExecutor(max_workers=8) as executor:
+        with ThreadPoolExecutor(max_workers=9) as executor:
             futures = {
                 executor.submit(self.get_basic_records, domain): 'basic',
                 executor.submit(self.get_authoritative_records, domain): 'auth',
@@ -861,6 +918,7 @@ class DNSAnalyzer:
                 executor.submit(self.analyze_dkim, domain): 'dkim',
                 executor.submit(self.analyze_mta_sts, domain): 'mta_sts',
                 executor.submit(self.analyze_tlsrpt, domain): 'tlsrpt',
+                executor.submit(self.analyze_bimi, domain): 'bimi',
                 executor.submit(self.get_registrar_info, domain): 'registrar',
             }
             
@@ -904,6 +962,7 @@ class DNSAnalyzer:
             'dkim_analysis': results_map.get('dkim', {'status': 'error'}),
             'mta_sts_analysis': results_map.get('mta_sts', {'status': 'warning'}),
             'tlsrpt_analysis': results_map.get('tlsrpt', {'status': 'warning'}),
+            'bimi_analysis': results_map.get('bimi', {'status': 'warning'}),
             'registrar_info': results_map.get('registrar', {'status': 'error', 'registrar': None})
         }
         

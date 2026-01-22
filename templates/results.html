@@ -183,10 +183,10 @@
                             </div>
                         </div>
                         
-                        <!-- Second Row: MTA-STS and TLS-RPT -->
+                        <!-- Second Row: MTA-STS, TLS-RPT, and BIMI -->
                         <div class="row mt-4 pt-3 border-top">
                             <!-- MTA-STS Analysis -->
-                            <div class="col-md-6 mb-3 mb-md-0">
+                            <div class="col-md-4 mb-3 mb-md-0">
                                 <h6 class="d-flex align-items-center">
                                     <i class="fas fa-shield-alt me-2"></i>MTA-STS
                                     <span class="badge bg-{{ 'success' if results.mta_sts_analysis.status == 'success' else 'warning' }} ms-2">
@@ -203,7 +203,7 @@
                             </div>
 
                             <!-- TLS-RPT Analysis -->
-                            <div class="col-md-6">
+                            <div class="col-md-4 mb-3 mb-md-0">
                                 <h6 class="d-flex align-items-center">
                                     <i class="fas fa-file-alt me-2"></i>TLS-RPT
                                     <span class="badge bg-{{ 'success' if results.tlsrpt_analysis.status == 'success' else 'warning' }} ms-2">
@@ -213,6 +213,28 @@
                                 <p class="text-muted mb-2 small">{{ results.tlsrpt_analysis.message }}</p>
                                 {% if results.tlsrpt_analysis.record %}
                                     <div class="code-block small">{{ results.tlsrpt_analysis.record }}</div>
+                                {% endif %}
+                            </div>
+
+                            <!-- BIMI Analysis -->
+                            <div class="col-md-4">
+                                <h6 class="d-flex align-items-center">
+                                    <i class="fas fa-image me-2"></i>BIMI
+                                    <span class="badge bg-{{ 'success' if results.bimi_analysis.status == 'success' else 'warning' }} ms-2">
+                                        {{ results.bimi_analysis.status|title }}
+                                    </span>
+                                    {% if results.bimi_analysis.vmc_url %}
+                                        <span class="badge bg-success ms-1">VMC</span>
+                                    {% endif %}
+                                </h6>
+                                <p class="text-muted mb-2 small">{{ results.bimi_analysis.message }}</p>
+                                {% if results.bimi_analysis.record %}
+                                    <div class="code-block small">{{ results.bimi_analysis.record }}</div>
+                                {% endif %}
+                                {% if results.bimi_analysis.logo_url %}
+                                    <div class="mt-2">
+                                        <small class="text-info"><i class="fas fa-external-link-alt me-1"></i>Logo: {{ results.bimi_analysis.logo_url[:50] }}{% if results.bimi_analysis.logo_url|length > 50 %}...{% endif %}</small>
+                                    </div>
                                 {% endif %}
                             </div>
                         </div>
