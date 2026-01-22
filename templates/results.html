@@ -91,7 +91,7 @@
         </div>
         
         <!-- Findings Summary Block -->
-        {% if results.posture and (results.posture.issues or results.posture.monitoring) %}
+        {% if results.posture and (results.posture.issues or results.posture.monitoring or results.posture.configured or results.posture.absent) %}
         <div class="row mb-3">
             <div class="col-12">
                 <div class="card border-0 bg-dark bg-opacity-50">
@@ -99,9 +99,9 @@
                         <h6 class="mb-2 text-muted"><i class="fas fa-clipboard-list me-2"></i>Findings Summary</h6>
                         <div class="row">
                             {% if results.posture.issues %}
-                            <div class="col-md-6 mb-2 mb-md-0">
+                            <div class="col-md-6 col-lg-3 mb-2">
                                 <div class="small text-danger fw-bold mb-1">
-                                    <i class="fas fa-exclamation-circle me-1"></i>Action Required:
+                                    <i class="fas fa-times-circle me-1"></i>Action Required:
                                 </div>
                                 <ul class="list-unstyled mb-0 ms-3 small">
                                     {% for issue in results.posture.issues %}
@@ -114,14 +114,44 @@
                             </div>
                             {% endif %}
                             {% if results.posture.monitoring %}
-                            <div class="col-md-6">
-                                <div class="small text-info fw-bold mb-1">
-                                    <i class="fas fa-eye me-1"></i>Monitoring / Optional:
+                            <div class="col-md-6 col-lg-3 mb-2">
+                                <div class="small text-warning fw-bold mb-1">
+                                    <i class="fas fa-eye me-1"></i>Monitoring Mode:
                                 </div>
                                 <ul class="list-unstyled mb-0 ms-3 small">
                                     {% for item in results.posture.monitoring %}
                                     <li class="mb-1">
-                                        <i class="fas fa-info-circle text-info me-1"></i>
+                                        <i class="fas fa-pause-circle text-warning me-1"></i>
+                                        {{ item }}
+                                    </li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                            {% endif %}
+                            {% if results.posture.configured %}
+                            <div class="col-md-6 col-lg-3 mb-2">
+                                <div class="small text-success fw-bold mb-1">
+                                    <i class="fas fa-check-circle me-1"></i>Configured:
+                                </div>
+                                <ul class="list-unstyled mb-0 ms-3 small">
+                                    {% for item in results.posture.configured %}
+                                    <li class="mb-1">
+                                        <i class="fas fa-check text-success me-1"></i>
+                                        {{ item }}
+                                    </li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                            {% endif %}
+                            {% if results.posture.absent %}
+                            <div class="col-md-6 col-lg-3 mb-2">
+                                <div class="small text-muted fw-bold mb-1">
+                                    <i class="fas fa-minus-circle me-1"></i>Not Configured:
+                                </div>
+                                <ul class="list-unstyled mb-0 ms-3 small">
+                                    {% for item in results.posture.absent %}
+                                    <li class="mb-1">
+                                        <i class="fas fa-minus text-muted me-1"></i>
                                         {{ item }}
                                     </li>
                                     {% endfor %}

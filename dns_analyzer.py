@@ -1210,10 +1210,12 @@ class DNSAnalyzer:
     
     def _calculate_posture(self, results: Dict[str, Any]) -> Dict[str, Any]:
         """Calculate overall DNS & Trust Posture based on security controls."""
-        issues = []
-        monitoring_items = []
+        issues = []  # Critical problems that need action
+        monitoring_items = []  # Controls in monitoring/non-enforce mode
+        configured_items = []  # Runtime-dependent controls that are present
+        absent_items = []  # Optional controls not configured
         
-        # Check DMARC policy
+        # Check DMARC policy (DNS-verifiable enforcement level)
         dmarc = results.get('dmarc_analysis', {})
         dmarc_policy = dmarc.get('policy', '').lower()
         if dmarc.get('status') != 'success':
@@ -1221,14 +1223,14 @@ class DNSAnalyzer:
         elif dmarc_policy == 'none':
             monitoring_items.append('DMARC in monitoring mode (p=none) - spoofed mail may still deliver')
         elif dmarc_policy == 'quarantine':
-            monitoring_items.append('DMARC quarantine (spoofed mail goes to spam, p=reject recommended)')
+            monitoring_items.append('DMARC quarantine (p=reject recommended for full enforcement)')
         
         # Check SPF
         spf = results.get('spf_analysis', {})
         if spf.get('status') != 'success':
             issues.append('No SPF record (no sender verification)')
         
-        # Check DNSSEC
+        # Check DNSSEC (DNS-verifiable)
         dnssec = results.get('dnssec_analysis', {})
         chain = dnssec.get('chain_of_trust', 'none')
         if chain == 'broken':
@@ -1241,34 +1243,38 @@ class DNSAnalyzer:
         if ns_del.get('delegation_ok') == False:
             issues.append('NS delegation issue (DNS may not resolve correctly)')
         
-        # Check CAA
+        # Check CAA (DNS-verifiable)
         caa = results.get('caa_analysis', {})
         if caa.get('status') != 'success':
             issues.append('No CAA record (any CA can issue SSL certificates)')
         
-        # Check MTA-STS
+        # Check MTA-STS (runtime-dependent - record presence only)
         mta_sts = results.get('mta_sts_analysis', {})
-        if mta_sts.get('status') != 'success':
-            monitoring_items.append('No MTA-STS (email TLS not enforced)')
-        elif mta_sts.get('mode') != 'enforce':
-            monitoring_items.append('MTA-STS in testing mode (email TLS not yet enforced)')
+        if mta_sts.get('status') == 'success':
+            configured_items.append('MTA-STS (policy present)')
+        else:
+            absent_items.append('MTA-STS (email TLS policy)')
         
-        # Check TLS-RPT
+        # Check TLS-RPT (runtime-dependent - record presence only)
         tls_rpt = results.get('tls_rpt_analysis', {})
-        if tls_rpt.get('status') != 'success':
-            monitoring_items.append('No TLS-RPT (no TLS delivery reporting)')
+        if tls_rpt.get('status') == 'success':
+            configured_items.append('TLS-RPT (reporting enabled)')
+        else:
+            absent_items.append('TLS-RPT (TLS delivery reporting)')
         
-        # Check BIMI
+        # Check BIMI (runtime-dependent - record presence only)
         bimi = results.get('bimi_analysis', {})
-        if bimi.get('status') != 'success':
-            monitoring_items.append('No BIMI (brand logo not displayed in inboxes)')
+        if bimi.get('status') == 'success':
+            configured_items.append('BIMI (brand logo configured)')
+        else:
+            absent_items.append('BIMI (brand logo in inboxes)')
         
-        # Determine posture state
+        # Determine posture state (based only on issues and monitoring - not absent optional items)
         if not issues and not monitoring_items:
             state = 'SECURE'
             color = 'success'
             icon = 'shield-alt'
-            message = 'All critical DNS and email security controls are properly configured and enforced.'
+            message = 'All critical DNS security controls are enforced.'
         elif not issues and monitoring_items:
             state = 'SECURE (Monitoring)'
             color = 'info'
@@ -1278,7 +1284,7 @@ class DNSAnalyzer:
             state = 'PARTIAL'
             color = 'warning'
             icon = 'exclamation-triangle'
-            message = 'Some security controls are missing or misconfigured.'
+            message = 'Some critical security controls are missing.'
         else:
             state = 'AT RISK'
             color = 'danger'
@@ -1294,6 +1300,8 @@ class DNSAnalyzer:
             'icon': icon,
             'message': message,
             'issues': issues,
+            'configured': configured_items,
+            'absent': absent_items,
             'monitoring': monitoring_items,
             'verdicts': verdicts
         }
