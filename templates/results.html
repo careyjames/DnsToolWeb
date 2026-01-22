@@ -509,10 +509,20 @@
                                     <span class="badge bg-warning text-dark me-2">MX</span>Mail Servers
                                 </h6>
                                 {% if results.basic_records.MX %}
+                                    {% set mx_list = results.basic_records.MX|join(' ')|lower %}
+                                    {% set is_google = 'google' in mx_list or 'googlemail' in mx_list %}
+                                    {% set mx_count = results.basic_records.MX|length %}
                                     {% for record in results.basic_records.MX %}
                                         <div class="code-block small mb-1">{{ record }}</div>
                                     {% endfor %}
-                                    <small class="text-muted">Priority + mail server for email delivery</small>
+                                    {% if is_google and mx_count > 1 %}
+                                        <div class="text-warning small mt-1">
+                                            <i class="fas fa-exclamation-triangle me-1"></i>
+                                            <strong>Legacy setup:</strong> Google Workspace now only needs 1 MX record (smtp.google.com). You can simplify by removing the extra {{ mx_count - 1 }} record{{ 's' if mx_count > 2 else '' }}.
+                                        </div>
+                                    {% else %}
+                                        <small class="text-muted">Priority + mail server for email delivery</small>
+                                    {% endif %}
                                 {% else %}
                                     <div class="text-muted small"><i class="fas fa-minus me-1"></i>No MX records</div>
                                     <small class="text-warning">Domain cannot receive email</small>
