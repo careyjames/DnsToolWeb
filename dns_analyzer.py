@@ -352,21 +352,22 @@ class DNSAnalyzer:
     
     def get_registrar_info(self, domain: str) -> Dict[str, Any]:
         """Get registrar information via RDAP or WHOIS."""
-        logging.debug(f"Getting registrar info for {domain}")
-        logging.debug(f"IANA RDAP map has {len(self.iana_rdap_map)} entries")
+        logging.info(f"[REGISTRAR] Getting registrar info for {domain}")
+        logging.info(f"[REGISTRAR] IANA RDAP map has {len(self.iana_rdap_map)} entries")
         
         # Try RDAP first
         rdap_data = self._rdap_lookup(domain)
-        logging.debug(f"RDAP data retrieved: {bool(rdap_data)}, entities: {len(rdap_data.get('entities', []))}")
+        logging.info(f"[REGISTRAR] RDAP data retrieved: {bool(rdap_data)}, keys: {list(rdap_data.keys()) if rdap_data else []}")
         
         if rdap_data:
             registrar_name = self._extract_registrar_from_rdap(rdap_data)
-            logging.debug(f"Extracted registrar: {registrar_name}")
+            logging.info(f"[REGISTRAR] Extracted registrar from RDAP: {registrar_name}")
             if registrar_name and not registrar_name.isdigit():
                 registrant_name = self._extract_registrant_from_rdap(rdap_data)
                 reg_str = registrar_name
                 if registrant_name:
                     reg_str += f" (Registrant: {registrant_name})"
+                logging.info(f"[REGISTRAR] SUCCESS via RDAP: {reg_str}")
                 return {
                     'status': 'success',
                     'source': 'RDAP',
@@ -374,15 +375,18 @@ class DNSAnalyzer:
                 }
         
         # Fallback to WHOIS
-        logging.debug(f"Falling back to WHOIS for {domain}")
+        logging.info(f"[REGISTRAR] Falling back to WHOIS for {domain}")
         whois_registrar = self._whois_lookup_registrar(domain)
+        logging.info(f"[REGISTRAR] WHOIS result: {whois_registrar}")
         if whois_registrar:
+            logging.info(f"[REGISTRAR] SUCCESS via WHOIS: {whois_registrar}")
             return {
                 'status': 'success',
                 'source': 'WHOIS',
                 'registrar': whois_registrar
             }
         
+        logging.warning(f"[REGISTRAR] FAILED - No registrar info found for {domain}")
         return {
             'status': 'error',
             'source': None,
@@ -393,6 +397,7 @@ class DNSAnalyzer:
     def _rdap_lookup(self, domain: str) -> Dict:
         """Return RDAP JSON data for domain using IANA endpoints."""
         tld = self._get_tld(domain)
+        logging.info(f"[RDAP] Looking up domain {domain}, TLD: {tld}")
         
         # Hardcoded RDAP endpoints for common TLDs (fallback if IANA map fails)
         hardcoded_endpoints = {
@@ -412,7 +417,10 @@ class DNSAnalyzer:
         }
         
         # Use IANA map first, then hardcoded endpoints
-        endpoints = self.iana_rdap_map.get(tld, []) or hardcoded_endpoints.get(tld, [])
+        iana_endpoints = self.iana_rdap_map.get(tld, [])
+        hardcoded = hardcoded_endpoints.get(tld, [])
+        endpoints = iana_endpoints or hardcoded
+        logging.info(f"[RDAP] IANA endpoints: {len(iana_endpoints)}, Hardcoded: {len(hardcoded)}, Using: {len(endpoints)}")
         
         headers = {
             'Accept': 'application/rdap+json',
@@ -422,28 +430,42 @@ class DNSAnalyzer:
         for endpoint in endpoints:
             url = f"{endpoint.rstrip('/')}/domain/{domain}"
             try:
-                logging.debug(f"RDAP lookup: {url}")
-                resp = requests.get(url, timeout=10, headers=headers)
+                logging.info(f"[RDAP] Trying: {url}")
+                resp = requests.get(url, timeout=8, headers=headers)
+                logging.info(f"[RDAP] Response status: {resp.status_code}")
                 if resp.status_code < 400:
                     data = resp.json()
                     if "errorCode" not in data:
-                        logging.debug(f"RDAP success from {url}")
+                        logging.info(f"[RDAP] SUCCESS from {url}")
                         return data
+                    else:
+                        logging.info(f"[RDAP] Error in response: {data.get('errorCode')}")
+            except requests.exceptions.Timeout:
+                logging.warning(f"[RDAP] Timeout for {url}")
+            except requests.exceptions.ConnectionError as e:
+                logging.warning(f"[RDAP] Connection error for {url}: {e}")
             except Exception as e:
-                logging.debug(f"RDAP lookup error for {url}: {e}")
+                logging.warning(f"[RDAP] Error for {url}: {type(e).__name__}: {e}")
         
         # Universal fallback: rdap.org (redirects to correct registry)
         try:
             url = f"https://rdap.org/domain/{domain}"
-            logging.debug(f"RDAP universal fallback: {url}")
-            resp = requests.get(url, timeout=10, headers=headers, allow_redirects=True)
+            logging.info(f"[RDAP] Universal fallback: {url}")
+            resp = requests.get(url, timeout=8, headers=headers, allow_redirects=True)
+            logging.info(f"[RDAP] Fallback response status: {resp.status_code}")
             if resp.status_code < 400:
                 data = resp.json()
                 if "errorCode" not in data:
+                    logging.info(f"[RDAP] SUCCESS from universal fallback")
                     return data
+        except requests.exceptions.Timeout:
+            logging.warning(f"[RDAP] Universal fallback timeout")
+        except requests.exceptions.ConnectionError as e:
+            logging.warning(f"[RDAP] Universal fallback connection error: {e}")
         except Exception as e:
-            logging.debug(f"RDAP universal fallback error: {e}")
+            logging.warning(f"[RDAP] Universal fallback error: {type(e).__name__}: {e}")
         
+        logging.warning(f"[RDAP] All lookups failed for {domain}")
         return {}
     
     def _extract_registrar_from_rdap(self, rdap_data: Dict) -> Optional[str]:
