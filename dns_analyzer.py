@@ -173,9 +173,50 @@ class DNSAnalyzer:
     
     def get_authoritative_records(self, domain: str) -> Dict[str, List[str]]:
         """Get DNS records directly from authoritative nameservers."""
-        # Disabled for performance - authoritative queries timeout in restricted environments
-        record_types = ["A", "AAAA", "MX", "TXT"]
+        record_types = ["A", "AAAA", "MX", "TXT", "NS"]
         results = {t: [] for t in record_types}
+        
+        try:
+            # 1. Find authoritative nameservers
+            ns_records = self.dns_query("NS", domain)
+            if not ns_records:
+                # Try parent domain if this is a subdomain
+                parts = domain.split(".")
+                if len(parts) > 2:
+                    parent = ".".join(parts[-2:])
+                    ns_records = self.dns_query("NS", parent)
+            
+            if not ns_records:
+                return results
+
+            # 2. Query each nameserver for redundancy
+            for ns_host in ns_records:
+                try:
+                    # Resolve NS hostname to IP
+                    ns_ips = self.dns_query("A", ns_host.rstrip("."))
+                    if not ns_ips:
+                        continue
+                        
+                    resolver = dns.resolver.Resolver(configure=False)
+                    resolver.nameservers = ns_ips
+                    resolver.timeout = 2
+                    resolver.lifetime = 2
+                    
+                    for rtype in record_types:
+                        try:
+                            answer = resolver.resolve(domain, rtype)
+                            for rr in answer:
+                                val = str(rr).strip('"')
+                                if val not in results[rtype]:
+                                    results[rtype].append(val)
+                        except Exception:
+                            continue
+                except Exception:
+                    continue
+                    
+        except Exception as e:
+            logging.error(f"Authoritative lookup failed for {domain}: {e}")
+            
         return results
     
     def analyze_spf(self, domain: str) -> Dict[str, Any]:
@@ -379,7 +420,7 @@ class DNSAnalyzer:
         return None
     
     def _whois_lookup_registrar(self, domain: str) -> Optional[str]:
-        """Return registrar name using the whois command."""
+        """Return registrar name and registrant using the whois command."""
         if not shutil.which("whois"):
             return None
         
@@ -391,12 +432,30 @@ class DNSAnalyzer:
                 timeout=10
             )
             
+            registrar = None
+            registrant = None
+            
             for line in result.stdout.splitlines():
-                if re.search(r"(?i)registrar:", line) or re.search(r"(?i)sponsoring registrar:", line):
-                    parts = line.split(":", 1)
-                    if len(parts) == 2:
-                        return parts[1].strip()
-            return None
+                line = line.strip()
+                # Lookup Registrar
+                if not registrar:
+                    if re.search(r"(?i)^(registrar|sponsoring registrar):", line):
+                        parts = line.split(":", 1)
+                        if len(parts) == 2:
+                            registrar = parts[1].strip()
+                
+                # Lookup Registrant/Organization
+                if not registrant:
+                    if re.search(r"(?i)^(registrant organization|registrant|org):", line):
+                        parts = line.split(":", 1)
+                        if len(parts) == 2:
+                            val = parts[1].strip()
+                            if val and val.lower() not in ["redacted", "data protected", "not disclosed"]:
+                                registrant = val
+            
+            if registrar and registrant:
+                return f"{registrar} (Registrant: {registrant})"
+            return registrar or registrant
         except Exception:
             return None
     
