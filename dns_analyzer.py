@@ -373,59 +373,37 @@ class DNSAnalyzer:
         """Get registrar information via RDAP (primary) with WHOIS (backup)."""
         logging.info(f"[REGISTRAR] Getting registrar info for {domain}")
         
-        # Start both in parallel but prefer RDAP
+        # TRY RDAP FIRST - it's the primary, authoritative source
         rdap_result = None
-        whois_result = None
+        try:
+            logging.info(f"[REGISTRAR] Trying RDAP first (primary source)...")
+            rdap_data = self._rdap_lookup(domain)
+            if rdap_data:
+                registrar_name = self._extract_registrar_from_rdap(rdap_data)
+                logging.info(f"[REGISTRAR] RDAP extracted registrar: {registrar_name}")
+                if registrar_name and not registrar_name.isdigit():
+                    registrant_name = self._extract_registrant_from_rdap(rdap_data)
+                    reg_str = registrar_name
+                    if registrant_name:
+                        reg_str += f" (Registrant: {registrant_name})"
+                    logging.info(f"[REGISTRAR] SUCCESS via RDAP: {reg_str}")
+                    return {'status': 'success', 'source': 'RDAP', 'registrar': reg_str}
+                else:
+                    logging.warning(f"[REGISTRAR] RDAP data found but no valid registrar name")
+            else:
+                logging.warning(f"[REGISTRAR] RDAP returned no data")
+        except Exception as e:
+            logging.warning(f"[REGISTRAR] RDAP failed: {e}")
         
-        def do_rdap():
-            try:
-                rdap_data = self._rdap_lookup(domain)
-                if rdap_data:
-                    registrar_name = self._extract_registrar_from_rdap(rdap_data)
-                    if registrar_name and not registrar_name.isdigit():
-                        registrant_name = self._extract_registrant_from_rdap(rdap_data)
-                        reg_str = registrar_name
-                        if registrant_name:
-                            reg_str += f" (Registrant: {registrant_name})"
-                        return ('RDAP', reg_str)
-            except Exception as e:
-                logging.warning(f"[REGISTRAR] RDAP error: {e}")
-            return None
-        
-        def do_whois():
-            try:
-                result = self._whois_lookup_registrar(domain)
-                if result:
-                    return ('WHOIS', result)
-            except Exception as e:
-                logging.warning(f"[REGISTRAR] WHOIS error: {e}")
-            return None
-        
-        # Start both lookups in parallel
-        with ThreadPoolExecutor(max_workers=2) as executor:
-            rdap_future = executor.submit(do_rdap)
-            whois_future = executor.submit(do_whois)
-            
-            # Wait for RDAP first (primary source) with 10s timeout
-            try:
-                rdap_result = rdap_future.result(timeout=10)
-            except:
-                logging.warning(f"[REGISTRAR] RDAP timed out for {domain}")
-            
-            # If RDAP succeeded, use it immediately
-            if rdap_result:
-                logging.info(f"[REGISTRAR] SUCCESS via RDAP: {rdap_result[1]}")
-                return {'status': 'success', 'source': 'RDAP', 'registrar': rdap_result[1]}
-            
-            # RDAP failed, wait for WHOIS backup
-            try:
-                whois_result = whois_future.result(timeout=10)
-            except:
-                logging.warning(f"[REGISTRAR] WHOIS timed out for {domain}")
-        
-        if whois_result:
-            logging.info(f"[REGISTRAR] SUCCESS via WHOIS (backup): {whois_result[1]}")
-            return {'status': 'success', 'source': 'WHOIS', 'registrar': whois_result[1]}
+        # RDAP failed - fall back to WHOIS (backup source)
+        logging.info(f"[REGISTRAR] RDAP failed, trying WHOIS as backup...")
+        try:
+            whois_result = self._whois_lookup_registrar(domain)
+            if whois_result:
+                logging.info(f"[REGISTRAR] SUCCESS via WHOIS (backup): {whois_result}")
+                return {'status': 'success', 'source': 'WHOIS', 'registrar': whois_result}
+        except Exception as e:
+            logging.warning(f"[REGISTRAR] WHOIS failed: {e}")
         
         logging.warning(f"[REGISTRAR] FAILED - No registrar info found for {domain}")
         return {
