@@ -248,19 +248,18 @@
                                     <div class="code-block small">{{ results.bimi_analysis.record }}</div>
                                 {% endif %}
                                 {% if results.bimi_analysis.logo_url %}
-                                    <div class="mt-3 d-flex align-items-start">
-                                        <div class="me-3" style="flex-shrink: 0;">
+                                    <div class="mt-3 d-flex align-items-center">
+                                        <div class="me-3 p-2 bg-white rounded" style="flex-shrink: 0;">
                                             <img src="{{ results.bimi_analysis.logo_url }}" 
                                                  alt="BIMI Logo" 
-                                                 style="max-width: 64px; max-height: 64px; background: #fff; border-radius: 8px; padding: 4px;"
-                                                 onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-                                            <div style="display: none; width: 64px; height: 64px; background: #374151; border-radius: 8px;" class="align-items-center justify-content-center">
-                                                <i class="fas fa-image text-muted"></i>
-                                            </div>
+                                                 style="width: 48px; height: 48px; object-fit: contain;"
+                                                 onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2248%22 height=%2248%22><rect fill=%22%23e5e7eb%22 width=%2248%22 height=%2248%22 rx=%224%22/><text x=%2224%22 y=%2230%22 text-anchor=%22middle%22 fill=%22%239ca3af%22 font-size=%2212%22>SVG</text></svg>'">
                                         </div>
-                                        <div>
-                                            <small class="text-info d-block"><i class="fas fa-external-link-alt me-1"></i>Logo URL:</small>
-                                            <small class="text-muted" style="word-break: break-all;">{{ results.bimi_analysis.logo_url }}</small>
+                                        <div class="small">
+                                            <span class="text-success"><i class="fas fa-check-circle me-1"></i>Logo found</span>
+                                            <a href="{{ results.bimi_analysis.logo_url }}" target="_blank" class="d-block text-info text-truncate" style="max-width: 200px;" title="{{ results.bimi_analysis.logo_url }}">
+                                                <i class="fas fa-external-link-alt me-1"></i>View full logo
+                                            </a>
                                         </div>
                                     </div>
                                 {% endif %}
