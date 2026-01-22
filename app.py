@@ -9,7 +9,7 @@ from sqlalchemy import JSON
 from dns_analyzer import DNSAnalyzer
 
 # App version - format: YY.M.patch (bump last number for small changes)
-APP_VERSION = "26.1.4"
+APP_VERSION = "26.1.5"
 
 # Configure logging
 logging.basicConfig(level=logging.DEBUG)
@@ -286,60 +286,43 @@ def history():
 
 @app.route('/analysis/<int:analysis_id>')
 def view_analysis(analysis_id):
-    """View a specific analysis result."""
+    """View a specific analysis - ALWAYS performs fresh lookup."""
     analysis = DomainAnalysis.query.get_or_404(analysis_id)
     
-    # Convert database record back to results format
-    results = {
-        'basic_records': analysis.basic_records or {},
-        'authoritative_records': analysis.authoritative_records or {},
-        'spf_analysis': {
-            'status': analysis.spf_status,
-            'records': analysis.spf_records or []
-        },
-        'dmarc_analysis': {
-            'status': analysis.dmarc_status,
-            'policy': analysis.dmarc_policy,
-            'records': analysis.dmarc_records or []
-        },
-        'dkim_analysis': {
-            'status': analysis.dkim_status,
-            'selectors': analysis.dkim_selectors or {}
-        },
-        'registrar_info': {
-            'status': 'success' if analysis.registrar_name else 'error',
-            'registrar': analysis.registrar_name,
-            'source': analysis.registrar_source,
-            'message': 'No registrar information found' if not analysis.registrar_name else None
-        }
-    }
-
-    # Re-calculate propagation status for view since it's not stored
-    propagation_status = {}
-    basic = results['basic_records']
-    auth = results['authoritative_records']
-    for rtype in basic.keys():
-        b_set = set(basic.get(rtype, []))
-        a_set = set(auth.get(rtype, []))
-        if not a_set:
-            status = "unknown"
-        elif b_set == a_set:
-            status = "synchronized"
-        else:
-            status = "propagating"
-        propagation_status[rtype] = {'status': status}
-    results['propagation_status'] = propagation_status
-
-    # Re-calculate hosting summary for view
-    results['hosting_summary'] = dns_analyzer.get_hosting_info(analysis.domain, results)
+    # ALWAYS do a fresh lookup - never show cached/stale data
+    domain = analysis.domain
+    ascii_domain = dns_analyzer.domain_to_ascii(domain)
+    
+    start_time = time.time()
+    results = dns_analyzer.analyze_domain(ascii_domain)
+    analysis_duration = time.time() - start_time
+    
+    # Update the existing record with fresh data
+    analysis.basic_records = results.get('basic_records', {})
+    analysis.authoritative_records = results.get('authoritative_records', {})
+    analysis.spf_status = results.get('spf_analysis', {}).get('status')
+    analysis.spf_records = results.get('spf_analysis', {}).get('records', [])
+    analysis.dmarc_status = results.get('dmarc_analysis', {}).get('status')
+    analysis.dmarc_policy = results.get('dmarc_analysis', {}).get('policy')
+    analysis.dmarc_records = results.get('dmarc_analysis', {}).get('records', [])
+    analysis.dkim_status = results.get('dkim_analysis', {}).get('status')
+    analysis.dkim_selectors = results.get('dkim_analysis', {}).get('selectors', {})
+    analysis.registrar_name = results.get('registrar_info', {}).get('registrar')
+    analysis.registrar_source = results.get('registrar_info', {}).get('source')
+    analysis.analysis_duration = analysis_duration
+    analysis.analyzed_at = datetime.utcnow()
+    
+    try:
+        db.session.commit()
+    except Exception:
+        db.session.rollback()
     
     return render_template('results.html',
-                         domain=analysis.domain,
-                         ascii_domain=analysis.ascii_domain,
+                         domain=domain,
+                         ascii_domain=ascii_domain,
                          results=results,
                          analysis_id=analysis.id,
-                         analysis_date=analysis.created_at,
-                         from_history=True)
+                         from_history=False)
 
 @app.route('/stats')
 def stats():
