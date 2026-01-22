@@ -465,26 +465,26 @@ class DNSAnalyzer:
         
         url = f"{endpoint.rstrip('/')}/domain/{domain}"
         
-        # Try with short timeout first
+        # Try with longer timeout for production reliability
         try:
-            logging.info(f"[RDAP] Trying: {url}")
-            resp = requests.get(url, timeout=8, headers=headers, allow_redirects=True)
-            logging.info(f"[RDAP] Response {resp.status_code}")
+            logging.warning(f"[RDAP] === STARTING RDAP REQUEST === URL: {url}")
+            resp = requests.get(url, timeout=15, headers=headers, allow_redirects=True)
+            logging.warning(f"[RDAP] === RESPONSE RECEIVED === Status: {resp.status_code}")
             if resp.status_code < 400:
                 data = resp.json()
                 if "errorCode" not in data and (data.get("ldhName") or data.get("objectClassName") == "domain"):
-                    logging.info(f"[RDAP] SUCCESS")
+                    logging.warning(f"[RDAP] === SUCCESS === Got valid RDAP data")
                     return data
                 else:
                     logging.warning(f"[RDAP] Invalid response: errorCode={data.get('errorCode')}")
             else:
                 logging.warning(f"[RDAP] HTTP error: {resp.status_code}")
         except requests.exceptions.Timeout as e:
-            logging.warning(f"[RDAP] Primary TIMEOUT: {e}")
+            logging.warning(f"[RDAP] === TIMEOUT === {e}")
         except requests.exceptions.ConnectionError as e:
-            logging.warning(f"[RDAP] Primary CONNECTION ERROR: {e}")
+            logging.warning(f"[RDAP] === CONNECTION ERROR === {e}")
         except Exception as e:
-            logging.warning(f"[RDAP] Primary failed: {type(e).__name__}: {e}")
+            logging.warning(f"[RDAP] === EXCEPTION === {type(e).__name__}: {e}")
         
         # Fallback to rdap.org
         if endpoint != 'https://rdap.org/':
