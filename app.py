@@ -8,8 +8,8 @@ from sqlalchemy.orm import DeclarativeBase
 from sqlalchemy import JSON
 from dns_analyzer import DNSAnalyzer
 
-# App version
-APP_VERSION = "2.2"
+# App version - bump this with each change
+APP_VERSION = "2.3"
 
 # Configure logging
 logging.basicConfig(level=logging.DEBUG)
