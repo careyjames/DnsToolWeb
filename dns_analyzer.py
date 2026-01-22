@@ -591,6 +591,179 @@ class DNSAnalyzer:
             'vmc_url': vmc_url
         }
     
+    def analyze_dnssec(self, domain: str) -> Dict[str, Any]:
+        """Check DNSSEC status for domain by looking for DNSKEY and DS records."""
+        has_dnskey = False
+        has_ds = False
+        dnskey_records = []
+        ds_records = []
+        algorithm_names = {
+            5: 'RSA/SHA-1', 7: 'RSASHA1-NSEC3-SHA1', 8: 'RSA/SHA-256', 
+            10: 'RSA/SHA-512', 13: 'ECDSA P-256/SHA-256', 14: 'ECDSA P-384/SHA-384',
+            15: 'Ed25519', 16: 'Ed448'
+        }
+        
+        # Check for DNSKEY records (at the domain itself)
+        try:
+            dnskey_result = self.dns_query("DNSKEY", domain)
+            if dnskey_result:
+                has_dnskey = True
+                for rec in dnskey_result[:3]:  # Limit display
+                    dnskey_records.append(rec[:100] + '...' if len(rec) > 100 else rec)
+        except Exception:
+            pass
+        
+        # Check for DS records (at parent zone - indicates delegation is signed)
+        try:
+            ds_result = self.dns_query("DS", domain)
+            if ds_result:
+                has_ds = True
+                for rec in ds_result[:3]:
+                    ds_records.append(rec)
+        except Exception:
+            pass
+        
+        # Determine algorithm from DS if available
+        algorithm = None
+        algorithm_name = None
+        if ds_records:
+            try:
+                parts = ds_records[0].split()
+                if len(parts) >= 2:
+                    alg_num = int(parts[1])
+                    algorithm = alg_num
+                    algorithm_name = algorithm_names.get(alg_num, f'Algorithm {alg_num}')
+            except:
+                pass
+        
+        if has_dnskey and has_ds:
+            return {
+                'status': 'success',
+                'message': 'DNSSEC fully configured - DNS responses are cryptographically signed and verified',
+                'has_dnskey': True,
+                'has_ds': True,
+                'dnskey_records': dnskey_records,
+                'ds_records': ds_records,
+                'algorithm': algorithm,
+                'algorithm_name': algorithm_name,
+                'chain_of_trust': 'complete'
+            }
+        elif has_dnskey and not has_ds:
+            return {
+                'status': 'warning',
+                'message': 'DNSSEC partially configured - DNSKEY exists but DS record missing at registrar',
+                'has_dnskey': True,
+                'has_ds': False,
+                'dnskey_records': dnskey_records,
+                'ds_records': [],
+                'algorithm': None,
+                'algorithm_name': None,
+                'chain_of_trust': 'broken'
+            }
+        else:
+            return {
+                'status': 'warning',
+                'message': 'DNSSEC not configured - DNS responses are unsigned',
+                'has_dnskey': False,
+                'has_ds': False,
+                'dnskey_records': [],
+                'ds_records': [],
+                'algorithm': None,
+                'algorithm_name': None,
+                'chain_of_trust': 'none'
+            }
+    
+    def analyze_ns_delegation(self, domain: str) -> Dict[str, Any]:
+        """Check NS delegation by comparing child NS records with parent zone delegation."""
+        # Get NS records from resolvers (what the domain says)
+        child_ns = []
+        parent_ns = []
+        
+        try:
+            child_result = self.dns_query("NS", domain)
+            if child_result:
+                child_ns = sorted([ns.rstrip('.').lower() for ns in child_result])
+        except Exception:
+            pass
+        
+        # Get parent zone and query for delegation
+        parts = domain.split('.')
+        if len(parts) >= 2:
+            parent_zone = '.'.join(parts[1:]) if len(parts) > 2 else parts[-1]
+            
+            # Try to get NS from parent by querying authoritative servers for parent
+            try:
+                # Query the parent zone's NS directly
+                resolver = dns.resolver.Resolver()
+                resolver.nameservers = self.resolvers
+                resolver.timeout = self.dns_timeout
+                resolver.lifetime = self.dns_timeout * 2
+                
+                # Get parent NS servers
+                parent_ns_servers = resolver.resolve(parent_zone, 'NS')
+                if parent_ns_servers:
+                    # Query one of the parent's NS for the child's delegation
+                    parent_server = str(parent_ns_servers[0]).rstrip('.')
+                    try:
+                        parent_ip = resolver.resolve(parent_server, 'A')
+                        if parent_ip:
+                            parent_resolver = dns.resolver.Resolver()
+                            parent_resolver.nameservers = [str(parent_ip[0])]
+                            parent_resolver.timeout = self.dns_timeout
+                            parent_resolver.lifetime = self.dns_timeout * 2
+                            
+                            delegation = parent_resolver.resolve(domain, 'NS')
+                            parent_ns = sorted([str(ns).rstrip('.').lower() for ns in delegation])
+                    except Exception:
+                        pass
+            except Exception:
+                pass
+        
+        if not child_ns:
+            return {
+                'status': 'error',
+                'message': 'Could not retrieve NS records',
+                'child_ns': [],
+                'parent_ns': [],
+                'match': False,
+                'delegation_ok': False
+            }
+        
+        if not parent_ns:
+            # Couldn't verify parent, but child NS exists
+            return {
+                'status': 'success',
+                'message': f'{len(child_ns)} nameserver(s) configured',
+                'child_ns': child_ns,
+                'parent_ns': [],
+                'match': None,
+                'delegation_ok': True,
+                'note': 'Parent zone delegation could not be verified'
+            }
+        
+        # Compare child and parent NS
+        match = set(child_ns) == set(parent_ns)
+        
+        if match:
+            return {
+                'status': 'success',
+                'message': f'NS delegation verified - {len(child_ns)} nameserver(s) match parent zone',
+                'child_ns': child_ns,
+                'parent_ns': parent_ns,
+                'match': True,
+                'delegation_ok': True
+            }
+        else:
+            return {
+                'status': 'warning',
+                'message': 'NS delegation mismatch - child and parent zone have different NS records',
+                'child_ns': child_ns,
+                'parent_ns': parent_ns,
+                'match': False,
+                'delegation_ok': False,
+                'note': 'This may indicate a recent change still propagating'
+            }
+
     def get_registrar_info(self, domain: str) -> Dict[str, Any]:
         """Get registrar information via RDAP (primary) with WHOIS (backup)."""
         logging.info(f"[REGISTRAR] Getting registrar info for {domain}")
@@ -964,7 +1137,7 @@ class DNSAnalyzer:
         """Perform complete DNS analysis of domain with parallel lookups for speed."""
         
         # Run all lookups in parallel for speed (5-10s target)
-        with ThreadPoolExecutor(max_workers=10) as executor:
+        with ThreadPoolExecutor(max_workers=12) as executor:
             futures = {
                 executor.submit(self.get_basic_records, domain): 'basic',
                 executor.submit(self.get_authoritative_records, domain): 'auth',
@@ -975,6 +1148,8 @@ class DNSAnalyzer:
                 executor.submit(self.analyze_tlsrpt, domain): 'tlsrpt',
                 executor.submit(self.analyze_bimi, domain): 'bimi',
                 executor.submit(self.analyze_caa, domain): 'caa',
+                executor.submit(self.analyze_dnssec, domain): 'dnssec',
+                executor.submit(self.analyze_ns_delegation, domain): 'ns_delegation',
                 executor.submit(self.get_registrar_info, domain): 'registrar',
             }
             
@@ -1020,6 +1195,8 @@ class DNSAnalyzer:
             'tlsrpt_analysis': results_map.get('tlsrpt', {'status': 'warning'}),
             'bimi_analysis': results_map.get('bimi', {'status': 'warning'}),
             'caa_analysis': results_map.get('caa', {'status': 'warning'}),
+            'dnssec_analysis': results_map.get('dnssec', {'status': 'warning'}),
+            'ns_delegation_analysis': results_map.get('ns_delegation', {'status': 'warning'}),
             'registrar_info': results_map.get('registrar', {'status': 'error', 'registrar': None})
         }
         

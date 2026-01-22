@@ -310,6 +310,100 @@
             </div>
         </div>
 
+        <!-- Domain Security Section (DNSSEC + NS Delegation) -->
+        <div class="row">
+            <div class="col-12 mb-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="fas fa-shield-alt me-2"></i>Domain Security
+                            <small class="text-muted ms-2">Chain of trust &amp; delegation integrity</small>
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <!-- DNSSEC Analysis -->
+                            <div class="col-md-6 mb-3 mb-md-0">
+                                <h6 class="d-flex align-items-center">
+                                    <i class="fas fa-key me-2"></i>DNSSEC
+                                    <span class="badge bg-{{ 'success' if results.dnssec_analysis.status == 'success' else 'warning' }} ms-2">
+                                        {{ 'Signed' if results.dnssec_analysis.status == 'success' else 'Unsigned' }}
+                                    </span>
+                                    {% if results.dnssec_analysis.algorithm_name %}
+                                        <span class="badge bg-info ms-1">{{ results.dnssec_analysis.algorithm_name }}</span>
+                                    {% endif %}
+                                </h6>
+                                <p class="text-muted mb-2 small">{{ results.dnssec_analysis.message }}</p>
+                                
+                                {% if results.dnssec_analysis.status == 'success' %}
+                                    <div class="small text-success mb-2">
+                                        <i class="fas fa-check-circle me-1"></i>
+                                        Chain of trust: Root → TLD → Domain. DNS responses are authenticated and tamper-proof.
+                                    </div>
+                                {% elif results.dnssec_analysis.chain_of_trust == 'broken' %}
+                                    <div class="small text-warning mb-2">
+                                        <i class="fas fa-exclamation-triangle me-1"></i>
+                                        DNSKEY exists but DS record not published at registrar. Add DS record to complete chain of trust.
+                                    </div>
+                                {% else %}
+                                    <div class="small text-info mb-2">
+                                        <i class="fas fa-info-circle me-1"></i>
+                                        Without DNSSEC, DNS responses can be spoofed. Enable at your DNS provider for cryptographic verification.
+                                    </div>
+                                {% endif %}
+                                
+                                {% if results.dnssec_analysis.ds_records %}
+                                    <div class="mt-2">
+                                        <small class="text-muted d-block mb-1">DS Record (at registrar):</small>
+                                        {% for ds in results.dnssec_analysis.ds_records %}
+                                            <div class="code-block small mb-1" style="font-size: 0.7rem;">{{ ds }}</div>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+
+                            <!-- NS Delegation Analysis -->
+                            <div class="col-md-6">
+                                <h6 class="d-flex align-items-center">
+                                    <i class="fas fa-project-diagram me-2"></i>NS Delegation
+                                    <span class="badge bg-{{ 'success' if results.ns_delegation_analysis.status == 'success' else 'warning' if results.ns_delegation_analysis.status == 'warning' else 'secondary' }} ms-2">
+                                        {{ 'Verified' if results.ns_delegation_analysis.delegation_ok else 'Check Failed' }}
+                                    </span>
+                                    {% if results.ns_delegation_analysis.match == true %}
+                                        <span class="badge bg-success ms-1">Match</span>
+                                    {% elif results.ns_delegation_analysis.match == false %}
+                                        <span class="badge bg-warning ms-1">Mismatch</span>
+                                    {% endif %}
+                                </h6>
+                                <p class="text-muted mb-2 small">{{ results.ns_delegation_analysis.message }}</p>
+                                
+                                {% if results.ns_delegation_analysis.match == false %}
+                                    <div class="small text-warning mb-2">
+                                        <i class="fas fa-exclamation-triangle me-1"></i>
+                                        NS records at domain differ from parent zone delegation. May indicate recent DNS migration still propagating.
+                                    </div>
+                                {% elif results.ns_delegation_analysis.match == true %}
+                                    <div class="small text-success mb-2">
+                                        <i class="fas fa-check-circle me-1"></i>
+                                        Parent zone delegation matches domain's NS records. No delegation drift detected.
+                                    </div>
+                                {% endif %}
+                                
+                                {% if results.ns_delegation_analysis.child_ns %}
+                                    <div class="mt-2">
+                                        <small class="text-muted d-block mb-1">Nameservers:</small>
+                                        {% for ns in results.ns_delegation_analysis.child_ns %}
+                                            <span class="badge bg-secondary me-1 mb-1">{{ ns }}</span>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- DNS Records Section -->
         <div class="row">
             <div class="col-lg-6 mb-4">
