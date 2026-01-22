@@ -490,15 +490,16 @@ class DNSAnalyzer:
             return None
         
         # Query all endpoints in parallel, return first success
-        with ThreadPoolExecutor(max_workers=len(endpoints) + 1) as executor:
-            futures = {executor.submit(try_endpoint, ep): ep for ep in endpoints}
-            for future in futures:
-                try:
-                    result = future.result(timeout=8)
-                    if result:
-                        return result
-                except:
-                    pass
+        if endpoints:
+            with ThreadPoolExecutor(max_workers=min(len(endpoints), 5)) as executor:
+                futures = {executor.submit(try_endpoint, ep): ep for ep in endpoints}
+                for future in as_completed(futures, timeout=10):
+                    try:
+                        result = future.result()
+                        if result:
+                            return result
+                    except:
+                        pass
         
         # Universal fallback: rdap.org (redirects to correct registry)
         try:
