@@ -57,6 +57,40 @@
             </a>
         </div>
         
+        <!-- Global Posture Score -->
+        {% if results.posture %}
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card border-{{ results.posture.color }} bg-{{ results.posture.color }} bg-opacity-10">
+                    <div class="card-body py-3">
+                        <div class="d-flex align-items-center justify-content-between flex-wrap">
+                            <div class="d-flex align-items-center">
+                                <i class="fas fa-{{ results.posture.icon }} fa-2x text-{{ results.posture.color }} me-3"></i>
+                                <div>
+                                    <div class="d-flex align-items-center">
+                                        <span class="text-muted small me-2">DNS & Trust Posture:</span>
+                                        <span class="badge bg-{{ results.posture.color }} fs-6 px-3 py-2">{{ results.posture.state }}</span>
+                                    </div>
+                                    <small class="text-muted">{{ results.posture.message }}</small>
+                                </div>
+                            </div>
+                            {% if results.posture.issues or results.posture.monitoring %}
+                            <div class="mt-2 mt-md-0">
+                                {% if results.posture.issues %}
+                                    <small class="text-danger d-block"><i class="fas fa-times-circle me-1"></i>{{ results.posture.issues|length }} issue{{ 's' if results.posture.issues|length > 1 else '' }}</small>
+                                {% endif %}
+                                {% if results.posture.monitoring %}
+                                    <small class="text-info d-block"><i class="fas fa-eye me-1"></i>{{ results.posture.monitoring|length }} monitoring</small>
+                                {% endif %}
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
         <!-- Domain Summary Section -->
         <div class="row mb-4">
             <div class="col-12">
@@ -106,11 +140,21 @@
             <div class="col-12 mb-4">
                 <div class="card">
                     <div class="card-header">
-                        <h5 class="mb-0">
-                            <i class="fas fa-shield-alt me-2"></i>Email Security
+                        <h5 class="mb-0 d-flex align-items-center justify-content-between flex-wrap">
+                            <span><i class="fas fa-shield-alt me-2"></i>Email Security</span>
+                            <small class="text-muted">Can this domain be impersonated by email?
+                                {% if results.posture and results.posture.verdicts.email_answer %}
+                                    <span class="badge bg-{{ 'success' if results.posture.verdicts.email_answer == 'No' else 'warning' if 'Mostly' in results.posture.verdicts.email_answer or 'Partially' in results.posture.verdicts.email_answer else 'danger' }} ms-1">{{ results.posture.verdicts.email_answer }}</span>
+                                {% endif %}
+                            </small>
                         </h5>
                     </div>
                     <div class="card-body">
+                        {% if results.posture and results.posture.verdicts.email %}
+                            <div class="alert alert-{{ 'success' if results.posture.verdicts.email_answer == 'No' else 'warning' if 'Mostly' in results.posture.verdicts.email_answer or 'Partially' in results.posture.verdicts.email_answer else 'danger' }} py-2 mb-3 small">
+                                <i class="fas fa-gavel me-2"></i><strong>Verdict:</strong> {{ results.posture.verdicts.email }}
+                            </div>
+                        {% endif %}
                         <div class="row">
                             <!-- SPF Analysis -->
                             <div class="col-md-4 mb-3 mb-md-0">
@@ -226,11 +270,17 @@
             <div class="col-12 mb-4">
                 <div class="card">
                     <div class="card-header">
-                        <h5 class="mb-0">
-                            <i class="fas fa-certificate me-2"></i>Brand Security
+                        <h5 class="mb-0 d-flex align-items-center justify-content-between flex-wrap">
+                            <span><i class="fas fa-certificate me-2"></i>Brand Security</span>
+                            <small class="text-muted">Can my brand be convincingly faked?</small>
                         </h5>
                     </div>
                     <div class="card-body">
+                        {% if results.posture and results.posture.verdicts.brand %}
+                            <div class="alert alert-{{ 'success' if results.posture.verdicts.brand_secure else 'warning' }} py-2 mb-3 small">
+                                <i class="fas fa-gavel me-2"></i><strong>Verdict:</strong> {{ results.posture.verdicts.brand }}
+                            </div>
+                        {% endif %}
                         <div class="row">
                             <!-- BIMI Analysis -->
                             <div class="col-md-6 mb-3 mb-md-0">
@@ -315,12 +365,17 @@
             <div class="col-12 mb-4">
                 <div class="card">
                     <div class="card-header">
-                        <h5 class="mb-0">
-                            <i class="fas fa-shield-alt me-2"></i>Domain Security
-                            <small class="text-muted ms-2">Chain of trust &amp; delegation integrity</small>
+                        <h5 class="mb-0 d-flex align-items-center justify-content-between flex-wrap">
+                            <span><i class="fas fa-shield-alt me-2"></i>Domain Security</span>
+                            <small class="text-muted">Can DNS itself be tampered with?</small>
                         </h5>
                     </div>
                     <div class="card-body">
+                        {% if results.posture and results.posture.verdicts.domain %}
+                            <div class="alert alert-{{ 'success' if 'authenticated' in results.posture.verdicts.domain else 'warning' }} py-2 mb-3 small">
+                                <i class="fas fa-gavel me-2"></i><strong>Verdict:</strong> {{ results.posture.verdicts.domain }}
+                            </div>
+                        {% endif %}
                         <div class="row">
                             <!-- DNSSEC Analysis -->
                             <div class="col-md-6 mb-3 mb-md-0">
@@ -519,13 +574,53 @@
             </div>
         </div>
 
+        <!-- Propagation Delta Summary -->
+        {% set propagating_types = [] %}
+        {% set synced_count = 0 %}
+        {% if results.propagation_status %}
+            {% for rtype, pinfo in results.propagation_status.items() %}
+                {% if pinfo.status == 'propagating' %}
+                    {% set _ = propagating_types.append(rtype) %}
+                {% elif pinfo.status == 'synchronized' %}
+                    {% set synced_count = synced_count + 1 %}
+                {% endif %}
+            {% endfor %}
+        {% endif %}
+        
+        <div class="row mb-3">
+            <div class="col-12">
+                {% if propagating_types %}
+                <div class="alert alert-warning py-2 mb-0 d-flex align-items-center justify-content-between flex-wrap">
+                    <div>
+                        <i class="fas fa-sync-alt fa-spin me-2"></i>
+                        <strong>Δ Changes Detected:</strong>
+                        {% for rtype in propagating_types %}
+                            <span class="badge bg-warning text-dark ms-1">{{ rtype }}</span>
+                        {% endfor %}
+                        <span class="ms-2 small text-muted">Resolver ≠ Authoritative (TTL / CDN rotation / recent change)</span>
+                    </div>
+                    <small class="text-warning-emphasis">
+                        <i class="fas fa-clock me-1"></i>Risk: Low - typically resolves within TTL
+                    </small>
+                </div>
+                {% else %}
+                <div class="alert alert-success py-2 mb-0 d-flex align-items-center">
+                    <i class="fas fa-check-circle me-2"></i>
+                    <strong>Δ No Propagation Issues:</strong>
+                    <span class="ms-2 small">All DNS records are synchronized between resolver and authoritative nameserver.</span>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
         <!-- DNS Records Section -->
         <div class="row">
             <div class="col-lg-6 mb-4">
                 <div class="card h-100">
                     <div class="card-header">
                         <h5 class="mb-0">
-                            <i class="fas fa-server me-2"></i>Resolver DNS Records
+                            <i class="fas fa-database me-2"></i>Evidence: Resolver Records
+                            <small class="text-muted ms-2">(Raw DNS data)</small>
                         </h5>
                     </div>
                     <div class="card-body">
@@ -580,7 +675,8 @@
                 <div class="card h-100">
                     <div class="card-header bg-primary bg-opacity-10">
                         <h5 class="mb-0">
-                            <i class="fas fa-microchip me-2"></i>Authoritative DNS Records
+                            <i class="fas fa-microchip me-2"></i>Evidence: Authoritative Records
+                            <small class="text-muted ms-2">(Direct from nameserver)</small>
                         </h5>
                     </div>
                     <div class="card-body">

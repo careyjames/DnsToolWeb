@@ -1203,4 +1203,147 @@ class DNSAnalyzer:
         # Add Hosting/Who summary
         results['hosting_summary'] = self.get_hosting_info(domain, results)
         
+        # Calculate Posture Score
+        results['posture'] = self._calculate_posture(results)
+        
         return results
+    
+    def _calculate_posture(self, results: Dict[str, Any]) -> Dict[str, Any]:
+        """Calculate overall DNS & Trust Posture based on security controls."""
+        issues = []
+        monitoring_items = []
+        
+        # Check DMARC policy
+        dmarc = results.get('dmarc_analysis', {})
+        dmarc_policy = dmarc.get('policy', '').lower()
+        if dmarc.get('status') != 'success':
+            issues.append('No DMARC policy')
+        elif dmarc_policy == 'none':
+            monitoring_items.append('DMARC policy is monitoring-only (p=none)')
+        elif dmarc_policy == 'quarantine':
+            monitoring_items.append('DMARC policy is quarantine (p=reject recommended)')
+        
+        # Check SPF
+        spf = results.get('spf_analysis', {})
+        if spf.get('status') != 'success':
+            issues.append('No SPF record')
+        
+        # Check DNSSEC
+        dnssec = results.get('dnssec_analysis', {})
+        chain = dnssec.get('chain_of_trust', 'none')
+        if chain == 'broken':
+            issues.append('DNSSEC chain of trust broken')
+        elif chain == 'none' or dnssec.get('status') != 'success':
+            issues.append('DNSSEC not enabled')
+        
+        # Check NS delegation
+        ns_del = results.get('ns_delegation_analysis', {})
+        if ns_del.get('delegation_ok') == False:
+            issues.append('NS delegation issue')
+        
+        # Check CAA
+        caa = results.get('caa_analysis', {})
+        if caa.get('status') != 'success':
+            monitoring_items.append('No CAA records (any CA can issue certs)')
+        
+        # Check MTA-STS
+        mta_sts = results.get('mta_sts_analysis', {})
+        if mta_sts.get('status') == 'success':
+            if mta_sts.get('mode') != 'enforce':
+                monitoring_items.append('MTA-STS not in enforce mode')
+        
+        # Determine posture state
+        if not issues and not monitoring_items:
+            state = 'SECURE'
+            color = 'success'
+            icon = 'shield-alt'
+            message = 'All critical DNS and email security controls are properly configured and enforced.'
+        elif not issues and monitoring_items:
+            state = 'SECURE (Monitoring)'
+            color = 'info'
+            icon = 'eye'
+            message = 'Security controls present but some are in monitoring/reporting mode.'
+        elif len(issues) <= 2:
+            state = 'PARTIAL'
+            color = 'warning'
+            icon = 'exclamation-triangle'
+            message = 'Some security controls are missing or misconfigured.'
+        else:
+            state = 'AT RISK'
+            color = 'danger'
+            icon = 'times-circle'
+            message = 'Critical security gaps detected. Domain may be vulnerable to spoofing or tampering.'
+        
+        # Generate verdicts for each section
+        verdicts = self._generate_verdicts(results)
+        
+        return {
+            'state': state,
+            'color': color,
+            'icon': icon,
+            'message': message,
+            'issues': issues,
+            'monitoring': monitoring_items,
+            'verdicts': verdicts
+        }
+    
+    def _generate_verdicts(self, results: Dict[str, Any]) -> Dict[str, str]:
+        """Generate verdict sentences for each security section."""
+        verdicts = {}
+        
+        # Email Security verdict
+        spf_ok = results.get('spf_analysis', {}).get('status') == 'success'
+        dmarc = results.get('dmarc_analysis', {})
+        dmarc_ok = dmarc.get('status') == 'success'
+        dmarc_policy = dmarc.get('policy', '').lower()
+        dmarc_reject = dmarc_policy == 'reject'
+        dmarc_quarantine = dmarc_policy == 'quarantine'
+        dkim_ok = results.get('dkim_analysis', {}).get('status') == 'success'
+        
+        if spf_ok and dmarc_ok and dmarc_reject and dkim_ok:
+            verdicts['email'] = 'Receivers can cryptographically verify mail and will reject spoofed messages.'
+            verdicts['email_answer'] = 'No'
+        elif spf_ok and dmarc_ok and dmarc_quarantine and dkim_ok:
+            verdicts['email'] = 'Mail authentication enforced with quarantine - spoofed messages will be flagged as spam.'
+            verdicts['email_answer'] = 'Mostly No'
+        elif spf_ok and dmarc_ok and dmarc_policy == 'none':
+            verdicts['email'] = 'Mail authentication is configured but DMARC is in monitoring mode - spoofed mail may still be delivered.'
+            verdicts['email_answer'] = 'Mostly No'
+        elif spf_ok or dmarc_ok:
+            verdicts['email'] = 'Partial email authentication configured - some spoofed messages may be delivered.'
+            verdicts['email_answer'] = 'Partially'
+        else:
+            verdicts['email'] = 'No email authentication - this domain can be easily impersonated.'
+            verdicts['email_answer'] = 'Yes'
+        
+        # Brand Security verdict
+        bimi_ok = results.get('bimi_analysis', {}).get('status') == 'success'
+        caa_ok = results.get('caa_analysis', {}).get('status') == 'success'
+        
+        if bimi_ok and caa_ok:
+            verdicts['brand'] = 'Attackers cannot easily spoof your logo or obtain fraudulent TLS certificates.'
+            verdicts['brand_secure'] = True
+        elif caa_ok:
+            verdicts['brand'] = 'Certificate issuance is controlled but brand logo (BIMI) is not configured.'
+            verdicts['brand_secure'] = True
+        elif bimi_ok:
+            verdicts['brand'] = 'Brand logo is configured but any CA can issue certificates for this domain.'
+            verdicts['brand_secure'] = False
+        else:
+            verdicts['brand'] = 'No brand protection controls - attackers could obtain certificates or impersonate visually.'
+            verdicts['brand_secure'] = False
+        
+        # Domain Security verdict
+        dnssec_ok = results.get('dnssec_analysis', {}).get('status') == 'success'
+        ns_ok = results.get('ns_delegation_analysis', {}).get('delegation_ok', False)
+        
+        if dnssec_ok and ns_ok:
+            verdicts['domain'] = 'DNS responses are authenticated from the root downward. Delegation is verified.'
+        elif dnssec_ok:
+            verdicts['domain'] = 'DNS responses are signed but delegation verification had issues.'
+        elif ns_ok:
+            verdicts['domain'] = 'Delegation is verified but DNS responses are unsigned and could be spoofed.'
+        else:
+            verdicts['domain'] = 'DNS responses are unsigned and delegation may have issues.'
+        
+        return verdicts
