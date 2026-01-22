@@ -1256,7 +1256,7 @@ class DNSAnalyzer:
             absent_items.append('MTA-STS (email TLS policy)')
         
         # Check TLS-RPT (runtime-dependent - record presence only)
-        tls_rpt = results.get('tls_rpt_analysis', {})
+        tls_rpt = results.get('tlsrpt_analysis', {})  # Note: key is 'tlsrpt_analysis' not 'tls_rpt_analysis'
         if tls_rpt.get('status') == 'success':
             configured_items.append('TLS-RPT (reporting enabled)')
         else:

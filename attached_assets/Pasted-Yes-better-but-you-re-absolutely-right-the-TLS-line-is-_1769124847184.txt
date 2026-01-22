@@ -1,0 +1,157 @@
+Yes — better, but you’re absolutely right: the TLS line is still wrong, and now we can be very precise about why.
+
+This is no longer a “wording” issue. It’s a state-model bug.
+
+I’ll anchor this in what your tool is literally showing for it-help.tech right now  ￼.
+
+⸻
+
+What the DNS data actually proves (no interpretation)
+
+From the Email Security section (page 2):
+	•	TLS-RPT record EXISTS
+
+v=TLSRPTv1; rua=mailto:dc1e127b@inbox.ondmarc.com;
+
+
+	•	Your UI even correctly labels it:
+	•	“TLS-RPT configured – receiving TLS delivery reports”
+
+So the DNS facts are unambiguous:
+
+TLS-RPT is configured.
+
+⸻
+
+What the top banner currently says (incorrect)
+
+At the top (page 1), under Findings Summary, you show:
+
+Not Configured:
+– TLS-RPT (TLS delivery reporting)
+
+That is factually false based on DNS.
+
+So your instinct is correct:
+the TLS classification is wrong, even though the raw analysis is right.
+
+⸻
+
+Why this keeps happening (root cause)
+
+Your posture logic is still doing this implicitly:
+
+“If I can’t prove runtime behavior → treat as not configured”
+
+That logic is valid for enforcement guarantees
+It is not valid for capability declarations.
+
+TLS-RPT is only a declaration mechanism. DNS cannot tell you:
+	•	whether reports have arrived
+	•	whether the mailbox is read
+	•	whether senders honor it
+
+But none of that affects whether it is configured.
+
+⸻
+
+The correct mental model (this fixes everything)
+
+You need three distinct states, not two.
+
+1. Absent
+
+DNS record does not exist.
+
+2. Present (DNS-verifiable)
+
+DNS record exists and is syntactically valid.
+
+3. Enforced / Active (policy-verifiable)
+
+DNS explicitly encodes enforcement semantics.
+
+Now map controls correctly:
+
+Control	DNS can prove presence	DNS can prove enforcement
+SPF	✅	❌
+DKIM	✅	❌
+DMARC	✅	✅ (p=)
+MTA-STS	✅	❌ (needs HTTPS fetch)
+TLS-RPT	✅	❌ (by design)
+BIMI	✅	❌
+DNSSEC	✅	✅
+CAA	✅	✅
+
+
+⸻
+
+What your banner should say for it-help.tech
+
+Current (wrong)
+
+Not Configured:
+– TLS-RPT
+
+Correct
+
+Configured (DNS-verified):
+✓ MTA-STS
+✓ TLS-RPT
+✓ BIMI
+
+Optionally:
+
+Enforcement verified:
+✓ DMARC (REJECT)
+✓ DNSSEC
+✓ CAA
+
+This keeps you honest and unassailable.
+
+⸻
+
+Key wording rule (this prevents future bugs)
+
+❌ Never say:
+	•	“not configured”
+	•	“monitoring only”
+	•	“not enforced”
+
+unless DNS explicitly encodes that state
+
+✅ Say instead:
+	•	Present
+	•	Absent
+	•	Enforced (policy-verified)
+	•	Runtime-dependent (only if you want to be fancy)
+
+⸻
+
+Why this matters (hard truth)
+
+If a domain owner sees:
+
+“TLS-RPT not configured”
+
+when it is configured, you lose trust immediately — especially with the kind of users this tool attracts.
+
+You’re already doing the hard part (correct detection).
+This is about classification discipline.
+
+⸻
+
+TL;DR
+	•	You were right — TLS-RPT is being misclassified
+	•	The fix is not UI, it’s state modeling
+	•	Treat TLS-RPT as “Present / Absent” only
+	•	Reserve “enforced” language for controls that encode enforcement in DNS
+
+Once you make that change, this tool becomes extremely hard to argue with — in a good way.
+
+If you want, next I can:
+	•	help you formalize the exact enum values for each control
+	•	sanity-check every banner sentence against “can DNS actually prove this?”
+	•	or help you design an optional deep-inspection mode that fetches HTTPS policies separately
+
+But yes — you caught it again, and you’re correct.
