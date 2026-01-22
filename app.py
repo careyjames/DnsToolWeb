@@ -299,8 +299,10 @@ def view_analysis(analysis_id):
             'selectors': analysis.dkim_selectors or {}
         },
         'registrar_info': {
+            'status': 'success' if analysis.registrar_name else 'error',
             'registrar': analysis.registrar_name,
-            'source': analysis.registrar_source
+            'source': analysis.registrar_source,
+            'message': 'No registrar information found' if not analysis.registrar_name else None
         }
     }
 

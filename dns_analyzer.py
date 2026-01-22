@@ -352,11 +352,16 @@ class DNSAnalyzer:
     
     def get_registrar_info(self, domain: str) -> Dict[str, Any]:
         """Get registrar information via RDAP or WHOIS."""
+        logging.debug(f"Getting registrar info for {domain}")
+        logging.debug(f"IANA RDAP map has {len(self.iana_rdap_map)} entries")
+        
         # Try RDAP first
         rdap_data = self._rdap_lookup(domain)
+        logging.debug(f"RDAP data retrieved: {bool(rdap_data)}, entities: {len(rdap_data.get('entities', []))}")
         
         if rdap_data:
             registrar_name = self._extract_registrar_from_rdap(rdap_data)
+            logging.debug(f"Extracted registrar: {registrar_name}")
             if registrar_name and not registrar_name.isdigit():
                 registrant_name = self._extract_registrant_from_rdap(rdap_data)
                 reg_str = registrar_name
@@ -369,6 +374,7 @@ class DNSAnalyzer:
                 }
         
         # Fallback to WHOIS
+        logging.debug(f"Falling back to WHOIS for {domain}")
         whois_registrar = self._whois_lookup_registrar(domain)
         if whois_registrar:
             return {
@@ -391,8 +397,8 @@ class DNSAnalyzer:
         # Primary lookup using IANA mapping
         endpoints = self.iana_rdap_map.get(tld, [])
         for endpoint in endpoints:
+            url = f"{endpoint.rstrip('/')}/domain/{domain}"
             try:
-                url = f"{endpoint.rstrip('/')}/domain/{domain}"
                 logging.debug(f"RDAP lookup: {url}")
                 # Use a specific User-Agent and Accept header
                 headers = {
@@ -403,6 +409,7 @@ class DNSAnalyzer:
                 if resp.status_code < 400:
                     data = resp.json()
                     if "errorCode" not in data:
+                        logging.debug(f"RDAP success from {url}")
                         return data
             except Exception as e:
                 logging.debug(f"RDAP lookup error for {url}: {e}")
