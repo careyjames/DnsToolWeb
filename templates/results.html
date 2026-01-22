@@ -170,10 +170,13 @@
                                 <p class="text-muted mb-2 small">{{ results.dkim_analysis.message }}</p>
                                 {% if results.dkim_analysis.selectors %}
                                     {% for selector, records in results.dkim_analysis.selectors.items() %}
-                                        <div class="mb-1">
-                                            <small class="text-success">
+                                        <div class="mb-2">
+                                            <small class="text-success d-block">
                                                 <i class="fas fa-check-circle me-1"></i>{{ selector }}
                                             </small>
+                                            {% for record in records %}
+                                                <div class="code-block small mt-1" style="word-break: break-all;">{{ record }}</div>
+                                            {% endfor %}
                                         </div>
                                     {% endfor %}
                                 {% endif %}
