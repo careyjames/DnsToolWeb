@@ -69,6 +69,7 @@
                                     <i class="fas fa-id-card text-primary me-2"></i>
                                     <strong>{{ results.registrar_info.registrar.split('(')[0].strip() if results.registrar_info.registrar else 'Unknown' }}</strong>
                                 </div>
+                                <small class="text-muted d-block" style="font-size: 0.65rem;">Where you pay to own domain</small>
                             </div>
                             <div class="col-md-3 border-end border-primary border-opacity-10">
                                 <small class="text-uppercase text-muted fw-bold d-block" style="font-size: 0.7rem;">Registrant</small>
@@ -80,6 +81,7 @@
                                         <strong>Private / Redacted</strong>
                                     {% endif %}
                                 </div>
+                                <small class="text-muted d-block" style="font-size: 0.65rem;">Domain owner</small>
                             </div>
                             <div class="col-md-3 border-end border-primary border-opacity-10">
                                 <small class="text-uppercase text-muted fw-bold d-block" style="font-size: 0.7rem;">Web Hosting</small>
@@ -87,6 +89,7 @@
                                     <i class="fas fa-server text-primary me-2"></i>
                                     <strong>{{ results.hosting_summary.hosting if results.hosting_summary else 'Unknown' }}</strong>
                                 </div>
+                                <small class="text-muted d-block" style="font-size: 0.65rem;">Where website is hosted</small>
                             </div>
                             <div class="col-md-3">
                                 <small class="text-uppercase text-muted fw-bold d-block" style="font-size: 0.7rem;">DNS Hosting</small>
@@ -94,6 +97,7 @@
                                     <i class="fas fa-network-wired text-primary me-2"></i>
                                     <strong>{{ results.hosting_summary.dns_hosting if results.hosting_summary else 'Standard' }}</strong>
                                 </div>
+                                <small class="text-muted d-block" style="font-size: 0.65rem;">Where DNS records are edited</small>
                             </div>
                         </div>
                     </div>
