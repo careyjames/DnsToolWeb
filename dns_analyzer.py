@@ -440,13 +440,13 @@ class DNSAnalyzer:
         tld = self._get_tld(domain)
         logging.info(f"[RDAP] Looking up domain {domain}, TLD: {tld}")
         
-        # Hardcoded RDAP endpoints for common TLDs (fallback if IANA map fails)
+        # Hardcoded RDAP endpoints for common TLDs (multiple for redundancy)
         hardcoded_endpoints = {
             'com': ['https://rdap.verisign.com/com/v1/'],
             'net': ['https://rdap.verisign.com/net/v1/'],
             'org': ['https://rdap.publicinterestregistry.net/rdap/'],
             'io': ['https://rdap.nic.io/'],
-            'tech': ['https://rdap.centralnic.com/tech/'],
+            'tech': ['https://rdap.centralnic.com/tech/', 'https://rdap.org/'],
             'dev': ['https://rdap.nic.google/'],
             'app': ['https://rdap.nic.google/'],
             'co': ['https://rdap.nic.co/'],
@@ -469,25 +469,36 @@ class DNSAnalyzer:
             'User-Agent': 'Mozilla/5.0 DNS-Analyzer'
         }
         
-        for endpoint in endpoints:
+        # Try all endpoints in parallel for speed
+        def try_endpoint(endpoint):
             url = f"{endpoint.rstrip('/')}/domain/{domain}"
             try:
                 logging.info(f"[RDAP] Trying: {url}")
-                resp = requests.get(url, timeout=8, headers=headers)
-                logging.info(f"[RDAP] Response status: {resp.status_code}")
+                resp = requests.get(url, timeout=6, headers=headers)
+                logging.info(f"[RDAP] Response status: {resp.status_code} from {url}")
                 if resp.status_code < 400:
                     data = resp.json()
                     if "errorCode" not in data:
                         logging.info(f"[RDAP] SUCCESS from {url}")
                         return data
-                    else:
-                        logging.info(f"[RDAP] Error in response: {data.get('errorCode')}")
             except requests.exceptions.Timeout:
                 logging.warning(f"[RDAP] Timeout for {url}")
             except requests.exceptions.ConnectionError as e:
-                logging.warning(f"[RDAP] Connection error for {url}: {e}")
+                logging.warning(f"[RDAP] Connection error for {url}")
             except Exception as e:
-                logging.warning(f"[RDAP] Error for {url}: {type(e).__name__}: {e}")
+                logging.warning(f"[RDAP] Error for {url}: {type(e).__name__}")
+            return None
+        
+        # Query all endpoints in parallel, return first success
+        with ThreadPoolExecutor(max_workers=len(endpoints) + 1) as executor:
+            futures = {executor.submit(try_endpoint, ep): ep for ep in endpoints}
+            for future in futures:
+                try:
+                    result = future.result(timeout=8)
+                    if result:
+                        return result
+                except:
+                    pass
         
         # Universal fallback: rdap.org (redirects to correct registry)
         try:
