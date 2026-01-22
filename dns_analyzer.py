@@ -5,6 +5,7 @@ import subprocess
 import shutil
 import logging
 from typing import Dict, List, Optional, Any
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 try:
     import requests
@@ -59,7 +60,7 @@ class DNSAnalyzer:
         """Populate IANA_RDAP_MAP with TLD to RDAP endpoint mappings."""
         url = "https://data.iana.org/rdap/dns.json"
         try:
-            r = requests.get(url, timeout=10)
+            r = requests.get(url, timeout=5)
             r.raise_for_status()
             j = r.json()
             for svc in j.get("services", []):
@@ -162,25 +163,33 @@ class DNSAnalyzer:
         return []
     
     def get_basic_records(self, domain: str) -> Dict[str, List[str]]:
-        """Get basic DNS records for domain."""
+        """Get basic DNS records for domain (parallel for speed)."""
         record_types = ["A", "AAAA", "MX", "TXT", "NS", "CNAME"]
-        records = {}
+        records = {t: [] for t in record_types}
         
-        for record_type in record_types:
-            records[record_type] = self.dns_query(record_type, domain)
+        def query_type(rtype):
+            return (rtype, self.dns_query(rtype, domain))
+        
+        with ThreadPoolExecutor(max_workers=6) as executor:
+            futures = {executor.submit(query_type, t): t for t in record_types}
+            for future in as_completed(futures, timeout=5):
+                try:
+                    rtype, result = future.result()
+                    records[rtype] = result
+                except:
+                    pass
         
         return records
     
     def get_authoritative_records(self, domain: str) -> Dict[str, List[str]]:
-        """Get DNS records directly from authoritative nameservers."""
+        """Get DNS records directly from authoritative nameservers (optimized for speed)."""
         record_types = ["A", "AAAA", "MX", "TXT", "NS"]
         results = {t: [] for t in record_types}
         
         try:
-            # 1. Find authoritative nameservers
+            # 1. Find authoritative nameservers (quick lookup)
             ns_records = self.dns_query("NS", domain)
             if not ns_records:
-                # Try parent domain if this is a subdomain
                 parts = domain.split(".")
                 if len(parts) > 2:
                     parent = ".".join(parts[-2:])
@@ -189,33 +198,33 @@ class DNSAnalyzer:
             if not ns_records:
                 return results
 
-            # 2. Query nameservers (limit to top 2 for performance)
-            for ns_host in ns_records[:2]:
+            # 2. Use only first nameserver for speed
+            ns_host = ns_records[0]
+            ns_ips = self.dns_query("A", ns_host.rstrip("."))
+            if not ns_ips:
+                return results
+                
+            resolver = dns.resolver.Resolver(configure=False)
+            resolver.nameservers = ns_ips
+            resolver.timeout = 1
+            resolver.lifetime = 1
+            
+            # 3. Query all record types in parallel
+            def query_auth_type(rtype):
                 try:
-                    # Resolve NS hostname to IP
-                    ns_ips = self.dns_query("A", ns_host.rstrip("."))
-                    if not ns_ips:
-                        continue
-                        
-                    resolver = dns.resolver.Resolver(configure=False)
-                    resolver.nameservers = ns_ips
-                    resolver.timeout = 1.5
-                    resolver.lifetime = 1.5
-                    
-                    for rtype in record_types:
-                        # If we already have results for this type from a previous NS, 
-                        # we can skip it to save time, or keep it for redundancy.
-                        # Let's keep it but ensure we don't hang.
-                        try:
-                            answer = resolver.resolve(domain, rtype)
-                            for rr in answer:
-                                val = str(rr).strip('"')
-                                if val not in results[rtype]:
-                                    results[rtype].append(val)
-                        except Exception:
-                            continue
-                except Exception:
-                    continue
+                    answer = resolver.resolve(domain, rtype)
+                    return (rtype, [str(rr).strip('"') for rr in answer])
+                except:
+                    return (rtype, [])
+            
+            with ThreadPoolExecutor(max_workers=5) as executor:
+                futures = {executor.submit(query_auth_type, t): t for t in record_types}
+                for future in as_completed(futures, timeout=3):
+                    try:
+                        rtype, vals = future.result()
+                        results[rtype] = vals
+                    except:
+                        pass
                     
         except Exception as e:
             logging.error(f"Authoritative lookup failed for {domain}: {e}")
@@ -323,19 +332,29 @@ class DNSAnalyzer:
         }
     
     def analyze_dkim(self, domain: str) -> Dict[str, Any]:
-        """Check common DKIM selectors for domain."""
+        """Check common DKIM selectors for domain (parallel for speed)."""
         selectors = ["default._domainkey", "google._domainkey", 
                     "selector1._domainkey", "selector2._domainkey"]
         
         found_selectors = {}
         
-        for selector in selectors:
+        def check_selector(selector):
             records = self.dns_query("TXT", f"{selector}.{domain}")
             if records:
-                # Check if it's actually a DKIM record
                 dkim_records = [r for r in records if "v=dkim1" in r.lower() or "k=" in r.lower()]
                 if dkim_records:
-                    found_selectors[selector] = dkim_records
+                    return (selector, dkim_records)
+            return None
+        
+        with ThreadPoolExecutor(max_workers=4) as executor:
+            futures = {executor.submit(check_selector, s): s for s in selectors}
+            for future in as_completed(futures, timeout=5):
+                try:
+                    result = future.result()
+                    if result:
+                        found_selectors[result[0]] = result[1]
+                except:
+                    pass
         
         if found_selectors:
             status = 'success'
@@ -432,7 +451,7 @@ class DNSAnalyzer:
             url = f"{endpoint.rstrip('/')}/domain/{domain}"
             try:
                 logging.info(f"[RDAP] Trying: {url}")
-                resp = requests.get(url, timeout=8, headers=headers)
+                resp = requests.get(url, timeout=4, headers=headers)
                 logging.info(f"[RDAP] Response status: {resp.status_code}")
                 if resp.status_code < 400:
                     data = resp.json()
@@ -452,7 +471,7 @@ class DNSAnalyzer:
         try:
             url = f"https://rdap.org/domain/{domain}"
             logging.info(f"[RDAP] Universal fallback: {url}")
-            resp = requests.get(url, timeout=8, headers=headers, allow_redirects=True)
+            resp = requests.get(url, timeout=4, headers=headers, allow_redirects=True)
             logging.info(f"[RDAP] Fallback response status: {resp.status_code}")
             if resp.status_code < 400:
                 data = resp.json()
@@ -549,7 +568,7 @@ class DNSAnalyzer:
                 ["whois", domain], 
                 capture_output=True, 
                 text=True, 
-                timeout=10
+                timeout=5
             )
             
             registrar = None
@@ -636,9 +655,30 @@ class DNSAnalyzer:
         }
 
     def analyze_domain(self, domain: str) -> Dict[str, Any]:
-        """Perform complete DNS analysis of domain."""
-        basic = self.get_basic_records(domain)
-        auth = self.get_authoritative_records(domain)
+        """Perform complete DNS analysis of domain with parallel lookups for speed."""
+        
+        # Run all lookups in parallel for speed (5-10s target)
+        with ThreadPoolExecutor(max_workers=6) as executor:
+            futures = {
+                executor.submit(self.get_basic_records, domain): 'basic',
+                executor.submit(self.get_authoritative_records, domain): 'auth',
+                executor.submit(self.analyze_spf, domain): 'spf',
+                executor.submit(self.analyze_dmarc, domain): 'dmarc',
+                executor.submit(self.analyze_dkim, domain): 'dkim',
+                executor.submit(self.get_registrar_info, domain): 'registrar',
+            }
+            
+            results_map = {}
+            for future in as_completed(futures, timeout=15):
+                key = futures[future]
+                try:
+                    results_map[key] = future.result()
+                except Exception as e:
+                    logging.error(f"Error in {key} lookup: {e}")
+                    results_map[key] = {} if key in ['basic', 'auth'] else {'status': 'error'}
+        
+        basic = results_map.get('basic', {})
+        auth = results_map.get('auth', {})
         
         # Determine propagation status
         propagation_status = {}
@@ -663,10 +703,10 @@ class DNSAnalyzer:
             'basic_records': basic,
             'authoritative_records': auth,
             'propagation_status': propagation_status,
-            'spf_analysis': self.analyze_spf(domain),
-            'dmarc_analysis': self.analyze_dmarc(domain),
-            'dkim_analysis': self.analyze_dkim(domain),
-            'registrar_info': self.get_registrar_info(domain)
+            'spf_analysis': results_map.get('spf', {'status': 'error'}),
+            'dmarc_analysis': results_map.get('dmarc', {'status': 'error'}),
+            'dkim_analysis': results_map.get('dkim', {'status': 'error'}),
+            'registrar_info': results_map.get('registrar', {'status': 'error', 'registrar': None})
         }
         
         # Add Hosting/Who summary
