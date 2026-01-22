@@ -4,8 +4,14 @@ import os
 import subprocess
 import shutil
 import logging
+import time
 from typing import Dict, List, Optional, Any
 from concurrent.futures import ThreadPoolExecutor, as_completed
+
+# Simple in-memory RDAP cache to avoid hammering registries
+# Key: domain, Value: (timestamp, data)
+_rdap_cache: Dict[str, tuple] = {}
+_RDAP_CACHE_TTL = 300  # 5 minutes - short enough for fresh data, long enough to avoid rate limits
 
 try:
     import requests
@@ -432,7 +438,17 @@ class DNSAnalyzer:
     def _rdap_lookup(self, domain: str) -> Dict:
         """Return RDAP JSON data for domain using whodap library with retry."""
         import whodap
-        import time
+        
+        global _rdap_cache
+        
+        # Check cache first to avoid hammering registries
+        cache_key = domain.lower()
+        if cache_key in _rdap_cache:
+            cached_time, cached_data = _rdap_cache[cache_key]
+            age = time.time() - cached_time
+            if age < _RDAP_CACHE_TTL:
+                logging.warning(f"[RDAP] Using cached data for {domain} (age: {age:.0f}s)")
+                return cached_data
         
         tld = self._get_tld(domain)
         domain_name = domain.rsplit('.', 1)[0] if '.' in domain else domain
@@ -445,6 +461,8 @@ class DNSAnalyzer:
                 response = whodap.lookup_domain(domain=domain_name, tld=tld)
                 data = response.to_dict()
                 logging.warning(f"[RDAP] whodap SUCCESS - got {len(data)} keys")
+                # Cache the result
+                _rdap_cache[cache_key] = (time.time(), data)
                 return data
             except Exception as e:
                 error_str = str(e).lower()
@@ -484,6 +502,8 @@ class DNSAnalyzer:
                 data = resp.json()
                 if "errorCode" not in data:
                     logging.warning(f"[RDAP] Direct request SUCCESS - got {len(data)} keys")
+                    # Cache the result
+                    _rdap_cache[cache_key] = (time.time(), data)
                     return data
                 else:
                     logging.warning(f"[RDAP] Direct request returned error: {data.get('errorCode')}")
