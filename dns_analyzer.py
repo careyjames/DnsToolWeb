@@ -387,28 +387,45 @@ class DNSAnalyzer:
     def _rdap_lookup(self, domain: str) -> Dict:
         """Return RDAP JSON data for domain using IANA endpoints."""
         tld = self._get_tld(domain)
-        endpoints = self.iana_rdap_map.get(tld, [])
         
+        # Primary lookup using IANA mapping
+        endpoints = self.iana_rdap_map.get(tld, [])
         for endpoint in endpoints:
-            url = f"{endpoint.rstrip('/')}/domain/{domain}"
             try:
-                resp = requests.get(url, timeout=10)
+                url = f"{endpoint.rstrip('/')}/domain/{domain}"
+                logging.debug(f"RDAP lookup: {url}")
+                # Use a specific User-Agent and Accept header
+                headers = {
+                    'Accept': 'application/rdap+json',
+                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+                }
+                resp = requests.get(url, timeout=10, headers=headers)
                 if resp.status_code < 400:
                     data = resp.json()
                     if "errorCode" not in data:
                         return data
             except Exception as e:
-                logging.debug(f"RDAP lookup error: {e}")
+                logging.debug(f"RDAP lookup error for {url}: {e}")
         
-        # Fallback to rdap.org
-        try:
-            resp = requests.get(f"https://rdap.org/domain/{domain}", timeout=10)
-            if resp.status_code < 400:
-                data = resp.json()
-                if "errorCode" not in data:
-                    return data
-        except Exception as e:
-            logging.debug(f"RDAP fallback lookup error: {e}")
+        # Fallback 1: Common RDAP servers for tech and other TLDs
+        fallbacks = [
+            f"https://rdap.centralnic.com/{tld}/domain/{domain}",
+            f"https://rdap.verisign.com/com/v1/domain/{domain}",
+            f"https://rdap.publicinterestregistry.net/rdap/domain/{domain}",
+            f"https://rdap.markmonitor.com/rdap/domain/{domain}",
+            f"https://rdap.org/domain/{domain}"
+        ]
+        
+        for url in fallbacks:
+            try:
+                logging.debug(f"RDAP fallback lookup: {url}")
+                resp = requests.get(url, timeout=10, headers={'Accept': 'application/rdap+json'})
+                if resp.status_code < 400:
+                    data = resp.json()
+                    if "errorCode" not in data:
+                        return data
+            except Exception as e:
+                logging.debug(f"RDAP fallback lookup error for {url}: {e}")
         
         return {}
     
