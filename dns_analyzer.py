@@ -439,7 +439,21 @@ class DNSAnalyzer:
                         return res
             return None
             
-        return find_registrar(entities)
+        # First pass: direct check
+        result = find_registrar(entities)
+        if result:
+            return result
+            
+        # Second pass: check notices or links if no registrar entity found
+        links = rdap_data.get("links", [])
+        for link in links:
+            if link.get("rel") == "related" and "registrar" in link.get("href", "").lower():
+                # Extract potential name from title
+                title = link.get("title", "")
+                if "Registrar" in title:
+                    return title.replace("URL of", "").replace("RDAP Record", "").strip()
+
+        return None
 
     def _extract_registrant_from_rdap(self, rdap_data: Dict) -> Optional[str]:
         """Extract registrant name from RDAP data."""
@@ -484,30 +498,27 @@ class DNSAnalyzer:
             registrar = None
             registrant = None
             
-            for line in result.stdout.splitlines():
-                line = line.strip()
-                # Wider registrar matching
-                if not registrar:
-                    if re.search(r"(?i)^(registrar|sponsoring registrar|registrar name|registrar\:)\s*:", line):
-                        parts = line.split(":", 1)
-                        if len(parts) == 2:
-                            val = parts[1].strip()
-                            if val and not val.lower().startswith('http') and val.lower() != 'not available':
-                                registrar = val
-                
-                # Wider registrant matching
-                if not registrant:
-                    if re.search(r"(?i)^(registrant organization|registrant|org|registrant name|registrant\:)\s*:", line):
-                        parts = line.split(":", 1)
-                        if len(parts) == 2:
-                            val = parts[1].strip()
-                            if val and val.lower() not in ["redacted", "data protected", "not disclosed", "withheld", "selectively withheld"]:
-                                registrant = val
+            output = result.stdout
+            
+            # Wider registrar matching with refined patterns
+            registrar_match = re.search(r"(?i)^(?:registrar|sponsoring registrar|registrar name|registrar\:|registrar\s+url)\s*:\s*(.+)$", output, re.MULTILINE)
+            if registrar_match:
+                val = registrar_match.group(1).strip()
+                if val and not val.lower().startswith('http') and val.lower() != 'not available':
+                    registrar = val
+                    
+            # Wider registrant matching
+            registrant_match = re.search(r"(?i)^(?:registrant organization|registrant|org|registrant name|registrant\:)\s*:\s*(.+)$", output, re.MULTILINE)
+            if registrant_match:
+                val = registrant_match.group(1).strip()
+                if val and val.lower() not in ["redacted", "data protected", "not disclosed", "withheld", "selectively withheld"]:
+                    registrant = val
             
             if registrar and registrant:
                 return f"{registrar} (Registrant: {registrant})"
             return registrar or registrant
-        except Exception:
+        except Exception as e:
+            logging.error(f"WHOIS lookup error for {domain}: {e}")
             return None
     
     def get_hosting_info(self, domain: str, results: Dict) -> Dict[str, str]:
