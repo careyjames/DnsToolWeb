@@ -406,12 +406,12 @@ class DNSAnalyzer:
             whois_future = executor.submit(do_whois)
             
             try:
-                rdap_result = rdap_future.result(timeout=5)
+                rdap_result = rdap_future.result(timeout=10)
             except:
                 pass
             
             try:
-                whois_result = whois_future.result(timeout=5)
+                whois_result = whois_future.result(timeout=10)
             except:
                 pass
         
@@ -470,7 +470,7 @@ class DNSAnalyzer:
             url = f"{endpoint.rstrip('/')}/domain/{domain}"
             try:
                 logging.info(f"[RDAP] Trying: {url}")
-                resp = requests.get(url, timeout=4, headers=headers)
+                resp = requests.get(url, timeout=8, headers=headers)
                 logging.info(f"[RDAP] Response status: {resp.status_code}")
                 if resp.status_code < 400:
                     data = resp.json()
@@ -490,7 +490,7 @@ class DNSAnalyzer:
         try:
             url = f"https://rdap.org/domain/{domain}"
             logging.info(f"[RDAP] Universal fallback: {url}")
-            resp = requests.get(url, timeout=4, headers=headers, allow_redirects=True)
+            resp = requests.get(url, timeout=8, headers=headers, allow_redirects=True)
             logging.info(f"[RDAP] Fallback response status: {resp.status_code}")
             if resp.status_code < 400:
                 data = resp.json()
