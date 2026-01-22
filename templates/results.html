@@ -103,7 +103,7 @@
 
         <div class="row">
             <!-- Email Security Section -->
-            <div class="col-lg-6 mb-4">
+            <div class="col-12 mb-4">
                 <div class="card">
                     <div class="card-header">
                         <h5 class="mb-0">
@@ -111,102 +111,74 @@
                         </h5>
                     </div>
                     <div class="card-body">
-                        <!-- SPF Analysis -->
-                        <div class="mb-4">
-                            <h6 class="d-flex align-items-center">
-                                <i class="fas fa-envelope me-2"></i>SPF Record
-                                <span class="badge bg-{{ 'success' if results.spf_analysis.status == 'success' else 'danger' if results.spf_analysis.status == 'error' else 'warning' }} ms-2">
-                                    {{ results.spf_analysis.status|title }}
-                                </span>
-                            </h6>
-                            <p class="text-muted mb-2">{{ results.spf_analysis.message }}</p>
-                            {% if results.spf_analysis.valid_records %}
-                                {% for record in results.spf_analysis.valid_records %}
-                                    <div class="code-block">{{ record }}</div>
-                                {% endfor %}
-                            {% endif %}
-                            {% if results.spf_analysis.spf_like %}
-                                <small class="text-warning">
-                                    <i class="fas fa-exclamation-triangle me-1"></i>
-                                    Found SPF-like records that may be invalid
-                                </small>
-                            {% endif %}
-                        </div>
-
-                        <!-- DMARC Analysis -->
-                        <div class="mb-4">
-                            <h6 class="d-flex align-items-center">
-                                <i class="fas fa-lock me-2"></i>DMARC Policy
-                                <span class="badge bg-{{ 'success' if results.dmarc_analysis.status == 'success' else 'danger' if results.dmarc_analysis.status == 'error' else 'warning' }} ms-2">
-                                    {{ results.dmarc_analysis.status|title }}
-                                </span>
-                                {% if results.dmarc_analysis.policy %}
-                                    <span class="badge bg-secondary ms-1">{{ results.dmarc_analysis.policy|upper }}</span>
+                        <div class="row">
+                            <!-- SPF Analysis -->
+                            <div class="col-md-4 mb-3 mb-md-0">
+                                <h6 class="d-flex align-items-center">
+                                    <i class="fas fa-envelope me-2"></i>SPF Record
+                                    <span class="badge bg-{{ 'success' if results.spf_analysis.status == 'success' else 'danger' if results.spf_analysis.status == 'error' else 'warning' }} ms-2">
+                                        {{ results.spf_analysis.status|title }}
+                                    </span>
+                                </h6>
+                                <p class="text-muted mb-2 small">{{ results.spf_analysis.message }}</p>
+                                {% if results.spf_analysis.valid_records %}
+                                    {% for record in results.spf_analysis.valid_records %}
+                                        <div class="code-block small">{{ record }}</div>
+                                    {% endfor %}
                                 {% endif %}
-                            </h6>
-                            <p class="text-muted mb-2">{{ results.dmarc_analysis.message }}</p>
-                            {% if results.dmarc_analysis.valid_records %}
-                                {% for record in results.dmarc_analysis.valid_records %}
-                                    <div class="code-block">{{ record }}</div>
-                                {% endfor %}
-                            {% endif %}
-                        </div>
-
-                        <!-- DKIM Analysis -->
-                        <div>
-                            <h6 class="d-flex align-items-center">
-                                <i class="fas fa-key me-2"></i>DKIM Records
-                                <span class="badge bg-{{ 'success' if results.dkim_analysis.status == 'success' else 'warning' }} ms-2">
-                                    {{ results.dkim_analysis.status|title }}
-                                </span>
-                            </h6>
-                            <p class="text-muted mb-2">{{ results.dkim_analysis.message }}</p>
-                            {% if results.dkim_analysis.selectors %}
-                                {% for selector, records in results.dkim_analysis.selectors.items() %}
-                                    <div class="mb-2">
-                                        <small class="text-success">
-                                            <i class="fas fa-check-circle me-1"></i>{{ selector }}
+                                {% if results.spf_analysis.spf_like %}
+                                    <div class="mt-2 p-2 bg-danger bg-opacity-10 border border-danger rounded">
+                                        <small class="text-danger d-block fw-bold">
+                                            <i class="fas fa-exclamation-circle me-1"></i>
+                                            Duplicate SPF records found!
                                         </small>
+                                        <small class="text-muted d-block">Only one SPF record is allowed per domain. Multiple records can cause delivery issues.</small>
+                                        {% for record in results.spf_analysis.spf_like %}
+                                            <div class="code-block small mt-1 border-danger text-danger">{{ record }}</div>
+                                        {% endfor %}
                                     </div>
-                                {% endfor %}
-                            {% endif %}
-                        </div>
-                    </div>
-                </div>
-            </div>
+                                {% endif %}
+                            </div>
 
-            <!-- Registrar Information -->
-            <div class="col-lg-6 mb-4">
-                <div class="card">
-                    <div class="card-header">
-                        <h5 class="mb-0">
-                            <i class="fas fa-building me-2"></i>Registrar Information
-                        </h5>
-                    </div>
-                    <div class="card-body">
-                        {% if results.registrar_info.status == 'success' %}
-                            <div class="mb-3">
-                                <small class="text-muted d-block">Registrar</small>
-                                <strong>{{ results.registrar_info.registrar.split('(')[0].strip() }}</strong>
+                            <!-- DMARC Analysis -->
+                            <div class="col-md-4 mb-3 mb-md-0">
+                                <h6 class="d-flex align-items-center">
+                                    <i class="fas fa-lock me-2"></i>DMARC Policy
+                                    <span class="badge bg-{{ 'success' if results.dmarc_analysis.status == 'success' else 'danger' if results.dmarc_analysis.status == 'error' else 'warning' }} ms-2">
+                                        {{ results.dmarc_analysis.status|title }}
+                                    </span>
+                                    {% if results.dmarc_analysis.policy %}
+                                        <span class="badge bg-{{ 'success' if results.dmarc_analysis.policy == 'reject' else 'warning' if results.dmarc_analysis.policy == 'quarantine' else 'secondary' }} ms-1">{{ results.dmarc_analysis.policy|upper }}</span>
+                                    {% endif %}
+                                </h6>
+                                <p class="text-muted mb-2 small">{{ results.dmarc_analysis.message }}</p>
+                                {% if results.dmarc_analysis.valid_records %}
+                                    {% for record in results.dmarc_analysis.valid_records %}
+                                        <div class="code-block small">{{ record }}</div>
+                                    {% endfor %}
+                                {% endif %}
                             </div>
-                            {% if 'Registrant:' in results.registrar_info.registrar %}
-                                <div class="mb-3">
-                                    <small class="text-muted d-block">Registrant</small>
-                                    <strong>{{ results.registrar_info.registrar.split('Registrant:')[1].strip(') ') }}</strong>
-                                </div>
-                            {% endif %}
-                            <div class="mt-2">
-                                <small class="text-muted">
-                                    <i class="fas fa-info-circle me-1"></i>
-                                    Source: {{ results.registrar_info.source }}
-                                </small>
+
+                            <!-- DKIM Analysis -->
+                            <div class="col-md-4">
+                                <h6 class="d-flex align-items-center">
+                                    <i class="fas fa-key me-2"></i>DKIM Records
+                                    <span class="badge bg-{{ 'success' if results.dkim_analysis.status == 'success' else 'warning' }} ms-2">
+                                        {{ results.dkim_analysis.status|title }}
+                                    </span>
+                                </h6>
+                                <p class="text-muted mb-2 small">{{ results.dkim_analysis.message }}</p>
+                                {% if results.dkim_analysis.selectors %}
+                                    {% for selector, records in results.dkim_analysis.selectors.items() %}
+                                        <div class="mb-1">
+                                            <small class="text-success">
+                                                <i class="fas fa-check-circle me-1"></i>{{ selector }}
+                                            </small>
+                                        </div>
+                                    {% endfor %}
+                                {% endif %}
                             </div>
-                        {% else %}
-                            <div class="d-flex align-items-center text-muted">
-                                <i class="fas fa-exclamation-triangle text-warning me-2"></i>
-                                {{ results.registrar_info.message or 'No registrar information available' }}
-                            </div>
-                        {% endif %}
+                        </div>
                     </div>
                 </div>
             </div>
