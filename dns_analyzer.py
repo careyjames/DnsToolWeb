@@ -430,23 +430,34 @@ class DNSAnalyzer:
         }
     
     def _rdap_lookup(self, domain: str) -> Dict:
-        """Return RDAP JSON data for domain using whodap library."""
+        """Return RDAP JSON data for domain using whodap library with retry."""
         import whodap
+        import time
         
         tld = self._get_tld(domain)
         domain_name = domain.rsplit('.', 1)[0] if '.' in domain else domain
         
         logging.warning(f"[RDAP] whodap lookup: domain={domain_name}, tld={tld}")
         
-        try:
-            response = whodap.lookup_domain(domain=domain_name, tld=tld)
-            data = response.to_dict()
-            logging.warning(f"[RDAP] whodap SUCCESS - got {len(data)} keys")
-            return data
-        except Exception as e:
-            logging.warning(f"[RDAP] whodap FAILED: {type(e).__name__}: {e}")
+        # Try whodap with retry on rate limit
+        for attempt in range(2):
+            try:
+                response = whodap.lookup_domain(domain=domain_name, tld=tld)
+                data = response.to_dict()
+                logging.warning(f"[RDAP] whodap SUCCESS - got {len(data)} keys")
+                return data
+            except Exception as e:
+                error_str = str(e).lower()
+                logging.warning(f"[RDAP] whodap attempt {attempt+1} FAILED: {type(e).__name__}: {e}")
+                if 'rate' in error_str or '429' in error_str:
+                    if attempt == 0:
+                        logging.warning("[RDAP] Rate limited, waiting 2s before retry...")
+                        time.sleep(2)
+                        continue
+                break
         
         # Fallback to direct requests if whodap fails
+        logging.warning("[RDAP] Falling back to direct requests")
         headers = {
             'Accept': 'application/rdap+json',
             'User-Agent': 'DNS-Analyzer/1.0'
@@ -466,13 +477,20 @@ class DNSAnalyzer:
         url = f"{endpoint.rstrip('/')}/domain/{domain}"
         
         try:
+            logging.warning(f"[RDAP] Direct request to: {url}")
             resp = requests.get(url, timeout=10, headers=headers, allow_redirects=True)
+            logging.warning(f"[RDAP] Direct request status: {resp.status_code}")
             if resp.status_code < 400:
                 data = resp.json()
                 if "errorCode" not in data:
+                    logging.warning(f"[RDAP] Direct request SUCCESS - got {len(data)} keys")
                     return data
-        except Exception:
-            pass
+                else:
+                    logging.warning(f"[RDAP] Direct request returned error: {data.get('errorCode')}")
+            elif resp.status_code == 429:
+                logging.warning("[RDAP] Direct request also rate limited (429)")
+        except Exception as e:
+            logging.warning(f"[RDAP] Direct request FAILED: {type(e).__name__}: {e}")
         
         return {}
     
