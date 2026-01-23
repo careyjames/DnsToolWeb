@@ -6,7 +6,7 @@ import shutil
 import logging
 import time
 from typing import Dict, List, Optional, Any
-from concurrent.futures import ThreadPoolExecutor, as_completed
+from concurrent.futures import ThreadPoolExecutor, as_completed, TimeoutError as FuturesTimeoutError
 
 # Simple in-memory RDAP cache to avoid hammering registries
 # Key: domain, Value: (timestamp, data)
@@ -1155,13 +1155,27 @@ class DNSAnalyzer:
             }
             
             results_map = {}
-            for future in as_completed(futures, timeout=15):
-                key = futures[future]
-                try:
-                    results_map[key] = future.result()
-                except Exception as e:
-                    logging.error(f"Error in {key} lookup: {e}")
-                    results_map[key] = {} if key in ['basic', 'auth'] else {'status': 'error'}
+            try:
+                for future in as_completed(futures, timeout=20):
+                    key = futures[future]
+                    try:
+                        results_map[key] = future.result()
+                    except Exception as e:
+                        logging.error(f"Error in {key} lookup: {e}")
+                        results_map[key] = {} if key in ['basic', 'auth'] else {'status': 'error'}
+            except FuturesTimeoutError:
+                # Some futures timed out - continue with what we have
+                logging.warning(f"Some lookups timed out for {domain}, continuing with partial results")
+                for future, key in futures.items():
+                    if key not in results_map:
+                        if future.done():
+                            try:
+                                results_map[key] = future.result()
+                            except Exception:
+                                results_map[key] = {} if key in ['basic', 'auth'] else {'status': 'error'}
+                        else:
+                            logging.warning(f"Lookup {key} timed out for {domain}")
+                            results_map[key] = {} if key in ['basic', 'auth'] else {'status': 'timeout'}
         
         basic = results_map.get('basic', {})
         auth = results_map.get('auth', {})
