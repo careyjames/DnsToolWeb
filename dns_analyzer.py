@@ -1236,7 +1236,7 @@ class DNSAnalyzer:
         
         # Check DMARC policy (DNS-verifiable enforcement level)
         dmarc = results.get('dmarc_analysis', {})
-        dmarc_policy = dmarc.get('policy', '').lower()
+        dmarc_policy = (dmarc.get('policy') or '').lower()
         if dmarc.get('status') != 'success':
             issues.append('No DMARC policy (email can be spoofed)')
         elif dmarc_policy == 'none':
@@ -1341,7 +1341,7 @@ class DNSAnalyzer:
         spf_ok = results.get('spf_analysis', {}).get('status') == 'success'
         dmarc = results.get('dmarc_analysis', {})
         dmarc_ok = dmarc.get('status') == 'success'
-        dmarc_policy = dmarc.get('policy', '').lower()
+        dmarc_policy = (dmarc.get('policy') or '').lower()
         dmarc_reject = dmarc_policy == 'reject'
         dmarc_quarantine = dmarc_policy == 'quarantine'
         dkim_ok = results.get('dkim_analysis', {}).get('status') == 'success'
