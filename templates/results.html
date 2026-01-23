@@ -296,8 +296,8 @@
                             <div class="col-md-4">
                                 <h6 class="d-flex align-items-center">
                                     <i class="fas fa-key me-2"></i>DKIM Records
-                                    <span class="badge bg-{{ 'success' if results.dkim_analysis.status == 'success' else 'warning' }} ms-2">
-                                        {{ results.dkim_analysis.status|title }}
+                                    <span class="badge bg-{{ 'success' if results.dkim_analysis.status == 'success' else 'secondary' }} ms-2">
+                                        {{ 'Found' if results.dkim_analysis.status == 'success' else 'Not Discoverable' }}
                                     </span>
                                 </h6>
                                 <p class="text-muted mb-2 small">{{ results.dkim_analysis.message }}</p>

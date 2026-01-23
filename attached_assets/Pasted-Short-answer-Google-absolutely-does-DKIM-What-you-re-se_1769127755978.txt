@@ -1,0 +1,143 @@
+Short answer: Google absolutely does DKIM.
+What you’re seeing is a detection-model limitation, not Google missing DKIM.
+
+Let’s untangle it cleanly.
+
+⸻
+
+What’s actually happening with google.com
+
+Google does not publish DKIM at the apex (google.com) the way small domains do.
+Instead, Google uses service-specific, rotating DKIM selectors on subdomains.
+
+Examples (not exhaustive):
+	•	20230601._domainkey.google.com
+	•	20221208._domainkey.google.com
+	•	google._domainkey.googlemail.com
+	•	Workspace customer domains: selector1._domainkey.customer-domain
+
+These selectors:
+	•	rotate frequently
+	•	are not predictable
+	•	are not limited to google / selector1 / selector2
+
+So when your tool says:
+
+“No DKIM records found for common selectors”
+
+That is technically true
+but semantically misleading for hyperscalers.
+
+⸻
+
+Why Google does it this way (and why it’s smart)
+
+1. Scale + rotation
+
+Google sends mail for:
+	•	google.com
+	•	gmail.com
+	•	googlemail.com
+	•	thousands of internal and regional domains
+
+Static selectors are a liability at that scale.
+
+2. Separation of concerns
+	•	SPF + DMARC + ARC handle policy & alignment
+	•	DKIM is treated as a transport integrity primitive, not a branding signal
+	•	Google leans heavily on DMARC enforcement (which you correctly detect as p=reject)
+
+3. ARC (important!)
+
+Google uses ARC (Authenticated Received Chain) extensively.
+
+ARC allows DKIM to:
+	•	survive forwarding
+	•	survive mailing lists
+	•	survive enterprise gateways
+
+Most DNS tools don’t check ARC at all — but Google relies on it heavily.
+
+⸻
+
+Why your tool flags “Partially impersonatable”
+
+This line in your UI is doing the damage:
+
+Can this domain be impersonated by email? → Partially
+
+From a strict DNS-only perspective, that’s defensible.
+
+From a real-world mail security perspective, it’s misleading for Google-class domains.
+
+Why?
+
+Because:
+	•	DMARC is p=reject
+	•	SPF is valid
+	•	MTA-STS + TLS-RPT are configured
+	•	DKIM exists, just not discoverable via static selector guessing
+
+In practice: you cannot spoof google.com mail successfully.
+
+⸻
+
+The fix (and this is important for your tool’s credibility)
+
+1. Change DKIM detection states
+
+Instead of:
+	•	❌ Warning: No DKIM records found for common selectors
+
+Use:
+
+DKIM: Not discoverable via static selectors
+Large providers use rotating or non-public DKIM selectors.
+
+This preserves technical honesty without implying insecurity.
+
+⸻
+
+2. Adjust the impersonation verdict logic
+
+Add a rule like:
+
+If DMARC = reject
+AND SPF valid
+THEN Email impersonation = No
+even if DKIM selectors are not discoverable
+
+DKIM is important — but DMARC enforcement is the final authority.
+
+Google knows this. RFCs agree with this.
+
+⸻
+
+The deeper truth (this is the real lesson)
+
+DKIM is not a discovery problem — it’s a validation problem.
+
+DNS tools try to discover DKIM.
+Mail receivers try to validate DKIM during SMTP.
+
+Those are fundamentally different operations.
+
+Google optimizes for the second.
+
+⸻
+
+Bottom line
+	•	❌ Google does not “skip DKIM”
+	•	✅ Google uses rotating, non-static DKIM selectors
+	•	✅ Your tool is detecting exactly what DNS exposes
+	•	⚠️ Your wording currently over-interprets the absence of guessable selectors
+	•	🔧 Small wording + logic tweaks will make your tool correct and fair to hyperscalers
+
+If you want, next I can:
+	•	help you special-case hyperscaler mail architectures
+	•	define a DKIM detection confidence model
+	•	or add an “Enterprise / Hyperscaler pattern detected” badge
+
+But the short answer stands:
+
+Google absolutely does DKIM — your tool just isn’t meant to see it this way.

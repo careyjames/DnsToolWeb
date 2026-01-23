@@ -382,8 +382,9 @@ class DNSAnalyzer:
             status = 'success'
             message = f'Found DKIM records for {len(found_selectors)} selector(s)'
         else:
-            status = 'warning'
-            message = 'No DKIM records found for common selectors'
+            # Use neutral status - large providers use rotating/non-public selectors
+            status = 'info'
+            message = 'DKIM not discoverable via common selectors (large providers use rotating selectors)'
         
         return {
             'status': status,
@@ -1316,6 +1317,9 @@ class DNSAnalyzer:
         verdicts = {}
         
         # Email Security verdict
+        # Key insight: DMARC enforcement is the final authority, not DKIM discoverability
+        # Large providers (Google, Microsoft) use rotating DKIM selectors that aren't discoverable
+        # but their DMARC=reject policy still blocks spoofing effectively
         spf_ok = results.get('spf_analysis', {}).get('status') == 'success'
         dmarc = results.get('dmarc_analysis', {})
         dmarc_ok = dmarc.get('status') == 'success'
@@ -1324,11 +1328,12 @@ class DNSAnalyzer:
         dmarc_quarantine = dmarc_policy == 'quarantine'
         dkim_ok = results.get('dkim_analysis', {}).get('status') == 'success'
         
-        if spf_ok and dmarc_ok and dmarc_reject and dkim_ok:
-            verdicts['email'] = 'Receivers can cryptographically verify mail and will reject spoofed messages.'
+        # DMARC=reject + SPF valid = No impersonation, regardless of DKIM discoverability
+        if spf_ok and dmarc_ok and dmarc_reject:
+            verdicts['email'] = 'DMARC policy is reject - spoofed messages will be blocked by receiving servers.'
             verdicts['email_answer'] = 'No'
-        elif spf_ok and dmarc_ok and dmarc_quarantine and dkim_ok:
-            verdicts['email'] = 'Mail authentication enforced with quarantine - spoofed messages will be flagged as spam.'
+        elif spf_ok and dmarc_ok and dmarc_quarantine:
+            verdicts['email'] = 'DMARC policy is quarantine - spoofed messages will be flagged as spam.'
             verdicts['email_answer'] = 'Mostly No'
         elif spf_ok and dmarc_ok and dmarc_policy == 'none':
             verdicts['email'] = 'Mail authentication is configured but DMARC is in monitoring mode - spoofed mail may still be delivered.'
