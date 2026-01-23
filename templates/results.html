@@ -9,14 +9,93 @@
     <link href="{{ url_for('static', filename='css/custom.css') }}" rel="stylesheet">
     <style>
         @media print {
-            .navbar, .btn, button, #exportBtn, .no-print { display: none !important; }
-            body { background: white !important; color: black !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-            .container { max-width: 100% !important; padding: 0 !important; margin: 0 !important; }
-            .card { break-inside: avoid; margin-bottom: 15px !important; border: 1px solid #dee2e6 !important; }
-            .card-header { background-color: #e9ecef !important; }
-            .code-block { background-color: #f8f9fa !important; border: 1px solid #dee2e6 !important; }
-            .badge { border: 1px solid currentColor; }
-            a { text-decoration: none !important; }
+            /* Hide non-printable elements */
+            .navbar, .btn, button, .no-print { display: none !important; }
+            
+            /* Force light background and dark text */
+            html, body { 
+                background: white !important; 
+                color: #212529 !important; 
+                -webkit-print-color-adjust: exact; 
+                print-color-adjust: exact; 
+            }
+            
+            /* Override dark theme data attribute */
+            [data-bs-theme="dark"] { 
+                --bs-body-bg: white !important;
+                --bs-body-color: #212529 !important;
+            }
+            
+            /* Container */
+            .container { max-width: 100% !important; padding: 0 15px !important; margin: 0 !important; }
+            
+            /* Cards */
+            .card { 
+                break-inside: avoid; 
+                margin-bottom: 15px !important; 
+                border: 1px solid #dee2e6 !important; 
+                background: white !important;
+                color: #212529 !important;
+            }
+            .card-header { 
+                background-color: #f8f9fa !important; 
+                color: #212529 !important;
+                border-bottom: 1px solid #dee2e6 !important;
+            }
+            .card-body { 
+                background: white !important; 
+                color: #212529 !important; 
+            }
+            
+            /* Text colors */
+            .text-muted { color: #6c757d !important; }
+            .text-success { color: #198754 !important; }
+            .text-warning { color: #cc8800 !important; }
+            .text-danger { color: #dc3545 !important; }
+            .text-info { color: #0d6efd !important; }
+            .text-primary { color: #0d6efd !important; }
+            .text-secondary { color: #6c757d !important; }
+            h1, h2, h3, h4, h5, h6, p, span, div, small, strong { color: inherit !important; }
+            
+            /* Code blocks */
+            .code-block { 
+                background-color: #f8f9fa !important; 
+                border: 1px solid #dee2e6 !important; 
+                color: #212529 !important;
+            }
+            
+            /* Badges - keep colors but ensure visibility */
+            .badge { 
+                border: 1px solid currentColor !important; 
+                print-color-adjust: exact !important;
+                -webkit-print-color-adjust: exact !important;
+            }
+            .badge.bg-success { background-color: #198754 !important; color: white !important; }
+            .badge.bg-warning { background-color: #ffc107 !important; color: #212529 !important; }
+            .badge.bg-danger { background-color: #dc3545 !important; color: white !important; }
+            .badge.bg-secondary { background-color: #6c757d !important; color: white !important; }
+            .badge.bg-primary { background-color: #0d6efd !important; color: white !important; }
+            .badge.bg-info { background-color: #0dcaf0 !important; color: #212529 !important; }
+            
+            /* Alerts */
+            .alert { border: 1px solid currentColor !important; }
+            .alert-success { background-color: #d1e7dd !important; color: #0f5132 !important; border-color: #badbcc !important; }
+            .alert-warning { background-color: #fff3cd !important; color: #664d03 !important; border-color: #ffecb5 !important; }
+            .alert-danger { background-color: #f8d7da !important; color: #842029 !important; border-color: #f5c2c7 !important; }
+            .alert-info { background-color: #cff4fc !important; color: #055160 !important; border-color: #b6effb !important; }
+            
+            /* Background utilities */
+            .bg-dark, .bg-primary, .bg-secondary { background-color: #f8f9fa !important; }
+            .bg-opacity-10, .bg-opacity-25 { background-color: #f8f9fa !important; }
+            
+            /* Border colors */
+            .border-primary, .border-secondary { border-color: #dee2e6 !important; }
+            
+            /* Links */
+            a { text-decoration: none !important; color: #0d6efd !important; }
+            
+            /* Icons - ensure they're visible */
+            .fas, .fab, .far { color: inherit !important; }
         }
     </style>
 </head>
