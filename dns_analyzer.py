@@ -1637,13 +1637,18 @@ class DNSAnalyzer:
         domain_exists = True
         domain_status = 'active'
         domain_status_message = None
-        has_any_records = False
+        
+        # Create a resolver for the existence check
+        check_resolver = dns.resolver.Resolver(configure=False)
+        check_resolver.nameservers = self.resolvers[:1]  # Use first resolver
+        check_resolver.timeout = 3
+        check_resolver.lifetime = 5
         
         def check_has_records(d):
             """Check if domain has any actual records."""
             for rtype in ['A', 'AAAA', 'MX']:
                 try:
-                    self.resolver.resolve(d, rtype)
+                    check_resolver.resolve(d, rtype)
                     return True
                 except Exception:
                     pass
@@ -1651,7 +1656,7 @@ class DNSAnalyzer:
         
         try:
             # Check for SOA record - if NXDOMAIN, domain doesn't exist
-            self.resolver.resolve(domain, 'SOA')
+            check_resolver.resolve(domain, 'SOA')
         except dns.resolver.NXDOMAIN:
             domain_exists = False
             domain_status = 'nxdomain'
@@ -1659,7 +1664,7 @@ class DNSAnalyzer:
         except dns.resolver.NoAnswer:
             # Domain exists but no SOA - check NS
             try:
-                self.resolver.resolve(domain, 'NS')
+                check_resolver.resolve(domain, 'NS')
             except dns.resolver.NXDOMAIN:
                 domain_exists = False
                 domain_status = 'nxdomain'
