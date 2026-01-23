@@ -1633,6 +1633,68 @@ class DNSAnalyzer:
     def analyze_domain(self, domain: str) -> Dict[str, Any]:
         """Perform complete DNS analysis of domain with parallel lookups for speed."""
         
+        # Early check: Does domain exist / is it delegated?
+        domain_exists = True
+        domain_status = 'active'
+        domain_status_message = None
+        
+        try:
+            # Check for ANY record - if NXDOMAIN, domain doesn't exist
+            self.resolver.resolve(domain, 'SOA')
+        except dns.resolver.NXDOMAIN:
+            domain_exists = False
+            domain_status = 'nxdomain'
+            domain_status_message = 'Domain does not exist (NXDOMAIN). No DNS records found at any level.'
+        except dns.resolver.NoAnswer:
+            # Domain exists but no SOA - check NS
+            try:
+                self.resolver.resolve(domain, 'NS')
+            except dns.resolver.NXDOMAIN:
+                domain_exists = False
+                domain_status = 'nxdomain'
+                domain_status_message = 'Domain does not exist (NXDOMAIN).'
+            except dns.resolver.NoAnswer:
+                # No NS either - likely undelegated
+                domain_status = 'undelegated'
+                domain_status_message = 'Domain may not be delegated - no NS records found.'
+            except Exception:
+                pass
+        except dns.resolver.NoNameservers:
+            domain_status = 'no_nameservers'
+            domain_status_message = 'No nameservers responding for this domain. Zone may be misconfigured or undelegated.'
+        except Exception:
+            pass  # Continue with analysis
+        
+        # If domain clearly doesn't exist, return early with minimal results
+        if not domain_exists:
+            return {
+                'domain_exists': False,
+                'domain_status': domain_status,
+                'domain_status_message': domain_status_message,
+                'basic_records': {'A': [], 'AAAA': [], 'MX': [], 'NS': [], 'TXT': [], 'CNAME': [], 'SOA': []},
+                'authoritative_records': {},
+                'propagation_status': {},
+                'spf_analysis': {'status': 'n/a', 'message': 'Domain does not exist'},
+                'dmarc_analysis': {'status': 'n/a', 'message': 'Domain does not exist'},
+                'dkim_analysis': {'status': 'n/a'},
+                'mta_sts_analysis': {'status': 'n/a'},
+                'tlsrpt_analysis': {'status': 'n/a'},
+                'bimi_analysis': {'status': 'n/a'},
+                'caa_analysis': {'status': 'n/a'},
+                'dnssec_analysis': {'status': 'n/a'},
+                'ns_delegation_analysis': {'status': 'error', 'delegation_ok': False, 'message': 'Domain does not exist'},
+                'registrar_info': {'status': 'n/a', 'registrar': None},
+                'smtp_transport': None,
+                'hosting_summary': {'hosting': 'N/A', 'dns_hosting': 'N/A', 'email_hosting': 'N/A'},
+                'posture': {
+                    'score': 0,
+                    'grade': 'N/A',
+                    'label': 'Non-existent Domain',
+                    'issues': ['Domain does not exist or is not delegated'],
+                    'color': 'secondary'
+                }
+            }
+        
         # Run all lookups in parallel for speed (5-10s target)
         with ThreadPoolExecutor(max_workers=12) as executor:
             futures = {
@@ -1696,6 +1758,9 @@ class DNSAnalyzer:
             }
 
         results = {
+            'domain_exists': True,
+            'domain_status': domain_status,
+            'domain_status_message': domain_status_message,
             'basic_records': basic,
             'authoritative_records': auth,
             'propagation_status': propagation_status,

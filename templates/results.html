@@ -74,6 +74,41 @@
             </div>
         </div>
         
+        <!-- Non-existent Domain Banner -->
+        {% if results.domain_exists == false %}
+        <div class="card border-info mb-4">
+            <div class="card-body text-center py-5">
+                <div class="mb-4">
+                    <i class="fas fa-question-circle fa-4x text-info opacity-75"></i>
+                </div>
+                <h2 class="h3 mb-3">
+                    <span class="badge bg-info-subtle text-info border border-info px-4 py-2">
+                        <i class="fas fa-globe-americas me-2"></i>Non-existent / Undelegated Domain
+                    </span>
+                </h2>
+                <p class="lead text-muted mb-4">{{ results.domain_status_message or 'This domain does not exist in DNS.' }}</p>
+                <div class="row justify-content-center">
+                    <div class="col-lg-8">
+                        <div class="alert alert-info bg-info-subtle border-info mb-0">
+                            <h6 class="alert-heading mb-2"><i class="fas fa-info-circle me-2"></i>What This Means</h6>
+                            <ul class="text-start mb-0 small">
+                                <li>No authoritative DNS data is available for this domain</li>
+                                <li>Security posture cannot be evaluated without DNS records</li>
+                                <li>The domain may never have been registered, or has expired</li>
+                                <li>If this is your domain, check your registrar to ensure it's active</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                <div class="mt-4">
+                    <a href="{{ url_for('index') }}" class="btn btn-primary btn-lg">
+                        <i class="fas fa-search me-2"></i>Try Another Domain
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% else %}
+        
         <!-- Global Posture Score -->
         {% if results.posture %}
         <div class="row mb-4">
@@ -942,6 +977,8 @@
             </a>
         </div>
 
+        {% endif %}
+        
         <!-- Footer -->
         <footer class="text-center mt-5 mb-4 text-muted small">
             <p class="mb-1">Report reflects evaluated DNS security posture at time of generation.</p>
