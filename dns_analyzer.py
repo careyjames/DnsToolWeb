@@ -1711,18 +1711,8 @@ class DNSAnalyzer:
             'registrar_info': results_map.get('registrar', {'status': 'error', 'registrar': None})
         }
         
-        # Add SMTP Transport verification (uses MX records from basic)
-        mx_records = basic.get('MX', [])
-        if mx_records:
-            results['smtp_transport'] = self.analyze_smtp_transport(domain, mx_records)
-        else:
-            results['smtp_transport'] = {
-                'status': 'warning',
-                'message': 'No MX records to verify',
-                'servers': [],
-                'summary': {'total_servers': 0, 'reachable': 0, 'starttls_supported': 0, 'tls_1_3': 0, 'tls_1_2': 0, 'valid_certs': 0, 'expiring_soon': 0},
-                'issues': []
-            }
+        # SMTP Transport verification disabled - port 25 blocked in production
+        results['smtp_transport'] = None
         
         # Add Hosting/Who summary
         results['hosting_summary'] = self.get_hosting_info(domain, results)
