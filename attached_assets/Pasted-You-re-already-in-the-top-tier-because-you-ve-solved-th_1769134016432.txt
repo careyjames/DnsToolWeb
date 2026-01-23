@@ -1,0 +1,129 @@
+You’re already in the top tier because you’ve solved the thing most tools screw up: truthful, decision-grade conclusions plus evidence, without confusing “configured” vs “enforced.” Your PDFs show you’re now doing policy-verified MTA-STS (mode/enforce, max_age, MX patterns) and “DKIM not discoverable” for hyperscalers — that’s unusually mature.  ￼  ￼
+
+If you want “better than anything out there,” the remaining gaps aren’t more DNS record types — they’re active verification + operational guardrails. Here’s the punch list, in descending order of “makes your tool the only one people need.”
+
+⸻
+
+1) Active SMTP checks (this is the big missing “only tool” piece)
+
+DNS tells intent. SMTP tells truth.
+
+Add one optional “Active Mail Transport” section (toggleable) that does:
+	•	STARTTLS availability on each MX
+	•	TLS version (≥1.2), weak cipher rejection, SNI behavior
+	•	Cert validity (chain, expiry, name match)
+	•	MTA-STS conformance: do observed MX hosts match MTA-STS mx patterns (you already parse patterns; now verify live)
+	•	DANE/TLSA: if present, validate; if absent, mark “Not used” (don’t shame)
+
+This single block replaces half of MXToolbox + half of Hardenize, and it closes the “DNS-only compliance” loop.
+
+⸻
+
+2) SPF correctness beyond “record exists”
+
+The #1 real-world SPF failure mode is not missing SPF — it’s broken SPF.
+
+Add:
+	•	Multiple SPF records detection (hard fail)
+	•	DNS lookup count (limit 10) and which includes blow the budget
+	•	Macro usage warnings (often abused / brittle)
+	•	Permissiveness score: +all (danger), ~all (soft), -all (strict)
+	•	Flatten suggestion only when lookup count is exceeded (don’t blanket-recommend flattening)
+
+This is the core “small-time guy keeps getting DNS wrong” pain point.
+
+⸻
+
+3) DKIM quality checks (when you do find DKIM)
+
+Finding a DKIM record is step one. The quality checks are what infosec cares about.
+
+When DKIM is found:
+	•	Key length check: 1024-bit = fail (Apple’s selectors in your PDF show n=1024 — that should be flagged as weak, even if it’s Apple)  ￼
+	•	“p= empty” / revoked key / syntax
+	•	Multiple selectors sanity (normal), but warn if only one and multiple senders are detected (optional)
+
+When DKIM is not discoverable (Google-style):
+	•	Keep current state: Not Discoverable (you already fixed this)  ￼
+	•	Do not let it downgrade spoof verdict if DMARC reject exists.
+
+⸻
+
+4) DMARC: enforceability + reporting correctness
+
+Most DMARC tools don’t check the “gotchas” because they require extra parsing.
+
+Add:
+	•	Alignment interpretation (aspf/adkim strict vs relaxed)
+	•	sp and pct impacts (pct<100 = partial protection)
+	•	External rua/ruf authorization check (the DNS-based permission mechanism)
+	•	Forensic ruf reality check: many providers ignore it; mark as “best-effort”
+	•	“DMARC says reject but sp=none” type mismatches called out plainly
+
+⸻
+
+5) DNSSEC: correctness beyond “signed/unsigned”
+
+You already do “signed/unsigned + chain-of-trust” well. To beat DNSViz for day-to-day ops, add:
+	•	DS/DNSKEY algorithm match + key tag visibility
+	•	Signature freshness (RRSIG expiry window) and clock skew notes
+	•	NSEC/NSEC3 presence (don’t moralize, just report)
+	•	Rollover safety hints (KSK/ZSK) if you detect multiple keys
+
+Also: fix your overall posture label for domains like apple.com / google.com. Your apple.com PDF currently says “DNS & Trust Posture: SECURE” while later correctly reporting DNSSEC unsigned and “Partially” tamperable. That’s a contradiction you should eliminate.  ￼  ￼
+Rule: if DNSSEC is unsigned → posture cannot be “SECURE” unless you explicitly define SECURE as “email + web only,” which you don’t.
+
+⸻
+
+6) CAA: hardening + VMC-aware options
+
+You already parse CAA nicely and even call out wildcard issuance.  ￼
+
+Add:
+	•	issuevmc awareness (only relevant if they want BIMI VMC)
+	•	Warn if CAA exists but doesn’t include current issuing CA (this can break renewals)
+	•	Separate “no CAA” into Action Required only for enterprises/government profiles; for SMB make it “Recommended”
+
+CNN is a good test case: you flag “No CAA record” as action required. That’s defensible for security posture, but you should be intentional: is that a critical control or a hardening control?  ￼
+
+⸻
+
+7) Delegation / authoritative hygiene that catches real outages
+
+Add these checks (fast, high-signal):
+	•	Lame delegation (NS listed but not authoritative)
+	•	NS diversity (same ASN / same provider warning)
+	•	Glue correctness (for in-bailiwick NS)
+	•	Open recursion on authoritative NS (rare but catastrophic if present)
+	•	SOA sanity (serial format, refresh/retry) — not “security,” but ops-grade
+
+Zonemaster-class stuff, but summarized.
+
+⸻
+
+8) The “I can fix it” layer (what makes it “the only tool”)
+
+This is the killer differentiator:
+	•	For each provider (Google Workspace, M365, SES, Mailgun, etc.), generate:
+	•	Exact DNS records
+	•	Exact hostnames
+	•	Safe order of operations
+	•	“copy/paste ready” outputs (Route53 JSON, Cloudflare import, BIND zone snippet)
+
+You already detect providers (registrar/email/web/dns hosting). Turning that into remediation output makes the tool operational, not just diagnostic.
+
+⸻
+
+Reality check: are you already better than “anything out there”?
+
+For DNS + email security posture reporting, you’re already ahead of most because you combine:
+	•	DNSSEC + delegation + propagation
+	•	SPF/DMARC/DKIM
+	•	MTA-STS + TLS-RPT with policy verification
+	•	BIMI + VMC awareness
+	•	CAA parsing
+…in one coherent narrative with evidence.  ￼  ￼
+
+To be unarguably “the only tool,” you need Active SMTP checks and SPF/DKIM deep correctness. Those are the two gaps that will make infosec people stop opening other tabs.
+
+If you want, I’ll give you a clean spec for that “Active Mail Transport” module (inputs, probes, timeouts, and exactly how to word results so you don’t over-claim).
