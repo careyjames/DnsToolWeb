@@ -329,7 +329,11 @@
                                 <h6 class="d-flex align-items-center flex-wrap">
                                     <i class="fas fa-lock me-2"></i>DMARC Policy
                                     <span class="badge bg-{{ 'success' if results.dmarc_analysis.status == 'success' else 'danger' if results.dmarc_analysis.status == 'error' else 'warning' }} ms-2">
-                                        {{ results.dmarc_analysis.status|title }}
+                                        {% if results.dmarc_analysis.no_mail_recommendation %}
+                                            Recommended
+                                        {% else %}
+                                            {{ results.dmarc_analysis.status|title }}
+                                        {% endif %}
                                     </span>
                                     {% if results.dmarc_analysis.policy %}
                                         <span class="badge bg-{{ 'success' if results.dmarc_analysis.policy == 'reject' else 'warning' if results.dmarc_analysis.policy == 'quarantine' else 'secondary' }} ms-1">p={{ results.dmarc_analysis.policy }}</span>
@@ -339,6 +343,12 @@
                                     {% endif %}
                                 </h6>
                                 <p class="text-muted mb-2 small">{{ results.dmarc_analysis.message }}</p>
+                                {% if results.dmarc_analysis.no_mail_recommendation and results.dmarc_analysis.suggested_record %}
+                                    <div class="alert alert-info py-2 px-3 mb-2">
+                                        <small><i class="fas fa-lightbulb me-1"></i>Add this TXT record at <code>_dmarc.{{ domain }}</code>:</small>
+                                        <div class="code-block small mt-1 bg-dark text-success border-success">{{ results.dmarc_analysis.suggested_record }}</div>
+                                    </div>
+                                {% endif %}
                                 {% if results.dmarc_analysis.valid_records %}
                                     {% for record in results.dmarc_analysis.valid_records %}
                                         <div class="code-block small">{{ record }}</div>

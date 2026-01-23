@@ -279,7 +279,8 @@ class DNSAnalyzer:
             'permissiveness': None,
             'all_mechanism': None,
             'issues': [],
-            'includes': []
+            'includes': [],
+            'no_mail_intent': False
         }
         
         if not txt_records:
@@ -303,6 +304,7 @@ class DNSAnalyzer:
         permissiveness = None
         all_mechanism = None
         includes = []
+        no_mail_intent = False
         
         # Multiple SPF records is a hard fail per RFC 7208
         if len(valid_spf) > 1:
@@ -372,6 +374,13 @@ class DNSAnalyzer:
                 elif qualifier == '-':
                     permissiveness = 'STRICT'
             
+            # Detect "no-mail domain" pattern: v=spf1 -all with no senders
+            # This is an intentional security configuration for domains that don't send email
+            no_mail_intent = False
+            spf_normalized = re.sub(r'\s+', ' ', spf_lower.strip())
+            if spf_normalized == 'v=spf1 -all' or spf_normalized == '"v=spf1 -all"':
+                no_mail_intent = True
+            
             # Check lookup limit
             if lookup_count > 10:
                 issues.append(f'Exceeds 10 DNS lookup limit ({lookup_count} lookups)')
@@ -389,7 +398,9 @@ class DNSAnalyzer:
                 message = 'SPF uses ?all - provides no protection'
             else:
                 status = 'success'
-                if permissiveness == 'STRICT':
+                if no_mail_intent:
+                    message = 'Valid SPF (no mail allowed) - domain declares it sends no email'
+                elif permissiveness == 'STRICT':
                     message = f'SPF valid with strict enforcement (-all), {lookup_count}/10 lookups'
                 elif permissiveness == 'SOFT':
                     message = f'SPF valid with soft fail (~all), {lookup_count}/10 lookups'
@@ -407,7 +418,8 @@ class DNSAnalyzer:
             'permissiveness': permissiveness,
             'all_mechanism': all_mechanism,
             'issues': issues,
-            'includes': includes
+            'includes': includes,
+            'no_mail_intent': no_mail_intent
         }
     
     def analyze_dmarc(self, domain: str) -> Dict[str, Any]:
@@ -1634,74 +1646,27 @@ class DNSAnalyzer:
         """Perform complete DNS analysis of domain with parallel lookups for speed."""
         
         # Early check: Does domain exist / is it delegated?
+        # Use dns_query which uses DoH for reliability
         domain_exists = True
         domain_status = 'active'
         domain_status_message = None
         
-        # Create a resolver for the existence check
-        check_resolver = dns.resolver.Resolver(configure=False)
-        check_resolver.nameservers = self.resolvers[:1]  # Use first resolver
-        check_resolver.timeout = 3
-        check_resolver.lifetime = 5
+        # Quick check for any records - if we can find A, AAAA, MX, or TXT, domain exists
+        quick_check_records = []
+        for rtype in ['A', 'TXT', 'MX']:
+            result = self.dns_query(rtype, domain)
+            if result:
+                quick_check_records.extend(result)
+                break  # Found records, domain exists
         
-        def check_has_records(d):
-            """Check if domain has any actual records."""
-            for rtype in ['A', 'AAAA', 'MX']:
-                try:
-                    check_resolver.resolve(d, rtype)
-                    return True
-                except Exception:
-                    pass
-            return False
-        
-        try:
-            # Check for SOA record - if NXDOMAIN, domain doesn't exist
-            check_resolver.resolve(domain, 'SOA')
-        except dns.resolver.NXDOMAIN:
-            domain_exists = False
-            domain_status = 'nxdomain'
-            domain_status_message = 'Domain does not exist (NXDOMAIN). No DNS records found at any level.'
-        except dns.resolver.NoAnswer:
-            # Domain exists but no SOA - check NS
-            try:
-                check_resolver.resolve(domain, 'NS')
-            except dns.resolver.NXDOMAIN:
+        if not quick_check_records:
+            # No basic records found - domain likely doesn't exist or is undelegated
+            # Try NS as final check
+            ns_records = self.dns_query('NS', domain)
+            if not ns_records:
                 domain_exists = False
-                domain_status = 'nxdomain'
-                domain_status_message = 'Domain does not exist (NXDOMAIN).'
-            except dns.resolver.NoAnswer:
-                # No NS either - check for ANY actual records
-                if not check_has_records(domain):
-                    domain_exists = False
-                    domain_status = 'undelegated'
-                    domain_status_message = 'Domain is not delegated or has no DNS records. This may be an unused subdomain or unregistered domain.'
-                else:
-                    domain_status = 'partial'
-                    domain_status_message = 'Domain has some records but no NS delegation.'
-            except (dns.resolver.LifetimeTimeout, dns.exception.Timeout):
-                # NS query timed out - check for any records
-                if not check_has_records(domain):
-                    domain_exists = False
-                    domain_status = 'timeout_no_records'
-                    domain_status_message = 'DNS queries timed out and no records found. Domain may not exist or nameservers are unresponsive.'
-            except Exception:
-                pass
-        except dns.resolver.NoNameservers:
-            domain_exists = False
-            domain_status = 'no_nameservers'
-            domain_status_message = 'No nameservers responding for this domain. Zone may be misconfigured or undelegated.'
-        except (dns.resolver.LifetimeTimeout, dns.exception.Timeout):
-            # SOA query timed out - likely broken/non-existent
-            # Check if ANY records exist
-            if not check_has_records(domain):
-                domain_exists = False
-                domain_status = 'timeout_no_records'
-                domain_status_message = 'DNS queries timed out and no records found. Domain may not exist or nameservers are unresponsive.'
-            else:
-                domain_status = 'timeout_partial'
-                domain_status_message = 'Some DNS queries timed out but records were found.'
-        except Exception:
-            pass  # Continue with analysis
+                domain_status = 'undelegated'
+                domain_status_message = 'Domain is not delegated or has no DNS records. This may be an unused subdomain or unregistered domain.'
         
         # If domain clearly doesn't exist or is undelegated with no records, return early
         if not domain_exists:
@@ -1816,6 +1781,36 @@ class DNSAnalyzer:
         
         # SMTP Transport verification disabled - port 25 blocked in production
         results['smtp_transport'] = None
+        
+        # Detect "no-mail domain" pattern and adjust DMARC messaging
+        # A domain with SPF "v=spf1 -all" (no senders) + no MX is intentionally not sending email
+        spf = results.get('spf_analysis', {})
+        dmarc = results.get('dmarc_analysis', {})
+        mx_records = basic.get('MX', [])
+        
+        is_no_mail_domain = (
+            spf.get('no_mail_intent', False) and 
+            len(mx_records) == 0
+        )
+        results['is_no_mail_domain'] = is_no_mail_domain
+        
+        if is_no_mail_domain:
+            # Domain explicitly declares no email - this is a security posture, not misconfiguration
+            if dmarc.get('status') == 'error' and 'No valid DMARC' in dmarc.get('message', ''):
+                # Instead of "Error - No DMARC", show a recommendation
+                results['dmarc_analysis'] = {
+                    **dmarc,
+                    'status': 'warning',
+                    'message': 'No DMARC record - recommend adding v=DMARC1; p=reject; to complete anti-spoofing protection',
+                    'no_mail_recommendation': True,
+                    'suggested_record': 'v=DMARC1; p=reject;'
+                }
+            elif dmarc.get('policy') == 'reject':
+                # Perfect! They have both SPF -all and DMARC reject
+                results['dmarc_analysis'] = {
+                    **dmarc,
+                    'message': 'DMARC policy reject - excellent anti-spoofing protection for non-mail domain'
+                }
         
         # Add Hosting/Who summary
         results['hosting_summary'] = self.get_hosting_info(domain, results)
@@ -2122,11 +2117,18 @@ class DNSAnalyzer:
         configured_items = []  # Runtime-dependent controls that are present
         absent_items = []  # Optional controls not configured
         
+        # Check if this is a "no-mail domain" (SPF -all only + no MX)
+        is_no_mail_domain = results.get('is_no_mail_domain', False)
+        
         # Check DMARC policy (DNS-verifiable enforcement level)
         dmarc = results.get('dmarc_analysis', {})
         dmarc_policy = (dmarc.get('policy') or '').lower()
         if dmarc.get('status') != 'success':
-            issues.append('No DMARC policy (email can be spoofed)')
+            if is_no_mail_domain and dmarc.get('no_mail_recommendation'):
+                # No-mail domain: DMARC missing is a recommendation, not critical issue
+                monitoring_items.append('DMARC p=reject recommended to complete anti-spoofing protection')
+            else:
+                issues.append('No DMARC policy (email can be spoofed)')
         elif dmarc_policy == 'none':
             monitoring_items.append('DMARC in monitoring mode (p=none) - spoofed mail may still deliver')
         elif dmarc_policy == 'quarantine':
@@ -2136,6 +2138,9 @@ class DNSAnalyzer:
         spf = results.get('spf_analysis', {})
         if spf.get('status') != 'success':
             issues.append('No SPF record (no sender verification)')
+        elif spf.get('no_mail_intent'):
+            # SPF -all is intentional for no-mail domains - this is a security feature
+            configured_items.append('SPF (no mail allowed - domain declares it sends no email)')
         
         # Check DNSSEC (DNS-verifiable)
         # Note: Unsigned DNSSEC is a deliberate design choice for many large operators
