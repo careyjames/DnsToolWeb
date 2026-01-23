@@ -1637,6 +1637,7 @@ class DNSAnalyzer:
         domain_exists = True
         domain_status = 'active'
         domain_status_message = None
+        has_any_records = False
         
         try:
             # Check for ANY record - if NXDOMAIN, domain doesn't exist
@@ -1654,9 +1655,23 @@ class DNSAnalyzer:
                 domain_status = 'nxdomain'
                 domain_status_message = 'Domain does not exist (NXDOMAIN).'
             except dns.resolver.NoAnswer:
-                # No NS either - likely undelegated
-                domain_status = 'undelegated'
-                domain_status_message = 'Domain may not be delegated - no NS records found.'
+                # No NS either - check for ANY actual records (A, AAAA, MX)
+                for rtype in ['A', 'AAAA', 'MX']:
+                    try:
+                        self.resolver.resolve(domain, rtype)
+                        has_any_records = True
+                        break
+                    except Exception:
+                        pass
+                
+                if not has_any_records:
+                    # No NS and no records - this is effectively non-existent
+                    domain_exists = False
+                    domain_status = 'undelegated'
+                    domain_status_message = 'Domain is not delegated or has no DNS records. This may be an unused subdomain or unregistered domain.'
+                else:
+                    domain_status = 'partial'
+                    domain_status_message = 'Domain has some records but no NS delegation.'
             except Exception:
                 pass
         except dns.resolver.NoNameservers:
@@ -1665,7 +1680,7 @@ class DNSAnalyzer:
         except Exception:
             pass  # Continue with analysis
         
-        # If domain clearly doesn't exist, return early with minimal results
+        # If domain clearly doesn't exist or is undelegated with no records, return early
         if not domain_exists:
             return {
                 'domain_exists': False,
