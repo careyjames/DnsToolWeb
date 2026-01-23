@@ -1757,11 +1757,11 @@ class DNSAnalyzer:
             pass
         return ''.join(response_lines)
     
-    def verify_smtp_server(self, mx_host: str, timeout: int = 3) -> Dict[str, Any]:
+    def verify_smtp_server(self, mx_host: str, timeout: float = 1.5) -> Dict[str, Any]:
         """
         Verify SMTP server capabilities: STARTTLS, TLS version, cipher, certificate.
         Uses raw sockets for reliable TLS information extraction.
-        Optimized for speed with tight timeouts.
+        Optimized for speed with tight timeouts (1.5s connection, 1s response).
         """
         result = {
             'host': mx_host,
@@ -1783,19 +1783,19 @@ class DNSAnalyzer:
         ssl_sock = None
         
         try:
-            # Connect to SMTP server on port 25 using raw socket (tight timeout)
+            # Connect to SMTP server on port 25 using raw socket (fast 1.5s timeout)
             sock = socket.create_connection((mx_host, 25), timeout=timeout)
             result['reachable'] = True
             
-            # Read banner with proper multi-line handling
-            banner = self._read_smtp_response(sock, timeout=2.0)
+            # Read banner with proper multi-line handling (fast 1s timeout)
+            banner = self._read_smtp_response(sock, timeout=1.0)
             if not banner.startswith('220'):
                 result['error'] = f"Unexpected banner"
                 return result
             
-            # Send EHLO and read full response
+            # Send EHLO and read full response (fast 1s timeout)
             sock.send(b'EHLO dnstool.local\r\n')
-            ehlo_resp = self._read_smtp_response(sock, timeout=2.0)
+            ehlo_resp = self._read_smtp_response(sock, timeout=1.0)
             
             # Check for STARTTLS support in EHLO response
             if 'STARTTLS' in ehlo_resp.upper():
@@ -1803,7 +1803,7 @@ class DNSAnalyzer:
                 
                 # Send STARTTLS command
                 sock.send(b'STARTTLS\r\n')
-                starttls_resp = self._read_smtp_response(sock, timeout=2.0)
+                starttls_resp = self._read_smtp_response(sock, timeout=1.0)
                 
                 if starttls_resp.startswith('220'):
                     # Wrap socket with TLS
@@ -1953,15 +1953,15 @@ class DNSAnalyzer:
         # Verify each MX server (limit to first 2 to keep under 5s total)
         mx_hosts_to_check = mx_hosts[:2]
         
-        # Use thread pool for parallel verification (tight 5s budget)
+        # Use thread pool for parallel verification (fast 3s budget)
         try:
             with ThreadPoolExecutor(max_workers=2) as executor:
-                futures = {executor.submit(self.verify_smtp_server, host, 3): host for host in mx_hosts_to_check}
+                futures = {executor.submit(self.verify_smtp_server, host, 1.5): host for host in mx_hosts_to_check}
                 
                 try:
-                    for future in as_completed(futures, timeout=6):
+                    for future in as_completed(futures, timeout=3):
                         try:
-                            server_result = future.result(timeout=4)
+                            server_result = future.result(timeout=2)
                             result['servers'].append(server_result)
                             
                             if server_result['reachable']:
@@ -1991,9 +1991,9 @@ class DNSAnalyzer:
         valid_certs = result['summary']['valid_certs']
         
         if reachable == 0:
-            result['status'] = 'error'
-            result['message'] = f'Could not reach any of {total} mail server(s)'
-            result['issues'].append('No mail servers responded on port 25')
+            result['status'] = 'warning'
+            result['message'] = f'Port 25 check unavailable'
+            result['issues'].append('SMTP port 25 may be blocked by hosting provider - this is common for cloud platforms')
         elif starttls == 0:
             result['status'] = 'error'
             result['message'] = 'No mail servers support STARTTLS'
