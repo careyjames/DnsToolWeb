@@ -1732,10 +1732,36 @@ class DNSAnalyzer:
         
         return results
     
-    def verify_smtp_server(self, mx_host: str, timeout: int = 10) -> Dict[str, Any]:
+    def _read_smtp_response(self, sock: socket.socket, timeout: float = 2.0) -> str:
+        """Read complete SMTP multi-line response with proper termination detection."""
+        sock.settimeout(timeout)
+        response_lines = []
+        try:
+            while True:
+                data = sock.recv(4096).decode('utf-8', errors='ignore')
+                if not data:
+                    break
+                response_lines.append(data)
+                # SMTP multi-line response ends with "<code><space>" pattern
+                # Single line responses are "<code><space>text\r\n"
+                lines = ''.join(response_lines).split('\r\n')
+                for line in lines:
+                    if line and len(line) >= 4:
+                        # Check if this is a terminating line (code followed by space)
+                        if line[3:4] == ' ' or line[3:4] == '':
+                            return ''.join(response_lines)
+                # Safety: if we've read enough, stop
+                if len(''.join(response_lines)) > 8192:
+                    break
+        except socket.timeout:
+            pass
+        return ''.join(response_lines)
+    
+    def verify_smtp_server(self, mx_host: str, timeout: int = 3) -> Dict[str, Any]:
         """
         Verify SMTP server capabilities: STARTTLS, TLS version, cipher, certificate.
-        Returns detailed transport security information.
+        Uses raw sockets for reliable TLS information extraction.
+        Optimized for speed with tight timeouts.
         """
         result = {
             'host': mx_host,
@@ -1753,43 +1779,64 @@ class DNSAnalyzer:
             'error': None
         }
         
+        sock = None
+        ssl_sock = None
+        
         try:
-            # Connect to SMTP server on port 25
-            smtp = smtplib.SMTP(timeout=timeout)
-            smtp.connect(mx_host, 25)
+            # Connect to SMTP server on port 25 using raw socket (tight timeout)
+            sock = socket.create_connection((mx_host, 25), timeout=timeout)
             result['reachable'] = True
             
-            # Get server capabilities
-            smtp.ehlo()
+            # Read banner with proper multi-line handling
+            banner = self._read_smtp_response(sock, timeout=2.0)
+            if not banner.startswith('220'):
+                result['error'] = f"Unexpected banner"
+                return result
             
-            # Check for STARTTLS support
-            if smtp.has_extn('STARTTLS'):
+            # Send EHLO and read full response
+            sock.send(b'EHLO dnstool.local\r\n')
+            ehlo_resp = self._read_smtp_response(sock, timeout=2.0)
+            
+            # Check for STARTTLS support in EHLO response
+            if 'STARTTLS' in ehlo_resp.upper():
                 result['starttls'] = True
                 
-                # Create SSL context for STARTTLS
-                context = ssl.create_default_context()
-                context.check_hostname = True
-                context.verify_mode = ssl.CERT_REQUIRED
+                # Send STARTTLS command
+                sock.send(b'STARTTLS\r\n')
+                starttls_resp = self._read_smtp_response(sock, timeout=2.0)
                 
-                try:
-                    smtp.starttls(context=context)
-                    smtp.ehlo()
+                if starttls_resp.startswith('220'):
+                    # Wrap socket with TLS
+                    context = ssl.create_default_context()
+                    context.check_hostname = False
+                    context.verify_mode = ssl.CERT_NONE
                     
-                    # Get TLS details from the socket
-                    sock = smtp.sock
-                    if hasattr(sock, 'version'):
-                        result['tls_version'] = sock.version()
-                    if hasattr(sock, 'cipher'):
-                        cipher_info = sock.cipher()
-                        if cipher_info:
-                            result['cipher'] = cipher_info[0]
-                            result['cipher_bits'] = cipher_info[2] if len(cipher_info) > 2 else None
+                    ssl_sock = context.wrap_socket(sock, server_hostname=mx_host)
                     
-                    # Get certificate details
-                    if hasattr(sock, 'getpeercert'):
-                        cert = sock.getpeercert()
+                    # Get TLS details
+                    result['tls_version'] = ssl_sock.version()
+                    cipher_info = ssl_sock.cipher()
+                    if cipher_info:
+                        result['cipher'] = cipher_info[0]
+                        result['cipher_bits'] = cipher_info[2] if len(cipher_info) > 2 else None
+                    
+                    # Get certificate (returns empty dict with CERT_NONE, need to reconnect with validation)
+                    # Try with certificate validation to get cert details
+                    try:
+                        ssl_sock.close()
+                        sock = socket.create_connection((mx_host, 25), timeout=timeout)
+                        sock.recv(1024)  # banner
+                        sock.send(b'EHLO dnstool.local\r\n')
+                        sock.recv(2048)
+                        sock.send(b'STARTTLS\r\n')
+                        sock.recv(1024)
+                        
+                        context_verify = ssl.create_default_context()
+                        ssl_sock = context_verify.wrap_socket(sock, server_hostname=mx_host)
+                        
+                        result['cert_valid'] = True
+                        cert = ssl_sock.getpeercert()
                         if cert:
-                            result['cert_valid'] = True
                             result['certificate'] = True
                             
                             # Parse expiry date
@@ -1822,50 +1869,40 @@ class DNSAnalyzer:
                                     if item and len(item) > 0:
                                         subject_dict[item[0][0]] = item[0][1]
                                 result['cert_subject'] = subject_dict.get('commonName', mx_host)
-                
-                except ssl.SSLCertVerificationError as e:
-                    result['error'] = f"Certificate verification failed: {str(e)}"
-                    result['cert_valid'] = False
-                    # Try without verification to get more info
-                    try:
-                        smtp2 = smtplib.SMTP(timeout=timeout)
-                        smtp2.connect(mx_host, 25)
-                        smtp2.ehlo()
-                        context2 = ssl.create_default_context()
-                        context2.check_hostname = False
-                        context2.verify_mode = ssl.CERT_NONE
-                        smtp2.starttls(context=context2)
-                        smtp2.ehlo()
-                        sock2 = smtp2.sock
-                        if hasattr(sock2, 'version'):
-                            result['tls_version'] = sock2.version()
-                        if hasattr(sock2, 'cipher'):
-                            cipher_info = sock2.cipher()
-                            if cipher_info:
-                                result['cipher'] = cipher_info[0]
-                                result['cipher_bits'] = cipher_info[2] if len(cipher_info) > 2 else None
-                        smtp2.quit()
-                    except Exception:
-                        pass
-                        
-                except ssl.SSLError as e:
-                    result['error'] = f"TLS error: {str(e)}"
+                    
+                    except ssl.SSLCertVerificationError as e:
+                        result['cert_valid'] = False
+                        result['error'] = f"Certificate invalid: {str(e)[:100]}"
+                    except Exception as e:
+                        # Certificate validation failed but TLS works
+                        result['cert_valid'] = False
+                        result['error'] = f"Cert check failed: {str(e)[:50]}"
+                else:
+                    result['error'] = f"STARTTLS failed: {starttls_resp[:50]}"
             else:
                 result['error'] = "STARTTLS not supported"
-            
-            try:
-                smtp.quit()
-            except Exception:
-                pass
                 
         except socket.timeout:
             result['error'] = "Connection timeout"
         except socket.gaierror as e:
-            result['error'] = f"DNS resolution failed: {str(e)}"
+            result['error'] = f"DNS resolution failed"
         except ConnectionRefusedError:
             result['error'] = "Connection refused"
+        except OSError as e:
+            if 'Network is unreachable' in str(e):
+                result['error'] = "Network unreachable"
+            else:
+                result['error'] = str(e)[:50]
         except Exception as e:
-            result['error'] = str(e)
+            result['error'] = str(e)[:50]
+        finally:
+            try:
+                if ssl_sock:
+                    ssl_sock.close()
+                elif sock:
+                    sock.close()
+            except Exception:
+                pass
         
         return result
     
@@ -1913,16 +1950,16 @@ class DNSAnalyzer:
         
         result['summary']['total_servers'] = len(mx_hosts)
         
-        # Verify each MX server (limit to first 3 to avoid timeouts)
-        mx_hosts_to_check = mx_hosts[:3]
+        # Verify each MX server (limit to first 2 to keep under 5s total)
+        mx_hosts_to_check = mx_hosts[:2]
         
-        # Use thread pool for parallel verification (with short timeout)
-        with ThreadPoolExecutor(max_workers=3) as executor:
-            futures = {executor.submit(self.verify_smtp_server, host, 8): host for host in mx_hosts_to_check}
+        # Use thread pool for parallel verification (tight 5s budget)
+        with ThreadPoolExecutor(max_workers=2) as executor:
+            futures = {executor.submit(self.verify_smtp_server, host, 3): host for host in mx_hosts_to_check}
             
-            for future in as_completed(futures, timeout=25):
+            for future in as_completed(futures, timeout=6):
                 try:
-                    server_result = future.result(timeout=10)
+                    server_result = future.result(timeout=4)
                     result['servers'].append(server_result)
                     
                     if server_result['reachable']:
