@@ -250,17 +250,30 @@
                         <div class="row">
                             <!-- SPF Analysis -->
                             <div class="col-md-4 mb-3 mb-md-0">
-                                <h6 class="d-flex align-items-center">
+                                <h6 class="d-flex align-items-center flex-wrap">
                                     <i class="fas fa-envelope me-2"></i>SPF Record
                                     <span class="badge bg-{{ 'success' if results.spf_analysis.status == 'success' else 'danger' if results.spf_analysis.status == 'error' else 'warning' }} ms-2">
                                         {{ results.spf_analysis.status|title }}
                                     </span>
+                                    {% if results.spf_analysis.permissiveness %}
+                                        <span class="badge bg-{{ 'danger' if results.spf_analysis.permissiveness == 'DANGEROUS' else 'success' if results.spf_analysis.permissiveness == 'STRICT' else 'warning' }} ms-1">{{ results.spf_analysis.all_mechanism or '' }}</span>
+                                    {% endif %}
+                                    {% if results.spf_analysis.lookup_count is defined %}
+                                        <span class="badge bg-{{ 'danger' if results.spf_analysis.lookup_count > 10 else 'warning' if results.spf_analysis.lookup_count >= 8 else 'secondary' }} ms-1" title="DNS lookup limit is 10">{{ results.spf_analysis.lookup_count }}/10 lookups</span>
+                                    {% endif %}
                                 </h6>
                                 <p class="text-muted mb-2 small">{{ results.spf_analysis.message }}</p>
                                 {% if results.spf_analysis.valid_records %}
                                     {% for record in results.spf_analysis.valid_records %}
                                         <div class="code-block small">{{ record }}</div>
                                     {% endfor %}
+                                {% endif %}
+                                {% if results.spf_analysis.issues %}
+                                    <div class="mt-2 small">
+                                        {% for issue in results.spf_analysis.issues %}
+                                            <div class="text-warning"><i class="fas fa-exclamation-triangle me-1"></i>{{ issue }}</div>
+                                        {% endfor %}
+                                    </div>
                                 {% endif %}
                                 {% if results.spf_analysis.spf_like %}
                                     <div class="mt-2 p-2 bg-danger bg-opacity-10 border border-danger rounded">
@@ -278,13 +291,16 @@
 
                             <!-- DMARC Analysis -->
                             <div class="col-md-4 mb-3 mb-md-0">
-                                <h6 class="d-flex align-items-center">
+                                <h6 class="d-flex align-items-center flex-wrap">
                                     <i class="fas fa-lock me-2"></i>DMARC Policy
                                     <span class="badge bg-{{ 'success' if results.dmarc_analysis.status == 'success' else 'danger' if results.dmarc_analysis.status == 'error' else 'warning' }} ms-2">
                                         {{ results.dmarc_analysis.status|title }}
                                     </span>
                                     {% if results.dmarc_analysis.policy %}
-                                        <span class="badge bg-{{ 'success' if results.dmarc_analysis.policy == 'reject' else 'warning' if results.dmarc_analysis.policy == 'quarantine' else 'secondary' }} ms-1">{{ results.dmarc_analysis.policy|upper }}</span>
+                                        <span class="badge bg-{{ 'success' if results.dmarc_analysis.policy == 'reject' else 'warning' if results.dmarc_analysis.policy == 'quarantine' else 'secondary' }} ms-1">p={{ results.dmarc_analysis.policy }}</span>
+                                    {% endif %}
+                                    {% if results.dmarc_analysis.pct is defined and results.dmarc_analysis.pct < 100 %}
+                                        <span class="badge bg-warning ms-1">{{ results.dmarc_analysis.pct }}% enforced</span>
                                     {% endif %}
                                 </h6>
                                 <p class="text-muted mb-2 small">{{ results.dmarc_analysis.message }}</p>
@@ -293,26 +309,62 @@
                                         <div class="code-block small">{{ record }}</div>
                                     {% endfor %}
                                 {% endif %}
+                                {% if results.dmarc_analysis.policy and results.dmarc_analysis.status == 'success' %}
+                                    <div class="mt-2 small">
+                                        <span class="text-muted">Alignment:</span>
+                                        <span class="badge bg-secondary">SPF {{ results.dmarc_analysis.aspf or 'relaxed' }}</span>
+                                        <span class="badge bg-secondary">DKIM {{ results.dmarc_analysis.adkim or 'relaxed' }}</span>
+                                        {% if results.dmarc_analysis.subdomain_policy %}
+                                            <span class="badge bg-{{ 'success' if results.dmarc_analysis.subdomain_policy == 'reject' else 'warning' if results.dmarc_analysis.subdomain_policy == 'quarantine' else 'secondary' }}">sp={{ results.dmarc_analysis.subdomain_policy }}</span>
+                                        {% endif %}
+                                    </div>
+                                {% endif %}
+                                {% if results.dmarc_analysis.issues %}
+                                    <div class="mt-2 small">
+                                        {% for issue in results.dmarc_analysis.issues %}
+                                            <div class="text-warning"><i class="fas fa-exclamation-triangle me-1"></i>{{ issue }}</div>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
                             </div>
 
                             <!-- DKIM Analysis -->
                             <div class="col-md-4">
-                                <h6 class="d-flex align-items-center">
+                                <h6 class="d-flex align-items-center flex-wrap">
                                     <i class="fas fa-key me-2"></i>DKIM Records
-                                    <span class="badge bg-{{ 'success' if results.dkim_analysis.status == 'success' else 'secondary' }} ms-2">
-                                        {{ 'Found' if results.dkim_analysis.status == 'success' else 'Not Discoverable' }}
+                                    <span class="badge bg-{{ 'success' if results.dkim_analysis.status == 'success' else 'warning' if results.dkim_analysis.status == 'warning' else 'secondary' }} ms-2">
+                                        {{ 'Found' if results.dkim_analysis.status == 'success' else 'Weak Keys' if results.dkim_analysis.status == 'warning' else 'Not Discoverable' }}
                                     </span>
+                                    {% if results.dkim_analysis.key_strengths %}
+                                        <span class="badge bg-success ms-1">{{ results.dkim_analysis.key_strengths|join(', ') }}</span>
+                                    {% endif %}
                                 </h6>
                                 <p class="text-muted mb-2 small">{{ results.dkim_analysis.message }}</p>
+                                {% if results.dkim_analysis.key_issues %}
+                                    <div class="mb-2 small">
+                                        {% for issue in results.dkim_analysis.key_issues %}
+                                            <div class="text-warning"><i class="fas fa-exclamation-triangle me-1"></i>{{ issue }}</div>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
                                 {% if results.dkim_analysis.selectors %}
-                                    {% for selector, records in results.dkim_analysis.selectors.items() %}
+                                    {% for selector, selector_data in results.dkim_analysis.selectors.items() %}
                                         <div class="mb-2">
                                             <small class="text-success d-block">
                                                 <i class="fas fa-check-circle me-1"></i>{{ selector }}
+                                                {% if selector_data.key_info %}
+                                                    {% for ki in selector_data.key_info %}
+                                                        {% if ki.key_bits %}
+                                                            <span class="badge bg-{{ 'warning' if ki.key_bits < 2048 else 'success' }} ms-1">{{ ki.key_bits }}-bit</span>
+                                                        {% endif %}
+                                                    {% endfor %}
+                                                {% endif %}
                                             </small>
-                                            {% for record in records %}
-                                                <div class="code-block small mt-1" style="word-break: break-all;">{{ record }}</div>
-                                            {% endfor %}
+                                            {% if selector_data.records %}
+                                                {% for record in selector_data.records %}
+                                                    <div class="code-block small mt-1" style="word-break: break-all;">{{ record }}</div>
+                                                {% endfor %}
+                                            {% endif %}
                                         </div>
                                     {% endfor %}
                                 {% endif %}

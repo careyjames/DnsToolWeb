@@ -254,17 +254,32 @@ class DNSAnalyzer:
         return results
     
     def analyze_spf(self, domain: str) -> Dict[str, Any]:
-        """Analyze SPF record for domain."""
+        """Analyze SPF record for domain with deep correctness checks.
+        
+        Checks for:
+        - Multiple SPF records (hard fail condition)
+        - DNS lookup count (limit 10)
+        - Permissiveness score (+all, ~all, ?all, -all)
+        - Mechanism breakdown
+        """
         txt_records = self.dns_query("TXT", domain)
         
+        base_result = {
+            'status': 'error',
+            'message': 'No TXT records found',
+            'records': [],
+            'valid_records': [],
+            'spf_like': [],
+            'lookup_count': 0,
+            'lookup_mechanisms': [],
+            'permissiveness': None,
+            'all_mechanism': None,
+            'issues': [],
+            'includes': []
+        }
+        
         if not txt_records:
-            return {
-                'status': 'error',
-                'message': 'No TXT records found',
-                'records': [],
-                'valid_records': [],
-                'spf_like': []
-            }
+            return base_result
         
         valid_spf = []
         spf_like = []
@@ -278,36 +293,149 @@ class DNSAnalyzer:
             elif "spf" in lower_record:
                 spf_like.append(record)
         
-        if len(valid_spf) == 0:
+        issues = []
+        lookup_count = 0
+        lookup_mechanisms = []
+        permissiveness = None
+        all_mechanism = None
+        includes = []
+        
+        # Multiple SPF records is a hard fail per RFC 7208
+        if len(valid_spf) > 1:
+            status = 'error'
+            message = 'Multiple SPF records found - this causes SPF to fail (RFC 7208)'
+            issues.append('Multiple SPF records (hard fail)')
+        elif len(valid_spf) == 0:
             status = 'error' if not spf_like else 'warning'
             message = 'No valid SPF record found'
-        elif len(valid_spf) == 1:
-            status = 'success'
-            message = 'Valid SPF record found'
         else:
-            status = 'warning'
-            message = 'Multiple SPF records found (there should be only one)'
+            # Parse the single valid SPF record
+            spf_record = valid_spf[0]
+            spf_lower = spf_record.lower()
+            
+            # Count DNS lookup mechanisms (limit is 10)
+            # Mechanisms that cause DNS lookups: include, a, mx, ptr, exists, redirect
+            import re
+            
+            # Find all include mechanisms
+            include_matches = re.findall(r'include:([^\s]+)', spf_lower)
+            includes = include_matches
+            lookup_count += len(include_matches)
+            for inc in include_matches:
+                lookup_mechanisms.append(f'include:{inc}')
+            
+            # Count other lookup mechanisms
+            a_matches = re.findall(r'\ba[:/]', spf_lower)
+            lookup_count += len(a_matches)
+            if a_matches:
+                lookup_mechanisms.append('a mechanism')
+            
+            mx_matches = re.findall(r'\bmx[:/\s]', spf_lower)
+            lookup_count += len(mx_matches)
+            if mx_matches:
+                lookup_mechanisms.append('mx mechanism')
+            
+            ptr_matches = re.findall(r'\bptr[:/\s]', spf_lower)
+            lookup_count += len(ptr_matches)
+            if ptr_matches:
+                lookup_mechanisms.append('ptr mechanism (deprecated)')
+                issues.append('PTR mechanism used (deprecated, slow)')
+            
+            exists_matches = re.findall(r'exists:', spf_lower)
+            lookup_count += len(exists_matches)
+            if exists_matches:
+                lookup_mechanisms.append('exists mechanism')
+            
+            redirect_match = re.search(r'redirect=([^\s]+)', spf_lower)
+            if redirect_match:
+                lookup_count += 1
+                lookup_mechanisms.append(f'redirect:{redirect_match.group(1)}')
+            
+            # Check for 'all' mechanism and its qualifier
+            all_match = re.search(r'([+\-~?]?)all\b', spf_lower)
+            if all_match:
+                qualifier = all_match.group(1) or '+'  # Default is pass
+                all_mechanism = qualifier + 'all'
+                
+                if qualifier == '+' or qualifier == '':
+                    permissiveness = 'DANGEROUS'
+                    issues.append('+all allows anyone to send as your domain')
+                elif qualifier == '?':
+                    permissiveness = 'NEUTRAL'
+                    issues.append('?all provides no protection')
+                elif qualifier == '~':
+                    permissiveness = 'SOFT'
+                elif qualifier == '-':
+                    permissiveness = 'STRICT'
+            
+            # Check lookup limit
+            if lookup_count > 10:
+                issues.append(f'Exceeds 10 DNS lookup limit ({lookup_count} lookups)')
+                status = 'warning'
+                message = f'SPF exceeds lookup limit ({lookup_count}/10 lookups)'
+            elif lookup_count == 10:
+                status = 'warning'
+                message = 'SPF at lookup limit (10/10 lookups) - no room for growth'
+                issues.append('At lookup limit (10/10)')
+            elif permissiveness == 'DANGEROUS':
+                status = 'error'
+                message = 'SPF uses +all - anyone can send as this domain'
+            elif permissiveness == 'NEUTRAL':
+                status = 'warning'
+                message = 'SPF uses ?all - provides no protection'
+            else:
+                status = 'success'
+                if permissiveness == 'STRICT':
+                    message = f'SPF valid with strict enforcement (-all), {lookup_count}/10 lookups'
+                elif permissiveness == 'SOFT':
+                    message = f'SPF valid with soft fail (~all), {lookup_count}/10 lookups'
+                else:
+                    message = f'SPF valid, {lookup_count}/10 lookups'
         
         return {
             'status': status,
             'message': message,
             'records': txt_records,
             'valid_records': valid_spf,
-            'spf_like': spf_like
+            'spf_like': spf_like,
+            'lookup_count': lookup_count,
+            'lookup_mechanisms': lookup_mechanisms,
+            'permissiveness': permissiveness,
+            'all_mechanism': all_mechanism,
+            'issues': issues,
+            'includes': includes
         }
     
     def analyze_dmarc(self, domain: str) -> Dict[str, Any]:
-        """Analyze DMARC record for domain."""
+        """Analyze DMARC record for domain with deep checks.
+        
+        Checks for:
+        - Policy (p=none/quarantine/reject)
+        - Subdomain policy (sp=)
+        - Percentage (pct=) - partial enforcement
+        - Alignment (aspf/adkim - strict/relaxed)
+        - Reporting addresses (rua/ruf)
+        """
+        import re
         dmarc_records = self.dns_query("TXT", f"_dmarc.{domain}")
         
+        base_result = {
+            'status': 'error',
+            'message': 'No DMARC record found',
+            'records': [],
+            'valid_records': [],
+            'policy': None,
+            'subdomain_policy': None,
+            'pct': 100,
+            'aspf': 'relaxed',
+            'adkim': 'relaxed',
+            'rua': None,
+            'ruf': None,
+            'issues': []
+        }
+        
         if not dmarc_records:
-            return {
-                'status': 'error',
-                'message': 'No DMARC record found',
-                'records': [],
-                'valid_records': [],
-                'policy': None
-            }
+            return base_result
         
         valid_dmarc = []
         dmarc_like = []
@@ -321,32 +449,91 @@ class DNSAnalyzer:
             elif "dmarc" in lower_record:
                 dmarc_like.append(record)
         
+        issues = []
+        policy = None
+        subdomain_policy = None
+        pct = 100
+        aspf = 'relaxed'
+        adkim = 'relaxed'
+        rua = None
+        ruf = None
+        
         if len(valid_dmarc) == 0:
             status = 'error'
             message = 'No valid DMARC record found'
-            policy = None
         elif len(valid_dmarc) > 1:
             status = 'warning'
             message = 'Multiple DMARC records found (there should be only one)'
-            policy = None
+            issues.append('Multiple DMARC records')
         else:
-            record = valid_dmarc[0].lower()
-            if "p=none" in record:
+            record = valid_dmarc[0]
+            record_lower = record.lower()
+            
+            # Extract policy
+            p_match = re.search(r'\bp=(\w+)', record_lower)
+            if p_match:
+                policy = p_match.group(1)
+            
+            # Extract subdomain policy
+            sp_match = re.search(r'\bsp=(\w+)', record_lower)
+            if sp_match:
+                subdomain_policy = sp_match.group(1)
+            
+            # Extract percentage
+            pct_match = re.search(r'\bpct=(\d+)', record_lower)
+            if pct_match:
+                pct = int(pct_match.group(1))
+            
+            # Extract alignment settings
+            aspf_match = re.search(r'\baspf=([rs])', record_lower)
+            if aspf_match:
+                aspf = 'strict' if aspf_match.group(1) == 's' else 'relaxed'
+            
+            adkim_match = re.search(r'\badkim=([rs])', record_lower)
+            if adkim_match:
+                adkim = 'strict' if adkim_match.group(1) == 's' else 'relaxed'
+            
+            # Extract reporting addresses
+            rua_match = re.search(r'\brua=([^;\s]+)', record, re.IGNORECASE)
+            if rua_match:
+                rua = rua_match.group(1)
+            
+            ruf_match = re.search(r'\bruf=([^;\s]+)', record, re.IGNORECASE)
+            if ruf_match:
+                ruf = ruf_match.group(1)
+            
+            # Build status and message
+            if policy == 'none':
                 status = 'warning'
-                message = 'DMARC policy is set to "none" - consider strengthening'
-                policy = 'none'
-            elif "p=reject" in record:
-                status = 'success'
-                message = 'DMARC policy is set to "reject" - excellent protection'
-                policy = 'reject'
-            elif "p=quarantine" in record:
-                status = 'success'
-                message = 'DMARC policy is set to "quarantine" - good protection'
-                policy = 'quarantine'
+                message = 'DMARC in monitoring mode (p=none) - no spoofing protection'
+                issues.append('Policy p=none provides no protection')
+            elif policy == 'reject':
+                if pct < 100:
+                    status = 'warning'
+                    message = f'DMARC reject but only {pct}% enforced - partial protection'
+                    issues.append(f'Only {pct}% of mail subject to policy')
+                else:
+                    status = 'success'
+                    message = 'DMARC policy reject (100%) - excellent protection'
+            elif policy == 'quarantine':
+                if pct < 100:
+                    status = 'warning'
+                    message = f'DMARC quarantine but only {pct}% enforced - partial protection'
+                    issues.append(f'Only {pct}% of mail subject to policy')
+                else:
+                    status = 'success'
+                    message = 'DMARC policy quarantine (100%) - good protection'
             else:
                 status = 'info'
-                message = 'DMARC record found'
-                policy = 'unknown'
+                message = 'DMARC record found but policy unclear'
+            
+            # Check for subdomain policy mismatch
+            if policy in ('reject', 'quarantine') and subdomain_policy == 'none':
+                issues.append(f'Subdomains unprotected (sp=none while p={policy})')
+            
+            # Note about forensic reporting
+            if ruf:
+                issues.append('Forensic reports (ruf) configured - many providers ignore these')
         
         return {
             'status': status,
@@ -354,23 +541,81 @@ class DNSAnalyzer:
             'records': dmarc_records,
             'valid_records': valid_dmarc,
             'dmarc_like': dmarc_like,
-            'policy': policy
+            'policy': policy,
+            'subdomain_policy': subdomain_policy,
+            'pct': pct,
+            'aspf': aspf,
+            'adkim': adkim,
+            'rua': rua,
+            'ruf': ruf,
+            'issues': issues
         }
     
     def analyze_dkim(self, domain: str) -> Dict[str, Any]:
-        """Check common DKIM selectors for domain (parallel for speed)."""
+        """Check common DKIM selectors for domain with key quality analysis.
+        
+        Checks for:
+        - Selector discovery
+        - Key length (1024-bit = weak, 2048+ = strong)
+        - Key type (rsa vs ed25519)
+        - Revoked keys (p= empty)
+        """
+        import re
+        import base64
+        
         selectors = ["default._domainkey", "google._domainkey", 
                     "selector1._domainkey", "selector2._domainkey"]
         
         found_selectors = {}
+        key_issues = []
+        key_strengths = []
         
         def check_selector(selector):
             records = self.dns_query("TXT", f"{selector}.{domain}")
             if records:
-                dkim_records = [r for r in records if "v=dkim1" in r.lower() or "k=" in r.lower()]
+                dkim_records = [r for r in records if "v=dkim1" in r.lower() or "k=" in r.lower() or "p=" in r.lower()]
                 if dkim_records:
                     return (selector, dkim_records)
             return None
+        
+        def analyze_dkim_key(record):
+            """Analyze DKIM key for strength and issues."""
+            key_info = {'key_type': 'rsa', 'key_bits': None, 'revoked': False, 'issues': []}
+            record_lower = record.lower()
+            
+            # Check key type
+            k_match = re.search(r'\bk=(\w+)', record_lower)
+            if k_match:
+                key_info['key_type'] = k_match.group(1)
+            
+            # Check for revoked key (empty p=)
+            p_match = re.search(r'\bp=([^;\s]*)', record)
+            if p_match:
+                public_key = p_match.group(1)
+                if not public_key or public_key.strip() == '':
+                    key_info['revoked'] = True
+                    key_info['issues'].append('Key revoked (p= empty)')
+                else:
+                    # Estimate key size from base64 length
+                    # RSA key in DKIM is SubjectPublicKeyInfo format
+                    # Base64 encoded, so length * 6 / 8 = bytes
+                    try:
+                        key_bytes = len(base64.b64decode(public_key + '=='))
+                        # RSA key overhead is ~38 bytes for SPKI wrapper
+                        # Actual key modulus is roughly key_bytes - 38
+                        if key_bytes <= 140:  # ~1024 bit key
+                            key_info['key_bits'] = 1024
+                            key_info['issues'].append('1024-bit key (weak, upgrade to 2048)')
+                        elif key_bytes <= 300:  # ~2048 bit key
+                            key_info['key_bits'] = 2048
+                        elif key_bytes <= 600:  # ~4096 bit key
+                            key_info['key_bits'] = 4096
+                        else:
+                            key_info['key_bits'] = key_bytes * 8 // 10  # rough estimate
+                    except:
+                        pass
+            
+            return key_info
         
         with ThreadPoolExecutor(max_workers=4) as executor:
             futures = {executor.submit(check_selector, s): s for s in selectors}
@@ -378,13 +623,39 @@ class DNSAnalyzer:
                 try:
                     result = future.result()
                     if result:
-                        found_selectors[result[0]] = result[1]
+                        selector_name, records = result
+                        # Analyze keys for this selector
+                        selector_info = {
+                            'records': records,
+                            'key_info': []
+                        }
+                        for rec in records:
+                            key_analysis = analyze_dkim_key(rec)
+                            selector_info['key_info'].append(key_analysis)
+                            key_issues.extend(key_analysis['issues'])
+                            if key_analysis['key_bits'] and key_analysis['key_bits'] >= 2048:
+                                key_strengths.append(f"{key_analysis['key_bits']}-bit")
+                        found_selectors[selector_name] = selector_info
                 except:
                     pass
         
         if found_selectors:
-            status = 'success'
-            message = f'Found DKIM records for {len(found_selectors)} selector(s)'
+            # Check for any weak keys
+            has_weak_key = any('1024-bit' in issue for issue in key_issues)
+            has_revoked = any('revoked' in issue for issue in key_issues)
+            
+            if has_revoked:
+                status = 'warning'
+                message = f'Found {len(found_selectors)} DKIM selector(s) but some keys are revoked'
+            elif has_weak_key:
+                status = 'warning'
+                message = f'Found {len(found_selectors)} DKIM selector(s) with weak key(s) (1024-bit)'
+            else:
+                status = 'success'
+                if key_strengths:
+                    message = f'Found DKIM for {len(found_selectors)} selector(s) with strong keys ({", ".join(set(key_strengths))})'
+                else:
+                    message = f'Found DKIM records for {len(found_selectors)} selector(s)'
         else:
             # Use neutral status - large providers use rotating/non-public selectors
             status = 'info'
@@ -393,7 +664,9 @@ class DNSAnalyzer:
         return {
             'status': status,
             'message': message,
-            'selectors': found_selectors
+            'selectors': found_selectors,
+            'key_issues': key_issues,
+            'key_strengths': list(set(key_strengths))
         }
     
     def analyze_mta_sts(self, domain: str) -> Dict[str, Any]:
@@ -1508,17 +1781,36 @@ class DNSAnalyzer:
         else:
             absent_items.append('BIMI (brand logo in inboxes)')
         
-        # Determine posture state (based only on issues and monitoring - not absent optional items)
+        # Check if DNSSEC is configured (affects overall posture label)
+        has_dnssec = dnssec.get('status') == 'success'
+        
+        # Determine posture state
+        # SECURE = all controls enforced INCLUDING DNSSEC
+        # STRONG = excellent email controls but no DNSSEC (valid design choice)
+        # PARTIAL = some controls missing
+        # AT RISK = critical gaps
         if not issues and not monitoring_items:
-            state = 'SECURE'
-            color = 'success'
-            icon = 'shield-alt'
-            message = 'All critical DNS security controls are enforced.'
+            if has_dnssec:
+                state = 'SECURE'
+                color = 'success'
+                icon = 'shield-alt'
+                message = 'All security controls enforced including DNSSEC.'
+            else:
+                state = 'STRONG'
+                color = 'success'
+                icon = 'check-circle'
+                message = 'Email security controls enforced. DNSSEC not configured (common for large operators).'
         elif not issues and monitoring_items:
-            state = 'SECURE (Monitoring)'
-            color = 'info'
-            icon = 'eye'
-            message = 'Security controls present but some are in monitoring/reporting mode.'
+            if has_dnssec:
+                state = 'SECURE (Monitoring)'
+                color = 'info'
+                icon = 'eye'
+                message = 'Security controls present but some in monitoring mode.'
+            else:
+                state = 'STRONG (Monitoring)'
+                color = 'info'
+                icon = 'eye'
+                message = 'Email controls present but some in monitoring mode. DNSSEC not configured.'
         elif len(issues) <= 2:
             state = 'PARTIAL'
             color = 'warning'
