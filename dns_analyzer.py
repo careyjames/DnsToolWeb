@@ -1954,29 +1954,35 @@ class DNSAnalyzer:
         mx_hosts_to_check = mx_hosts[:2]
         
         # Use thread pool for parallel verification (tight 5s budget)
-        with ThreadPoolExecutor(max_workers=2) as executor:
-            futures = {executor.submit(self.verify_smtp_server, host, 3): host for host in mx_hosts_to_check}
-            
-            for future in as_completed(futures, timeout=6):
+        try:
+            with ThreadPoolExecutor(max_workers=2) as executor:
+                futures = {executor.submit(self.verify_smtp_server, host, 3): host for host in mx_hosts_to_check}
+                
                 try:
-                    server_result = future.result(timeout=4)
-                    result['servers'].append(server_result)
-                    
-                    if server_result['reachable']:
-                        result['summary']['reachable'] += 1
-                    if server_result['starttls']:
-                        result['summary']['starttls_supported'] += 1
-                    if server_result['tls_version'] == 'TLSv1.3':
-                        result['summary']['tls_1_3'] += 1
-                    elif server_result['tls_version'] == 'TLSv1.2':
-                        result['summary']['tls_1_2'] += 1
-                    if server_result['cert_valid']:
-                        result['summary']['valid_certs'] += 1
-                    if server_result.get('cert_days_remaining') and server_result['cert_days_remaining'] < 30:
-                        result['summary']['expiring_soon'] += 1
-                        
-                except Exception as e:
-                    logging.warning(f"SMTP verification timeout for {futures[future]}: {e}")
+                    for future in as_completed(futures, timeout=6):
+                        try:
+                            server_result = future.result(timeout=4)
+                            result['servers'].append(server_result)
+                            
+                            if server_result['reachable']:
+                                result['summary']['reachable'] += 1
+                            if server_result['starttls']:
+                                result['summary']['starttls_supported'] += 1
+                            if server_result['tls_version'] == 'TLSv1.3':
+                                result['summary']['tls_1_3'] += 1
+                            elif server_result['tls_version'] == 'TLSv1.2':
+                                result['summary']['tls_1_2'] += 1
+                            if server_result['cert_valid']:
+                                result['summary']['valid_certs'] += 1
+                            if server_result.get('cert_days_remaining') and server_result['cert_days_remaining'] < 30:
+                                result['summary']['expiring_soon'] += 1
+                                
+                        except Exception as e:
+                            logging.warning(f"SMTP verification error for {futures[future]}: {e}")
+                except TimeoutError:
+                    logging.warning("SMTP verification timed out - some servers not checked")
+        except Exception as e:
+            logging.warning(f"SMTP verification failed: {e}")
         
         # Analyze results
         total = result['summary']['total_servers']
