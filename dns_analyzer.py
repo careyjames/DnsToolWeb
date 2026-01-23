@@ -1639,8 +1639,18 @@ class DNSAnalyzer:
         domain_status_message = None
         has_any_records = False
         
+        def check_has_records(d):
+            """Check if domain has any actual records."""
+            for rtype in ['A', 'AAAA', 'MX']:
+                try:
+                    self.resolver.resolve(d, rtype)
+                    return True
+                except Exception:
+                    pass
+            return False
+        
         try:
-            # Check for ANY record - if NXDOMAIN, domain doesn't exist
+            # Check for SOA record - if NXDOMAIN, domain doesn't exist
             self.resolver.resolve(domain, 'SOA')
         except dns.resolver.NXDOMAIN:
             domain_exists = False
@@ -1655,28 +1665,36 @@ class DNSAnalyzer:
                 domain_status = 'nxdomain'
                 domain_status_message = 'Domain does not exist (NXDOMAIN).'
             except dns.resolver.NoAnswer:
-                # No NS either - check for ANY actual records (A, AAAA, MX)
-                for rtype in ['A', 'AAAA', 'MX']:
-                    try:
-                        self.resolver.resolve(domain, rtype)
-                        has_any_records = True
-                        break
-                    except Exception:
-                        pass
-                
-                if not has_any_records:
-                    # No NS and no records - this is effectively non-existent
+                # No NS either - check for ANY actual records
+                if not check_has_records(domain):
                     domain_exists = False
                     domain_status = 'undelegated'
                     domain_status_message = 'Domain is not delegated or has no DNS records. This may be an unused subdomain or unregistered domain.'
                 else:
                     domain_status = 'partial'
                     domain_status_message = 'Domain has some records but no NS delegation.'
+            except (dns.resolver.LifetimeTimeout, dns.exception.Timeout):
+                # NS query timed out - check for any records
+                if not check_has_records(domain):
+                    domain_exists = False
+                    domain_status = 'timeout_no_records'
+                    domain_status_message = 'DNS queries timed out and no records found. Domain may not exist or nameservers are unresponsive.'
             except Exception:
                 pass
         except dns.resolver.NoNameservers:
+            domain_exists = False
             domain_status = 'no_nameservers'
             domain_status_message = 'No nameservers responding for this domain. Zone may be misconfigured or undelegated.'
+        except (dns.resolver.LifetimeTimeout, dns.exception.Timeout):
+            # SOA query timed out - likely broken/non-existent
+            # Check if ANY records exist
+            if not check_has_records(domain):
+                domain_exists = False
+                domain_status = 'timeout_no_records'
+                domain_status_message = 'DNS queries timed out and no records found. Domain may not exist or nameservers are unresponsive.'
+            else:
+                domain_status = 'timeout_partial'
+                domain_status_message = 'Some DNS queries timed out but records were found.'
         except Exception:
             pass  # Continue with analysis
         
