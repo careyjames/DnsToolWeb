@@ -1,0 +1,107 @@
+
+IT+HELP
+SAN DIEGO
+We solve tech problems.
+No monthly retainers.
+More
+Schedule
+
+DNS Security Best Practices: Defend Your Domain with DMARC, SPF & DKIM
+
+
+Looking to bolster your DNS Security with DMARC, SPF, and DKIM? This guide will show you how to set up DMARC to protect your business email system from spoofing and phishing attacks. If you feel lost, call 619-853-5008. I’m happy to help.
+
+The Challenge: Ensuring DNS Security and Combating Email Vulnerabilities
+Your Domain Name System (DNS) security protocols, such as DMARC (Domain-based Message Authentication, Reporting, and Conformance), SPF (Sender Policy Framework), and DKIM (DomainKeys Identified Mail), are crucial for safeguarding your business against email vulnerabilities.
+
+Why DNS Security Matters
+Without proper DNS security and email authentication, your business is susceptible to email spoofing and phishing attacks. This could lead to unauthorized access to sensitive information, financial loss, and a tarnished domain reputation. Adequately configured DNS records not only secure email but also improve deliverability. Emails from properly authenticated domains are less likely to be marked as spam, thus improving overall deliverability rates.
+
+How to set up DMARC, SPF, and DKIM for Optimal DNS Security
+DMARC, SPF, and DKIM offer a robust defense for your email system by authenticating the messages sent from your domain and providing a policy for handling messages that fail authentication. DMARC itself doesn’t “authenticate messages” but rather uses SPF/DKIM results to decide enforcement.
+
+Sample DMARC, SPF, and DKIM Records: Key Elements of DNS Security
+Here is a DNS Tool record snip-it from a trusted source, CISA (Cybersecurity and Infrastructure Security Agency), the US cyber intelligence agency:
+
+DNS Tool record showing CISA DMARC, SPF, and DKIM enforcement
+Notice that their policy is set to reject 100% of unauthorized messages.
+
+We proudly participate as a stakeholder in CISA's Cyber Hygiene program for critical cyber infrastructure. We have learned so much from our assigned feds, and I love experiencing the red team, where hackers at CISA hack your company and show you what they could steal and how to prevent it. One cool macOS security tool we had installed that gave our fed, who was red-teaming us the most trouble, was LuLu by Objective See.
+
+Common SPF Misconceptions
+Contrary to some misunderstandings, the -all tag in an SPF record does not prevent internal users from sending or receiving emails. Instead, it mandates that only explicitly allowed sources can send emails on behalf of the domain. Email newsletters sent with Mailchimp or Zendesk, for example, cannot successfully send emails that arrive from your domain without having an "include:" entry. So you allow them with an "include:" entry.
+
+Alternate Viewpoints
+Mail Hardener recommends using SPF ~all (Softfail) over -all (Fail) for better compatibility and fewer delivery issues.
+
+Scientific Backing
+According to RFC 7489, Section 10.1, the use of -all can cause messages to be rejected before DMARC processing, something operators should be aware of.
+
+Practical Tools for DNS Security
+I recommend using my own DNS Tool for a complete, one-page audit of your security posture. It's the most authoritative way to check your work because it mimics how email providers actually see you.
+
+I also use Red Sift's Investigate specifically when I need to send a test email to verify delivery path and headers. Their tool provides a special email address you can send to, which is a fantastic way to see exactly how your emails are arriving.
+
+For tracking historical DNS changes, SecurityTrails is my go-to.
+
+Step-by-Step Guide to Setting Up DMARC, SPF, and DKIM
+If you’re new to DNS security, here’s a simple checklist to help you set up DMARC, SPF, and DKIM:
+
+Note: This guide is for custom domain owners (e.g. you@yourbusiness.com). If you use a free address like @gmail.com or @yahoo.com, you cannot edit these records—this guide is not for you.
+
+If you’d like to see the state of your DNS before we get started, visit dnstool.it-help.tech, enter your domain, and keep that tab open. It will tell you exactly what is missing or broken in clear English.
+
+If you want to test how your emails are currently landing (e.g. Inbox vs Spam), visit Red Sift's Investigate, copy their test email address, and send an email to it from your system.
+
+In brief: SPF specifies which servers can send on your behalf (like a return-address check), DKIM attaches a digital signature to emails (proving the email hasn’t been tampered with), and DMARC ties everything together with a policy and reporting.
+
+SPF
+
+Verify domain ownership. a. The Registrar is where the yearly bill is paid (and could also be the place to edit DNS records – the DNS Host). b. The NS server records tell you where to edit the DNS records; they are the DNS hosts. (This could be GoDaddy, Wix, or another; the two NS servers will give you a hint if you Google them.) c. There are many variations in quality when you choose a registrar and DNS Host! We use Cloudflare as our registrar and DNS host. Mark Monitor (major companies like Google use them), Akamai (even cia.gov uses them!), and COM LAUDE (Apple uses them) are top-of-the-food-chain and good at their jobs!
+Create an SPF record listing authorized email servers: a. The two most typical are: * v=spf1 include:_spf.google.com ~all (for Google guidance) * v=spf1 include:spf.protection.outlook.com -all (for Microsoft guidance) b. After you construct your policy, copy it into your DNS. c. Note that the two above records do not have entries for other things that may need to send email as your domain (Email Marketing, receipts, and invoices). d. DNS lookup limit is 10. This means that if the SPF record causes more than 10 DNS lookups, it could lead to some emails failing SPF validation due to exceeding this limit. If you encounter this problem, you may need a Dynamic DNS service like Red Sift. We have a portal with them and can help you set it up.
+DMARC
+
+Set up a DMARC policy. a. Start with a monitoring policy (e.g., p=none). b. After you construct your policy, copy it into your DNS. Be sure to specify an email address in the rua tag in the DMARC record to receive reports, and monitor them for insights. c. Remember, if your DMARC says p=none, your work's not done! ;-) Progress to p=quarantine and then p=reject. p=none doesn't provide any protection. It only reports potential issues without enforcing policies, leaving your domain vulnerable to email spoofing.
+DKIM
+
+Log in to Microsoft Exchange or Google Workspace (your email service provider) to get your DKIM keys, which you'll also publish in your DNS records. a. DKIM selectors are part of the DKIM record that helps differentiate between multiple keys published under the same domain. This is useful for organizations that send emails through various systems or services (Email Marketing). b. After you find your DKIM keys, copy them into your DNS. When setting up DKIM, it's recommended that you use a key length of at least 2048 bits. Shorter keys, such as 1024 bits, are no longer considered secure enough against brute-force attacks. c. Make sure you hit Activate or Start Authentication in Google or Publish in Exchange.
+Test the setup using DNS Tool. It will verify that your SPF, DKIM, and DMARC records are actually propagating and being enforced correctly. Use this to confirm that your edits "took" and that the world sees the correct records.
+
+To do a final delivery test, go back to Red Sift Investigate and send another email to their test address to confirm your new authentication is passing.
+
+Monitor and adjust as needed.
+
+DNSSEC for extra security
+Additional DNS security measures, such as DNSSEC (DNS Security Extensions), protect against DNS spoofing by ensuring the DNS responses are authenticated. DNSSEC is a suite of extensions that provides DNS clients (resolvers) with origin authentication of DNS data, authenticated denial of existence, and data integrity.
+
+Common Pitfalls to Avoid
+When setting up DMARC and SPF, watch out for these common mistakes:
+
+Incorrectly formatted DNS records, spaces left before or after, or incorrect format.
+Not updating DNS records after changing email providers.
+Setting overly strict policies initially.
+You will find quite a few website platforms that offer to log in to your DNS and automatically adjust or add the needed records for their needs; I can’t tell you how many times I get a call about email and websites being down because one of these tools erased and reset the entire zone file. If you care about security and zero downtime, DO NOT TRUST THESE TOOLS. They are far from perfect and are often coded by those who don’t understand DNS zone files.
+FAQs: Your DNS Security Questions Answered
+Can I set up DMARC and SPF myself? Yes, but it’s advisable to consult a DNS security expert if you are unsure.
+What happens if I don’t set up DMARC or SPF? Your email system will be more susceptible to phishing and spoofing attacks. Evil criminals can send emails as you! They use you@company.com to email your bank or friends and ask for money or worse. These are called BEC Attacks (Business Email Compromise).
+BIMI
+Beyond email security, a Brand Indicators for Message Identification (BIMI) record can validate your company’s logo on platforms like Gmail and more. Learn how to set it up at bimigroup.org. Here is Apple’s: https://www.apple.com/bimi/v2/apple.svg. It’s a rock-solid way to protect your intellectual property on the web.
+
+Statistical Urgency
+The FBI's 2023 Internet Crime Report reveals a surge in cybercrime, with a record 880,418 complaints and over $12.5 billion in losses, highlighting California as the most affected state.
+
+Conclusion
+Securing your domain and email system is not just a technical requirement but a business imperative. Implementing DMARC, SPF, and DKIM can significantly reduce the risk of email spoofing and BEC phishing attacks. Don’t be a statistic—take action today. We can help you secure your email and DNS records. Call 619-853-5008.
+
+Last updated October 2025 — verified with current CISA DNS security guidelines.
+
+‹ IT Problem-Solving Meets the Scientific Method
+Why Your Wireless Network Sucks: No Ethernet Backbone ›
+Owl of Athena
+©2026 IT Help San Diego Inc.
+888 Prospect St Suite 200,
+La Jolla, CA 92037
+By appointment only
+(619) 853‑5008
+8 am – 8 pm daily
+✨ Built with Rust (Zola) & Sass; no frameworks, trackers, or cookies. ✨
