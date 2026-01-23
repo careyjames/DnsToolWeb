@@ -837,107 +837,102 @@
             </div>
         </div>
 
-        <!-- DNS Records Section -->
-        <div class="row">
-            <div class="col-lg-6 mb-4">
-                <div class="card h-100">
-                    <div class="card-header">
-                        <h5 class="mb-0">
-                            <i class="fas fa-database me-2"></i>Evidence: Resolver Records
-                            <small class="text-muted ms-2">(Raw DNS data)</small>
-                        </h5>
-                    </div>
-                    <div class="card-body">
-                        <div class="row">
-                            {% for record_type, records in results.basic_records.items() %}
-                                <div class="col-12 mb-3">
-                                    <h6 class="d-flex align-items-center justify-content-between">
-                                        <div class="d-flex align-items-center">
-                                            <span class="badge bg-secondary me-2">{{ record_type }}</span>
-                                            {% if records %}
-                                                <small class="text-success">{{ records|length }} record{{ 's' if records|length > 1 else '' }}</small>
-                                            {% else %}
-                                                <small class="text-muted">No records</small>
-                                            {% endif %}
-                                        </div>
-                                        
-                                        {% if results.propagation_status and record_type in results.propagation_status %}
-                                            {% set p_info = results.propagation_status[record_type] %}
-                                            {% if p_info.status == 'synchronized' %}
-                                                <span class="badge bg-success-subtle text-success border border-success-subtle px-2 py-1" style="font-size: 0.65rem;">
-                                                    <i class="fas fa-check-double me-1"></i>Synchronized
-                                                </span>
-                                            {% elif p_info.status == 'propagating' %}
-                                                <span class="badge bg-warning-subtle text-warning border border-warning-subtle px-2 py-1" style="font-size: 0.65rem;" title="Public resolver does not match authoritative nameserver">
-                                                    <i class="fas fa-clock me-1"></i>Still Propagating
-                                                </span>
-                                            {% endif %}
-                                        {% endif %}
-                                    </h6>
-                                    {% if records %}
-                                        {% for record in records %}
-                                            <div class="code-block">{{ record }}</div>
-                                        {% endfor %}
-                                    {% else %}
-                                        <div class="text-muted small">
-                                            <i class="fas fa-minus me-1"></i>No records found
-                                        </div>
-                                        {% if record_type == 'CNAME' %}
-                                            <div class="text-info small mt-1">
-                                                <i class="fas fa-lightbulb me-1"></i>Tip: CNAMEs are usually on subdomains. Try searching <strong>www.{{ domain }}</strong> or another subdomain.
-                                            </div>
+        <!-- DNS Diff Section - True Side-by-Side Comparison -->
+        <div class="col-12 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-code-compare me-2"></i>DNS Evidence Diff
+                        <small class="text-muted ms-2">Side-by-side comparison</small>
+                    </h5>
+                </div>
+                <div class="card-body p-0">
+                    <!-- Diff Header Row -->
+                    <div class="dns-diff-container">
+                        <div class="dns-diff-header">
+                            <div class="dns-diff-col dns-diff-left">
+                                <i class="fas fa-database me-2"></i>Resolver Records
+                                <small class="opacity-75">(Public DNS cache)</small>
+                            </div>
+                            <div class="dns-diff-col dns-diff-right">
+                                <i class="fas fa-microchip me-2"></i>Authoritative Records
+                                <small class="opacity-75">(Source of truth)</small>
+                            </div>
+                        </div>
+                        
+                        {% for record_type in results.basic_records.keys() %}
+                            {% set resolver_records = results.basic_records.get(record_type, []) %}
+                            {% set auth_records = results.authoritative_records.get(record_type, []) if results.authoritative_records else [] %}
+                            {% set max_len = [resolver_records|length, auth_records|length]|max %}
+                            
+                            {% if max_len > 0 or record_type in ['A', 'AAAA', 'MX', 'NS', 'TXT'] %}
+                                <!-- Record Type Header -->
+                                <div class="dns-diff-type-header">
+                                    <span class="badge bg-secondary me-2">{{ record_type }}</span>
+                                    {% if results.propagation_status and record_type in results.propagation_status %}
+                                        {% set p_info = results.propagation_status[record_type] %}
+                                        {% if p_info.status == 'synchronized' %}
+                                            <span class="badge bg-success-subtle text-success border border-success-subtle px-2 py-1" style="font-size: 0.7rem;">
+                                                <i class="fas fa-check-double me-1"></i>Synchronized
+                                            </span>
+                                        {% elif p_info.status == 'propagating' %}
+                                            <span class="badge bg-warning-subtle text-warning border border-warning-subtle px-2 py-1" style="font-size: 0.7rem;">
+                                                <i class="fas fa-clock me-1"></i>Propagating
+                                            </span>
                                         {% endif %}
                                     {% endif %}
+                                    <span class="ms-auto text-muted small">
+                                        {{ resolver_records|length }} / {{ auth_records|length }} records
+                                    </span>
                                 </div>
-                            {% endfor %}
-                        </div>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="col-lg-6 mb-4">
-                <div class="card h-100">
-                    <div class="card-header bg-primary bg-opacity-10">
-                        <h5 class="mb-0">
-                            <i class="fas fa-microchip me-2"></i>Evidence: Authoritative Records
-                            <small class="text-muted ms-2">(Direct from nameserver)</small>
-                        </h5>
-                    </div>
-                    <div class="card-body">
-                        {% if results.authoritative_records and results.authoritative_records.values()|map('length')|sum > 0 %}
-                            <div class="row">
-                                {% for record_type, records in results.authoritative_records.items() %}
-                                    <div class="col-12 mb-3">
-                                        <h6 class="d-flex align-items-center">
-                                            <span class="badge bg-primary me-2">{{ record_type }}</span>
-                                            {% if records %}
-                                                <small class="text-success">{{ records|length }} record{{ 's' if records|length > 1 else '' }}</small>
-                                            {% else %}
-                                                <small class="text-muted">No records</small>
-                                            {% endif %}
-                                        </h6>
-                                        {% if records %}
-                                            {% for record in records %}
-                                                <div class="code-block border-primary border-opacity-25">{{ record }}</div>
-                                            {% endfor %}
-                                        {% else %}
-                                            <div class="text-muted small">
-                                                <i class="fas fa-minus me-1"></i>No records found
+                                
+                                <!-- Record Rows -->
+                                {% if max_len > 0 %}
+                                    {% for i in range(max_len) %}
+                                        {% set resolver_val = resolver_records[i] if i < resolver_records|length else none %}
+                                        {% set auth_val = auth_records[i] if i < auth_records|length else none %}
+                                        {% set is_match = resolver_val == auth_val %}
+                                        
+                                        <div class="dns-diff-row {% if not is_match and resolver_val and auth_val %}dns-diff-changed{% elif not resolver_val %}dns-diff-added{% elif not auth_val %}dns-diff-removed{% endif %}">
+                                            <div class="dns-diff-col dns-diff-left {% if not resolver_val %}dns-diff-empty{% elif not is_match %}dns-diff-highlight-old{% endif %}">
+                                                {% if resolver_val %}
+                                                    <code class="dns-diff-value">{{ resolver_val }}</code>
+                                                {% else %}
+                                                    <span class="dns-diff-placeholder">—</span>
+                                                {% endif %}
                                             </div>
-                                        {% endif %}
+                                            <div class="dns-diff-col dns-diff-right {% if not auth_val %}dns-diff-empty{% elif not is_match %}dns-diff-highlight-new{% endif %}">
+                                                {% if auth_val %}
+                                                    <code class="dns-diff-value">{{ auth_val }}</code>
+                                                {% else %}
+                                                    <span class="dns-diff-placeholder">—</span>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    {% endfor %}
+                                {% else %}
+                                    <div class="dns-diff-row">
+                                        <div class="dns-diff-col dns-diff-left dns-diff-empty">
+                                            <span class="dns-diff-placeholder">No records</span>
+                                        </div>
+                                        <div class="dns-diff-col dns-diff-right dns-diff-empty">
+                                            <span class="dns-diff-placeholder">No records</span>
+                                        </div>
                                     </div>
-                                {% endfor %}
-                            </div>
-                        {% else %}
-                            <div class="text-center py-5 text-muted">
-                                <i class="fas fa-satellite-dish fa-3x mb-3 opacity-25"></i>
-                                <p>No authoritative records could be retrieved directly.</p>
-                                <small>This may happen if the nameservers are blocking direct queries or timing out.</small>
+                                {% endif %}
+                            {% endif %}
+                        {% endfor %}
+                        
+                        {% if not results.authoritative_records or results.authoritative_records.values()|map('length')|sum == 0 %}
+                            <div class="dns-diff-notice">
+                                <i class="fas fa-info-circle me-2"></i>
+                                Authoritative records unavailable - nameserver may be blocking direct queries
                             </div>
                         {% endif %}
                     </div>
                 </div>
             </div>
+        </div>
         </div>
 
         <!-- Back to top -->
