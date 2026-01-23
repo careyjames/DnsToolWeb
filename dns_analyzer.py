@@ -190,18 +190,52 @@ class DNSAnalyzer:
     
     def get_basic_records(self, domain: str) -> Dict[str, List[str]]:
         """Get basic DNS records for domain (parallel for speed)."""
-        record_types = ["A", "AAAA", "MX", "TXT", "NS", "CNAME", "SRV"]
+        record_types = ["A", "AAAA", "MX", "TXT", "NS", "CNAME"]
         records = {t: [] for t in record_types}
+        records["SRV"] = []  # SRV needs special handling
+        
+        # Common SRV service prefixes to check
+        srv_prefixes = [
+            "_autodiscover._tcp",  # Microsoft Exchange/O365
+            "_sip._tls",           # SIP/VoIP  
+            "_sipfederationtls._tcp",  # Lync/Skype federation
+            "_xmpp-client._tcp",   # XMPP chat (Jabber)
+            "_caldavs._tcp",       # CalDAV (calendar)
+            "_carddavs._tcp",      # CardDAV (contacts)
+            "_imaps._tcp",         # IMAP over TLS
+            "_submission._tcp",    # Email submission
+        ]
         
         def query_type(rtype):
             return (rtype, self.dns_query(rtype, domain))
         
-        with ThreadPoolExecutor(max_workers=7) as executor:
-            futures = {executor.submit(query_type, t): t for t in record_types}
-            for future in as_completed(futures, timeout=5):
+        def query_srv(prefix):
+            result = self.dns_query("SRV", f"{prefix}.{domain}")
+            if result:
+                return (prefix, result)
+            return None
+        
+        with ThreadPoolExecutor(max_workers=15) as executor:
+            # Query basic record types
+            type_futures = {executor.submit(query_type, t): t for t in record_types}
+            # Query SRV prefixes in parallel
+            srv_futures = {executor.submit(query_srv, p): p for p in srv_prefixes}
+            
+            for future in as_completed(type_futures, timeout=5):
                 try:
                     rtype, result = future.result()
                     records[rtype] = result
+                except:
+                    pass
+            
+            for future in as_completed(srv_futures, timeout=5):
+                try:
+                    result = future.result()
+                    if result:
+                        prefix, srv_records = result
+                        # Format: "service: target:port priority weight"
+                        for rec in srv_records:
+                            records["SRV"].append(f"{prefix}: {rec}")
                 except:
                     pass
         
