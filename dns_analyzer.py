@@ -270,6 +270,8 @@ class DNSAnalyzer:
         spf_like = []
         
         for record in txt_records:
+            if not record:
+                continue
             lower_record = record.lower()
             if "v=spf1" in lower_record:
                 valid_spf.append(record)
@@ -311,6 +313,8 @@ class DNSAnalyzer:
         dmarc_like = []
         
         for record in dmarc_records:
+            if not record:
+                continue
             lower_record = record.lower()
             if "v=dmarc1" in lower_record:
                 valid_dmarc.append(record)
@@ -683,7 +687,7 @@ class DNSAnalyzer:
         try:
             child_result = self.dns_query("NS", domain)
             if child_result:
-                child_ns = sorted([ns.rstrip('.').lower() for ns in child_result])
+                child_ns = sorted([ns.rstrip('.').lower() for ns in child_result if ns])
         except Exception:
             pass
         
@@ -714,7 +718,7 @@ class DNSAnalyzer:
                             parent_resolver.lifetime = self.dns_timeout * 2
                             
                             delegation = parent_resolver.resolve(domain, 'NS')
-                            parent_ns = sorted([str(ns).rstrip('.').lower() for ns in delegation])
+                            parent_ns = sorted([str(ns).rstrip('.').lower() for ns in delegation if ns])
                     except Exception:
                         pass
             except Exception:
@@ -1040,7 +1044,7 @@ class DNSAnalyzer:
         
         # 1. Detect DNS Hosting from NS records
         ns_records = results.get('basic_records', {}).get('NS', [])
-        ns_str = " ".join(ns_records).lower()
+        ns_str = " ".join(r for r in ns_records if r).lower()
         
         dns_providers = {
             'cloudflare': 'Cloudflare',
@@ -1085,7 +1089,7 @@ class DNSAnalyzer:
         
         # 3. Detect Email Hosting from MX records
         mx_records = results.get('basic_records', {}).get('MX', [])
-        mx_str = " ".join(mx_records).lower()
+        mx_str = " ".join(r for r in mx_records if r).lower()
         
         email_providers = {
             'google': 'Google Workspace',
