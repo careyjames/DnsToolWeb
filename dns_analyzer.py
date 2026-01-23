@@ -1231,12 +1231,17 @@ class DNSAnalyzer:
             issues.append('No SPF record (no sender verification)')
         
         # Check DNSSEC (DNS-verifiable)
+        # Note: Unsigned DNSSEC is a deliberate design choice for many large operators
+        # (Apple, Google, CDNs) who secure at other layers. Only broken chain is an issue.
         dnssec = results.get('dnssec_analysis', {})
         chain = dnssec.get('chain_of_trust', 'none')
         if chain == 'broken':
-            issues.append('DNSSEC chain broken (DNS responses cannot be verified)')
-        elif chain == 'none' or dnssec.get('status') != 'success':
-            issues.append('DNSSEC not enabled (DNS responses can be spoofed)')
+            issues.append('DNSSEC chain incomplete (DS record missing at registrar)')
+        elif dnssec.get('status') == 'success':
+            configured_items.append('DNSSEC (DNS responses signed)')
+        else:
+            # Unsigned is tracked as "not configured" - a design choice, not an error
+            absent_items.append('DNSSEC (DNS response signing)')
         
         # Check NS delegation
         ns_del = results.get('ns_delegation_analysis', {})

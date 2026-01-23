@@ -1,0 +1,172 @@
+Short answer: yes — apple.com is intentionally unsigned at the zone apex.
+Long answer (the part that matters): this is not ignorance or a mistake; it’s a deliberate architectural choice.
+
+Let’s walk it cleanly and reconcile what your tool shows vs what DNSViz is showing.
+
+⸻
+
+What you’re seeing (and why it looks contradictory)
+
+Your tool shows
+	•	DNSSEC: Unsigned for apple.com
+	•	NS delegation: Verified
+	•	Banner: “Can DNS itself be tampered with? → Partially”
+
+That is correct.
+
+DNSViz shows
+	•	Root (.) → signed
+	•	TLD (.com) → signed
+	•	apple.com RRsets → Insecure
+	•	Delegation → Insecure
+
+That is also correct.
+
+These two tools are agreeing — just using different words.
+
+⸻
+
+The key DNSSEC concept (this is the crux)
+
+DNSSEC is opt-in per zone.
+A signed parent does not mean the child is signed.
+
+For DNSSEC to be active on apple.com, both must exist:
+	1.	apple.com publishes DNSKEY records
+	2.	.com publishes a DS record pointing at apple.com
+
+Apple does neither.
+
+So resolvers correctly mark apple.com as insecure (unsigned), not bogus.
+
+That’s an important distinction.
+
+⸻
+
+Why Apple chooses not to sign apple.com
+
+This is where people usually assume “Apple must be behind.”
+
+They’re not.
+
+Apple’s DNS reality
+
+Apple operates one of the largest, most latency-sensitive DNS infrastructures on Earth:
+	•	Massive Anycast footprint
+	•	Heavy use of:
+	•	CDNs
+	•	DNS-based traffic steering
+	•	ultra-low TTLs
+	•	aggressive failover
+	•	A mix of:
+	•	internal authoritative systems
+	•	split-horizon behavior
+	•	service-specific sub-zones
+
+DNSSEC introduces:
+	•	Cryptographic overhead
+	•	Key management complexity
+	•	Failure modes that are catastrophic when they happen (global resolution failure)
+
+At Apple’s scale, DNSSEC failures are not “oops” — they’re worldwide outages.
+
+Apple has historically chosen:
+
+Availability > DNS-level authenticity at the apex
+
+And instead enforces trust above DNS.
+
+⸻
+
+How Apple secures things instead of DNSSEC
+
+Apple compensates aggressively at higher layers:
+
+1. TLS + Certificate control
+	•	Apple runs its own CA (pki.apple.com)
+	•	CAA is locked down tightly (as your tool shows)
+	•	Certificate transparency is enforced
+	•	TLS is non-negotiable
+
+2. Application-layer signing
+	•	iOS/macOS updates are signed
+	•	App Store content is signed
+	•	Device trust chains do not depend on DNSSEC
+
+3. Email security (ironically stronger than many)
+	•	Strong DMARC
+	•	MTA-STS
+	•	TLS-RPT
+	•	BIMI with VMC (as you showed)
+
+4. Resolver trust assumptions
+
+Apple controls:
+	•	the client OS
+	•	the resolver behavior
+	•	the validation logic
+
+They are not relying on random ISP resolvers behaving correctly.
+
+⸻
+
+Why DNSViz says “Insecure” (and why that’s okay)
+
+In DNSSEC terminology:
+	•	Secure = signed and validated
+	•	Bogus = signed but broken (dangerous)
+	•	Insecure = unsigned by design
+
+Apple is Insecure, not Bogus.
+
+That is an acceptable state under DNSSEC.
+
+⸻
+
+What your tool should say (and you’re actually very close)
+
+Your current wording:
+
+DNSSEC: Unsigned
+DNS responses are unsigned
+
+That is correct.
+
+If you want to be extra precise (and avoid “Apple looks broken” reactions), you could add a small clarification line:
+
+DNSSEC: Unsigned (intentional)
+The domain does not publish DNSSEC records. This is a deliberate design choice by some large operators.
+
+Do not say:
+	•	“misconfigured”
+	•	“broken”
+	•	“at risk”
+
+Because that would be misleading for domains like:
+	•	apple.com
+	•	google.com (historically unsigned at times)
+	•	large CDNs and SaaS platforms
+
+⸻
+
+Bottom line (plain English)
+	•	Apple does not use DNSSEC for apple.com
+	•	This is intentional
+	•	DNSViz confirms this
+	•	Your tool correctly detects it
+	•	This does not mean Apple is “less secure”
+	•	It means Apple chose different trust boundaries
+
+And importantly:
+
+Your tool handled this correctly.
+
+If anything, this example proves your classification model is sound — because it didn’t try to “grade” Apple as broken, just accurately unsigned.
+
+If you want, next we can:
+	•	define a “DNSSEC posture taxonomy” (Secure / Unsigned / Bogus)
+	•	tune the language so large operators don’t look “wrong”
+	•	or build a short explainer tooltip specifically for DNSSEC-unsigned mega-domains
+
+But no — you didn’t find a bug.
+You found a real, nuanced DNS truth.

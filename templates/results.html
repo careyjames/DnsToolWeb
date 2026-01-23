@@ -503,9 +503,9 @@
                                         DNSKEY exists but DS record not published at registrar. Add DS record to complete chain of trust.
                                     </div>
                                 {% else %}
-                                    <div class="small text-info mb-2">
+                                    <div class="small text-muted mb-2">
                                         <i class="fas fa-info-circle me-1"></i>
-                                        Without DNSSEC, DNS responses can be spoofed. Enable at your DNS provider for cryptographic verification.
+                                        Domain does not use DNSSEC. Many large operators choose to secure at other layers (TLS, app signing).
                                     </div>
                                 {% endif %}
                                 
