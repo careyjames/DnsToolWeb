@@ -5,8 +5,12 @@ import subprocess
 import shutil
 import logging
 import time
+import socket
+import ssl
+import smtplib
 from typing import Dict, List, Optional, Any
 from concurrent.futures import ThreadPoolExecutor, as_completed, TimeoutError as FuturesTimeoutError
+from datetime import datetime
 
 # Simple in-memory RDAP cache to avoid hammering registries
 # Key: domain, Value: (timestamp, data)
@@ -1707,6 +1711,19 @@ class DNSAnalyzer:
             'registrar_info': results_map.get('registrar', {'status': 'error', 'registrar': None})
         }
         
+        # Add SMTP Transport verification (uses MX records from basic)
+        mx_records = basic.get('MX', [])
+        if mx_records:
+            results['smtp_transport'] = self.analyze_smtp_transport(domain, mx_records)
+        else:
+            results['smtp_transport'] = {
+                'status': 'warning',
+                'message': 'No MX records to verify',
+                'servers': [],
+                'summary': {'total_servers': 0, 'reachable': 0, 'starttls_supported': 0, 'tls_1_3': 0, 'tls_1_2': 0, 'valid_certs': 0, 'expiring_soon': 0},
+                'issues': []
+            }
+        
         # Add Hosting/Who summary
         results['hosting_summary'] = self.get_hosting_info(domain, results)
         
@@ -1714,6 +1731,253 @@ class DNSAnalyzer:
         results['posture'] = self._calculate_posture(results)
         
         return results
+    
+    def verify_smtp_server(self, mx_host: str, timeout: int = 10) -> Dict[str, Any]:
+        """
+        Verify SMTP server capabilities: STARTTLS, TLS version, cipher, certificate.
+        Returns detailed transport security information.
+        """
+        result = {
+            'host': mx_host,
+            'reachable': False,
+            'starttls': False,
+            'tls_version': None,
+            'cipher': None,
+            'cipher_bits': None,
+            'certificate': None,
+            'cert_valid': False,
+            'cert_expiry': None,
+            'cert_days_remaining': None,
+            'cert_issuer': None,
+            'cert_subject': None,
+            'error': None
+        }
+        
+        try:
+            # Connect to SMTP server on port 25
+            smtp = smtplib.SMTP(timeout=timeout)
+            smtp.connect(mx_host, 25)
+            result['reachable'] = True
+            
+            # Get server capabilities
+            smtp.ehlo()
+            
+            # Check for STARTTLS support
+            if smtp.has_extn('STARTTLS'):
+                result['starttls'] = True
+                
+                # Create SSL context for STARTTLS
+                context = ssl.create_default_context()
+                context.check_hostname = True
+                context.verify_mode = ssl.CERT_REQUIRED
+                
+                try:
+                    smtp.starttls(context=context)
+                    smtp.ehlo()
+                    
+                    # Get TLS details from the socket
+                    sock = smtp.sock
+                    if hasattr(sock, 'version'):
+                        result['tls_version'] = sock.version()
+                    if hasattr(sock, 'cipher'):
+                        cipher_info = sock.cipher()
+                        if cipher_info:
+                            result['cipher'] = cipher_info[0]
+                            result['cipher_bits'] = cipher_info[2] if len(cipher_info) > 2 else None
+                    
+                    # Get certificate details
+                    if hasattr(sock, 'getpeercert'):
+                        cert = sock.getpeercert()
+                        if cert:
+                            result['cert_valid'] = True
+                            result['certificate'] = True
+                            
+                            # Parse expiry date
+                            not_after = cert.get('notAfter')
+                            if not_after:
+                                try:
+                                    expiry = datetime.strptime(not_after, '%b %d %H:%M:%S %Y %Z')
+                                    result['cert_expiry'] = expiry.strftime('%Y-%m-%d')
+                                    days_remaining = (expiry - datetime.now()).days
+                                    result['cert_days_remaining'] = days_remaining
+                                except Exception:
+                                    result['cert_expiry'] = not_after
+                            
+                            # Parse issuer
+                            issuer = cert.get('issuer')
+                            if issuer:
+                                issuer_dict = {}
+                                for item in issuer:
+                                    if item and len(item) > 0:
+                                        issuer_dict[item[0][0]] = item[0][1]
+                                org = issuer_dict.get('organizationName', '')
+                                cn = issuer_dict.get('commonName', '')
+                                result['cert_issuer'] = org or cn
+                            
+                            # Parse subject
+                            subject = cert.get('subject')
+                            if subject:
+                                subject_dict = {}
+                                for item in subject:
+                                    if item and len(item) > 0:
+                                        subject_dict[item[0][0]] = item[0][1]
+                                result['cert_subject'] = subject_dict.get('commonName', mx_host)
+                
+                except ssl.SSLCertVerificationError as e:
+                    result['error'] = f"Certificate verification failed: {str(e)}"
+                    result['cert_valid'] = False
+                    # Try without verification to get more info
+                    try:
+                        smtp2 = smtplib.SMTP(timeout=timeout)
+                        smtp2.connect(mx_host, 25)
+                        smtp2.ehlo()
+                        context2 = ssl.create_default_context()
+                        context2.check_hostname = False
+                        context2.verify_mode = ssl.CERT_NONE
+                        smtp2.starttls(context=context2)
+                        smtp2.ehlo()
+                        sock2 = smtp2.sock
+                        if hasattr(sock2, 'version'):
+                            result['tls_version'] = sock2.version()
+                        if hasattr(sock2, 'cipher'):
+                            cipher_info = sock2.cipher()
+                            if cipher_info:
+                                result['cipher'] = cipher_info[0]
+                                result['cipher_bits'] = cipher_info[2] if len(cipher_info) > 2 else None
+                        smtp2.quit()
+                    except Exception:
+                        pass
+                        
+                except ssl.SSLError as e:
+                    result['error'] = f"TLS error: {str(e)}"
+            else:
+                result['error'] = "STARTTLS not supported"
+            
+            try:
+                smtp.quit()
+            except Exception:
+                pass
+                
+        except socket.timeout:
+            result['error'] = "Connection timeout"
+        except socket.gaierror as e:
+            result['error'] = f"DNS resolution failed: {str(e)}"
+        except ConnectionRefusedError:
+            result['error'] = "Connection refused"
+        except Exception as e:
+            result['error'] = str(e)
+        
+        return result
+    
+    def analyze_smtp_transport(self, domain: str, mx_records: List[str] = None) -> Dict[str, Any]:
+        """
+        Analyze SMTP transport security for all MX servers of a domain.
+        Checks STARTTLS, TLS version, ciphers, and certificates.
+        """
+        result = {
+            'status': 'warning',
+            'message': 'SMTP transport not verified',
+            'servers': [],
+            'summary': {
+                'total_servers': 0,
+                'reachable': 0,
+                'starttls_supported': 0,
+                'tls_1_3': 0,
+                'tls_1_2': 0,
+                'valid_certs': 0,
+                'expiring_soon': 0  # certs expiring in < 30 days
+            },
+            'issues': [],
+            'mta_sts_enforced': False
+        }
+        
+        # Get MX records if not provided
+        if mx_records is None:
+            mx_records = self.dns_query('MX', domain)
+        
+        if not mx_records:
+            result['status'] = 'error'
+            result['message'] = 'No MX records found'
+            return result
+        
+        # Extract hostnames from MX records (format: "priority hostname")
+        mx_hosts = []
+        for mx in mx_records:
+            parts = mx.split()
+            if len(parts) >= 2:
+                hostname = parts[1].rstrip('.')
+                mx_hosts.append(hostname)
+            elif len(parts) == 1:
+                hostname = parts[0].rstrip('.')
+                mx_hosts.append(hostname)
+        
+        result['summary']['total_servers'] = len(mx_hosts)
+        
+        # Verify each MX server (limit to first 3 to avoid timeouts)
+        mx_hosts_to_check = mx_hosts[:3]
+        
+        # Use thread pool for parallel verification (with short timeout)
+        with ThreadPoolExecutor(max_workers=3) as executor:
+            futures = {executor.submit(self.verify_smtp_server, host, 8): host for host in mx_hosts_to_check}
+            
+            for future in as_completed(futures, timeout=25):
+                try:
+                    server_result = future.result(timeout=10)
+                    result['servers'].append(server_result)
+                    
+                    if server_result['reachable']:
+                        result['summary']['reachable'] += 1
+                    if server_result['starttls']:
+                        result['summary']['starttls_supported'] += 1
+                    if server_result['tls_version'] == 'TLSv1.3':
+                        result['summary']['tls_1_3'] += 1
+                    elif server_result['tls_version'] == 'TLSv1.2':
+                        result['summary']['tls_1_2'] += 1
+                    if server_result['cert_valid']:
+                        result['summary']['valid_certs'] += 1
+                    if server_result.get('cert_days_remaining') and server_result['cert_days_remaining'] < 30:
+                        result['summary']['expiring_soon'] += 1
+                        
+                except Exception as e:
+                    logging.warning(f"SMTP verification timeout for {futures[future]}: {e}")
+        
+        # Analyze results
+        total = result['summary']['total_servers']
+        reachable = result['summary']['reachable']
+        starttls = result['summary']['starttls_supported']
+        valid_certs = result['summary']['valid_certs']
+        
+        if reachable == 0:
+            result['status'] = 'error'
+            result['message'] = f'Could not reach any of {total} mail server(s)'
+            result['issues'].append('No mail servers responded on port 25')
+        elif starttls == 0:
+            result['status'] = 'error'
+            result['message'] = 'No mail servers support STARTTLS'
+            result['issues'].append('Mail is transmitted unencrypted - critical security issue')
+        elif starttls < reachable:
+            result['status'] = 'warning'
+            result['message'] = f'Only {starttls}/{reachable} servers support STARTTLS'
+            result['issues'].append('Some mail servers do not support encryption')
+        elif valid_certs < starttls:
+            result['status'] = 'warning'
+            result['message'] = f'STARTTLS supported but {starttls - valid_certs} server(s) have certificate issues'
+            result['issues'].append('Some certificates failed validation')
+        else:
+            result['status'] = 'success'
+            tls_versions = []
+            if result['summary']['tls_1_3'] > 0:
+                tls_versions.append('TLS 1.3')
+            if result['summary']['tls_1_2'] > 0:
+                tls_versions.append('TLS 1.2')
+            tls_str = '/'.join(tls_versions) if tls_versions else 'TLS'
+            result['message'] = f'All {starttls} server(s) support encrypted transport ({tls_str})'
+        
+        # Check for expiring certificates
+        if result['summary']['expiring_soon'] > 0:
+            result['issues'].append(f'{result["summary"]["expiring_soon"]} certificate(s) expiring within 30 days')
+        
+        return result
     
     def _calculate_posture(self, results: Dict[str, Any]) -> Dict[str, Any]:
         """Calculate overall DNS & Trust Posture based on security controls."""
