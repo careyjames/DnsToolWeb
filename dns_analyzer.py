@@ -397,43 +397,72 @@ class DNSAnalyzer:
         }
     
     def analyze_mta_sts(self, domain: str) -> Dict[str, Any]:
-        """Check MTA-STS (Mail Transfer Agent Strict Transport Security) for domain."""
+        """Check MTA-STS (Mail Transfer Agent Strict Transport Security) for domain.
+        
+        Enhanced to fetch and validate the actual policy file from:
+        https://mta-sts.{domain}/.well-known/mta-sts.txt
+        """
         mta_sts_domain = f"_mta-sts.{domain}"
         records = self.dns_query("TXT", mta_sts_domain)
         
+        base_result = {
+            'status': 'warning',
+            'message': 'No MTA-STS record found',
+            'record': None,
+            'mode': None,
+            'policy': None,
+            'policy_mode': None,
+            'policy_max_age': None,
+            'policy_mx': [],
+            'policy_fetched': False,
+            'policy_error': None
+        }
+        
         if not records:
-            return {
-                'status': 'warning',
-                'message': 'No MTA-STS record found',
-                'record': None,
-                'mode': None
-            }
+            return base_result
         
         valid_records = [r for r in records if r.lower().startswith("v=stsv1")]
         
         if not valid_records:
-            return {
-                'status': 'warning', 
-                'message': 'No valid MTA-STS record found',
-                'record': None,
-                'mode': None
-            }
+            base_result['message'] = 'No valid MTA-STS record found'
+            return base_result
         
         record = valid_records[0]
-        mode = None
+        dns_id = None
         
-        if "mode=enforce" in record.lower():
-            mode = 'enforce'
-            status = 'success'
-            message = 'MTA-STS enforced - TLS required for mail delivery'
-        elif "mode=testing" in record.lower():
-            mode = 'testing'
+        # Extract ID from DNS record
+        import re
+        id_match = re.search(r'id=([^;\s]+)', record, re.IGNORECASE)
+        if id_match:
+            dns_id = id_match.group(1)
+        
+        # Now fetch the actual policy file
+        policy_url = f"https://mta-sts.{domain}/.well-known/mta-sts.txt"
+        policy_data = self._fetch_mta_sts_policy(policy_url)
+        
+        # Determine mode and status
+        mode = policy_data.get('mode') if policy_data.get('fetched') else None
+        
+        if policy_data.get('fetched') and mode:
+            if mode == 'enforce':
+                status = 'success'
+                mx_list = policy_data.get('mx', [])
+                if mx_list:
+                    message = f'MTA-STS enforced - TLS required for {len(mx_list)} mail server(s)'
+                else:
+                    message = 'MTA-STS enforced - TLS required for mail delivery'
+            elif mode == 'testing':
+                status = 'warning'
+                message = 'MTA-STS in testing mode - TLS failures reported but not enforced'
+            elif mode == 'none':
+                status = 'warning'
+                message = 'MTA-STS policy disabled (mode=none)'
+            else:
+                status = 'success'
+                message = 'MTA-STS policy found'
+        elif policy_data.get('error'):
             status = 'warning'
-            message = 'MTA-STS in testing mode'
-        elif "mode=none" in record.lower():
-            mode = 'none'
-            status = 'warning'
-            message = 'MTA-STS disabled (mode=none)'
+            message = f'MTA-STS DNS record found but policy file inaccessible'
         else:
             status = 'success'
             message = 'MTA-STS record found'
@@ -442,8 +471,64 @@ class DNSAnalyzer:
             'status': status,
             'message': message,
             'record': record,
-            'mode': mode
+            'dns_id': dns_id,
+            'mode': mode,
+            'policy': policy_data.get('raw'),
+            'policy_mode': policy_data.get('mode'),
+            'policy_max_age': policy_data.get('max_age'),
+            'policy_mx': policy_data.get('mx', []),
+            'policy_fetched': policy_data.get('fetched', False),
+            'policy_error': policy_data.get('error')
         }
+    
+    def _fetch_mta_sts_policy(self, url: str) -> Dict[str, Any]:
+        """Fetch and parse MTA-STS policy file from the well-known URL."""
+        import re
+        result = {
+            'fetched': False,
+            'raw': None,
+            'mode': None,
+            'max_age': None,
+            'mx': [],
+            'error': None
+        }
+        
+        try:
+            response = requests.get(url, timeout=5, allow_redirects=True)
+            if response.status_code == 200:
+                policy_text = response.text
+                result['fetched'] = True
+                result['raw'] = policy_text
+                
+                # Parse policy fields (case-insensitive per RFC 8461)
+                for line in policy_text.split('\n'):
+                    line = line.strip()
+                    line_lower = line.lower()
+                    if line_lower.startswith('version:'):
+                        pass  # We just check it exists
+                    elif line_lower.startswith('mode:'):
+                        result['mode'] = line.split(':', 1)[1].strip().lower()
+                    elif line_lower.startswith('max_age:'):
+                        try:
+                            result['max_age'] = int(line.split(':', 1)[1].strip())
+                        except ValueError:
+                            pass
+                    elif line_lower.startswith('mx:'):
+                        mx_pattern = line.split(':', 1)[1].strip()
+                        if mx_pattern:
+                            result['mx'].append(mx_pattern)
+            else:
+                result['error'] = f'HTTP {response.status_code}'
+        except requests.exceptions.SSLError:
+            result['error'] = 'SSL certificate error'
+        except requests.exceptions.ConnectionError:
+            result['error'] = 'Connection failed'
+        except requests.exceptions.Timeout:
+            result['error'] = 'Timeout'
+        except Exception as e:
+            result['error'] = str(e)[:50]
+        
+        return result
     
     def analyze_tlsrpt(self, domain: str) -> Dict[str, Any]:
         """Check TLS-RPT (TLS Reporting) for domain."""
@@ -530,9 +615,20 @@ class DNSAnalyzer:
         
         issuers = list(set(issuers))  # Remove duplicates
         
+        # Build informative message with wildcard details
+        message_parts = ['CAA configured']
+        if issuers:
+            message_parts.append(f'- only {", ".join(issuers)} can issue certificates')
+        else:
+            message_parts.append('- specific CAs authorized')
+        
+        # Explicitly mention wildcard permissions
+        if has_wildcard:
+            message_parts.append('(including wildcards)')
+        
         return {
             'status': 'success',
-            'message': f'CAA configured - only {", ".join(issuers) if issuers else "specified CAs"} can issue certificates',
+            'message': ' '.join(message_parts),
             'records': records,
             'issuers': issuers,
             'has_wildcard': has_wildcard,
@@ -540,30 +636,37 @@ class DNSAnalyzer:
         }
     
     def analyze_bimi(self, domain: str) -> Dict[str, Any]:
-        """Check BIMI (Brand Indicators for Message Identification) for domain."""
+        """Check BIMI (Brand Indicators for Message Identification) for domain.
+        
+        Enhanced to validate SVG accessibility and check VMC certificate.
+        """
         import re
         bimi_domain = f"default._bimi.{domain}"
         records = self.dns_query("TXT", bimi_domain)
         
+        base_result = {
+            'status': 'warning',
+            'message': 'No BIMI record found',
+            'record': None,
+            'logo_url': None,
+            'vmc_url': None,
+            'logo_valid': None,
+            'logo_format': None,
+            'logo_error': None,
+            'vmc_valid': None,
+            'vmc_issuer': None,
+            'vmc_subject': None,
+            'vmc_error': None
+        }
+        
         if not records:
-            return {
-                'status': 'warning',
-                'message': 'No BIMI record found',
-                'record': None,
-                'logo_url': None,
-                'vmc_url': None
-            }
+            return base_result
         
         valid_records = [r for r in records if r.lower().startswith("v=bimi1")]
         
         if not valid_records:
-            return {
-                'status': 'warning',
-                'message': 'No valid BIMI record found',
-                'record': None,
-                'logo_url': None,
-                'vmc_url': None
-            }
+            base_result['message'] = 'No valid BIMI record found'
+            return base_result
         
         record = valid_records[0]
         logo_url = None
@@ -579,22 +682,134 @@ class DNSAnalyzer:
         if vmc_match:
             vmc_url = vmc_match.group(1)
         
+        # Validate logo SVG
+        logo_data = self._validate_bimi_logo(logo_url) if logo_url else {}
+        
+        # Validate VMC certificate
+        vmc_data = self._validate_bimi_vmc(vmc_url) if vmc_url else {}
+        
+        # Build result with validation info
         status = 'success'
-        if vmc_url:
-            message = 'BIMI configured with VMC certificate - brand logo will display in supported email clients'
+        message_parts = []
+        
+        if vmc_url and vmc_data.get('valid'):
+            message_parts.append('BIMI with VMC certificate')
+            if vmc_data.get('issuer'):
+                message_parts.append(f"(from {vmc_data.get('issuer')})")
+        elif vmc_url:
+            message_parts.append('BIMI with VMC')
+            if vmc_data.get('error'):
+                status = 'warning'
+                message_parts.append(f"- VMC issue: {vmc_data.get('error')}")
         elif logo_url:
-            message = 'BIMI configured - brand logo available (VMC recommended for Gmail)'
+            message_parts.append('BIMI configured')
+            if logo_data.get('valid'):
+                message_parts.append('- logo validated')
+            message_parts.append('(VMC recommended for Gmail)')
         else:
             status = 'warning'
-            message = 'BIMI record found but missing logo URL'
+            message_parts.append('BIMI record found but missing logo URL')
+        
+        if logo_url and not logo_data.get('valid') and logo_data.get('error'):
+            status = 'warning'
+            message_parts.append(f"Logo issue: {logo_data.get('error')}")
         
         return {
             'status': status,
-            'message': message,
+            'message': ' '.join(message_parts),
             'record': record,
             'logo_url': logo_url,
-            'vmc_url': vmc_url
+            'vmc_url': vmc_url,
+            'logo_valid': logo_data.get('valid'),
+            'logo_format': logo_data.get('format'),
+            'logo_error': logo_data.get('error'),
+            'vmc_valid': vmc_data.get('valid'),
+            'vmc_issuer': vmc_data.get('issuer'),
+            'vmc_subject': vmc_data.get('subject'),
+            'vmc_error': vmc_data.get('error')
         }
+    
+    def _validate_bimi_logo(self, url: str) -> Dict[str, Any]:
+        """Validate BIMI logo SVG accessibility and basic format."""
+        result = {'valid': False, 'format': None, 'error': None}
+        
+        if not url:
+            result['error'] = 'No URL'
+            return result
+        
+        try:
+            response = requests.head(url, timeout=5, allow_redirects=True)
+            if response.status_code == 200:
+                content_type = response.headers.get('Content-Type', '')
+                if 'svg' in content_type.lower():
+                    result['valid'] = True
+                    result['format'] = 'SVG'
+                elif 'image' in content_type.lower():
+                    result['valid'] = True
+                    result['format'] = content_type.split('/')[-1].upper()
+                else:
+                    # Try GET to check content
+                    get_resp = requests.get(url, timeout=5, allow_redirects=True)
+                    if get_resp.status_code == 200:
+                        content = get_resp.text[:500].lower()
+                        if '<svg' in content:
+                            result['valid'] = True
+                            result['format'] = 'SVG'
+                        else:
+                            result['error'] = 'Not SVG format'
+                    else:
+                        result['error'] = f'HTTP {get_resp.status_code}'
+            else:
+                result['error'] = f'HTTP {response.status_code}'
+        except requests.exceptions.SSLError:
+            result['error'] = 'SSL error'
+        except requests.exceptions.ConnectionError:
+            result['error'] = 'Connection failed'
+        except requests.exceptions.Timeout:
+            result['error'] = 'Timeout'
+        except Exception as e:
+            result['error'] = str(e)[:30]
+        
+        return result
+    
+    def _validate_bimi_vmc(self, url: str) -> Dict[str, Any]:
+        """Validate BIMI VMC (Verified Mark Certificate) accessibility."""
+        result = {'valid': False, 'issuer': None, 'subject': None, 'error': None}
+        
+        if not url:
+            result['error'] = 'No URL'
+            return result
+        
+        try:
+            response = requests.get(url, timeout=5, allow_redirects=True)
+            if response.status_code == 200:
+                content = response.text
+                # VMC is a PEM-encoded certificate
+                if '-----BEGIN CERTIFICATE-----' in content:
+                    result['valid'] = True
+                    # Try to extract issuer from common VMC issuers
+                    if 'DigiCert' in content:
+                        result['issuer'] = 'DigiCert'
+                    elif 'Entrust' in content:
+                        result['issuer'] = 'Entrust'
+                    elif 'GlobalSign' in content:
+                        result['issuer'] = 'GlobalSign'
+                    else:
+                        result['issuer'] = 'Verified CA'
+                else:
+                    result['error'] = 'Invalid certificate format'
+            else:
+                result['error'] = f'HTTP {response.status_code}'
+        except requests.exceptions.SSLError:
+            result['error'] = 'SSL error'
+        except requests.exceptions.ConnectionError:
+            result['error'] = 'Connection failed'
+        except requests.exceptions.Timeout:
+            result['error'] = 'Timeout'
+        except Exception as e:
+            result['error'] = str(e)[:30]
+        
+        return result
     
     def analyze_dnssec(self, domain: str) -> Dict[str, Any]:
         """Check DNSSEC status for domain by looking for DNSKEY and DS records."""

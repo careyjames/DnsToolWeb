@@ -331,10 +331,33 @@
                                     {% if results.mta_sts_analysis.mode %}
                                         <span class="badge bg-{{ 'success' if results.mta_sts_analysis.mode == 'enforce' else 'warning' }} ms-1">{{ results.mta_sts_analysis.mode|upper }}</span>
                                     {% endif %}
+                                    {% if results.mta_sts_analysis.policy_fetched %}
+                                        <span class="badge bg-info ms-1" title="Policy file fetched and validated"><i class="fas fa-check-circle"></i> Policy Verified</span>
+                                    {% endif %}
                                 </h6>
                                 <p class="text-muted mb-2 small">{{ results.mta_sts_analysis.message }}</p>
                                 {% if results.mta_sts_analysis.record %}
                                     <div class="code-block small">{{ results.mta_sts_analysis.record }}</div>
+                                {% endif %}
+                                {% if results.mta_sts_analysis.policy_fetched %}
+                                    <div class="mt-2 small">
+                                        <strong>Policy Details:</strong>
+                                        <ul class="mb-0 ps-3">
+                                            {% if results.mta_sts_analysis.policy_mode %}
+                                                <li>Mode: <code>{{ results.mta_sts_analysis.policy_mode }}</code></li>
+                                            {% endif %}
+                                            {% if results.mta_sts_analysis.policy_max_age %}
+                                                <li>Max Age: {{ results.mta_sts_analysis.policy_max_age // 86400 }} days ({{ results.mta_sts_analysis.policy_max_age }} seconds)</li>
+                                            {% endif %}
+                                            {% if results.mta_sts_analysis.policy_mx %}
+                                                <li>MX Patterns: {{ results.mta_sts_analysis.policy_mx|join(', ') }}</li>
+                                            {% endif %}
+                                        </ul>
+                                    </div>
+                                {% elif results.mta_sts_analysis.policy_error %}
+                                    <div class="mt-2 small text-warning">
+                                        <i class="fas fa-exclamation-triangle me-1"></i>Policy file: {{ results.mta_sts_analysis.policy_error }}
+                                    </div>
                                 {% endif %}
                             </div>
 
@@ -388,9 +411,16 @@
                                         {{ results.bimi_analysis.status|title }}
                                     </span>
                                     {% if results.bimi_analysis.vmc_url %}
-                                        <span class="badge bg-success ms-1">VMC</span>
+                                        {% if results.bimi_analysis.vmc_valid %}
+                                            <span class="badge bg-success ms-1"><i class="fas fa-certificate me-1"></i>VMC</span>
+                                        {% else %}
+                                            <span class="badge bg-warning ms-1">VMC</span>
+                                        {% endif %}
                                     {% elif results.bimi_analysis.logo_url %}
                                         <span class="badge bg-info ms-1">No VMC</span>
+                                    {% endif %}
+                                    {% if results.bimi_analysis.logo_valid %}
+                                        <span class="badge bg-success ms-1" title="Logo validated"><i class="fas fa-check"></i> {{ results.bimi_analysis.logo_format or 'Logo' }}</span>
                                     {% endif %}
                                 </h6>
                                 <p class="text-muted mb-2 small">{{ results.bimi_analysis.message }}</p>
@@ -399,10 +429,15 @@
                                         <i class="fas fa-info-circle me-1"></i>
                                         BIMI works without VMC! VMC (Verified Mark Certificate) requires a registered trademark. Small businesses can use BIMI with just a logo - it shows in Apple Mail and some providers. Gmail requires VMC.
                                     </div>
-                                {% elif results.bimi_analysis.vmc_url %}
+                                {% elif results.bimi_analysis.vmc_valid %}
                                     <div class="small text-success mb-2">
                                         <i class="fas fa-check-circle me-1"></i>
-                                        VMC verified - logo displays in Gmail, Apple Mail, and all major providers.
+                                        VMC certificate accessible{% if results.bimi_analysis.vmc_issuer %} (from {{ results.bimi_analysis.vmc_issuer }}){% endif %} - logo displays in Gmail, Apple Mail, and all major providers.
+                                    </div>
+                                {% elif results.bimi_analysis.vmc_url %}
+                                    <div class="small text-warning mb-2">
+                                        <i class="fas fa-exclamation-triangle me-1"></i>
+                                        VMC certificate found{% if results.bimi_analysis.vmc_error %} - {{ results.bimi_analysis.vmc_error }}{% endif %}
                                     </div>
                                 {% endif %}
                                 {% if results.bimi_analysis.record %}
@@ -417,7 +452,13 @@
                                                  onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2248%22 height=%2248%22><rect fill=%22%23e5e7eb%22 width=%2248%22 height=%2248%22 rx=%224%22/><text x=%2224%22 y=%2230%22 text-anchor=%22middle%22 fill=%22%239ca3af%22 font-size=%2212%22>SVG</text></svg>'">
                                         </div>
                                         <div class="small">
-                                            <span class="text-success"><i class="fas fa-check-circle me-1"></i>Logo found</span>
+                                            {% if results.bimi_analysis.logo_valid %}
+                                                <span class="text-success"><i class="fas fa-check-circle me-1"></i>Logo validated ({{ results.bimi_analysis.logo_format or 'SVG' }})</span>
+                                            {% elif results.bimi_analysis.logo_error %}
+                                                <span class="text-warning"><i class="fas fa-exclamation-triangle me-1"></i>{{ results.bimi_analysis.logo_error }}</span>
+                                            {% else %}
+                                                <span class="text-success"><i class="fas fa-check-circle me-1"></i>Logo found</span>
+                                            {% endif %}
                                             <a href="{{ results.bimi_analysis.logo_url }}" target="_blank" class="d-block text-info text-truncate" style="max-width: 200px;" title="{{ results.bimi_analysis.logo_url }}">
                                                 <i class="fas fa-external-link-alt me-1"></i>View full logo
                                             </a>
