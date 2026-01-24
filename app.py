@@ -4,12 +4,13 @@ import time
 from datetime import datetime, date
 from flask import Flask, render_template, request, flash, redirect, url_for, jsonify, send_from_directory
 from flask_sqlalchemy import SQLAlchemy
+from flask_compress import Compress
 from sqlalchemy.orm import DeclarativeBase
 from sqlalchemy import JSON
 from dns_analyzer import DNSAnalyzer
 
 # App version - format: YY.M.patch (bump last number for small changes)
-APP_VERSION = "26.3.18"
+APP_VERSION = "26.3.19"
 
 # Configure logging
 logging.basicConfig(level=logging.DEBUG)
@@ -22,6 +23,9 @@ db = SQLAlchemy(model_class=Base)
 # Create the Flask app
 app = Flask(__name__)
 app.secret_key = os.environ.get("SESSION_SECRET", "dns-tool-secret-key")
+
+# Enable gzip/brotli compression
+Compress(app)
 
 # Configure the database - using SQLite for reliability
 app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///dns_analysis.db"

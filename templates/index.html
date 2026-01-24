@@ -68,7 +68,41 @@
     }
     </script>
     
-    <link href="https://cdn.replit.com/agent/bootstrap-agent-dark-theme.min.css" rel="stylesheet">
+    <!-- Critical inline CSS for initial render -->
+    <style>
+        :root{--bs-body-bg:#212529;--bs-body-color:#dee2e6;--bs-primary:#0d6efd;--bs-secondary:#6c757d}
+        *,::after,::before{box-sizing:border-box}
+        body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background-color:var(--bs-body-bg);color:var(--bs-body-color);line-height:1.5}
+        .navbar{display:flex;padding:.5rem 1rem;background-color:#212529!important}
+        .navbar-brand{color:#fff;text-decoration:none;font-size:1.25rem;padding:.3125rem 0}
+        .container{width:100%;max-width:1140px;margin:0 auto;padding:0 .75rem}
+        .text-center{text-align:center}
+        .my-5{margin-top:3rem;margin-bottom:3rem}
+        .mb-3,.mb-4,.mb-5{margin-bottom:1rem}
+        .display-4{font-size:2.5rem;font-weight:300;line-height:1.2}
+        .lead{font-size:1.25rem;font-weight:300}
+        .text-muted{color:#adb5bd!important}
+        .card{background-color:#2b3035;border:1px solid #495057;border-radius:.375rem}
+        .card-body{padding:1rem}
+        .form-control{display:block;width:100%;padding:.375rem .75rem;font-size:1rem;background-color:#2b3035;border:1px solid #495057;border-radius:.375rem;color:#dee2e6}
+        .btn{display:inline-block;padding:.375rem .75rem;font-size:1rem;border-radius:.375rem;text-decoration:none;cursor:pointer}
+        .btn-primary{background-color:var(--bs-primary);border:1px solid var(--bs-primary);color:#fff}
+        .input-group{display:flex;flex-wrap:wrap}
+        .input-group>.form-control{flex:1 1 auto;width:1%}
+        .row{display:flex;flex-wrap:wrap;margin:0 -.75rem}
+        .col-lg-8{padding:0 .75rem}
+        @media(min-width:992px){.col-lg-8{flex:0 0 66.666667%;max-width:66.666667%}}
+        .justify-content-center{justify-content:center}
+        .badge{display:inline-block;padding:.35em .65em;font-size:.75em;font-weight:700;border-radius:.25rem;background-color:var(--bs-secondary)}
+        .navbar-nav{display:flex;list-style:none;margin:0;padding:0}
+        .nav-link{color:rgba(255,255,255,.55);text-decoration:none;padding:.5rem 1rem}
+        .d-none{display:none}
+        .collapse:not(.show){display:none}
+        @media(min-width:992px){.collapse.navbar-collapse{display:flex!important}}
+    </style>
+    <!-- Preload and async load Bootstrap -->
+    <link rel="preload" href="https://cdn.replit.com/agent/bootstrap-agent-dark-theme.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="https://cdn.replit.com/agent/bootstrap-agent-dark-theme.min.css"></noscript>
     <link href="{{ url_for('static', filename='css/custom.css') }}" rel="stylesheet">
     <!-- Load Font Awesome asynchronously to prevent render blocking -->
     <link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
