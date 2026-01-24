@@ -108,6 +108,9 @@ class DomainAnalysis(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+    
     def __repr__(self):
         return f'<DomainAnalysis {self.domain}>'
     
@@ -157,6 +160,9 @@ class AnalysisStats(db.Model):
     
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
     
     def __repr__(self):
         return f'<AnalysisStats {self.date}>'
