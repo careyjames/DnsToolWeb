@@ -3,8 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#212529">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>DNS Tool - Authoritative DNS & Email Security Analysis</title>
     <meta name="description" content="Comprehensive DNS analysis tool for IT professionals. Check SPF, DKIM, DMARC, DNSSEC, BIMI, and more. Get a complete security posture audit in seconds.">
+    
+    <!-- Preconnect to external domains for faster loading -->
+    <link rel="preconnect" href="https://cdn.replit.com" crossorigin>
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
+    <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+    <link rel="dns-prefetch" href="https://cdn.replit.com">
+    <link rel="dns-prefetch" href="https://cdnjs.cloudflare.com">
     
     <!-- Facebook / Open Graph -->
     <meta property="og:url" content="https://dnstool.it-help.tech/">
@@ -68,7 +79,7 @@
             <a class="navbar-brand" href="{{ url_for('index') }}">
                 <i class="fas fa-globe me-2"></i>DNS Tool <span class="badge bg-secondary ms-1">v{{ app_version }}</span>
             </a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
@@ -135,8 +146,8 @@
                                            placeholder="example.com" 
                                            required
                                            autocomplete="off">
-                                    <button class="btn btn-primary" type="submit" id="analyzeBtn">
-                                        <i class="fas fa-search me-2"></i>Analyze
+                                    <button class="btn btn-primary" type="submit" id="analyzeBtn" aria-label="Analyze domain">
+                                        <i class="fas fa-search me-2" aria-hidden="true"></i>Analyze
                                     </button>
                                 </div>
                                 <div class="form-text">
