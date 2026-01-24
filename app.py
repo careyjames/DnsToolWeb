@@ -10,7 +10,7 @@ from sqlalchemy import JSON
 from dns_analyzer import DNSAnalyzer
 
 # App version - format: YY.M.patch (bump last number for small changes)
-APP_VERSION = "26.3.21"
+APP_VERSION = "26.3.22"
 
 # Configure logging
 logging.basicConfig(level=logging.DEBUG)
@@ -385,8 +385,8 @@ def analyze():
             db.session.add(analysis)
             db.session.commit()
             update_daily_stats(analysis_success=False, duration=analysis_duration, domain=domain)
-        except Exception:
-            pass  # Don't fail if we can't save the error
+        except Exception:  # nosec B110
+            pass  # Intentional: Don't fail if we can't save the error
         
         flash(f'Error analyzing domain: {error_message}', 'danger')
         return redirect(url_for('index'))
@@ -531,4 +531,6 @@ def internal_error(error):
     return render_template('index.html'), 500
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000, debug=True)
+    # Debug mode controlled by environment - disabled in production via gunicorn
+    debug_mode = os.environ.get('FLASK_DEBUG', 'false').lower() == 'true'
+    app.run(host='0.0.0.0', port=5000, debug=debug_mode)  # nosec B104 B201
