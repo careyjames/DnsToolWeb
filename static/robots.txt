@@ -1,0 +1,27 @@
+# Default: allow all crawlers
+User-agent: *
+Allow: /
+
+# AI/LLM Search Bots - explicitly allowed
+User-agent: GPTBot
+User-agent: ChatGPT-User
+User-agent: OAI-SearchBot
+User-agent: ClaudeBot
+User-agent: PerplexityBot
+User-agent: GeminiBot
+User-agent: Google-Extended
+User-agent: CCBot
+User-agent: YouBot
+User-agent: PhindBot
+User-agent: ExaBot
+User-agent: AndiBot
+User-agent: FirecrawlAgent
+Allow: /
+
+# Traditional Search Bots
+User-agent: Googlebot
+User-agent: Bingbot
+Allow: /
+
+# Sitemap
+Sitemap: https://dnstool.it-help.tech/sitemap.xml

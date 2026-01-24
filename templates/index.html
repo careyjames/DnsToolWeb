@@ -21,6 +21,42 @@
     <meta name="twitter:description" content="Comprehensive DNS analysis for IT professionals. Check SPF, DKIM, DMARC, DNSSEC, BIMI and get a complete security posture audit in seconds.">
     <meta name="twitter:image" content="https://dnstool.it-help.tech/static/images/og-image.png">
     
+    <!-- JSON-LD Schema -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "DNS Tool",
+        "description": "Comprehensive DNS analysis tool for IT professionals. Check SPF, DKIM, DMARC, DNSSEC, BIMI, and get a complete security posture audit.",
+        "url": "https://dnstool.it-help.tech",
+        "applicationCategory": "SecurityApplication",
+        "operatingSystem": "Web Browser",
+        "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "USD"
+        },
+        "author": {
+            "@type": "Organization",
+            "name": "IT Help San Diego Inc.",
+            "url": "https://www.it-help.tech",
+            "telephone": "+1-619-853-5008",
+            "address": {
+                "@type": "PostalAddress",
+                "addressLocality": "La Jolla",
+                "addressRegion": "CA",
+                "postalCode": "92037",
+                "addressCountry": "US"
+            }
+        },
+        "potentialAction": {
+            "@type": "SearchAction",
+            "target": "https://dnstool.it-help.tech/analyze?domain={domain}",
+            "query-input": "required name=domain"
+        }
+    }
+    </script>
+    
     <link href="https://cdn.replit.com/agent/bootstrap-agent-dark-theme.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <link href="{{ url_for('static', filename='css/custom.css') }}" rel="stylesheet">

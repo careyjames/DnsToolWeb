@@ -2,14 +2,14 @@ import os
 import logging
 import time
 from datetime import datetime, date
-from flask import Flask, render_template, request, flash, redirect, url_for, jsonify
+from flask import Flask, render_template, request, flash, redirect, url_for, jsonify, send_from_directory
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.orm import DeclarativeBase
 from sqlalchemy import JSON
 from dns_analyzer import DNSAnalyzer
 
 # App version - format: YY.M.patch (bump last number for small changes)
-APP_VERSION = "26.3.15"
+APP_VERSION = "26.3.16"
 
 # Configure logging
 logging.basicConfig(level=logging.DEBUG)
@@ -138,6 +138,26 @@ except Exception as e:
 def index():
     """Main page with domain input form."""
     return render_template('index.html')
+
+@app.route('/robots.txt')
+def robots():
+    """Serve robots.txt for search engines."""
+    return send_from_directory('static', 'robots.txt', mimetype='text/plain')
+
+@app.route('/sitemap.xml')
+def sitemap():
+    """Serve sitemap.xml for search engines."""
+    return send_from_directory('static', 'sitemap.xml', mimetype='application/xml')
+
+@app.route('/llms.txt')
+def llms():
+    """Serve llms.txt for AI crawlers."""
+    return send_from_directory('static', 'llms.txt', mimetype='text/plain')
+
+@app.route('/llms-full.txt')
+def llms_full():
+    """Serve llms-full.txt for AI crawlers."""
+    return send_from_directory('static', 'llms-full.txt', mimetype='text/plain')
 
 @app.route('/debug-rdap/<domain>')
 def debug_rdap(domain):
