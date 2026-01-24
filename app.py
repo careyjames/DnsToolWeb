@@ -10,7 +10,7 @@ from sqlalchemy import JSON
 from dns_analyzer import DNSAnalyzer
 
 # App version - format: YY.M.patch (bump last number for small changes)
-APP_VERSION = "26.3.20"
+APP_VERSION = "26.3.21"
 
 # Configure logging
 logging.basicConfig(level=logging.DEBUG)
@@ -48,13 +48,16 @@ def add_security_headers(response):
     # Prevent MIME type sniffing
     response.headers['X-Content-Type-Options'] = 'nosniff'
     # Prevent clickjacking
-    response.headers['X-Frame-Options'] = 'SAMEORIGIN'
-    # Enable HSTS (Strict Transport Security)
-    response.headers['Strict-Transport-Security'] = 'max-age=31536000; includeSubDomains'
+    response.headers['X-Frame-Options'] = 'DENY'
+    # Enable HSTS (Strict Transport Security) - preload ready
+    response.headers['Strict-Transport-Security'] = 'max-age=63072000; includeSubDomains; preload'
     # Control referrer information
     response.headers['Referrer-Policy'] = 'strict-origin-when-cross-origin'
     # Permissions Policy (formerly Feature-Policy)
     response.headers['Permissions-Policy'] = 'geolocation=(), microphone=(), camera=()'
+    # Cross-Origin headers for additional security
+    response.headers['Cross-Origin-Opener-Policy'] = 'same-origin'
+    response.headers['Cross-Origin-Resource-Policy'] = 'same-origin'
     # Content Security Policy - allow CDNs we use
     csp = (
         "default-src 'self'; "
@@ -63,7 +66,10 @@ def add_security_headers(response):
         "font-src 'self' https://cdnjs.cloudflare.com https://fonts.gstatic.com; "
         "img-src 'self' data:; "
         "connect-src 'self'; "
-        "frame-ancestors 'self';"
+        "frame-ancestors 'none'; "
+        "base-uri 'self'; "
+        "form-action 'self'; "
+        "upgrade-insecure-requests;"
     )
     response.headers['Content-Security-Policy'] = csp
     return response
