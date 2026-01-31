@@ -21,18 +21,18 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
         
-        // Form submission handling
+        // Form submission handling - use GET navigation for loading animation
         domainForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
             const domain = domainInput.value.trim();
             
             if (!domain) {
-                e.preventDefault();
                 domainInput.classList.add('is-invalid');
                 return;
             }
             
             if (!domainRegex.test(domain)) {
-                e.preventDefault();
                 domainInput.classList.add('is-invalid');
                 return;
             }
@@ -52,6 +52,11 @@ document.addEventListener('DOMContentLoaded', function() {
             analyzeBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Analyzing...';
             analyzeBtn.disabled = true;
             document.body.classList.add('loading');
+            
+            // Navigate via GET after a short delay to allow messages to cycle
+            setTimeout(function() {
+                window.location.href = '/analyze?domain=' + encodeURIComponent(domain);
+            }, 100);
         });
         
         // Clear validation on focus

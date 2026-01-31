@@ -10,7 +10,7 @@ from sqlalchemy import JSON
 from dns_analyzer import DNSAnalyzer
 
 # App version - format: YY.M.patch (bump last number for small changes)
-APP_VERSION = "26.3.32"
+APP_VERSION = "26.3.33"
 
 # Configure logging
 logging.basicConfig(level=logging.DEBUG)
@@ -359,10 +359,11 @@ def debug_whodap(domain):
 @app.route('/analyze', methods=['GET', 'POST'])
 def analyze():
     """Analyze DNS records for the submitted domain."""
-    if request.method == 'GET':
-        return redirect(url_for('index'))
-        
-    domain = request.form.get('domain', '').strip()
+    # Get domain from form (POST) or query string (GET)
+    if request.method == 'POST':
+        domain = request.form.get('domain', '').strip()
+    else:
+        domain = request.args.get('domain', '').strip()
     
     if not domain:
         flash('Please enter a domain name.', 'danger')
