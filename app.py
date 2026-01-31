@@ -10,7 +10,7 @@ from sqlalchemy import JSON
 from dns_analyzer import DNSAnalyzer
 
 # App version - format: YY.M.patch (bump last number for small changes)
-APP_VERSION = "26.3.24"
+APP_VERSION = "26.3.25"
 
 # Configure logging
 logging.basicConfig(level=logging.DEBUG)
@@ -62,13 +62,14 @@ def add_security_headers(response):
     # Cross-Origin headers for additional security
     response.headers['Cross-Origin-Opener-Policy'] = 'same-origin'
     response.headers['Cross-Origin-Resource-Policy'] = 'same-origin'
-    # Content Security Policy - allow CDNs we use
+    # Content Security Policy - allow CDNs we use and external BIMI logos
     csp = (
         "default-src 'self'; "
         "script-src 'self' https://cdn.jsdelivr.net 'unsafe-inline'; "
         "style-src 'self' https://cdn.replit.com https://cdnjs.cloudflare.com https://fonts.googleapis.com 'unsafe-inline'; "
         "font-src 'self' https://cdnjs.cloudflare.com https://fonts.gstatic.com; "
-        "img-src 'self' data:; "
+        "img-src 'self' data: https:; "
+        "object-src https:; "
         "connect-src 'self'; "
         "frame-ancestors 'none'; "
         "base-uri 'self'; "
