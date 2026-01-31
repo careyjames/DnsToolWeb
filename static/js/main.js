@@ -59,11 +59,21 @@ document.addEventListener('DOMContentLoaded', function() {
             
             fetch('/analyze', {
                 method: 'POST',
-                body: formData
+                body: formData,
+                redirect: 'follow'
             })
             .then(function(response) {
-                // Redirect to results page with the final URL
-                window.location.href = response.url;
+                // Get the HTML and replace the page
+                return response.text().then(function(html) {
+                    // Write the HTML to the current document
+                    document.open();
+                    document.write(html);
+                    document.close();
+                    // Update the URL in browser history
+                    if (response.url && response.url !== window.location.href) {
+                        window.history.pushState({}, '', response.url);
+                    }
+                });
             })
             .catch(function() {
                 // Fallback: navigate directly
