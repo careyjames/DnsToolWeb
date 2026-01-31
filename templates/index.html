@@ -324,16 +324,25 @@
         // Also expose globally for main.js
         window.startLoadingMessages = startMessages;
         
-        // Listen for button click AND form submission
+        // Listen for button click, Enter key, AND form submission
         document.addEventListener('DOMContentLoaded', function() {
             const form = document.getElementById('domainForm');
             const btn = document.getElementById('analyzeBtn');
+            const input = document.getElementById('domain');
             
             // Start on button click (fires before submit)
             if (btn) {
                 btn.addEventListener('click', function() {
-                    const domain = document.getElementById('domain');
-                    if (domain && domain.value.trim()) {
+                    if (input && input.value.trim()) {
+                        startMessages();
+                    }
+                });
+            }
+            
+            // Start on Enter key in input field
+            if (input) {
+                input.addEventListener('keypress', function(e) {
+                    if (e.key === 'Enter' && input.value.trim()) {
                         startMessages();
                     }
                 });
