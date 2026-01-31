@@ -25,7 +25,9 @@ document.addEventListener('DOMContentLoaded', function() {
         domainForm.addEventListener('submit', function(e) {
             e.preventDefault();
             
-            const domain = domainInput.value.trim();
+            // Normalize to lowercase (domains are case-insensitive)
+            var domain = domainInput.value.trim().toLowerCase();
+            domainInput.value = domain; // Update the input to show normalized value
             
             if (!domain) {
                 domainInput.classList.add('is-invalid');
