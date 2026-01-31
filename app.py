@@ -10,7 +10,7 @@ from sqlalchemy import JSON
 from dns_analyzer import DNSAnalyzer
 
 # App version - format: YY.M.patch (bump last number for small changes)
-APP_VERSION = "26.3.25"
+APP_VERSION = "26.3.26"
 
 # Configure logging
 logging.basicConfig(level=logging.DEBUG)
@@ -205,6 +205,49 @@ def llms():
 def llms_full():
     """Serve llms-full.txt for AI crawlers."""
     return send_from_directory('static', 'llms-full.txt', mimetype='text/plain')
+
+@app.route('/proxy/bimi-logo')
+def proxy_bimi_logo():
+    """Proxy BIMI logos to avoid CORS issues with external SVGs."""
+    import requests
+    from flask import Response
+    
+    logo_url = request.args.get('url')
+    if not logo_url:
+        return 'Missing URL parameter', 400
+    
+    # Validate URL is HTTPS and looks like an SVG
+    if not logo_url.startswith('https://'):
+        return 'Only HTTPS URLs allowed', 400
+    
+    try:
+        # Fetch the logo with a timeout
+        resp = requests.get(logo_url, timeout=5, headers={
+            'User-Agent': 'DNS-Analyzer/1.0 BIMI-Logo-Fetcher'
+        })
+        
+        if resp.status_code != 200:
+            return f'Failed to fetch logo: {resp.status_code}', 502
+        
+        # Determine content type
+        content_type = resp.headers.get('Content-Type', 'image/svg+xml')
+        if 'svg' in logo_url.lower() or 'svg' in content_type.lower():
+            content_type = 'image/svg+xml'
+        
+        # Return the logo with appropriate headers
+        return Response(
+            resp.content,
+            mimetype=content_type,
+            headers={
+                'Cache-Control': 'public, max-age=3600',
+                'X-Content-Type-Options': 'nosniff'
+            }
+        )
+    except requests.Timeout:
+        return 'Timeout fetching logo', 504
+    except Exception as e:
+        logging.error(f"Error proxying BIMI logo: {e}")
+        return 'Error fetching logo', 500
 
 @app.route('/debug-rdap/<domain>')
 def debug_rdap(domain):

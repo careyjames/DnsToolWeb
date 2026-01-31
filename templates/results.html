@@ -548,15 +548,11 @@
                                 {% if results.bimi_analysis.logo_url %}
                                     <div class="mt-3 d-flex align-items-center">
                                         <div class="me-3 p-2 bg-white rounded" style="flex-shrink: 0; width: 56px; height: 56px; display: flex; align-items: center; justify-content: center;">
-                                            <object data="{{ results.bimi_analysis.logo_url }}" 
-                                                    type="image/svg+xml"
-                                                    width="48" height="48"
-                                                    style="max-width: 48px; max-height: 48px;">
-                                                <img src="{{ results.bimi_analysis.logo_url }}" 
-                                                     alt="BIMI Logo" 
-                                                     style="width: 48px; height: 48px; object-fit: contain;"
-                                                     onerror="this.parentElement.innerHTML='<i class=\'fas fa-image fa-2x text-muted\'></i>'">
-                                            </object>
+                                            <img src="{{ url_for('proxy_bimi_logo', url=results.bimi_analysis.logo_url) }}" 
+                                                 alt="BIMI Logo" 
+                                                 style="width: 48px; height: 48px; object-fit: contain;"
+                                                 onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+                                            <i class="fas fa-image fa-2x text-muted" style="display: none;"></i>
                                         </div>
                                         <div class="small">
                                             {% if results.bimi_analysis.logo_valid %}
