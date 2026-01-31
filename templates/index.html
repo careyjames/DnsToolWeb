@@ -309,24 +309,40 @@
             currentIndex = 0;
             statusEl.textContent = statusMessages[0];
             
-            // First change very fast (100ms), then every 700ms
-            setTimeout(function() {
+            // Use requestAnimationFrame for reliable timing
+            function tick() {
                 cycleMessage();
-                intervalId = setInterval(cycleMessage, 700);
-            }, 100);
+            }
+            
+            // Start cycling every 600ms using both methods for reliability
+            intervalId = setInterval(tick, 600);
+            
+            // Also force first update after 50ms
+            setTimeout(tick, 50);
         }
         
         // Also expose globally for main.js
         window.startLoadingMessages = startMessages;
         
-        // Listen for form submission directly - start messages immediately
+        // Listen for button click AND form submission
         document.addEventListener('DOMContentLoaded', function() {
             const form = document.getElementById('domainForm');
+            const btn = document.getElementById('analyzeBtn');
+            
+            // Start on button click (fires before submit)
+            if (btn) {
+                btn.addEventListener('click', function() {
+                    const domain = document.getElementById('domain');
+                    if (domain && domain.value.trim()) {
+                        startMessages();
+                    }
+                });
+            }
+            
+            // Also start on form submit as backup
             if (form) {
                 form.addEventListener('submit', function() {
-                    // Start message cycling immediately
                     startMessages();
-                    console.log('Loading messages started');
                 });
             }
         });
