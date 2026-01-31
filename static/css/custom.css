@@ -165,6 +165,14 @@ body {
     40% { transform: scale(1); opacity: 1; }
 }
 
+.loading-status {
+    font-family: 'Monaco', 'Consolas', 'Courier New', monospace;
+    font-size: 0.85rem;
+    color: #6ea8fe;
+    min-height: 1.5em;
+    transition: opacity 0.2s ease;
+}
+
 /* DNS Diff Styles - Code Diff Style Layout */
 .dns-diff-container {
     font-family: 'Monaco', 'Consolas', 'Courier New', monospace;

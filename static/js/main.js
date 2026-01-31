@@ -45,6 +45,9 @@ document.addEventListener('DOMContentLoaded', function() {
                     loadingDomain.textContent = domain;
                 }
                 overlay.style.display = 'flex';
+                if (typeof window.startLoadingMessages === 'function') {
+                    window.startLoadingMessages();
+                }
             }
             analyzeBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Analyzing...';
             analyzeBtn.disabled = true;
