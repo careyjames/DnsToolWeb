@@ -547,11 +547,16 @@
                                 {% endif %}
                                 {% if results.bimi_analysis.logo_url %}
                                     <div class="mt-3 d-flex align-items-center">
-                                        <div class="me-3 p-2 bg-white rounded" style="flex-shrink: 0;">
-                                            <img src="{{ results.bimi_analysis.logo_url }}" 
-                                                 alt="BIMI Logo" 
-                                                 style="width: 48px; height: 48px; object-fit: contain;"
-                                                 onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2248%22 height=%2248%22><rect fill=%22%23e5e7eb%22 width=%2248%22 height=%2248%22 rx=%224%22/><text x=%2224%22 y=%2230%22 text-anchor=%22middle%22 fill=%22%239ca3af%22 font-size=%2212%22>SVG</text></svg>'">
+                                        <div class="me-3 p-2 bg-white rounded" style="flex-shrink: 0; width: 56px; height: 56px; display: flex; align-items: center; justify-content: center;">
+                                            <object data="{{ results.bimi_analysis.logo_url }}" 
+                                                    type="image/svg+xml"
+                                                    width="48" height="48"
+                                                    style="max-width: 48px; max-height: 48px;">
+                                                <img src="{{ results.bimi_analysis.logo_url }}" 
+                                                     alt="BIMI Logo" 
+                                                     style="width: 48px; height: 48px; object-fit: contain;"
+                                                     onerror="this.parentElement.innerHTML='<i class=\'fas fa-image fa-2x text-muted\'></i>'">
+                                            </object>
                                         </div>
                                         <div class="small">
                                             {% if results.bimi_analysis.logo_valid %}
