@@ -290,15 +290,28 @@
         let currentIndex = 0;
         let intervalId = null;
         
+        function cycleMessage() {
+            const statusEl = document.getElementById('loadingStatus');
+            if (!statusEl) return;
+            currentIndex = (currentIndex + 1) % statusMessages.length;
+            statusEl.textContent = statusMessages[currentIndex];
+        }
+        
         window.startLoadingMessages = function() {
             const statusEl = document.getElementById('loadingStatus');
             if (!statusEl) return;
+            
+            // Clear any existing interval
+            if (intervalId) {
+                clearInterval(intervalId);
+            }
+            
             currentIndex = 0;
             statusEl.textContent = statusMessages[0];
-            intervalId = setInterval(function() {
-                currentIndex = (currentIndex + 1) % statusMessages.length;
-                statusEl.textContent = statusMessages[currentIndex];
-            }, 1200);
+            
+            // Start cycling immediately after a short delay, then every 900ms
+            setTimeout(cycleMessage, 600);
+            intervalId = setInterval(cycleMessage, 900);
         };
         
         window.stopLoadingMessages = function() {
