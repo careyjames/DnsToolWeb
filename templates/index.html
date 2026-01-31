@@ -297,7 +297,7 @@
             statusEl.textContent = statusMessages[currentIndex];
         }
         
-        window.startLoadingMessages = function() {
+        function startMessages() {
             const statusEl = document.getElementById('loadingStatus');
             if (!statusEl) return;
             
@@ -309,17 +309,29 @@
             currentIndex = 0;
             statusEl.textContent = statusMessages[0];
             
-            // Start cycling immediately after a short delay, then every 900ms
-            setTimeout(cycleMessage, 600);
-            intervalId = setInterval(cycleMessage, 900);
-        };
+            // Cycle immediately, then every 800ms
+            intervalId = setInterval(cycleMessage, 800);
+        }
         
-        window.stopLoadingMessages = function() {
-            if (intervalId) {
-                clearInterval(intervalId);
-                intervalId = null;
+        // Also expose globally for main.js
+        window.startLoadingMessages = startMessages;
+        
+        // Listen for form submission directly here to avoid race conditions
+        document.addEventListener('DOMContentLoaded', function() {
+            const form = document.getElementById('domainForm');
+            if (form) {
+                form.addEventListener('submit', function() {
+                    const overlay = document.getElementById('loadingOverlay');
+                    if (overlay && overlay.style.display !== 'none') {
+                        // Already showing, start messages
+                        startMessages();
+                    } else {
+                        // Wait a tick for overlay to show, then start
+                        setTimeout(startMessages, 10);
+                    }
+                });
             }
-        };
+        });
     })();
     </script>
 
