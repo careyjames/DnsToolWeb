@@ -21,7 +21,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
         
-        // Form submission handling - use GET navigation for loading animation
+        // Form submission handling - use fetch to keep page alive for animations
         domainForm.addEventListener('submit', function(e) {
             e.preventDefault();
             
@@ -53,15 +53,21 @@ document.addEventListener('DOMContentLoaded', function() {
             analyzeBtn.disabled = true;
             document.body.classList.add('loading');
             
-            // Navigate via GET after allowing messages to render
-            // Use requestAnimationFrame for Safari compatibility
-            var targetUrl = '/analyze?domain=' + encodeURIComponent(domain);
-            requestAnimationFrame(function() {
-                requestAnimationFrame(function() {
-                    setTimeout(function() {
-                        window.location.href = targetUrl;
-                    }, 50);
-                });
+            // Use fetch to submit - keeps page alive for Safari
+            var formData = new FormData();
+            formData.append('domain', domain);
+            
+            fetch('/analyze', {
+                method: 'POST',
+                body: formData
+            })
+            .then(function(response) {
+                // Redirect to results page with the final URL
+                window.location.href = response.url;
+            })
+            .catch(function() {
+                // Fallback: navigate directly
+                window.location.href = '/analyze?domain=' + encodeURIComponent(domain);
             });
         });
         
