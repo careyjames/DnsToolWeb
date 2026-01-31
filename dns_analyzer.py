@@ -2163,16 +2163,23 @@ class DNSAnalyzer:
         # Check DMARC policy (DNS-verifiable enforcement level)
         dmarc = results.get('dmarc_analysis', {})
         dmarc_policy = (dmarc.get('policy') or '').lower()
-        if dmarc.get('status') != 'success':
+        dmarc_status = dmarc.get('status', '')
+        
+        if dmarc_status == 'error' or (dmarc_status not in ('success', 'warning', 'info') and not dmarc_policy):
+            # No DMARC record at all
             if is_no_mail_domain and dmarc.get('no_mail_recommendation'):
                 # No-mail domain: DMARC missing is a recommendation, not critical issue
                 monitoring_items.append('DMARC p=reject recommended to complete anti-spoofing protection')
             else:
                 issues.append('No DMARC policy (email can be spoofed)')
         elif dmarc_policy == 'none':
-            monitoring_items.append('DMARC in monitoring mode (p=none) - spoofed mail may still deliver')
+            # DMARC exists but in monitoring mode - not enforcing
+            issues.append('DMARC not enforcing (p=none) - spoofed email can still be delivered')
         elif dmarc_policy == 'quarantine':
             monitoring_items.append('DMARC quarantine (p=reject recommended for full enforcement)')
+        elif dmarc_status == 'success':
+            # DMARC with reject policy - good!
+            configured_items.append('DMARC (email spoofing protection)')
         
         # Check SPF
         spf = results.get('spf_analysis', {})
