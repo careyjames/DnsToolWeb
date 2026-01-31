@@ -270,7 +270,7 @@
     </div>
     <script>
     (function() {
-        const statusMessages = [
+        var statusMessages = [
             "Initializing DNS resolver...",
             "Querying authoritative nameservers...",
             "Pulling A/AAAA records via DNS over HTTPS...",
@@ -287,72 +287,49 @@
             "Comparing against Google Public DNS...",
             "Aggregating results from multiple resolvers..."
         ];
-        let currentIndex = 0;
-        let intervalId = null;
+        var currentIndex = 0;
+        var intervalId = null;
+        var isRunning = false;
         
         function cycleMessage() {
-            const statusEl = document.getElementById('loadingStatus');
+            var statusEl = document.getElementById('loadingStatus');
             if (!statusEl) return;
             currentIndex = (currentIndex + 1) % statusMessages.length;
             statusEl.textContent = statusMessages[currentIndex];
         }
         
         function startMessages() {
-            const statusEl = document.getElementById('loadingStatus');
-            if (!statusEl) return;
+            if (isRunning) return;
+            isRunning = true;
             
-            // Clear any existing interval
-            if (intervalId) {
-                clearInterval(intervalId);
-            }
+            var statusEl = document.getElementById('loadingStatus');
+            if (!statusEl) return;
             
             currentIndex = 0;
             statusEl.textContent = statusMessages[0];
             
-            // Use requestAnimationFrame for reliable timing
-            function tick() {
-                cycleMessage();
-            }
-            
-            // Start cycling every 600ms using both methods for reliability
-            intervalId = setInterval(tick, 600);
-            
-            // Also force first update after 50ms
-            setTimeout(tick, 50);
+            // Start cycling every 500ms
+            intervalId = setInterval(cycleMessage, 500);
         }
         
-        // Also expose globally for main.js
+        // Expose globally
         window.startLoadingMessages = startMessages;
         
-        // Listen for button click, Enter key, AND form submission
+        // Use MutationObserver to detect when overlay becomes visible
         document.addEventListener('DOMContentLoaded', function() {
-            const form = document.getElementById('domainForm');
-            const btn = document.getElementById('analyzeBtn');
-            const input = document.getElementById('domain');
-            
-            // Start on button click (fires before submit)
-            if (btn) {
-                btn.addEventListener('click', function() {
-                    if (input && input.value.trim()) {
-                        startMessages();
-                    }
+            var overlay = document.getElementById('loadingOverlay');
+            if (overlay) {
+                var observer = new MutationObserver(function(mutations) {
+                    mutations.forEach(function(mutation) {
+                        if (mutation.attributeName === 'style') {
+                            var display = overlay.style.display;
+                            if (display === 'flex' || display === 'block') {
+                                startMessages();
+                            }
+                        }
+                    });
                 });
-            }
-            
-            // Start on Enter key in input field
-            if (input) {
-                input.addEventListener('keypress', function(e) {
-                    if (e.key === 'Enter' && input.value.trim()) {
-                        startMessages();
-                    }
-                });
-            }
-            
-            // Also start on form submit as backup
-            if (form) {
-                form.addEventListener('submit', function() {
-                    startMessages();
-                });
+                observer.observe(overlay, { attributes: true, attributeFilter: ['style'] });
             }
         });
     })();
