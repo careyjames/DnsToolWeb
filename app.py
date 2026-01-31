@@ -27,9 +27,13 @@ app.secret_key = os.environ.get("SESSION_SECRET", "dns-tool-secret-key")
 # Enable gzip/brotli compression
 Compress(app)
 
-# Configure the database - using SQLite for reliability
-app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///dns_analysis.db"
+# Configure the database - use PostgreSQL from environment
+app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get("DATABASE_URL")
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
+    "pool_recycle": 300,
+    "pool_pre_ping": True,
+}
 
 # Initialize the app with the extension
 db.init_app(app)

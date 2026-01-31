@@ -13,7 +13,7 @@ Preferred communication style: Simple, everyday language.
 ### Backend Framework
 - **Flask** serves as the web framework, handling HTTP requests and rendering templates
 - **SQLAlchemy** provides ORM functionality with a declarative base pattern
-- **SQLite** is used as the database for storing domain analysis results (simple, file-based, no external dependencies)
+- **PostgreSQL** is used as the database for storing domain analysis results (Replit-managed, reliable)
 
 ### Core Components
 
@@ -49,7 +49,7 @@ Preferred communication style: Simple, everyday language.
 ### Design Patterns
 - MVC-style separation with Flask routes as controllers, SQLAlchemy models, and Jinja2 templates as views
 - Singleton pattern for the DNSAnalyzer instance
-- JSON columns in SQLite for storing variable-structure DNS record data
+- JSON columns in PostgreSQL for storing variable-structure DNS record data
 
 ## External Dependencies
 
@@ -69,4 +69,4 @@ Preferred communication style: Simple, everyday language.
 - Font Awesome icons
 
 ### Database
-- SQLite (file-based at `dns_analysis.db`)
+- PostgreSQL (Replit-managed via DATABASE_URL environment variable)
