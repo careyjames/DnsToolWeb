@@ -37,7 +37,15 @@ document.addEventListener('DOMContentLoaded', function() {
                 return;
             }
             
-            // Show loading state
+            // Show loading overlay
+            const overlay = document.getElementById('loadingOverlay');
+            const loadingDomain = document.getElementById('loadingDomain');
+            if (overlay) {
+                if (loadingDomain) {
+                    loadingDomain.textContent = domain;
+                }
+                overlay.style.display = 'flex';
+            }
             analyzeBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Analyzing...';
             analyzeBtn.disabled = true;
             document.body.classList.add('loading');

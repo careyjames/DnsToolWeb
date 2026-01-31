@@ -188,7 +188,7 @@
                                 </div>
                                 <div class="form-text">
                                     <i class="fas fa-info-circle me-1"></i>
-                                    Enter a domain name to analyze DNS records, email security settings, and registrar information
+                                    Enter the raw domain only (e.g., <strong>example.com</strong>) — no https:// or www
                                 </div>
                             </div>
                         </form>
@@ -252,6 +252,21 @@
         <footer class="text-center mt-5 mb-4 text-muted small">
             <p class="mb-0">Made by <a href="https://it-help.tech" target="_blank" class="text-decoration-none">IT Help San Diego Inc.</a></p>
         </footer>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div id="loadingOverlay" class="loading-overlay" style="display: none;">
+        <div class="loading-content">
+            <div class="loading-spinner">
+                <i class="fas fa-globe fa-spin"></i>
+            </div>
+            <h4 class="mt-4 mb-2">Analyzing Domain</h4>
+            <p class="text-muted mb-0" id="loadingDomain"></p>
+            <div class="loading-dots mt-3">
+                <span></span><span></span><span></span>
+            </div>
+            <p class="text-muted small mt-3">Querying DNS records, checking email security...</p>
+        </div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js" defer></script>
