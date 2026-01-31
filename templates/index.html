@@ -309,26 +309,24 @@
             currentIndex = 0;
             statusEl.textContent = statusMessages[0];
             
-            // Cycle immediately, then every 800ms
-            intervalId = setInterval(cycleMessage, 800);
+            // First change very fast (100ms), then every 700ms
+            setTimeout(function() {
+                cycleMessage();
+                intervalId = setInterval(cycleMessage, 700);
+            }, 100);
         }
         
         // Also expose globally for main.js
         window.startLoadingMessages = startMessages;
         
-        // Listen for form submission directly here to avoid race conditions
+        // Listen for form submission directly - start messages immediately
         document.addEventListener('DOMContentLoaded', function() {
             const form = document.getElementById('domainForm');
             if (form) {
                 form.addEventListener('submit', function() {
-                    const overlay = document.getElementById('loadingOverlay');
-                    if (overlay && overlay.style.display !== 'none') {
-                        // Already showing, start messages
-                        startMessages();
-                    } else {
-                        // Wait a tick for overlay to show, then start
-                        setTimeout(startMessages, 10);
-                    }
+                    // Start message cycling immediately
+                    startMessages();
+                    console.log('Loading messages started');
                 });
             }
         });
