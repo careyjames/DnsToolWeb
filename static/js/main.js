@@ -53,10 +53,16 @@ document.addEventListener('DOMContentLoaded', function() {
             analyzeBtn.disabled = true;
             document.body.classList.add('loading');
             
-            // Navigate via GET after a short delay to allow messages to cycle
-            setTimeout(function() {
-                window.location.href = '/analyze?domain=' + encodeURIComponent(domain);
-            }, 100);
+            // Navigate via GET after allowing messages to render
+            // Use requestAnimationFrame for Safari compatibility
+            var targetUrl = '/analyze?domain=' + encodeURIComponent(domain);
+            requestAnimationFrame(function() {
+                requestAnimationFrame(function() {
+                    setTimeout(function() {
+                        window.location.href = targetUrl;
+                    }, 50);
+                });
+            });
         });
         
         // Clear validation on focus
