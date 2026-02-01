@@ -292,13 +292,21 @@
                         <div class="row">
                             <!-- SPF Analysis -->
                             <div class="col-md-4 mb-3 mb-md-0">
-                                <h6 class="d-flex align-items-center flex-wrap">
+                                <h6 class="d-flex align-items-center mb-1">
                                     <i class="fas fa-envelope me-2"></i>SPF Record
                                     <a href="https://datatracker.ietf.org/doc/html/rfc7208" target="_blank" rel="noopener" class="ms-2 text-muted rfc-link" data-bs-toggle="tooltip" data-bs-html="true" title="<strong>Sender Policy Framework</strong><br>Specifies which mail servers can send email for your domain." aria-label="Learn about SPF - RFC 7208"><i class="fas fa-info-circle"></i><span class="rfc-label">RFC 7208</span></a>
-                                    <span class="badge bg-{{ 'success' if results.spf_analysis.status == 'success' else 'danger' if results.spf_analysis.status == 'error' else 'warning' }} ms-2">
+                                </h6>
+                                <div class="mb-2">
+                                    <span class="badge bg-{{ 'success' if results.spf_analysis.status == 'success' else 'danger' if results.spf_analysis.status == 'error' else 'warning' }}">
                                         {{ results.spf_analysis.status|title }}
                                     </span>
-                                </h6>
+                                    {% if results.spf_analysis.permissiveness %}
+                                        <span class="badge bg-{{ 'danger' if results.spf_analysis.permissiveness == 'DANGEROUS' else 'success' if results.spf_analysis.permissiveness == 'STRICT' else 'warning' }} ms-1">{{ results.spf_analysis.all_mechanism or '' }}</span>
+                                    {% endif %}
+                                    {% if results.spf_analysis.lookup_count is defined %}
+                                        <span class="badge bg-{{ 'danger' if results.spf_analysis.lookup_count > 10 else 'warning' if results.spf_analysis.lookup_count >= 8 else 'secondary' }} ms-1" data-bs-toggle="tooltip" title="DNS lookup limit is 10">{{ results.spf_analysis.lookup_count }}/10 lookups</span>
+                                    {% endif %}
+                                </div>
                                 <p class="text-muted mb-2 small">{{ results.spf_analysis.message }}</p>
                                 {% if results.spf_analysis.valid_records %}
                                     {% for record in results.spf_analysis.valid_records %}
@@ -328,17 +336,25 @@
 
                             <!-- DMARC Analysis -->
                             <div class="col-md-4 mb-3 mb-md-0">
-                                <h6 class="d-flex align-items-center flex-wrap">
+                                <h6 class="d-flex align-items-center mb-1">
                                     <i class="fas fa-lock me-2"></i>DMARC Policy
                                     <a href="https://datatracker.ietf.org/doc/html/rfc7489" target="_blank" rel="noopener" class="ms-2 text-muted rfc-link" data-bs-toggle="tooltip" data-bs-html="true" title="<strong>Domain-based Message Authentication</strong><br>Tells receivers how to handle SPF/DKIM failures and where to send reports." aria-label="Learn about DMARC - RFC 7489"><i class="fas fa-info-circle"></i><span class="rfc-label">RFC 7489</span></a>
-                                    <span class="badge bg-{{ 'success' if results.dmarc_analysis.status == 'success' else 'danger' if results.dmarc_analysis.status == 'error' else 'warning' }} ms-2">
+                                </h6>
+                                <div class="mb-2">
+                                    <span class="badge bg-{{ 'success' if results.dmarc_analysis.status == 'success' else 'danger' if results.dmarc_analysis.status == 'error' else 'warning' }}">
                                         {% if results.dmarc_analysis.no_mail_recommendation %}
                                             Recommended
                                         {% else %}
                                             {{ results.dmarc_analysis.status|title }}
                                         {% endif %}
                                     </span>
-                                </h6>
+                                    {% if results.dmarc_analysis.policy %}
+                                        <span class="badge bg-{{ 'success' if results.dmarc_analysis.policy == 'reject' else 'warning' if results.dmarc_analysis.policy == 'quarantine' else 'secondary' }} ms-1">p={{ results.dmarc_analysis.policy }}</span>
+                                    {% endif %}
+                                    {% if results.dmarc_analysis.pct is defined and results.dmarc_analysis.pct < 100 %}
+                                        <span class="badge bg-warning ms-1">{{ results.dmarc_analysis.pct }}% enforced</span>
+                                    {% endif %}
+                                </div>
                                 <p class="text-muted mb-2 small">{{ results.dmarc_analysis.message }}</p>
                                 {% if results.dmarc_analysis.no_mail_recommendation and results.dmarc_analysis.suggested_record %}
                                     <div class="alert alert-info py-2 px-3 mb-2">
@@ -372,13 +388,18 @@
 
                             <!-- DKIM Analysis -->
                             <div class="col-md-4">
-                                <h6 class="d-flex align-items-center flex-wrap">
+                                <h6 class="d-flex align-items-center mb-1">
                                     <i class="fas fa-key me-2"></i>DKIM Records
                                     <a href="https://datatracker.ietf.org/doc/html/rfc6376" target="_blank" rel="noopener" class="ms-2 text-muted rfc-link" data-bs-toggle="tooltip" data-bs-html="true" title="<strong>DomainKeys Identified Mail</strong><br>Cryptographic signatures that verify email hasn't been altered in transit." aria-label="Learn about DKIM - RFC 6376"><i class="fas fa-info-circle"></i><span class="rfc-label">RFC 6376</span></a>
-                                    <span class="badge bg-{{ 'success' if results.dkim_analysis.status == 'success' else 'warning' if results.dkim_analysis.status == 'warning' else 'secondary' }} ms-2">
+                                </h6>
+                                <div class="mb-2">
+                                    <span class="badge bg-{{ 'success' if results.dkim_analysis.status == 'success' else 'warning' if results.dkim_analysis.status == 'warning' else 'secondary' }}">
                                         {{ 'Found' if results.dkim_analysis.status == 'success' else 'Weak Keys' if results.dkim_analysis.status == 'warning' else 'Not Discoverable' }}
                                     </span>
-                                </h6>
+                                    {% if results.dkim_analysis.key_strengths %}
+                                        <span class="badge bg-success ms-1">{{ results.dkim_analysis.key_strengths|join(', ') }}</span>
+                                    {% endif %}
+                                </div>
                                 <p class="text-muted mb-2 small">{{ results.dkim_analysis.message }}</p>
                                 {% if results.dkim_analysis.key_issues %}
                                     <div class="mb-2 small">
