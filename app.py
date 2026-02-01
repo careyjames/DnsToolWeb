@@ -1,8 +1,9 @@
 import os
 import logging
 import time
+import secrets
 from datetime import datetime, date
-from flask import Flask, render_template, request, flash, redirect, url_for, jsonify, send_from_directory
+from flask import Flask, render_template, request, flash, redirect, url_for, jsonify, send_from_directory, g
 from flask_sqlalchemy import SQLAlchemy
 from flask_compress import Compress
 from sqlalchemy.orm import DeclarativeBase
@@ -10,7 +11,7 @@ from sqlalchemy import JSON
 from dns_analyzer import DNSAnalyzer
 
 # App version - format: YY.M.patch (bump last number for small changes)
-APP_VERSION = "26.4.14"
+APP_VERSION = "26.4.15"
 
 # Configure logging
 logging.basicConfig(level=logging.DEBUG)
@@ -41,10 +42,18 @@ db.init_app(app)
 # Initialize DNS analyzer
 dns_analyzer = DNSAnalyzer()
 
+@app.before_request
+def generate_nonce():
+    """Generate a unique CSP nonce for each request."""
+    g.csp_nonce = secrets.token_urlsafe(16)
+
 @app.context_processor
-def inject_version():
-    """Inject app version into all templates."""
-    return {'app_version': APP_VERSION}
+def inject_globals():
+    """Inject app version and CSP nonce into all templates."""
+    return {
+        'app_version': APP_VERSION,
+        'csp_nonce': getattr(g, 'csp_nonce', '')
+    }
 
 @app.after_request
 def add_security_headers(response):
@@ -62,14 +71,15 @@ def add_security_headers(response):
     # Cross-Origin headers for additional security
     response.headers['Cross-Origin-Opener-Policy'] = 'same-origin'
     response.headers['Cross-Origin-Resource-Policy'] = 'same-origin'
-    # Content Security Policy - allow CDNs we use and external BIMI logos
+    # Content Security Policy with nonces for inline scripts/styles
+    nonce = getattr(g, 'csp_nonce', '')
     csp = (
         "default-src 'self'; "
-        "script-src 'self' https://cdn.jsdelivr.net 'unsafe-inline'; "
-        "style-src 'self' https://cdn.replit.com https://cdnjs.cloudflare.com https://fonts.googleapis.com 'unsafe-inline'; "
-        "font-src 'self' https://cdnjs.cloudflare.com https://fonts.gstatic.com; "
+        f"script-src 'self' https://cdn.jsdelivr.net 'nonce-{nonce}'; "
+        f"style-src 'self' https://cdn.replit.com https://cdnjs.cloudflare.com 'nonce-{nonce}'; "
+        "font-src 'self' https://cdnjs.cloudflare.com; "
         "img-src 'self' data: https:; "
-        "object-src https:; "
+        "object-src 'none'; "
         "connect-src 'self'; "
         "frame-ancestors 'none'; "
         "base-uri 'self'; "

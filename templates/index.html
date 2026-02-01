@@ -69,7 +69,7 @@
     </script>
     
     <!-- Critical inline CSS for initial render -->
-    <style>
+    <style nonce="{{ csp_nonce }}">
         :root{--bs-body-bg:#212529;--bs-body-color:#dee2e6;--bs-primary:#0d6efd;--bs-secondary:#6c757d}
         *,::after,::before{box-sizing:border-box}
         body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text",system-ui,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;background-color:var(--bs-body-bg);color:var(--bs-body-color);line-height:1.5;-webkit-font-smoothing:antialiased}
@@ -105,9 +105,8 @@
     <!-- Load Bootstrap first (sync) to prevent CLS when it applies styles -->
     <link rel="stylesheet" href="https://cdn.replit.com/agent/bootstrap-agent-dark-theme.min.css">
     <link href="{{ url_for('static', filename='css/custom.css') }}" rel="stylesheet">
-    <!-- Load Font Awesome asynchronously - icons have reserved dimensions -->
-    <link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
-    <noscript><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"></noscript>
+    <!-- Font Awesome loaded synchronously for CSP compliance -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
     <!-- Navigation -->
@@ -269,7 +268,7 @@
             <p class="loading-status mt-3" id="loadingStatus">Initializing DNS resolver...</p>
         </div>
     </div>
-    <script>
+    <script nonce="{{ csp_nonce }}">
     (function() {
         var statusMessages = [
             "Initializing DNS resolver...",
@@ -336,7 +335,7 @@
     })();
     </script>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js" integrity="sha384-geWF76RCwLtnZ8qwWowPQNguL3RmwHVBC9FhGdlKrxdiJJigb/j/68SIy3Te4Bkz" crossorigin="anonymous" defer></script>
     <script src="{{ url_for('static', filename='js/main.js') }}" defer></script>
 </body>
 </html>
