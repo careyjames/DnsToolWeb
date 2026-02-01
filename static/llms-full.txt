@@ -1,7 +1,7 @@
 # DNS Tool - Complete Technical Documentation
 
 ## Overview
-DNS Tool is an authoritative DNS analysis platform designed for IT professionals. It provides comprehensive domain analysis including DNS records, email security validation, DNSSEC verification, and domain registration information.
+DNS Tool is an authoritative DNS intelligence platform designed for IT professionals. It provides comprehensive domain analysis and security intelligence including DNS records, email security validation, DNSSEC verification, and domain registration information.
 
 URL: https://dnstool.it-help.tech
 

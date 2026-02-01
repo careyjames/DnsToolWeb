@@ -1,7 +1,7 @@
-# DNS Tool - Authoritative DNS & Email Security Analysis
-> A comprehensive DNS analysis tool for IT professionals
+# DNS Tool - Authoritative DNS & Email Security Intelligence
+> A comprehensive DNS intelligence tool for IT professionals
 
-DNS Tool provides real-time DNS record lookups, email security validation (SPF, DKIM, DMARC), DNSSEC verification, BIMI checking, and domain information via RDAP.
+DNS Tool provides real-time DNS record analysis, email security validation (SPF, DKIM, DMARC), DNSSEC verification, BIMI checking, and domain intelligence via RDAP.
 
 ## Features
 - Authoritative DNS record lookups (A, AAAA, MX, TXT, CNAME, NS, SOA, CAA, SRV)

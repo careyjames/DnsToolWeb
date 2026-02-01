@@ -2,7 +2,7 @@
 
 ## Overview
 
-A web-based DNS analysis tool that provides comprehensive domain record analysis, email security validation (SPF, DMARC), and domain information lookup. The application allows users to analyze domains, view DNS records, check email security configurations, and maintain a history of past analyses with usage statistics.
+A web-based DNS intelligence tool that provides comprehensive domain record analysis, email security validation (SPF, DMARC, DKIM), and DNS security intelligence reports. The application allows users to analyze domains, view DNS records, check email security configurations, and maintain a history of past analyses with usage statistics.
 
 ## User Preferences
 
