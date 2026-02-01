@@ -298,12 +298,6 @@
                                     <span class="badge bg-{{ 'success' if results.spf_analysis.status == 'success' else 'danger' if results.spf_analysis.status == 'error' else 'warning' }} ms-2">
                                         {{ results.spf_analysis.status|title }}
                                     </span>
-                                    {% if results.spf_analysis.permissiveness %}
-                                        <span class="badge bg-{{ 'danger' if results.spf_analysis.permissiveness == 'DANGEROUS' else 'success' if results.spf_analysis.permissiveness == 'STRICT' else 'warning' }} ms-1">{{ results.spf_analysis.all_mechanism or '' }}</span>
-                                    {% endif %}
-                                    {% if results.spf_analysis.lookup_count is defined %}
-                                        <span class="badge bg-{{ 'danger' if results.spf_analysis.lookup_count > 10 else 'warning' if results.spf_analysis.lookup_count >= 8 else 'secondary' }} ms-1" title="DNS lookup limit is 10">{{ results.spf_analysis.lookup_count }}/10 lookups</span>
-                                    {% endif %}
                                 </h6>
                                 <p class="text-muted mb-2 small">{{ results.spf_analysis.message }}</p>
                                 {% if results.spf_analysis.valid_records %}
@@ -344,12 +338,6 @@
                                             {{ results.dmarc_analysis.status|title }}
                                         {% endif %}
                                     </span>
-                                    {% if results.dmarc_analysis.policy %}
-                                        <span class="badge bg-{{ 'success' if results.dmarc_analysis.policy == 'reject' else 'warning' if results.dmarc_analysis.policy == 'quarantine' else 'secondary' }} ms-1">p={{ results.dmarc_analysis.policy }}</span>
-                                    {% endif %}
-                                    {% if results.dmarc_analysis.pct is defined and results.dmarc_analysis.pct < 100 %}
-                                        <span class="badge bg-warning ms-1">{{ results.dmarc_analysis.pct }}% enforced</span>
-                                    {% endif %}
                                 </h6>
                                 <p class="text-muted mb-2 small">{{ results.dmarc_analysis.message }}</p>
                                 {% if results.dmarc_analysis.no_mail_recommendation and results.dmarc_analysis.suggested_record %}
@@ -390,9 +378,6 @@
                                     <span class="badge bg-{{ 'success' if results.dkim_analysis.status == 'success' else 'warning' if results.dkim_analysis.status == 'warning' else 'secondary' }} ms-2">
                                         {{ 'Found' if results.dkim_analysis.status == 'success' else 'Weak Keys' if results.dkim_analysis.status == 'warning' else 'Not Discoverable' }}
                                     </span>
-                                    {% if results.dkim_analysis.key_strengths %}
-                                        <span class="badge bg-success ms-1">{{ results.dkim_analysis.key_strengths|join(', ') }}</span>
-                                    {% endif %}
                                 </h6>
                                 <p class="text-muted mb-2 small">{{ results.dkim_analysis.message }}</p>
                                 {% if results.dkim_analysis.key_issues %}
