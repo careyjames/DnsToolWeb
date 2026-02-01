@@ -572,25 +572,35 @@ body {
     /* Major sections - keep header with first content */
     .card-header {
         page-break-after: avoid;
-    }
-    
-    /* Entire section cards should avoid internal breaks when possible */
-    .mb-4 > .card {
         page-break-inside: avoid;
     }
     
-    /* Force page break BEFORE major sections to avoid orphaned headers */
-    .section-email-security,
-    .section-brand-security,
-    .section-domain-security,
-    .section-traffic-routing {
+    /* MTA-STS/TLS-RPT row - ALLOW breaks to prevent overlap */
+    .mta-sts-tlsrpt-row {
+        page-break-inside: auto !important;
         page-break-before: auto;
+    }
+    
+    /* Section cards - allow breaks inside large cards */
+    .section-email-security .card,
+    .section-traffic-routing .card {
+        page-break-inside: auto;
+    }
+    
+    /* Smaller sections can avoid breaks */
+    .section-brand-security .card,
+    .section-domain-security .card {
         page-break-inside: avoid;
     }
     
-    /* Row of 3-column grids (SPF/DMARC/DKIM) should stay together */
+    /* Force page break BEFORE Brand Security to eliminate gap after Email Security */
+    .section-brand-security {
+        page-break-before: always;
+    }
+    
+    /* Row of 3-column grids (SPF/DMARC/DKIM) - allow breaks for long content */
     .row.g-4 {
-        page-break-inside: avoid;
+        page-break-inside: auto;
     }
     
     /* DNS diff for print */
