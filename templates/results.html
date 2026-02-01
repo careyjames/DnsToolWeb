@@ -169,6 +169,56 @@
             </div>
         </div>
         
+        <!-- Executive Scorecard - At-a-Glance Security Status -->
+        <div class="row mb-3">
+            <div class="col-12">
+                <div class="card border-0 bg-dark bg-opacity-25">
+                    <div class="card-body py-3 px-3">
+                        <div class="row g-3 text-center">
+                            <div class="col-6 col-md-3">
+                                <div class="small text-muted text-uppercase mb-1">Email Spoofing</div>
+                                {% if results.spf_analysis.status == 'success' and results.dmarc_analysis.status == 'success' and results.dmarc_analysis.policy in ['reject', 'quarantine'] %}
+                                <span class="badge bg-success px-3 py-2">Protected</span>
+                                {% elif results.spf_analysis.status == 'success' or results.dmarc_analysis.status == 'success' %}
+                                <span class="badge bg-warning text-dark px-3 py-2">Partial</span>
+                                {% else %}
+                                <span class="badge bg-danger px-3 py-2">Vulnerable</span>
+                                {% endif %}
+                            </div>
+                            <div class="col-6 col-md-3">
+                                <div class="small text-muted text-uppercase mb-1">Brand Impersonation</div>
+                                {% if results.bimi_analysis and results.bimi_analysis.status == 'success' and results.bimi_analysis.has_vmc %}
+                                <span class="badge bg-success px-3 py-2">Protected</span>
+                                {% elif results.bimi_analysis and results.bimi_analysis.status == 'success' %}
+                                <span class="badge bg-info px-3 py-2">Basic</span>
+                                {% else %}
+                                <span class="badge bg-secondary px-3 py-2">Not Setup</span>
+                                {% endif %}
+                            </div>
+                            <div class="col-6 col-md-3">
+                                <div class="small text-muted text-uppercase mb-1">DNS Tampering</div>
+                                {% if results.dnssec_analysis.status == 'success' %}
+                                <span class="badge bg-success px-3 py-2">Protected</span>
+                                {% elif results.dns_infrastructure and results.dns_infrastructure.provider_tier == 'enterprise' %}
+                                <span class="badge bg-info px-3 py-2">Enterprise</span>
+                                {% else %}
+                                <span class="badge bg-warning text-dark px-3 py-2">Unsigned</span>
+                                {% endif %}
+                            </div>
+                            <div class="col-6 col-md-3">
+                                <div class="small text-muted text-uppercase mb-1">Certificate Control</div>
+                                {% if results.caa_analysis and results.caa_analysis.status == 'success' %}
+                                <span class="badge bg-success px-3 py-2">Configured</span>
+                                {% else %}
+                                <span class="badge bg-secondary px-3 py-2">Open</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
         <!-- Findings Summary Block - Clean 2-Column Layout -->
         {% if results.posture and (results.posture.issues or results.posture.monitoring or results.posture.configured or results.posture.absent) %}
         <div class="row mb-3">
@@ -244,7 +294,10 @@
                                     <i class="fas fa-network-wired text-primary me-2"></i>
                                     <strong>{{ results.hosting_summary.dns_hosting if results.hosting_summary else 'Standard' }}</strong>
                                     {% if results.dns_infrastructure and results.dns_infrastructure.provider_tier == 'enterprise' %}
-                                    <span class="badge bg-success ms-1" style="font-size: 0.55rem;">Enterprise</span>
+                                    {% if results.dns_infrastructure.is_government %}
+                                    <span class="badge bg-info ms-1" style="font-size: 0.55rem;" title="Government security standards apply">Gov</span>
+                                    {% endif %}
+                                    <span class="badge bg-success ms-1" style="font-size: 0.55rem;" title="Enterprise-grade DNS infrastructure">Enterprise</span>
                                     {% endif %}
                                 </div>
                                 <small class="text-muted d-block" style="font-size: 0.65rem;">Where DNS records are edited</small>
@@ -425,7 +478,7 @@
                                 <h6 class="d-flex align-items-center">
                                     <i class="fas fa-shield-alt me-2"></i>MTA-STS
                                     <a href="https://datatracker.ietf.org/doc/html/rfc8461" target="_blank" rel="noopener" class="ms-2 text-muted rfc-link" data-bs-toggle="tooltip" data-bs-html="true" title="<strong>SMTP MTA Strict Transport Security</strong><br>Forces TLS encryption between mail servers to prevent downgrade attacks." aria-label="Learn about MTA-STS - RFC 8461"><i class="fas fa-info-circle"></i><span class="rfc-label">RFC 8461</span></a>
-                                    <span class="badge bg-{{ 'success' if results.mta_sts_analysis.status == 'success' else 'warning' }} ms-2">
+                                    <span class="badge bg-{{ 'success' if results.mta_sts_analysis.status == 'success' else 'danger' if results.mta_sts_analysis.status == 'error' else 'warning' }} ms-2">
                                         {{ results.mta_sts_analysis.status|title }}
                                     </span>
                                     {% if results.mta_sts_analysis.mode %}
@@ -466,7 +519,7 @@
                                 <h6 class="d-flex align-items-center">
                                     <i class="fas fa-file-alt me-2"></i>TLS-RPT
                                     <a href="https://datatracker.ietf.org/doc/html/rfc8460" target="_blank" rel="noopener" class="ms-2 text-muted rfc-link" data-bs-toggle="tooltip" data-bs-html="true" title="<strong>TLS Reporting</strong><br>Sends reports about TLS connection failures to help diagnose delivery issues." aria-label="Learn about TLS-RPT - RFC 8460"><i class="fas fa-info-circle"></i><span class="rfc-label">RFC 8460</span></a>
-                                    <span class="badge bg-{{ 'success' if results.tlsrpt_analysis.status == 'success' else 'warning' }} ms-2">
+                                    <span class="badge bg-{{ 'success' if results.tlsrpt_analysis.status == 'success' else 'danger' if results.tlsrpt_analysis.status == 'error' else 'warning' }} ms-2">
                                         {{ results.tlsrpt_analysis.status|title }}
                                     </span>
                                 </h6>
@@ -510,7 +563,7 @@
                                 <h6 class="d-flex align-items-center">
                                     <i class="fas fa-image me-2"></i>BIMI
                                     <a href="https://bimigroup.org/implementation-guide/" target="_blank" rel="noopener" class="ms-2 text-muted rfc-link" data-bs-toggle="tooltip" data-bs-html="true" title="<strong>Brand Indicators for Message Identification</strong><br>Displays your brand logo next to emails in recipients' inboxes." aria-label="Learn about BIMI - BIMI Group Specification"><i class="fas fa-info-circle"></i><span class="rfc-label">BIMI Spec</span></a>
-                                    <span class="badge bg-{{ 'success' if results.bimi_analysis.status == 'success' else 'warning' }} ms-2">
+                                    <span class="badge bg-{{ 'success' if results.bimi_analysis.status == 'success' else 'danger' if results.bimi_analysis.status == 'error' else 'warning' }} ms-2">
                                         {{ results.bimi_analysis.status|title }}
                                     </span>
                                     {% if results.bimi_analysis.vmc_url %}

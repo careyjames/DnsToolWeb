@@ -1751,8 +1751,10 @@ class DNSAnalyzer:
         
         # Check if domain itself is a government entity (always enterprise-grade)
         domain_lower = domain.lower()
+        is_government = False
         for gov_suffix, gov_info in government_domains.items():
             if domain_lower.endswith(gov_suffix):
+                is_government = True
                 # Government domains get enterprise tier regardless of DNS provider
                 if provider_tier != 'enterprise':
                     provider_tier = 'enterprise'
@@ -1831,7 +1833,8 @@ class DNSAnalyzer:
             'has_dnssec': has_dnssec,
             'alt_security_score': alt_security_score,
             'alt_security_items': alt_security_items,
-            'explains_no_dnssec': provider_tier == 'enterprise' and not has_dnssec
+            'explains_no_dnssec': provider_tier == 'enterprise' and not has_dnssec,
+            'is_government': is_government
         }
     
     def get_hosting_info(self, domain: str, results: Dict) -> Dict[str, str]:
