@@ -23,7 +23,7 @@ db = SQLAlchemy(model_class=Base)
 
 # Create the Flask app
 app = Flask(__name__)
-app.secret_key = os.environ.get("SESSION_SECRET", "dns-tool-secret-key")
+app.secret_key = os.environ.get("SESSION_SECRET")
 
 # Enable gzip/brotli compression
 Compress(app)
