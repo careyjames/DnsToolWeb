@@ -113,7 +113,7 @@
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
         <div class="container">
             <a class="navbar-brand" href="{{ url_for('index') }}">
-                <i class="fas fa-globe me-2"></i>DNS Tool <span class="badge bg-secondary ms-1">v{{ app_version }}</span>
+                <i class="fas fa-globe me-2"></i>DNS Tool <span class="badge bg-info text-dark ms-1">v{{ app_version }}</span>
             </a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
@@ -140,7 +140,7 @@
         </div>
     </nav>
 
-    <div class="container my-5">
+    <main class="container my-5">
         <!-- Header -->
         <div class="text-center mb-5">
             <h1 class="display-4 mb-3">
@@ -200,7 +200,7 @@
         <!-- Features overview -->
         <div class="row mt-5">
             <div class="col-12">
-                <h3 class="text-center mb-4">What We Analyze</h3>
+                <h2 class="text-center mb-4">What We Analyze</h2>
             </div>
             <div class="col-md-6 col-lg-3 mb-4">
                 <div class="card h-100 border-0 bg-transparent">
@@ -208,7 +208,7 @@
                         <div class="feature-icon mb-3">
                             <i class="fas fa-server fa-2x text-primary"></i>
                         </div>
-                        <h5 class="card-title">DNS Records</h5>
+                        <h3 class="card-title h5">DNS Records</h3>
                         <p class="card-text text-muted">A, AAAA, MX, TXT, and NS records from multiple resolvers</p>
                     </div>
                 </div>
@@ -219,7 +219,7 @@
                         <div class="feature-icon mb-3">
                             <i class="fas fa-shield-alt fa-2x text-success"></i>
                         </div>
-                        <h5 class="card-title">Email Security</h5>
+                        <h3 class="card-title h5">Email Security</h3>
                         <p class="card-text text-muted">SPF, DMARC, and DKIM validation with security recommendations</p>
                     </div>
                 </div>
@@ -230,7 +230,7 @@
                         <div class="feature-icon mb-3">
                             <i class="fas fa-building fa-2x text-info"></i>
                         </div>
-                        <h5 class="card-title">Registrar Info</h5>
+                        <h3 class="card-title h5">Registrar Info</h3>
                         <p class="card-text text-muted">Domain registration details via RDAP and WHOIS lookup</p>
                     </div>
                 </div>
@@ -241,7 +241,7 @@
                         <div class="feature-icon mb-3">
                             <i class="fas fa-network-wired fa-2x text-warning"></i>
                         </div>
-                        <h5 class="card-title">Authoritative</h5>
+                        <h3 class="card-title h5">Authoritative</h3>
                         <p class="card-text text-muted">Direct queries to authoritative nameservers for accuracy</p>
                     </div>
                 </div>
@@ -250,9 +250,9 @@
 
         <!-- Footer -->
         <footer class="text-center mt-5 mb-4 text-muted small">
-            <p class="mb-0">Made by <a href="https://it-help.tech" target="_blank" class="text-decoration-none">IT Help San Diego Inc.</a></p>
+            <p class="mb-0">Made by <a href="https://it-help.tech" target="_blank" class="text-info">IT Help San Diego Inc.</a></p>
         </footer>
-    </div>
+    </main>
 
     <!-- Loading Overlay -->
     <div id="loadingOverlay" class="loading-overlay" style="display: none;">
