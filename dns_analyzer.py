@@ -1697,6 +1697,16 @@ class DNSAnalyzer:
             'adobe.com': {'name': 'Adobe (Self-Hosted)', 'tier': 'enterprise', 'features': ['Self-managed infrastructure', 'Global Anycast', 'Enterprise security']},
         }
         
+        # Government entities - always enterprise-grade security
+        # Many use Akamai, UltraDNS, or self-hosted secure infrastructure
+        government_domains = {
+            '.gov': {'name': 'U.S. Government', 'tier': 'enterprise', 'features': ['Government security standards', 'FISMA compliance', 'Protected infrastructure']},
+            '.mil': {'name': 'U.S. Military', 'tier': 'enterprise', 'features': ['Military security standards', 'DoD compliance', 'Protected infrastructure']},
+            '.gov.uk': {'name': 'UK Government', 'tier': 'enterprise', 'features': ['Government security standards', 'NCSC compliance', 'Protected infrastructure']},
+            '.gov.au': {'name': 'Australian Government', 'tier': 'enterprise', 'features': ['Government security standards', 'ASD compliance', 'Protected infrastructure']},
+            '.gc.ca': {'name': 'Canadian Government', 'tier': 'enterprise', 'features': ['Government security standards', 'GC compliance', 'Protected infrastructure']},
+        }
+        
         # Managed DNS providers - good security but not enterprise-grade
         managed_providers = {
             'digitalocean': {'name': 'DigitalOcean', 'tier': 'managed'},
@@ -1738,6 +1748,21 @@ class DNSAnalyzer:
                     provider_info = info
                     provider_tier = 'managed'
                     break
+        
+        # Check if domain itself is a government entity (always enterprise-grade)
+        domain_lower = domain.lower()
+        for gov_suffix, gov_info in government_domains.items():
+            if domain_lower.endswith(gov_suffix):
+                # Government domains get enterprise tier regardless of DNS provider
+                if provider_tier != 'enterprise':
+                    provider_tier = 'enterprise'
+                    provider_features = gov_info.get('features', [])
+                # Update provider info to reflect government status
+                if provider_info:
+                    provider_info = {'name': f"{gov_info['name']} via {provider_info['name']}", 'tier': 'enterprise'}
+                else:
+                    provider_info = gov_info
+                break
         
         # Get CAA status from results
         caa_analysis = results.get('caa_analysis', {})
