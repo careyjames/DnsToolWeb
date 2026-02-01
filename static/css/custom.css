@@ -569,13 +569,34 @@ body {
         page-break-after: avoid;
     }
     
-    .row {
+    /* Major sections - keep header with first content */
+    .card-header {
+        page-break-after: avoid;
+    }
+    
+    /* Entire section cards should avoid internal breaks when possible */
+    .mb-4 > .card {
+        page-break-inside: avoid;
+    }
+    
+    /* Force page break BEFORE major sections to avoid orphaned headers */
+    .section-email-security,
+    .section-brand-security,
+    .section-domain-security,
+    .section-traffic-routing {
+        page-break-before: auto;
+        page-break-inside: avoid;
+    }
+    
+    /* Row of 3-column grids (SPF/DMARC/DKIM) should stay together */
+    .row.g-4 {
         page-break-inside: avoid;
     }
     
     /* DNS diff for print */
     .dns-diff-container {
         background-color: #f6f8fa !important;
+        page-break-before: auto;
     }
     
     .dns-diff-row .dns-diff-col {
