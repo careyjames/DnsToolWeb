@@ -1678,6 +1678,25 @@ class DNSAnalyzer:
             'verisign': {'name': 'Verisign DNS', 'tier': 'enterprise', 'features': ['DDoS protection', 'Anycast', 'Critical infrastructure']},
         }
         
+        # Major companies running their own enterprise-grade DNS infrastructure
+        # These are self-hosted but have the same security posture as enterprise providers
+        self_hosted_enterprise = {
+            'ns.apple.com': {'name': 'Apple (Self-Hosted)', 'tier': 'enterprise', 'features': ['Self-managed infrastructure', 'Global Anycast', 'Enterprise security']},
+            'microsoft.com': {'name': 'Microsoft (Self-Hosted)', 'tier': 'enterprise', 'features': ['Self-managed infrastructure', 'Global Anycast', 'Enterprise security']},
+            'facebook.com': {'name': 'Meta (Self-Hosted)', 'tier': 'enterprise', 'features': ['Self-managed infrastructure', 'Global Anycast', 'Enterprise security']},
+            'meta.com': {'name': 'Meta (Self-Hosted)', 'tier': 'enterprise', 'features': ['Self-managed infrastructure', 'Global Anycast', 'Enterprise security']},
+            'amazon.com': {'name': 'Amazon (Self-Hosted)', 'tier': 'enterprise', 'features': ['Self-managed infrastructure', 'Global Anycast', 'Enterprise security']},
+            'netflix.com': {'name': 'Netflix (Self-Hosted)', 'tier': 'enterprise', 'features': ['Self-managed infrastructure', 'Global Anycast', 'Enterprise security']},
+            'twitter.com': {'name': 'X/Twitter (Self-Hosted)', 'tier': 'enterprise', 'features': ['Self-managed infrastructure', 'Global Anycast', 'Enterprise security']},
+            'x.com': {'name': 'X/Twitter (Self-Hosted)', 'tier': 'enterprise', 'features': ['Self-managed infrastructure', 'Global Anycast', 'Enterprise security']},
+            'ibm.com': {'name': 'IBM (Self-Hosted)', 'tier': 'enterprise', 'features': ['Self-managed infrastructure', 'Global Anycast', 'Enterprise security']},
+            'oracle.com': {'name': 'Oracle (Self-Hosted)', 'tier': 'enterprise', 'features': ['Self-managed infrastructure', 'Global Anycast', 'Enterprise security']},
+            'cisco.com': {'name': 'Cisco (Self-Hosted)', 'tier': 'enterprise', 'features': ['Self-managed infrastructure', 'Global Anycast', 'Enterprise security']},
+            'intel.com': {'name': 'Intel (Self-Hosted)', 'tier': 'enterprise', 'features': ['Self-managed infrastructure', 'Global Anycast', 'Enterprise security']},
+            'salesforce.com': {'name': 'Salesforce (Self-Hosted)', 'tier': 'enterprise', 'features': ['Self-managed infrastructure', 'Global Anycast', 'Enterprise security']},
+            'adobe.com': {'name': 'Adobe (Self-Hosted)', 'tier': 'enterprise', 'features': ['Self-managed infrastructure', 'Global Anycast', 'Enterprise security']},
+        }
+        
         # Managed DNS providers - good security but not enterprise-grade
         managed_providers = {
             'digitalocean': {'name': 'DigitalOcean', 'tier': 'managed'},
@@ -1702,6 +1721,15 @@ class DNSAnalyzer:
                 provider_tier = 'enterprise'
                 provider_features = info.get('features', [])
                 break
+        
+        # Check self-hosted enterprise DNS (major tech companies)
+        if not provider_info:
+            for key, info in self_hosted_enterprise.items():
+                if key in ns_str:
+                    provider_info = info
+                    provider_tier = 'enterprise'
+                    provider_features = info.get('features', [])
+                    break
         
         # Check managed providers if no enterprise match
         if not provider_info:
