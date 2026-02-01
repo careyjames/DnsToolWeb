@@ -23,6 +23,27 @@
             
             /* Avoid page breaks inside cards */
             .card { break-inside: avoid; }
+            
+            /* Fix hosting summary - prevent text truncation */
+            .text-truncate { 
+                overflow: visible !important; 
+                text-overflow: clip !important; 
+                white-space: normal !important;
+            }
+            
+            /* Make hosting summary columns wider in print */
+            .col-md-3 { 
+                flex: 0 0 50% !important; 
+                max-width: 50% !important;
+                margin-bottom: 0.5rem !important;
+            }
+            
+            /* Ensure footer prints */
+            footer { 
+                display: block !important; 
+                visibility: visible !important;
+                margin-top: 2rem !important;
+            }
         }
     </style>
 </head>
