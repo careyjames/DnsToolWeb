@@ -1093,28 +1093,8 @@
                     this.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Analyzing...';
                     this.disabled = true;
                     
-                    // Fetch fresh results
-                    var formData = new FormData();
-                    formData.append('domain', domain);
-                    
-                    fetch('/analyze', {
-                        method: 'POST',
-                        body: formData,
-                        redirect: 'follow'
-                    })
-                    .then(function(response) {
-                        return response.text().then(function(html) {
-                            document.open();
-                            document.write(html);
-                            document.close();
-                            if (response.url && response.url !== window.location.href) {
-                                window.history.pushState({}, '', response.url);
-                            }
-                        });
-                    })
-                    .catch(function() {
-                        window.location.href = '/analyze?domain=' + encodeURIComponent(domain);
-                    });
+                    // Navigate to fresh analysis - browser gets fresh page with correct CSP nonce
+                    window.location.href = '/analyze?domain=' + encodeURIComponent(domain);
                 });
             }
         });

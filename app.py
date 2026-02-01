@@ -11,7 +11,7 @@ from sqlalchemy import JSON
 from dns_analyzer import DNSAnalyzer
 
 # App version - format: YY.M.patch (bump last number for small changes)
-APP_VERSION = "26.4.16"
+APP_VERSION = "26.4.19"
 
 # Configure logging
 logging.basicConfig(level=logging.DEBUG)
@@ -71,13 +71,16 @@ def add_security_headers(response):
     # Cross-Origin headers for additional security
     response.headers['Cross-Origin-Opener-Policy'] = 'same-origin'
     response.headers['Cross-Origin-Resource-Policy'] = 'same-origin'
-    # Content Security Policy with nonces for inline scripts/styles
+    # Content Security Policy - balanced for security AND real-world compatibility
+    # - script-src uses nonces (critical for XSS prevention)
+    # - style-src uses 'unsafe-inline' (acceptable - inline style attrs can't use nonces)
+    # - fonts allowed for Replit Bootstrap compatibility
     nonce = getattr(g, 'csp_nonce', '')
     csp = (
         "default-src 'self'; "
         f"script-src 'self' https://cdn.jsdelivr.net 'nonce-{nonce}'; "
-        f"style-src 'self' https://cdn.replit.com https://cdnjs.cloudflare.com 'nonce-{nonce}'; "
-        "font-src 'self' https://cdnjs.cloudflare.com; "
+        "style-src 'self' https://cdn.replit.com https://cdnjs.cloudflare.com https://fonts.googleapis.com 'unsafe-inline'; "
+        "font-src 'self' https://cdnjs.cloudflare.com https://fonts.gstatic.com; "
         "img-src 'self' data: https:; "
         "object-src 'none'; "
         "connect-src 'self'; "

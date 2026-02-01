@@ -21,20 +21,20 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
         
-        // Form submission handling - use fetch to keep page alive for animations
+        // Form submission handling - traditional form submit for CSP nonce compatibility
         domainForm.addEventListener('submit', function(e) {
-            e.preventDefault();
-            
             // Normalize to lowercase (domains are case-insensitive)
             var domain = domainInput.value.trim().toLowerCase();
             domainInput.value = domain; // Update the input to show normalized value
             
             if (!domain) {
+                e.preventDefault();
                 domainInput.classList.add('is-invalid');
                 return;
             }
             
             if (!domainRegex.test(domain)) {
+                e.preventDefault();
                 domainInput.classList.add('is-invalid');
                 return;
             }
@@ -55,32 +55,7 @@ document.addEventListener('DOMContentLoaded', function() {
             analyzeBtn.disabled = true;
             document.body.classList.add('loading');
             
-            // Use fetch to submit - keeps page alive for Safari
-            var formData = new FormData();
-            formData.append('domain', domain);
-            
-            fetch('/analyze', {
-                method: 'POST',
-                body: formData,
-                redirect: 'follow'
-            })
-            .then(function(response) {
-                // Get the HTML and replace the page
-                return response.text().then(function(html) {
-                    // Write the HTML to the current document
-                    document.open();
-                    document.write(html);
-                    document.close();
-                    // Update the URL in browser history
-                    if (response.url && response.url !== window.location.href) {
-                        window.history.pushState({}, '', response.url);
-                    }
-                });
-            })
-            .catch(function() {
-                // Fallback: navigate directly
-                window.location.href = '/analyze?domain=' + encodeURIComponent(domain);
-            });
+            // Let the form submit naturally - browser gets fresh page with correct CSP nonce
         });
         
         // Clear validation on focus
