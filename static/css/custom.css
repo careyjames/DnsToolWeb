@@ -37,6 +37,25 @@ body {
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
 
+/* CLS Prevention: Reserve space for main content to prevent layout shift */
+main.container {
+    min-height: 50vh;
+}
+
+/* Prevent layout shift from icon fonts loading */
+.fas, .fab, .far, .fa {
+    display: inline-block;
+    width: 1em;
+    height: 1em;
+    vertical-align: -0.125em;
+}
+
+/* Reserve space for badges to prevent CLS */
+.badge {
+    min-width: 1.5em;
+    display: inline-block;
+}
+
 /* Override Bootstrap emphasis colors for better dark mode contrast */
 .text-warning-emphasis {
     color: var(--status-warning) !important;
@@ -205,10 +224,12 @@ body {
     font-size: 4rem;
     color: var(--bs-primary);
     animation: pulse 1.5s ease-in-out infinite;
+    will-change: transform, opacity;
 }
 
 .loading-spinner i {
     animation: spin 2s linear infinite;
+    will-change: transform;
 }
 
 @keyframes spin {
@@ -233,6 +254,7 @@ body {
     background-color: var(--bs-primary);
     border-radius: 50%;
     animation: bounce 1.4s ease-in-out infinite;
+    will-change: transform, opacity;
 }
 
 .loading-dots span:nth-child(1) { animation-delay: 0s; }
@@ -575,10 +597,17 @@ body {
         page-break-inside: avoid;
     }
     
-    /* MTA-STS/TLS-RPT row - ALLOW breaks to prevent overlap */
+    /* MTA-STS/TLS-RPT row - Force vertical stacking to prevent overlap */
     .mta-sts-tlsrpt-row {
+        display: block !important;
         page-break-inside: auto !important;
-        page-break-before: auto;
+    }
+    
+    .mta-sts-tlsrpt-row > .col-md-6 {
+        width: 100% !important;
+        max-width: 100% !important;
+        flex: 0 0 100% !important;
+        margin-bottom: 1rem;
     }
     
     /* Section cards - allow breaks inside large cards */
