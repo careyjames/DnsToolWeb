@@ -79,10 +79,16 @@ Preferred communication style: Simple, everyday language.
 - Run tests: `python -m pytest tests/ -v`
 - Coverage: Domain validation, government detection, enterprise provider detection, scorecard logic, error states
 
-## Recent Changes (v26.4.28)
+## Recent Changes (v26.4.30)
+
+### Bug Fixes
+- Fixed Re-analyze button not showing loading overlay (race condition - navigation before render)
+- Fixed Brand Impersonation scorecard showing "Basic" instead of "Protected" (template checked `has_vmc` vs `vmc_valid`)
+- Added cache-busting `&refresh=TIMESTAMP` parameter for re-analysis to ensure fresh results
 
 ### Quality Improvements
 - Added comprehensive unit test suite (28 tests covering scorecard logic, error states, government/enterprise detection)
 - Improved executive scorecard edge cases: New "Monitoring" state for SPF+DMARC configured with p=none policy
 - Enhanced docstrings for key functions (analyze_domain, analyze_dns_infrastructure)
 - Fixed error state handling: Red badges for genuine failures vs yellow for not configured
+- All domain analysis entry points (Analyze button, Enter key, Re-analyze button) now work consistently with loading animations
