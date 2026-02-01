@@ -1176,22 +1176,30 @@
             // Re-analyze button handler
             var reanalyzeBtn = document.getElementById('reanalyzeBtn');
             if (reanalyzeBtn) {
-                reanalyzeBtn.addEventListener('click', function() {
+                reanalyzeBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
                     var domain = this.getAttribute('data-domain');
                     var overlay = document.getElementById('loadingOverlay');
+                    var btn = this;
                     
-                    // Show loading overlay (use classList to avoid CSP inline style restrictions)
+                    // Update button state immediately
+                    btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Analyzing...';
+                    btn.disabled = true;
+                    
+                    // Show loading overlay
                     if (overlay) {
                         overlay.classList.remove('d-none');
                         startMessages();
                     }
                     
-                    // Update button state
-                    this.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Analyzing...';
-                    this.disabled = true;
+                    // Add cache-busting parameter to force fresh analysis
+                    var timestamp = Date.now();
+                    var url = '/analyze?domain=' + encodeURIComponent(domain) + '&refresh=' + timestamp;
                     
-                    // Navigate to fresh analysis - browser gets fresh page with correct CSP nonce
-                    window.location.href = '/analyze?domain=' + encodeURIComponent(domain);
+                    // Small delay to ensure overlay renders before navigation
+                    setTimeout(function() {
+                        window.location.href = url;
+                    }, 100);
                 });
             }
         });
