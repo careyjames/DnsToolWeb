@@ -255,7 +255,7 @@
     </main>
 
     <!-- Loading Overlay -->
-    <div id="loadingOverlay" class="loading-overlay" style="display: none;">
+    <div id="loadingOverlay" class="loading-overlay d-none">
         <div class="loading-content">
             <div class="loading-spinner">
                 <i class="fas fa-globe fa-spin"></i>
@@ -315,21 +315,21 @@
         // Expose globally
         window.startLoadingMessages = startMessages;
         
-        // Use MutationObserver to detect when overlay becomes visible
+        // Use MutationObserver to detect when overlay becomes visible (via class change)
         document.addEventListener('DOMContentLoaded', function() {
             var overlay = document.getElementById('loadingOverlay');
             if (overlay) {
                 var observer = new MutationObserver(function(mutations) {
                     mutations.forEach(function(mutation) {
-                        if (mutation.attributeName === 'style') {
-                            var display = overlay.style.display;
-                            if (display === 'flex' || display === 'block') {
+                        if (mutation.attributeName === 'class') {
+                            // Check if d-none class was removed (overlay became visible)
+                            if (!overlay.classList.contains('d-none')) {
                                 startMessages();
                             }
                         }
                     });
                 });
-                observer.observe(overlay, { attributes: true, attributeFilter: ['style'] });
+                observer.observe(overlay, { attributes: true, attributeFilter: ['class'] });
             }
         });
     })();

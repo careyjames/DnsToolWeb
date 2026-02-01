@@ -219,7 +219,7 @@ main.container {
     cursor: not-allowed;
 }
 
-/* Loading Overlay */
+/* Loading Overlay - hidden by default via d-none class */
 .loading-overlay {
     position: fixed;
     top: 0;
@@ -228,10 +228,12 @@ main.container {
     bottom: 0;
     background: rgba(0, 0, 0, 0.85);
     z-index: 9999;
-    display: flex;
     align-items: center;
     justify-content: center;
     backdrop-filter: blur(4px);
+}
+.loading-overlay:not(.d-none) {
+    display: flex;
 }
 
 .loading-content {

@@ -1017,7 +1017,7 @@
     </main>
 
     <!-- Loading Overlay -->
-    <div id="loadingOverlay" class="loading-overlay" style="display: none;">
+    <div id="loadingOverlay" class="loading-overlay d-none">
         <div class="loading-content">
             <div class="loading-spinner">
                 <i class="fas fa-globe fa-spin"></i>
@@ -1083,9 +1083,9 @@
                     var domain = this.getAttribute('data-domain');
                     var overlay = document.getElementById('loadingOverlay');
                     
-                    // Show loading overlay
+                    // Show loading overlay (use classList to avoid CSP inline style restrictions)
                     if (overlay) {
-                        overlay.style.display = 'flex';
+                        overlay.classList.remove('d-none');
                         startMessages();
                     }
                     

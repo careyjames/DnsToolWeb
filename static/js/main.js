@@ -39,14 +39,14 @@ document.addEventListener('DOMContentLoaded', function() {
                 return;
             }
             
-            // Show loading overlay
+            // Show loading overlay (use classList to avoid CSP inline style restrictions)
             const overlay = document.getElementById('loadingOverlay');
             const loadingDomain = document.getElementById('loadingDomain');
             if (overlay) {
                 if (loadingDomain) {
                     loadingDomain.textContent = domain;
                 }
-                overlay.style.display = 'flex';
+                overlay.classList.remove('d-none');
                 if (typeof window.startLoadingMessages === 'function') {
                     window.startLoadingMessages();
                 }
