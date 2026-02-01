@@ -573,4 +573,57 @@ body {
     .dns-diff-value {
         color: #1a1a1a !important;
     }
+    
+    /* Findings Summary - Compact print layout */
+    .d-flex.flex-wrap.align-items-start.gap-3 {
+        display: flex !important;
+        flex-wrap: wrap !important;
+        gap: 0.5rem !important;
+        align-items: center !important;
+    }
+    
+    .d-flex.flex-wrap.align-items-center.gap-1 {
+        display: inline-flex !important;
+        flex-wrap: wrap !important;
+        gap: 0.25rem !important;
+        margin-right: 0.75rem !important;
+    }
+    
+    /* Findings badges for print - solid colors, readable */
+    .d-flex.flex-wrap .badge {
+        background-color: transparent !important;
+        border: 1px solid currentColor !important;
+        padding: 0.15rem 0.4rem !important;
+        font-size: 8pt !important;
+        white-space: nowrap !important;
+        display: inline-block !important;
+    }
+    
+    .d-flex.flex-wrap .badge.bg-success,
+    .d-flex.flex-wrap .badge.border-success {
+        color: #28a745 !important;
+        border-color: #28a745 !important;
+        background-color: rgba(40, 167, 69, 0.1) !important;
+    }
+    
+    .d-flex.flex-wrap .badge.bg-warning,
+    .d-flex.flex-wrap .badge.border-warning {
+        color: #856404 !important;
+        border-color: #ffc107 !important;
+        background-color: rgba(255, 193, 7, 0.1) !important;
+    }
+    
+    .d-flex.flex-wrap .badge.bg-danger,
+    .d-flex.flex-wrap .badge.border-danger {
+        color: #dc3545 !important;
+        border-color: #dc3545 !important;
+        background-color: rgba(220, 53, 69, 0.1) !important;
+    }
+    
+    .d-flex.flex-wrap .badge.bg-secondary,
+    .d-flex.flex-wrap .badge.border-secondary {
+        color: #6c757d !important;
+        border-color: #6c757d !important;
+        background-color: rgba(108, 117, 125, 0.1) !important;
+    }
 }
