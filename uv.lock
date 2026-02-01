@@ -342,6 +342,12 @@ wheels = [
 ]
 
 [[package]]
+name = "cssmin"
+version = "0.2.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/8e/d8/dc9da69bb186303f7ab41adef0a5b6d34da2fdba006827620877760241c3/cssmin-0.2.0.tar.gz", hash = "sha256:e012f0cc8401efcf2620332339011564738ae32be8c84b2e43ce8beaec1067b6", size = 3228, upload-time = "2013-10-14T15:40:29.854Z" }
+
+[[package]]
 name = "dnspython"
 version = "2.7.0"
 source = { registry = "https://pypi.org/simple" }
@@ -741,6 +747,7 @@ version = "0.1.0"
 source = { virtual = "." }
 dependencies = [
     { name = "bandit" },
+    { name = "cssmin" },
     { name = "dnspython" },
     { name = "email-validator" },
     { name = "flask" },
@@ -759,6 +766,7 @@ dependencies = [
 [package.metadata]
 requires-dist = [
     { name = "bandit", specifier = ">=1.9.3" },
+    { name = "cssmin", specifier = ">=0.2.0" },
     { name = "dnspython", specifier = ">=2.7.0" },
     { name = "email-validator", specifier = ">=2.2.0" },
     { name = "flask", specifier = ">=3.1.1" },

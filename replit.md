@@ -37,8 +37,9 @@ Preferred communication style: Simple, everyday language.
 - Server-rendered HTML templates using Jinja2
 - Bootstrap dark theme for styling (loaded from CDN)
 - Font Awesome icons for UI elements
-- Custom CSS in `static/css/custom.css`
+- Custom CSS: `static/css/custom.css` (source) → `static/css/custom.min.css` (minified, used in production)
 - Client-side JavaScript in `static/js/main.js` for form validation and UX enhancements
+- CSS Minification: Run `python3 -c "import cssmin; ..."` to regenerate minified CSS after changes
 
 **Pages:**
 - Index (home) - Domain input form
