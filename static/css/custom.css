@@ -1,6 +1,35 @@
 :root {
-    --code-bg: hsl(210, 11%, 15%);
-    --code-border: hsl(210, 11%, 25%);
+    /* Professional Dark Mode Palette - Following UX Best Practices */
+    /* Backgrounds: Avoid pure black, use dark grays for depth/elevation */
+    --bg-primary: #0d1117;      /* Main background - GitHub dark */
+    --bg-secondary: #161b22;    /* Elevated surfaces */
+    --bg-tertiary: #21262d;     /* Cards, modals */
+    --bg-elevated: #30363d;     /* Highest elevation */
+    
+    /* Text: Off-white for reduced eye strain */
+    --text-primary: rgba(230, 237, 243, 0.9);    /* ~#e6edf3 at 90% */
+    --text-secondary: rgba(139, 148, 158, 0.9);  /* Muted text */
+    
+    /* Code blocks */
+    --code-bg: #161b22;
+    --code-border: #30363d;
+    
+    /* Status Colors: Desaturated for professionalism (20% less saturation) */
+    --status-success: #3fb950;     /* Muted green - safe/verified */
+    --status-success-bg: rgba(63, 185, 80, 0.15);
+    --status-warning: #d29922;     /* Soft amber - caution */
+    --status-warning-bg: rgba(210, 153, 34, 0.15);
+    --status-danger: #f85149;      /* Muted red - critical */
+    --status-danger-bg: rgba(248, 81, 73, 0.15);
+    --status-info: #58a6ff;        /* Calm blue - informational */
+    --status-info-bg: rgba(88, 166, 255, 0.15);
+    --status-neutral: #8b949e;     /* Gray - inactive/secondary */
+    
+    /* Borders */
+    --border-default: #30363d;
+    --border-muted: #21262d;
+    
+    /* Feature sizing */
     --feature-icon-size: 3rem;
 }
 
@@ -356,5 +385,192 @@ body {
         margin-right: 0.5rem;
         font-size: 0.7rem;
         text-transform: uppercase;
+    }
+}
+
+/* ============================================
+   PROFESSIONAL STATUS BADGE OVERRIDES
+   Desaturated colors for trust & credibility
+   ============================================ */
+
+/* Success badges - Muted green (verified, safe, configured) */
+.badge.bg-success {
+    background-color: var(--status-success) !important;
+    color: #ffffff;
+}
+
+/* Warning badges - Soft amber (caution, review needed) */
+.badge.bg-warning {
+    background-color: var(--status-warning) !important;
+    color: #ffffff;
+}
+
+/* Danger badges - Muted red (critical, error, misconfigured) */
+.badge.bg-danger {
+    background-color: var(--status-danger) !important;
+    color: #ffffff;
+}
+
+/* Info badges - Calm blue (informational, technical details) */
+.badge.bg-info {
+    background-color: var(--status-info) !important;
+    color: #ffffff;
+}
+
+/* Secondary/neutral badges */
+.badge.bg-secondary {
+    background-color: var(--status-neutral) !important;
+    color: #ffffff;
+}
+
+/* Executive-level verdict box styling */
+.alert-success {
+    background-color: var(--status-success-bg);
+    border-left: 4px solid var(--status-success);
+    color: var(--text-primary);
+}
+
+.alert-warning {
+    background-color: var(--status-warning-bg);
+    border-left: 4px solid var(--status-warning);
+    color: var(--text-primary);
+}
+
+.alert-danger {
+    background-color: var(--status-danger-bg);
+    border-left: 4px solid var(--status-danger);
+    color: var(--text-primary);
+}
+
+.alert-info {
+    background-color: var(--status-info-bg);
+    border-left: 4px solid var(--status-info);
+    color: var(--text-primary);
+}
+
+/* ============================================
+   PRINT STYLES - Preserve beautiful reports
+   ============================================ */
+@media print {
+    /* Light background for print */
+    body {
+        background-color: #ffffff !important;
+        color: #1a1a1a !important;
+        font-size: 11pt;
+    }
+    
+    /* Cards become simple boxes */
+    .card {
+        border: 1px solid #dee2e6 !important;
+        box-shadow: none !important;
+        page-break-inside: avoid;
+    }
+    
+    .card-header {
+        background-color: #f8f9fa !important;
+        color: #1a1a1a !important;
+        border-bottom: 1px solid #dee2e6 !important;
+    }
+    
+    .card-body {
+        background-color: #ffffff !important;
+        color: #1a1a1a !important;
+    }
+    
+    /* Code blocks stay readable */
+    .code-block {
+        background-color: #f6f8fa !important;
+        border: 1px solid #d0d7de !important;
+        color: #1a1a1a !important;
+        font-size: 9pt;
+        page-break-inside: avoid;
+    }
+    
+    /* Badges remain visible with proper contrast */
+    .badge {
+        border: 1px solid currentColor !important;
+        font-size: 9pt;
+    }
+    
+    .badge.bg-success {
+        background-color: #28a745 !important;
+        color: #ffffff !important;
+    }
+    
+    .badge.bg-warning {
+        background-color: #ffc107 !important;
+        color: #1a1a1a !important;
+    }
+    
+    .badge.bg-danger {
+        background-color: #dc3545 !important;
+        color: #ffffff !important;
+    }
+    
+    .badge.bg-info {
+        background-color: #17a2b8 !important;
+        color: #ffffff !important;
+    }
+    
+    .badge.bg-secondary {
+        background-color: #6c757d !important;
+        color: #ffffff !important;
+    }
+    
+    /* Alerts for print */
+    .alert {
+        background-color: #f8f9fa !important;
+        border-left: 4px solid currentColor !important;
+        color: #1a1a1a !important;
+    }
+    
+    .alert-success { border-left-color: #28a745 !important; }
+    .alert-warning { border-left-color: #ffc107 !important; }
+    .alert-danger { border-left-color: #dc3545 !important; }
+    
+    /* Text colors for print */
+    .text-muted {
+        color: #6c757d !important;
+    }
+    
+    .text-success { color: #28a745 !important; }
+    .text-warning { color: #856404 !important; }
+    .text-danger { color: #dc3545 !important; }
+    .text-info { color: #17a2b8 !important; }
+    
+    /* Hide interactive elements */
+    .btn, .loading-overlay, .navbar, footer, 
+    .no-print, #reanalyze-btn {
+        display: none !important;
+    }
+    
+    /* RFC links show URL */
+    .rfc-link {
+        background-color: transparent !important;
+        border: none !important;
+        color: #0066cc !important;
+    }
+    
+    /* Ensure page breaks are clean */
+    h1, h2, h3, h4, h5, h6 {
+        page-break-after: avoid;
+    }
+    
+    .row {
+        page-break-inside: avoid;
+    }
+    
+    /* DNS diff for print */
+    .dns-diff-container {
+        background-color: #f6f8fa !important;
+    }
+    
+    .dns-diff-row .dns-diff-col {
+        background-color: #ffffff !important;
+        color: #1a1a1a !important;
+    }
+    
+    .dns-diff-value {
+        color: #1a1a1a !important;
     }
 }
