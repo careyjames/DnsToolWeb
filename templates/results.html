@@ -192,7 +192,7 @@
                             </div>
                             <div class="col-6 col-md-3">
                                 <div class="small text-muted text-uppercase mb-1">Brand Impersonation</div>
-                                {% if results.bimi_analysis and results.bimi_analysis.status == 'success' and results.bimi_analysis.has_vmc %}
+                                {% if results.bimi_analysis and results.bimi_analysis.status == 'success' and results.bimi_analysis.vmc_valid %}
                                 <span class="badge bg-success px-3 py-2">Protected</span>
                                 {% elif results.bimi_analysis and results.bimi_analysis.status == 'success' %}
                                 <span class="badge bg-info px-3 py-2">Basic</span>

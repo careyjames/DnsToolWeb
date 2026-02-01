@@ -208,19 +208,19 @@ class TestScorecardLogic(unittest.TestCase):
     
     def test_brand_impersonation_protected(self):
         """Protected: BIMI success with VMC."""
-        bimi = {'status': 'success', 'has_vmc': True}
+        bimi = {'status': 'success', 'vmc_valid': True}
         result = self._calculate_brand_impersonation(bimi)
         self.assertEqual(result, 'protected')
     
     def test_brand_impersonation_basic(self):
         """Basic: BIMI success without VMC."""
-        bimi = {'status': 'success', 'has_vmc': False}
+        bimi = {'status': 'success', 'vmc_valid': False}
         result = self._calculate_brand_impersonation(bimi)
         self.assertEqual(result, 'basic')
     
     def test_brand_impersonation_not_setup(self):
         """Not Setup: No BIMI or BIMI error."""
-        bimi = {'status': 'error', 'has_vmc': False}
+        bimi = {'status': 'error', 'vmc_valid': False}
         result = self._calculate_brand_impersonation(bimi)
         self.assertEqual(result, 'not_setup')
         
@@ -276,7 +276,7 @@ class TestScorecardLogic(unittest.TestCase):
     
     def _calculate_brand_impersonation(self, bimi):
         """Mirror template logic for brand impersonation scorecard."""
-        if bimi and bimi.get('status') == 'success' and bimi.get('has_vmc'):
+        if bimi and bimi.get('status') == 'success' and bimi.get('vmc_valid'):
             return 'protected'
         elif bimi and bimi.get('status') == 'success':
             return 'basic'
