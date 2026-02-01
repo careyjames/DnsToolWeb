@@ -1650,6 +1650,137 @@ class DNSAnalyzer:
             logging.error(f"[WHOIS] Socket error for {domain}: {e}")
             return None
     
+    def analyze_dns_infrastructure(self, domain: str, results: Dict) -> Dict[str, Any]:
+        """Analyze DNS infrastructure security - enterprise-grade providers, CAA, etc.
+        
+        Large organizations often skip DNSSEC because they secure at other layers:
+        - Enterprise DNS providers with DDoS protection and monitoring
+        - CAA records to restrict certificate issuance
+        - Managed DNS infrastructure with security features
+        
+        This method detects these alternative security measures.
+        """
+        ns_records = results.get('basic_records', {}).get('NS', [])
+        ns_str = " ".join(r for r in ns_records if r).lower()
+        
+        # Enterprise-grade DNS providers with security features
+        # These provide: DDoS protection, rate limiting, DNSSEC signing (optional), monitoring
+        enterprise_providers = {
+            'cloudflare': {'name': 'Cloudflare', 'tier': 'enterprise', 'features': ['DDoS protection', 'Anycast', 'Auto-DNSSEC available']},
+            'awsdns': {'name': 'Amazon Route 53', 'tier': 'enterprise', 'features': ['DDoS protection', 'Anycast', 'Health checks']},
+            'route53': {'name': 'Amazon Route 53', 'tier': 'enterprise', 'features': ['DDoS protection', 'Anycast', 'Health checks']},
+            'ultradns': {'name': 'Vercara UltraDNS', 'tier': 'enterprise', 'features': ['DDoS protection', 'Anycast', 'DNSSEC support']},
+            'akam': {'name': 'Akamai Edge DNS', 'tier': 'enterprise', 'features': ['DDoS protection', 'Anycast', 'Global distribution']},
+            'dynect': {'name': 'Oracle Dyn', 'tier': 'enterprise', 'features': ['DDoS protection', 'Anycast', 'Traffic management']},
+            'nsone': {'name': 'NS1 (IBM)', 'tier': 'enterprise', 'features': ['DDoS protection', 'Anycast', 'Intelligent DNS']},
+            'azure-dns': {'name': 'Azure DNS', 'tier': 'enterprise', 'features': ['DDoS protection', 'Anycast', 'Azure integration']},
+            'google': {'name': 'Google Cloud DNS', 'tier': 'enterprise', 'features': ['DDoS protection', 'Anycast', 'Auto-scaling']},
+            'verisign': {'name': 'Verisign DNS', 'tier': 'enterprise', 'features': ['DDoS protection', 'Anycast', 'Critical infrastructure']},
+        }
+        
+        # Managed DNS providers - good security but not enterprise-grade
+        managed_providers = {
+            'digitalocean': {'name': 'DigitalOcean', 'tier': 'managed'},
+            'linode': {'name': 'Linode', 'tier': 'managed'},
+            'vultr': {'name': 'Vultr', 'tier': 'managed'},
+            'porkbun': {'name': 'Porkbun', 'tier': 'managed'},
+            'namecheap': {'name': 'Namecheap', 'tier': 'managed'},
+            'registrar-servers': {'name': 'Namecheap', 'tier': 'managed'},
+            'namesilo': {'name': 'NameSilo', 'tier': 'managed'},
+            'godaddy': {'name': 'GoDaddy', 'tier': 'managed'},
+            'domaincontrol': {'name': 'GoDaddy', 'tier': 'managed'},
+        }
+        
+        provider_info = None
+        provider_tier = 'standard'
+        provider_features = []
+        
+        # Check enterprise providers first
+        for key, info in enterprise_providers.items():
+            if key in ns_str:
+                provider_info = info
+                provider_tier = 'enterprise'
+                provider_features = info.get('features', [])
+                break
+        
+        # Check managed providers if no enterprise match
+        if not provider_info:
+            for key, info in managed_providers.items():
+                if key in ns_str:
+                    provider_info = info
+                    provider_tier = 'managed'
+                    break
+        
+        # Get CAA status from results
+        caa_analysis = results.get('caa_analysis', {})
+        has_caa = caa_analysis.get('status') == 'success' or bool(caa_analysis.get('records', []))
+        
+        # Get DNSSEC status from results
+        dnssec_analysis = results.get('dnssec_analysis', {})
+        has_dnssec = dnssec_analysis.get('status') == 'success'
+        
+        # Determine alternative security status
+        # Enterprise provider + CAA = strong alternative security stack
+        # Enterprise provider alone = moderate alternative security
+        alt_security_score = 0
+        alt_security_items = []
+        
+        if provider_tier == 'enterprise' and provider_info:
+            alt_security_score += 2
+            alt_security_items.append(f"{provider_info['name']} (enterprise DNS with DDoS protection)")
+        elif provider_tier == 'managed' and provider_info:
+            alt_security_score += 1
+            alt_security_items.append(f"{provider_info['name']} (managed DNS)")
+        
+        if has_caa:
+            alt_security_score += 1
+            alt_security_items.append("CAA records (certificate issuance control)")
+        
+        # Determine overall infrastructure security assessment
+        if has_dnssec and provider_tier == 'enterprise':
+            assessment = 'maximum'
+            assessment_label = 'Maximum Security'
+            message = 'Enterprise DNS provider with DNSSEC - comprehensive DNS security'
+        elif provider_tier == 'enterprise' and has_caa:
+            assessment = 'enterprise'
+            assessment_label = 'Enterprise Security'
+            message = 'Enterprise-grade DNS infrastructure with certificate controls - industry-standard for large organizations'
+        elif provider_tier == 'enterprise':
+            assessment = 'enterprise'
+            assessment_label = 'Enterprise Infrastructure'
+            message = 'Enterprise-grade DNS provider with built-in DDoS protection and monitoring'
+        elif has_dnssec:
+            assessment = 'secured'
+            assessment_label = 'DNSSEC Secured'
+            message = 'DNS responses cryptographically signed'
+        elif provider_tier == 'managed' and has_caa:
+            assessment = 'managed'
+            assessment_label = 'Managed Security'
+            message = 'Managed DNS with certificate controls'
+        elif provider_tier == 'managed':
+            assessment = 'managed'
+            assessment_label = 'Managed DNS'
+            message = 'Using managed DNS provider'
+        else:
+            assessment = 'standard'
+            assessment_label = 'Standard'
+            message = 'Standard DNS configuration'
+        
+        return {
+            'status': 'success' if assessment in ['maximum', 'enterprise', 'secured'] else 'info',
+            'assessment': assessment,
+            'assessment_label': assessment_label,
+            'message': message,
+            'provider': provider_info['name'] if provider_info else 'Standard/Custom',
+            'provider_tier': provider_tier,
+            'provider_features': provider_features,
+            'has_caa': has_caa,
+            'has_dnssec': has_dnssec,
+            'alt_security_score': alt_security_score,
+            'alt_security_items': alt_security_items,
+            'explains_no_dnssec': provider_tier == 'enterprise' and not has_dnssec
+        }
+    
     def get_hosting_info(self, domain: str, results: Dict) -> Dict[str, str]:
         """Identify hosting, DNS, and email providers."""
         hosting = "Unknown"
@@ -1924,6 +2055,9 @@ class DNSAnalyzer:
         
         # Add Hosting/Who summary
         results['hosting_summary'] = self.get_hosting_info(domain, results)
+        
+        # Add DNS Infrastructure analysis (enterprise security detection)
+        results['dns_infrastructure'] = self.analyze_dns_infrastructure(domain, results)
         
         # Calculate Posture Score
         results['posture'] = self._calculate_posture(results)

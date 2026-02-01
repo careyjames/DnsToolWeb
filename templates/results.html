@@ -222,6 +222,9 @@
                                 <div class="text-truncate">
                                     <i class="fas fa-network-wired text-primary me-2"></i>
                                     <strong>{{ results.hosting_summary.dns_hosting if results.hosting_summary else 'Standard' }}</strong>
+                                    {% if results.dns_infrastructure and results.dns_infrastructure.provider_tier == 'enterprise' %}
+                                    <span class="badge bg-success ms-1" style="font-size: 0.55rem;">Enterprise</span>
+                                    {% endif %}
                                 </div>
                                 <small class="text-muted d-block" style="font-size: 0.65rem;">Where DNS records are edited</small>
                             </div>
@@ -639,10 +642,25 @@
                                         DNSKEY exists but DS record not published at registrar. Add DS record to complete chain of trust.
                                     </div>
                                 {% else %}
+                                    {% if results.dns_infrastructure and results.dns_infrastructure.explains_no_dnssec %}
+                                    <div class="small text-info mb-2">
+                                        <i class="fas fa-shield-alt me-1"></i>
+                                        <strong>Alternative Security:</strong> {{ results.dns_infrastructure.provider }} provides enterprise-grade DNS with DDoS protection and monitoring.
+                                    </div>
+                                    {% if results.dns_infrastructure.alt_security_items %}
+                                    <div class="small text-muted mb-2">
+                                        <i class="fas fa-check me-1"></i>
+                                        {% for item in results.dns_infrastructure.alt_security_items %}
+                                            {{ item }}{% if not loop.last %}, {% endif %}
+                                        {% endfor %}
+                                    </div>
+                                    {% endif %}
+                                    {% else %}
                                     <div class="small text-muted mb-2">
                                         <i class="fas fa-info-circle me-1"></i>
-                                        Domain does not use DNSSEC. Large organizations often secure at other layers; for smaller domains, enable DNSSEC in your registrar's DNS settings (look for "DNSSEC" or "DS records" section).
+                                        Domain does not use DNSSEC. Enable in your registrar's DNS settings (look for "DNSSEC" or "DS records" section).
                                     </div>
+                                    {% endif %}
                                 {% endif %}
                                 
                                 {% if results.dnssec_analysis.ds_records %}
