@@ -72,3 +72,17 @@ Preferred communication style: Simple, everyday language.
 
 ### Database
 - PostgreSQL (Replit-managed via DATABASE_URL environment variable)
+
+### Testing
+- **pytest** - Unit test framework
+- Test file: `tests/test_dns_analyzer.py` (28 tests)
+- Run tests: `python -m pytest tests/ -v`
+- Coverage: Domain validation, government detection, enterprise provider detection, scorecard logic, error states
+
+## Recent Changes (v26.4.28)
+
+### Quality Improvements
+- Added comprehensive unit test suite (28 tests covering scorecard logic, error states, government/enterprise detection)
+- Improved executive scorecard edge cases: New "Monitoring" state for SPF+DMARC configured with p=none policy
+- Enhanced docstrings for key functions (analyze_domain, analyze_dns_infrastructure)
+- Fixed error state handling: Red badges for genuine failures vs yellow for not configured
