@@ -28,6 +28,7 @@ Preferred communication style: Simple, everyday language.
 - Uses external DNS resolvers (default: 1.1.1.1) with configurable timeout
 - Fetches IANA RDAP data for domain registry lookups
 - SMTP Transport Verification: Checks MX server STARTTLS support, TLS version, cipher strength, and certificate validity
+- DNS Infrastructure Analysis: Detects enterprise-grade DNS providers (Cloudflare, AWS, Google, Akamai, Azure) and explains alternative security measures when DNSSEC is not enabled
 
 **Data Model:**
 - `DomainAnalysis` model stores analysis results with JSON fields for flexible record storage
