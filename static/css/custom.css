@@ -622,11 +622,6 @@ main.container {
         page-break-inside: avoid;
     }
     
-    /* Force page break BEFORE Brand Security to eliminate gap after Email Security */
-    .section-brand-security {
-        page-break-before: always;
-    }
-    
     /* Row of 3-column grids (SPF/DMARC/DKIM) - allow breaks for long content */
     .row.g-4 {
         page-break-inside: auto;
