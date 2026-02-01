@@ -1969,7 +1969,7 @@ class DNSAnalyzer:
                             
                             # Parse expiry date
                             not_after = cert.get('notAfter')
-                            if not_after:
+                            if not_after and isinstance(not_after, str):
                                 try:
                                     expiry = datetime.strptime(not_after, '%b %d %H:%M:%S %Y %Z')
                                     result['cert_expiry'] = expiry.strftime('%Y-%m-%d')
@@ -2034,7 +2034,7 @@ class DNSAnalyzer:
         
         return result
     
-    def analyze_smtp_transport(self, domain: str, mx_records: List[str] = None) -> Dict[str, Any]:
+    def analyze_smtp_transport(self, domain: str, mx_records: Optional[List[str]] = None) -> Dict[str, Any]:
         """
         Analyze SMTP transport security for all MX servers of a domain.
         Checks STARTTLS, TLS version, ciphers, and certificates.
