@@ -102,11 +102,10 @@
         .collapse:not(.show){display:none}
         @media(min-width:992px){.collapse.navbar-collapse{display:flex!important}}
     </style>
-    <!-- Preload and async load Bootstrap -->
-    <link rel="preload" href="https://cdn.replit.com/agent/bootstrap-agent-dark-theme.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
-    <noscript><link rel="stylesheet" href="https://cdn.replit.com/agent/bootstrap-agent-dark-theme.min.css"></noscript>
+    <!-- Load Bootstrap first (sync) to prevent CLS when it applies styles -->
+    <link rel="stylesheet" href="https://cdn.replit.com/agent/bootstrap-agent-dark-theme.min.css">
     <link href="{{ url_for('static', filename='css/custom.css') }}" rel="stylesheet">
-    <!-- Load Font Awesome asynchronously to prevent render blocking -->
+    <!-- Load Font Awesome asynchronously - icons have reserved dimensions -->
     <link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
     <noscript><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"></noscript>
 </head>
