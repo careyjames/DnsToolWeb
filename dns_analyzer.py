@@ -41,6 +41,7 @@ def create_robust_session():
 
 try:
     import dns.resolver
+    import dns.flags
 except ImportError:
     print("Error: the 'dnspython' package is required.")
     sys.exit(1)
@@ -187,6 +188,59 @@ class DNSAnalyzer:
                 continue
         
         return []
+    
+    def check_dnssec_ad_flag(self, domain: str) -> Dict[str, Any]:
+        """
+        Check if DNS responses have the AD (Authentic Data) flag set.
+        The AD flag indicates that a DNSSEC-validating resolver has verified
+        the cryptographic signatures in the response chain.
+        """
+        result = {
+            'ad_flag': False,
+            'validated': False,
+            'resolver_used': None,
+            'error': None
+        }
+        
+        # Use Google's public DNS (8.8.8.8) which is a validating resolver
+        validating_resolvers = ['8.8.8.8', '1.1.1.1']
+        
+        for resolver_ip in validating_resolvers:
+            try:
+                resolver = dns.resolver.Resolver(configure=False)
+                resolver.nameservers = [resolver_ip]
+                resolver.timeout = 3
+                resolver.lifetime = 5
+                # Enable DNSSEC - request the AD flag
+                resolver.use_edns(edns=0, ednsflags=dns.flags.DO)
+                
+                # Query for A record (or SOA as fallback)
+                try:
+                    answer = resolver.resolve(domain, 'A')
+                except dns.resolver.NoAnswer:
+                    answer = resolver.resolve(domain, 'SOA')
+                
+                # Check if AD flag is set in the response
+                if answer.response.flags & dns.flags.AD:
+                    result['ad_flag'] = True
+                    result['validated'] = True
+                    result['resolver_used'] = resolver_ip
+                    return result
+                else:
+                    result['ad_flag'] = False
+                    result['validated'] = False
+                    result['resolver_used'] = resolver_ip
+                    return result
+                    
+            except dns.resolver.NXDOMAIN:
+                result['error'] = 'Domain not found'
+                return result
+            except Exception as e:
+                logging.debug(f"AD flag check failed with {resolver_ip}: {e}")
+                continue
+        
+        result['error'] = 'Could not verify AD flag'
+        return result
     
     def get_basic_records(self, domain: str) -> Dict[str, List[str]]:
         """Get basic DNS records for domain (parallel for speed)."""
@@ -1141,7 +1195,7 @@ class DNSAnalyzer:
         return result
     
     def analyze_dnssec(self, domain: str) -> Dict[str, Any]:
-        """Check DNSSEC status for domain by looking for DNSKEY and DS records."""
+        """Check DNSSEC status for domain by looking for DNSKEY, DS records, and AD flag."""
         has_dnskey = False
         has_ds = False
         dnskey_records = []
@@ -1172,6 +1226,11 @@ class DNSAnalyzer:
         except Exception:
             pass
         
+        # Check AD (Authentic Data) flag - indicates resolver validated DNSSEC
+        ad_result = self.check_dnssec_ad_flag(domain)
+        ad_flag = ad_result.get('ad_flag', False)
+        ad_resolver = ad_result.get('resolver_used')
+        
         # Determine algorithm from DS if available
         algorithm = None
         algorithm_name = None
@@ -1186,16 +1245,23 @@ class DNSAnalyzer:
                 pass
         
         if has_dnskey and has_ds:
+            # Enhance message based on AD flag
+            if ad_flag:
+                message = 'DNSSEC fully configured and validated - AD flag confirmed by resolver'
+            else:
+                message = 'DNSSEC configured (DNSKEY + DS present) but AD flag not set by resolver'
             return {
                 'status': 'success',
-                'message': 'DNSSEC fully configured - DNS responses are cryptographically signed and verified',
+                'message': message,
                 'has_dnskey': True,
                 'has_ds': True,
                 'dnskey_records': dnskey_records,
                 'ds_records': ds_records,
                 'algorithm': algorithm,
                 'algorithm_name': algorithm_name,
-                'chain_of_trust': 'complete'
+                'chain_of_trust': 'complete',
+                'ad_flag': ad_flag,
+                'ad_resolver': ad_resolver
             }
         elif has_dnskey and not has_ds:
             return {
@@ -1207,7 +1273,9 @@ class DNSAnalyzer:
                 'ds_records': [],
                 'algorithm': None,
                 'algorithm_name': None,
-                'chain_of_trust': 'broken'
+                'chain_of_trust': 'broken',
+                'ad_flag': False,
+                'ad_resolver': ad_resolver
             }
         else:
             return {
@@ -1219,7 +1287,9 @@ class DNSAnalyzer:
                 'ds_records': [],
                 'algorithm': None,
                 'algorithm_name': None,
-                'chain_of_trust': 'none'
+                'chain_of_trust': 'none',
+                'ad_flag': False,
+                'ad_resolver': None
             }
     
     def analyze_ns_delegation(self, domain: str) -> Dict[str, Any]:
