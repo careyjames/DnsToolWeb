@@ -15,6 +15,7 @@ dependencies = [
     "idna>=3.10",
     "prompt-toolkit>=3.0.51",
     "psycopg2-binary>=2.9.10",
+    "pytest>=9.0.2",
     "requests>=2.32.3",
     "sqlalchemy>=2.0.41",
     "urllib3>=2.6.3",

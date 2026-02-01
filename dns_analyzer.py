@@ -1651,14 +1651,21 @@ class DNSAnalyzer:
             return None
     
     def analyze_dns_infrastructure(self, domain: str, results: Dict) -> Dict[str, Any]:
-        """Analyze DNS infrastructure security - enterprise-grade providers, CAA, etc.
+        """Analyze DNS infrastructure to detect enterprise providers and security posture.
         
-        Large organizations often skip DNSSEC because they secure at other layers:
-        - Enterprise DNS providers with DDoS protection and monitoring
-        - CAA records to restrict certificate issuance
-        - Managed DNS infrastructure with security features
+        Detects:
+        - Enterprise DNS providers (Cloudflare, AWS, Google, Akamai, Azure, etc.)
+        - Self-hosted enterprise DNS (Apple, Microsoft, Meta, etc.)
+        - Government domains (.gov, .mil, .gov.uk, .gov.au, .gc.ca)
+        - Managed DNS providers (DigitalOcean, Namecheap, GoDaddy, etc.)
         
-        This method detects these alternative security measures.
+        Args:
+            domain: The domain being analyzed
+            results: Dict containing basic_records, caa_analysis, dnssec_analysis
+            
+        Returns:
+            Dict with provider_tier ('enterprise'/'managed'/'standard'),
+            is_government flag, alt_security_items, and assessment label.
         """
         ns_records = results.get('basic_records', {}).get('NS', [])
         ns_str = " ".join(r for r in ns_records if r).lower()
@@ -1940,7 +1947,27 @@ class DNSAnalyzer:
         }
 
     def analyze_domain(self, domain: str) -> Dict[str, Any]:
-        """Perform complete DNS analysis of domain with parallel lookups for speed."""
+        """Perform complete DNS analysis of domain with parallel lookups for speed.
+        
+        Args:
+            domain: The domain name to analyze (e.g., 'example.com')
+            
+        Returns:
+            Dict containing comprehensive DNS analysis:
+            - domain_exists: Whether the domain has DNS records
+            - basic_records: A, AAAA, MX, NS, TXT, CNAME, SRV records
+            - spf_analysis: SPF record analysis with lookup counts and issues
+            - dmarc_analysis: DMARC policy analysis with alignment checks
+            - dkim_analysis: DKIM selector discovery and key analysis
+            - mta_sts_analysis: MTA-STS policy status
+            - tlsrpt_analysis: TLS-RPT configuration
+            - bimi_analysis: BIMI record and VMC validation
+            - caa_analysis: CAA records for certificate control
+            - dnssec_analysis: DNSSEC validation status
+            - dns_infrastructure: Enterprise provider detection, government status
+            - registrar_info: RDAP registrar data
+            - posture: Overall security assessment and scorecard
+        """
         
         # Early check: Does domain exist / is it delegated?
         # Use dns_query which uses DoH for reliability

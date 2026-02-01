@@ -177,9 +177,14 @@
                         <div class="row g-3 text-center">
                             <div class="col-6 col-md-3">
                                 <div class="small text-muted text-uppercase mb-1">Email Spoofing</div>
-                                {% if results.spf_analysis.status == 'success' and results.dmarc_analysis.status == 'success' and results.dmarc_analysis.policy in ['reject', 'quarantine'] %}
+                                {% set spf_ok = results.spf_analysis.status == 'success' %}
+                                {% set dmarc_ok = results.dmarc_analysis.status == 'success' %}
+                                {% set dmarc_enforced = results.dmarc_analysis.policy in ['reject', 'quarantine'] %}
+                                {% if spf_ok and dmarc_ok and dmarc_enforced %}
                                 <span class="badge bg-success px-3 py-2">Protected</span>
-                                {% elif results.spf_analysis.status == 'success' or results.dmarc_analysis.status == 'success' %}
+                                {% elif spf_ok and dmarc_ok and results.dmarc_analysis.policy == 'none' %}
+                                <span class="badge bg-info px-3 py-2">Monitoring</span>
+                                {% elif spf_ok or dmarc_ok %}
                                 <span class="badge bg-warning text-dark px-3 py-2">Partial</span>
                                 {% else %}
                                 <span class="badge bg-danger px-3 py-2">Vulnerable</span>
