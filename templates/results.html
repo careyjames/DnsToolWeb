@@ -149,72 +149,44 @@
             </div>
         </div>
         
-        <!-- Findings Summary Block -->
+        <!-- Findings Summary Block - Compact Horizontal Layout -->
         {% if results.posture and (results.posture.issues or results.posture.monitoring or results.posture.configured or results.posture.absent) %}
         <div class="row mb-3">
             <div class="col-12">
                 <div class="card border-0 bg-dark bg-opacity-50">
-                    <div class="card-body py-3">
-                        <h6 class="mb-2 text-muted"><i class="fas fa-clipboard-list me-2"></i>Findings Summary</h6>
-                        <div class="row">
+                    <div class="card-body py-2">
+                        <div class="d-flex flex-wrap align-items-start gap-3">
+                            <span class="text-muted small"><i class="fas fa-clipboard-list me-1"></i>Findings:</span>
                             {% if results.posture.issues %}
-                            <div class="col-md-6 col-lg-3 mb-2">
-                                <div class="small text-danger fw-bold mb-1">
-                                    <i class="fas fa-times-circle me-1"></i>Action Required:
-                                </div>
-                                <ul class="list-unstyled mb-0 ms-3 small">
-                                    {% for issue in results.posture.issues %}
-                                    <li class="mb-1">
-                                        <i class="fas fa-times text-danger me-1"></i>
-                                        {{ issue }}
-                                    </li>
-                                    {% endfor %}
-                                </ul>
+                            <div class="d-flex flex-wrap align-items-center gap-1">
+                                <span class="text-danger small fw-bold"><i class="fas fa-times-circle me-1"></i>Action:</span>
+                                {% for issue in results.posture.issues %}
+                                <span class="badge bg-danger bg-opacity-25 text-danger border border-danger border-opacity-50 small">{{ issue }}</span>
+                                {% endfor %}
                             </div>
                             {% endif %}
                             {% if results.posture.monitoring %}
-                            <div class="col-md-6 col-lg-3 mb-2">
-                                <div class="small text-warning fw-bold mb-1">
-                                    <i class="fas fa-eye me-1"></i>Monitoring Mode:
-                                </div>
-                                <ul class="list-unstyled mb-0 ms-3 small">
-                                    {% for item in results.posture.monitoring %}
-                                    <li class="mb-1">
-                                        <i class="fas fa-pause-circle text-warning me-1"></i>
-                                        {{ item }}
-                                    </li>
-                                    {% endfor %}
-                                </ul>
+                            <div class="d-flex flex-wrap align-items-center gap-1">
+                                <span class="text-warning small fw-bold"><i class="fas fa-eye me-1"></i>Monitor:</span>
+                                {% for item in results.posture.monitoring %}
+                                <span class="badge bg-warning bg-opacity-25 text-warning border border-warning border-opacity-50 small">{{ item }}</span>
+                                {% endfor %}
                             </div>
                             {% endif %}
                             {% if results.posture.configured %}
-                            <div class="col-md-6 col-lg-3 mb-2">
-                                <div class="small text-success fw-bold mb-1">
-                                    <i class="fas fa-check-circle me-1"></i>Configured:
-                                </div>
-                                <ul class="list-unstyled mb-0 ms-3 small">
-                                    {% for item in results.posture.configured %}
-                                    <li class="mb-1">
-                                        <i class="fas fa-check text-success me-1"></i>
-                                        {{ item }}
-                                    </li>
-                                    {% endfor %}
-                                </ul>
+                            <div class="d-flex flex-wrap align-items-center gap-1">
+                                <span class="text-success small fw-bold"><i class="fas fa-check-circle me-1"></i>OK:</span>
+                                {% for item in results.posture.configured %}
+                                <span class="badge bg-success bg-opacity-25 text-success border border-success border-opacity-50 small">{{ item }}</span>
+                                {% endfor %}
                             </div>
                             {% endif %}
                             {% if results.posture.absent %}
-                            <div class="col-md-6 col-lg-3 mb-2">
-                                <div class="small text-muted fw-bold mb-1">
-                                    <i class="fas fa-minus-circle me-1"></i>Not Configured:
-                                </div>
-                                <ul class="list-unstyled mb-0 ms-3 small">
-                                    {% for item in results.posture.absent %}
-                                    <li class="mb-1">
-                                        <i class="fas fa-minus text-muted me-1"></i>
-                                        {{ item }}
-                                    </li>
-                                    {% endfor %}
-                                </ul>
+                            <div class="d-flex flex-wrap align-items-center gap-1">
+                                <span class="text-muted small fw-bold"><i class="fas fa-minus-circle me-1"></i>N/A:</span>
+                                {% for item in results.posture.absent %}
+                                <span class="badge bg-secondary bg-opacity-25 text-muted border border-secondary border-opacity-50 small">{{ item }}</span>
+                                {% endfor %}
                             </div>
                             {% endif %}
                         </div>
