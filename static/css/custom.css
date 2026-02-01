@@ -49,11 +49,25 @@ main.container {
 }
 
 /* Prevent layout shift from icon fonts loading */
-.fas, .fab, .far, .fa {
+.fas, .fab, .far, .fa, .fa-solid, .fa-regular, .fa-brands {
     display: inline-block;
     width: 1em;
     height: 1em;
+    min-width: 1em;
     vertical-align: -0.125em;
+    font-style: normal;
+}
+
+/* Reserve specific icon sizes used in the app */
+.fa-search, .fa-globe, .fa-home, .fa-history, .fa-chart-bar {
+    width: 1em;
+    height: 1em;
+}
+
+/* Stable button to prevent CLS during interaction */
+.btn {
+    transform: translateZ(0);
+    will-change: opacity;
 }
 
 /* Reserve space for badges to prevent CLS */
