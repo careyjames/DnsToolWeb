@@ -71,9 +71,12 @@
                     {% endif %}
                 </div>
             </div>
-            <div class="d-flex gap-2">
+            <div class="d-flex gap-2 flex-wrap">
+                <a href="{{ url_for('analyze') }}?domain={{ domain }}" class="btn btn-primary">
+                    <i class="fas fa-sync-alt me-2"></i>Re-analyze
+                </a>
                 <a href="{{ url_for('index') }}" class="btn btn-outline-primary">
-                    <i class="fas fa-arrow-left me-2"></i>New Analysis
+                    <i class="fas fa-search me-2"></i>New Domain
                 </a>
             </div>
         </div>
@@ -291,6 +294,7 @@
                             <div class="col-md-4 mb-3 mb-md-0">
                                 <h6 class="d-flex align-items-center flex-wrap">
                                     <i class="fas fa-envelope me-2"></i>SPF Record
+                                    <a href="https://datatracker.ietf.org/doc/html/rfc7208" target="_blank" class="ms-1 text-muted" data-bs-toggle="tooltip" data-bs-html="true" title="<strong>Sender Policy Framework</strong><br>Specifies which mail servers can send email for your domain.<br><em>RFC 7208</em>"><i class="fas fa-info-circle small"></i></a>
                                     <span class="badge bg-{{ 'success' if results.spf_analysis.status == 'success' else 'danger' if results.spf_analysis.status == 'error' else 'warning' }} ms-2">
                                         {{ results.spf_analysis.status|title }}
                                     </span>
@@ -332,6 +336,7 @@
                             <div class="col-md-4 mb-3 mb-md-0">
                                 <h6 class="d-flex align-items-center flex-wrap">
                                     <i class="fas fa-lock me-2"></i>DMARC Policy
+                                    <a href="https://datatracker.ietf.org/doc/html/rfc7489" target="_blank" class="ms-1 text-muted" data-bs-toggle="tooltip" data-bs-html="true" title="<strong>Domain-based Message Authentication</strong><br>Tells receivers how to handle SPF/DKIM failures and where to send reports.<br><em>RFC 7489</em>"><i class="fas fa-info-circle small"></i></a>
                                     <span class="badge bg-{{ 'success' if results.dmarc_analysis.status == 'success' else 'danger' if results.dmarc_analysis.status == 'error' else 'warning' }} ms-2">
                                         {% if results.dmarc_analysis.no_mail_recommendation %}
                                             Recommended
@@ -381,6 +386,7 @@
                             <div class="col-md-4">
                                 <h6 class="d-flex align-items-center flex-wrap">
                                     <i class="fas fa-key me-2"></i>DKIM Records
+                                    <a href="https://datatracker.ietf.org/doc/html/rfc6376" target="_blank" class="ms-1 text-muted" data-bs-toggle="tooltip" data-bs-html="true" title="<strong>DomainKeys Identified Mail</strong><br>Cryptographic signatures that verify email hasn't been altered in transit.<br><em>RFC 6376</em>"><i class="fas fa-info-circle small"></i></a>
                                     <span class="badge bg-{{ 'success' if results.dkim_analysis.status == 'success' else 'warning' if results.dkim_analysis.status == 'warning' else 'secondary' }} ms-2">
                                         {{ 'Found' if results.dkim_analysis.status == 'success' else 'Weak Keys' if results.dkim_analysis.status == 'warning' else 'Not Discoverable' }}
                                     </span>
@@ -426,6 +432,7 @@
                             <div class="col-md-6 mb-3 mb-md-0">
                                 <h6 class="d-flex align-items-center">
                                     <i class="fas fa-shield-alt me-2"></i>MTA-STS
+                                    <a href="https://datatracker.ietf.org/doc/html/rfc8461" target="_blank" class="ms-1 text-muted" data-bs-toggle="tooltip" data-bs-html="true" title="<strong>SMTP MTA Strict Transport Security</strong><br>Forces TLS encryption between mail servers to prevent downgrade attacks.<br><em>RFC 8461</em>"><i class="fas fa-info-circle small"></i></a>
                                     <span class="badge bg-{{ 'success' if results.mta_sts_analysis.status == 'success' else 'warning' }} ms-2">
                                         {{ results.mta_sts_analysis.status|title }}
                                     </span>
@@ -466,6 +473,7 @@
                             <div class="col-md-6">
                                 <h6 class="d-flex align-items-center">
                                     <i class="fas fa-file-alt me-2"></i>TLS-RPT
+                                    <a href="https://datatracker.ietf.org/doc/html/rfc8460" target="_blank" class="ms-1 text-muted" data-bs-toggle="tooltip" data-bs-html="true" title="<strong>TLS Reporting</strong><br>Sends reports about TLS connection failures to help diagnose delivery issues.<br><em>RFC 8460</em>"><i class="fas fa-info-circle small"></i></a>
                                     <span class="badge bg-{{ 'success' if results.tlsrpt_analysis.status == 'success' else 'warning' }} ms-2">
                                         {{ results.tlsrpt_analysis.status|title }}
                                     </span>
@@ -508,7 +516,8 @@
                             <!-- BIMI Analysis -->
                             <div class="col-md-6 mb-3 mb-md-0">
                                 <h6 class="d-flex align-items-center">
-                                    <i class="fas fa-image me-2"></i>BIMI (Brand Logo)
+                                    <i class="fas fa-image me-2"></i>BIMI
+                                    <a href="https://bimigroup.org/implementation-guide/" target="_blank" class="ms-1 text-muted" data-bs-toggle="tooltip" data-bs-html="true" title="<strong>Brand Indicators for Message Identification</strong><br>Displays your brand logo next to emails in recipients' inboxes.<br><em>BIMI Group Spec</em>"><i class="fas fa-info-circle small"></i></a>
                                     <span class="badge bg-{{ 'success' if results.bimi_analysis.status == 'success' else 'warning' }} ms-2">
                                         {{ results.bimi_analysis.status|title }}
                                     </span>
@@ -573,7 +582,8 @@
                             <!-- CAA Analysis -->
                             <div class="col-md-6">
                                 <h6 class="d-flex align-items-center">
-                                    <i class="fas fa-lock me-2"></i>CAA (Certificate Authority)
+                                    <i class="fas fa-lock me-2"></i>CAA
+                                    <a href="https://datatracker.ietf.org/doc/html/rfc8659" target="_blank" class="ms-1 text-muted" data-bs-toggle="tooltip" data-bs-html="true" title="<strong>Certificate Authority Authorization</strong><br>Controls which CAs can issue SSL certificates for your domain.<br><em>RFC 8659</em>"><i class="fas fa-info-circle small"></i></a>
                                     <span class="badge bg-{{ 'success' if results.caa_analysis.status == 'success' else 'warning' }} ms-2">
                                         {{ results.caa_analysis.status|title }}
                                     </span>
@@ -627,6 +637,7 @@
                             <div class="col-md-6 mb-3 mb-md-0">
                                 <h6 class="d-flex align-items-center">
                                     <i class="fas fa-key me-2"></i>DNSSEC
+                                    <a href="https://datatracker.ietf.org/doc/html/rfc4033" target="_blank" class="ms-1 text-muted" data-bs-toggle="tooltip" data-bs-html="true" title="<strong>DNS Security Extensions</strong><br>Cryptographic signatures that prove DNS responses are authentic and untampered.<br><em>RFC 4033-4035</em>"><i class="fas fa-info-circle small"></i></a>
                                     <span class="badge bg-{{ 'success' if results.dnssec_analysis.status == 'success' else 'warning' }} ms-2">
                                         {{ 'Signed' if results.dnssec_analysis.status == 'success' else 'Unsigned' }}
                                     </span>
@@ -1026,5 +1037,13 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js" defer></script>
     <script src="{{ url_for('static', filename='js/main.js') }}" defer></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+            tooltipTriggerList.map(function(el) {
+                return new bootstrap.Tooltip(el);
+            });
+        });
+    </script>
 </body>
 </html>
