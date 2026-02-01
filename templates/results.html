@@ -72,9 +72,9 @@
                 </div>
             </div>
             <div class="d-flex gap-2 flex-wrap">
-                <a href="{{ url_for('analyze') }}?domain={{ domain }}" class="btn btn-primary">
+                <button type="button" id="reanalyzeBtn" class="btn btn-primary" data-domain="{{ domain }}">
                     <i class="fas fa-sync-alt me-2"></i>Re-analyze
-                </a>
+                </button>
                 <a href="{{ url_for('index') }}" class="btn btn-outline-primary">
                     <i class="fas fa-search me-2"></i>New Domain
                 </a>
@@ -1035,15 +1035,109 @@
         </footer>
     </div>
 
+    <!-- Loading Overlay -->
+    <div id="loadingOverlay" class="loading-overlay" style="display: none;">
+        <div class="loading-content">
+            <div class="loading-spinner">
+                <i class="fas fa-globe fa-spin"></i>
+            </div>
+            <h4 class="mt-4 mb-2">Analyzing Domain</h4>
+            <p class="text-muted mb-0" id="loadingDomain">{{ domain }}</p>
+            <div class="loading-dots mt-3">
+                <span></span><span></span><span></span>
+            </div>
+            <p class="loading-status mt-3" id="loadingStatus">Initializing DNS resolver...</p>
+        </div>
+    </div>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js" defer></script>
     <script src="{{ url_for('static', filename='js/main.js') }}" defer></script>
     <script>
+    (function() {
+        var statusMessages = [
+            "Initializing DNS resolver...",
+            "Querying authoritative nameservers...",
+            "Pulling A/AAAA records via DNS over HTTPS...",
+            "Fetching MX records for mail routing...",
+            "Running RDAP lookup for registrar info...",
+            "Parsing SPF record from TXT...",
+            "Validating DMARC policy...",
+            "Checking DKIM selectors...",
+            "Querying DNSSEC chain of trust...",
+            "Fetching CAA records...",
+            "Checking MTA-STS policy...",
+            "Validating BIMI configuration...",
+            "Cross-referencing with Cloudflare DNS...",
+            "Comparing against Google Public DNS...",
+            "Aggregating results from multiple resolvers..."
+        ];
+        var currentIndex = 0;
+        var intervalId = null;
+        
+        function cycleMessage() {
+            var statusEl = document.getElementById('loadingStatus');
+            if (!statusEl) return;
+            currentIndex = (currentIndex + 1) % statusMessages.length;
+            statusEl.textContent = statusMessages[currentIndex];
+        }
+        
+        function startMessages() {
+            currentIndex = 0;
+            var statusEl = document.getElementById('loadingStatus');
+            if (statusEl) statusEl.textContent = statusMessages[0];
+            intervalId = setInterval(cycleMessage, 500);
+        }
+        
         document.addEventListener('DOMContentLoaded', function() {
+            // Initialize tooltips
             var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
             tooltipTriggerList.map(function(el) {
                 return new bootstrap.Tooltip(el);
             });
+            
+            // Re-analyze button handler
+            var reanalyzeBtn = document.getElementById('reanalyzeBtn');
+            if (reanalyzeBtn) {
+                reanalyzeBtn.addEventListener('click', function() {
+                    var domain = this.getAttribute('data-domain');
+                    var overlay = document.getElementById('loadingOverlay');
+                    
+                    // Show loading overlay
+                    if (overlay) {
+                        overlay.style.display = 'flex';
+                        startMessages();
+                    }
+                    
+                    // Update button state
+                    this.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Analyzing...';
+                    this.disabled = true;
+                    
+                    // Fetch fresh results
+                    var formData = new FormData();
+                    formData.append('domain', domain);
+                    
+                    fetch('/analyze', {
+                        method: 'POST',
+                        body: formData,
+                        redirect: 'follow'
+                    })
+                    .then(function(response) {
+                        return response.text().then(function(html) {
+                            document.open();
+                            document.write(html);
+                            document.close();
+                            if (response.url && response.url !== window.location.href) {
+                                window.history.pushState({}, '', response.url);
+                            }
+                        });
+                    })
+                    .catch(function() {
+                        window.location.href = '/analyze?domain=' + encodeURIComponent(domain);
+                    });
+                });
+            }
         });
+    })();
     </script>
 </body>
 </html>
