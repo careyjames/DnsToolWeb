@@ -42,8 +42,22 @@ URL: https://dnstool.it-help.tech
 - Full chain validation from root to domain
 - DS record verification
 - DNSKEY analysis
-- Algorithm identification
+- Algorithm identification (ECDSA P-256/SHA-256, RSA/SHA-256, etc.)
 - Trust chain status
+- AD (Authentic Data) flag verification via validating resolvers (8.8.8.8, 1.1.1.1)
+
+### MTA-STS (Mail Transfer Agent Strict Transport Security)
+- DNS record detection at _mta-sts.{domain}
+- Policy file retrieval from .well-known/mta-sts.txt
+- Mode analysis (enforce, testing, none)
+- MX pattern matching validation
+- Max-age verification
+- RFC 8461 compliance
+
+### TLS-RPT (TLS Reporting)
+- Record detection at _smtp._tls.{domain}
+- Reporting endpoint (rua=) validation
+- RFC 8460 compliance
 
 ### BIMI (Brand Indicators for Message Identification)
 - Record detection at default._bimi.{domain}
@@ -89,12 +103,15 @@ Posture Levels:
 The tool is web-based. Enter a domain at the homepage to receive analysis.
 
 ## RFC References
-- RFC 7208: SPF
-- RFC 6376: DKIM
-- RFC 7489: DMARC
-- RFC 4035: DNSSEC
-- RFC 9091: BIMI
-- RFC 7710: RDAP
+- RFC 7208: SPF (Sender Policy Framework)
+- RFC 6376: DKIM (DomainKeys Identified Mail)
+- RFC 7489: DMARC (Domain-based Message Authentication)
+- RFC 4033-4035: DNSSEC (DNS Security Extensions)
+- RFC 8461: MTA-STS (Mail Transfer Agent Strict Transport Security)
+- RFC 8460: TLS-RPT (SMTP TLS Reporting)
+- RFC 8659: CAA (Certificate Authority Authorization)
+- BIMI Group Specification: Brand Indicators for Message Identification
+- RFC 7483: RDAP (Registration Data Access Protocol)
 
 ## Contact
 IT Help San Diego Inc.

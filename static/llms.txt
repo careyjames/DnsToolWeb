@@ -4,13 +4,15 @@
 DNS Tool provides real-time DNS record analysis, email security validation (SPF, DKIM, DMARC), DNSSEC verification, BIMI checking, and domain intelligence via RDAP.
 
 ## Features
-- Authoritative DNS record lookups (A, AAAA, MX, TXT, CNAME, NS, SOA, CAA, SRV)
-- Email security analysis (SPF, DKIM, DMARC policies)
-- DNSSEC chain validation
+- Authoritative DNS record lookups (A, AAAA, MX, TXT, NS, SOA, CAA, SRV)
+- Email security analysis (SPF, DKIM, DMARC with full policy parsing)
+- MTA-STS and TLS-RPT verification (RFC 8461, RFC 8460)
+- DNSSEC chain validation with AD flag verification
 - BIMI record and logo verification
 - SMTP transport security (STARTTLS, TLS version, cipher strength)
+- CAA record analysis (Certificate Authority Authorization)
 - Domain registrar information via RDAP
-- Security posture scoring
+- Security posture scoring with executive-level verdicts
 
 ## Usage
 Enter any domain name to receive a complete one-page audit of DNS configuration and email security posture.
