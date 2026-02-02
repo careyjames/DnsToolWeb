@@ -79,18 +79,23 @@ Preferred communication style: Simple, everyday language.
 - Run tests: `python -m pytest tests/ -v`
 - Total: 61 tests covering routes, rate limiting, scorecard logic, error states
 
-## Recent Changes (v26.5.0)
+## Recent Changes (v26.6.0)
 
-### Rate Limiting & Abuse Prevention
-- Added per-IP rate limiting: 8 analyses per minute per IP
-- Added 15-second anti-repeat protection (double-click prevention, not caching)
+### Re-analyze Countdown UX
+- When rate limited, countdown timer appears on the button instead of redirect
+- Results page: Re-analyze button shows "Ready in Xs" countdown in place
+- Home page: Analyze button shows countdown when redirected from rate limit
+- Static view route `/analysis/{id}/view` for displaying cached results during countdown
+- User stays on current page with their data visible while waiting
+
+### Rate Limiting & Abuse Prevention (v26.5.0)
+- Per-IP rate limiting: 8 analyses per minute per IP
+- 15-second anti-repeat protection (double-click prevention, not caching)
 - Every analysis is always fresh - no Force Fresh toggle needed
 - RateLimiter class with thread-safe implementation
 
-### Quality Improvements (from v26.4.31)
+### Quality Improvements
 - 61 total tests (28 unit + 33 integration)
 - Per-section timeouts with partial failure banners
 - Analysis timestamp and duration displayed on results page
 - RDAP cache extended to 6 hours (registry data only - DNS always fresh)
-- Typed dataclasses in dns_types.py for documentation
-- DOCS.md with operator guide and symbiotic security philosophy
