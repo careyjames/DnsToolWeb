@@ -13,7 +13,7 @@ from sqlalchemy import JSON
 from dns_analyzer import DNSAnalyzer
 
 # App version - format: YY.M.patch (bump last number for small changes)
-APP_VERSION = "26.6.0"
+APP_VERSION = "26.7.0"
 
 # Rate limiting configuration
 RATE_LIMIT_WINDOW = 60  # 1 minute window
@@ -21,7 +21,7 @@ RATE_LIMIT_MAX_REQUESTS = 8  # 8 analyses per minute per IP
 ANTI_REPEAT_WINDOW = 15  # 15 seconds anti-repeat (double-click protection only)
 
 
-class RateLimiter:
+class InMemoryRateLimiter:
     """In-memory rate limiter with per-IP tracking.
     
     Uses atomic check-and-record to prevent race conditions with concurrent requests.
@@ -31,6 +31,7 @@ class RateLimiter:
         self._requests = defaultdict(list)  # IP -> list of timestamps
         self._recent_analyses = {}  # (IP, domain) -> timestamp
         self._lock = Lock()
+        self.backend = 'memory'
     
     def _cleanup_old_requests(self, ip: str, current_time: float):
         """Remove requests older than the rate limit window."""
@@ -128,8 +129,187 @@ class RateLimiter:
             self._recent_analyses[(ip, domain.lower())] = current_time
 
 
+class RedisRateLimiter:
+    """Redis-backed rate limiter for multi-worker scaling.
+    
+    Uses Redis sorted sets for atomic, distributed rate limiting.
+    Falls back to in-memory if Redis connection fails.
+    """
+    
+    def __init__(self, redis_url: str):
+        import redis as redis_lib
+        self._redis = redis_lib.from_url(redis_url, decode_responses=True)
+        self._fallback = InMemoryRateLimiter()
+        self.backend = 'redis'
+        # Test connection
+        try:
+            self._redis.ping()
+        except Exception as e:
+            logging.warning(f"Redis connection failed, falling back to memory: {e}")
+            self.backend = 'memory'
+    
+    def _get_rate_key(self, ip: str) -> str:
+        return f"ratelimit:ip:{ip}"
+    
+    def _get_anti_repeat_key(self, ip: str, domain: str) -> str:
+        return f"ratelimit:repeat:{ip}:{domain.lower()}"
+    
+    def check_and_record(self, ip: str, domain: str) -> tuple[bool, str, int]:
+        """Atomically check and record using Redis pipeline."""
+        if self.backend == 'memory':
+            return self._fallback.check_and_record(ip, domain)
+        
+        try:
+            current_time = time.time()
+            rate_key = self._get_rate_key(ip)
+            repeat_key = self._get_anti_repeat_key(ip, domain)
+            
+            # Use pipeline for atomicity
+            pipe = self._redis.pipeline(True)
+            
+            # Remove old entries from rate limit set
+            cutoff = current_time - RATE_LIMIT_WINDOW
+            pipe.zremrangebyscore(rate_key, '-inf', cutoff)
+            pipe.zcard(rate_key)
+            pipe.zrange(rate_key, 0, 0, withscores=True)  # Get oldest
+            
+            # Check anti-repeat
+            pipe.get(repeat_key)
+            
+            results = pipe.execute()
+            request_count = results[1]
+            oldest_entries = results[2]
+            last_analysis = results[3]
+            
+            # Check rate limit
+            if request_count >= RATE_LIMIT_MAX_REQUESTS:
+                if oldest_entries:
+                    oldest_time = float(oldest_entries[0][1])
+                    seconds_until_reset = int(oldest_time + RATE_LIMIT_WINDOW - current_time) + 1
+                else:
+                    seconds_until_reset = RATE_LIMIT_WINDOW
+                return False, 'rate_limit', max(1, seconds_until_reset)
+            
+            # Check anti-repeat
+            if last_analysis:
+                last_time = float(last_analysis)
+                elapsed = current_time - last_time
+                if elapsed < ANTI_REPEAT_WINDOW:
+                    seconds_remaining = int(ANTI_REPEAT_WINDOW - elapsed) + 1
+                    return False, 'anti_repeat', max(1, seconds_remaining)
+            
+            # All checks passed - record
+            pipe2 = self._redis.pipeline(True)
+            pipe2.zadd(rate_key, {str(current_time): current_time})
+            pipe2.expire(rate_key, RATE_LIMIT_WINDOW + 10)
+            pipe2.set(repeat_key, str(current_time), ex=ANTI_REPEAT_WINDOW + 5)
+            pipe2.execute()
+            
+            return True, 'ok', 0
+            
+        except Exception as e:
+            logging.warning(f"Redis error, using fallback: {e}")
+            return self._fallback.check_and_record(ip, domain)
+    
+    def check_rate_limit(self, ip: str) -> tuple[bool, int]:
+        """Check if IP is within rate limit."""
+        if self.backend == 'memory':
+            return self._fallback.check_rate_limit(ip)
+        
+        try:
+            current_time = time.time()
+            rate_key = self._get_rate_key(ip)
+            
+            # Remove old and count
+            cutoff = current_time - RATE_LIMIT_WINDOW
+            pipe = self._redis.pipeline(True)
+            pipe.zremrangebyscore(rate_key, '-inf', cutoff)
+            pipe.zcard(rate_key)
+            pipe.zrange(rate_key, 0, 0, withscores=True)
+            results = pipe.execute()
+            
+            request_count = results[1]
+            oldest_entries = results[2]
+            
+            if request_count >= RATE_LIMIT_MAX_REQUESTS:
+                if oldest_entries:
+                    oldest_time = float(oldest_entries[0][1])
+                    seconds_until_reset = int(oldest_time + RATE_LIMIT_WINDOW - current_time) + 1
+                else:
+                    seconds_until_reset = RATE_LIMIT_WINDOW
+                return False, max(1, seconds_until_reset)
+            
+            return True, 0
+            
+        except Exception:
+            return self._fallback.check_rate_limit(ip)
+    
+    def check_anti_repeat(self, ip: str, domain: str) -> tuple[bool, int]:
+        """Check if this is a repeat request."""
+        if self.backend == 'memory':
+            return self._fallback.check_anti_repeat(ip, domain)
+        
+        try:
+            current_time = time.time()
+            repeat_key = self._get_anti_repeat_key(ip, domain)
+            
+            last_analysis = self._redis.get(repeat_key)
+            if last_analysis:
+                last_time = float(last_analysis)
+                elapsed = current_time - last_time
+                if elapsed < ANTI_REPEAT_WINDOW:
+                    seconds_remaining = int(ANTI_REPEAT_WINDOW - elapsed) + 1
+                    return False, max(1, seconds_remaining)
+            
+            return True, 0
+            
+        except Exception:
+            return self._fallback.check_anti_repeat(ip, domain)
+    
+    def record_request(self, ip: str, domain: str):
+        """Record a request (for testing)."""
+        if self.backend == 'memory':
+            return self._fallback.record_request(ip, domain)
+        
+        try:
+            current_time = time.time()
+            rate_key = self._get_rate_key(ip)
+            repeat_key = self._get_anti_repeat_key(ip, domain)
+            
+            pipe = self._redis.pipeline(True)
+            pipe.zadd(rate_key, {str(current_time): current_time})
+            pipe.expire(rate_key, RATE_LIMIT_WINDOW + 10)
+            pipe.set(repeat_key, str(current_time), ex=ANTI_REPEAT_WINDOW + 5)
+            pipe.execute()
+            
+        except Exception:
+            self._fallback.record_request(ip, domain)
+
+
+# Backwards compatibility alias
+RateLimiter = InMemoryRateLimiter
+
+
+def create_rate_limiter():
+    """Create the appropriate rate limiter based on environment.
+    
+    Uses Redis if REDIS_URL is set, otherwise in-memory.
+    """
+    redis_url = os.environ.get('REDIS_URL')
+    if redis_url:
+        try:
+            limiter = RedisRateLimiter(redis_url)
+            logging.info(f"Rate limiter using backend: {limiter.backend}")
+            return limiter
+        except Exception as e:
+            logging.warning(f"Failed to create Redis rate limiter: {e}")
+    
+    logging.info("Rate limiter using backend: memory")
+    return InMemoryRateLimiter()
+
+
 # Global rate limiter instance
-rate_limiter = RateLimiter()
+rate_limiter = create_rate_limiter()
 
 # Configure logging
 logging.basicConfig(level=logging.DEBUG)

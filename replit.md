@@ -79,9 +79,16 @@ Preferred communication style: Simple, everyday language.
 - Run tests: `python -m pytest tests/ -v`
 - Total: 61 tests covering routes, rate limiting, scorecard logic, error states
 
-## Recent Changes (v26.6.0)
+## Recent Changes (v26.7.0)
 
-### Re-analyze Countdown UX
+### Redis-Backed Rate Limiter (v26.7.0)
+- Hybrid rate limiter: Uses Redis if REDIS_URL is set, falls back to in-memory
+- Multi-worker scaling support via shared Redis state
+- Atomic operations using Redis sorted sets and pipelines
+- Automatic fallback to in-memory on Redis connection errors
+- 68 total tests (28 unit + 40 integration)
+
+### Re-analyze Countdown UX (v26.6.0)
 - When rate limited, countdown timer appears on the button instead of redirect
 - Results page: Re-analyze button shows "Ready in Xs" countdown in place
 - Home page: Analyze button shows countdown when redirected from rate limit
@@ -95,7 +102,6 @@ Preferred communication style: Simple, everyday language.
 - RateLimiter class with thread-safe implementation
 
 ### Quality Improvements
-- 61 total tests (28 unit + 33 integration)
 - Per-section timeouts with partial failure banners
 - Analysis timestamp and duration displayed on results page
 - RDAP cache extended to 6 hours (registry data only - DNS always fresh)

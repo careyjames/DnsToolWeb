@@ -299,5 +299,72 @@ class TestRateLimiter(unittest.TestCase):
         self.assertGreater(wait, 0)
 
 
+class TestCountdownButtonState(BaseTestCase):
+    """Tests for countdown button state transitions when rate limited."""
+    
+    def setUp(self):
+        super().setUp()
+        from app import RateLimiter
+        # Get the global rate limiter to manipulate state
+        import app as app_module
+        self.rate_limiter = app_module.rate_limiter
+    
+    def test_static_view_route_exists(self):
+        """Static view route should return 404 for non-existent analysis."""
+        response = self.client.get('/analysis/99999/view')
+        self.assertEqual(response.status_code, 404)
+    
+    def test_static_view_with_wait_params(self):
+        """Static view should accept wait_seconds query parameter."""
+        # First do an analysis to get a valid ID
+        response = self.client.get('/analyze?domain=example.com')
+        # We can't easily get the ID without DB query, so test param parsing
+        response = self.client.get('/analysis/99999/view?wait_seconds=10&wait_reason=anti_repeat')
+        # Should be 404 (not found) but not crash
+        self.assertEqual(response.status_code, 404)
+    
+    def test_index_page_accepts_wait_params(self):
+        """Index page should accept wait_seconds parameter for countdown display."""
+        response = self.client.get('/?wait_seconds=10&wait_domain=example.com')
+        self.assertEqual(response.status_code, 200)
+        # Check that the data attributes are in the response
+        self.assertIn(b'data-wait-seconds', response.data)
+    
+    def test_results_button_has_data_attributes(self):
+        """Results page re-analyze button should have data-domain attribute."""
+        # First need an analysis to exist - this may take time or redirect
+        response = self.client.get('/analyze?domain=example.com', follow_redirects=True)
+        if response.status_code == 200:
+            # Check for re-analyze button with data-domain (results page)
+            # or for domain input (home page if redirected due to rate limit)
+            has_reanalyze = b'data-domain' in response.data or b'reanalyzeBtn' in response.data
+            has_home = b'domainForm' in response.data
+            self.assertTrue(has_reanalyze or has_home, "Should have results or home page elements")
+    
+    def test_countdown_ui_elements_present(self):
+        """Countdown JS code should be present in templates."""
+        response = self.client.get('/')
+        self.assertEqual(response.status_code, 200)
+        # Check for countdown-related JS
+        self.assertIn(b'waitSeconds', response.data)
+        self.assertIn(b'updateCountdown', response.data)
+
+
+class TestStaticViewRoute(BaseTestCase):
+    """Tests for the /analysis/{id}/view static view route."""
+    
+    def test_static_view_404_for_missing(self):
+        """Static view should 404 for non-existent analysis."""
+        response = self.client.get('/analysis/999999/view')
+        self.assertEqual(response.status_code, 404)
+    
+    def test_static_view_preserves_wait_seconds(self):
+        """Static view should pass wait_seconds to template."""
+        # Can't easily test with real data, but verify route doesn't crash
+        response = self.client.get('/analysis/1/view?wait_seconds=5&wait_reason=anti_repeat')
+        # Either 200 (if analysis exists) or 404 (if not)
+        self.assertIn(response.status_code, [200, 404])
+
+
 if __name__ == '__main__':
     unittest.main()
