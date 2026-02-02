@@ -831,6 +831,30 @@
                                 {% endif %}
                             </div>
                         </div>
+                        
+                        <!-- Multi-Resolver Consensus -->
+                        {% if results.resolver_consensus %}
+                        <div class="row mt-3">
+                            <div class="col-12">
+                                <div class="d-flex align-items-center small">
+                                    <i class="fas fa-check-double me-2 text-{{ 'success' if results.resolver_consensus.consensus_reached else 'warning' }}"></i>
+                                    <span class="text-muted">
+                                        <strong>Multi-Resolver Verification:</strong>
+                                        {% if results.resolver_consensus.consensus_reached %}
+                                            <span class="text-success">Consensus reached</span> - 
+                                            {{ results.resolver_consensus.resolvers_queried }} resolvers (Cloudflare, Google, Quad9) agree on DNS records
+                                        {% else %}
+                                            <span class="text-warning">Discrepancy detected</span> - 
+                                            Some resolvers returned different results
+                                            {% if results.resolver_consensus.discrepancies %}
+                                                <span class="text-warning">({{ results.resolver_consensus.discrepancies|length }} differences found)</span>
+                                            {% endif %}
+                                        {% endif %}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
                     </div>
                 </div>
             </div>

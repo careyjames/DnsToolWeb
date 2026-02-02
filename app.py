@@ -2,6 +2,7 @@ import os
 import logging
 import time
 import secrets
+import uuid
 from collections import defaultdict
 from threading import Lock
 from datetime import datetime, date
@@ -13,7 +14,57 @@ from sqlalchemy import JSON
 from dns_analyzer import DNSAnalyzer
 
 # App version - format: YY.M.patch (bump last number for small changes)
-APP_VERSION = "26.7.0"
+APP_VERSION = "26.8.0"
+
+
+class TraceIDFilter(logging.Filter):
+    """Logging filter that adds trace_id to log records."""
+    
+    def filter(self, record):
+        # Get trace_id from Flask's g object if available
+        try:
+            from flask import g, has_request_context
+            if has_request_context() and hasattr(g, 'trace_id'):
+                record.trace_id = g.trace_id
+            else:
+                record.trace_id = 'no-trace'
+        except Exception:
+            record.trace_id = 'no-trace'
+        return True
+
+
+def setup_structured_logging():
+    """Configure structured logging with trace ID support."""
+    # Create custom formatter with trace ID
+    log_format = '%(asctime)s [%(levelname)s] [trace:%(trace_id)s] %(name)s: %(message)s'
+    formatter = logging.Formatter(log_format, datefmt='%Y-%m-%d %H:%M:%S')
+    
+    # Get the root logger
+    root_logger = logging.getLogger()
+    # Use LOG_LEVEL env var, default to INFO in production (DEBUG is too verbose)
+    log_level = os.environ.get('LOG_LEVEL', 'INFO').upper()
+    root_logger.setLevel(getattr(logging, log_level, logging.INFO))
+    
+    # Add trace ID filter to all handlers
+    trace_filter = TraceIDFilter()
+    
+    # Configure handlers
+    for handler in root_logger.handlers:
+        handler.setFormatter(formatter)
+        handler.addFilter(trace_filter)
+    
+    # If no handlers exist, add a stream handler
+    if not root_logger.handlers:
+        handler = logging.StreamHandler()
+        handler.setFormatter(formatter)
+        handler.addFilter(trace_filter)
+        root_logger.addHandler(handler)
+    
+    return trace_filter
+
+
+# Initialize structured logging
+_trace_filter = setup_structured_logging()
 
 # Rate limiting configuration
 RATE_LIMIT_WINDOW = 60  # 1 minute window
@@ -341,9 +392,13 @@ db.init_app(app)
 dns_analyzer = DNSAnalyzer()
 
 @app.before_request
-def generate_nonce():
-    """Generate a unique CSP nonce for each request."""
+def setup_request_context():
+    """Set up request context including CSP nonce and trace ID."""
+    # Generate CSP nonce
     g.csp_nonce = secrets.token_urlsafe(16)
+    # Generate trace ID for structured logging (correlates all logs for this request)
+    g.trace_id = str(uuid.uuid4())[:8]  # Short 8-char ID for readability
+    g.request_start_time = time.time()
 
 @app.context_processor
 def inject_globals():
@@ -355,7 +410,12 @@ def inject_globals():
 
 @app.after_request
 def add_security_headers(response):
-    """Add security headers recommended by Mozilla Observatory."""
+    """Add security headers and log request completion with trace ID."""
+    # Log request completion with timing
+    if hasattr(g, 'request_start_time'):
+        duration_ms = (time.time() - g.request_start_time) * 1000
+        logging.info(f"Request completed: {request.method} {request.path} -> {response.status_code} ({duration_ms:.1f}ms)")
+    
     # Prevent MIME type sniffing
     response.headers['X-Content-Type-Options'] = 'nosniff'
     # Prevent clickjacking

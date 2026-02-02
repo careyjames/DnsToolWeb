@@ -319,5 +319,114 @@ class TestErrorStateHandling(unittest.TestCase):
         self.assertEqual(badge_class, 'success')
 
 
+class TestDNSSECEdgeStates(unittest.TestCase):
+    """Tests for DNSSEC validation edge cases."""
+    
+    def setUp(self):
+        self.analyzer = DNSAnalyzer()
+    
+    def test_dnssec_result_structure(self):
+        """DNSSEC result should have expected structure."""
+        expected_keys = {'ad_flag', 'validated', 'resolver_used', 'error'}
+        result = self.analyzer.check_dnssec_ad_flag('example.com')
+        for key in expected_keys:
+            self.assertIn(key, result, f"DNSSEC result should have '{key}' key")
+    
+    def test_dnssec_ad_flag_types(self):
+        """DNSSEC ad_flag and validated should be boolean."""
+        result = self.analyzer.check_dnssec_ad_flag('example.com')
+        self.assertIsInstance(result['ad_flag'], bool)
+        self.assertIsInstance(result['validated'], bool)
+    
+    def test_dnssec_nonexistent_domain(self):
+        """DNSSEC check on non-existent domain should return error."""
+        result = self.analyzer.check_dnssec_ad_flag('this-domain-does-not-exist-xyz123.com')
+        # Should either have error or return False for validation
+        is_failed = result.get('error') is not None or not result.get('validated', True)
+        self.assertTrue(is_failed or result.get('ad_flag') == False)
+
+
+class TestMultiResolverConsensus(unittest.TestCase):
+    """Tests for multi-resolver consensus functionality."""
+    
+    def setUp(self):
+        self.analyzer = DNSAnalyzer()
+    
+    def test_consensus_resolvers_configured(self):
+        """Should have multiple resolvers configured for consensus."""
+        self.assertGreaterEqual(
+            len(self.analyzer.CONSENSUS_RESOLVERS), 
+            2, 
+            "Should have at least 2 resolvers for consensus"
+        )
+    
+    def test_consensus_resolvers_have_required_fields(self):
+        """Each resolver should have name and ip fields."""
+        for resolver in self.analyzer.CONSENSUS_RESOLVERS:
+            self.assertIn('name', resolver, "Resolver should have 'name'")
+            self.assertIn('ip', resolver, "Resolver should have 'ip'")
+    
+    def test_dns_query_with_consensus_structure(self):
+        """Consensus query should return expected structure."""
+        result = self.analyzer.dns_query_with_consensus('A', 'example.com')
+        expected_keys = ['records', 'consensus', 'resolver_count', 'discrepancies', 'resolver_results']
+        for key in expected_keys:
+            self.assertIn(key, result, f"Consensus result should have '{key}' key")
+    
+    def test_dns_query_with_consensus_types(self):
+        """Consensus query should return correct types."""
+        result = self.analyzer.dns_query_with_consensus('A', 'example.com')
+        self.assertIsInstance(result['records'], list)
+        self.assertIsInstance(result['consensus'], bool)
+        self.assertIsInstance(result['resolver_count'], int)
+        self.assertIsInstance(result['discrepancies'], list)
+        self.assertIsInstance(result['resolver_results'], dict)
+    
+    def test_validate_resolver_consensus_structure(self):
+        """Resolver validation should return expected structure."""
+        result = self.analyzer.validate_resolver_consensus('example.com')
+        expected_keys = ['consensus_reached', 'resolvers_queried', 'checks_performed', 
+                         'discrepancies', 'per_record_consensus']
+        for key in expected_keys:
+            self.assertIn(key, result, f"Validation result should have '{key}' key")
+    
+    def test_validate_resolver_consensus_checks_critical_records(self):
+        """Validation should check critical record types (A, MX, NS, TXT)."""
+        result = self.analyzer.validate_resolver_consensus('example.com')
+        checked_types = result.get('per_record_consensus', {}).keys()
+        # At least some of the critical types should be checked
+        critical_types = {'A', 'MX', 'NS', 'TXT'}
+        self.assertTrue(
+            len(set(checked_types) & critical_types) > 0,
+            "Should check at least some critical record types"
+        )
+
+
+class TestRDAPCache(unittest.TestCase):
+    """Tests for RDAP caching functionality."""
+    
+    def test_rdap_cache_class_exists(self):
+        """RDAPCache class should be importable."""
+        from dns_analyzer import RDAPCache
+        cache = RDAPCache()
+        self.assertIsNotNone(cache)
+    
+    def test_rdap_cache_has_backend_property(self):
+        """RDAPCache should have backend property."""
+        from dns_analyzer import RDAPCache
+        cache = RDAPCache()
+        self.assertIn(cache.backend, ['memory', 'redis'])
+    
+    def test_rdap_cache_get_set(self):
+        """RDAPCache should support get/set operations."""
+        from dns_analyzer import RDAPCache
+        cache = RDAPCache()
+        test_data = {'registrar': 'Test Registrar', '_cached_at': '2024-01-01 00:00 UTC'}
+        cache.set('test.com', test_data)
+        retrieved = cache.get('test.com')
+        self.assertIsNotNone(retrieved)
+        self.assertEqual(retrieved.get('registrar'), 'Test Registrar')
+
+
 if __name__ == '__main__':
     unittest.main()

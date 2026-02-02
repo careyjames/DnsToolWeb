@@ -48,6 +48,14 @@ Preferred communication style: Simple, everyday language.
 - History - List of past analyses
 - Statistics - Usage trends and metrics
 
+**Route Structure:**
+- `GET /` - Homepage with domain input form
+- `POST /analyze` - Processes domain analysis and renders results directly (fresh analysis)
+- `GET /analysis/{id}` - View saved analysis from history
+- `GET /analysis/{id}/view` - Static view for rate-limited countdown scenarios
+- `GET /history` - List of past analyses
+- `GET /statistics` - Usage metrics dashboard
+
 ### Design Patterns
 - MVC-style separation with Flask routes as controllers, SQLAlchemy models, and Jinja2 templates as views
 - Singleton pattern for the DNSAnalyzer instance
@@ -79,14 +87,23 @@ Preferred communication style: Simple, everyday language.
 - Run tests: `python -m pytest tests/ -v`
 - Total: 61 tests covering routes, rate limiting, scorecard logic, error states
 
-## Recent Changes (v26.7.0)
+## Recent Changes (v26.8.0)
+
+### Multi-Resolver Consensus & Scientific Rigor (v26.8.0)
+- Multi-resolver DNS consensus: Queries Cloudflare (1.1.1.1), Google (8.8.8.8), Quad9 (9.9.9.9)
+- Triangulates results and detects discrepancies between resolvers
+- resolver_consensus added to analysis results with per-record consensus info
+- **UI display**: "Multi-Resolver Verification" section in DNS Security Analysis shows consensus status
+- Redis-backed RDAP cache for multi-worker scaling (shared across workers)
+- Structured logging with trace IDs for correlating analysis runs
+- Configurable logging level via LOG_LEVEL env var (defaults to INFO for production)
+- 80 total tests (40 unit + 40 integration)
 
 ### Redis-Backed Rate Limiter (v26.7.0)
 - Hybrid rate limiter: Uses Redis if REDIS_URL is set, falls back to in-memory
 - Multi-worker scaling support via shared Redis state
 - Atomic operations using Redis sorted sets and pipelines
 - Automatic fallback to in-memory on Redis connection errors
-- 68 total tests (28 unit + 40 integration)
 
 ### Re-analyze Countdown UX (v26.6.0)
 - When rate limited, countdown timer appears on the button instead of redirect

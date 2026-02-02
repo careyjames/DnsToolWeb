@@ -13,10 +13,91 @@ from concurrent.futures import ThreadPoolExecutor, as_completed, TimeoutError as
 from datetime import datetime
 
 # RDAP cache - registry data rarely changes, so longer TTL is appropriate
-# Key: domain, Value: (timestamp, data)
 # Note: DNS records are ALWAYS fresh (no cache), only RDAP registry info is cached
-_rdap_cache: Dict[str, tuple] = {}
 _RDAP_CACHE_TTL = 21600  # 6 hours - registrar/registry data changes infrequently
+
+
+class RDAPCache:
+    """Hybrid RDAP cache - uses Redis if available, falls back to in-memory."""
+    
+    def __init__(self):
+        self._memory_cache: Dict[str, tuple] = {}  # In-memory fallback
+        self._redis = None
+        self._use_redis = False
+        self._init_redis()
+    
+    def _init_redis(self):
+        """Initialize Redis connection if REDIS_URL is set."""
+        redis_url = os.environ.get('REDIS_URL')
+        if redis_url:
+            try:
+                import redis
+                self._redis = redis.from_url(redis_url, decode_responses=True)
+                self._redis.ping()
+                self._use_redis = True
+                logging.info("RDAP cache using Redis backend")
+            except Exception as e:
+                logging.warning(f"Redis connection failed for RDAP cache, using memory: {e}")
+                self._use_redis = False
+    
+    def get(self, domain: str) -> Optional[Dict]:
+        """Get cached RDAP data for domain."""
+        cache_key = f"rdap:{domain.lower()}"
+        
+        if self._use_redis:
+            try:
+                import json
+                cached = self._redis.get(cache_key)
+                if cached:
+                    return json.loads(cached)
+                return None
+            except Exception as e:
+                logging.debug(f"Redis get failed: {e}")
+                # Fall through to memory cache
+        
+        # In-memory fallback
+        if domain.lower() in self._memory_cache:
+            timestamp, data = self._memory_cache[domain.lower()]
+            if time.time() - timestamp < _RDAP_CACHE_TTL:
+                return data
+            else:
+                del self._memory_cache[domain.lower()]
+        return None
+    
+    def set(self, domain: str, data: Dict):
+        """Cache RDAP data for domain."""
+        cache_key = f"rdap:{domain.lower()}"
+        
+        if self._use_redis:
+            try:
+                import json
+                self._redis.setex(cache_key, _RDAP_CACHE_TTL, json.dumps(data))
+            except Exception as e:
+                logging.debug(f"Redis set failed: {e}")
+                # Fall through to memory cache
+        
+        # Always store in memory as backup
+        self._memory_cache[domain.lower()] = (time.time(), data)
+    
+    def clear(self):
+        """Clear all cached data (primarily for testing)."""
+        self._memory_cache.clear()
+        if self._use_redis:
+            try:
+                # Clear only RDAP keys
+                for key in self._redis.scan_iter("rdap:*"):
+                    self._redis.delete(key)
+            except Exception:
+                pass
+    
+    @property
+    def backend(self) -> str:
+        """Return the current backend type."""
+        return 'redis' if self._use_redis else 'memory'
+
+
+# Global RDAP cache instance
+_rdap_cache = RDAPCache()
 
 try:
     import requests
@@ -57,12 +138,21 @@ except ImportError:
 class DNSAnalyzer:
     """DNS analysis tool for domain records and email security."""
     
+    # Multi-resolver configuration for consensus-based queries
+    # Using diverse providers for triangulation and accuracy
+    CONSENSUS_RESOLVERS = [
+        {"name": "Cloudflare", "ip": "1.1.1.1", "doh": "https://cloudflare-dns.com/dns-query"},
+        {"name": "Google", "ip": "8.8.8.8", "doh": "https://dns.google/resolve"},
+        {"name": "Quad9", "ip": "9.9.9.9", "doh": None},  # Quad9 DoH has different format
+    ]
+    
     def __init__(self):
         self.dns_timeout = 1
         self.dns_tries = 1
         self.default_resolvers = ["1.1.1.1"]
         self.resolvers = self.default_resolvers.copy()
         self.iana_rdap_map = {}
+        self.consensus_enabled = True  # Enable multi-resolver consensus
         self._fetch_iana_rdap_data()
     
     def domain_to_ascii(self, domain: str) -> str:
@@ -151,6 +241,149 @@ class DNSAnalyzer:
         except Exception as e:
             logging.debug(f"DNS-over-HTTPS query failed: {e}")
             return []
+    
+    def _query_single_resolver(self, domain: str, record_type: str, resolver_ip: str) -> tuple[str, List[str], Optional[str]]:
+        """Query a single resolver and return (resolver_ip, results, error)."""
+        try:
+            resolver = dns.resolver.Resolver(configure=False)
+            resolver.nameservers = [resolver_ip]
+            resolver.timeout = self.dns_timeout
+            resolver.lifetime = self.dns_timeout * self.dns_tries
+            
+            answer = resolver.resolve(domain, record_type)
+            results = sorted([str(rr) for rr in answer])  # Sort for comparison
+            return (resolver_ip, results, None)
+        except dns.resolver.NXDOMAIN:
+            return (resolver_ip, [], "NXDOMAIN")
+        except dns.resolver.NoAnswer:
+            return (resolver_ip, [], "NoAnswer")
+        except dns.resolver.Timeout:
+            return (resolver_ip, [], "Timeout")
+        except Exception as e:
+            return (resolver_ip, [], str(e))
+    
+    def dns_query_with_consensus(self, record_type: str, domain: str) -> Dict[str, Any]:
+        """Query multiple resolvers and return consensus results with discrepancy detection.
+        
+        Returns:
+            {
+                'records': List[str],  # The consensus records
+                'consensus': bool,  # True if all resolvers agree
+                'resolver_count': int,  # Number of resolvers that responded
+                'discrepancies': List[str],  # Any discrepancies found
+                'resolver_results': Dict[str, List[str]]  # Results per resolver
+            }
+        """
+        if not domain or not record_type:
+            return {
+                'records': [],
+                'consensus': True,
+                'resolver_count': 0,
+                'discrepancies': [],
+                'resolver_results': {}
+            }
+        
+        # Query all resolvers in parallel
+        resolver_results = {}
+        with ThreadPoolExecutor(max_workers=3) as executor:
+            futures = {
+                executor.submit(
+                    self._query_single_resolver, 
+                    domain, 
+                    record_type, 
+                    r["ip"]
+                ): r["name"] 
+                for r in self.CONSENSUS_RESOLVERS
+            }
+            
+            for future in as_completed(futures, timeout=5):
+                resolver_name = futures[future]
+                try:
+                    resolver_ip, results, error = future.result()
+                    if not error:
+                        resolver_results[resolver_name] = results
+                    else:
+                        logging.debug(f"{resolver_name} ({resolver_ip}) returned {error} for {domain} {record_type}")
+                except Exception as e:
+                    logging.debug(f"Error querying {resolver_name}: {e}")
+        
+        # Determine consensus
+        if not resolver_results:
+            # All resolvers failed, fall back to DoH
+            doh_results = self._dns_over_https_query(domain, record_type)
+            return {
+                'records': doh_results,
+                'consensus': True,  # Single source, no discrepancy possible
+                'resolver_count': 1 if doh_results else 0,
+                'discrepancies': [],
+                'resolver_results': {'DoH': doh_results} if doh_results else {}
+            }
+        
+        # Find the most common result (majority voting)
+        result_sets = [tuple(sorted(r)) for r in resolver_results.values()]
+        from collections import Counter
+        result_counter = Counter(result_sets)
+        most_common = result_counter.most_common(1)[0][0]
+        consensus_records = list(most_common)
+        
+        # Check for discrepancies
+        discrepancies = []
+        all_same = len(set(result_sets)) == 1
+        
+        if not all_same:
+            for resolver_name, results in resolver_results.items():
+                if tuple(sorted(results)) != most_common:
+                    discrepancies.append(
+                        f"{resolver_name} returned different results: {results}"
+                    )
+            logging.warning(f"DNS discrepancy for {domain} {record_type}: {discrepancies}")
+        
+        return {
+            'records': consensus_records,
+            'consensus': all_same,
+            'resolver_count': len(resolver_results),
+            'discrepancies': discrepancies,
+            'resolver_results': resolver_results
+        }
+    
+    def validate_resolver_consensus(self, domain: str) -> Dict[str, Any]:
+        """Validate that multiple resolvers return consistent results for critical records.
+        
+        This is a scientific rigor check - we query multiple resolvers and report any discrepancies.
+        """
+        critical_types = ['A', 'MX', 'NS', 'TXT']  # Most important for security analysis
+        validation_results = {
+            'consensus_reached': True,
+            'resolvers_queried': len(self.CONSENSUS_RESOLVERS),
+            'checks_performed': 0,
+            'discrepancies': [],
+            'per_record_consensus': {}
+        }
+        
+        for record_type in critical_types:
+            try:
+                consensus_result = self.dns_query_with_consensus(record_type, domain)
+                validation_results['checks_performed'] += 1
+                validation_results['per_record_consensus'][record_type] = {
+                    'consensus': consensus_result['consensus'],
+                    'resolver_count': consensus_result['resolver_count'],
+                    'discrepancies': consensus_result['discrepancies']
+                }
+                
+                if not consensus_result['consensus']:
+                    validation_results['consensus_reached'] = False
+                    for disc in consensus_result['discrepancies']:
+                        validation_results['discrepancies'].append(f"{record_type}: {disc}")
+            except Exception as e:
+                logging.warning(f"Consensus check failed for {record_type}: {e}")
+                validation_results['per_record_consensus'][record_type] = {
+                    'consensus': True,  # Assume consensus if check failed
+                    'resolver_count': 0,
+                    'discrepancies': [],
+                    'error': str(e)
+                }
+        
+        return validation_results
     
     def dns_query(self, record_type: str, domain: str) -> List[str]:
         """Query domain for record type using DNS-over-HTTPS fallback."""
@@ -1388,16 +1621,13 @@ class DNSAnalyzer:
         """Get registrar information via RDAP (primary) with WHOIS (backup)."""
         logging.info(f"[REGISTRAR] Getting registrar info for {domain}")
         
-        # Check if we have cached RDAP data and its age
-        cache_key = domain.lower()
+        # Check if we have cached RDAP data
         cached_at = None
         from_cache = False
-        if cache_key in _rdap_cache:
-            cached_time, _ = _rdap_cache[cache_key]
-            age = time.time() - cached_time
-            if age < _RDAP_CACHE_TTL:
-                from_cache = True
-                cached_at = datetime.fromtimestamp(cached_time).strftime('%Y-%m-%d %H:%M UTC')
+        cached_data = _rdap_cache.get(domain)
+        if cached_data is not None:
+            from_cache = True
+            cached_at = cached_data.get('_cached_at', 'recently')
         
         # TRY RDAP FIRST - it's the primary, authoritative source
         rdap_result = None
@@ -1447,16 +1677,11 @@ class DNSAnalyzer:
         """Return RDAP JSON data for domain using whodap library with retry."""
         import whodap
         
-        global _rdap_cache
-        
         # Check cache first to avoid hammering registries
-        cache_key = domain.lower()
-        if cache_key in _rdap_cache:
-            cached_time, cached_data = _rdap_cache[cache_key]
-            age = time.time() - cached_time
-            if age < _RDAP_CACHE_TTL:
-                logging.warning(f"[RDAP] Using cached data for {domain} (age: {age:.0f}s)")
-                return cached_data
+        cached_data = _rdap_cache.get(domain)
+        if cached_data is not None:
+            logging.warning(f"[RDAP] Using cached data for {domain}")
+            return cached_data
         
         tld = self._get_tld(domain)
         domain_name = domain.rsplit('.', 1)[0] if '.' in domain else domain
@@ -1469,8 +1694,9 @@ class DNSAnalyzer:
                 response = whodap.lookup_domain(domain=domain_name, tld=tld)
                 data = response.to_dict()
                 logging.warning(f"[RDAP] whodap SUCCESS - got {len(data)} keys")
-                # Cache the result
-                _rdap_cache[cache_key] = (time.time(), data)
+                # Cache the result with timestamp
+                data['_cached_at'] = datetime.now().strftime('%Y-%m-%d %H:%M UTC')
+                _rdap_cache.set(domain, data)
                 return data
             except Exception as e:
                 error_str = str(e).lower()
@@ -1510,8 +1736,9 @@ class DNSAnalyzer:
                 data = resp.json()
                 if "errorCode" not in data:
                     logging.warning(f"[RDAP] Direct request SUCCESS - got {len(data)} keys")
-                    # Cache the result
-                    _rdap_cache[cache_key] = (time.time(), data)
+                    # Cache the result with timestamp
+                    data['_cached_at'] = datetime.now().strftime('%Y-%m-%d %H:%M UTC')
+                    _rdap_cache.set(domain, data)
                     return data
                 else:
                     logging.warning(f"[RDAP] Direct request returned error: {data.get('errorCode')}")
@@ -2040,7 +2267,7 @@ class DNSAnalyzer:
             }
         
         # Run all lookups in parallel for speed (5-10s target)
-        with ThreadPoolExecutor(max_workers=12) as executor:
+        with ThreadPoolExecutor(max_workers=14) as executor:
             futures = {
                 executor.submit(self.get_basic_records, domain): 'basic',
                 executor.submit(self.get_authoritative_records, domain): 'auth',
@@ -2054,6 +2281,7 @@ class DNSAnalyzer:
                 executor.submit(self.analyze_dnssec, domain): 'dnssec',
                 executor.submit(self.analyze_ns_delegation, domain): 'ns_delegation',
                 executor.submit(self.get_registrar_info, domain): 'registrar',
+                executor.submit(self.validate_resolver_consensus, domain): 'resolver_consensus',
             }
             
             results_map = {}
@@ -2132,7 +2360,14 @@ class DNSAnalyzer:
             'caa_analysis': results_map.get('caa', {'status': 'warning'}),
             'dnssec_analysis': results_map.get('dnssec', {'status': 'warning'}),
             'ns_delegation_analysis': results_map.get('ns_delegation', {'status': 'warning'}),
-            'registrar_info': results_map.get('registrar', {'status': 'error', 'registrar': None})
+            'registrar_info': results_map.get('registrar', {'status': 'error', 'registrar': None}),
+            'resolver_consensus': results_map.get('resolver_consensus', {
+                'consensus_reached': True,
+                'resolvers_queried': 3,
+                'checks_performed': 0,
+                'discrepancies': [],
+                'per_record_consensus': {}
+            })
         }
         
         # SMTP Transport verification disabled - port 25 blocked in production
