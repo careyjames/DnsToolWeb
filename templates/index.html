@@ -181,8 +181,14 @@
                                            name="domain" 
                                            placeholder="example.com" 
                                            required
-                                           autocomplete="off">
-                                    <button class="btn btn-primary" type="submit" id="analyzeBtn" aria-label="Analyze domain">
+                                           autocomplete="off"
+                                           value="{{ request.args.get('wait_domain', '') }}">
+                                    <button class="btn btn-primary" type="submit" id="analyzeBtn" aria-label="Analyze domain"
+                                        {% if request.args.get('wait_seconds') %}
+                                        data-wait-seconds="{{ request.args.get('wait_seconds') }}"
+                                        data-wait-domain="{{ request.args.get('wait_domain', '') }}"
+                                        data-wait-reason="{{ request.args.get('wait_reason', 'anti_repeat') }}"
+                                        {% endif %}>
                                         <i class="fas fa-search me-2" aria-hidden="true"></i>Analyze
                                     </button>
                                 </div>
@@ -330,6 +336,32 @@
                     });
                 });
                 observer.observe(overlay, { attributes: true, attributeFilter: ['class'] });
+            }
+            
+            // Countdown timer for rate limiting (visual UX instead of flash message)
+            var analyzeBtn = document.getElementById('analyzeBtn');
+            if (analyzeBtn && analyzeBtn.dataset.waitSeconds) {
+                var waitSeconds = parseInt(analyzeBtn.dataset.waitSeconds, 10);
+                var waitDomain = analyzeBtn.dataset.waitDomain || '';
+                var originalHTML = analyzeBtn.innerHTML;
+                
+                if (waitSeconds > 0) {
+                    // Disable button and show countdown
+                    analyzeBtn.disabled = true;
+                    
+                    function updateCountdown() {
+                        if (waitSeconds > 0) {
+                            analyzeBtn.innerHTML = '<i class="fas fa-clock me-2"></i>Ready in ' + waitSeconds + 's';
+                            waitSeconds--;
+                            setTimeout(updateCountdown, 1000);
+                        } else {
+                            // Re-enable button
+                            analyzeBtn.disabled = false;
+                            analyzeBtn.innerHTML = originalHTML;
+                        }
+                    }
+                    updateCountdown();
+                }
             }
         });
     })();

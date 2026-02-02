@@ -519,11 +519,8 @@ def analyze():
     # Atomic check and record (prevents race conditions with concurrent requests)
     allowed, reason, wait_seconds = rate_limiter.check_and_record(client_ip, domain)
     if not allowed:
-        if reason == 'rate_limit':
-            flash(f'Rate limit exceeded. Please wait {wait_seconds} seconds before trying again.', 'warning')
-        else:  # anti_repeat
-            flash(f'Please wait {wait_seconds} seconds before re-analyzing {domain}.', 'info')
-        return redirect(url_for('index'))
+        # Return to index with wait_seconds for visual countdown (no flash message)
+        return redirect(url_for('index', wait_seconds=wait_seconds, wait_domain=domain, wait_reason=reason))
     
     start_time = time.time()
     analysis_success = True
@@ -670,11 +667,8 @@ def view_analysis(analysis_id):
     # Atomic check and record (prevents race conditions with concurrent requests)
     allowed, reason, wait_seconds = rate_limiter.check_and_record(client_ip, domain)
     if not allowed:
-        if reason == 'rate_limit':
-            flash(f'Rate limit exceeded. Please wait {wait_seconds} seconds before trying again.', 'warning')
-        else:  # anti_repeat
-            flash(f'Please wait {wait_seconds} seconds before re-analyzing {domain}.', 'info')
-        return redirect(url_for('history'))
+        # Return to index with wait_seconds for visual countdown (consistent UX)
+        return redirect(url_for('index', wait_seconds=wait_seconds, wait_domain=domain, wait_reason=reason))
     
     start_time = time.time()
     results = dns_analyzer.analyze_domain(ascii_domain)
