@@ -407,14 +407,14 @@
                                     </div>
                                 {% endif %}
                                 {% if results.spf_analysis.spf_like %}
-                                    <div class="mt-2 p-2 bg-danger bg-opacity-10 border border-danger rounded">
-                                        <small class="text-danger d-block fw-bold">
-                                            <i class="fas fa-exclamation-circle me-1"></i>
-                                            Duplicate SPF records found!
+                                    <div class="mt-2 p-2 bg-warning bg-opacity-10 border border-warning rounded">
+                                        <small class="text-warning d-block fw-bold">
+                                            <i class="fas fa-exclamation-triangle me-1"></i>
+                                            Legacy SPF-like records detected
                                         </small>
-                                        <small class="text-muted d-block">Only one SPF record is allowed per domain. Multiple records can cause delivery issues.</small>
+                                        <small class="text-muted d-block">These deprecated records (e.g. spf2.0/pra) should be ignored per RFC 7208, but some non-compliant receivers may still process them. Consider removing.</small>
                                         {% for record in results.spf_analysis.spf_like %}
-                                            <div class="code-block small mt-1 border-danger text-danger">{{ record }}</div>
+                                            <div class="code-block small mt-1 border-warning text-warning">{{ record }}</div>
                                         {% endfor %}
                                     </div>
                                 {% endif %}
