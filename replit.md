@@ -83,11 +83,18 @@ Preferred communication style: Simple, everyday language.
 
 ### Testing
 - **pytest** - Unit test framework
-- Test files: `tests/test_dns_analyzer.py` (28 unit tests), `tests/test_integration.py` (33 integration tests)
+- Test files: `tests/test_dns_analyzer.py` (43 unit tests), `tests/test_integration.py` (40 integration tests)
 - Run tests: `python -m pytest tests/ -v`
-- Total: 61 tests covering routes, rate limiting, scorecard logic, error states
+- Total: 83 tests covering routes, rate limiting, scorecard logic, error states, schema bindings
 
-## Recent Changes (v26.8.2)
+## Recent Changes (v26.8.3)
+
+### CAA Reclassification & Fair .gov Scoring (v26.8.3)
+- CAA reclassified from "issue" to "optional hardening" (absent_items)
+- Missing CAA no longer forces PARTIAL when core controls (DMARC/DNSSEC/SPF) are strong
+- .gov domains like usa.gov, whitehouse.gov now correctly show SECURE
+- CAA presence adds to configured_items: "CAA (certificate issuance restricted)"
+- 83 tests passing (43 unit + 40 integration)
 
 ### Multi-Resolver Consensus & Scientific Rigor (v26.8.2)
 - Multi-resolver DNS consensus: Queries Cloudflare (1.1.1.1), Google (8.8.8.8), Quad9 (9.9.9.9)

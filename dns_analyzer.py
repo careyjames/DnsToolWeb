@@ -2761,10 +2761,13 @@ class DNSAnalyzer:
         if ns_del.get('delegation_ok') == False:
             issues.append('NS delegation issue (DNS may not resolve correctly)')
         
-        # Check CAA (DNS-verifiable)
+        # Check CAA (DNS-verifiable) - optional hardening, not core security
         caa = results.get('caa_analysis', {})
-        if caa.get('status') != 'success':
-            issues.append('No CAA record (any CA can issue SSL certificates)')
+        if caa.get('status') == 'success':
+            configured_items.append('CAA (certificate issuance restricted)')
+        else:
+            # CAA is recommended but not required - don't treat as issue
+            absent_items.append('CAA (certificate authority control)')
         
         # Check MTA-STS (runtime-dependent - record presence only)
         mta_sts = results.get('mta_sts_analysis', {})
