@@ -97,7 +97,14 @@ Preferred communication style: Simple, everyday language.
 - Redis-backed RDAP cache for multi-worker scaling (shared across workers)
 - Structured logging with trace IDs for correlating analysis runs
 - Configurable logging level via LOG_LEVEL env var (defaults to INFO for production)
-- 80 total tests (40 unit + 40 integration)
+- DMARC p=none correctly classified as issue (no protection, spoofed mail delivered)
+- Legacy SPF2.0/pra records labeled as deprecated with RFC 7208 context
+- 83 total tests (43 unit + 40 integration) including schema binding tests
+
+### Data Freshness Guarantee
+- DNS records are ALWAYS fetched fresh (no caching) for up-to-the-second accuracy
+- Only RDAP registry data is cached (6 hour TTL) since it changes rarely
+- This ensures users always see current DNS state, not stale cached data
 
 ### Redis-Backed Rate Limiter (v26.7.0)
 - Hybrid rate limiter: Uses Redis if REDIS_URL is set, falls back to in-memory

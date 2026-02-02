@@ -428,5 +428,32 @@ class TestRDAPCache(unittest.TestCase):
         self.assertEqual(retrieved.get('registrar'), 'Test Registrar')
 
 
+class TestResolverConsensusSchema(unittest.TestCase):
+    """Tests for resolver consensus field binding with UI."""
+    
+    def setUp(self):
+        self.analyzer = DNSAnalyzer()
+    
+    def test_validate_resolver_consensus_returns_required_fields(self):
+        """validate_resolver_consensus should return UI-required fields."""
+        result = self.analyzer.validate_resolver_consensus('example.com')
+        # These fields are required by the UI template
+        self.assertIn('consensus_reached', result)
+        self.assertIn('resolvers_queried', result)  # UI uses this field name
+        self.assertIn('discrepancies', result)
+        self.assertIn('per_record_consensus', result)
+    
+    def test_resolvers_queried_is_integer(self):
+        """resolvers_queried should be an integer for UI display."""
+        result = self.analyzer.validate_resolver_consensus('example.com')
+        self.assertIsInstance(result['resolvers_queried'], int)
+        self.assertGreaterEqual(result['resolvers_queried'], 0)
+    
+    def test_discrepancies_is_list(self):
+        """discrepancies should be a list for UI iteration."""
+        result = self.analyzer.validate_resolver_consensus('example.com')
+        self.assertIsInstance(result['discrepancies'], list)
+
+
 if __name__ == '__main__':
     unittest.main()
