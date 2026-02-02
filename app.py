@@ -519,7 +519,16 @@ def analyze():
     # Atomic check and record (prevents race conditions with concurrent requests)
     allowed, reason, wait_seconds = rate_limiter.check_and_record(client_ip, domain)
     if not allowed:
-        # Return to index with wait_seconds for visual countdown (no flash message)
+        # Check if this was a re-analyze (has refresh param) - redirect back to results page
+        if request.args.get('refresh'):
+            # Find the most recent analysis for this domain to redirect back to
+            recent = DomainAnalysis.query.filter_by(domain=domain).order_by(
+                DomainAnalysis.created_at.desc()
+            ).first()
+            if recent:
+                return redirect(url_for('view_analysis_static', analysis_id=recent.id, 
+                                       wait_seconds=wait_seconds, wait_reason=reason))
+        # Otherwise return to index with countdown
         return redirect(url_for('index', wait_seconds=wait_seconds, wait_domain=domain, wait_reason=reason))
     
     start_time = time.time()
@@ -702,6 +711,52 @@ def view_analysis(analysis_id):
                          analysis_duration=analysis_duration,
                          analysis_timestamp=analysis.analyzed_at or analysis.created_at,
                          from_history=False)
+
+@app.route('/analysis/<int:analysis_id>/view')
+def view_analysis_static(analysis_id):
+    """View a specific analysis WITHOUT re-analyzing (for rate limit redirects)."""
+    analysis = DomainAnalysis.query.get_or_404(analysis_id)
+    
+    domain = analysis.domain
+    ascii_domain = dns_analyzer.domain_to_ascii(domain)
+    
+    # Get wait_seconds from query params (for countdown display)
+    wait_seconds = request.args.get('wait_seconds', type=int)
+    wait_reason = request.args.get('wait_reason', '')
+    
+    # Reconstruct results from stored data
+    results = {
+        'basic_records': analysis.basic_records or {},
+        'authoritative_records': analysis.authoritative_records or {},
+        'spf_analysis': {
+            'status': analysis.spf_status,
+            'records': analysis.spf_records or [],
+        },
+        'dmarc_analysis': {
+            'status': analysis.dmarc_status,
+            'policy': analysis.dmarc_policy,
+            'records': analysis.dmarc_records or [],
+        },
+        'dkim_analysis': {
+            'status': analysis.dkim_status,
+            'selectors': analysis.dkim_selectors or {},
+        },
+        'registrar_info': {
+            'registrar': analysis.registrar_name,
+            'source': analysis.registrar_source,
+        },
+    }
+    
+    return render_template('results.html',
+                         domain=domain,
+                         ascii_domain=ascii_domain,
+                         results=results,
+                         analysis_id=analysis.id,
+                         analysis_duration=analysis.analysis_duration,
+                         analysis_timestamp=analysis.analyzed_at or analysis.created_at,
+                         from_history=True,
+                         wait_seconds=wait_seconds,
+                         wait_reason=wait_reason)
 
 @app.route('/stats')
 def stats():

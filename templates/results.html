@@ -92,7 +92,8 @@
                 </div>
             </div>
             <div class="d-flex gap-2 flex-wrap">
-                <button type="button" id="reanalyzeBtn" class="btn btn-primary" data-domain="{{ domain }}">
+                <button type="button" id="reanalyzeBtn" class="btn btn-primary" data-domain="{{ domain }}"
+                    {% if wait_seconds %}data-wait-seconds="{{ wait_seconds }}" data-wait-reason="{{ wait_reason }}"{% endif %}>
                     <i class="fas fa-sync-alt me-2"></i>Re-analyze
                 </button>
                 <a href="{{ url_for('index') }}" class="btn btn-outline-primary">
@@ -1217,8 +1218,39 @@
             // Re-analyze button handler
             var reanalyzeBtn = document.getElementById('reanalyzeBtn');
             if (reanalyzeBtn) {
+                var waitSeconds = parseInt(reanalyzeBtn.getAttribute('data-wait-seconds')) || 0;
+                var countdownInterval = null;
+                
+                function startCountdown(seconds) {
+                    reanalyzeBtn.disabled = true;
+                    reanalyzeBtn.classList.remove('btn-primary');
+                    reanalyzeBtn.classList.add('btn-secondary');
+                    
+                    function updateButton() {
+                        if (seconds <= 0) {
+                            clearInterval(countdownInterval);
+                            reanalyzeBtn.innerHTML = '<i class="fas fa-sync-alt me-2"></i>Re-analyze';
+                            reanalyzeBtn.disabled = false;
+                            reanalyzeBtn.classList.remove('btn-secondary');
+                            reanalyzeBtn.classList.add('btn-primary');
+                        } else {
+                            reanalyzeBtn.innerHTML = '<i class="fas fa-clock me-2"></i>Ready in ' + seconds + 's';
+                            seconds--;
+                            countdownInterval = setTimeout(updateButton, 1000);
+                        }
+                    }
+                    updateButton();
+                }
+                
+                // Start countdown if wait_seconds is present
+                if (waitSeconds > 0) {
+                    startCountdown(waitSeconds);
+                }
+                
                 reanalyzeBtn.addEventListener('click', function(e) {
                     e.preventDefault();
+                    if (this.disabled) return;
+                    
                     var domain = this.getAttribute('data-domain');
                     var overlay = document.getElementById('loadingOverlay');
                     var btn = this;
