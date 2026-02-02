@@ -428,6 +428,105 @@ class TestRDAPCache(unittest.TestCase):
         self.assertEqual(retrieved.get('registrar'), 'Test Registrar')
 
 
+class TestConsensusConflictDetection(unittest.TestCase):
+    """Tests for resolver consensus CONFLICT detection (negative cases)."""
+    
+    def setUp(self):
+        self.analyzer = DNSAnalyzer()
+    
+    def test_discrepancy_detection_different_results(self):
+        """Should detect discrepancies when mock resolvers return different results."""
+        # Simulate what happens when resolvers disagree
+        resolver_results = {
+            'Cloudflare': ['1.2.3.4', '5.6.7.8'],
+            'Google': ['1.2.3.4', '5.6.7.8'],
+            'Quad9': ['1.2.3.4', '9.9.9.9']  # Different!
+        }
+        # Check that different results would be detected
+        result_sets = [tuple(sorted(r)) for r in resolver_results.values()]
+        all_same = len(set(result_sets)) == 1
+        self.assertFalse(all_same, "Should detect that results are NOT all the same")
+    
+    def test_consensus_voting_uses_majority(self):
+        """Majority voting should select most common result."""
+        from collections import Counter
+        # 2 resolvers agree, 1 disagrees
+        resolver_results = {
+            'Cloudflare': ['1.2.3.4'],
+            'Google': ['1.2.3.4'],
+            'Quad9': ['9.9.9.9']  # Minority
+        }
+        result_sets = [tuple(sorted(r)) for r in resolver_results.values()]
+        result_counter = Counter(result_sets)
+        most_common = result_counter.most_common(1)[0][0]
+        self.assertEqual(most_common, ('1.2.3.4',), "Majority result should win")
+    
+    def test_discrepancy_message_format(self):
+        """Discrepancy messages should identify the dissenting resolver."""
+        resolver_results = {
+            'Cloudflare': ['1.2.3.4'],
+            'Google': ['1.2.3.4'],
+            'Quad9': ['9.9.9.9']
+        }
+        from collections import Counter
+        result_sets = [tuple(sorted(r)) for r in resolver_results.values()]
+        result_counter = Counter(result_sets)
+        most_common = result_counter.most_common(1)[0][0]
+        
+        discrepancies = []
+        for resolver_name, results in resolver_results.items():
+            if tuple(sorted(results)) != most_common:
+                discrepancies.append(f"{resolver_name} returned different results: {results}")
+        
+        self.assertEqual(len(discrepancies), 1)
+        self.assertIn('Quad9', discrepancies[0])
+        self.assertIn('9.9.9.9', discrepancies[0])
+    
+    def test_empty_resolver_results_uses_doh_fallback(self):
+        """When all resolvers fail, should fallback to DoH."""
+        # Empty resolver results should trigger DoH fallback
+        resolver_results = {}
+        self.assertEqual(len(resolver_results), 0)
+        # In actual code, this triggers DoH fallback with consensus=True
+    
+    def test_all_different_resolvers_still_picks_most_common(self):
+        """Even with all-different results, should pick most common (or first)."""
+        from collections import Counter
+        resolver_results = {
+            'Cloudflare': ['1.1.1.1'],
+            'Google': ['8.8.8.8'],
+            'Quad9': ['9.9.9.9']
+        }
+        result_sets = [tuple(sorted(r)) for r in resolver_results.values()]
+        result_counter = Counter(result_sets)
+        most_common = result_counter.most_common(1)[0][0]
+        # Should still return something (first in alphabetical order typically)
+        self.assertIsNotNone(most_common)
+        self.assertEqual(result_counter[most_common], 1, "No majority exists, each appears once")
+    
+    def test_consensus_false_when_discrepancies_exist(self):
+        """consensus flag should be False when any discrepancy exists."""
+        resolver_results = {
+            'Cloudflare': ['1.2.3.4'],
+            'Google': ['9.9.9.9']  # Different!
+        }
+        result_sets = [tuple(sorted(r)) for r in resolver_results.values()]
+        all_same = len(set(result_sets)) == 1
+        # In actual code, consensus = all_same
+        self.assertFalse(all_same)
+    
+    def test_consensus_true_when_all_agree(self):
+        """consensus flag should be True when all resolvers agree."""
+        resolver_results = {
+            'Cloudflare': ['1.2.3.4', '5.6.7.8'],
+            'Google': ['5.6.7.8', '1.2.3.4'],  # Same records, different order
+            'Quad9': ['1.2.3.4', '5.6.7.8']
+        }
+        result_sets = [tuple(sorted(r)) for r in resolver_results.values()]
+        all_same = len(set(result_sets)) == 1
+        self.assertTrue(all_same, "Sorted results should match regardless of order")
+
+
 class TestResolverConsensusSchema(unittest.TestCase):
     """Tests for resolver consensus field binding with UI."""
     

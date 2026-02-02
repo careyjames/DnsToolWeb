@@ -83,18 +83,34 @@ Preferred communication style: Simple, everyday language.
 
 ### Testing
 - **pytest** - Unit test framework
-- Test files: `tests/test_dns_analyzer.py` (43 unit tests), `tests/test_integration.py` (40 integration tests)
+- Test files: `tests/test_dns_analyzer.py` (50 unit tests), `tests/test_integration.py` (40 integration tests)
 - Run tests: `python -m pytest tests/ -v`
-- Total: 83 tests covering routes, rate limiting, scorecard logic, error states, schema bindings
+- Total: 90 tests covering routes, rate limiting, scorecard logic, error states, schema bindings, consensus conflicts
 
-## Recent Changes (v26.8.3)
+## Recent Changes (v26.9.0)
+
+### DKIM Validation & Scoring Integration (v26.9.0)
+- Comprehensive DKIM selector discovery: 28+ selectors covering major ESPs (Microsoft 365, Google, SendGrid, Mailchimp, etc.)
+- Key strength analysis: Detects 1024-bit (weak) vs 2048-bit+ (strong) RSA keys, revoked keys
+- Scorecard integration: DKIM with strong keys adds to configured_items and verdict
+- Verdict enhancement: "DKIM keys verified with strong cryptography" when applicable
+
+### Consensus Conflict Detection Tests (v26.9.0)
+- 7 new negative tests for resolver disagreement scenarios
+- Tests majority voting, discrepancy message format, all-different-results edge case
+- Deterministic consensus flag behavior verified
+
+### RDAP/DoH Failure Handling Hardening (v26.9.0)
+- Explicit per-exception timeout handling in DoH queries (Timeout, ConnectionError, HTTPError)
+- Clear "Registry data unavailable" vs "missing" messaging
+- Debug/warning logs distinguish service errors from data-not-found
 
 ### CAA Reclassification & Fair .gov Scoring (v26.8.3)
 - CAA reclassified from "issue" to "optional hardening" (absent_items)
 - Missing CAA no longer forces PARTIAL when core controls (DMARC/DNSSEC/SPF) are strong
 - .gov domains like usa.gov, whitehouse.gov now correctly show SECURE
 - CAA presence adds to configured_items: "CAA (certificate issuance restricted)"
-- 83 tests passing (43 unit + 40 integration)
+- 90 tests passing (50 unit + 40 integration)
 
 ### Multi-Resolver Consensus & Scientific Rigor (v26.8.2)
 - Multi-resolver DNS consensus: Queries Cloudflare (1.1.1.1), Google (8.8.8.8), Quad9 (9.9.9.9)

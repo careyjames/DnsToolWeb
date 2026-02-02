@@ -196,8 +196,12 @@ class DNSAnalyzer:
         return domain.rsplit(".", 1)[-1].lower()
     
     def _dns_over_https_query(self, domain: str, record_type: str) -> List[str]:
-        """Query DNS records using DNS-over-HTTPS."""
-        # Use Google's DNS-over-HTTPS service (more reliable)
+        """Query DNS records using DNS-over-HTTPS with explicit error handling.
+        
+        Returns empty list for both 'record not found' and 'service unavailable'.
+        Errors are logged with enough context to distinguish failure modes.
+        """
+        DOH_TIMEOUT = 5  # seconds
         url = "https://dns.google/resolve"
         
         params = {
@@ -206,18 +210,22 @@ class DNSAnalyzer:
         }
         
         try:
-            response = requests.get(url, params=params, timeout=5, headers={
+            response = requests.get(url, params=params, timeout=DOH_TIMEOUT, headers={
                 'Accept': 'application/dns-json'
             })
             response.raise_for_status()
             data = response.json()
             
             # Check for successful response (0 = NOERROR)
-            if data.get('Status') != 0:
+            status = data.get('Status', -1)
+            if status != 0:
+                # NXDOMAIN=3, SERVFAIL=2, etc - these are "no data" not "service error"
+                logging.debug(f"DoH {record_type} for {domain}: DNS status {status} (no data)")
                 return []
             
             answers = data.get('Answer', [])
             if not answers:
+                logging.debug(f"DoH {record_type} for {domain}: No answers in response")
                 return []
             
             results = []
@@ -237,9 +245,18 @@ class DNSAnalyzer:
                     results.append(record_data)
             
             return results
-            
+        
+        except requests.exceptions.Timeout:
+            logging.warning(f"DoH {record_type} for {domain}: TIMEOUT ({DOH_TIMEOUT}s) - service may be slow")
+            return []
+        except requests.exceptions.ConnectionError as e:
+            logging.warning(f"DoH {record_type} for {domain}: CONNECTION ERROR - {e}")
+            return []
+        except requests.exceptions.HTTPError as e:
+            logging.warning(f"DoH {record_type} for {domain}: HTTP ERROR {e.response.status_code if e.response else 'unknown'}")
+            return []
         except Exception as e:
-            logging.debug(f"DNS-over-HTTPS query failed: {e}")
+            logging.debug(f"DoH {record_type} for {domain}: {type(e).__name__}: {e}")
             return []
     
     def _query_single_resolver(self, domain: str, record_type: str, resolver_ip: str) -> tuple[str, List[str], Optional[str]]:
@@ -907,8 +924,26 @@ class DNSAnalyzer:
         import re
         import base64
         
-        selectors = ["default._domainkey", "google._domainkey", 
-                    "selector1._domainkey", "selector2._domainkey"]
+        # Comprehensive selector list covering major ESPs and common patterns
+        selectors = [
+            # Generic/common
+            "default._domainkey", "dkim._domainkey", "mail._domainkey",
+            "email._domainkey", "k1._domainkey", "k2._domainkey",
+            "s1._domainkey", "s2._domainkey", "sig1._domainkey",
+            # Microsoft 365
+            "selector1._domainkey", "selector2._domainkey",
+            # Google Workspace
+            "google._domainkey", "google2048._domainkey",
+            # Major ESPs
+            "mailjet._domainkey", "mandrill._domainkey", "amazonses._domainkey",
+            "sendgrid._domainkey", "mailchimp._domainkey", "postmark._domainkey",
+            "sparkpost._domainkey", "mailgun._domainkey", "sendinblue._domainkey",
+            # Enterprise
+            "mimecast._domainkey", "proofpoint._domainkey", "everlytickey1._domainkey",
+            "zendesk1._domainkey", "zendesk2._domainkey", "cm._domainkey",
+            # Common patterns
+            "mx._domainkey", "smtp._domainkey", "mailer._domainkey",
+        ]
         
         found_selectors = {}
         key_issues = []
@@ -961,9 +996,9 @@ class DNSAnalyzer:
             
             return key_info
         
-        with ThreadPoolExecutor(max_workers=4) as executor:
+        with ThreadPoolExecutor(max_workers=10) as executor:
             futures = {executor.submit(check_selector, s): s for s in selectors}
-            for future in as_completed(futures, timeout=5):
+            for future in as_completed(futures, timeout=8):
                 try:
                     result = future.result()
                     if result:
@@ -1670,7 +1705,7 @@ class DNSAnalyzer:
             'status': 'error',
             'source': None,
             'registrar': None,
-            'message': 'No registrar information found'
+            'message': 'Registry data unavailable (RDAP/WHOIS services unreachable or rate-limited)'
         }
     
     def _rdap_lookup(self, domain: str) -> Dict:
@@ -2743,6 +2778,25 @@ class DNSAnalyzer:
             # SPF -all is intentional for no-mail domains - this is a security feature
             configured_items.append('SPF (no mail allowed - domain declares it sends no email)')
         
+        # Check DKIM (email authentication strengthening)
+        dkim = results.get('dkim_analysis', {})
+        dkim_status = dkim.get('status')
+        dkim_selectors = dkim.get('selectors', {})
+        if dkim_status == 'success' and dkim_selectors:
+            key_strengths = dkim.get('key_strengths', [])
+            if key_strengths:
+                configured_items.append(f'DKIM ({len(dkim_selectors)} selector(s), {", ".join(key_strengths)})')
+            else:
+                configured_items.append(f'DKIM ({len(dkim_selectors)} selector(s) verified)')
+        elif dkim_status == 'warning':
+            # Weak keys or revoked
+            key_issues = dkim.get('key_issues', [])
+            if any('revoked' in i.lower() for i in key_issues):
+                monitoring_items.append('DKIM (some keys revoked)')
+            elif any('1024' in i for i in key_issues):
+                monitoring_items.append('DKIM (weak 1024-bit keys, upgrade to 2048)')
+        # Note: 'info' status means not discoverable - not an issue for large providers
+        
         # Check DNSSEC (DNS-verifiable)
         # Note: Unsigned DNSSEC is a deliberate design choice for many large operators
         # (Apple, Google, CDNs) who secure at other layers. Only broken chain is an issue.
@@ -2863,11 +2917,15 @@ class DNSAnalyzer:
         dkim_ok = results.get('dkim_analysis', {}).get('status') == 'success'
         
         # DMARC=reject + SPF valid = No impersonation, regardless of DKIM discoverability
+        dkim_analysis = results.get('dkim_analysis', {})
+        dkim_strong = dkim_analysis.get('status') == 'success' and dkim_analysis.get('key_strengths')
+        dkim_note = ' DKIM keys verified with strong cryptography.' if dkim_strong else ''
+        
         if spf_ok and dmarc_ok and dmarc_reject:
-            verdicts['email'] = 'DMARC policy is reject - spoofed messages will be blocked by receiving servers.'
+            verdicts['email'] = f'DMARC policy is reject - spoofed messages will be blocked by receiving servers.{dkim_note}'
             verdicts['email_answer'] = 'No'
         elif spf_ok and dmarc_ok and dmarc_quarantine:
-            verdicts['email'] = 'DMARC policy is quarantine - spoofed messages will be flagged as spam.'
+            verdicts['email'] = f'DMARC policy is quarantine - spoofed messages will be flagged as spam.{dkim_note}'
             verdicts['email_answer'] = 'Mostly No'
         elif spf_ok and dmarc_ok and dmarc_policy == 'none':
             verdicts['email'] = 'Mail authentication is configured but DMARC is in monitoring mode - spoofed mail may still be delivered.'
