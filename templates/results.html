@@ -847,13 +847,29 @@
                                             <span class="text-warning">Discrepancy detected</span> - 
                                             Some resolvers returned different results
                                             {% if results.resolver_consensus.discrepancies %}
-                                                <span class="text-warning">({{ results.resolver_consensus.discrepancies|length }} differences found)</span>
+                                                <a href="#resolver-discrepancies" class="text-warning">({{ results.resolver_consensus.discrepancies|length }} difference{{ 's' if results.resolver_consensus.discrepancies|length > 1 else '' }} found)</a>
                                             {% endif %}
                                         {% endif %}
                                     </span>
                                 </div>
                             </div>
                         </div>
+                        <!-- Discrepancy Details (shown when there are differences) -->
+                        {% if not results.resolver_consensus.consensus_reached and results.resolver_consensus.discrepancies %}
+                        <div class="row mt-2" id="resolver-discrepancies">
+                            <div class="col-12">
+                                <div class="p-2 bg-warning bg-opacity-10 border border-warning rounded small">
+                                    <strong class="text-warning d-block mb-1"><i class="fas fa-exclamation-triangle me-1"></i>Resolver Differences:</strong>
+                                    {% for disc in results.resolver_consensus.discrepancies %}
+                                    <div class="mb-1 text-muted">
+                                        <i class="fas fa-angle-right me-1"></i>{{ disc }}
+                                    </div>
+                                    {% endfor %}
+                                    <small class="text-muted d-block mt-1">This may indicate DNS propagation in progress or geo-based DNS routing.</small>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
                         {% endif %}
                     </div>
                 </div>
