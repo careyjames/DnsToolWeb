@@ -79,7 +79,7 @@ Preferred communication style: Simple, everyday language.
 - Run tests: `python -m pytest tests/ -v`
 - Coverage: Domain validation, government detection, enterprise provider detection, scorecard logic, error states
 
-## Recent Changes (v26.4.30)
+## Recent Changes (v26.4.31)
 
 ### Bug Fixes
 - Fixed Re-analyze button not showing loading overlay (race condition - navigation before render)

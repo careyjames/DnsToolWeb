@@ -11,7 +11,7 @@ from sqlalchemy import JSON
 from dns_analyzer import DNSAnalyzer
 
 # App version - format: YY.M.patch (bump last number for small changes)
-APP_VERSION = "26.4.30"
+APP_VERSION = "26.4.31"
 
 # Configure logging
 logging.basicConfig(level=logging.DEBUG)
@@ -433,7 +433,9 @@ def analyze():
                              domain=domain, 
                              ascii_domain=ascii_domain,
                              results=results,
-                             analysis_id=analysis.id)
+                             analysis_id=analysis.id,
+                             analysis_duration=analysis_duration,
+                             analysis_timestamp=analysis.created_at)
         
     except Exception as e:
         analysis_duration = time.time() - start_time
@@ -553,6 +555,8 @@ def view_analysis(analysis_id):
                          ascii_domain=ascii_domain,
                          results=results,
                          analysis_id=analysis.id,
+                         analysis_duration=analysis_duration,
+                         analysis_timestamp=analysis.analyzed_at or analysis.created_at,
                          from_history=False)
 
 @app.route('/stats')

@@ -169,6 +169,47 @@
             </div>
         </div>
         
+        <!-- Analysis Metadata: Timestamp and Duration -->
+        <div class="row mb-3">
+            <div class="col-12">
+                <div class="d-flex justify-content-end align-items-center gap-3 small text-muted">
+                    {% if analysis_timestamp %}
+                    <span title="When this analysis was performed">
+                        <i class="fas fa-clock me-1"></i>Analyzed: {{ analysis_timestamp.strftime('%Y-%m-%d %H:%M UTC') if analysis_timestamp else 'Unknown' }}
+                    </span>
+                    {% endif %}
+                    {% if analysis_duration %}
+                    <span title="How long the analysis took">
+                        <i class="fas fa-stopwatch me-1"></i>Duration: {{ "%.1f"|format(analysis_duration) }}s
+                    </span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Partial Failure Banner - Shows if any sections timed out or failed -->
+        {% set failed_sections = [] %}
+        {% if results.section_status %}
+            {% for key, info in results.section_status.items() %}
+                {% if info.status in ['timeout', 'error'] %}
+                    {% set _ = failed_sections.append({'key': key, 'status': info.status, 'message': info.message}) %}
+                {% endif %}
+            {% endfor %}
+        {% endif %}
+        {% if failed_sections %}
+        <div class="alert alert-warning alert-dismissible fade show py-2 mb-3" role="alert">
+            <i class="fas fa-exclamation-triangle me-2"></i>
+            <strong>Partial Results:</strong> 
+            Some lookups experienced issues: 
+            {% for s in failed_sections %}
+                <span class="badge bg-{{ 'secondary' if s.status == 'timeout' else 'danger' }} me-1">
+                    {{ s.key|replace('_', ' ')|title }} ({{ s.status }})
+                </span>
+            {% endfor %}
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="alert"></button>
+        </div>
+        {% endif %}
+        
         <!-- Executive Scorecard - At-a-Glance Security Status -->
         <div class="row mb-3">
             <div class="col-12">

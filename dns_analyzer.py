@@ -12,10 +12,11 @@ from typing import Dict, List, Optional, Any
 from concurrent.futures import ThreadPoolExecutor, as_completed, TimeoutError as FuturesTimeoutError
 from datetime import datetime
 
-# Simple in-memory RDAP cache to avoid hammering registries
+# RDAP cache - registry data rarely changes, so longer TTL is appropriate
 # Key: domain, Value: (timestamp, data)
+# Note: DNS records are ALWAYS fresh (no cache), only RDAP registry info is cached
 _rdap_cache: Dict[str, tuple] = {}
-_RDAP_CACHE_TTL = 300  # 5 minutes - short enough for fresh data, long enough to avoid rate limits
+_RDAP_CACHE_TTL = 21600  # 6 hours - registrar/registry data changes infrequently
 
 try:
     import requests
@@ -1387,6 +1388,17 @@ class DNSAnalyzer:
         """Get registrar information via RDAP (primary) with WHOIS (backup)."""
         logging.info(f"[REGISTRAR] Getting registrar info for {domain}")
         
+        # Check if we have cached RDAP data and its age
+        cache_key = domain.lower()
+        cached_at = None
+        from_cache = False
+        if cache_key in _rdap_cache:
+            cached_time, _ = _rdap_cache[cache_key]
+            age = time.time() - cached_time
+            if age < _RDAP_CACHE_TTL:
+                from_cache = True
+                cached_at = datetime.fromtimestamp(cached_time).strftime('%Y-%m-%d %H:%M UTC')
+        
         # TRY RDAP FIRST - it's the primary, authoritative source
         rdap_result = None
         try:
@@ -1401,7 +1413,11 @@ class DNSAnalyzer:
                     if registrant_name:
                         reg_str += f" (Registrant: {registrant_name})"
                     logging.info(f"[REGISTRAR] SUCCESS via RDAP: {reg_str}")
-                    return {'status': 'success', 'source': 'RDAP', 'registrar': reg_str}
+                    result: Dict[str, Any] = {'status': 'success', 'source': 'RDAP', 'registrar': reg_str}
+                    if from_cache and cached_at:
+                        result['cached'] = True
+                        result['cached_at'] = cached_at
+                    return result
                 else:
                     logging.warning(f"[REGISTRAR] RDAP data found but no valid registrar name")
             else:
@@ -1998,6 +2014,7 @@ class DNSAnalyzer:
                 'domain_exists': False,
                 'domain_status': domain_status,
                 'domain_status_message': domain_status_message,
+                'section_status': {},
                 'basic_records': {'A': [], 'AAAA': [], 'MX': [], 'NS': [], 'TXT': [], 'CNAME': [], 'SOA': []},
                 'authoritative_records': {},
                 'propagation_status': {},
@@ -2084,10 +2101,25 @@ class DNSAnalyzer:
                 'mismatch': status == "propagating"
             }
 
+        # Track section status for partial failure banners
+        section_status = {}
+        for key, result in results_map.items():
+            if isinstance(result, dict):
+                status = result.get('status', 'unknown')
+                if status == 'timeout':
+                    section_status[key] = {'status': 'timeout', 'message': 'Query timed out'}
+                elif status == 'error':
+                    section_status[key] = {'status': 'error', 'message': result.get('message', 'Lookup failed')}
+                else:
+                    section_status[key] = {'status': 'ok'}
+            else:
+                section_status[key] = {'status': 'ok'}
+        
         results = {
             'domain_exists': True,
             'domain_status': domain_status,
             'domain_status_message': domain_status_message,
+            'section_status': section_status,
             'basic_records': basic,
             'authoritative_records': auth,
             'propagation_status': propagation_status,
