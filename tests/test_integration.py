@@ -210,5 +210,94 @@ class TestBIMIProxy(BaseTestCase):
         self.assertIn(response.status_code, [400, 500])
 
 
+class TestRateLimiter(unittest.TestCase):
+    """Tests for the rate limiter functionality."""
+    
+    def setUp(self):
+        from app import RateLimiter
+        self.limiter = RateLimiter()
+    
+    def test_rate_limit_allows_initial_requests(self):
+        """Rate limiter should allow initial requests."""
+        allowed, _ = self.limiter.check_rate_limit('192.168.1.1')
+        self.assertTrue(allowed)
+    
+    def test_rate_limit_blocks_after_max_requests(self):
+        """Rate limiter should block after max requests."""
+        test_ip = '192.168.1.100'
+        for i in range(8):
+            self.limiter.record_request(test_ip, f'domain{i}.com')
+        
+        allowed, wait_seconds = self.limiter.check_rate_limit(test_ip)
+        self.assertFalse(allowed)
+        self.assertGreater(wait_seconds, 0)
+    
+    def test_anti_repeat_allows_first_request(self):
+        """Anti-repeat should allow first request for a domain."""
+        allowed, _ = self.limiter.check_anti_repeat('192.168.1.2', 'example.com')
+        self.assertTrue(allowed)
+    
+    def test_anti_repeat_blocks_immediate_repeat(self):
+        """Anti-repeat should block immediate repeat for same domain."""
+        test_ip = '192.168.1.3'
+        domain = 'test.com'
+        
+        self.limiter.record_request(test_ip, domain)
+        allowed, wait_seconds = self.limiter.check_anti_repeat(test_ip, domain)
+        
+        self.assertFalse(allowed)
+        self.assertGreater(wait_seconds, 0)
+        self.assertLessEqual(wait_seconds, 15)
+    
+    def test_anti_repeat_allows_different_domain(self):
+        """Anti-repeat should allow requests to different domains."""
+        test_ip = '192.168.1.4'
+        
+        self.limiter.record_request(test_ip, 'domain1.com')
+        allowed, _ = self.limiter.check_anti_repeat(test_ip, 'domain2.com')
+        
+        self.assertTrue(allowed)
+    
+    def test_anti_repeat_case_insensitive(self):
+        """Anti-repeat should be case-insensitive for domains."""
+        test_ip = '192.168.1.5'
+        
+        self.limiter.record_request(test_ip, 'Example.COM')
+        allowed, _ = self.limiter.check_anti_repeat(test_ip, 'example.com')
+        
+        self.assertFalse(allowed)
+    
+    def test_check_and_record_atomic_success(self):
+        """check_and_record should atomically check and record on success."""
+        test_ip = '192.168.1.6'
+        domain = 'atomic-test.com'
+        
+        allowed, reason, _ = self.limiter.check_and_record(test_ip, domain)
+        
+        self.assertTrue(allowed)
+        self.assertEqual(reason, 'ok')
+        
+        # Second request should be blocked by anti-repeat
+        allowed, reason, wait = self.limiter.check_and_record(test_ip, domain)
+        self.assertFalse(allowed)
+        self.assertEqual(reason, 'anti_repeat')
+        self.assertGreater(wait, 0)
+    
+    def test_check_and_record_rate_limit(self):
+        """check_and_record should enforce rate limit."""
+        test_ip = '192.168.1.7'
+        
+        # Make 8 requests (max allowed)
+        for i in range(8):
+            allowed, reason, _ = self.limiter.check_and_record(test_ip, f'domain{i}.com')
+            self.assertTrue(allowed)
+        
+        # 9th request should be rate limited
+        allowed, reason, wait = self.limiter.check_and_record(test_ip, 'domain9.com')
+        self.assertFalse(allowed)
+        self.assertEqual(reason, 'rate_limit')
+        self.assertGreater(wait, 0)
+
+
 if __name__ == '__main__':
     unittest.main()

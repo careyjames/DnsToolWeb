@@ -40,6 +40,24 @@ Traditional DNS security tools often treat DNSSEC as the only valid security mea
 
 Only RDAP registry data is cached (6 hours) since registrar information rarely changes.
 
+### Rate Limiting & Anti-Repeat Protection
+
+To prevent abuse while honoring the "fresh data" promise:
+
+| Protection | Window | Purpose |
+|------------|--------|---------|
+| **Rate Limit** | 8 requests/minute per IP | Prevents abuse and network overload |
+| **Anti-Repeat** | 15 seconds per domain | Prevents accidental double-clicks |
+
+**Why 15 seconds for anti-repeat?**
+- A human editing DNS in GoDaddy/Cloudflare and switching tabs typically takes 20+ seconds
+- 15 seconds is short enough that real edits won't be blocked
+- Long enough to prevent rapid re-clicks that waste network resources
+
+**Note**: There is no "Force Fresh" toggle - every analysis is fresh. The anti-repeat is purely double-click protection, not caching.
+
+**Deployment Note**: Rate limiting uses in-memory storage, which works correctly with a single Gunicorn worker (the Replit default). If running multiple workers, consider Redis-backed rate limiting.
+
 ---
 
 ## Operator Guide

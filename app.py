@@ -2,6 +2,8 @@ import os
 import logging
 import time
 import secrets
+from collections import defaultdict
+from threading import Lock
 from datetime import datetime, date
 from flask import Flask, render_template, request, flash, redirect, url_for, jsonify, send_from_directory, g
 from flask_sqlalchemy import SQLAlchemy
@@ -11,7 +13,123 @@ from sqlalchemy import JSON
 from dns_analyzer import DNSAnalyzer
 
 # App version - format: YY.M.patch (bump last number for small changes)
-APP_VERSION = "26.4.31"
+APP_VERSION = "26.5.0"
+
+# Rate limiting configuration
+RATE_LIMIT_WINDOW = 60  # 1 minute window
+RATE_LIMIT_MAX_REQUESTS = 8  # 8 analyses per minute per IP
+ANTI_REPEAT_WINDOW = 15  # 15 seconds anti-repeat (double-click protection only)
+
+
+class RateLimiter:
+    """In-memory rate limiter with per-IP tracking.
+    
+    Uses atomic check-and-record to prevent race conditions with concurrent requests.
+    """
+    
+    def __init__(self):
+        self._requests = defaultdict(list)  # IP -> list of timestamps
+        self._recent_analyses = {}  # (IP, domain) -> timestamp
+        self._lock = Lock()
+    
+    def _cleanup_old_requests(self, ip: str, current_time: float):
+        """Remove requests older than the rate limit window."""
+        cutoff = current_time - RATE_LIMIT_WINDOW
+        self._requests[ip] = [t for t in self._requests[ip] if t > cutoff]
+    
+    def _cleanup_old_analyses(self, current_time: float):
+        """Remove anti-repeat entries older than the window."""
+        cutoff = current_time - ANTI_REPEAT_WINDOW
+        expired = [k for k, v in self._recent_analyses.items() if v < cutoff]
+        for k in expired:
+            del self._recent_analyses[k]
+    
+    def check_and_record(self, ip: str, domain: str) -> tuple[bool, str, int]:
+        """Atomically check rate limit + anti-repeat and record if allowed.
+        
+        This prevents race conditions by checking and recording in one lock.
+        
+        Returns: (allowed, reason, wait_seconds)
+            - allowed: True if request should proceed
+            - reason: 'ok', 'rate_limit', or 'anti_repeat'
+            - wait_seconds: Seconds to wait if blocked (0 if allowed)
+        """
+        current_time = time.time()
+        key = (ip, domain.lower())
+        
+        with self._lock:
+            # Cleanup old entries
+            self._cleanup_old_requests(ip, current_time)
+            self._cleanup_old_analyses(current_time)
+            
+            # Check rate limit first
+            request_count = len(self._requests[ip])
+            if request_count >= RATE_LIMIT_MAX_REQUESTS:
+                oldest = min(self._requests[ip]) if self._requests[ip] else current_time
+                seconds_until_reset = int(oldest + RATE_LIMIT_WINDOW - current_time) + 1
+                return False, 'rate_limit', seconds_until_reset
+            
+            # Check anti-repeat
+            if key in self._recent_analyses:
+                last_time = self._recent_analyses[key]
+                elapsed = current_time - last_time
+                if elapsed < ANTI_REPEAT_WINDOW:
+                    seconds_remaining = int(ANTI_REPEAT_WINDOW - elapsed) + 1
+                    return False, 'anti_repeat', seconds_remaining
+            
+            # All checks passed - record immediately to prevent race conditions
+            self._requests[ip].append(current_time)
+            self._recent_analyses[key] = current_time
+            
+            return True, 'ok', 0
+    
+    def check_rate_limit(self, ip: str) -> tuple[bool, int]:
+        """Check if IP is within rate limit (for testing only).
+        
+        Returns: (allowed, seconds_until_reset)
+        """
+        current_time = time.time()
+        with self._lock:
+            self._cleanup_old_requests(ip, current_time)
+            request_count = len(self._requests[ip])
+            
+            if request_count >= RATE_LIMIT_MAX_REQUESTS:
+                oldest = min(self._requests[ip]) if self._requests[ip] else current_time
+                seconds_until_reset = int(oldest + RATE_LIMIT_WINDOW - current_time) + 1
+                return False, seconds_until_reset
+            
+            return True, 0
+    
+    def check_anti_repeat(self, ip: str, domain: str) -> tuple[bool, int]:
+        """Check if this is a repeat request (for testing only).
+        
+        Returns: (allowed, seconds_until_allowed)
+        """
+        current_time = time.time()
+        key = (ip, domain.lower())
+        
+        with self._lock:
+            self._cleanup_old_analyses(current_time)
+            
+            if key in self._recent_analyses:
+                last_time = self._recent_analyses[key]
+                elapsed = current_time - last_time
+                if elapsed < ANTI_REPEAT_WINDOW:
+                    seconds_remaining = int(ANTI_REPEAT_WINDOW - elapsed) + 1
+                    return False, seconds_remaining
+            
+            return True, 0
+    
+    def record_request(self, ip: str, domain: str):
+        """Record a request (for testing only - use check_and_record in production)."""
+        current_time = time.time()
+        with self._lock:
+            self._requests[ip].append(current_time)
+            self._recent_analyses[(ip, domain.lower())] = current_time
+
+
+# Global rate limiter instance
+rate_limiter = RateLimiter()
 
 # Configure logging
 logging.basicConfig(level=logging.DEBUG)
@@ -369,6 +487,14 @@ def debug_whodap(domain):
             'error': f'{type(e).__name__}: {str(e)}'
         })
 
+def get_client_ip() -> str:
+    """Get the client's real IP address, accounting for proxies."""
+    forwarded = request.headers.get('X-Forwarded-For')
+    if forwarded:
+        return forwarded.split(',')[0].strip()
+    return request.remote_addr or '127.0.0.1'
+
+
 @app.route('/analyze', methods=['GET', 'POST'])
 def analyze():
     """Analyze DNS records for the submitted domain."""
@@ -385,6 +511,18 @@ def analyze():
     # Validate domain
     if not dns_analyzer.validate_domain(domain):
         flash(f'Invalid domain name: {domain}', 'danger')
+        return redirect(url_for('index'))
+    
+    # Get client IP for rate limiting
+    client_ip = get_client_ip()
+    
+    # Atomic check and record (prevents race conditions with concurrent requests)
+    allowed, reason, wait_seconds = rate_limiter.check_and_record(client_ip, domain)
+    if not allowed:
+        if reason == 'rate_limit':
+            flash(f'Rate limit exceeded. Please wait {wait_seconds} seconds before trying again.', 'warning')
+        else:  # anti_repeat
+            flash(f'Please wait {wait_seconds} seconds before re-analyzing {domain}.', 'info')
         return redirect(url_for('index'))
     
     start_time = time.time()
@@ -426,7 +564,7 @@ def analyze():
         db.session.add(analysis)
         db.session.commit()
         
-        # Update daily statistics
+        # Update daily statistics (rate limit already recorded in check_and_record)
         update_daily_stats(analysis_success=True, duration=analysis_duration, domain=domain)
         
         return render_template('results.html', 
@@ -525,6 +663,18 @@ def view_analysis(analysis_id):
     # ALWAYS do a fresh lookup - never show cached/stale data
     domain = analysis.domain
     ascii_domain = dns_analyzer.domain_to_ascii(domain)
+    
+    # Get client IP for rate limiting
+    client_ip = get_client_ip()
+    
+    # Atomic check and record (prevents race conditions with concurrent requests)
+    allowed, reason, wait_seconds = rate_limiter.check_and_record(client_ip, domain)
+    if not allowed:
+        if reason == 'rate_limit':
+            flash(f'Rate limit exceeded. Please wait {wait_seconds} seconds before trying again.', 'warning')
+        else:  # anti_repeat
+            flash(f'Please wait {wait_seconds} seconds before re-analyzing {domain}.', 'info')
+        return redirect(url_for('history'))
     
     start_time = time.time()
     results = dns_analyzer.analyze_domain(ascii_domain)

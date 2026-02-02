@@ -75,20 +75,22 @@ Preferred communication style: Simple, everyday language.
 
 ### Testing
 - **pytest** - Unit test framework
-- Test file: `tests/test_dns_analyzer.py` (28 tests)
+- Test files: `tests/test_dns_analyzer.py` (28 unit tests), `tests/test_integration.py` (33 integration tests)
 - Run tests: `python -m pytest tests/ -v`
-- Coverage: Domain validation, government detection, enterprise provider detection, scorecard logic, error states
+- Total: 61 tests covering routes, rate limiting, scorecard logic, error states
 
-## Recent Changes (v26.4.31)
+## Recent Changes (v26.5.0)
 
-### Bug Fixes
-- Fixed Re-analyze button not showing loading overlay (race condition - navigation before render)
-- Fixed Brand Impersonation scorecard showing "Basic" instead of "Protected" (template checked `has_vmc` vs `vmc_valid`)
-- Added cache-busting `&refresh=TIMESTAMP` parameter for re-analysis to ensure fresh results
+### Rate Limiting & Abuse Prevention
+- Added per-IP rate limiting: 8 analyses per minute per IP
+- Added 15-second anti-repeat protection (double-click prevention, not caching)
+- Every analysis is always fresh - no Force Fresh toggle needed
+- RateLimiter class with thread-safe implementation
 
-### Quality Improvements
-- Added comprehensive unit test suite (28 tests covering scorecard logic, error states, government/enterprise detection)
-- Improved executive scorecard edge cases: New "Monitoring" state for SPF+DMARC configured with p=none policy
-- Enhanced docstrings for key functions (analyze_domain, analyze_dns_infrastructure)
-- Fixed error state handling: Red badges for genuine failures vs yellow for not configured
-- All domain analysis entry points (Analyze button, Enter key, Re-analyze button) now work consistently with loading animations
+### Quality Improvements (from v26.4.31)
+- 61 total tests (28 unit + 33 integration)
+- Per-section timeouts with partial failure banners
+- Analysis timestamp and duration displayed on results page
+- RDAP cache extended to 6 hours (registry data only - DNS always fresh)
+- Typed dataclasses in dns_types.py for documentation
+- DOCS.md with operator guide and symbiotic security philosophy
