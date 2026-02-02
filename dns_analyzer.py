@@ -849,8 +849,8 @@ class DNSAnalyzer:
             # Build status and message
             if policy == 'none':
                 status = 'warning'
-                message = 'DMARC in monitoring mode (p=none) - common during rollout, no enforcement yet'
-                issues.append('Policy p=none (monitoring) - recommend progressing to quarantine/reject')
+                message = 'DMARC in monitoring mode (p=none) - spoofed mail still delivered, no enforcement'
+                issues.append('Policy p=none provides no protection - spoofed emails reach inboxes')
             elif policy == 'reject':
                 if pct < 100:
                     status = 'warning'
@@ -2727,8 +2727,8 @@ class DNSAnalyzer:
             else:
                 issues.append('No DMARC policy (email can be spoofed)')
         elif dmarc_policy == 'none':
-            # DMARC exists but in monitoring mode - common rollout phase
-            monitoring_items.append('DMARC in monitoring mode (p=none) - recommend progressing to enforcement')
+            # DMARC exists but p=none provides NO enforcement - spoofed mail still delivered
+            issues.append('DMARC p=none (monitoring only) - spoofed emails still reach inboxes')
         elif dmarc_policy == 'quarantine':
             monitoring_items.append('DMARC quarantine (p=reject recommended for full enforcement)')
         elif dmarc_status == 'success':
