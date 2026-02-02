@@ -87,9 +87,9 @@ Preferred communication style: Simple, everyday language.
 - Run tests: `python -m pytest tests/ -v`
 - Total: 61 tests covering routes, rate limiting, scorecard logic, error states
 
-## Recent Changes (v26.8.1)
+## Recent Changes (v26.8.2)
 
-### Multi-Resolver Consensus & Scientific Rigor (v26.8.1)
+### Multi-Resolver Consensus & Scientific Rigor (v26.8.2)
 - Multi-resolver DNS consensus: Queries Cloudflare (1.1.1.1), Google (8.8.8.8), Quad9 (9.9.9.9)
 - Triangulates results and detects discrepancies between resolvers
 - resolver_consensus added to analysis results with per-record consensus info
