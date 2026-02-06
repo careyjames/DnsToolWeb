@@ -1758,6 +1758,12 @@ class DNSAnalyzer:
             'tech': 'https://rdap.centralnic.com/tech/',
             'dev': 'https://rdap.nic.google/',
             'app': 'https://rdap.nic.google/',
+            'us': 'https://rdap.nic.us/',
+            'gov': 'https://rdap.cloudflare.com/rdap/',
+            'edu': 'https://rdap.arin.net/registry/',
+            'ca': 'https://rdap.ca.fury.ca/rdap/',
+            'au': 'https://rdap.auda.org.au/rdap/',
+            'nl': 'https://rdap.sidn.nl/rdap/',
         }
         
         endpoint = direct_endpoints.get(tld, 'https://rdap.org/')
@@ -1875,6 +1881,26 @@ class DNSAnalyzer:
             'biz': 'whois.biz',
             'uk': 'whois.nic.uk',
             'de': 'whois.denic.de',
+            'us': 'whois.nic.us',
+            'gov': 'whois.dotgov.gov',
+            'edu': 'whois.educause.edu',
+            'ca': 'whois.cira.ca',
+            'au': 'whois.auda.org.au',
+            'nl': 'whois.sidn.nl',
+            'fr': 'whois.nic.fr',
+            'it': 'whois.nic.it',
+            'br': 'whois.registro.br',
+            'in': 'whois.registry.in',
+            'jp': 'whois.jprs.jp',
+            'ru': 'whois.tcinet.ru',
+            'pl': 'whois.dns.pl',
+            'se': 'whois.iis.se',
+            'ch': 'whois.nic.ch',
+            'be': 'whois.dns.be',
+            'at': 'whois.nic.at',
+            'eu': 'whois.eu',
+            'nz': 'whois.srs.net.nz',
+            'za': 'whois.registry.net.za',
         }
         
         server = whois_servers.get(tld)
