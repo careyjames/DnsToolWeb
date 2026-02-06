@@ -445,8 +445,8 @@ def add_security_headers(response):
     csp = (
         "default-src 'self'; "
         f"script-src 'self' https://cdn.jsdelivr.net 'nonce-{nonce}'; "
-        "style-src 'self' https://cdn.replit.com https://cdnjs.cloudflare.com https://fonts.googleapis.com 'unsafe-inline'; "
-        "font-src 'self' https://cdnjs.cloudflare.com https://fonts.gstatic.com; "
+        "style-src 'self' https://cdn.replit.com 'unsafe-inline'; "
+        "font-src 'self'; "
         "img-src 'self' data: https:; "
         "object-src 'none'; "
         "connect-src 'self'; "
@@ -1061,6 +1061,11 @@ def view_analysis_static(analysis_id):
                          from_history=True,
                          wait_seconds=wait_seconds,
                          wait_reason=wait_reason)
+
+@app.route('/statistics')
+def statistics_redirect():
+    """Redirect /statistics to /stats for URL consistency."""
+    return redirect(url_for('stats'))
 
 @app.route('/stats')
 def stats():
