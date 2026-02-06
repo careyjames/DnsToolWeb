@@ -3,6 +3,7 @@ import logging
 import time
 import secrets
 import uuid
+import requests as http_requests
 from collections import defaultdict
 from threading import Lock
 from datetime import datetime, date
@@ -751,21 +752,25 @@ def lookup_country(ip: str) -> dict:
     Returns {'code': 'US', 'name': 'United States'} or empty dict on failure.
     Non-blocking: fails silently so it never delays analysis."""
     if not ip or ip in ('127.0.0.1', '::1', 'localhost'):
+        logging.debug(f"[GEO] Skipping local IP: {ip}")
         return {}
     try:
-        resp = requests.get(
+        resp = http_requests.get(
             f'http://ip-api.com/json/{ip}?fields=status,countryCode,country',
             timeout=2
         )
         if resp.status_code == 200:
             data = resp.json()
+            logging.info(f"[GEO] IP={ip} -> {data}")
             if data.get('status') == 'success':
                 return {
                     'code': data.get('countryCode', ''),
                     'name': data.get('country', '')
                 }
-    except Exception:
-        pass
+        else:
+            logging.warning(f"[GEO] IP={ip} -> HTTP {resp.status_code}")
+    except Exception as e:
+        logging.warning(f"[GEO] IP={ip} -> error: {e}")
     return {}
 
 
