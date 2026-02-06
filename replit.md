@@ -87,7 +87,7 @@ Preferred communication style: Simple, everyday language.
 - Run tests: `python -m pytest tests/ -v`
 - Total: 90 tests covering routes, rate limiting, scorecard logic, error states, schema bindings, consensus conflicts
 
-## Recent Changes (v26.10.7)
+## Recent Changes (v26.10.8)
 
 ### DKIM Primary Platform Correlation (v26.10.8)
 - DKIM selectors now attributed to known providers (MailChimp, Microsoft 365, Google, SendGrid, etc.)

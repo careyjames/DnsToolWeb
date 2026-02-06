@@ -974,18 +974,57 @@ class DNSAnalyzer:
         'Cloudflare Email': ['default._domainkey'],
     }
 
+    SPF_TO_PROVIDER = {
+        'spf.protection.outlook': 'Microsoft 365',
+        '_spf.google': 'Google Workspace',
+        'spf.intermedia': 'Microsoft 365',
+        'emg.intermedia': 'Microsoft 365',
+        'servers.mcsv.net': 'MailChimp',
+        'spf.mandrillapp': 'MailChimp',
+        'sendgrid.net': 'SendGrid',
+        'amazonses.com': 'Amazon SES',
+        'mailgun.org': 'Mailgun',
+        'spf.sparkpostmail': 'SparkPost',
+        'mail.zendesk.com': 'Zendesk',
+        'spf.brevo.com': 'Brevo (Sendinblue)',
+        'spf.sendinblue': 'Brevo (Sendinblue)',
+        'spf.mailjet': 'Mailjet',
+        'spf.postmarkapp': 'Postmark',
+        'spf.freshdesk': 'Freshdesk',
+        'zoho.com': 'Zoho Mail',
+        'messagingengine.com': 'Fastmail',
+        'protonmail.ch': 'ProtonMail',
+        'spf.mtasv.net': 'Postmark',
+        'mimecast': 'Mimecast',
+        'pphosted': 'Proofpoint',
+    }
+
     def _classify_selector_provider(self, selector_name: str) -> str:
         """Map a DKIM selector to its known provider, or 'Unknown' if not recognized."""
         return self.SELECTOR_PROVIDER_MAP.get(selector_name, 'Unknown')
 
-    def _detect_primary_mail_provider(self, mx_records: list) -> str:
-        """Detect the primary mail platform from MX records for DKIM correlation."""
-        if not mx_records:
+    def _detect_primary_mail_provider(self, mx_records: list, spf_record: str = None) -> str:
+        """Detect the primary mail platform from MX records and SPF includes for DKIM correlation.
+        
+        MX records are the strongest signal (they show where mail is actually delivered).
+        SPF includes are used as a secondary signal when MX doesn't match a known provider,
+        since SPF lists who is authorized to send as the domain.
+        """
+        if not mx_records and not spf_record:
             return 'Unknown'
-        mx_str = " ".join(r for r in mx_records if r).lower()
-        for key, provider in self.MX_TO_DKIM_PROVIDER.items():
-            if key in mx_str:
-                return provider
+        
+        if mx_records:
+            mx_str = " ".join(r for r in mx_records if r).lower()
+            for key, provider in self.MX_TO_DKIM_PROVIDER.items():
+                if key in mx_str:
+                    return provider
+        
+        if spf_record:
+            spf_lower = spf_record.lower()
+            for key, provider in self.SPF_TO_PROVIDER.items():
+                if key in spf_lower:
+                    return provider
+        
         return 'Unknown'
 
     def analyze_dkim(self, domain: str, mx_records: list = None) -> Dict[str, Any]:
@@ -2537,8 +2576,11 @@ class DNSAnalyzer:
         dkim_result = results_map.get('dkim', {'status': 'error'})
         if isinstance(dkim_result, dict) and dkim_result.get('selectors'):
             mx_records = basic.get('MX', [])
-            if mx_records:
-                primary_provider = self._detect_primary_mail_provider(mx_records)
+            spf_data = results_map.get('spf', {})
+            spf_valid = spf_data.get('valid_records', []) if isinstance(spf_data, dict) else []
+            spf_record = spf_valid[0] if spf_valid else ''
+            if mx_records or spf_record:
+                primary_provider = self._detect_primary_mail_provider(mx_records, spf_record)
                 found_providers = set()
                 for sel_name, sel_data in dkim_result.get('selectors', {}).items():
                     p = sel_data.get('provider', 'Unknown')
