@@ -14,7 +14,7 @@ from sqlalchemy import JSON
 from dns_analyzer import DNSAnalyzer
 
 # App version - format: YY.M.patch (bump last number for small changes)
-APP_VERSION = "26.9.1"
+APP_VERSION = "26.10.0"
 
 
 class TraceIDFilter(logging.Filter):
@@ -408,6 +408,13 @@ def inject_globals():
         'csp_nonce': getattr(g, 'csp_nonce', '')
     }
 
+@app.template_filter('country_flag')
+def country_flag_filter(code):
+    """Convert a 2-letter country code to a flag emoji."""
+    if not code or len(code) != 2:
+        return ''
+    return ''.join(chr(0x1F1E6 + ord(c) - ord('A')) for c in code.upper())
+
 @app.after_request
 def add_security_headers(response):
     """Add security headers and log request completion with trace ID."""
@@ -474,6 +481,10 @@ class DomainAnalysis(db.Model):
     # Registrar Information
     registrar_name = db.Column(db.String(255))
     registrar_source = db.Column(db.String(20))
+    
+    # Visitor geolocation
+    country_code = db.Column(db.String(10))
+    country_name = db.Column(db.String(100))
     
     # Analysis metadata
     analysis_success = db.Column(db.Boolean, default=True)
@@ -735,6 +746,29 @@ def get_client_ip() -> str:
     return request.remote_addr or '127.0.0.1'
 
 
+def lookup_country(ip: str) -> dict:
+    """Look up country from IP address using free ip-api.com service.
+    Returns {'code': 'US', 'name': 'United States'} or empty dict on failure.
+    Non-blocking: fails silently so it never delays analysis."""
+    if not ip or ip in ('127.0.0.1', '::1', 'localhost'):
+        return {}
+    try:
+        resp = requests.get(
+            f'http://ip-api.com/json/{ip}?fields=status,countryCode,country',
+            timeout=2
+        )
+        if resp.status_code == 200:
+            data = resp.json()
+            if data.get('status') == 'success':
+                return {
+                    'code': data.get('countryCode', ''),
+                    'name': data.get('country', '')
+                }
+    except Exception:
+        pass
+    return {}
+
+
 @app.route('/analyze', methods=['GET', 'POST'])
 def analyze():
     """Analyze DNS records for the submitted domain."""
@@ -753,8 +787,9 @@ def analyze():
         flash(f'Invalid domain name: {domain}', 'danger')
         return redirect(url_for('index'))
     
-    # Get client IP for rate limiting
+    # Get client IP for rate limiting and geo lookup
     client_ip = get_client_ip()
+    geo = lookup_country(client_ip)
     
     # Atomic check and record (prevents race conditions with concurrent requests)
     allowed, reason, wait_seconds = rate_limiter.check_and_record(client_ip, domain)
@@ -800,6 +835,8 @@ def analyze():
             dkim_selectors=results.get('dkim_analysis', {}).get('selectors', {}),
             registrar_name=results.get('registrar_info', {}).get('registrar'),
             registrar_source=results.get('registrar_info', {}).get('source'),
+            country_code=geo.get('code'),
+            country_name=geo.get('name'),
             analysis_success=True,
             analysis_duration=analysis_duration
         )
@@ -830,6 +867,8 @@ def analyze():
         analysis = DomainAnalysis(
             domain=domain,
             ascii_domain=dns_analyzer.domain_to_ascii(domain),
+            country_code=geo.get('code'),
+            country_name=geo.get('name'),
             analysis_success=False,
             error_message=error_message,
             analysis_duration=analysis_duration
@@ -910,8 +949,9 @@ def view_analysis(analysis_id):
     domain = analysis.domain
     ascii_domain = dns_analyzer.domain_to_ascii(domain)
     
-    # Get client IP for rate limiting
+    # Get client IP for rate limiting and geo lookup
     client_ip = get_client_ip()
+    geo = lookup_country(client_ip)
     
     # Atomic check and record (prevents race conditions with concurrent requests)
     allowed, reason, wait_seconds = rate_limiter.check_and_record(client_ip, domain)
@@ -935,6 +975,8 @@ def view_analysis(analysis_id):
     analysis.dkim_selectors = results.get('dkim_analysis', {}).get('selectors', {})
     analysis.registrar_name = results.get('registrar_info', {}).get('registrar')
     analysis.registrar_source = results.get('registrar_info', {}).get('source')
+    analysis.country_code = geo.get('code') or analysis.country_code
+    analysis.country_name = geo.get('name') or analysis.country_name
     analysis.analysis_duration = analysis_duration
     
     try:
@@ -1036,12 +1078,28 @@ def stats():
         db.func.count(DomainAnalysis.id).desc()
     ).limit(10).all()
     
+    # Get country distribution
+    country_stats = db.session.query(
+        DomainAnalysis.country_code,
+        DomainAnalysis.country_name,
+        db.func.count(DomainAnalysis.id).label('count')
+    ).filter(
+        DomainAnalysis.country_code.isnot(None),
+        DomainAnalysis.country_code != ''
+    ).group_by(
+        DomainAnalysis.country_code,
+        DomainAnalysis.country_name
+    ).order_by(
+        db.func.count(DomainAnalysis.id).desc()
+    ).limit(20).all()
+    
     return render_template('stats.html',
                          recent_stats=recent_stats,
                          total_analyses=total_analyses,
                          successful_analyses=successful_analyses,
                          unique_domains=unique_domains,
-                         popular_domains=popular_domains)
+                         popular_domains=popular_domains,
+                         country_stats=country_stats)
 
 @app.route('/api/analysis/<int:analysis_id>')
 def api_analysis(analysis_id):

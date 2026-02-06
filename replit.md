@@ -87,7 +87,16 @@ Preferred communication style: Simple, everyday language.
 - Run tests: `python -m pytest tests/ -v`
 - Total: 90 tests covering routes, rate limiting, scorecard logic, error states, schema bindings, consensus conflicts
 
-## Recent Changes (v26.9.1)
+## Recent Changes (v26.10.0)
+
+### Visitor Country Tracking (v26.10.0)
+- Added country_code and country_name columns to DomainAnalysis model
+- IP-to-country lookup via free ip-api.com service (2s timeout, fails silently)
+- Country tracked on both /analyze and /analysis/{id} routes
+- "Visitor Countries" section on /stats page with flag emojis and count badges
+- Jinja2 country_flag template filter converts ISO 3166-1 codes to flag emoji
+- Country section only appears when geo data exists (progressive enhancement)
+- Company description corrected: on-demand concierge IT support, not managed services
 
 ### SEO Multi-Persona Optimization (v26.9.1)
 - Updated title, meta description, OG/Twitter tags with multi-persona keywords
