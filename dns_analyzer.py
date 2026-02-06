@@ -1945,7 +1945,6 @@ class DNSAnalyzer:
             'site': 'https://rdap.centralnic.com/site/',
             'store': 'https://rdap.centralnic.com/store/',
             'cloud': 'https://rdap.centralnic.com/cloud/',
-            'lu': 'https://rdap.dns.lu/',
             'cz': 'https://rdap.nic.cz/',
             'fi': 'https://rdap.fi/rdap/rdap/',
             'no': 'https://rdap.norid.no/',
@@ -2161,7 +2160,7 @@ class DNSAnalyzer:
             registrant = None
             
             # Parse registrar
-            registrar_match = re.search(r"(?i)^(?:registrar|sponsoring registrar|registrar name)\s*:\s*(.+)$", output, re.MULTILINE)
+            registrar_match = re.search(r"(?i)^(?:registrar|sponsoring registrar|registrar[- ]name)\s*:\s*(.+)$", output, re.MULTILINE)
             if registrar_match:
                 val = registrar_match.group(1).strip()
                 if val and not val.lower().startswith('http') and val.lower() != 'not available':
