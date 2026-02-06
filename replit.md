@@ -96,7 +96,7 @@ Preferred communication style: Simple, everyday language.
 - "Visitor Countries" section on /stats page with flag emojis and count badges
 - Jinja2 country_flag template filter converts ISO 3166-1 codes to flag emoji
 - Country section only appears when geo data exists (progressive enhancement)
-- Company description corrected: on-demand concierge IT support, not managed services
+- Company description updated: emphasizes DNS expertise, email deliverability consulting, and remote support for organizations worldwide (no longer Apple-centric)
 
 ### SEO Multi-Persona Optimization (v26.9.1)
 - Updated title, meta description, OG/Twitter tags with multi-persona keywords
