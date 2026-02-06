@@ -445,8 +445,8 @@ def add_security_headers(response):
     csp = (
         "default-src 'self'; "
         f"script-src 'self' https://cdn.jsdelivr.net 'nonce-{nonce}'; "
-        "style-src 'self' https://cdn.replit.com 'unsafe-inline'; "
-        "font-src 'self'; "
+        "style-src 'self' https://cdn.replit.com https://fonts.googleapis.com 'unsafe-inline'; "
+        "font-src 'self' https://fonts.gstatic.com; "
         "img-src 'self' data: https:; "
         "object-src 'none'; "
         "connect-src 'self'; "
