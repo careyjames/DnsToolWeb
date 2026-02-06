@@ -221,166 +221,167 @@
         </div>
     </nav>
 
-    <main class="container my-5">
-        <!-- Header -->
-        <div class="text-center mb-5">
-            <h1 class="display-4 mb-3">
-                Domain Security Audit Tool
-            </h1>
-            <p class="lead text-muted">
-                Instant DNS intelligence reports with email authentication checks, DNSSEC validation, and executive-ready security posture scoring
-            </p>
-            <p class="text-muted small">
-                Analyze SPF, DKIM, DMARC, DNSSEC, BIMI, MTA-STS, TLS-RPT, and CAA records in one scan. Always fresh, never cached.
-            </p>
-        </div>
+    <!-- Hero Section -->
+    <section class="hero-section">
+        <div class="container">
+            <div class="text-center hero-content">
+                <div class="hero-badge mb-3">
+                    <i class="fas fa-shield-alt me-1"></i> Free OSINT Tool
+                </div>
+                <h1 class="hero-title mb-3">
+                    Domain Security<br class="d-none d-md-inline"> Audit Tool
+                </h1>
+                <p class="hero-subtitle mx-auto mb-2">
+                    Instant DNS intelligence reports with email authentication checks, DNSSEC validation, and executive-ready security posture scoring
+                </p>
+                <p class="hero-protocols mb-4">
+                    SPF &middot; DKIM &middot; DMARC &middot; DNSSEC &middot; BIMI &middot; MTA-STS &middot; TLS-RPT &middot; CAA
+                </p>
+            </div>
 
-        <!-- Flash messages -->
-        {% with messages = get_flashed_messages(with_categories=true) %}
-            {% if messages %}
-                {% for category, message in messages %}
-                    <div class="alert alert-{{ 'danger' if category == 'danger' else 'warning' if category == 'warning' else 'success' }} alert-dismissible fade show" role="alert">
-                        <i class="fas fa-{{ 'exclamation-triangle' if category in ['danger', 'warning'] else 'check-circle' }} me-2"></i>
-                        {{ message }}
-                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            <!-- Flash messages -->
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    <div class="row justify-content-center mb-3">
+                        <div class="col-lg-8">
+                        {% for category, message in messages %}
+                            <div class="alert alert-{{ 'danger' if category == 'danger' else 'warning' if category == 'warning' else 'success' }} alert-dismissible fade show" role="alert">
+                                <i class="fas fa-{{ 'exclamation-triangle' if category in ['danger', 'warning'] else 'check-circle' }} me-2"></i>
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                            </div>
+                        {% endfor %}
+                        </div>
                     </div>
-                {% endfor %}
-            {% endif %}
-        {% endwith %}
+                {% endif %}
+            {% endwith %}
 
-        <!-- Main form -->
-        <div class="row justify-content-center">
-            <div class="col-lg-8">
-                <div class="card shadow-sm">
-                    <div class="card-body p-4">
+            <!-- Main form -->
+            <div class="row justify-content-center">
+                <div class="col-lg-7 col-xl-6">
+                    <div class="search-card">
                         <form method="POST" action="{{ url_for('analyze') }}" id="domainForm">
-                            <div class="mb-4">
-                                <label for="domain" class="form-label h5">
-                                    <i class="fas fa-search me-2"></i>Domain Name
-                                </label>
-                                <div class="input-group input-group-lg">
-                                    <input type="text" 
-                                           class="form-control" 
-                                           id="domain" 
-                                           name="domain" 
-                                           placeholder="example.com" 
-                                           required
-                                           autocomplete="off"
-                                           value="{{ request.args.get('wait_domain', '') }}">
-                                    <button class="btn btn-primary" type="submit" id="analyzeBtn" aria-label="Analyze domain"
-                                        {% if request.args.get('wait_seconds') %}
-                                        data-wait-seconds="{{ request.args.get('wait_seconds') }}"
-                                        data-wait-domain="{{ request.args.get('wait_domain', '') }}"
-                                        data-wait-reason="{{ request.args.get('wait_reason', 'anti_repeat') }}"
-                                        {% endif %}>
-                                        <i class="fas fa-search me-2" aria-hidden="true"></i>Analyze
-                                    </button>
-                                </div>
-                                <div class="form-text">
-                                    <i class="fas fa-info-circle me-1"></i>
-                                    Enter the raw domain (e.g., <strong>example.com</strong>) — no https://. Pro tip: <strong>www</strong> is just a subdomain, the same way DKIM selectors like <strong>google._domainkey</strong> are.
-                                </div>
+                            <label for="domain" class="form-label search-label">
+                                <i class="fas fa-search me-2"></i>Domain Name
+                            </label>
+                            <div class="input-group input-group-lg search-input-group">
+                                <input type="text" 
+                                       class="form-control search-input" 
+                                       id="domain" 
+                                       name="domain" 
+                                       placeholder="example.com" 
+                                       required
+                                       autocomplete="off"
+                                       value="{{ request.args.get('wait_domain', '') }}">
+                                <button class="btn btn-primary search-btn" type="submit" id="analyzeBtn" aria-label="Analyze domain"
+                                    {% if request.args.get('wait_seconds') %}
+                                    data-wait-seconds="{{ request.args.get('wait_seconds') }}"
+                                    data-wait-domain="{{ request.args.get('wait_domain', '') }}"
+                                    data-wait-reason="{{ request.args.get('wait_reason', 'anti_repeat') }}"
+                                    {% endif %}>
+                                    <i class="fas fa-search me-2" aria-hidden="true"></i>Analyze
+                                </button>
+                            </div>
+                            <div class="form-text search-hint mt-2">
+                                <i class="fas fa-info-circle me-1"></i>
+                                Enter the raw domain (e.g., <strong>example.com</strong>) &mdash; no https://. Pro tip: <strong>www</strong> is just a subdomain, the same way DKIM selectors like <strong>google._domainkey</strong> are.
                             </div>
                         </form>
                     </div>
                 </div>
             </div>
-        </div>
 
-        <!-- Features overview -->
-        <div class="row mt-5">
-            <div class="col-12">
-                <h2 class="text-center mb-4">What We Analyze</h2>
-            </div>
-            <div class="col-md-6 col-lg-3 mb-4">
-                <div class="card h-100 border-0 bg-transparent">
-                    <div class="card-body text-center">
-                        <div class="feature-icon mb-3">
-                            <i class="fas fa-server fa-2x text-primary"></i>
-                        </div>
-                        <h3 class="card-title h5">DNS Records</h3>
-                        <p class="card-text text-muted">A, AAAA, MX, TXT, and NS records from multiple resolvers with multi-resolver consensus verification</p>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-6 col-lg-3 mb-4">
-                <div class="card h-100 border-0 bg-transparent">
-                    <div class="card-body text-center">
-                        <div class="feature-icon mb-3">
-                            <i class="fas fa-shield-alt fa-2x text-success"></i>
-                        </div>
-                        <h3 class="card-title h5">Email Authentication</h3>
-                        <p class="card-text text-muted">SPF, DMARC, and DKIM validation with key strength analysis and email spoofing protection assessment</p>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-6 col-lg-3 mb-4">
-                <div class="card h-100 border-0 bg-transparent">
-                    <div class="card-body text-center">
-                        <div class="feature-icon mb-3">
-                            <i class="fas fa-building fa-2x text-info"></i>
-                        </div>
-                        <h3 class="card-title h5">Domain Intelligence</h3>
-                        <p class="card-text text-muted">Domain registration details via RDAP, enterprise infrastructure detection, and DNS provider analysis</p>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-6 col-lg-3 mb-4">
-                <div class="card h-100 border-0 bg-transparent">
-                    <div class="card-body text-center">
-                        <div class="feature-icon mb-3">
-                            <i class="fas fa-lock fa-2x text-warning"></i>
-                        </div>
-                        <h3 class="card-title h5">Security Posture</h3>
-                        <p class="card-text text-muted">DNSSEC validation, BIMI verification, MTA-STS, TLS-RPT, CAA checks, and transport encryption analysis</p>
-                    </div>
-                </div>
+            <!-- Trust indicators -->
+            <div class="text-center mt-4 hero-trust">
+                <span><i class="fas fa-bolt me-1"></i> Always fresh, never cached</span>
+                <span class="trust-divider"></span>
+                <span><i class="fas fa-lock me-1"></i> No sign-up required</span>
+                <span class="trust-divider"></span>
+                <span><i class="fas fa-globe me-1"></i> Multi-resolver consensus</span>
             </div>
         </div>
+    </section>
+
+    <main class="container">
+        <!-- Features overview -->
+        <section class="features-section">
+            <h2 class="section-heading text-center mb-2">What We Analyze</h2>
+            <p class="text-center text-muted mb-4">Comprehensive domain security intelligence in a single scan</p>
+            <div class="row g-4">
+                <div class="col-md-6 col-lg-3">
+                    <div class="feature-card">
+                        <div class="feature-card-icon feature-card-icon--primary">
+                            <i class="fas fa-server"></i>
+                        </div>
+                        <h3 class="feature-card-title">DNS Records</h3>
+                        <p class="feature-card-text">A, AAAA, MX, TXT, and NS records from multiple resolvers with multi-resolver consensus verification</p>
+                    </div>
+                </div>
+                <div class="col-md-6 col-lg-3">
+                    <div class="feature-card">
+                        <div class="feature-card-icon feature-card-icon--success">
+                            <i class="fas fa-shield-alt"></i>
+                        </div>
+                        <h3 class="feature-card-title">Email Authentication</h3>
+                        <p class="feature-card-text">SPF, DMARC, and DKIM validation with key strength analysis and email spoofing protection assessment</p>
+                    </div>
+                </div>
+                <div class="col-md-6 col-lg-3">
+                    <div class="feature-card">
+                        <div class="feature-card-icon feature-card-icon--info">
+                            <i class="fas fa-building"></i>
+                        </div>
+                        <h3 class="feature-card-title">Domain Intelligence</h3>
+                        <p class="feature-card-text">Domain registration details via RDAP, enterprise infrastructure detection, and DNS provider analysis</p>
+                    </div>
+                </div>
+                <div class="col-md-6 col-lg-3">
+                    <div class="feature-card">
+                        <div class="feature-card-icon feature-card-icon--warning">
+                            <i class="fas fa-lock"></i>
+                        </div>
+                        <h3 class="feature-card-title">Security Posture</h3>
+                        <p class="feature-card-text">DNSSEC validation, BIMI verification, MTA-STS, TLS-RPT, CAA checks, and transport encryption analysis</p>
+                    </div>
+                </div>
+            </div>
+        </section>
 
         <!-- Who It's For section -->
-        <div class="row mt-4 mb-5">
-            <div class="col-12">
-                <h2 class="text-center mb-4">Built for Every Level of Your Organization</h2>
-                <p class="text-center text-muted mb-4">Whether you need a quick domain reputation check or a deep DNS infrastructure analysis, DNS Tool delivers the right level of detail.</p>
-            </div>
-            <div class="col-md-6 col-lg-3 mb-4">
-                <div class="card h-100 bg-dark border-secondary">
-                    <div class="card-body">
-                        <div class="mb-2"><i class="fas fa-briefcase fa-lg text-primary"></i></div>
-                        <h3 class="h6 text-primary">Executives & Board Members</h3>
-                        <p class="card-text text-muted small mb-0">Clear SECURE / PARTIAL / INSECURE verdicts that communicate cybersecurity posture at a glance. Understand your domain security risk without technical jargon.</p>
+        <section class="personas-section">
+            <h2 class="section-heading text-center mb-2">Built for Every Level of Your Organization</h2>
+            <p class="text-center text-muted mb-4">Whether you need a quick domain reputation check or a deep DNS infrastructure analysis, DNS Tool delivers the right level of detail.</p>
+            <div class="row g-4">
+                <div class="col-md-6 col-lg-3">
+                    <div class="persona-card">
+                        <div class="persona-card-icon"><i class="fas fa-briefcase text-primary"></i></div>
+                        <h3 class="persona-card-title text-primary">Executives & Board Members</h3>
+                        <p class="persona-card-text">Clear SECURE / PARTIAL / INSECURE verdicts that communicate cybersecurity posture at a glance. Understand your domain security risk without technical jargon.</p>
+                    </div>
+                </div>
+                <div class="col-md-6 col-lg-3">
+                    <div class="persona-card">
+                        <div class="persona-card-icon"><i class="fas fa-laptop-code text-success"></i></div>
+                        <h3 class="persona-card-title text-success">IT Professionals</h3>
+                        <p class="persona-card-text">Validate SPF, DKIM, and DMARC configurations. Check email authentication, verify DNSSEC, and troubleshoot DNS records across multiple resolvers.</p>
+                    </div>
+                </div>
+                <div class="col-md-6 col-lg-3">
+                    <div class="persona-card">
+                        <div class="persona-card-icon"><i class="fas fa-network-wired text-warning"></i></div>
+                        <h3 class="persona-card-title text-warning">DNS Specialists</h3>
+                        <p class="persona-card-text">Authoritative nameserver queries, multi-resolver consensus verification, DNSSEC chain validation, and enterprise DNS provider detection.</p>
+                    </div>
+                </div>
+                <div class="col-md-6 col-lg-3">
+                    <div class="persona-card">
+                        <div class="persona-card-icon"><i class="fas fa-users text-info"></i></div>
+                        <h3 class="persona-card-title text-info">Business & Compliance</h3>
+                        <p class="persona-card-text">Verify your company's email is protected from spoofing. Check if your domain can be impersonated. Assess brand protection with BIMI and certificate authority controls.</p>
                     </div>
                 </div>
             </div>
-            <div class="col-md-6 col-lg-3 mb-4">
-                <div class="card h-100 bg-dark border-secondary">
-                    <div class="card-body">
-                        <div class="mb-2"><i class="fas fa-laptop-code fa-lg text-success"></i></div>
-                        <h3 class="h6 text-success">IT Professionals</h3>
-                        <p class="card-text text-muted small mb-0">Validate SPF, DKIM, and DMARC configurations. Check email authentication, verify DNSSEC, and troubleshoot DNS records across multiple resolvers.</p>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-6 col-lg-3 mb-4">
-                <div class="card h-100 bg-dark border-secondary">
-                    <div class="card-body">
-                        <div class="mb-2"><i class="fas fa-network-wired fa-lg text-warning"></i></div>
-                        <h3 class="h6 text-warning">DNS Specialists</h3>
-                        <p class="card-text text-muted small mb-0">Authoritative nameserver queries, multi-resolver consensus verification, DNSSEC chain validation, and enterprise DNS provider detection with infrastructure analysis.</p>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-6 col-lg-3 mb-4">
-                <div class="card h-100 bg-dark border-secondary">
-                    <div class="card-body">
-                        <div class="mb-2"><i class="fas fa-users fa-lg text-info"></i></div>
-                        <h3 class="h6 text-info">Business & Compliance</h3>
-                        <p class="card-text text-muted small mb-0">Verify your company's email is protected from spoofing. Check if your domain can be impersonated. Assess brand protection with BIMI and certificate authority controls.</p>
-                    </div>
-                </div>
-            </div>
-        </div>
+        </section>
 
         <!-- FAQ Section -->
         <div class="row mt-4 mb-5">
