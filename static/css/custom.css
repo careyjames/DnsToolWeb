@@ -282,9 +282,25 @@ body {
     margin-bottom: 0.5rem;
 }
 
+.persona-card-title.text-primary {
+    color: #79b8ff !important;
+}
+
+.persona-card-title.text-success {
+    color: #56d364 !important;
+}
+
+.persona-card-title.text-warning {
+    color: #f0d050 !important;
+}
+
+.persona-card-title.text-info {
+    color: #79c0ff !important;
+}
+
 .persona-card-text {
     font-size: 0.8rem;
-    color: var(--text-secondary);
+    color: #9ea7b3;
     line-height: 1.55;
     margin-bottom: 0;
 }
