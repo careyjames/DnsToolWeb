@@ -14,10 +14,8 @@
     <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='favicon.svg') }}">
     <!-- Preconnect to external domains for faster loading -->
     <link rel="preconnect" href="https://cdn.replit.com">
-    <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
     <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
     <link rel="dns-prefetch" href="https://cdn.replit.com">
-    <link rel="dns-prefetch" href="https://cdnjs.cloudflare.com">
     
     <!-- Facebook / Open Graph -->
     <meta property="og:url" content="https://dnstool.it-help.tech/">
@@ -187,9 +185,8 @@
     <!-- Load Bootstrap first (sync) to prevent CLS when it applies styles -->
     <link rel="stylesheet" href="https://cdn.replit.com/agent/bootstrap-agent-dark-theme.min.css">
     <link href="{{ url_for('static', filename='css/custom.min.css') }}" rel="stylesheet">
-    <!-- Font Awesome - solid only (saves ~100KB vs all.min.css) -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/fontawesome.min.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/solid.min.css">
+    <!-- Font Awesome - self-hosted subset (54 icons, ~22KB total vs ~231KB from CDN) -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/fontawesome-subset.min.css') }}">
 </head>
 <body>
     <!-- Navigation -->
@@ -507,82 +504,29 @@
             <div class="loading-dots mt-3">
                 <span></span><span></span><span></span>
             </div>
-            <p class="loading-status mt-3" id="loadingStatus">Initializing DNS resolver...</p>
+            <div class="loading-status mt-3">
+                <span>Initializing DNS resolver...</span>
+                <span>Querying authoritative nameservers...</span>
+                <span>Pulling A/AAAA records via DoH...</span>
+                <span>Fetching MX records for mail routing...</span>
+                <span>Running RDAP lookup for registrar info...</span>
+                <span>Parsing SPF record from TXT...</span>
+                <span>Validating DMARC policy...</span>
+                <span>Checking DKIM selectors...</span>
+                <span>Querying DNSSEC chain of trust...</span>
+                <span>Aggregating multi-resolver consensus...</span>
+            </div>
         </div>
     </div>
     <script nonce="{{ csp_nonce }}">
     (function() {
-        var statusMessages = [
-            "Initializing DNS resolver...",
-            "Querying authoritative nameservers...",
-            "Pulling A/AAAA records via DNS over HTTPS...",
-            "Fetching MX records for mail routing...",
-            "Running RDAP lookup for registrar info...",
-            "Parsing SPF record from TXT...",
-            "Validating DMARC policy...",
-            "Checking DKIM selectors...",
-            "Querying DNSSEC chain of trust...",
-            "Fetching CAA records...",
-            "Checking MTA-STS policy...",
-            "Validating BIMI configuration...",
-            "Cross-referencing with Cloudflare DNS...",
-            "Comparing against Google Public DNS...",
-            "Aggregating results from multiple resolvers..."
-        ];
-        var currentIndex = 0;
-        var intervalId = null;
-        var isRunning = false;
-        
-        function cycleMessage() {
-            var statusEl = document.getElementById('loadingStatus');
-            if (!statusEl) return;
-            currentIndex = (currentIndex + 1) % statusMessages.length;
-            statusEl.textContent = statusMessages[currentIndex];
-        }
-        
-        function startMessages() {
-            if (isRunning) return;
-            isRunning = true;
-            
-            var statusEl = document.getElementById('loadingStatus');
-            if (!statusEl) return;
-            
-            currentIndex = 0;
-            statusEl.textContent = statusMessages[0];
-            
-            // Start cycling every 500ms
-            intervalId = setInterval(cycleMessage, 500);
-        }
-        
-        // Expose globally
-        window.startLoadingMessages = startMessages;
-        
-        // Use MutationObserver to detect when overlay becomes visible (via class change)
         document.addEventListener('DOMContentLoaded', function() {
-            var overlay = document.getElementById('loadingOverlay');
-            if (overlay) {
-                var observer = new MutationObserver(function(mutations) {
-                    mutations.forEach(function(mutation) {
-                        if (mutation.attributeName === 'class') {
-                            // Check if d-none class was removed (overlay became visible)
-                            if (!overlay.classList.contains('d-none')) {
-                                startMessages();
-                            }
-                        }
-                    });
-                });
-                observer.observe(overlay, { attributes: true, attributeFilter: ['class'] });
-            }
-            
-            // Countdown timer for rate limiting (visual UX instead of flash message)
             var analyzeBtn = document.getElementById('analyzeBtn');
             if (analyzeBtn && analyzeBtn.dataset.waitSeconds) {
                 var waitSeconds = parseInt(analyzeBtn.dataset.waitSeconds, 10);
-                var waitDomain = analyzeBtn.dataset.waitDomain || '';
                 var originalHTML = analyzeBtn.innerHTML;
                 
                 if (waitSeconds > 0) {
-                    // Disable button and show countdown
                     analyzeBtn.disabled = true;
                     
                     function updateCountdown() {
@@ -591,7 +535,6 @@
                             waitSeconds--;
                             setTimeout(updateCountdown, 1000);
                         } else {
-                            // Re-enable button
                             analyzeBtn.disabled = false;
                             analyzeBtn.innerHTML = originalHTML;
                         }

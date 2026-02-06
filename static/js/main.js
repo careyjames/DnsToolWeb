@@ -47,32 +47,15 @@ document.addEventListener('DOMContentLoaded', function() {
                     loadingDomain.textContent = domain;
                 }
                 overlay.classList.remove('d-none');
-                if (typeof window.startLoadingMessages === 'function') {
-                    window.startLoadingMessages();
-                }
             }
             analyzeBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Analyzing...';
             analyzeBtn.disabled = true;
             document.body.classList.add('loading');
-            
-            // Let the form submit naturally - browser gets fresh page with correct CSP nonce
         });
         
         // Clear validation on focus
         domainInput.addEventListener('focus', function() {
             this.classList.remove('is-invalid');
-        });
-        
-        // Handle Enter key - use requestSubmit for proper form submission
-        domainInput.addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
-                e.preventDefault();
-                if (domainForm.requestSubmit) {
-                    domainForm.requestSubmit();
-                } else {
-                    analyzeBtn.click();
-                }
-            }
         });
     }
     
