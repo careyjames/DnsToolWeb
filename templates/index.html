@@ -11,8 +11,9 @@
     <meta name="description" content="Free domain security audit tool. Check SPF, DKIM, DMARC, DNSSEC, BIMI, MTA-STS, and CAA records instantly. Executive-ready security posture reports for IT professionals, DNS specialists, and business leaders. Trusted by government agencies and enterprises worldwide.">
     <meta name="keywords" content="DNS lookup, SPF checker, DKIM validator, DMARC lookup, DNSSEC validation, domain security audit, email authentication, email spoofing protection, cybersecurity posture report, DNS intelligence, BIMI checker, MTA-STS, CAA record check, domain reputation, email security assessment">
     
+    <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='favicon.svg') }}">
     <!-- Preconnect to external domains for faster loading -->
-    <link rel="preconnect" href="https://cdn.replit.com" crossorigin>
+    <link rel="preconnect" href="https://cdn.replit.com">
     <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
     <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
     <link rel="dns-prefetch" href="https://cdn.replit.com">
@@ -186,8 +187,9 @@
     <!-- Load Bootstrap first (sync) to prevent CLS when it applies styles -->
     <link rel="stylesheet" href="https://cdn.replit.com/agent/bootstrap-agent-dark-theme.min.css">
     <link href="{{ url_for('static', filename='css/custom.min.css') }}" rel="stylesheet">
-    <!-- Font Awesome loaded synchronously for CSP compliance -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Font Awesome - solid only (saves ~100KB vs all.min.css) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/fontawesome.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/solid.min.css">
 </head>
 <body>
     <!-- Navigation -->
