@@ -1945,6 +1945,12 @@ class DNSAnalyzer:
             'site': 'https://rdap.centralnic.com/site/',
             'store': 'https://rdap.centralnic.com/store/',
             'cloud': 'https://rdap.centralnic.com/cloud/',
+            'lu': 'https://rdap.dns.lu/',
+            'cz': 'https://rdap.nic.cz/',
+            'fi': 'https://rdap.fi/rdap/rdap/',
+            'no': 'https://rdap.norid.no/',
+            'si': 'https://rdap.register.si/',
+            'is': 'https://rdap.isnic.is/rdap/',
         }
         
         endpoint = direct_endpoints.get(tld, 'https://rdap.org/')
@@ -2103,6 +2109,26 @@ class DNSAnalyzer:
             'site': 'whois.centralnic.com',
             'store': 'whois.centralnic.com',
             'cloud': 'whois.centralnic.com',
+            'lu': 'whois.dns.lu',
+            'dk': 'whois.dk-hostmaster.dk',
+            'fi': 'whois.fi',
+            'no': 'whois.norid.no',
+            'es': 'whois.nic.es',
+            'pt': 'whois.dns.pt',
+            'cz': 'whois.nic.cz',
+            'sk': 'whois.sk-nic.sk',
+            'hr': 'whois.dns.hr',
+            'ro': 'whois.rotld.ro',
+            'hu': 'whois.nic.hu',
+            'bg': 'whois.register.bg',
+            'lt': 'whois.domreg.lt',
+            'lv': 'whois.nic.lv',
+            'ee': 'whois.tld.ee',
+            'gr': 'whois.nic.gr',
+            'si': 'whois.register.si',
+            'is': 'whois.isnic.is',
+            'rs': 'whois.rnids.rs',
+            'li': 'whois.nic.li',
         }
         
         server = whois_servers.get(tld)

@@ -100,11 +100,13 @@ Preferred communication style: Simple, everyday language.
 - Honest messaging: "primary provider may use custom selectors not discoverable through standard checks"
 - Fixes false-positive "SECURE" verdicts when only marketing platform DKIM exists (e.g., MailChimp DKIM on Microsoft Exchange domain)
 
-### Expanded RDAP/WHOIS TLD Coverage (v26.10.7)
-- Added 35+ TLDs to both RDAP direct endpoints and WHOIS server mappings
+### Expanded RDAP/WHOIS TLD Coverage (v26.10.8)
+- Added 55+ TLDs to both RDAP direct endpoints and WHOIS server mappings
 - English-speaking: .uk, .nz, .ie, .gg, .je, .im, .ph, .in
 - Popular: .co, .me, .ai, .cc, .tv, .ws, .to, .ly, .fm, .eu
 - New gTLDs: .xyz, .online, .site, .store, .cloud, .info, .biz, .mobi, .name
+- European ccTLDs: .lu, .dk, .fi, .no, .es, .pt, .cz, .sk, .hr, .ro, .hu, .bg, .lt, .lv, .ee, .gr, .si, .is, .rs, .li
+- RDAP endpoints sourced from IANA bootstrap registry (data.iana.org/rdap/dns.json)
 - All unmapped TLDs still fall back to rdap.org bootstrap service
 
 ### Asset Optimization & UX Fixes (v26.10.5)
