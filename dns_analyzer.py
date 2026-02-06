@@ -912,7 +912,83 @@ class DNSAnalyzer:
             'issues': issues
         }
     
-    def analyze_dkim(self, domain: str) -> Dict[str, Any]:
+    SELECTOR_PROVIDER_MAP = {
+        'selector1._domainkey': 'Microsoft 365',
+        'selector2._domainkey': 'Microsoft 365',
+        'google._domainkey': 'Google Workspace',
+        'google2048._domainkey': 'Google Workspace',
+        'k1._domainkey': 'MailChimp',
+        'k2._domainkey': 'MailChimp',
+        'k3._domainkey': 'MailChimp',
+        'mailchimp._domainkey': 'MailChimp',
+        'mandrill._domainkey': 'MailChimp (Mandrill)',
+        's1._domainkey': 'SendGrid',
+        's2._domainkey': 'SendGrid',
+        'sendgrid._domainkey': 'SendGrid',
+        'mailjet._domainkey': 'Mailjet',
+        'amazonses._domainkey': 'Amazon SES',
+        'postmark._domainkey': 'Postmark',
+        'sparkpost._domainkey': 'SparkPost',
+        'mailgun._domainkey': 'Mailgun',
+        'sendinblue._domainkey': 'Brevo (Sendinblue)',
+        'mimecast._domainkey': 'Mimecast',
+        'proofpoint._domainkey': 'Proofpoint',
+        'everlytickey1._domainkey': 'Everlytic',
+        'zendesk1._domainkey': 'Zendesk',
+        'zendesk2._domainkey': 'Zendesk',
+        'cm._domainkey': 'Campaign Monitor',
+    }
+
+    MX_TO_DKIM_PROVIDER = {
+        'google': 'Google Workspace',
+        'googlemail': 'Google Workspace',
+        'gmail': 'Google Workspace',
+        'outlook': 'Microsoft 365',
+        'microsoft': 'Microsoft 365',
+        'protection.outlook': 'Microsoft 365',
+        'o365': 'Microsoft 365',
+        'exchange': 'Microsoft 365',
+        'intermedia': 'Microsoft 365',
+        'pphosted': 'Proofpoint',
+        'mimecast': 'Mimecast',
+        'zoho': 'Zoho Mail',
+        'mailgun': 'Mailgun',
+        'sendgrid': 'SendGrid',
+        'amazonses': 'Amazon SES',
+        'fastmail': 'Fastmail',
+        'protonmail': 'ProtonMail',
+        'mx.cloudflare': 'Cloudflare Email',
+    }
+
+    PRIMARY_PROVIDER_SELECTORS = {
+        'Microsoft 365': ['selector1._domainkey', 'selector2._domainkey'],
+        'Google Workspace': ['google._domainkey', 'google2048._domainkey'],
+        'Proofpoint': ['proofpoint._domainkey'],
+        'Mimecast': ['mimecast._domainkey'],
+        'Mailgun': ['mailgun._domainkey'],
+        'SendGrid': ['s1._domainkey', 's2._domainkey', 'sendgrid._domainkey'],
+        'Amazon SES': ['amazonses._domainkey'],
+        'Zoho Mail': ['default._domainkey'],
+        'Fastmail': ['fm1._domainkey', 'fm2._domainkey', 'fm3._domainkey'],
+        'ProtonMail': ['protonmail._domainkey', 'protonmail2._domainkey', 'protonmail3._domainkey'],
+        'Cloudflare Email': ['default._domainkey'],
+    }
+
+    def _classify_selector_provider(self, selector_name: str) -> str:
+        """Map a DKIM selector to its known provider, or 'Unknown' if not recognized."""
+        return self.SELECTOR_PROVIDER_MAP.get(selector_name, 'Unknown')
+
+    def _detect_primary_mail_provider(self, mx_records: list) -> str:
+        """Detect the primary mail platform from MX records for DKIM correlation."""
+        if not mx_records:
+            return 'Unknown'
+        mx_str = " ".join(r for r in mx_records if r).lower()
+        for key, provider in self.MX_TO_DKIM_PROVIDER.items():
+            if key in mx_str:
+                return provider
+        return 'Unknown'
+
+    def analyze_dkim(self, domain: str, mx_records: list = None) -> Dict[str, Any]:
         """Check common DKIM selectors for domain with key quality analysis.
         
         Checks for:
@@ -920,6 +996,8 @@ class DNSAnalyzer:
         - Key length (1024-bit = weak, 2048+ = strong)
         - Key type (rsa vs ed25519)
         - Revoked keys (p= empty)
+        - Provider attribution per selector
+        - Primary mail platform DKIM coverage
         """
         import re
         import base64
@@ -943,6 +1021,10 @@ class DNSAnalyzer:
             "zendesk1._domainkey", "zendesk2._domainkey", "cm._domainkey",
             # Common patterns
             "mx._domainkey", "smtp._domainkey", "mailer._domainkey",
+            # ProtonMail
+            "protonmail._domainkey", "protonmail2._domainkey", "protonmail3._domainkey",
+            # Fastmail
+            "fm1._domainkey", "fm2._domainkey", "fm3._domainkey",
         ]
         
         found_selectors = {}
@@ -1003,10 +1085,11 @@ class DNSAnalyzer:
                     result = future.result()
                     if result:
                         selector_name, records = result
-                        # Analyze keys for this selector
+                        provider = self._classify_selector_provider(selector_name)
                         selector_info = {
                             'records': records,
-                            'key_info': []
+                            'key_info': [],
+                            'provider': provider
                         }
                         for rec in records:
                             key_analysis = analyze_dkim_key(rec)
@@ -1018,8 +1101,34 @@ class DNSAnalyzer:
                 except:
                     pass
         
+        primary_provider = self._detect_primary_mail_provider(mx_records or [])
+        
+        found_providers = set()
+        for sel_name, sel_data in found_selectors.items():
+            p = sel_data.get('provider', 'Unknown')
+            if p != 'Unknown':
+                found_providers.add(p)
+        
+        primary_has_dkim = False
+        primary_dkim_note = ''
+        if primary_provider != 'Unknown':
+            expected_selectors = self.PRIMARY_PROVIDER_SELECTORS.get(primary_provider, [])
+            if expected_selectors:
+                primary_has_dkim = any(s in found_selectors for s in expected_selectors)
+            else:
+                primary_has_dkim = primary_provider in found_providers
+        
+        third_party_only = False
+        if found_selectors and primary_provider != 'Unknown' and not primary_has_dkim:
+            third_party_names = ', '.join(sorted(found_providers)) if found_providers else 'third-party services'
+            third_party_only = True
+            primary_dkim_note = (
+                f'DKIM verified for {third_party_names} only \u2014 '
+                f'no DKIM found for primary mail platform ({primary_provider}). '
+                f'The primary provider may use custom selectors not discoverable through standard checks.'
+            )
+        
         if found_selectors:
-            # Check for any weak keys
             has_weak_key = any('1024-bit' in issue for issue in key_issues)
             has_revoked = any('revoked' in issue for issue in key_issues)
             
@@ -1029,6 +1138,12 @@ class DNSAnalyzer:
             elif has_weak_key:
                 status = 'warning'
                 message = f'Found {len(found_selectors)} DKIM selector(s) with weak key(s) (1024-bit)'
+            elif third_party_only:
+                status = 'partial'
+                if key_strengths:
+                    message = f'Found DKIM for {len(found_selectors)} selector(s) ({", ".join(set(key_strengths))}) but none for primary mail platform ({primary_provider})'
+                else:
+                    message = f'Found DKIM for {len(found_selectors)} selector(s) but none for primary mail platform ({primary_provider})'
             else:
                 status = 'success'
                 if key_strengths:
@@ -1036,7 +1151,6 @@ class DNSAnalyzer:
                 else:
                     message = f'Found DKIM records for {len(found_selectors)} selector(s)'
         else:
-            # Use neutral status - large providers use rotating/non-public selectors
             status = 'info'
             message = 'DKIM not discoverable via common selectors (large providers use rotating selectors)'
         
@@ -1045,7 +1159,12 @@ class DNSAnalyzer:
             'message': message,
             'selectors': found_selectors,
             'key_issues': key_issues,
-            'key_strengths': list(set(key_strengths))
+            'key_strengths': list(set(key_strengths)),
+            'primary_provider': primary_provider,
+            'primary_has_dkim': primary_has_dkim,
+            'third_party_only': third_party_only,
+            'primary_dkim_note': primary_dkim_note,
+            'found_providers': list(sorted(found_providers))
         }
     
     def analyze_mta_sts(self, domain: str) -> Dict[str, Any]:
@@ -2378,7 +2497,7 @@ class DNSAnalyzer:
                 executor.submit(self.get_authoritative_records, domain): 'auth',
                 executor.submit(self.analyze_spf, domain): 'spf',
                 executor.submit(self.analyze_dmarc, domain): 'dmarc',
-                executor.submit(self.analyze_dkim, domain): 'dkim',
+                executor.submit(self.analyze_dkim, domain, None): 'dkim',
                 executor.submit(self.analyze_mta_sts, domain): 'mta_sts',
                 executor.submit(self.analyze_tlsrpt, domain): 'tlsrpt',
                 executor.submit(self.analyze_bimi, domain): 'bimi',
@@ -2414,6 +2533,49 @@ class DNSAnalyzer:
         
         basic = results_map.get('basic', {})
         auth = results_map.get('auth', {})
+        
+        dkim_result = results_map.get('dkim', {'status': 'error'})
+        if isinstance(dkim_result, dict) and dkim_result.get('selectors'):
+            mx_records = basic.get('MX', [])
+            if mx_records:
+                primary_provider = self._detect_primary_mail_provider(mx_records)
+                found_providers = set()
+                for sel_name, sel_data in dkim_result.get('selectors', {}).items():
+                    p = sel_data.get('provider', 'Unknown')
+                    if p != 'Unknown':
+                        found_providers.add(p)
+                
+                primary_has_dkim = False
+                if primary_provider != 'Unknown':
+                    expected_selectors = self.PRIMARY_PROVIDER_SELECTORS.get(primary_provider, [])
+                    if expected_selectors:
+                        primary_has_dkim = any(s in dkim_result['selectors'] for s in expected_selectors)
+                    else:
+                        primary_has_dkim = primary_provider in found_providers
+                
+                dkim_result['primary_provider'] = primary_provider
+                dkim_result['primary_has_dkim'] = primary_has_dkim
+                dkim_result['found_providers'] = list(sorted(found_providers))
+                
+                if dkim_result['selectors'] and primary_provider != 'Unknown' and not primary_has_dkim:
+                    third_party_names = ', '.join(sorted(found_providers)) if found_providers else 'third-party services'
+                    dkim_result['third_party_only'] = True
+                    dkim_result['primary_dkim_note'] = (
+                        f'DKIM verified for {third_party_names} only \u2014 '
+                        f'no DKIM found for primary mail platform ({primary_provider}). '
+                        f'The primary provider may use custom selectors not discoverable through standard checks.'
+                    )
+                    key_strengths = dkim_result.get('key_strengths', [])
+                    dkim_result['status'] = 'partial'
+                    if key_strengths:
+                        dkim_result['message'] = f'Found DKIM for {len(dkim_result["selectors"])} selector(s) ({", ".join(set(key_strengths))}) but none for primary mail platform ({primary_provider})'
+                    else:
+                        dkim_result['message'] = f'Found DKIM for {len(dkim_result["selectors"])} selector(s) but none for primary mail platform ({primary_provider})'
+                else:
+                    dkim_result['third_party_only'] = False
+                    dkim_result['primary_dkim_note'] = ''
+                
+                results_map['dkim'] = dkim_result
         
         # Determine propagation status
         propagation_status = {}
@@ -2848,24 +3010,27 @@ class DNSAnalyzer:
             # SPF -all is intentional for no-mail domains - this is a security feature
             configured_items.append('SPF (no mail allowed - domain declares it sends no email)')
         
-        # Check DKIM (email authentication strengthening)
         dkim = results.get('dkim_analysis', {})
         dkim_status = dkim.get('status')
         dkim_selectors = dkim.get('selectors', {})
+        dkim_third_party_only = dkim.get('third_party_only', False)
         if dkim_status == 'success' and dkim_selectors:
             key_strengths = dkim.get('key_strengths', [])
             if key_strengths:
                 configured_items.append(f'DKIM ({len(dkim_selectors)} selector(s), {", ".join(key_strengths)})')
             else:
                 configured_items.append(f'DKIM ({len(dkim_selectors)} selector(s) verified)')
+        elif dkim_status == 'partial' and dkim_third_party_only:
+            primary = dkim.get('primary_provider', 'primary platform')
+            found_provs = dkim.get('found_providers', [])
+            third_party_names = ', '.join(found_provs) if found_provs else 'third-party'
+            monitoring_items.append(f'DKIM ({third_party_names} only \u2014 not verified for {primary})')
         elif dkim_status == 'warning':
-            # Weak keys or revoked
             key_issues = dkim.get('key_issues', [])
             if any('revoked' in i.lower() for i in key_issues):
                 monitoring_items.append('DKIM (some keys revoked)')
             elif any('1024' in i for i in key_issues):
                 monitoring_items.append('DKIM (weak 1024-bit keys, upgrade to 2048)')
-        # Note: 'info' status means not discoverable - not an issue for large providers
         
         # Check DNSSEC (DNS-verifiable)
         # Note: Unsigned DNSSEC is a deliberate design choice for many large operators
@@ -2986,10 +3151,19 @@ class DNSAnalyzer:
         dmarc_quarantine = dmarc_policy == 'quarantine'
         dkim_ok = results.get('dkim_analysis', {}).get('status') == 'success'
         
-        # DMARC=reject + SPF valid = No impersonation, regardless of DKIM discoverability
         dkim_analysis = results.get('dkim_analysis', {})
         dkim_strong = dkim_analysis.get('status') == 'success' and dkim_analysis.get('key_strengths')
-        dkim_note = ' DKIM keys verified with strong cryptography.' if dkim_strong else ''
+        dkim_third_party_only = dkim_analysis.get('third_party_only', False)
+        dkim_primary_provider = dkim_analysis.get('primary_provider', '')
+        
+        if dkim_strong:
+            dkim_note = ' DKIM keys verified with strong cryptography.'
+        elif dkim_third_party_only:
+            found_provs = dkim_analysis.get('found_providers', [])
+            third_party_names = ', '.join(found_provs) if found_provs else 'third-party services'
+            dkim_note = f' Note: DKIM found for {third_party_names} only \u2014 primary mail platform ({dkim_primary_provider}) DKIM not verified.'
+        else:
+            dkim_note = ''
         
         if spf_ok and dmarc_ok and dmarc_reject:
             verdicts['email'] = f'DMARC policy is reject - spoofed messages will be blocked by receiving servers.{dkim_note}'

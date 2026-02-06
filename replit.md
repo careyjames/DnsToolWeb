@@ -89,6 +89,24 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes (v26.10.7)
 
+### DKIM Primary Platform Correlation (v26.10.8)
+- DKIM selectors now attributed to known providers (MailChimp, Microsoft 365, Google, SendGrid, etc.)
+- Cross-references found DKIM selectors with MX-detected primary mail platform
+- New 'partial' DKIM status when DKIM found only for third-party services (not primary platform)
+- Scorecard: third-party-only DKIM goes to "Monitoring" instead of "Configured"
+- Verdict includes gap note: "DKIM found for X only — primary mail platform (Y) DKIM not verified"
+- UI: provider badges on selectors, "Third-Party Only" badge, warning alert explaining gap
+- MX provider detection expanded: o365, exchange, intermedia patterns for Microsoft-hosted Exchange
+- Honest messaging: "primary provider may use custom selectors not discoverable through standard checks"
+- Fixes false-positive "SECURE" verdicts when only marketing platform DKIM exists (e.g., MailChimp DKIM on Microsoft Exchange domain)
+
+### Expanded RDAP/WHOIS TLD Coverage (v26.10.7)
+- Added 35+ TLDs to both RDAP direct endpoints and WHOIS server mappings
+- English-speaking: .uk, .nz, .ie, .gg, .je, .im, .ph, .in
+- Popular: .co, .me, .ai, .cc, .tv, .ws, .to, .ly, .fm, .eu
+- New gTLDs: .xyz, .online, .site, .store, .cloud, .info, .biz, .mobi, .name
+- All unmapped TLDs still fall back to rdap.org bootstrap service
+
 ### Asset Optimization & UX Fixes (v26.10.5)
 - Self-hosted Font Awesome subset: 54 icons in 5.7KB woff2 (down from 150KB CDN), ~209KB total savings per page
 - fontawesome-subset.min.css (16KB) replaces CDN CSS (81KB+572B)

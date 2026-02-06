@@ -479,14 +479,20 @@
                                     <a href="https://datatracker.ietf.org/doc/html/rfc6376" target="_blank" rel="noopener" class="ms-2 text-muted rfc-link" data-bs-toggle="tooltip" data-bs-html="true" title="<strong>DomainKeys Identified Mail</strong><br>Cryptographic signatures that verify email hasn't been altered in transit." aria-label="Learn about DKIM - RFC 6376"><i class="fas fa-info-circle"></i><span class="rfc-label">RFC 6376</span></a>
                                 </h6>
                                 <div class="mb-2">
-                                    <span class="badge bg-{{ 'success' if results.dkim_analysis.status == 'success' else 'warning' if results.dkim_analysis.status == 'warning' else 'secondary' }}">
-                                        {{ 'Found' if results.dkim_analysis.status == 'success' else 'Weak Keys' if results.dkim_analysis.status == 'warning' else 'Not Discoverable' }}
+                                    <span class="badge bg-{{ 'success' if results.dkim_analysis.status == 'success' else 'warning' if results.dkim_analysis.status in ['warning', 'partial'] else 'secondary' }}">
+                                        {{ 'Found' if results.dkim_analysis.status == 'success' else 'Third-Party Only' if results.dkim_analysis.status == 'partial' else 'Weak Keys' if results.dkim_analysis.status == 'warning' else 'Not Discoverable' }}
                                     </span>
                                     {% if results.dkim_analysis.key_strengths %}
                                         <span class="badge bg-success ms-1">{{ results.dkim_analysis.key_strengths|join(', ') }}</span>
                                     {% endif %}
                                 </div>
                                 <p class="text-muted mb-2 small">{{ results.dkim_analysis.message }}</p>
+                                {% if results.dkim_analysis.get('third_party_only') and results.dkim_analysis.get('primary_dkim_note') %}
+                                    <div class="alert alert-warning py-2 px-3 small mb-2">
+                                        <i class="fas fa-exclamation-triangle me-1"></i>
+                                        {{ results.dkim_analysis.primary_dkim_note }}
+                                    </div>
+                                {% endif %}
                                 {% if results.dkim_analysis.key_issues %}
                                     <div class="mb-2 small">
                                         {% for issue in results.dkim_analysis.key_issues %}
@@ -497,8 +503,11 @@
                                 {% if results.dkim_analysis.selectors %}
                                     {% for selector, selector_data in results.dkim_analysis.selectors.items() %}
                                         <div class="mb-2">
-                                            <small class="text-success d-block">
+                                            <small class="d-block {{ 'text-success' if not results.dkim_analysis.get('third_party_only') or selector_data.get('provider', 'Unknown') == results.dkim_analysis.get('primary_provider', '') else 'text-warning' }}">
                                                 <i class="fas fa-check-circle me-1"></i>{{ selector }}
+                                                {% if selector_data.get('provider') and selector_data.provider != 'Unknown' %}
+                                                    <span class="badge bg-{{ 'info' if selector_data.provider == results.dkim_analysis.get('primary_provider', '') else 'secondary' }} ms-1">{{ selector_data.provider }}</span>
+                                                {% endif %}
                                                 {% if selector_data.key_info %}
                                                     {% for ki in selector_data.key_info %}
                                                         {% if ki.key_bits %}
