@@ -87,7 +87,7 @@ Preferred communication style: Simple, everyday language.
 - Run tests: `python -m pytest tests/ -v`
 - Total: 90 tests covering routes, rate limiting, scorecard logic, error states, schema bindings, consensus conflicts
 
-## Recent Changes (v26.10.6)
+## Recent Changes (v26.10.7)
 
 ### Asset Optimization & UX Fixes (v26.10.5)
 - Self-hosted Font Awesome subset: 54 icons in 5.7KB woff2 (down from 150KB CDN), ~209KB total savings per page
