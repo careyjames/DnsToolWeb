@@ -87,15 +87,23 @@ Preferred communication style: Simple, everyday language.
 - Run tests: `python -m pytest tests/ -v`
 - Total: 90 tests covering routes, rate limiting, scorecard logic, error states, schema bindings, consensus conflicts
 
-## Recent Changes (v26.10.11)
+## Recent Changes (v26.10.12)
+
+### System Font Stack & Performance Hardening (v26.10.12)
+- Native system font stack: SF Pro (macOS/iOS), Segoe UI (Windows), Roboto (Android/Linux)
+- Bootstrap CSS variables overridden: `--bs-body-font-family` and `--bs-font-sans-serif` set in :root
+- Prevents IBM Plex Sans font file downloads even though Bootstrap theme @imports Google Fonts CSS
+- Preconnect hints added to ALL templates: cdn.replit.com, cdn.jsdelivr.net, fonts.googleapis.com, fonts.gstatic.com
+- Critical inline CSS added to ALL pages (index, results, history, stats) for instant first paint
+- Inline CSS includes: body/navbar/container/card/icon base styles + font stack + Bootstrap variable overrides
+- Font rendering: -webkit-font-smoothing:antialiased, -moz-osx-font-smoothing:grayscale, text-rendering:optimizeLegibility
+- Current Lighthouse scores (mobile): Performance 93-94, Accessibility 100, Best Practices 100, SEO 100
 
 ### CSP Fix for Google Fonts & Perfect Best Practices Score (v26.10.11)
 - Root cause: Replit Bootstrap dark theme CSS imports IBM Plex Sans via @import from fonts.googleapis.com
 - CSP was blocking fonts.googleapis.com (style-src) and fonts.gstatic.com (font-src), causing console errors
 - Added fonts.googleapis.com to style-src and fonts.gstatic.com to font-src in CSP
 - Result: Best Practices score restored to 100% (was 74% in DebugBear / 92% in PageSpeed)
-- Current Lighthouse scores (mobile): Performance 93-94, Accessibility 100, Best Practices 100, SEO 100
-- Performance improvement from 88 → 93-94 attributed to cumulative optimizations: self-hosted Font Awesome subset (v26.10.5), CSS minification, reduced page weight (82KB from 260KB)
 
 ### CSS Minification Pipeline
 - Source: `static/css/custom.css` (23KB) → Minified: `static/css/custom.min.css` (15KB), 35% reduction

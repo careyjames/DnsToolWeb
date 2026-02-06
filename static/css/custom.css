@@ -31,6 +31,12 @@
     
     /* Feature sizing */
     --feature-icon-size: 3rem;
+    
+    /* Override Bootstrap's IBM Plex Sans with native system font stack */
+    --bs-body-font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'SF Pro Display',
+                           system-ui, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    --bs-font-sans-serif: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'SF Pro Display',
+                          system-ui, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
 }
 
 body {

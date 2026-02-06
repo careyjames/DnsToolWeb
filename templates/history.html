@@ -7,9 +7,26 @@
     <title>Analysis History - DNS Tool</title>
     <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='favicon.svg') }}">
     <link rel="preconnect" href="https://cdn.replit.com">
+    <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+    <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://cdn.replit.com/agent/bootstrap-agent-dark-theme.min.css" rel="stylesheet">
     <link href="{{ url_for('static', filename='css/custom.min.css') }}" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/fontawesome-subset.min.css') }}">
+    <style nonce="{{ csp_nonce }}">
+        :root{--bs-body-bg:#212529;--bs-body-color:#dee2e6;--bs-primary:#0d6efd;--bs-secondary:#6c757d;--bs-body-font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text','SF Pro Display',system-ui,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;--bs-font-sans-serif:-apple-system,BlinkMacSystemFont,'SF Pro Text','SF Pro Display',system-ui,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif}
+        *,::after,::before{box-sizing:border-box}
+        body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text",system-ui,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;background-color:var(--bs-body-bg);color:var(--bs-body-color);line-height:1.5;-webkit-font-smoothing:antialiased}
+        .navbar{display:flex;padding:.5rem 1rem;background-color:#212529!important}
+        .navbar-brand{color:#fff;text-decoration:none;font-size:1.25rem;padding:.3125rem 0}
+        .container{width:100%;max-width:1140px;margin:0 auto;padding:0 .75rem}
+        .card{background-color:#2b3035;border:1px solid #495057;border-radius:.375rem}
+        .card-body{padding:1rem}
+        .fas,.fab,.far,.fa{display:inline-block;width:1em;height:1em;min-width:1em;vertical-align:-0.125em}
+        .d-none{display:none}
+        .collapse:not(.show){display:none}
+        @media(min-width:992px){.collapse.navbar-collapse{display:flex!important}}
+    </style>
 </head>
 <body>
     <!-- Navigation -->
