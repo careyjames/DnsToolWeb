@@ -1,21 +1,33 @@
-# DNS Tool - Authoritative DNS & Email Security Intelligence
-> A comprehensive DNS intelligence tool for IT professionals
+# DNS Tool - Domain Security Audit & Email Authentication Checker
+> Free domain security audit tool for IT professionals, executives, DNS specialists, and business leaders
 
-DNS Tool provides real-time DNS record analysis, email security validation (SPF, DKIM, DMARC), DNSSEC verification, BIMI checking, and domain intelligence via RDAP.
+DNS Tool provides instant, real-time DNS intelligence reports with email authentication validation (SPF, DKIM, DMARC), DNSSEC chain verification, BIMI brand checking, MTA-STS/TLS-RPT analysis, CAA certificate controls, and domain intelligence via RDAP. Every query fetches fresh data from multiple resolvers — never cached.
+
+## Who It's For
+- **Executives & Board Members**: Clear SECURE / PARTIAL / INSECURE verdicts for cybersecurity posture at a glance
+- **IT Professionals**: Validate SPF, DKIM, DMARC configurations and troubleshoot DNS records
+- **DNS Specialists**: Authoritative nameserver queries, multi-resolver consensus, DNSSEC chain validation
+- **Business & Compliance**: Vendor security assessments, supply chain risk evaluation, brand protection
 
 ## Features
 - Authoritative DNS record lookups (A, AAAA, MX, TXT, NS, SOA, CAA, SRV)
-- Email security analysis (SPF, DKIM, DMARC with full policy parsing)
+- Email authentication analysis (SPF, DKIM, DMARC with full policy parsing)
+- DKIM key strength analysis (1024-bit weak vs 2048-bit+ strong)
 - MTA-STS and TLS-RPT verification (RFC 8461, RFC 8460)
 - DNSSEC chain validation with AD flag verification
-- BIMI record and logo verification
+- BIMI record and logo verification with VMC detection
 - SMTP transport security (STARTTLS, TLS version, cipher strength)
 - CAA record analysis (Certificate Authority Authorization)
+- Enterprise DNS provider detection (Cloudflare, AWS, Google, Akamai, Azure)
+- Multi-resolver consensus verification (Cloudflare, Google, Quad9)
 - Domain registrar information via RDAP
 - Security posture scoring with executive-level verdicts
 
+## Common Search Terms
+Domain security audit, SPF checker, DKIM validator, DMARC lookup, DNSSEC validation tool, email authentication checker, email spoofing protection, cybersecurity posture report, DNS intelligence, domain reputation check, CAA record check, MTA-STS checker, BIMI checker
+
 ## Usage
-Enter any domain name to receive a complete one-page audit of DNS configuration and email security posture.
+Enter any domain name to receive a complete one-page security intelligence report covering DNS configuration, email authentication, and overall security posture.
 
 ## Documentation
 - Full details: /llms-full.txt

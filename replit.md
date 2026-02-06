@@ -87,7 +87,17 @@ Preferred communication style: Simple, everyday language.
 - Run tests: `python -m pytest tests/ -v`
 - Total: 90 tests covering routes, rate limiting, scorecard logic, error states, schema bindings, consensus conflicts
 
-## Recent Changes (v26.9.0)
+## Recent Changes (v26.9.1)
+
+### SEO Multi-Persona Optimization (v26.9.1)
+- Updated title, meta description, OG/Twitter tags with multi-persona keywords
+- Added "Built for Every Level of Your Organization" section targeting executives, IT pros, DNS specialists, business/compliance
+- Added 8-question FAQ accordion with FAQPage schema for rich search results
+- Enhanced JSON-LD with alternateName, audience targeting, applicationSubCategory
+- Added meta keywords tag covering all target search terms
+- Updated llms.txt with persona descriptions and common search terms
+- H1 changed to "Domain Security Audit Tool" for stronger SEO signal
+- Feature cards expanded with richer descriptions (multi-resolver consensus, key strength analysis, enterprise detection)
 
 ### DKIM Validation & Scoring Integration (v26.9.0)
 - Comprehensive DKIM selector discovery: 28+ selectors covering major ESPs (Microsoft 365, Google, SendGrid, Mailchimp, etc.)

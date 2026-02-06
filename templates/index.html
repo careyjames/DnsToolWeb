@@ -7,8 +7,9 @@
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <title>DNS Tool - DNS & Email Security Intelligence</title>
-    <meta name="description" content="Comprehensive DNS intelligence tool for IT professionals. Check SPF, DKIM, DMARC, DNSSEC, BIMI, and more. Get a complete security posture report in seconds.">
+    <title>DNS Tool - Domain Security Audit & Email Authentication Checker | SPF DKIM DMARC DNSSEC</title>
+    <meta name="description" content="Free domain security audit tool. Check SPF, DKIM, DMARC, DNSSEC, BIMI, MTA-STS, and CAA records instantly. Executive-ready security posture reports for IT professionals, DNS specialists, and business leaders. Trusted by government agencies and enterprises worldwide.">
+    <meta name="keywords" content="DNS lookup, SPF checker, DKIM validator, DMARC lookup, DNSSEC validation, domain security audit, email authentication, email spoofing protection, cybersecurity posture report, DNS intelligence, BIMI checker, MTA-STS, CAA record check, domain reputation, email security assessment">
     
     <!-- Preconnect to external domains for faster loading -->
     <link rel="preconnect" href="https://cdn.replit.com" crossorigin>
@@ -20,16 +21,16 @@
     <!-- Facebook / Open Graph -->
     <meta property="og:url" content="https://dnstool.it-help.tech/">
     <meta property="og:type" content="website">
-    <meta property="og:title" content="DNS Tool - DNS & Email Security Intelligence">
-    <meta property="og:description" content="Comprehensive DNS intelligence for IT professionals. Check SPF, DKIM, DMARC, DNSSEC, BIMI and get a complete security posture report in seconds.">
+    <meta property="og:title" content="DNS Tool - Domain Security Audit & Email Authentication Checker">
+    <meta property="og:description" content="Free domain security audit. Check SPF, DKIM, DMARC, DNSSEC, BIMI, MTA-STS instantly. Executive-ready security posture reports trusted by government agencies and enterprises.">
     <meta property="og:image" content="https://dnstool.it-help.tech/static/images/og-image.png">
     
     <!-- Twitter -->
     <meta name="twitter:card" content="summary_large_image">
     <meta property="twitter:domain" content="dnstool.it-help.tech">
     <meta property="twitter:url" content="https://dnstool.it-help.tech/">
-    <meta name="twitter:title" content="DNS Tool - DNS & Email Security Intelligence">
-    <meta name="twitter:description" content="Comprehensive DNS intelligence for IT professionals. Check SPF, DKIM, DMARC, DNSSEC, BIMI and get a complete security posture report in seconds.">
+    <meta name="twitter:title" content="DNS Tool - Domain Security Audit & Email Authentication Checker">
+    <meta name="twitter:description" content="Free domain security audit. Check SPF, DKIM, DMARC, DNSSEC, BIMI, MTA-STS instantly. Executive-ready security posture reports trusted by government agencies and enterprises.">
     <meta name="twitter:image" content="https://dnstool.it-help.tech/static/images/og-image.png">
     
     <!-- JSON-LD Schema -->
@@ -37,11 +38,17 @@
     {
         "@context": "https://schema.org",
         "@type": "WebApplication",
-        "name": "DNS Tool",
-        "description": "Comprehensive DNS analysis and email security intelligence tool for IT professionals. Check SPF, DKIM, DMARC, DNSSEC, BIMI, and get a complete security posture report.",
+        "name": "DNS Tool - Domain Security Audit",
+        "alternateName": ["DNS Checker", "SPF Checker", "DMARC Lookup", "DKIM Validator", "DNSSEC Checker", "Email Security Audit Tool"],
+        "description": "Free domain security audit tool for IT professionals, executives, and DNS specialists. Check SPF, DKIM, DMARC, DNSSEC, BIMI, MTA-STS, TLS-RPT, and CAA records. Get executive-ready security posture reports instantly.",
         "url": "https://dnstool.it-help.tech",
         "applicationCategory": "SecurityApplication",
+        "applicationSubCategory": "DNS Security Analysis",
         "operatingSystem": "Web Browser",
+        "audience": {
+            "@type": "Audience",
+            "audienceType": "IT Professionals, Security Analysts, Business Executives, DNS Administrators"
+        },
         "offers": {
             "@type": "Offer",
             "price": "0",
@@ -65,6 +72,80 @@
             "target": "https://dnstool.it-help.tech/analyze?domain={domain}",
             "query-input": "required name=domain"
         }
+    }
+    </script>
+    
+    <!-- FAQ Schema for rich search results -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "FAQPage",
+        "mainEntity": [
+            {
+                "@type": "Question",
+                "name": "What is a domain security audit?",
+                "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "A domain security audit examines your domain's DNS configuration, email authentication records (SPF, DKIM, DMARC), encryption settings (DNSSEC, MTA-STS), and certificate controls (CAA). It reveals whether your domain is protected against email spoofing, DNS hijacking, and brand impersonation."
+                }
+            },
+            {
+                "@type": "Question",
+                "name": "How do I check if my email can be spoofed?",
+                "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "Enter your domain name into DNS Tool and click Analyze. It checks your SPF record (which servers can send email as you), DMARC policy (what happens to unauthorized emails), and DKIM keys (cryptographic email signatures). A DMARC policy of reject provides the strongest protection against email spoofing."
+                }
+            },
+            {
+                "@type": "Question",
+                "name": "What do SPF, DKIM, and DMARC mean?",
+                "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "SPF (Sender Policy Framework) lists which mail servers are authorized to send email for your domain. DKIM (DomainKeys Identified Mail) adds a cryptographic signature to emails proving they haven't been tampered with. DMARC (Domain-based Message Authentication) tells receiving mail servers what to do when SPF or DKIM checks fail."
+                }
+            },
+            {
+                "@type": "Question",
+                "name": "What is DNSSEC and why does it matter?",
+                "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "DNSSEC (DNS Security Extensions) adds cryptographic signatures to DNS responses, proving they haven't been tampered with in transit. Without DNSSEC, attackers could redirect your domain's traffic to malicious servers through DNS hijacking or cache poisoning."
+                }
+            },
+            {
+                "@type": "Question",
+                "name": "Is this tool free to use?",
+                "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "Yes, DNS Tool is completely free. There are no sign-ups, no accounts, and no data collection. Every analysis queries DNS records in real-time from multiple resolvers (Cloudflare, Google, Quad9) to ensure you always see the most current data."
+                }
+            },
+            {
+                "@type": "Question",
+                "name": "How is this different from other DNS lookup tools?",
+                "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "Most DNS tools show raw records. DNS Tool provides a complete security intelligence report including multi-resolver consensus verification, email authentication scoring, DKIM key strength analysis, enterprise DNS provider detection, SMTP transport encryption checks, BIMI brand verification, and a clear SECURE / PARTIAL / INSECURE verdict designed for both technical and executive audiences."
+                }
+            },
+            {
+                "@type": "Question",
+                "name": "Can I use this to audit a competitor's or vendor's domain?",
+                "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "Absolutely. DNS records are public information. This is commonly used for vendor security assessments, supply chain risk evaluation, due diligence before partnerships, and competitive analysis."
+                }
+            },
+            {
+                "@type": "Question",
+                "name": "What are BIMI, MTA-STS, and CAA records?",
+                "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "BIMI (Brand Indicators for Message Identification) displays your brand logo next to emails in recipients' inboxes. MTA-STS (Mail Transfer Agent Strict Transport Security) enforces encrypted email delivery. CAA (Certificate Authority Authorization) restricts which certificate authorities can issue SSL certificates for your domain."
+                }
+            }
+        ]
     }
     </script>
     
@@ -144,10 +225,13 @@
         <!-- Header -->
         <div class="text-center mb-5">
             <h1 class="display-4 mb-3">
-                DNS Tool
+                Domain Security Audit Tool
             </h1>
             <p class="lead text-muted">
-                Comprehensive DNS record analysis, email security validation, and domain DNS intelligence report
+                Instant DNS intelligence reports with email authentication checks, DNSSEC validation, and executive-ready security posture scoring
+            </p>
+            <p class="text-muted small">
+                Analyze SPF, DKIM, DMARC, DNSSEC, BIMI, MTA-STS, TLS-RPT, and CAA records in one scan. Always fresh, never cached.
             </p>
         </div>
 
@@ -215,7 +299,7 @@
                             <i class="fas fa-server fa-2x text-primary"></i>
                         </div>
                         <h3 class="card-title h5">DNS Records</h3>
-                        <p class="card-text text-muted">A, AAAA, MX, TXT, and NS records from multiple resolvers</p>
+                        <p class="card-text text-muted">A, AAAA, MX, TXT, and NS records from multiple resolvers with multi-resolver consensus verification</p>
                     </div>
                 </div>
             </div>
@@ -225,8 +309,8 @@
                         <div class="feature-icon mb-3">
                             <i class="fas fa-shield-alt fa-2x text-success"></i>
                         </div>
-                        <h3 class="card-title h5">Email Security</h3>
-                        <p class="card-text text-muted">SPF, DMARC, and DKIM validation with security recommendations</p>
+                        <h3 class="card-title h5">Email Authentication</h3>
+                        <p class="card-text text-muted">SPF, DMARC, and DKIM validation with key strength analysis and email spoofing protection assessment</p>
                     </div>
                 </div>
             </div>
@@ -236,8 +320,8 @@
                         <div class="feature-icon mb-3">
                             <i class="fas fa-building fa-2x text-info"></i>
                         </div>
-                        <h3 class="card-title h5">Registrar Info</h3>
-                        <p class="card-text text-muted">Domain registration details via RDAP and WHOIS lookup</p>
+                        <h3 class="card-title h5">Domain Intelligence</h3>
+                        <p class="card-text text-muted">Domain registration details via RDAP, enterprise infrastructure detection, and DNS provider analysis</p>
                     </div>
                 </div>
             </div>
@@ -245,10 +329,159 @@
                 <div class="card h-100 border-0 bg-transparent">
                     <div class="card-body text-center">
                         <div class="feature-icon mb-3">
-                            <i class="fas fa-network-wired fa-2x text-warning"></i>
+                            <i class="fas fa-lock fa-2x text-warning"></i>
                         </div>
-                        <h3 class="card-title h5">Authoritative</h3>
-                        <p class="card-text text-muted">Direct queries to authoritative nameservers for accuracy</p>
+                        <h3 class="card-title h5">Security Posture</h3>
+                        <p class="card-text text-muted">DNSSEC validation, BIMI verification, MTA-STS, TLS-RPT, CAA checks, and transport encryption analysis</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Who It's For section -->
+        <div class="row mt-4 mb-5">
+            <div class="col-12">
+                <h2 class="text-center mb-4">Built for Every Level of Your Organization</h2>
+                <p class="text-center text-muted mb-4">Whether you need a quick domain reputation check or a deep DNS infrastructure analysis, DNS Tool delivers the right level of detail.</p>
+            </div>
+            <div class="col-md-6 col-lg-3 mb-4">
+                <div class="card h-100 bg-dark border-secondary">
+                    <div class="card-body">
+                        <div class="mb-2"><i class="fas fa-briefcase fa-lg text-primary"></i></div>
+                        <h3 class="h6 text-primary">Executives & Board Members</h3>
+                        <p class="card-text text-muted small mb-0">Clear SECURE / PARTIAL / INSECURE verdicts that communicate cybersecurity posture at a glance. Understand your domain security risk without technical jargon.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 col-lg-3 mb-4">
+                <div class="card h-100 bg-dark border-secondary">
+                    <div class="card-body">
+                        <div class="mb-2"><i class="fas fa-laptop-code fa-lg text-success"></i></div>
+                        <h3 class="h6 text-success">IT Professionals</h3>
+                        <p class="card-text text-muted small mb-0">Validate SPF, DKIM, and DMARC configurations. Check email authentication, verify DNSSEC, and troubleshoot DNS records across multiple resolvers.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 col-lg-3 mb-4">
+                <div class="card h-100 bg-dark border-secondary">
+                    <div class="card-body">
+                        <div class="mb-2"><i class="fas fa-network-wired fa-lg text-warning"></i></div>
+                        <h3 class="h6 text-warning">DNS Specialists</h3>
+                        <p class="card-text text-muted small mb-0">Authoritative nameserver queries, multi-resolver consensus verification, DNSSEC chain validation, and enterprise DNS provider detection with infrastructure analysis.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 col-lg-3 mb-4">
+                <div class="card h-100 bg-dark border-secondary">
+                    <div class="card-body">
+                        <div class="mb-2"><i class="fas fa-users fa-lg text-info"></i></div>
+                        <h3 class="h6 text-info">Business & Compliance</h3>
+                        <p class="card-text text-muted small mb-0">Verify your company's email is protected from spoofing. Check if your domain can be impersonated. Assess brand protection with BIMI and certificate authority controls.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- FAQ Section -->
+        <div class="row mt-4 mb-5">
+            <div class="col-lg-8 mx-auto">
+                <h2 class="text-center mb-4">Frequently Asked Questions</h2>
+                <div class="accordion" id="faqAccordion">
+                    <div class="accordion-item bg-dark border-secondary">
+                        <h3 class="accordion-header">
+                            <button class="accordion-button collapsed bg-dark text-light" type="button" data-bs-toggle="collapse" data-bs-target="#faq1">
+                                What is a domain security audit?
+                            </button>
+                        </h3>
+                        <div id="faq1" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                            <div class="accordion-body text-muted small">
+                                A domain security audit examines your domain's DNS configuration, email authentication records (SPF, DKIM, DMARC), encryption settings (DNSSEC, MTA-STS), and certificate controls (CAA). It reveals whether your domain is protected against email spoofing, DNS hijacking, and brand impersonation. DNS Tool performs all these checks in a single scan and delivers a clear security posture verdict.
+                            </div>
+                        </div>
+                    </div>
+                    <div class="accordion-item bg-dark border-secondary">
+                        <h3 class="accordion-header">
+                            <button class="accordion-button collapsed bg-dark text-light" type="button" data-bs-toggle="collapse" data-bs-target="#faq2">
+                                How do I check if my email can be spoofed?
+                            </button>
+                        </h3>
+                        <div id="faq2" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                            <div class="accordion-body text-muted small">
+                                Enter your domain name above and click Analyze. DNS Tool checks your SPF record (which servers can send email as you), DMARC policy (what happens to unauthorized emails), and DKIM keys (cryptographic email signatures). If any of these are missing or misconfigured, the report will flag it and explain the risk in plain language. A DMARC policy of "reject" provides the strongest protection against email spoofing.
+                            </div>
+                        </div>
+                    </div>
+                    <div class="accordion-item bg-dark border-secondary">
+                        <h3 class="accordion-header">
+                            <button class="accordion-button collapsed bg-dark text-light" type="button" data-bs-toggle="collapse" data-bs-target="#faq3">
+                                What do SPF, DKIM, and DMARC mean?
+                            </button>
+                        </h3>
+                        <div id="faq3" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                            <div class="accordion-body text-muted small">
+                                <strong>SPF</strong> (Sender Policy Framework) lists which mail servers are authorized to send email for your domain. <strong>DKIM</strong> (DomainKeys Identified Mail) adds a cryptographic signature to emails proving they haven't been tampered with. <strong>DMARC</strong> (Domain-based Message Authentication) tells receiving mail servers what to do when SPF or DKIM checks fail — it can monitor, quarantine, or reject suspicious emails. Together, these three protocols form the foundation of email authentication and spoofing prevention.
+                            </div>
+                        </div>
+                    </div>
+                    <div class="accordion-item bg-dark border-secondary">
+                        <h3 class="accordion-header">
+                            <button class="accordion-button collapsed bg-dark text-light" type="button" data-bs-toggle="collapse" data-bs-target="#faq4">
+                                What is DNSSEC and why does it matter?
+                            </button>
+                        </h3>
+                        <div id="faq4" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                            <div class="accordion-body text-muted small">
+                                DNSSEC (DNS Security Extensions) adds cryptographic signatures to DNS responses, proving they haven't been tampered with in transit. Without DNSSEC, attackers could redirect your domain's traffic to malicious servers through DNS hijacking or cache poisoning. DNS Tool validates the full DNSSEC chain of trust and checks the AD (Authenticated Data) flag across multiple resolvers. Many enterprise organizations use alternative security measures like enterprise-grade DNS providers with built-in DDoS protection when DNSSEC is not deployed.
+                            </div>
+                        </div>
+                    </div>
+                    <div class="accordion-item bg-dark border-secondary">
+                        <h3 class="accordion-header">
+                            <button class="accordion-button collapsed bg-dark text-light" type="button" data-bs-toggle="collapse" data-bs-target="#faq5">
+                                Is this tool free to use?
+                            </button>
+                        </h3>
+                        <div id="faq5" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                            <div class="accordion-body text-muted small">
+                                Yes, DNS Tool is completely free. There are no sign-ups, no accounts, and no data collection. Every analysis queries DNS records in real-time from multiple resolvers (Cloudflare, Google, Quad9) to ensure you always see the most current data. Built by <a href="https://www.it-help.tech" target="_blank" class="text-info">IT Help San Diego Inc.</a>, a managed IT services company specializing in cybersecurity and DNS infrastructure.
+                            </div>
+                        </div>
+                    </div>
+                    <div class="accordion-item bg-dark border-secondary">
+                        <h3 class="accordion-header">
+                            <button class="accordion-button collapsed bg-dark text-light" type="button" data-bs-toggle="collapse" data-bs-target="#faq6">
+                                How is this different from other DNS lookup tools?
+                            </button>
+                        </h3>
+                        <div id="faq6" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                            <div class="accordion-body text-muted small">
+                                Most DNS tools show raw records. DNS Tool goes further with a complete security intelligence report: multi-resolver consensus verification across Cloudflare, Google, and Quad9; email authentication scoring; DKIM key strength analysis; enterprise DNS provider detection; SMTP transport encryption checks; BIMI brand verification; and a clear SECURE / PARTIAL / INSECURE verdict designed for both technical and executive audiences. Every query fetches fresh data — we never show cached results.
+                            </div>
+                        </div>
+                    </div>
+                    <div class="accordion-item bg-dark border-secondary">
+                        <h3 class="accordion-header">
+                            <button class="accordion-button collapsed bg-dark text-light" type="button" data-bs-toggle="collapse" data-bs-target="#faq7">
+                                Can I use this to audit a competitor's or vendor's domain?
+                            </button>
+                        </h3>
+                        <div id="faq7" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                            <div class="accordion-body text-muted small">
+                                Absolutely. DNS records are public information, so analyzing any domain is perfectly legitimate. This is commonly used for vendor security assessments, supply chain risk evaluation, due diligence before partnerships, and competitive analysis. The security posture report gives you a quick view of how seriously an organization takes their email and DNS security.
+                            </div>
+                        </div>
+                    </div>
+                    <div class="accordion-item bg-dark border-secondary">
+                        <h3 class="accordion-header">
+                            <button class="accordion-button collapsed bg-dark text-light" type="button" data-bs-toggle="collapse" data-bs-target="#faq8">
+                                What are BIMI, MTA-STS, and CAA records?
+                            </button>
+                        </h3>
+                        <div id="faq8" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                            <div class="accordion-body text-muted small">
+                                <strong>BIMI</strong> (Brand Indicators for Message Identification) displays your brand logo next to emails in recipients' inboxes, fighting phishing by making legitimate emails visually identifiable. <strong>MTA-STS</strong> (Mail Transfer Agent Strict Transport Security) enforces encrypted email delivery, preventing downgrade attacks. <strong>CAA</strong> (Certificate Authority Authorization) restricts which certificate authorities can issue SSL certificates for your domain, preventing unauthorized certificate issuance. These are advanced security controls that complement SPF, DKIM, and DMARC.
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
