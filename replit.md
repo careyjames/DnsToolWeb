@@ -92,9 +92,13 @@ Preferred communication style: Simple, everyday language.
 ### Asset Optimization & UX Fixes (v26.10.5)
 - Self-hosted Font Awesome subset: 54 icons in 5.7KB woff2 (down from 150KB CDN), ~209KB total savings per page
 - fontawesome-subset.min.css (16KB) replaces CDN CSS (81KB+572B)
+- @font-face with font-display:swap for faster icon rendering (no invisible text flash)
+- Removed unused "Font Awesome 6 Brands" font-family reference (no brand icons used)
 - Removed cdnjs.cloudflare.com preconnect/dns-prefetch (no longer needed)
+- CSP tightened: removed stale cdnjs.cloudflare.com and fonts.googleapis.com from style-src/font-src
 - Loading overlay messages now use CSS @keyframes animation instead of JS setInterval (continues during page navigation)
 - Removed redundant Enter key handler in main.js (fixes Safari form submission)
+- Added /statistics → /stats redirect for URL consistency
 - CSS Minification: custom.css (23KB) → custom.min.css (15KB)
 
 ### Visitor Country Tracking (v26.10.0)
