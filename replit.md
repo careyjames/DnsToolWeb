@@ -87,7 +87,15 @@ Preferred communication style: Simple, everyday language.
 - Run tests: `python -m pytest tests/ -v`
 - Total: 90 tests covering routes, rate limiting, scorecard logic, error states, schema bindings, consensus conflicts
 
-## Recent Changes (v26.10.0)
+## Recent Changes (v26.10.5)
+
+### Asset Optimization & UX Fixes (v26.10.5)
+- Self-hosted Font Awesome subset: 54 icons in 5.7KB woff2 (down from 150KB CDN), ~209KB total savings per page
+- fontawesome-subset.min.css (16KB) replaces CDN CSS (81KB+572B)
+- Removed cdnjs.cloudflare.com preconnect/dns-prefetch (no longer needed)
+- Loading overlay messages now use CSS @keyframes animation instead of JS setInterval (continues during page navigation)
+- Removed redundant Enter key handler in main.js (fixes Safari form submission)
+- CSS Minification: custom.css (23KB) → custom.min.css (15KB)
 
 ### Visitor Country Tracking (v26.10.0)
 - Added country_code and country_name columns to DomainAnalysis model
