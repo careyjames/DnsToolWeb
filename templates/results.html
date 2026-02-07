@@ -353,7 +353,7 @@
                             </div>
                             <div class="col-md-3">
                                 <small class="text-uppercase text-muted fw-bold d-block" style="font-size: 0.7rem;">DNS Hosting</small>
-                                <div class="text-truncate">
+                                <div>
                                     <i class="fas fa-network-wired text-primary me-2"></i>
                                     <strong>{{ results.hosting_summary.dns_hosting if results.hosting_summary else 'Standard' }}</strong>
                                     {% if results.dns_infrastructure and results.dns_infrastructure.provider_tier == 'enterprise' %}
