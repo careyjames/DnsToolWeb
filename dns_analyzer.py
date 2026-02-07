@@ -993,11 +993,19 @@ class DNSAnalyzer:
         'Cloudflare Email': ['default._domainkey'],
     }
 
-    SPF_TO_PROVIDER = {
+    SPF_MAILBOX_PROVIDERS = {
         'spf.protection.outlook': 'Microsoft 365',
         '_spf.google': 'Google Workspace',
         'spf.intermedia': 'Microsoft 365',
         'emg.intermedia': 'Microsoft 365',
+        'zoho.com': 'Zoho Mail',
+        'messagingengine.com': 'Fastmail',
+        'protonmail.ch': 'ProtonMail',
+        'mimecast': 'Mimecast',
+        'pphosted': 'Proofpoint',
+    }
+
+    SPF_ANCILLARY_SENDERS = {
         'servers.mcsv.net': 'MailChimp',
         'spf.mandrillapp': 'MailChimp',
         'sendgrid.net': 'SendGrid',
@@ -1009,13 +1017,8 @@ class DNSAnalyzer:
         'spf.sendinblue': 'Brevo (Sendinblue)',
         'spf.mailjet': 'Mailjet',
         'spf.postmarkapp': 'Postmark',
-        'spf.freshdesk': 'Freshdesk',
-        'zoho.com': 'Zoho Mail',
-        'messagingengine.com': 'Fastmail',
-        'protonmail.ch': 'ProtonMail',
         'spf.mtasv.net': 'Postmark',
-        'mimecast': 'Mimecast',
-        'pphosted': 'Proofpoint',
+        'spf.freshdesk': 'Freshdesk',
     }
 
     def _classify_selector_provider(self, selector_name: str, primary_provider: str = None) -> str:
@@ -1076,10 +1079,15 @@ class DNSAnalyzer:
         spf_provider = None
         if spf_record:
             spf_lower = spf_record.lower()
-            for key, provider in self.SPF_TO_PROVIDER.items():
+            for key, provider in self.SPF_MAILBOX_PROVIDERS.items():
                 if key in spf_lower:
                     spf_provider = provider
                     break
+            if not spf_provider:
+                for key, provider in self.SPF_ANCILLARY_SENDERS.items():
+                    if key in spf_lower:
+                        spf_provider = provider
+                        break
         
         if mx_provider and mx_provider in self.SECURITY_GATEWAYS:
             if spf_provider and spf_provider != mx_provider:
