@@ -1071,8 +1071,8 @@ class DNSAnalyzer:
         'powerdmarc.com': {'name': 'PowerSPF', 'vendor': 'PowerDMARC'},
         'dmarcly.com': {'name': 'DMARCLY', 'vendor': 'DMARCLY'},
         'dmarcduty.com': {'name': 'DynamicSPF', 'vendor': 'Dmarcduty'},
-        'gpphosted.com': {'name': 'Proofpoint EFD (Gov)', 'vendor': 'Proofpoint'},
-        'pphosted.com': {'name': 'Proofpoint EFD', 'vendor': 'Proofpoint'},
+        'spf.has.gpphosted.com': {'name': 'Proofpoint EFD (Gov)', 'vendor': 'Proofpoint'},
+        'spf.has.pphosted.com': {'name': 'Proofpoint EFD', 'vendor': 'Proofpoint'},
     }
 
     DYNAMIC_SERVICES_PROVIDERS = {
