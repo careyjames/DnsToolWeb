@@ -2286,11 +2286,15 @@ class DNSAnalyzer:
             if count > 0:
                 matched_enterprise[key] = (info, count)
         
+        secondary_providers = []
         if matched_enterprise:
             best_key = max(matched_enterprise, key=lambda k: matched_enterprise[k][1])
             provider_info = matched_enterprise[best_key][0]
             provider_tier = 'enterprise'
             provider_features = provider_info.get('features', [])
+            for key, (info, count) in matched_enterprise.items():
+                if key != best_key:
+                    secondary_providers.append(info['name'])
         
         # Check self-hosted enterprise DNS (major tech companies)
         if not provider_info:
@@ -2343,6 +2347,8 @@ class DNSAnalyzer:
         if provider_tier == 'enterprise' and provider_info:
             alt_security_score += 2
             alt_security_items.append(f"{provider_info['name']} (enterprise DNS with DDoS protection)")
+            for sp in secondary_providers:
+                alt_security_items.append(f"{sp} (secondary/backup DNS)")
         elif provider_tier == 'managed' and provider_info:
             alt_security_score += 1
             alt_security_items.append(f"{provider_info['name']} (managed DNS)")
