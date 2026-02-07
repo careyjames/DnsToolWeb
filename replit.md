@@ -92,7 +92,14 @@ Preferred communication style: Simple, everyday language.
 ### Testing
 - **pytest**: Unit and integration test framework.
 
-## Recent Changes (v26.10.17)
+## Recent Changes (v26.10.18)
+
+### Context-Aware DKIM Selector Attribution (v26.10.18)
+- DKIM selector names like `selector1`/`selector2` no longer falsely attributed to Microsoft 365 when MX records show self-hosted email
+- Apple.com was incorrectly showing "Microsoft 365" badge on DKIM selectors — now shows no provider badge (self-hosted)
+- Added `iphmx` as Proofpoint MX pattern (previously only `pphosted` was detected)
+- Deloitte (Proofpoint via iphmx.com) now correctly shows "Proofpoint (inferred)" on ambiguous selectors
+- Ambiguous selectors (`selector1`, `selector2`, `s1`, `s2`, `k1`, `k2`, `default`) are only attributed to their "known" provider when MX confirms that provider
 
 ### Self-Hosted Enterprise DNS & Provider Expansion (v26.10.17)
 - Self-hosted enterprise DNS detection now synced to hosting summary card (Apple, Meta, Intel, Salesforce, Cisco)
