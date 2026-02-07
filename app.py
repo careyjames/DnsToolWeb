@@ -15,7 +15,7 @@ from sqlalchemy import JSON
 from dns_analyzer import DNSAnalyzer
 
 # App version - format: YY.M.patch (bump last number for small changes)
-APP_VERSION = "26.10.21"
+APP_VERSION = "26.10.22"
 
 
 class TraceIDFilter(logging.Filter):
@@ -1046,6 +1046,7 @@ def view_analysis_static(analysis_id):
         'ns_delegation_analysis': {'status': 'unknown', 'message': 'Data not available in cached view'},
         'hosting_summary': {},
         'dns_infrastructure': {},
+        'email_security_mgmt': {'actively_managed': False, 'providers': [], 'spf_flattening': None, 'provider_count': 0},
         'posture': None,
         'domain_exists': True,
         'smtp_tls_analysis': {},

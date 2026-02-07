@@ -1021,6 +1021,139 @@ class DNSAnalyzer:
         'spf.freshdesk': 'Freshdesk',
     }
 
+    DMARC_MONITORING_PROVIDERS = {
+        'ondmarc.com': {'name': 'OnDMARC', 'vendor': 'Red Sift', 'capabilities': ['DMARC reporting', 'TLS-RPT reporting', 'SPF management']},
+        'valimail.com': {'name': 'Valimail Enforce', 'vendor': 'Valimail', 'capabilities': ['DMARC reporting', 'DMARC enforcement', 'SPF management']},
+        'dmarcian.com': {'name': 'Dmarcian', 'vendor': 'Dmarcian', 'capabilities': ['DMARC reporting', 'DMARC analytics']},
+        'easydmarc.com': {'name': 'EasyDMARC', 'vendor': 'EasyDMARC', 'capabilities': ['DMARC reporting', 'DMARC analytics']},
+        'powerdmarc.com': {'name': 'PowerDMARC', 'vendor': 'PowerDMARC', 'capabilities': ['DMARC reporting', 'DMARC enforcement']},
+        'agari.com': {'name': 'Agari', 'vendor': 'Fortra (HelpSystems)', 'capabilities': ['DMARC reporting', 'brand protection']},
+        'dmarc-analyzer.com': {'name': 'DMARC Analyzer', 'vendor': 'Mimecast', 'capabilities': ['DMARC reporting', 'DMARC analytics']},
+        'postmarkapp.com': {'name': 'Postmark DMARC', 'vendor': 'ActiveCampaign', 'capabilities': ['DMARC reporting']},
+        'uriports.com': {'name': 'URIports', 'vendor': 'URIports', 'capabilities': ['DMARC reporting', 'TLS-RPT reporting']},
+        'fraudmarc.com': {'name': 'Fraudmarc', 'vendor': 'Fraudmarc', 'capabilities': ['DMARC reporting', 'SPF management']},
+        'mxtoolbox.com': {'name': 'MxToolbox', 'vendor': 'MxToolbox', 'capabilities': ['DMARC reporting']},
+        'sendmarc.com': {'name': 'Sendmarc', 'vendor': 'Sendmarc', 'capabilities': ['DMARC reporting', 'DMARC enforcement']},
+        'proofpoint.com': {'name': 'Proofpoint EFD', 'vendor': 'Proofpoint', 'capabilities': ['DMARC reporting', 'email fraud defense']},
+        'redsift.com': {'name': 'Red Sift', 'vendor': 'Red Sift', 'capabilities': ['DMARC reporting']},
+        'mailhardener.com': {'name': 'Mailhardener', 'vendor': 'Mailhardener', 'capabilities': ['DMARC reporting', 'MTA-STS hosting']},
+        'dmarc.postmarkapp.com': {'name': 'Postmark DMARC', 'vendor': 'ActiveCampaign', 'capabilities': ['DMARC reporting']},
+        'emailsecuritycheck.net': {'name': 'DMARC Report', 'vendor': 'DMARC Report', 'capabilities': ['DMARC reporting']},
+        'app.dmarcdigests.com': {'name': 'DMARC Digests', 'vendor': 'DMARC Digests', 'capabilities': ['DMARC reporting']},
+        'dmarc.report': {'name': 'DMARC Report', 'vendor': 'DMARC Report', 'capabilities': ['DMARC reporting']},
+    }
+
+    SPF_FLATTENING_PROVIDERS = {
+        'ondmarc.com': {'name': 'OnDMARC', 'vendor': 'Red Sift'},
+        'smart.ondmarc.com': {'name': 'OnDMARC', 'vendor': 'Red Sift'},
+        'vali.email': {'name': 'Valimail Enforce', 'vendor': 'Valimail'},
+        'valimail.com': {'name': 'Valimail Enforce', 'vendor': 'Valimail'},
+        'autospf.com': {'name': 'AutoSPF', 'vendor': 'AutoSPF'},
+        'sendmarc.com': {'name': 'Sendmarc', 'vendor': 'Sendmarc'},
+        'fraudmarc.com': {'name': 'Fraudmarc', 'vendor': 'Fraudmarc'},
+        'dmarcian.com': {'name': 'Dmarcian', 'vendor': 'Dmarcian'},
+    }
+
+    def _detect_email_security_management(self, spf_analysis: dict, dmarc_analysis: dict, tlsrpt_analysis: dict) -> dict:
+        """Detect email security management providers from DMARC rua/ruf, TLS-RPT rua, and SPF includes.
+        
+        Extracts the operational security partner network from DNS records — intelligence
+        most tools ignore.
+        """
+        import re
+        providers = {}
+        details = []
+
+        def _extract_mailto_domains(rua_string):
+            """Extract domains from rua/ruf mailto: URIs (may be comma-separated)."""
+            if not rua_string:
+                return []
+            domains = []
+            mailto_matches = re.findall(r'mailto:([^,;\s]+)', rua_string, re.IGNORECASE)
+            for addr in mailto_matches:
+                if '@' in addr:
+                    domain = addr.split('@')[1].strip().rstrip('.')
+                    domains.append(domain)
+            return domains
+
+        def _match_provider(domain):
+            """Match a domain against known monitoring providers."""
+            domain_lower = domain.lower()
+            for pattern, info in self.DMARC_MONITORING_PROVIDERS.items():
+                if domain_lower == pattern or domain_lower.endswith('.' + pattern):
+                    return info
+            return None
+
+        dmarc_rua = dmarc_analysis.get('rua', '')
+        dmarc_ruf = dmarc_analysis.get('ruf', '')
+        dmarc_rua_domains = _extract_mailto_domains(dmarc_rua)
+        dmarc_ruf_domains = _extract_mailto_domains(dmarc_ruf)
+
+        for domain in dmarc_rua_domains + dmarc_ruf_domains:
+            provider = _match_provider(domain)
+            if provider and provider['name'] not in providers:
+                source = 'DMARC forensic reports (ruf)' if domain in dmarc_ruf_domains and domain not in dmarc_rua_domains else 'DMARC aggregate reports (rua)'
+                if domain in dmarc_rua_domains and domain in dmarc_ruf_domains:
+                    source = 'DMARC aggregate (rua) and forensic (ruf) reports'
+                providers[provider['name']] = {
+                    **provider,
+                    'sources': [source],
+                    'detected_from': ['DMARC']
+                }
+
+        tlsrpt_rua = tlsrpt_analysis.get('rua', '')
+        tlsrpt_domains = _extract_mailto_domains(tlsrpt_rua)
+
+        for domain in tlsrpt_domains:
+            provider = _match_provider(domain)
+            if provider:
+                if provider['name'] in providers:
+                    if 'TLS-RPT' not in providers[provider['name']]['detected_from']:
+                        providers[provider['name']]['detected_from'].append('TLS-RPT')
+                        providers[provider['name']]['sources'].append('TLS-RPT delivery reports')
+                else:
+                    providers[provider['name']] = {
+                        **provider,
+                        'sources': ['TLS-RPT delivery reports'],
+                        'detected_from': ['TLS-RPT']
+                    }
+
+        spf_includes = spf_analysis.get('includes', [])
+        spf_flattening_detected = None
+
+        for include in spf_includes:
+            include_lower = include.lower()
+            for pattern, info in self.SPF_FLATTENING_PROVIDERS.items():
+                if include_lower.endswith(pattern) or pattern in include_lower:
+                    spf_flattening_detected = {
+                        'provider': info['name'],
+                        'vendor': info['vendor'],
+                        'include': include
+                    }
+                    if info['name'] in providers:
+                        if 'SPF flattening' not in providers[info['name']]['detected_from']:
+                            providers[info['name']]['detected_from'].append('SPF flattening')
+                            providers[info['name']]['sources'].append(f'SPF flattening (include:{include})')
+                    else:
+                        providers[info['name']] = {
+                            'name': info['name'],
+                            'vendor': info['vendor'],
+                            'capabilities': ['SPF management', 'SPF flattening'],
+                            'sources': [f'SPF flattening (include:{include})'],
+                            'detected_from': ['SPF flattening']
+                        }
+                    break
+
+        actively_managed = len(providers) > 0
+        provider_list = list(providers.values())
+
+        return {
+            'actively_managed': actively_managed,
+            'providers': provider_list,
+            'spf_flattening': spf_flattening_detected,
+            'provider_count': len(provider_list),
+        }
+
     def _classify_selector_provider(self, selector_name: str, primary_provider: str = None) -> str:
         """Map a DKIM selector to its known provider, or 'Unknown' if not recognized.
         
@@ -2690,6 +2823,7 @@ class DNSAnalyzer:
                 'ns_delegation_analysis': {'status': 'error', 'delegation_ok': False, 'message': 'Domain does not exist'},
                 'registrar_info': {'status': 'n/a', 'registrar': None},
                 'smtp_transport': None,
+                'email_security_mgmt': {'actively_managed': False, 'providers': [], 'spf_flattening': None, 'provider_count': 0},
                 'hosting_summary': {'hosting': 'N/A', 'dns_hosting': 'N/A', 'email_hosting': 'N/A'},
                 'posture': {
                     'score': 0,
@@ -2907,6 +3041,13 @@ class DNSAnalyzer:
         
         # Add DNS Infrastructure analysis (enterprise security detection)
         results['dns_infrastructure'] = self.analyze_dns_infrastructure(domain, results)
+        
+        # Detect Email Security Management Stack (monitoring providers, SPF flattening)
+        results['email_security_mgmt'] = self._detect_email_security_management(
+            results.get('spf_analysis', {}),
+            results.get('dmarc_analysis', {}),
+            results.get('tlsrpt_analysis', {})
+        )
         
         # Calculate Posture Score
         results['posture'] = self._calculate_posture(results)

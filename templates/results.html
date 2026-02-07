@@ -468,6 +468,11 @@
                                         {% endfor %}
                                     </div>
                                 {% endif %}
+                                {% if results.email_security_mgmt and results.email_security_mgmt.spf_flattening %}
+                                    <div class="mt-2 small">
+                                        <span class="badge bg-info bg-opacity-25 text-info"><i class="fas fa-compress-arrows-alt me-1"></i>SPF flattened by {{ results.email_security_mgmt.spf_flattening.provider }}{% if results.email_security_mgmt.spf_flattening.vendor != results.email_security_mgmt.spf_flattening.provider %} ({{ results.email_security_mgmt.spf_flattening.vendor }}){% endif %}</span>
+                                    </div>
+                                {% endif %}
                             </div>
 
                             <!-- DMARC Analysis -->
@@ -519,6 +524,15 @@
                                             <div class="text-warning"><i class="fas fa-exclamation-triangle me-1"></i>{{ issue }}</div>
                                         {% endfor %}
                                     </div>
+                                {% endif %}
+                                {% if results.email_security_mgmt and results.email_security_mgmt.providers %}
+                                    {% for provider in results.email_security_mgmt.providers %}
+                                        {% if 'DMARC' in provider.detected_from %}
+                                            <div class="mt-2 small">
+                                                <span class="badge bg-info bg-opacity-25 text-info"><i class="fas fa-external-link-alt me-1"></i>Reported to {{ provider.name }}{% if provider.vendor != provider.name %} ({{ provider.vendor }}){% endif %}</span>
+                                            </div>
+                                        {% endif %}
+                                    {% endfor %}
                                 {% endif %}
                             </div>
 
@@ -638,8 +652,61 @@
                                 {% if results.tlsrpt_analysis.record %}
                                     <div class="code-block small">{{ results.tlsrpt_analysis.record }}</div>
                                 {% endif %}
+                                {% if results.email_security_mgmt and results.email_security_mgmt.providers %}
+                                    {% for provider in results.email_security_mgmt.providers %}
+                                        {% if 'TLS-RPT' in provider.detected_from %}
+                                            <div class="mt-2 small">
+                                                <span class="badge bg-info bg-opacity-25 text-info"><i class="fas fa-external-link-alt me-1"></i>Reported to {{ provider.name }}{% if provider.vendor != provider.name %} ({{ provider.vendor }}){% endif %}</span>
+                                            </div>
+                                        {% endif %}
+                                    {% endfor %}
+                                {% endif %}
                             </div>
                         </div>
+
+                        {% if results.email_security_mgmt and results.email_security_mgmt.actively_managed %}
+                        <!-- Email Security Management Stack -->
+                        <div class="row mt-4 pt-3 border-top">
+                            <div class="col-12">
+                                <h6 class="d-flex align-items-center mb-3">
+                                    <i class="fas fa-cogs me-2"></i>Email Security Management
+                                    <span class="badge bg-success ms-2"><i class="fas fa-check-circle me-1"></i>Actively Managed</span>
+                                </h6>
+                                <div class="alert alert-info py-2 mb-3 small">
+                                    <i class="fas fa-search me-2"></i><strong>Intelligence:</strong> This domain uses dedicated email security management — indicating continuous monitoring and professional oversight, not a "set and forget" configuration. Most tools ignore reporting destinations; we extract the operational security partner network directly from DNS.
+                                </div>
+                                <div class="row">
+                                    {% for provider in results.email_security_mgmt.providers %}
+                                    <div class="col-md-6 mb-3">
+                                        <div class="border border-secondary rounded p-3 h-100" style="background: rgba(255,255,255,0.03);">
+                                            <div class="d-flex align-items-center mb-2">
+                                                <strong class="me-2">{{ provider.name }}</strong>
+                                                {% if provider.vendor != provider.name %}
+                                                    <span class="text-muted small">by {{ provider.vendor }}</span>
+                                                {% endif %}
+                                            </div>
+                                            <div class="mb-2">
+                                                {% for source in provider.detected_from %}
+                                                    <span class="badge bg-secondary bg-opacity-50 me-1 mb-1">{{ source }}</span>
+                                                {% endfor %}
+                                            </div>
+                                            <div class="small text-muted">
+                                                {% for source in provider.sources %}
+                                                    <div><i class="fas fa-angle-right me-1"></i>{{ source }}</div>
+                                                {% endfor %}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                                {% if results.email_security_mgmt.spf_flattening %}
+                                <div class="small text-muted mt-1">
+                                    <i class="fas fa-compress-arrows-alt me-1"></i><strong>SPF flattening detected:</strong> Dynamic SPF management via {{ results.email_security_mgmt.spf_flattening.provider }} — keeps include count within the 10-lookup limit automatically.
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endif %}
                         
                     </div>
                 </div>

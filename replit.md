@@ -98,7 +98,19 @@ When bumping the version, ALL of these must be updated:
 ### Testing
 - **pytest**: Unit and integration test framework.
 
-## Recent Changes (v26.10.21)
+## Recent Changes (v26.10.22)
+
+### Email Security Management Stack Detection (v26.10.22)
+- New "Email Security Management" section within Email Security card — detects and displays DMARC monitoring providers, TLS-RPT reporting providers, and SPF flattening services extracted from DNS records
+- Green "Actively Managed" badge when a known monitoring provider is detected — signals continuous oversight, not "set and forget"
+- Provider registry: OnDMARC/Red Sift, Valimail, Dmarcian, EasyDMARC, PowerDMARC, Agari/Fortra, DMARC Analyzer (Mimecast), Postmark, URIports, Fraudmarc, MxToolbox, Sendmarc, Proofpoint EFD, Mailhardener, DMARC Digests, DMARC Report
+- SPF flattening detection: OnDMARC, Valimail, AutoSPF, Sendmarc, Fraudmarc, Dmarcian
+- Detection sources: DMARC rua/ruf mailto domains, TLS-RPT rua mailto domains, SPF include patterns
+- Inline badges in SPF card ("SPF flattened by OnDMARC"), DMARC card ("Reported to OnDMARC"), and TLS-RPT card ("Reported to OnDMARC")
+- Intelligence insight: "Most tools ignore reporting destinations; we extract the operational security partner network directly from DNS"
+- Management stack card shows per-provider detail: vendor name, detection sources (DMARC/TLS-RPT/SPF flattening badges), and specific evidence lines
+- Blue info box explains SPF flattening when detected: "Dynamic SPF management — keeps include count within the 10-lookup limit automatically"
+- Section only appears when providers are detected (no empty state clutter)
 
 ### Security Gateway DKIM Attribution & SPF Evidence Hierarchy (v26.10.21)
 - When MX points to a security gateway (Proofpoint, Mimecast) but SPF includes a different sending platform (Microsoft 365, Google Workspace), the tool now correctly treats the SPF platform as the primary for DKIM purposes
