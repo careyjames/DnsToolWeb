@@ -718,7 +718,7 @@ class DNSAnalyzer:
             # Per RFC 7489 Section 10.1, -all may cause rejection before DMARC processing
             has_senders = len(include_matches) > 0 or a_matches or mx_matches
             if permissiveness == 'STRICT' and has_senders:
-                issues.append('RFC 7489: -all may reject mail before DMARC processes; ~all offers better DMARC compatibility')
+                issues.append('RFC 7489 §10.1: -all may cause rejection before DMARC evaluation, preventing DKIM from being checked')
             
             # Detect "no-mail domain" pattern: v=spf1 -all with no senders
             # This is an intentional security configuration for domains that don't send email

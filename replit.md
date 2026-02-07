@@ -92,7 +92,17 @@ Preferred communication style: Simple, everyday language.
 ### Testing
 - **pytest**: Unit and integration test framework.
 
-## Recent Changes (v26.10.19)
+## Recent Changes (v26.10.20)
+
+### DMARC-Aware SPF Messaging & Authority-Backed Guidance (v26.10.20)
+- SPF `~all` (soft fail) badge changed from yellow/warning to green — it's the industry standard used by Google, Apple, and most providers
+- SPF `~all` message now reads "industry-standard soft fail" instead of implying a weakness
+- New blue educational info box for `~all` domains cites CISA BOD 18-01 and RFC 7489 §10.1, explaining DMARC is the primary enforcement control
+- New yellow warning info box for `-all` domains explains RFC 7489 §10.1 conflict: hard fail can cause rejection before DKIM/DMARC evaluation
+- Both boxes provide DMARC-context-aware guidance (different messages for reject, quarantine, none, or missing DMARC)
+- Microsoft called out as the notable exception that historically defaults to `-all`
+- `~all + DMARC reject` identified as the strongest compatible security stance per CISA and RFC guidance
+- No-mail domains (`v=spf1 -all` with no senders) excluded from the `-all` warning — hard fail is correct for parked domains
 
 ### Context-Aware DKIM Selector Attribution (v26.10.19)
 - DKIM selector names like `selector1`/`selector2` no longer falsely attributed to Microsoft 365 when MX records show self-hosted email
