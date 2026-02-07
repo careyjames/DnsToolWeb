@@ -951,7 +951,9 @@ class DNSAnalyzer:
         'exchange': 'Microsoft 365',
         'intermedia': 'Microsoft 365',
         'pphosted': 'Proofpoint',
+        'gpphosted': 'Proofpoint',
         'iphmx': 'Proofpoint',
+        'ppops.net': 'Proofpoint',
         'mimecast': 'Mimecast',
         'barracudanetworks': 'Barracuda',
         'barracuda': 'Barracuda',
@@ -1070,6 +1072,7 @@ class DNSAnalyzer:
         'powerdmarc.com': {'name': 'PowerSPF', 'vendor': 'PowerDMARC'},
         'dmarcly.com': {'name': 'DMARCLY', 'vendor': 'DMARCLY'},
         'dmarcduty.com': {'name': 'DynamicSPF', 'vendor': 'Dmarcduty'},
+        'gpphosted.com': {'name': 'Proofpoint EFD (Gov)', 'vendor': 'Proofpoint'},
         'pphosted.com': {'name': 'Proofpoint EFD', 'vendor': 'Proofpoint'},
     }
 
@@ -1088,6 +1091,7 @@ class DNSAnalyzer:
     }
 
     HOSTED_DKIM_PROVIDERS = {
+        'gpphosted.com': {'name': 'Proofpoint EFD (Gov)', 'vendor': 'Proofpoint'},
         'pphosted.com': {'name': 'Proofpoint EFD', 'vendor': 'Proofpoint'},
         'proofpoint.com': {'name': 'Proofpoint EFD', 'vendor': 'Proofpoint'},
         'dkim.mimecast.com': {'name': 'Mimecast DMARC Analyzer', 'vendor': 'Mimecast'},
@@ -2886,7 +2890,9 @@ class DNSAnalyzer:
             'microsoft': 'Microsoft 365',
             'protection.outlook': 'Microsoft 365',
             'pphosted': 'Proofpoint',
+            'gpphosted': 'Proofpoint',
             'iphmx': 'Proofpoint',
+            'ppops.net': 'Proofpoint',
             'mimecast': 'Mimecast',
             'barracuda': 'Barracuda',
             'zoho': 'Zoho Mail',
