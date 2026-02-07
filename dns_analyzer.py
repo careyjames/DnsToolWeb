@@ -2278,13 +2278,19 @@ class DNSAnalyzer:
         provider_tier = 'standard'
         provider_features = []
         
-        # Check enterprise providers first
+        # Check enterprise providers - pick the one with most nameservers when multiple match
+        ns_list = [r.lower() for r in ns_records if r]
+        matched_enterprise = {}
         for key, info in enterprise_providers.items():
-            if key in ns_str:
-                provider_info = info
-                provider_tier = 'enterprise'
-                provider_features = info.get('features', [])
-                break
+            count = sum(1 for ns in ns_list if key in ns)
+            if count > 0:
+                matched_enterprise[key] = (info, count)
+        
+        if matched_enterprise:
+            best_key = max(matched_enterprise, key=lambda k: matched_enterprise[k][1])
+            provider_info = matched_enterprise[best_key][0]
+            provider_tier = 'enterprise'
+            provider_features = provider_info.get('features', [])
         
         # Check self-hosted enterprise DNS (major tech companies)
         if not provider_info:
