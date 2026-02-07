@@ -1070,12 +1070,14 @@ class DNSAnalyzer:
         'powerdmarc.com': {'name': 'PowerSPF', 'vendor': 'PowerDMARC'},
         'dmarcly.com': {'name': 'DMARCLY', 'vendor': 'DMARCLY'},
         'dmarcduty.com': {'name': 'DynamicSPF', 'vendor': 'Dmarcduty'},
+        'pphosted.com': {'name': 'Proofpoint EFD', 'vendor': 'Proofpoint'},
     }
 
     DYNAMIC_SERVICES_PROVIDERS = {
         'ondmarc.com': {'name': 'OnDMARC', 'vendor': 'Red Sift'},
         'redsift.cloud': {'name': 'OnDMARC', 'vendor': 'Red Sift'},
         'mailhardener.com': {'name': 'Mailhardener', 'vendor': 'Mailhardener'},
+        'vali.email': {'name': 'Valimail Enforce', 'vendor': 'Valimail'},
     }
 
     DYNAMIC_SERVICES_ZONES = {
@@ -1085,12 +1087,24 @@ class DNSAnalyzer:
         '_smtp._tls': 'Dynamic TLS-RPT',
     }
 
-    def _detect_email_security_management(self, spf_analysis: dict, dmarc_analysis: dict, tlsrpt_analysis: dict, mta_sts_analysis: dict = None, domain: str = None) -> dict:
-        """Detect email security management providers from DMARC rua/ruf, TLS-RPT rua, SPF includes, MTA-STS, and Dynamic Services.
+    HOSTED_DKIM_PROVIDERS = {
+        'pphosted.com': {'name': 'Proofpoint EFD', 'vendor': 'Proofpoint'},
+        'proofpoint.com': {'name': 'Proofpoint EFD', 'vendor': 'Proofpoint'},
+        'dkim.mimecast.com': {'name': 'Mimecast DMARC Analyzer', 'vendor': 'Mimecast'},
+        'mimecast.com': {'name': 'Mimecast DMARC Analyzer', 'vendor': 'Mimecast'},
+        'agari.com': {'name': 'Agari', 'vendor': 'Fortra'},
+        'emailsecurity.fortra.com': {'name': 'Agari', 'vendor': 'Fortra'},
+        'sendmarc.com': {'name': 'Sendmarc', 'vendor': 'Sendmarc'},
+        'dmarcian.com': {'name': 'Dmarcian', 'vendor': 'Dmarcian'},
+    }
+
+    def _detect_email_security_management(self, spf_analysis: dict, dmarc_analysis: dict, tlsrpt_analysis: dict, mta_sts_analysis: dict = None, domain: str = None, dkim_analysis: dict = None) -> dict:
+        """Detect email security management providers from DMARC rua/ruf, TLS-RPT rua, SPF includes, MTA-STS, Hosted DKIM, and Dynamic Services.
         
         Extracts the operational security partner network from DNS records — intelligence
-        most tools ignore. Includes Dynamic Services detection (Red Sift, Mailhardener) via
+        most tools ignore. Includes Dynamic Services detection (Red Sift, Mailhardener, Valimail) via
         DNS subzone delegation of email security zones (_dmarc, _domainkey, _mta-sts, _smtp._tls).
+        Detects Hosted DKIM via CNAME chains on discovered DKIM selectors (Proofpoint, Mimecast, etc.).
         """
         import re
         providers = {}
@@ -1203,6 +1217,35 @@ class DNSAnalyzer:
                                 'detected_from': ['MTA-STS']
                             }
                         break
+
+        if domain and dkim_analysis and dkim_analysis.get('selectors'):
+            for sel_name, sel_data in dkim_analysis['selectors'].items():
+                dkim_fqdn = f'{sel_name}.{domain}'
+                try:
+                    cname_answers = dns.resolver.resolve(dkim_fqdn, 'CNAME')
+                    for rdata in cname_answers:
+                        cname_target = str(rdata).rstrip('.').lower()
+                        for cname_pattern, dkim_info in self.HOSTED_DKIM_PROVIDERS.items():
+                            if cname_target.endswith(cname_pattern):
+                                prov_name = dkim_info['name']
+                                sel_short = sel_name.replace('._domainkey', '')
+                                if prov_name in providers:
+                                    if 'Hosted DKIM' not in providers[prov_name]['detected_from']:
+                                        providers[prov_name]['detected_from'].append('Hosted DKIM')
+                                        providers[prov_name]['sources'].append(f'Hosted DKIM (CNAME: {sel_short} → {cname_target})')
+                                    if 'DKIM hosting' not in providers[prov_name].get('capabilities', []):
+                                        providers[prov_name].setdefault('capabilities', []).append('DKIM hosting')
+                                else:
+                                    providers[prov_name] = {
+                                        'name': prov_name,
+                                        'vendor': dkim_info['vendor'],
+                                        'capabilities': ['DKIM hosting'],
+                                        'sources': [f'Hosted DKIM (CNAME: {sel_short} → {cname_target})'],
+                                        'detected_from': ['Hosted DKIM'],
+                                    }
+                                break
+                except Exception:
+                    pass
 
         if domain:
             ds_zones = {
@@ -3177,7 +3220,8 @@ class DNSAnalyzer:
             results.get('dmarc_analysis', {}),
             results.get('tlsrpt_analysis', {}),
             results.get('mta_sts_analysis', {}),
-            domain=domain
+            domain=domain,
+            dkim_analysis=results.get('dkim_analysis', {})
         )
         
         # Calculate Posture Score

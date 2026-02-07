@@ -4,7 +4,8 @@
 
 A web-based DNS intelligence tool for comprehensive domain record analysis, email security validation (SPF, DMARC, DKIM), email security management provider detection, and DNS security intelligence reports. The application aims to provide a robust, user-friendly platform for understanding and improving domain and email security posture, offering insights into business vision, market potential, and project ambitions.
 
-## Recent Changes (v26.10.39)
+## Recent Changes (v26.10.40)
+- Expanded provider detection: Valimail added to Dynamic Services (NS delegation via `ns.vali.email` for `_dmarc` and `_domainkey`). Proofpoint Hosted SPF added (`pphosted.com` includes). Hosted DKIM CNAME detection added for Proofpoint (`pphosted.com`), Mimecast, Agari/Fortra, Sendmarc, Dmarcian — detects when DKIM selectors use CNAME chains to provider infrastructure (v26.10.40).
 - Renamed "NS delegation" to "Dynamic Services" for email security subzone delegation detection. "NS delegation" now reserved for actual authoritative nameserver delegation (e.g., domain at GoDaddy with NS at Cloudflare). Dynamic Services detection shows capability labels (Dynamic DMARC, Dynamic DKIM, Dynamic MTA-STS, Dynamic TLS-RPT) instead of raw zone names (v26.10.39).
 - Dynamic Services provider detection: detects providers (Red Sift/OnDMARC, Mailhardener) via DNS subzone delegation on _dmarc, _domainkey, _mta-sts, _smtp._tls zones. Merges with existing provider detection (DMARC rua, TLS-RPT, MTA-STS CNAME). Fixed variable shadowing bug where loop variable `domain` overwrote method parameter (v26.10.38).
 
