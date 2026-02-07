@@ -470,7 +470,7 @@
                                 {% endif %}
                                 {% if results.email_security_mgmt and results.email_security_mgmt.spf_flattening %}
                                     <div class="mt-2 small">
-                                        <span class="badge text-light" style="background-color: rgba(13,202,240,0.5); border: 1px solid rgba(13,202,240,0.6);"><i class="fas fa-compress-arrows-alt me-1"></i>SPF flattened by {{ results.email_security_mgmt.spf_flattening.provider }}{% if results.email_security_mgmt.spf_flattening.vendor != results.email_security_mgmt.spf_flattening.provider %} ({{ results.email_security_mgmt.spf_flattening.vendor }}){% endif %}</span>
+                                        <span class="provider-badge"><i class="fas fa-compress-arrows-alt"></i> SPF flattened by {{ results.email_security_mgmt.spf_flattening.provider }}{% if results.email_security_mgmt.spf_flattening.vendor != results.email_security_mgmt.spf_flattening.provider %} ({{ results.email_security_mgmt.spf_flattening.vendor }}){% endif %}</span>
                                     </div>
                                 {% endif %}
                             </div>
@@ -529,7 +529,7 @@
                                     {% for provider in results.email_security_mgmt.providers %}
                                         {% if 'DMARC' in provider.detected_from %}
                                             <div class="mt-2 small">
-                                                <span class="badge text-light" style="background-color: rgba(13,202,240,0.5); border: 1px solid rgba(13,202,240,0.6);"><i class="fas fa-external-link-alt me-1"></i>Reported to {{ provider.name }}{% if provider.vendor != provider.name %} ({{ provider.vendor }}){% endif %}</span>
+                                                <span class="provider-badge"><i class="fas fa-shield-alt"></i> Reported to {{ provider.name }}{% if provider.vendor != provider.name %} ({{ provider.vendor }}){% endif %}</span>
                                             </div>
                                         {% endif %}
                                     {% endfor %}
@@ -656,7 +656,7 @@
                                     {% for provider in results.email_security_mgmt.providers %}
                                         {% if 'TLS-RPT' in provider.detected_from %}
                                             <div class="mt-2 small">
-                                                <span class="badge text-light" style="background-color: rgba(13,202,240,0.5); border: 1px solid rgba(13,202,240,0.6);"><i class="fas fa-external-link-alt me-1"></i>Reported to {{ provider.name }}{% if provider.vendor != provider.name %} ({{ provider.vendor }}){% endif %}</span>
+                                                <span class="provider-badge"><i class="fas fa-shield-alt"></i> Reported to {{ provider.name }}{% if provider.vendor != provider.name %} ({{ provider.vendor }}){% endif %}</span>
                                             </div>
                                         {% endif %}
                                     {% endfor %}

@@ -66,6 +66,10 @@ Preferred communication style: Simple, everyday language.
 - Data freshness: DNS records always fetched fresh; RDAP data cached (6-hour TTL).
 - SEO optimization with rich schema and meta tags.
 - Native system font stack for improved performance and aesthetics.
+- Provider attribution badges use warm gold/amber `.provider-badge` class for trust-signal readability (v26.10.24).
+- Code blocks optimized with explicit text color, line-height 1.65, letter-spacing for monospace readability.
+- Print styles for `.provider-badge` (cream/brown) and code blocks ensure paper readability.
+- IMPORTANT: `custom.min.css` must be kept in sync with `custom.css` (templates reference the `.min` version).
 
 ## External Dependencies
 
