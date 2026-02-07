@@ -8,8 +8,8 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>DNS Tool - Domain Security Audit & Email Authentication Checker | SPF DKIM DMARC DNSSEC</title>
-    <meta name="description" content="Free domain security audit tool. Check SPF, DKIM, DMARC, DNSSEC, BIMI, MTA-STS, and CAA records instantly. Executive-ready security posture reports for IT professionals, DNS specialists, and business leaders. Trusted by government agencies and enterprises worldwide.">
-    <meta name="keywords" content="DNS lookup, SPF checker, DKIM validator, DMARC lookup, DNSSEC validation, domain security audit, email authentication, email spoofing protection, cybersecurity posture report, DNS intelligence, BIMI checker, MTA-STS, CAA record check, domain reputation, email security assessment">
+    <meta name="description" content="Free domain security audit tool. Check SPF, DKIM, DMARC, DNSSEC, BIMI, MTA-STS, TLS-RPT, and CAA records instantly. Detect email security management providers, SMTP transport encryption, and enterprise DNS infrastructure. Executive-ready posture reports trusted by government agencies and enterprises worldwide.">
+    <meta name="keywords" content="DNS lookup, SPF checker, DKIM validator, DMARC lookup, DNSSEC validation, domain security audit, email authentication, email spoofing protection, cybersecurity posture report, DNS intelligence, BIMI checker, MTA-STS checker, TLS-RPT checker, CAA record check, domain reputation, email security assessment, email security management, DMARC monitoring, SPF flattening, SMTP transport encryption">
     
     <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='favicon.svg') }}">
     <!-- Preconnect to external domains for faster loading -->
@@ -23,7 +23,7 @@
     <meta property="og:url" content="https://dnstool.it-help.tech/">
     <meta property="og:type" content="website">
     <meta property="og:title" content="DNS Tool - Domain Security Audit & Email Authentication Checker">
-    <meta property="og:description" content="Free domain security audit. Check SPF, DKIM, DMARC, DNSSEC, BIMI, MTA-STS instantly. Executive-ready security posture reports trusted by government agencies and enterprises.">
+    <meta property="og:description" content="Free domain security audit. Check SPF, DKIM, DMARC, DNSSEC, BIMI, MTA-STS, TLS-RPT instantly. Detect email security management providers and SMTP transport encryption. Executive-ready reports trusted by government agencies and enterprises.">
     <meta property="og:image" content="https://dnstool.it-help.tech/static/images/og-image.png">
     
     <!-- Twitter -->
@@ -31,7 +31,7 @@
     <meta property="twitter:domain" content="dnstool.it-help.tech">
     <meta property="twitter:url" content="https://dnstool.it-help.tech/">
     <meta name="twitter:title" content="DNS Tool - Domain Security Audit & Email Authentication Checker">
-    <meta name="twitter:description" content="Free domain security audit. Check SPF, DKIM, DMARC, DNSSEC, BIMI, MTA-STS instantly. Executive-ready security posture reports trusted by government agencies and enterprises.">
+    <meta name="twitter:description" content="Free domain security audit. Check SPF, DKIM, DMARC, DNSSEC, BIMI, MTA-STS, TLS-RPT instantly. Detect email security management providers and SMTP transport encryption. Executive-ready reports trusted by government agencies and enterprises.">
     <meta name="twitter:image" content="https://dnstool.it-help.tech/static/images/og-image.png">
     
     <!-- JSON-LD Schema -->
@@ -40,8 +40,8 @@
         "@context": "https://schema.org",
         "@type": "WebApplication",
         "name": "DNS Tool - Domain Security Audit",
-        "alternateName": ["DNS Checker", "SPF Checker", "DMARC Lookup", "DKIM Validator", "DNSSEC Checker", "Email Security Audit Tool"],
-        "description": "Free domain security audit tool for IT professionals, executives, and DNS specialists. Check SPF, DKIM, DMARC, DNSSEC, BIMI, MTA-STS, TLS-RPT, and CAA records. Get executive-ready security posture reports instantly.",
+        "alternateName": ["DNS Checker", "SPF Checker", "DMARC Lookup", "DKIM Validator", "DNSSEC Checker", "Email Security Audit Tool", "Email Security Management Detector", "MTA-STS Checker", "TLS-RPT Checker"],
+        "description": "Free domain security audit tool for IT professionals, executives, and DNS specialists. Check SPF, DKIM, DMARC, DNSSEC, BIMI, MTA-STS, TLS-RPT, and CAA records. Detect email security management providers (DMARC monitoring, SPF flattening), SMTP transport encryption, and enterprise DNS infrastructure. Get executive-ready security posture reports instantly.",
         "url": "https://dnstool.it-help.tech",
         "applicationCategory": "SecurityApplication",
         "applicationSubCategory": "DNS Security Analysis",
@@ -87,7 +87,7 @@
                 "name": "What is a domain security audit?",
                 "acceptedAnswer": {
                     "@type": "Answer",
-                    "text": "A domain security audit examines your domain's DNS configuration, email authentication records (SPF, DKIM, DMARC), encryption settings (DNSSEC, MTA-STS), and certificate controls (CAA). It reveals whether your domain is protected against email spoofing, DNS hijacking, and brand impersonation."
+                    "text": "A domain security audit examines your domain's DNS configuration, email authentication records (SPF, DKIM, DMARC), encryption settings (DNSSEC, MTA-STS, TLS-RPT), certificate controls (CAA), and email security management providers. It reveals whether your domain is protected against email spoofing, DNS hijacking, and brand impersonation — and whether that protection is actively managed or unmonitored."
                 }
             },
             {
@@ -143,7 +143,7 @@
                 "name": "What are BIMI, MTA-STS, and CAA records?",
                 "acceptedAnswer": {
                     "@type": "Answer",
-                    "text": "BIMI (Brand Indicators for Message Identification) displays your brand logo next to emails in recipients' inboxes. MTA-STS (Mail Transfer Agent Strict Transport Security) enforces encrypted email delivery. CAA (Certificate Authority Authorization) restricts which certificate authorities can issue SSL certificates for your domain."
+                    "text": "BIMI (Brand Indicators for Message Identification) displays your brand logo next to emails in recipients' inboxes. MTA-STS (Mail Transfer Agent Strict Transport Security) enforces encrypted email delivery. TLS-RPT (TLS Reporting) sends delivery failure reports when encrypted email connections fail. CAA (Certificate Authority Authorization) restricts which certificate authorities can issue SSL certificates for your domain. DNS Tool checks all of these in a single scan."
                 }
             },
             {
@@ -405,7 +405,7 @@
                         </h3>
                         <div id="faq1" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
                             <div class="accordion-body text-muted small">
-                                A domain security audit examines your domain's DNS configuration, email authentication records (SPF, DKIM, DMARC), encryption settings (DNSSEC, MTA-STS), and certificate controls (CAA). It reveals whether your domain is protected against email spoofing, DNS hijacking, and brand impersonation. DNS Tool performs all these checks in a single scan and delivers a clear security posture verdict.
+                                A domain security audit examines your domain's DNS configuration, email authentication records (SPF, DKIM, DMARC), encryption settings (DNSSEC, MTA-STS, TLS-RPT), certificate controls (CAA), and email security management providers. It reveals whether your domain is protected against email spoofing, DNS hijacking, and brand impersonation — and whether that protection is actively managed or left unmonitored. DNS Tool performs all these checks in a single scan and delivers a clear security posture verdict.
                             </div>
                         </div>
                     </div>
@@ -489,7 +489,7 @@
                         </h3>
                         <div id="faq8" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
                             <div class="accordion-body text-muted small">
-                                <strong>BIMI</strong> (Brand Indicators for Message Identification) displays your brand logo next to emails in recipients' inboxes, fighting phishing by making legitimate emails visually identifiable. <strong>MTA-STS</strong> (Mail Transfer Agent Strict Transport Security) enforces encrypted email delivery, preventing downgrade attacks. <strong>CAA</strong> (Certificate Authority Authorization) restricts which certificate authorities can issue SSL certificates for your domain, preventing unauthorized certificate issuance. These are advanced security controls that complement SPF, DKIM, and DMARC.
+                                <strong>BIMI</strong> (Brand Indicators for Message Identification) displays your brand logo next to emails in recipients' inboxes, fighting phishing by making legitimate emails visually identifiable. <strong>MTA-STS</strong> (Mail Transfer Agent Strict Transport Security) enforces encrypted email delivery, preventing downgrade attacks. <strong>TLS-RPT</strong> (TLS Reporting) sends delivery failure reports when encrypted email connections fail, giving you visibility into transport security issues. <strong>CAA</strong> (Certificate Authority Authorization) restricts which certificate authorities can issue SSL certificates for your domain, preventing unauthorized certificate issuance. These are advanced security controls that complement SPF, DKIM, and DMARC. DNS Tool checks all of them in a single scan.
                             </div>
                         </div>
                     </div>
