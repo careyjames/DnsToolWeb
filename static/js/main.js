@@ -1,3 +1,7 @@
+if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('/sw.js').catch(function() {});
+}
+
 document.addEventListener('DOMContentLoaded', function() {
     const domainForm = document.getElementById('domainForm');
     const domainInput = document.getElementById('domain');

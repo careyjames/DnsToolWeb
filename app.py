@@ -613,6 +613,16 @@ def llms_full():
     """Serve llms-full.txt for AI crawlers."""
     return send_from_directory('static', 'llms-full.txt', mimetype='text/plain')
 
+@app.route('/manifest.json')
+def manifest():
+    """Serve PWA manifest from root URL."""
+    return send_from_directory('static', 'manifest.json', mimetype='application/manifest+json')
+
+@app.route('/sw.js')
+def service_worker():
+    """Serve service worker from root scope for PWA installability."""
+    return send_from_directory('static', 'sw.js', mimetype='application/javascript')
+
 @app.route('/proxy/bimi-logo')
 def proxy_bimi_logo():
     """Proxy BIMI logos to avoid CORS issues with external SVGs."""
