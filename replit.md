@@ -4,7 +4,9 @@
 
 A web-based DNS intelligence tool for comprehensive domain record analysis, email security validation (SPF, DMARC, DKIM), email security management provider detection, and DNS security intelligence reports. The application aims to provide a robust, user-friendly platform for understanding and improving domain and email security posture, offering insights into business vision, market potential, and project ambitions.
 
-## Recent Changes (v26.10.28)
+## Recent Changes (v26.10.29)
+- Self-hosted Bootstrap JS bundle — eliminates last external CDN dependency (cdn.jsdelivr.net), removes intermittent Cloudflare `__cf_bm` third-party cookie that caused Best Practices score to drop to 81 (v26.10.29).
+- CSP tightened: script-src no longer allowlists cdn.jsdelivr.net (v26.10.29).
 - PWA support: web app manifest, service worker, and app icons enable Chrome "Install App" and Mac dock pinning — opens as standalone app without browser chrome (v26.10.28).
 - AI agent documentation: `llms.txt` and `llms-full.txt` rewritten as step-by-step guides teaching AI agents (ChatGPT, Gemini, Claude, Perplexity) how to operate the tool — direct URL method, form interaction, result interpretation, and re-analyze flow (v26.10.28).
 - Dynamic sitemap: `/sitemap.xml` now generated dynamically with automatic `lastmod` dates (always today's date), includes `/statistics` route (v26.10.28).

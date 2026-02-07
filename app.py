@@ -15,7 +15,7 @@ from sqlalchemy import JSON
 from dns_analyzer import DNSAnalyzer
 
 # App version - format: YY.M.patch (bump last number for small changes)
-APP_VERSION = "26.10.28"
+APP_VERSION = "26.10.29"
 
 
 class TraceIDFilter(logging.Filter):
@@ -450,7 +450,7 @@ def add_security_headers(response):
     nonce = getattr(g, 'csp_nonce', '')
     csp = (
         "default-src 'self'; "
-        f"script-src 'self' https://cdn.jsdelivr.net 'nonce-{nonce}'; "
+        f"script-src 'self' 'nonce-{nonce}'; "
         "style-src 'self' 'unsafe-inline'; "
         "font-src 'self'; "
         "img-src 'self' data: https:; "
