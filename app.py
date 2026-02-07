@@ -307,7 +307,7 @@ class RedisRateLimiter:
             
             last_analysis = self._redis.get(repeat_key)
             if last_analysis:
-                last_time = float(last_analysis)
+                last_time = float(str(last_analysis))
                 elapsed = current_time - last_time
                 if elapsed < ANTI_REPEAT_WINDOW:
                     seconds_remaining = int(ANTI_REPEAT_WINDOW - elapsed) + 1
