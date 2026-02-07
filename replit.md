@@ -2,7 +2,13 @@
 
 ## Overview
 
-A web-based DNS intelligence tool for comprehensive domain record analysis, email security validation (SPF, DMARC, DKIM), and DNS security intelligence reports. The application aims to provide a robust, user-friendly platform for understanding and improving domain and email security posture, offering insights into business vision, market potential, and project ambitions.
+A web-based DNS intelligence tool for comprehensive domain record analysis, email security validation (SPF, DMARC, DKIM), email security management provider detection, and DNS security intelligence reports. The application aims to provide a robust, user-friendly platform for understanding and improving domain and email security posture, offering insights into business vision, market potential, and project ambitions.
+
+## Recent Changes (v26.10.26)
+- Provider attribution badges use warm gold/amber `.provider-badge` class for trust-signal readability (v26.10.24).
+- Code blocks optimized with explicit text color, line-height 1.65, letter-spacing 0.015em for monospace readability (v26.10.24).
+- DNS Hosting column badges (Gov/Enterprise) no longer truncated — removed text-truncate (v26.10.25).
+- Homepage meta descriptions, OG/Twitter tags, keywords, JSON-LD schema, feature cards, persona cards, and FAQ answers updated to reflect email security management provider detection, TLS-RPT, and SMTP transport encryption capabilities (v26.10.26).
 
 ## User Preferences
 
