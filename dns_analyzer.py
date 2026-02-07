@@ -1137,7 +1137,13 @@ class DNSAnalyzer:
             
             return key_info
         
-        primary_provider = self._detect_primary_mail_provider(mx_records or [])
+        if not mx_records:
+            mx_records = self.dns_query("MX", domain) or []
+        
+        spf_records = self.dns_query("TXT", domain) or []
+        spf_record = next((r for r in spf_records if r.lower().startswith("v=spf1")), None)
+        
+        primary_provider = self._detect_primary_mail_provider(mx_records, spf_record)
         
         with ThreadPoolExecutor(max_workers=10) as executor:
             futures = {executor.submit(check_selector, s): s for s in selectors}
