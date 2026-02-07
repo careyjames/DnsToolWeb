@@ -105,10 +105,10 @@
                     {% endif %}
                 </div>
                 {% if analysis_timestamp or analysis_duration %}
-                <div class="small text-muted" style="opacity: 0.7;">
-                    {% if analysis_timestamp %}<i class="fas fa-clock me-1"></i>{{ analysis_timestamp.strftime('%Y-%m-%d %H:%M UTC') }}{% endif %}
-                    {% if analysis_timestamp and analysis_duration %} · {% endif %}
-                    {% if analysis_duration %}<i class="fas fa-stopwatch me-1"></i>{{ "%.1f"|format(analysis_duration) }}s{% endif %}
+                <div class="small text-muted d-flex align-items-center" style="opacity: 0.7;">
+                    {% if analysis_timestamp %}<i class="fas fa-clock me-1" style="vertical-align: middle;"></i><span>{{ analysis_timestamp.strftime('%Y-%m-%d %H:%M UTC') }}</span>{% endif %}
+                    {% if analysis_timestamp and analysis_duration %}<span class="mx-1">·</span>{% endif %}
+                    {% if analysis_duration %}<i class="fas fa-stopwatch me-1" style="vertical-align: middle;"></i><span>{{ "%.1f"|format(analysis_duration) }}s</span>{% endif %}
                 </div>
                 {% endif %}
             </div>
