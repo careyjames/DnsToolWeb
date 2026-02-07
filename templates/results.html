@@ -103,14 +103,14 @@
                     {% if ascii_domain != domain %}
                         <span class="badge bg-secondary ms-2">ASCII: {{ ascii_domain }}</span>
                     {% endif %}
-                    {% if analysis_timestamp or analysis_duration %}
-                    <span class="ms-2 small" style="opacity: 0.7;">
-                        {% if analysis_timestamp %}<i class="fas fa-clock me-1"></i>{{ analysis_timestamp.strftime('%Y-%m-%d %H:%M UTC') }}{% endif %}
-                        {% if analysis_timestamp and analysis_duration %} · {% endif %}
-                        {% if analysis_duration %}<i class="fas fa-stopwatch me-1"></i>{{ "%.1f"|format(analysis_duration) }}s{% endif %}
-                    </span>
-                    {% endif %}
                 </div>
+                {% if analysis_timestamp or analysis_duration %}
+                <div class="small text-muted" style="opacity: 0.7;">
+                    {% if analysis_timestamp %}<i class="fas fa-clock me-1"></i>{{ analysis_timestamp.strftime('%Y-%m-%d %H:%M UTC') }}{% endif %}
+                    {% if analysis_timestamp and analysis_duration %} · {% endif %}
+                    {% if analysis_duration %}<i class="fas fa-stopwatch me-1"></i>{{ "%.1f"|format(analysis_duration) }}s{% endif %}
+                </div>
+                {% endif %}
             </div>
             <div class="d-flex gap-2 flex-wrap">
                 <button type="button" id="reanalyzeBtn" class="btn btn-primary" data-domain="{{ domain }}"
