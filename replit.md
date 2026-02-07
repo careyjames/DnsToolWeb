@@ -123,7 +123,7 @@ Preferred communication style: Simple, everyday language.
 - Added `iphmx` as Proofpoint MX pattern (previously only `pphosted` was detected)
 - Deloitte (Proofpoint via iphmx.com) now correctly shows "Proofpoint (inferred)" on ambiguous selectors
 - Ambiguous selectors (`selector1`, `selector2`, `s1`, `s2`, `k1`, `k2`, `default`) are only attributed to their "known" provider when MX confirms that provider
-- SPF record now used as secondary signal for DKIM provider attribution when MX doesn't match a known provider (e.g., M365 behind a security gateway detected via `spf.protection.outlook` in SPF includes)
+- SPF includes are authoritative evidence of sending platform: `include:spf.protection.outlook.com` is a definitive declaration of M365 usage, not a hint. SPF is the stronger signal for DKIM attribution since DKIM is signed by the sending platform, not the inbound gateway. MX is used as primary signal for efficiency when it matches a known mailbox provider.
 - `analyze_dkim` now fetches its own MX and SPF data for provider detection rather than relying on externally passed data
 
 ### Self-Hosted Enterprise DNS & Provider Expansion (v26.10.17)

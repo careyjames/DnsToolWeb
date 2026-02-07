@@ -1047,9 +1047,18 @@ class DNSAnalyzer:
           - provider: the platform that signs/sends mail (DKIM source)
           - gateway: the security gateway in front, if any (e.g. Proofpoint, Mimecast)
         
-        When MX points to a security gateway (Proofpoint, Mimecast) but SPF includes a
-        different sending platform (Microsoft 365, Google Workspace), the SPF platform is
-        the actual mail originator — DKIM will be signed by it, not the gateway.
+        Evidence hierarchy for sending platform detection:
+          - SPF includes are authoritative: the domain owner explicitly declares which
+            platforms are authorized to send mail on their behalf. An include for
+            spf.protection.outlook.com is a definitive declaration of Microsoft 365 usage.
+          - MX records show where inbound mail is delivered, which is often but not always
+            the same as the sending platform.
+          - When MX points to a security gateway but SPF includes a different sending
+            platform, SPF is the stronger signal for DKIM attribution since DKIM is
+            signed by the sending platform, not the inbound gateway.
+          - When MX matches a known mailbox provider (M365, Google, etc.) and there's no
+            gateway, MX and SPF typically agree — MX is used as the primary signal for
+            efficiency since it's already available.
         """
         result = {'provider': 'Unknown', 'gateway': None}
         
