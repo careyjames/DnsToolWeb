@@ -1072,8 +1072,8 @@ class DNSAnalyzer:
         'dmarcduty.com': {'name': 'DynamicSPF', 'vendor': 'Dmarcduty'},
     }
 
-    def _detect_email_security_management(self, spf_analysis: dict, dmarc_analysis: dict, tlsrpt_analysis: dict) -> dict:
-        """Detect email security management providers from DMARC rua/ruf, TLS-RPT rua, and SPF includes.
+    def _detect_email_security_management(self, spf_analysis: dict, dmarc_analysis: dict, tlsrpt_analysis: dict, mta_sts_analysis: dict = None) -> dict:
+        """Detect email security management providers from DMARC rua/ruf, TLS-RPT rua, SPF includes, and MTA-STS.
         
         Extracts the operational security partner network from DNS records — intelligence
         most tools ignore.
@@ -1161,6 +1161,13 @@ class DNSAnalyzer:
                             'detected_from': ['SPF flattening']
                         }
                     break
+
+        if mta_sts_analysis and mta_sts_analysis.get('status') in ('success', 'warning') and mta_sts_analysis.get('record'):
+            for name, prov in providers.items():
+                if 'MTA-STS hosting' in prov.get('capabilities', []):
+                    if 'MTA-STS' not in prov.get('detected_from', []):
+                        prov['detected_from'].append('MTA-STS')
+                        prov['sources'].append('MTA-STS policy hosting')
 
         actively_managed = len(providers) > 0
         provider_list = list(providers.values())
@@ -3064,7 +3071,8 @@ class DNSAnalyzer:
         results['email_security_mgmt'] = self._detect_email_security_management(
             results.get('spf_analysis', {}),
             results.get('dmarc_analysis', {}),
-            results.get('tlsrpt_analysis', {})
+            results.get('tlsrpt_analysis', {}),
+            results.get('mta_sts_analysis', {})
         )
         
         # Calculate Posture Score

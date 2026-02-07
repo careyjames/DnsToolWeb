@@ -635,6 +635,15 @@
                                         <i class="fas fa-exclamation-triangle me-1"></i>Policy file: {{ results.mta_sts_analysis.policy_error }}
                                     </div>
                                 {% endif %}
+                                {% if results.email_security_mgmt and results.email_security_mgmt.providers %}
+                                    {% for provider in results.email_security_mgmt.providers %}
+                                        {% if 'MTA-STS' in provider.detected_from %}
+                                            <div class="mt-2 small">
+                                                <span class="provider-badge"><i class="fas fa-shield-alt"></i> Hosted by {{ provider.name }}{% if provider.vendor != provider.name %} ({{ provider.vendor }}){% endif %}</span>
+                                            </div>
+                                        {% endif %}
+                                    {% endfor %}
+                                {% endif %}
                             </div>
 
                             <!-- TLS-RPT Analysis -->
