@@ -15,7 +15,7 @@ from sqlalchemy import JSON
 from dns_analyzer import DNSAnalyzer
 
 # App version - format: YY.M.patch (bump last number for small changes)
-APP_VERSION = "26.10.27"
+APP_VERSION = "26.10.28"
 
 
 class TraceIDFilter(logging.Filter):
@@ -582,8 +582,26 @@ def robots():
 
 @app.route('/sitemap.xml')
 def sitemap():
-    """Serve sitemap.xml for search engines."""
-    return send_from_directory('static', 'sitemap.xml', mimetype='application/xml')
+    """Generate dynamic sitemap.xml with automatic lastmod dates."""
+    today = date.today().isoformat()
+    xml = '<?xml version="1.0" encoding="UTF-8"?>\n'
+    xml += '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
+    pages = [
+        {'loc': 'https://dnstool.it-help.tech/', 'changefreq': 'weekly', 'priority': '1.0'},
+        {'loc': 'https://dnstool.it-help.tech/history', 'changefreq': 'daily', 'priority': '0.6'},
+        {'loc': 'https://dnstool.it-help.tech/stats', 'changefreq': 'daily', 'priority': '0.5'},
+        {'loc': 'https://dnstool.it-help.tech/statistics', 'changefreq': 'daily', 'priority': '0.5'},
+    ]
+    for page in pages:
+        xml += '  <url>\n'
+        xml += f'    <loc>{page["loc"]}</loc>\n'
+        xml += f'    <lastmod>{today}</lastmod>\n'
+        xml += f'    <changefreq>{page["changefreq"]}</changefreq>\n'
+        xml += f'    <priority>{page["priority"]}</priority>\n'
+        xml += '  </url>\n'
+    xml += '</urlset>\n'
+    from flask import Response
+    return Response(xml, mimetype='application/xml')
 
 @app.route('/llms.txt')
 def llms():

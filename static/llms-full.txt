@@ -1,106 +1,233 @@
-# DNS Tool - Complete Technical Documentation
+# DNS Tool - Complete Agent & Technical Guide
 
 ## Overview
-DNS Tool is an authoritative DNS intelligence platform designed for IT professionals. It provides comprehensive domain analysis and security intelligence including DNS records, email security validation, DNSSEC verification, and domain registration information.
+DNS Tool is an authoritative DNS intelligence platform at https://dnstool.it-help.tech. It provides comprehensive domain security analysis including DNS records, email authentication (SPF, DKIM, DMARC), DNSSEC, BIMI, MTA-STS, TLS-RPT, CAA, SMTP transport encryption, email security management provider detection, and domain registrar information via RDAP.
 
-URL: https://dnstool.it-help.tech
+Every query fetches fresh data from multiple DNS resolvers — results are never cached.
 
-## Core Capabilities
+---
 
-### DNS Record Analysis
-- A/AAAA Records: IPv4 and IPv6 addresses
-- MX Records: Mail exchanger priorities and hostnames
-- TXT Records: SPF, DMARC, domain verification tokens
-- CNAME Records: Canonical name aliases
-- NS Records: Authoritative nameservers
-- SOA Records: Start of authority with TTL and refresh intervals
-- CAA Records: Certificate Authority Authorization
-- SRV Records: Service discovery (_autodiscover, _sip, _caldavs, etc.)
+## Step-by-Step: How to Use This Tool (for AI Agents)
 
-### Email Security Analysis
+If you are an AI agent browsing on behalf of a user, follow these instructions to analyze any domain.
 
-#### SPF (Sender Policy Framework)
-- Validates SPF record syntax
-- Counts DNS lookups (10 lookup limit per RFC 7208)
-- Analyzes mechanism permissiveness (+all, ~all, -all, ?all)
-- Detects no-mail domains (v=spf1 -all pattern)
-- RFC 7489 compliance notes for -all with legitimate senders
+### Method 1: Direct URL (Recommended for Agents)
 
-#### DKIM (DomainKeys Identified Mail)
-- Checks common selectors: google, selector1, selector2, default, dkim, mail, k1, s1, s2, email
-- Validates key presence and format
-- Reports key length when available
+Navigate directly to:
+```
+https://dnstool.it-help.tech/analyze?domain=DOMAIN
+```
+Replace `DOMAIN` with the bare domain name (no protocol, no path).
 
-#### DMARC (Domain-based Message Authentication)
-- Policy analysis (none, quarantine, reject)
-- Subdomain policy (sp=) detection
-- Percentage (pct=) enforcement level
+Examples:
+- `https://dnstool.it-help.tech/analyze?domain=google.com`
+- `https://dnstool.it-help.tech/analyze?domain=whitehouse.gov`
+- `https://dnstool.it-help.tech/analyze?domain=example.co.uk`
+
+This triggers a fresh analysis and returns the full results page. Wait 2-5 seconds for the analysis to complete.
+
+### Method 2: Form Submission
+
+1. Go to `https://dnstool.it-help.tech/`
+2. Locate the input field with placeholder text "example.com"
+3. Enter the domain name (bare domain only — no https://, no www unless analyzing the www subdomain)
+4. Click the "Analyze" button or press Enter
+5. The page will redirect to the results after 2-5 seconds
+
+### Input Rules
+- Enter bare domain names: `example.com`, `mail.example.com`, `example.co.uk`
+- Do NOT include protocol: no `https://` or `http://`
+- Do NOT include paths: no `/page` or `/index.html`
+- Internationalized domains (IDN) are supported: `münchen.de`, `中国.cn`
+- Subdomains are supported: `mail.example.com`, `blog.example.com`
+
+### Rate Limiting
+- 8 analyses per minute per visitor
+- If rate-limited, a countdown timer will appear showing when you can try again
+- This mirrors how fast an expert human could realistically switch between tabs and run checks
+
+---
+
+## Reading the Results Page
+
+After analysis, the results page contains these sections in order. Scroll down through them.
+
+### 1. Security Posture Verdict (Top of Page)
+The overall security rating appears prominently at the top:
+- **SECURE** (green): Strong protections across email auth, DNSSEC, and encryption
+- **PARTIAL** (yellow/amber): Some protections in place but gaps exist
+- **INSECURE** (red): Critical security controls missing
+
+A brief executive summary explains the reasoning.
+
+### 2. Email Security Section
+Contains cards for each email authentication protocol:
+
+**SPF (Sender Policy Framework)**
+- Status: Found / Not Found
+- The full SPF record text
+- DNS lookup count (RFC 7208 allows max 10)
+- Mechanism analysis: permissiveness level (+all, ~all, -all, ?all)
+- No-mail domain detection (v=spf1 -all)
+- RFC 7489 §10.1 compliance notes
+
+**DKIM (DomainKeys Identified Mail)**
+- Found selectors and their key strengths
+- Key length: 2048-bit+ (strong) vs 1024-bit (weak)
+- Selectors checked: google, selector1, selector2, default, dkim, mail, k1, s1, s2, protonmail, and many more
+- Provider attribution showing which service each selector belongs to (gold badges)
+
+**DMARC (Domain-based Message Authentication)**
+- Policy: none / quarantine / reject
+- Subdomain policy (sp=)
+- Percentage enforcement (pct=)
 - Reporting addresses (rua=, ruf=)
 - Alignment modes (adkim=, aspf=)
 
-### DNSSEC Validation
-- Full chain validation from root to domain
-- DS record verification
-- DNSKEY analysis
-- Algorithm identification (ECDSA P-256/SHA-256, RSA/SHA-256, etc.)
-- Trust chain status
-- AD (Authentic Data) flag verification via validating resolvers (8.8.8.8, 1.1.1.1)
+**Email Security Providers (Gold Badges)**
+- DMARC monitoring services detected from reporting addresses
+- SPF flattening services detected from SPF includes
+- MTA-STS hosting providers
+- TLS-RPT reporting destinations
+- These appear as warm gold/amber badges throughout the email security section
 
-### MTA-STS (Mail Transfer Agent Strict Transport Security)
-- DNS record detection at _mta-sts.{domain}
-- Policy file retrieval from .well-known/mta-sts.txt
-- Mode analysis (enforce, testing, none)
-- MX pattern matching validation
-- Max-age verification
-- RFC 8461 compliance
+### 3. Brand Security Section
+**BIMI (Brand Indicators for Message Identification)**
+- Record presence at default._bimi.{domain}
+- Logo URL and preview (if accessible)
+- VMC (Verified Mark Certificate) status
 
-### TLS-RPT (TLS Reporting)
-- Record detection at _smtp._tls.{domain}
-- Reporting endpoint (rua=) validation
-- RFC 8460 compliance
+**MTA-STS (Mail Transfer Agent Strict Transport Security)**
+- DNS record at _mta-sts.{domain}
+- Policy file from .well-known/mta-sts.txt
+- Mode: enforce / testing / none
+- MX pattern matching
+- Max-age value
 
-### BIMI (Brand Indicators for Message Identification)
-- Record detection at default._bimi.{domain}
-- Logo URL (l=) validation
-- VMC certificate (a=) verification
-- SVG accessibility checking
+**TLS-RPT (TLS Reporting)**
+- Record at _smtp._tls.{domain}
+- Reporting endpoint (rua=)
 
-### SMTP Transport Security
+### 4. Domain Security Section
+**DNSSEC (DNS Security Extensions)**
+- Chain validation status from root to domain
+- DS and DNSKEY records
+- Algorithm identification (ECDSA P-256, RSA/SHA-256, etc.)
+- AD (Authentic Data) flag verification
+- Trust chain visualization
+
+**CAA (Certificate Authority Authorization)**
+- Which certificate authorities are authorized
+- Wildcard restrictions
+- Issue and issuewild tags
+
+### 5. Traffic & Routing Section
+All DNS record types displayed:
+- A Records (IPv4 addresses)
+- AAAA Records (IPv6 addresses)
+- MX Records (mail exchangers with priorities)
+- NS Records (authoritative nameservers)
+- TXT Records (all TXT records)
+- SOA Records (start of authority)
+- CNAME Records (canonical names)
+- SRV Records (service discovery)
+
+**Multi-Resolver Consensus**
+Results from Cloudflare (1.1.1.1), Google (8.8.8.8), Quad9 (9.9.9.9), and OpenDNS (208.67.222.222). Discrepancies between resolvers are flagged.
+
+**DNS Infrastructure Detection**
+Enterprise DNS providers identified (Cloudflare, AWS Route 53, Google Cloud DNS, Akamai, Azure DNS, etc.)
+
+### 6. SMTP Transport Security
 - MX server STARTTLS support
-- TLS version detection (1.2, 1.3)
-- Cipher strength analysis
-- Certificate validity checking
+- TLS version (1.2 or 1.3)
+- Cipher suite and strength
+- Certificate validity
 
-### Domain Information (RDAP)
+### 7. Domain Intelligence (RDAP)
 - Registrar name
-- Creation/expiration dates
+- Domain creation and expiration dates
 - Nameserver delegation
 - Registry information
 
-## Security Posture Scoring
+---
 
-Domains receive a posture rating based on:
-- SPF configuration and strictness
-- DMARC policy enforcement level
-- DKIM key presence
-- DNSSEC enablement
-- MX record configuration
+## Re-Analyzing a Domain
 
-Posture Levels:
-- EXCELLENT: Full email security + DNSSEC
-- GOOD: Strong email security controls
-- MODERATE: Basic protections in place
-- WEAK: Missing critical security records
-- CRITICAL: No security controls detected
+To get fresh data for the same domain:
+- On the results page, click the "Re-Analyze" button at the top
+- Or navigate again to: `https://dnstool.it-help.tech/analyze?domain=DOMAIN`
 
-## Technical Implementation
+Each analysis always fetches fresh DNS data — there is no caching.
+
+---
+
+## Browsing History & Statistics
+
+### Analysis History
+URL: `https://dnstool.it-help.tech/history`
+Shows a paginated list of all previously analyzed domains with timestamps. Click any entry to view its full results.
+
+### Statistics Dashboard
+URL: `https://dnstool.it-help.tech/stats`
+(Also accessible via `https://dnstool.it-help.tech/statistics`)
+Shows usage trends, analysis counts, popular domains, and visitor geography.
+
+---
+
+## Interpreting Results for Users
+
+When reporting results back to a user, focus on:
+
+1. **The overall security posture** (SECURE / PARTIAL / INSECURE) and why
+2. **Email authentication status**: Do they have SPF + DKIM + DMARC? Is DMARC set to reject?
+3. **Actionable gaps**: What's missing and what should they fix first?
+4. **Provider attribution**: Who manages their email security? Are they using a DMARC monitoring service?
+5. **Advanced protections**: DNSSEC, MTA-STS, BIMI, CAA — these are differentiators
+
+### Priority Order for Recommendations
+If a domain is missing protections, recommend in this order:
+1. SPF record (authorize legitimate senders)
+2. DKIM signing (cryptographic email authentication)
+3. DMARC policy (start with p=none, work toward p=reject)
+4. DMARC monitoring service (visibility into authentication results)
+5. MTA-STS (enforce encrypted email delivery)
+6. DNSSEC (DNS response integrity)
+7. CAA (certificate issuance control)
+8. BIMI (brand logo in inboxes — requires DMARC p=quarantine or p=reject)
+
+### Important Nuance: Symbiotic Security
+DNS Tool recognizes that security is not binary. A domain without DNSSEC but with strong DMARC p=reject and MTA-STS enforce may have excellent email security. The tool evaluates the full picture rather than penalizing individual missing records in isolation.
+
+---
+
+## Core Capabilities Reference
+
+### DNS Record Analysis
+- A/AAAA: IPv4 and IPv6 addresses
+- MX: Mail exchanger priorities and hostnames
+- TXT: SPF, DMARC, domain verification tokens
+- CNAME: Canonical name aliases
+- NS: Authoritative nameservers
+- SOA: Start of authority with TTL and refresh intervals
+- CAA: Certificate Authority Authorization
+- SRV: Service discovery (_autodiscover, _sip, _caldavs, etc.)
+
+### Security Posture Levels
+- **EXCELLENT**: Full email security + DNSSEC + advanced protections
+- **GOOD**: Strong email security controls in place
+- **MODERATE**: Basic protections present but gaps exist
+- **WEAK**: Missing critical security records
+- **CRITICAL**: No security controls detected
+
+### Technical Details
 - Backend: Python/Flask
-- DNS Library: dnspython with DoH fallback
+- DNS Library: dnspython with multiple resolver fallback
 - RDAP: Direct IANA bootstrap queries
-- Response Time: Typically 2-3 seconds
+- Response Time: Typically 2-5 seconds per analysis
+- Data: Always fresh, never cached
 
-## API Usage
-The tool is web-based. Enter a domain at the homepage to receive analysis.
+---
 
 ## RFC References
 - RFC 7208: SPF (Sender Policy Framework)
@@ -113,7 +240,10 @@ The tool is web-based. Enter a domain at the homepage to receive analysis.
 - BIMI Group Specification: Brand Indicators for Message Identification
 - RFC 7483: RDAP (Registration Data Access Protocol)
 
+---
+
 ## Contact
 IT Help San Diego Inc.
-619-853-5008
-https://www.it-help.tech/blog/dns-security-best-practices/
+Phone: 619-853-5008
+Website: https://www.it-help.tech
+Blog: https://www.it-help.tech/blog/dns-security-best-practices/

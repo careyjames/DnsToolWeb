@@ -4,7 +4,10 @@
 
 A web-based DNS intelligence tool for comprehensive domain record analysis, email security validation (SPF, DMARC, DKIM), email security management provider detection, and DNS security intelligence reports. The application aims to provide a robust, user-friendly platform for understanding and improving domain and email security posture, offering insights into business vision, market potential, and project ambitions.
 
-## Recent Changes (v26.10.27)
+## Recent Changes (v26.10.28)
+- AI agent documentation: `llms.txt` and `llms-full.txt` rewritten as step-by-step guides teaching AI agents (ChatGPT, Gemini, Claude, Perplexity) how to operate the tool — direct URL method, form interaction, result interpretation, and re-analyze flow (v26.10.28).
+- Dynamic sitemap: `/sitemap.xml` now generated dynamically with automatic `lastmod` dates (always today's date), includes `/statistics` route (v26.10.28).
+- `robots.txt` updated with AI agent documentation pointers (`/llms.txt`, `/llms-full.txt`) (v26.10.28).
 - Self-hosted Bootstrap dark theme CSS — eliminates external cdn.replit.com dependency and removes wasted 750ms Google Fonts (IBM Plex Sans) render-blocking load (v26.10.27).
 - CSP tightened: style-src and font-src now 'self' only (no external CDN allowlisting needed) (v26.10.27).
 - Static file cache headers: 1-year max-age for all static assets (v26.10.27).
@@ -60,10 +63,15 @@ Preferred communication style: Simple, everyday language.
 
 **Route Structure:**
 - `GET /`: Homepage.
-- `POST /analyze`: Processes domain analysis.
+- `GET|POST /analyze`: Processes domain analysis (GET via `?domain=` query param, POST via form).
 - `GET /analysis/{id}`: View saved analysis.
 - `GET /history`: List of past analyses.
-- `GET /statistics`: Usage metrics dashboard.
+- `GET /stats`: Usage metrics dashboard.
+- `GET /statistics`: Redirects to `/stats`.
+- `GET /robots.txt`: Search engine crawler guidance (static file).
+- `GET /sitemap.xml`: Dynamic sitemap with automatic `lastmod` dates.
+- `GET /llms.txt`: AI agent quick-start guide (static file).
+- `GET /llms-full.txt`: AI agent comprehensive driving guide (static file).
 
 ### Design Patterns
 - MVC-style separation (Flask routes, SQLAlchemy models, Jinja2 templates).
@@ -81,6 +89,10 @@ Preferred communication style: Simple, everyday language.
 - Code blocks optimized with explicit text color, line-height 1.65, letter-spacing for monospace readability.
 - Print styles for `.provider-badge` (cream/brown) and code blocks ensure paper readability.
 - IMPORTANT: `custom.min.css` must be kept in sync with `custom.css` (templates reference the `.min` version).
+- IMPORTANT: When adding new public routes, add them to the dynamic sitemap in `app.py` (`sitemap()` function) and update `llms.txt`/`llms-full.txt` if user-facing.
+- Sitemap `lastmod` is automatic (always today's date) — no manual updates needed.
+- `llms.txt` (static/llms.txt): Quick-start guide for AI agents. Update when capabilities change.
+- `llms-full.txt` (static/llms-full.txt): Comprehensive agent driving guide. Update when result page structure, routes, or analysis features change.
 
 ## External Dependencies
 

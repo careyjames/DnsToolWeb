@@ -3,6 +3,41 @@
 
 DNS Tool provides instant, real-time DNS intelligence reports with email authentication validation (SPF, DKIM, DMARC), DNSSEC chain verification, BIMI brand checking, MTA-STS/TLS-RPT analysis, CAA certificate controls, and domain intelligence via RDAP. Every query fetches fresh data from multiple resolvers — never cached.
 
+## How to Use This Tool (for AI Agents)
+
+If you are an AI agent (ChatGPT, Gemini, Claude, Perplexity, etc.) browsing on behalf of a user:
+
+### Quick Start — Analyze a Domain
+1. Navigate to: `https://dnstool.it-help.tech/`
+2. Find the search input field (labeled "Enter a domain name")
+3. Type the domain (e.g., `example.com`) — no `https://` or paths, just the bare domain
+4. Click the "Analyze" button or submit the form
+5. Wait 2-5 seconds for the full report to load
+
+### Direct URL Method (Fastest)
+Skip the form entirely — go directly to:
+```
+https://dnstool.it-help.tech/analyze?domain=example.com
+```
+Replace `example.com` with any domain. This triggers a fresh analysis immediately.
+
+### What You'll Get Back
+A single-page report with these sections (scroll down):
+- **Security Posture Verdict**: SECURE / PARTIAL / INSECURE at the top
+- **Email Security**: SPF, DKIM, DMARC analysis with pass/fail badges
+- **Email Security Providers**: Who manages DMARC monitoring, SPF flattening (gold badges)
+- **Brand Security**: BIMI logo, MTA-STS policy, TLS-RPT reporting
+- **Domain Security**: DNSSEC chain, CAA records
+- **Traffic & Routing**: DNS records (A, AAAA, MX, NS, SOA, TXT, SRV, CNAME)
+- **Domain Intelligence**: Registrar, creation/expiration, nameservers via RDAP
+
+### Re-Analyzing
+To get fresh data for the same domain, click the "Re-Analyze" button on any results page. Rate limit: 8 analyses per minute per visitor.
+
+### Other Pages
+- `/history` — List of recently analyzed domains
+- `/stats` — Usage statistics and trends
+
 ## Who It's For
 - **Executives & Board Members**: Clear SECURE / PARTIAL / INSECURE verdicts for cybersecurity posture at a glance
 - **IT Professionals**: Validate SPF, DKIM, DMARC configurations and troubleshoot DNS records
@@ -18,6 +53,7 @@ DNS Tool provides instant, real-time DNS intelligence reports with email authent
 - BIMI record and logo verification with VMC detection
 - SMTP transport security (STARTTLS, TLS version, cipher strength)
 - CAA record analysis (Certificate Authority Authorization)
+- Email security management provider detection (DMARC monitoring, SPF flattening)
 - Enterprise DNS provider detection (Cloudflare, AWS, Google, Akamai, Azure)
 - Multi-resolver consensus verification (Cloudflare, Google, Quad9)
 - Domain registrar information via RDAP
@@ -26,11 +62,8 @@ DNS Tool provides instant, real-time DNS intelligence reports with email authent
 ## Common Search Terms
 Domain security audit, SPF checker, DKIM validator, DMARC lookup, DNSSEC validation tool, email authentication checker, email spoofing protection, cybersecurity posture report, DNS intelligence, domain reputation check, CAA record check, MTA-STS checker, BIMI checker
 
-## Usage
-Enter any domain name to receive a complete one-page security intelligence report covering DNS configuration, email authentication, and overall security posture.
-
 ## Documentation
-- Full details: /llms-full.txt
+- Full agent guide with result interpretation: /llms-full.txt
 - Blog guide: https://www.it-help.tech/blog/dns-security-best-practices/
 
 ## Contact
