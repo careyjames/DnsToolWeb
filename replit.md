@@ -92,9 +92,9 @@ Preferred communication style: Simple, everyday language.
 ### Testing
 - **pytest**: Unit and integration test framework.
 
-## Recent Changes (v26.10.20)
+## Recent Changes (v26.10.21)
 
-### Security Gateway DKIM Attribution (v26.10.21)
+### Security Gateway DKIM Attribution & SPF Evidence Hierarchy (v26.10.21)
 - When MX points to a security gateway (Proofpoint, Mimecast) but SPF includes a different sending platform (Microsoft 365, Google Workspace), the tool now correctly treats the SPF platform as the primary for DKIM purposes
 - Previously: cisa.gov showed "DKIM verified for Microsoft 365 only — no DKIM found for primary mail platform (Proofpoint)" — false warning because Proofpoint is the inbound gateway, not the DKIM signer
 - Now: cisa.gov correctly shows DKIM as "Found" (success) with M365 selector, plus info box explaining the gateway architecture
@@ -103,6 +103,8 @@ Preferred communication style: Simple, everyday language.
 - Verdict text includes gateway context: "DKIM keys verified with strong cryptography (signed by Microsoft 365 via Proofpoint gateway)"
 - `SECURITY_GATEWAYS` set: Proofpoint, Mimecast, Barracuda, Perception Point, Sophos, FireEye, Trend Micro, Forcepoint, Symantec, Hornetsecurity, SpamExperts
 - Federal compliance context for SPF -all updated to be precise: BOD 18-01 "requires valid SPF records" — doesn't explicitly specify -all vs ~all; -all is widespread federal practice, not spelled-out requirement
+- SPF provider detection split into `SPF_MAILBOX_PROVIDERS` (M365, Google, Zoho, Fastmail, ProtonMail) and `SPF_ANCILLARY_SENDERS` (SendGrid, Mailchimp, Mailgun, etc.) — mailbox providers always checked first regardless of include order in SPF record
+- FAQ #9 updated with precise BOD 18-01 findings: directive requires "valid SPF records" but doesn't explicitly mandate -all vs ~all
 
 ### DMARC-Aware SPF Messaging & Authority-Backed Guidance (v26.10.20)
 - SPF `~all` (soft fail) badge changed from yellow/warning to green — it's the industry standard used by Google, Apple, and most providers
