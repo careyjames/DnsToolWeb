@@ -522,7 +522,7 @@
                                             <small class="d-block {{ 'text-success' if not results.dkim_analysis.get('third_party_only') or selector_data.get('provider', 'Unknown') == results.dkim_analysis.get('primary_provider', '') else 'text-warning' }}">
                                                 <i class="fas fa-check-circle me-1"></i>{{ selector }}
                                                 {% if selector_data.get('provider') and selector_data.provider != 'Unknown' %}
-                                                    <span class="badge bg-{{ 'info' if selector_data.provider == results.dkim_analysis.get('primary_provider', '') else 'secondary' }} ms-1">{{ selector_data.provider }}</span>
+                                                    <span class="badge bg-{{ 'info' if selector_data.provider == results.dkim_analysis.get('primary_provider', '') else 'secondary' }} ms-1">{{ selector_data.provider }}{% if selector_data.get('inferred') %} (inferred){% endif %}</span>
                                                 {% endif %}
                                                 {% if selector_data.key_info %}
                                                     {% for ki in selector_data.key_info %}

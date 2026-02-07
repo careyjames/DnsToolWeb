@@ -92,7 +92,14 @@ Preferred communication style: Simple, everyday language.
 ### Testing
 - **pytest**: Unit and integration test framework.
 
-## Recent Changes (v26.10.14)
+## Recent Changes (v26.10.15)
+
+### DKIM Provider Inference (v26.10.15)
+- Unattributed DKIM selectors (e.g., `dkim._domainkey`, `email._domainkey`) are now inferred as belonging to the primary mail provider when standard named selectors aren't found
+- Fixes false "not verified for Proofpoint" warnings for enterprises like IBM that use custom DKIM selector names
+- Inferred selectors display "(inferred)" badge in results UI
+- DKIM posture moves from "Monitoring" to "Configured" when inference succeeds
+- Verdict text explains the inference for transparency
 
 ### Documentation & Branding Update (v26.10.14)
 - Updated all FAQ schema and visible FAQ content to reference 4 resolvers (Cloudflare, Google, Quad9, OpenDNS)

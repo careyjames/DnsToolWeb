@@ -1151,12 +1151,27 @@ class DNSAnalyzer:
         
         primary_has_dkim = False
         primary_dkim_note = ''
+        unattributed_selectors = [
+            sel_name for sel_name, sel_data in found_selectors.items()
+            if sel_data.get('provider', 'Unknown') == 'Unknown'
+        ]
         if primary_provider != 'Unknown':
             expected_selectors = self.PRIMARY_PROVIDER_SELECTORS.get(primary_provider, [])
             if expected_selectors:
                 primary_has_dkim = any(s in found_selectors for s in expected_selectors)
             else:
                 primary_has_dkim = primary_provider in found_providers
+            if not primary_has_dkim and unattributed_selectors:
+                primary_has_dkim = True
+                for sel_name in unattributed_selectors:
+                    found_selectors[sel_name]['provider'] = primary_provider
+                    found_selectors[sel_name]['inferred'] = True
+                found_providers.add(primary_provider)
+                inferred_names = ', '.join(s.replace('._domainkey', '') for s in unattributed_selectors)
+                primary_dkim_note = (
+                    f'DKIM selector(s) {inferred_names} inferred as {primary_provider} '
+                    f'(custom selector names — not the standard {primary_provider} selector).'
+                )
         
         third_party_only = False
         if found_selectors and primary_provider != 'Unknown' and not primary_has_dkim:
@@ -2614,12 +2629,27 @@ class DNSAnalyzer:
                         found_providers.add(p)
                 
                 primary_has_dkim = False
+                unattributed_selectors = [
+                    sel_name for sel_name, sel_data in dkim_result.get('selectors', {}).items()
+                    if sel_data.get('provider', 'Unknown') == 'Unknown'
+                ]
                 if primary_provider != 'Unknown':
                     expected_selectors = self.PRIMARY_PROVIDER_SELECTORS.get(primary_provider, [])
                     if expected_selectors:
                         primary_has_dkim = any(s in dkim_result['selectors'] for s in expected_selectors)
                     else:
                         primary_has_dkim = primary_provider in found_providers
+                    if not primary_has_dkim and unattributed_selectors:
+                        primary_has_dkim = True
+                        for sel_name in unattributed_selectors:
+                            dkim_result['selectors'][sel_name]['provider'] = primary_provider
+                            dkim_result['selectors'][sel_name]['inferred'] = True
+                        found_providers.add(primary_provider)
+                        inferred_names = ', '.join(s.replace('._domainkey', '') for s in unattributed_selectors)
+                        dkim_result['primary_dkim_note'] = (
+                            f'DKIM selector(s) {inferred_names} inferred as {primary_provider} '
+                            f'(custom selector names \u2014 not the standard {primary_provider} selector).'
+                        )
                 
                 dkim_result['primary_provider'] = primary_provider
                 dkim_result['primary_has_dkim'] = primary_has_dkim
@@ -2641,7 +2671,8 @@ class DNSAnalyzer:
                         dkim_result['message'] = f'Found DKIM for {len(dkim_result["selectors"])} selector(s) but none for primary mail platform ({primary_provider})'
                 else:
                     dkim_result['third_party_only'] = False
-                    dkim_result['primary_dkim_note'] = ''
+                    if not dkim_result.get('primary_dkim_note'):
+                        dkim_result['primary_dkim_note'] = ''
                 
                 results_map['dkim'] = dkim_result
         
@@ -3082,6 +3113,9 @@ class DNSAnalyzer:
         dkim_status = dkim.get('status')
         dkim_selectors = dkim.get('selectors', {})
         dkim_third_party_only = dkim.get('third_party_only', False)
+        dkim_has_inferred = any(
+            sel_data.get('inferred') for sel_data in dkim_selectors.values()
+        )
         if dkim_status == 'success' and dkim_selectors:
             key_strengths = dkim.get('key_strengths', [])
             if key_strengths:
@@ -3224,7 +3258,12 @@ class DNSAnalyzer:
         dkim_third_party_only = dkim_analysis.get('third_party_only', False)
         dkim_primary_provider = dkim_analysis.get('primary_provider', '')
         
-        if dkim_strong:
+        dkim_has_inferred = any(
+            sel_data.get('inferred') for sel_data in dkim_analysis.get('selectors', {}).values()
+        )
+        if dkim_strong and dkim_has_inferred:
+            dkim_note = f' DKIM keys verified with strong cryptography. {dkim_analysis.get("primary_dkim_note", "")}'
+        elif dkim_strong:
             dkim_note = ' DKIM keys verified with strong cryptography.'
         elif dkim_third_party_only:
             found_provs = dkim_analysis.get('found_providers', [])
