@@ -92,7 +92,14 @@ Preferred communication style: Simple, everyday language.
 ### Testing
 - **pytest**: Unit and integration test framework.
 
-## Recent Changes (v26.10.15)
+## Recent Changes (v26.10.17)
+
+### Self-Hosted Enterprise DNS & Provider Expansion (v26.10.17)
+- Self-hosted enterprise DNS detection now synced to hosting summary card (Apple, Meta, Intel, Salesforce, Cisco)
+- Previously, infrastructure analysis detected self-hosted enterprises but the DNS Hosting card showed "Standard"
+- Added Com Laude DNS (`comlaude-dns`) and BT/British Telecom (`bt.net`) to both detection lists
+- Added Oracle Cloud DNS, F5 Distributed Cloud, Verizon Business DNS, AT&T Managed DNS, CSC Global, MarkMonitor to enterprise provider detection (v26.10.16)
+- Multi-provider DNS: majority-match logic picks provider with most nameservers as primary
 
 ### DKIM Provider Inference (v26.10.15)
 - Unattributed DKIM selectors (e.g., `dkim._domainkey`, `email._domainkey`) are now inferred as belonging to the primary mail provider when standard named selectors aren't found
