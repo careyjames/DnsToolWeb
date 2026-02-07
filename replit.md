@@ -103,6 +103,9 @@ Preferred communication style: Simple, everyday language.
 - Microsoft called out as the notable exception that historically defaults to `-all`
 - `~all + DMARC reject` identified as the strongest compatible security stance per CISA and RFC guidance
 - No-mail domains (`v=spf1 -all` with no senders) excluded from the `-all` warning — hard fail is correct for parked domains
+- `.gov` domain detection: federal domains show "Federal compliance context" with landmark icon acknowledging BOD 18-01; `-all` recommendation suppressed for `.gov` since they follow a binding directive
+- FAQ #9 added: "I thought SPF -all was the strongest protection. Isn't ~all weaker?" — covers RFC 7489 §10.1, federal .gov context, CISA BOD 18-01 history, and Microsoft exception
+- **Key research finding (BOD 18-01 text):** The directive requires "valid SPF records" and DMARC p=reject, but does NOT explicitly mandate `-all` vs `~all`. Federal `-all` is widespread practice (defense-in-depth), not a spelled-out requirement. In 2017 when BOD 18-01 was issued, 80%+ of federal domains had no DMARC, so `-all` was a pragmatic safety net. Now that DMARC p=reject is deployed, `-all` is redundant but federal infrastructure is controlled enough that the RFC 7489 §10.1 risk is lower. The directive hasn't been updated to reflect the industry consensus around `~all + DMARC reject`.
 
 ### Context-Aware DKIM Selector Attribution (v26.10.19)
 - DKIM selector names like `selector1`/`selector2` no longer falsely attributed to Microsoft 365 when MX records show self-hosted email
