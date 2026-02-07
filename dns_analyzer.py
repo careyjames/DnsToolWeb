@@ -1072,24 +1072,25 @@ class DNSAnalyzer:
         'dmarcduty.com': {'name': 'DynamicSPF', 'vendor': 'Dmarcduty'},
     }
 
-    NS_DELEGATION_PROVIDERS = {
+    DYNAMIC_SERVICES_PROVIDERS = {
         'ondmarc.com': {'name': 'OnDMARC', 'vendor': 'Red Sift'},
         'redsift.cloud': {'name': 'OnDMARC', 'vendor': 'Red Sift'},
         'mailhardener.com': {'name': 'Mailhardener', 'vendor': 'Mailhardener'},
     }
 
-    NS_ZONE_CAPABILITIES = {
-        '_dmarc': 'DMARC management',
-        '_domainkey': 'DKIM management',
-        '_mta-sts': 'MTA-STS management',
-        '_smtp._tls': 'TLS-RPT management',
+    DYNAMIC_SERVICES_ZONES = {
+        '_dmarc': 'Dynamic DMARC',
+        '_domainkey': 'Dynamic DKIM',
+        '_mta-sts': 'Dynamic MTA-STS',
+        '_smtp._tls': 'Dynamic TLS-RPT',
     }
 
     def _detect_email_security_management(self, spf_analysis: dict, dmarc_analysis: dict, tlsrpt_analysis: dict, mta_sts_analysis: dict = None, domain: str = None) -> dict:
-        """Detect email security management providers from DMARC rua/ruf, TLS-RPT rua, SPF includes, MTA-STS, and NS delegations.
+        """Detect email security management providers from DMARC rua/ruf, TLS-RPT rua, SPF includes, MTA-STS, and Dynamic Services.
         
         Extracts the operational security partner network from DNS records — intelligence
-        most tools ignore. Includes NS delegation detection for Dynamic Services (Red Sift, Mailhardener).
+        most tools ignore. Includes Dynamic Services detection (Red Sift, Mailhardener) via
+        DNS subzone delegation of email security zones (_dmarc, _domainkey, _mta-sts, _smtp._tls).
         """
         import re
         providers = {}
@@ -1204,53 +1205,53 @@ class DNSAnalyzer:
                         break
 
         if domain:
-            ns_zones = {
+            ds_zones = {
                 '_dmarc': f'_dmarc.{domain}',
                 '_domainkey': f'_domainkey.{domain}',
                 '_mta-sts': f'_mta-sts.{domain}',
                 '_smtp._tls': f'_smtp._tls.{domain}',
             }
-            ns_delegations = {}
-            for zone_key, zone_fqdn in ns_zones.items():
+            ds_detections = {}
+            for zone_key, zone_fqdn in ds_zones.items():
                 try:
                     ns_answers = dns.resolver.resolve(zone_fqdn, 'NS')
                     for rdata in ns_answers:
                         ns_host = str(rdata).rstrip('.').lower()
-                        for ns_pattern, ns_info in self.NS_DELEGATION_PROVIDERS.items():
+                        for ns_pattern, ds_info in self.DYNAMIC_SERVICES_PROVIDERS.items():
                             if ns_host.endswith(ns_pattern):
-                                prov_name = ns_info['name']
-                                cap = self.NS_ZONE_CAPABILITIES.get(zone_key, f'{zone_key} delegation')
-                                if prov_name not in ns_delegations:
-                                    ns_delegations[prov_name] = {
-                                        'info': ns_info,
+                                prov_name = ds_info['name']
+                                cap = self.DYNAMIC_SERVICES_ZONES.get(zone_key, f'{zone_key} management')
+                                if prov_name not in ds_detections:
+                                    ds_detections[prov_name] = {
+                                        'info': ds_info,
                                         'capabilities': [],
                                         'zones': [],
                                     }
-                                if cap not in ns_delegations[prov_name]['capabilities']:
-                                    ns_delegations[prov_name]['capabilities'].append(cap)
-                                if zone_key not in ns_delegations[prov_name]['zones']:
-                                    ns_delegations[prov_name]['zones'].append(zone_key)
+                                if cap not in ds_detections[prov_name]['capabilities']:
+                                    ds_detections[prov_name]['capabilities'].append(cap)
+                                if zone_key not in ds_detections[prov_name]['zones']:
+                                    ds_detections[prov_name]['zones'].append(zone_key)
                                 break
                 except Exception:
                     pass
 
-            for prov_name, ns_data in ns_delegations.items():
-                zone_labels = ', '.join(ns_data['zones'])
+            for prov_name, ds_data in ds_detections.items():
+                cap_labels = ', '.join(ds_data['capabilities'])
                 if prov_name in providers:
-                    if 'NS delegation' not in providers[prov_name]['detected_from']:
-                        providers[prov_name]['detected_from'].append('NS delegation')
-                        providers[prov_name]['sources'].append(f'NS delegation ({zone_labels})')
-                    for cap in ns_data['capabilities']:
+                    if 'Dynamic Services' not in providers[prov_name]['detected_from']:
+                        providers[prov_name]['detected_from'].append('Dynamic Services')
+                        providers[prov_name]['sources'].append(f'Dynamic Services ({cap_labels})')
+                    for cap in ds_data['capabilities']:
                         if cap not in providers[prov_name].get('capabilities', []):
                             providers[prov_name].setdefault('capabilities', []).append(cap)
                 else:
-                    info = ns_data['info']
+                    info = ds_data['info']
                     providers[prov_name] = {
                         'name': prov_name,
                         'vendor': info['vendor'],
-                        'capabilities': ns_data['capabilities'],
-                        'sources': [f'NS delegation ({zone_labels})'],
-                        'detected_from': ['NS delegation'],
+                        'capabilities': ds_data['capabilities'],
+                        'sources': [f'Dynamic Services ({cap_labels})'],
+                        'detected_from': ['Dynamic Services'],
                     }
 
         actively_managed = len(providers) > 0
