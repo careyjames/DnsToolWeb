@@ -143,7 +143,8 @@ class DNSAnalyzer:
     CONSENSUS_RESOLVERS = [
         {"name": "Cloudflare", "ip": "1.1.1.1", "doh": "https://cloudflare-dns.com/dns-query"},
         {"name": "Google", "ip": "8.8.8.8", "doh": "https://dns.google/resolve"},
-        {"name": "Quad9", "ip": "9.9.9.9", "doh": None},  # Quad9 DoH has different format
+        {"name": "Quad9", "ip": "9.9.9.9", "doh": None},
+        {"name": "OpenDNS", "ip": "208.67.222.222", "doh": None},
     ]
     
     def __init__(self):
@@ -302,7 +303,7 @@ class DNSAnalyzer:
         
         # Query all resolvers in parallel
         resolver_results = {}
-        with ThreadPoolExecutor(max_workers=3) as executor:
+        with ThreadPoolExecutor(max_workers=4) as executor:
             futures = {
                 executor.submit(
                     self._query_single_resolver, 
@@ -2697,7 +2698,7 @@ class DNSAnalyzer:
             'registrar_info': results_map.get('registrar', {'status': 'error', 'registrar': None}),
             'resolver_consensus': results_map.get('resolver_consensus', {
                 'consensus_reached': True,
-                'resolvers_queried': 3,
+                'resolvers_queried': 4,
                 'checks_performed': 0,
                 'discrepancies': [],
                 'per_record_consensus': {}

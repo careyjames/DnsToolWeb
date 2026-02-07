@@ -867,7 +867,7 @@
                                         <strong>Multi-Resolver Verification:</strong>
                                         {% if results.resolver_consensus.consensus_reached %}
                                             <span class="text-success">Consensus reached</span> - 
-                                            {{ results.resolver_consensus.resolvers_queried }} resolvers (Cloudflare, Google, Quad9) agree on DNS records
+                                            {{ results.resolver_consensus.resolvers_queried }} resolvers (Cloudflare, Google, Quad9, OpenDNS) agree on DNS records
                                         {% else %}
                                             <span class="text-warning">Discrepancy detected</span> - 
                                             Some resolvers returned different results
