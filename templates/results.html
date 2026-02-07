@@ -440,16 +440,19 @@
                                 {% elif results.spf_analysis.permissiveness == 'STRICT' and not results.spf_analysis.no_mail_intent %}
                                     <div class="mt-2 p-2 bg-warning bg-opacity-10 border border-warning border-opacity-25 rounded small">
                                         <i class="fas fa-exclamation-triangle text-warning me-1"></i>
-                                        <strong class="text-warning">-all (hard fail) can interfere with DMARC.</strong>
-                                        <span class="text-muted">Per RFC 7489 §10.1, hard fail may cause receiving servers to reject messages during the SMTP transaction — before DKIM is checked and before DMARC can evaluate the result. This means a message that would pass DMARC via DKIM alignment is rejected prematurely. CISA (BOD 18-01) and Google recommend ~all (soft fail) for active sending domains, with DMARC p=reject as the enforcement layer. Microsoft is the notable exception that historically defaults to -all.
+                                        <strong class="text-warning">SPF hard fail (-all): compliance-strong, but can short-circuit DMARC.</strong>
+                                        <span class="text-muted">RFC 7489 §10.1 notes that -all can cause some receivers to reject mail during the SMTP transaction — before DKIM is checked and before DMARC can evaluate the result. A message that would pass DMARC via DKIM alignment may be rejected prematurely. For most domains, ~all + DMARC p=reject is the strongest compatible posture — it ensures every authentication method (SPF, DKIM, DMARC) is fully evaluated before a decision is made.
+                                        {% if domain and domain.endswith('.gov') %}
+                                            <br><strong class="text-info"><i class="fas fa-landmark me-1"></i>Federal compliance context:</strong> <span class="text-info">CISA BOD 18-01 mandates -all for federal civilian agency domains. This domain's use of -all is compliant with that directive.</span>
+                                        {% endif %}
                                         {% if results.dmarc_analysis.policy == 'reject' %}
-                                            <strong class="text-warning">This domain uses -all + DMARC reject. While both are individually strong, RFC 7489 warns this combination can cause legitimate mail to be rejected before DMARC processes. Switching to ~all + p=reject is the strongest compatible stance per CISA and RFC guidance.</strong>
+                                            <br><strong class="text-warning">DMARC is set to reject — enforcement is strong. However, some receivers may still reject messages on SPF hard fail before DKIM alignment is checked. {% if not (domain and domain.endswith('.gov')) %}Switching to ~all + p=reject would provide the same enforcement with full DMARC compatibility.{% endif %}</strong>
                                         {% elif results.dmarc_analysis.policy == 'quarantine' %}
-                                            <strong class="text-warning">This domain uses -all + DMARC quarantine. Consider switching to ~all for better DMARC compatibility, and upgrading to p=reject for the strongest security stance.</strong>
+                                            <br><strong class="text-warning">DMARC enforcement is partial (quarantine). -all may preempt DKIM/DMARC evaluation at some receivers. Consider p=reject for full enforcement; ~all is more DMARC-compatible.</strong>
                                         {% elif results.dmarc_analysis.policy == 'none' %}
-                                            <strong class="text-danger">This domain uses -all but DMARC is only monitoring (p=none). The hard fail provides some SPF-level protection, but DMARC enforcement (p=reject) with ~all would be far more effective.</strong>
+                                            <br><strong class="text-danger">DMARC is monitoring only (p=none). -all provides some SPF-level protection, but DMARC isn't enforcing. Adding p=reject and considering ~all for compatibility would be far more effective.</strong>
                                         {% elif results.dmarc_analysis.status == 'error' %}
-                                            <strong class="text-danger">No DMARC record found. Without DMARC, -all provides some protection but cannot prevent sophisticated spoofing. Adding DMARC with p=reject and switching to ~all is strongly recommended.</strong>
+                                            <br><strong class="text-danger">No DMARC record found. -all provides strict SPF, but without DMARC, alignment is never evaluated. Adding DMARC with p=reject is strongly recommended.</strong>
                                         {% endif %}</span>
                                     </div>
                                 {% endif %}
