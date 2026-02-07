@@ -2237,6 +2237,8 @@ class DNSAnalyzer:
             'csc.com': {'name': 'CSC Global DNS', 'tier': 'enterprise', 'features': ['Enterprise management', 'Brand protection', 'Global infrastructure']},
             'cscdns': {'name': 'CSC Global DNS', 'tier': 'enterprise', 'features': ['Enterprise management', 'Brand protection', 'Global infrastructure']},
             'markmonitor': {'name': 'MarkMonitor DNS', 'tier': 'enterprise', 'features': ['Brand protection', 'Enterprise management', 'Anti-fraud']},
+            'comlaude-dns': {'name': 'Com Laude DNS', 'tier': 'enterprise', 'features': ['Brand protection', 'Enterprise management', 'Global infrastructure']},
+            'bt.net': {'name': 'BT (British Telecom)', 'tier': 'enterprise', 'features': ['Enterprise infrastructure', 'Managed security', 'UK backbone']},
         }
         
         # Major companies running their own enterprise-grade DNS infrastructure
@@ -2436,6 +2438,8 @@ class DNSAnalyzer:
             'csc.com': 'CSC Global DNS',
             'cscdns': 'CSC Global DNS',
             'markmonitor': 'MarkMonitor DNS',
+            'comlaude-dns': 'Com Laude DNS',
+            'bt.net': 'BT (British Telecom)',
             'googledomains': 'Google Domains',
             'google': 'Google Cloud DNS',
             'azure-dns': 'Azure DNS',
