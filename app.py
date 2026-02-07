@@ -436,7 +436,10 @@ def add_security_headers(response):
     response.headers['Permissions-Policy'] = 'geolocation=(), microphone=(), camera=()'
     # Cross-Origin headers for additional security
     response.headers['Cross-Origin-Opener-Policy'] = 'same-origin'
-    response.headers['Cross-Origin-Resource-Policy'] = 'same-origin'
+    if request.path.startswith('/static/images/'):
+        response.headers['Cross-Origin-Resource-Policy'] = 'cross-origin'
+    else:
+        response.headers['Cross-Origin-Resource-Policy'] = 'same-origin'
     # Content Security Policy - balanced for security AND real-world compatibility
     # - script-src uses nonces (critical for XSS prevention)
     # - style-src uses 'unsafe-inline' (acceptable - inline style attrs can't use nonces)
