@@ -101,7 +101,7 @@ Preferred communication style: Simple, everyday language.
 - `_detect_primary_mail_provider` returns `{provider, gateway}` dict instead of string — gateway is populated when MX is a known security gateway with a different SPF-detected sender
 - Blue info box in results explains: "Mail routed through Proofpoint (security gateway) — DKIM signed by Microsoft 365 (sending platform). This is a standard enterprise architecture."
 - Verdict text includes gateway context: "DKIM keys verified with strong cryptography (signed by Microsoft 365 via Proofpoint gateway)"
-- `SECURITY_GATEWAYS` set: Proofpoint, Mimecast
+- `SECURITY_GATEWAYS` set: Proofpoint, Mimecast, Barracuda, Perception Point, Sophos, FireEye, Trend Micro, Forcepoint, Symantec, Hornetsecurity, SpamExperts
 - Federal compliance context for SPF -all updated to be precise: BOD 18-01 "requires valid SPF records" — doesn't explicitly specify -all vs ~all; -all is widespread federal practice, not spelled-out requirement
 
 ### DMARC-Aware SPF Messaging & Authority-Backed Guidance (v26.10.20)

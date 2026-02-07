@@ -953,6 +953,17 @@ class DNSAnalyzer:
         'pphosted': 'Proofpoint',
         'iphmx': 'Proofpoint',
         'mimecast': 'Mimecast',
+        'barracudanetworks': 'Barracuda',
+        'barracuda': 'Barracuda',
+        'perception-point': 'Perception Point',
+        'sophos': 'Sophos',
+        'fireeyecloud': 'FireEye',
+        'trendmicro': 'Trend Micro',
+        'forcepoint': 'Forcepoint',
+        'messagelabs': 'Symantec',
+        'hornetsecurity': 'Hornetsecurity',
+        'antispamcloud': 'SpamExperts',
+        'spamexperts': 'SpamExperts',
         'zoho': 'Zoho Mail',
         'mailgun': 'Mailgun',
         'sendgrid': 'SendGrid',
@@ -962,7 +973,11 @@ class DNSAnalyzer:
         'mx.cloudflare': 'Cloudflare Email',
     }
 
-    SECURITY_GATEWAYS = {'Proofpoint', 'Mimecast'}
+    SECURITY_GATEWAYS = {
+        'Proofpoint', 'Mimecast', 'Barracuda', 'Perception Point',
+        'Sophos', 'FireEye', 'Trend Micro', 'Forcepoint',
+        'Symantec', 'Hornetsecurity', 'SpamExperts',
+    }
 
     PRIMARY_PROVIDER_SELECTORS = {
         'Microsoft 365': ['selector1._domainkey', 'selector2._domainkey'],
