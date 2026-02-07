@@ -951,6 +951,7 @@ class DNSAnalyzer:
         'exchange': 'Microsoft 365',
         'intermedia': 'Microsoft 365',
         'pphosted': 'Proofpoint',
+        'iphmx': 'Proofpoint',
         'mimecast': 'Mimecast',
         'zoho': 'Zoho Mail',
         'mailgun': 'Mailgun',
@@ -1000,9 +1001,27 @@ class DNSAnalyzer:
         'pphosted': 'Proofpoint',
     }
 
-    def _classify_selector_provider(self, selector_name: str) -> str:
-        """Map a DKIM selector to its known provider, or 'Unknown' if not recognized."""
-        return self.SELECTOR_PROVIDER_MAP.get(selector_name, 'Unknown')
+    def _classify_selector_provider(self, selector_name: str, primary_provider: str = None) -> str:
+        """Map a DKIM selector to its known provider, or 'Unknown' if not recognized.
+        
+        When primary_provider is 'Unknown' (self-hosted email), generic selectors like
+        selector1/selector2 are not attributed to Microsoft 365 — many self-hosted
+        enterprises reuse these common selector names independently.
+        """
+        provider = self.SELECTOR_PROVIDER_MAP.get(selector_name, 'Unknown')
+        if provider != 'Unknown' and primary_provider == 'Unknown':
+            ambiguous_selectors = {
+                'selector1._domainkey': 'Microsoft 365',
+                'selector2._domainkey': 'Microsoft 365',
+                's1._domainkey': 'SendGrid',
+                's2._domainkey': 'SendGrid',
+                'default._domainkey': None,
+                'k1._domainkey': 'MailChimp',
+                'k2._domainkey': 'MailChimp',
+            }
+            if selector_name in ambiguous_selectors:
+                return 'Unknown'
+        return provider
 
     def _detect_primary_mail_provider(self, mx_records: list, spf_record: str = None) -> str:
         """Detect the primary mail platform from MX records and SPF includes for DKIM correlation.
@@ -1118,6 +1137,8 @@ class DNSAnalyzer:
             
             return key_info
         
+        primary_provider = self._detect_primary_mail_provider(mx_records or [])
+        
         with ThreadPoolExecutor(max_workers=10) as executor:
             futures = {executor.submit(check_selector, s): s for s in selectors}
             for future in as_completed(futures, timeout=8):
@@ -1125,7 +1146,7 @@ class DNSAnalyzer:
                     result = future.result()
                     if result:
                         selector_name, records = result
-                        provider = self._classify_selector_provider(selector_name)
+                        provider = self._classify_selector_provider(selector_name, primary_provider)
                         selector_info = {
                             'records': records,
                             'key_info': [],
@@ -1140,8 +1161,6 @@ class DNSAnalyzer:
                         found_selectors[selector_name] = selector_info
                 except:
                     pass
-        
-        primary_provider = self._detect_primary_mail_provider(mx_records or [])
         
         found_providers = set()
         for sel_name, sel_data in found_selectors.items():
@@ -2500,6 +2519,7 @@ class DNSAnalyzer:
             'microsoft': 'Microsoft 365',
             'protection.outlook': 'Microsoft 365',
             'pphosted': 'Proofpoint',
+            'iphmx': 'Proofpoint',
             'mimecast': 'Mimecast',
             'barracuda': 'Barracuda',
             'zoho': 'Zoho Mail',
