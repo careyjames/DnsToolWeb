@@ -2456,7 +2456,13 @@ class DNSAnalyzer:
             'dreamhost': 'DreamHost',
             'wixdns': 'Wix',
             'wordpress': 'WordPress',
-            'squarespace': 'Squarespace'
+            'squarespace': 'Squarespace',
+            'ns.apple.com': 'Apple (Self-Hosted)',
+            'ns.facebook.com': 'Meta (Self-Hosted)',
+            '.intel.com': 'Intel (Self-Hosted)',
+            'salesforce-dns.com': 'Salesforce (Self-Hosted)',
+            'salesforce.com': 'Salesforce (Self-Hosted)',
+            '.cisco.com': 'Cisco (Self-Hosted)',
         }
         
         ns_list_hosting = [r.lower() for r in ns_records if r]
