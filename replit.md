@@ -94,6 +94,16 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes (v26.10.20)
 
+### Security Gateway DKIM Attribution (v26.10.21)
+- When MX points to a security gateway (Proofpoint, Mimecast) but SPF includes a different sending platform (Microsoft 365, Google Workspace), the tool now correctly treats the SPF platform as the primary for DKIM purposes
+- Previously: cisa.gov showed "DKIM verified for Microsoft 365 only — no DKIM found for primary mail platform (Proofpoint)" — false warning because Proofpoint is the inbound gateway, not the DKIM signer
+- Now: cisa.gov correctly shows DKIM as "Found" (success) with M365 selector, plus info box explaining the gateway architecture
+- `_detect_primary_mail_provider` returns `{provider, gateway}` dict instead of string — gateway is populated when MX is a known security gateway with a different SPF-detected sender
+- Blue info box in results explains: "Mail routed through Proofpoint (security gateway) — DKIM signed by Microsoft 365 (sending platform). This is a standard enterprise architecture."
+- Verdict text includes gateway context: "DKIM keys verified with strong cryptography (signed by Microsoft 365 via Proofpoint gateway)"
+- `SECURITY_GATEWAYS` set: Proofpoint, Mimecast
+- Federal compliance context for SPF -all updated to be precise: BOD 18-01 "requires valid SPF records" — doesn't explicitly specify -all vs ~all; -all is widespread federal practice, not spelled-out requirement
+
 ### DMARC-Aware SPF Messaging & Authority-Backed Guidance (v26.10.20)
 - SPF `~all` (soft fail) badge changed from yellow/warning to green — it's the industry standard used by Google, Apple, and most providers
 - SPF `~all` message now reads "industry-standard soft fail" instead of implying a weakness

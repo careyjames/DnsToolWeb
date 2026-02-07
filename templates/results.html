@@ -537,7 +537,12 @@
                                     {% endif %}
                                 </div>
                                 <p class="text-muted mb-2 small">{{ results.dkim_analysis.message }}</p>
-                                {% if results.dkim_analysis.get('third_party_only') and results.dkim_analysis.get('primary_dkim_note') %}
+                                {% if results.dkim_analysis.get('security_gateway') and results.dkim_analysis.get('primary_has_dkim') %}
+                                    <div class="alert alert-info py-2 px-3 small mb-2">
+                                        <i class="fas fa-shield-alt me-1"></i>
+                                        Mail routed through <strong>{{ results.dkim_analysis.security_gateway }}</strong> (security gateway) — DKIM signed by <strong>{{ results.dkim_analysis.primary_provider }}</strong> (sending platform). This is a standard enterprise architecture.
+                                    </div>
+                                {% elif results.dkim_analysis.get('third_party_only') and results.dkim_analysis.get('primary_dkim_note') %}
                                     <div class="alert alert-warning py-2 px-3 small mb-2">
                                         <i class="fas fa-exclamation-triangle me-1"></i>
                                         {{ results.dkim_analysis.primary_dkim_note }}

@@ -962,6 +962,8 @@ class DNSAnalyzer:
         'mx.cloudflare': 'Cloudflare Email',
     }
 
+    SECURITY_GATEWAYS = {'Proofpoint', 'Mimecast'}
+
     PRIMARY_PROVIDER_SELECTORS = {
         'Microsoft 365': ['selector1._domainkey', 'selector2._domainkey'],
         'Google Workspace': ['google._domainkey', 'google2048._domainkey'],
@@ -1023,29 +1025,50 @@ class DNSAnalyzer:
                 return 'Unknown'
         return provider
 
-    def _detect_primary_mail_provider(self, mx_records: list, spf_record: str = None) -> str:
+    def _detect_primary_mail_provider(self, mx_records: list, spf_record: str = None) -> dict:
         """Detect the primary mail platform from MX records and SPF includes for DKIM correlation.
         
-        MX records are the strongest signal (they show where mail is actually delivered).
-        SPF includes are used as a secondary signal when MX doesn't match a known provider,
-        since SPF lists who is authorized to send as the domain.
-        """
-        if not mx_records and not spf_record:
-            return 'Unknown'
+        Returns a dict with:
+          - provider: the platform that signs/sends mail (DKIM source)
+          - gateway: the security gateway in front, if any (e.g. Proofpoint, Mimecast)
         
+        When MX points to a security gateway (Proofpoint, Mimecast) but SPF includes a
+        different sending platform (Microsoft 365, Google Workspace), the SPF platform is
+        the actual mail originator — DKIM will be signed by it, not the gateway.
+        """
+        result = {'provider': 'Unknown', 'gateway': None}
+        
+        if not mx_records and not spf_record:
+            return result
+        
+        mx_provider = None
         if mx_records:
             mx_str = " ".join(r for r in mx_records if r).lower()
             for key, provider in self.MX_TO_DKIM_PROVIDER.items():
                 if key in mx_str:
-                    return provider
+                    mx_provider = provider
+                    break
         
+        spf_provider = None
         if spf_record:
             spf_lower = spf_record.lower()
             for key, provider in self.SPF_TO_PROVIDER.items():
                 if key in spf_lower:
-                    return provider
+                    spf_provider = provider
+                    break
         
-        return 'Unknown'
+        if mx_provider and mx_provider in self.SECURITY_GATEWAYS:
+            if spf_provider and spf_provider != mx_provider:
+                result['provider'] = spf_provider
+                result['gateway'] = mx_provider
+            else:
+                result['provider'] = mx_provider
+        elif mx_provider:
+            result['provider'] = mx_provider
+        elif spf_provider:
+            result['provider'] = spf_provider
+        
+        return result
 
     def analyze_dkim(self, domain: str, mx_records: list = None) -> Dict[str, Any]:
         """Check common DKIM selectors for domain with key quality analysis.
@@ -1143,7 +1166,9 @@ class DNSAnalyzer:
         spf_records = self.dns_query("TXT", domain) or []
         spf_record = next((r for r in spf_records if r.lower().startswith("v=spf1")), None)
         
-        primary_provider = self._detect_primary_mail_provider(mx_records, spf_record)
+        provider_info = self._detect_primary_mail_provider(mx_records, spf_record)
+        primary_provider = provider_info['provider']
+        security_gateway = provider_info['gateway']
         
         with ThreadPoolExecutor(max_workers=10) as executor:
             futures = {executor.submit(check_selector, s): s for s in selectors}
@@ -1241,6 +1266,7 @@ class DNSAnalyzer:
             'key_issues': key_issues,
             'key_strengths': list(set(key_strengths)),
             'primary_provider': primary_provider,
+            'security_gateway': security_gateway,
             'primary_has_dkim': primary_has_dkim,
             'third_party_only': third_party_only,
             'primary_dkim_note': primary_dkim_note,
@@ -2693,7 +2719,9 @@ class DNSAnalyzer:
             spf_valid = spf_data.get('valid_records', []) if isinstance(spf_data, dict) else []
             spf_record = spf_valid[0] if spf_valid else ''
             if mx_records or spf_record:
-                primary_provider = self._detect_primary_mail_provider(mx_records, spf_record)
+                provider_info = self._detect_primary_mail_provider(mx_records, spf_record)
+                primary_provider = provider_info['provider']
+                security_gateway = provider_info['gateway']
                 found_providers = set()
                 for sel_name, sel_data in dkim_result.get('selectors', {}).items():
                     p = sel_data.get('provider', 'Unknown')
@@ -2724,6 +2752,7 @@ class DNSAnalyzer:
                         )
                 
                 dkim_result['primary_provider'] = primary_provider
+                dkim_result['security_gateway'] = security_gateway
                 dkim_result['primary_has_dkim'] = primary_has_dkim
                 dkim_result['found_providers'] = list(sorted(found_providers))
                 
@@ -3333,8 +3362,11 @@ class DNSAnalyzer:
         dkim_has_inferred = any(
             sel_data.get('inferred') for sel_data in dkim_analysis.get('selectors', {}).values()
         )
+        dkim_gateway = dkim_analysis.get('security_gateway')
         if dkim_strong and dkim_has_inferred:
             dkim_note = f' DKIM keys verified with strong cryptography. {dkim_analysis.get("primary_dkim_note", "")}'
+        elif dkim_strong and dkim_gateway:
+            dkim_note = f' DKIM keys verified with strong cryptography (signed by {dkim_primary_provider} via {dkim_gateway} gateway).'
         elif dkim_strong:
             dkim_note = ' DKIM keys verified with strong cryptography.'
         elif dkim_third_party_only:
