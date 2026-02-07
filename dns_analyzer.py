@@ -1022,7 +1022,7 @@ class DNSAnalyzer:
     }
 
     DMARC_MONITORING_PROVIDERS = {
-        'ondmarc.com': {'name': 'OnDMARC', 'vendor': 'Red Sift', 'capabilities': ['DMARC reporting', 'TLS-RPT reporting', 'SPF management']},
+        'ondmarc.com': {'name': 'OnDMARC', 'vendor': 'Red Sift', 'capabilities': ['DMARC reporting', 'TLS-RPT reporting', 'SPF management', 'MTA-STS hosting']},
         'valimail.com': {'name': 'Valimail Enforce', 'vendor': 'Valimail', 'capabilities': ['DMARC reporting', 'DMARC enforcement', 'SPF management']},
         'dmarcian.com': {'name': 'Dmarcian', 'vendor': 'Dmarcian', 'capabilities': ['DMARC reporting', 'DMARC analytics']},
         'easydmarc.com': {'name': 'EasyDMARC', 'vendor': 'EasyDMARC', 'capabilities': ['DMARC reporting', 'DMARC analytics', 'SPF management']},
@@ -1051,7 +1051,7 @@ class DNSAnalyzer:
         'dmarcduty.com': {'name': 'DynamicSPF', 'vendor': 'Dmarcduty', 'capabilities': ['DMARC reporting', 'SPF management']},
         'dmarcreport.com': {'name': 'DMARC Report', 'vendor': 'DMARC Report', 'capabilities': ['DMARC reporting', 'AI-assisted analysis']},
         'ironscales.com': {'name': 'IRONSCALES', 'vendor': 'IRONSCALES', 'capabilities': ['DMARC reporting', 'email security']},
-        'redsift.cloud': {'name': 'OnDMARC', 'vendor': 'Red Sift', 'capabilities': ['DMARC reporting', 'TLS-RPT reporting', 'SPF management']},
+        'redsift.cloud': {'name': 'OnDMARC', 'vendor': 'Red Sift', 'capabilities': ['DMARC reporting', 'TLS-RPT reporting', 'SPF management', 'MTA-STS hosting']},
     }
 
     SPF_FLATTENING_PROVIDERS = {
@@ -1163,11 +1163,32 @@ class DNSAnalyzer:
                     break
 
         if mta_sts_analysis and mta_sts_analysis.get('status') in ('success', 'warning') and mta_sts_analysis.get('record'):
+            mta_sts_cname = mta_sts_analysis.get('hosting_cname', '')
+            mta_sts_provider_found = False
             for name, prov in providers.items():
                 if 'MTA-STS hosting' in prov.get('capabilities', []):
                     if 'MTA-STS' not in prov.get('detected_from', []):
                         prov['detected_from'].append('MTA-STS')
                         prov['sources'].append('MTA-STS policy hosting')
+                    mta_sts_provider_found = True
+
+            if not mta_sts_provider_found and mta_sts_cname:
+                for domain_pattern, info in self.DMARC_MONITORING_PROVIDERS.items():
+                    if 'MTA-STS hosting' in info.get('capabilities', []) and domain_pattern in mta_sts_cname:
+                        prov_name = info['name']
+                        if prov_name in providers:
+                            if 'MTA-STS' not in providers[prov_name].get('detected_from', []):
+                                providers[prov_name]['detected_from'].append('MTA-STS')
+                                providers[prov_name]['sources'].append(f'MTA-STS hosting (CNAME: {mta_sts_cname})')
+                        else:
+                            providers[prov_name] = {
+                                'name': prov_name,
+                                'vendor': info['vendor'],
+                                'capabilities': info['capabilities'],
+                                'sources': [f'MTA-STS hosting (CNAME: {mta_sts_cname})'],
+                                'detected_from': ['MTA-STS']
+                            }
+                        break
 
         actively_managed = len(providers) > 0
         provider_list = list(providers.values())
@@ -1488,7 +1509,8 @@ class DNSAnalyzer:
             'policy_max_age': None,
             'policy_mx': [],
             'policy_fetched': False,
-            'policy_error': None
+            'policy_error': None,
+            'hosting_cname': None
         }
         
         if not records:
@@ -1509,6 +1531,15 @@ class DNSAnalyzer:
         if id_match:
             dns_id = id_match.group(1)
         
+        hosting_cname = None
+        try:
+            mta_sts_host = f"mta-sts.{domain}"
+            cname_records = self.dns_query("CNAME", mta_sts_host)
+            if cname_records:
+                hosting_cname = cname_records[0].rstrip('.')
+        except Exception:
+            pass
+
         # Now fetch the actual policy file
         policy_url = f"https://mta-sts.{domain}/.well-known/mta-sts.txt"
         policy_data = self._fetch_mta_sts_policy(policy_url)
@@ -1551,7 +1582,8 @@ class DNSAnalyzer:
             'policy_max_age': policy_data.get('max_age'),
             'policy_mx': policy_data.get('mx', []),
             'policy_fetched': policy_data.get('fetched', False),
-            'policy_error': policy_data.get('error')
+            'policy_error': policy_data.get('error'),
+            'hosting_cname': hosting_cname
         }
     
     def _fetch_mta_sts_policy(self, url: str) -> Dict[str, Any]:
