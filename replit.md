@@ -91,3 +91,22 @@ Preferred communication style: Simple, everyday language.
 
 ### Testing
 - **pytest**: Unit and integration test framework.
+
+## Recent Changes (v26.10.14)
+
+### Documentation & Branding Update (v26.10.14)
+- Updated all FAQ schema and visible FAQ content to reference 4 resolvers (Cloudflare, Google, Quad9, OpenDNS)
+- "How is this different" FAQ answer now lists all 4 consensus resolvers
+
+### 4-Resolver Consensus & Branding (v26.10.13)
+- Added OpenDNS/Cisco Umbrella (208.67.222.222) as 4th consensus resolver
+- Multi-resolver consensus now queries Cloudflare, Google, Quad9, and OpenDNS in parallel
+- ThreadPoolExecutor increased to 4 workers for parallel resolver queries
+- Owl of Athena branding: optimized PNG (5.6KB) added to all page footers
+- Footer added to history and statistics pages (previously missing)
+- OG image fix: Cross-Origin-Resource-Policy set to cross-origin for /static/images/
+
+### System Font Stack & Performance (v26.10.12)
+- Native system font stack: SF Pro, Segoe UI, Roboto
+- Preconnect hints and critical inline CSS on all pages
+- Lighthouse: Performance 94%, Accessibility 100%, Best Practices 100%, SEO 100%
