@@ -662,7 +662,7 @@ def proxy_bimi_logo():
             return 'URL points to a disallowed address', 400
 
     try:
-        resp = requests.get(logo_url, timeout=5, stream=True, allow_redirects=False, headers={
+        resp = requests.get(logo_url, timeout=5, allow_redirects=True, headers={
             'User-Agent': 'DNS-Analyzer/1.0 BIMI-Logo-Fetcher'
         })
 
@@ -673,13 +673,15 @@ def proxy_bimi_logo():
         if 'svg' not in content_type.lower() and 'image' not in content_type.lower():
             return 'Response is not an image', 400
 
-        body = resp.raw.read(MAX_RESPONSE_BYTES + 1)
+        body = resp.content
         if len(body) > MAX_RESPONSE_BYTES:
             return 'Response too large', 400
 
+        upstream_ct = resp.headers.get('Content-Type', 'image/svg+xml')
+
         return Response(
             body,
-            mimetype='image/svg+xml',
+            content_type=upstream_ct,
             headers={
                 'Cache-Control': 'public, max-age=3600',
                 'X-Content-Type-Options': 'nosniff'
