@@ -629,35 +629,56 @@ def service_worker():
 @app.route('/proxy/bimi-logo')
 def proxy_bimi_logo():
     """Proxy BIMI logos to avoid CORS issues with external SVGs."""
+    import ipaddress
+    import socket
+    from urllib.parse import urlparse
+
     import requests
     from flask import Response
-    
+
+    MAX_RESPONSE_BYTES = 512 * 1024
+
     logo_url = request.args.get('url')
     if not logo_url:
         return 'Missing URL parameter', 400
-    
-    # Validate URL is HTTPS and looks like an SVG
-    if not logo_url.startswith('https://'):
+
+    parsed = urlparse(logo_url)
+
+    if parsed.scheme != 'https':
         return 'Only HTTPS URLs allowed', 400
-    
+
+    if not parsed.hostname:
+        return 'Invalid URL', 400
+
     try:
-        # Fetch the logo with a timeout
-        resp = requests.get(logo_url, timeout=5, headers={
+        resolved_ips = socket.getaddrinfo(parsed.hostname, None)
+    except socket.gaierror:
+        return 'Could not resolve hostname', 400
+
+    for _family, _type, _proto, _canonname, sockaddr in resolved_ips:
+        ip = ipaddress.ip_address(sockaddr[0])
+        if ip.is_private or ip.is_loopback or ip.is_link_local or ip.is_reserved:
+            return 'URL points to a disallowed address', 400
+
+    try:
+        resp = requests.get(logo_url, timeout=5, stream=True, allow_redirects=False, headers={
             'User-Agent': 'DNS-Analyzer/1.0 BIMI-Logo-Fetcher'
         })
-        
+
         if resp.status_code != 200:
             return f'Failed to fetch logo: {resp.status_code}', 502
-        
-        # Determine content type
-        content_type = resp.headers.get('Content-Type', 'image/svg+xml')
-        if 'svg' in logo_url.lower() or 'svg' in content_type.lower():
-            content_type = 'image/svg+xml'
-        
-        # Return the logo with appropriate headers
+
+        content_type = resp.headers.get('Content-Type', '')
+        if 'svg' not in content_type.lower() and 'image' not in content_type.lower():
+            return 'Response is not an image', 400
+
+        body = resp.raw.read(MAX_RESPONSE_BYTES + 1)
+        if len(body) > MAX_RESPONSE_BYTES:
+            return 'Response too large', 400
+
         return Response(
-            resp.content,
-            mimetype=content_type,
+            body,
+            mimetype='image/svg+xml',
             headers={
                 'Cache-Control': 'public, max-age=3600',
                 'X-Content-Type-Options': 'nosniff'
