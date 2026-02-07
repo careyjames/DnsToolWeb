@@ -1260,7 +1260,7 @@ class DNSAnalyzer:
         
         return result
 
-    def analyze_dkim(self, domain: str, mx_records: list = None) -> Dict[str, Any]:
+    def analyze_dkim(self, domain: str, mx_records: list = None, custom_selectors: list = None) -> Dict[str, Any]:
         """Check common DKIM selectors for domain with key quality analysis.
         
         Checks for:
@@ -1298,6 +1298,11 @@ class DNSAnalyzer:
             # Fastmail
             "fm1._domainkey", "fm2._domainkey", "fm3._domainkey",
         ]
+        
+        if custom_selectors:
+            for cs in custom_selectors:
+                if cs not in selectors:
+                    selectors.insert(0, cs)
         
         found_selectors = {}
         key_issues = []
@@ -1371,7 +1376,8 @@ class DNSAnalyzer:
                         selector_info = {
                             'records': records,
                             'key_info': [],
-                            'provider': provider
+                            'provider': provider,
+                            'user_hint': bool(custom_selectors and selector_name in custom_selectors)
                         }
                         for rec in records:
                             key_analysis = analyze_dkim_key(rec)
@@ -2781,11 +2787,13 @@ class DNSAnalyzer:
             'email_hosting': email_hosting
         }
 
-    def analyze_domain(self, domain: str) -> Dict[str, Any]:
+    def analyze_domain(self, domain: str, custom_dkim_selectors: list = None) -> Dict[str, Any]:
         """Perform complete DNS analysis of domain with parallel lookups for speed.
         
         Args:
             domain: The domain name to analyze (e.g., 'example.com')
+            custom_dkim_selectors: Optional list of user-provided DKIM selectors to check
+                                   (e.g., ['myselector._domainkey'])
             
         Returns:
             Dict containing comprehensive DNS analysis:
@@ -2866,7 +2874,7 @@ class DNSAnalyzer:
                 executor.submit(self.get_authoritative_records, domain): 'auth',
                 executor.submit(self.analyze_spf, domain): 'spf',
                 executor.submit(self.analyze_dmarc, domain): 'dmarc',
-                executor.submit(self.analyze_dkim, domain, None): 'dkim',
+                executor.submit(self.analyze_dkim, domain, None, custom_dkim_selectors): 'dkim',
                 executor.submit(self.analyze_mta_sts, domain): 'mta_sts',
                 executor.submit(self.analyze_tlsrpt, domain): 'tlsrpt',
                 executor.submit(self.analyze_bimi, domain): 'bimi',

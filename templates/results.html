@@ -572,6 +572,9 @@
                                         <div class="mb-2">
                                             <small class="d-block {{ 'text-success' if not results.dkim_analysis.get('third_party_only') or selector_data.get('provider', 'Unknown') == results.dkim_analysis.get('primary_provider', '') else 'text-warning' }}">
                                                 <i class="fas fa-check-circle me-1"></i>{{ selector }}
+                                                {% if selector_data.get('user_hint') %}
+                                                    <span class="badge bg-primary bg-opacity-75 ms-1" title="Found via user-provided selector hint"><i class="fas fa-user me-1"></i>user hint</span>
+                                                {% endif %}
                                                 {% if selector_data.get('provider') and selector_data.provider != 'Unknown' %}
                                                     <span class="badge bg-{{ 'info' if selector_data.provider == results.dkim_analysis.get('primary_provider', '') else 'secondary' }} ms-1">{{ selector_data.provider }}{% if selector_data.get('inferred') %} (inferred){% endif %}</span>
                                                 {% endif %}

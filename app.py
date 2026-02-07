@@ -1,4 +1,5 @@
 import os
+import re
 import logging
 import time
 import secrets
@@ -838,8 +839,20 @@ def analyze():
     # Get domain from form (POST) or query string (GET)
     if request.method == 'POST':
         domain = request.form.get('domain', '').strip()
+        dkim_selector1 = request.form.get('dkim_selector1', '').strip()
+        dkim_selector2 = request.form.get('dkim_selector2', '').strip()
     else:
         domain = request.args.get('domain', '').strip()
+        dkim_selector1 = request.args.get('dkim_selector1', '').strip()
+        dkim_selector2 = request.args.get('dkim_selector2', '').strip()
+    
+    custom_selectors = []
+    for sel in [dkim_selector1, dkim_selector2]:
+        if sel:
+            sel = re.sub(r'[^a-zA-Z0-9._-]', '', sel)[:63]
+            sel = sel.rstrip('.').removesuffix('._domainkey').removesuffix('._domainkey.')
+            if sel:
+                custom_selectors.append(f"{sel}._domainkey")
     
     if not domain:
         flash('Please enter a domain name.', 'danger')
@@ -878,7 +891,7 @@ def analyze():
         ascii_domain = dns_analyzer.domain_to_ascii(domain)
         
         # Perform DNS analysis
-        results = dns_analyzer.analyze_domain(ascii_domain)
+        results = dns_analyzer.analyze_domain(ascii_domain, custom_dkim_selectors=custom_selectors)
         
         # Calculate analysis duration
         analysis_duration = time.time() - start_time
