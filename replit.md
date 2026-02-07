@@ -8,6 +8,12 @@ A web-based DNS intelligence tool providing comprehensive domain record analysis
 
 Preferred communication style: Simple, everyday language.
 
+### Versioning Protocol
+When bumping the version, ALL of these must be updated:
+1. `APP_VERSION` in `app.py` (line ~18) — this feeds `{{ app_version }}` into all template footers
+2. `## Recent Changes` header in `replit.md` — update to new version number
+3. Add a new changelog section under `## Recent Changes` in `replit.md`
+
 ## System Architecture
 
 ### Backend Framework
