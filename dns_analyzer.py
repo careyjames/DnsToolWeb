@@ -2226,10 +2226,17 @@ class DNSAnalyzer:
             'ultradns': {'name': 'Vercara UltraDNS', 'tier': 'enterprise', 'features': ['DDoS protection', 'Anycast', 'DNSSEC support']},
             'akam': {'name': 'Akamai Edge DNS', 'tier': 'enterprise', 'features': ['DDoS protection', 'Anycast', 'Global distribution']},
             'dynect': {'name': 'Oracle Dyn', 'tier': 'enterprise', 'features': ['DDoS protection', 'Anycast', 'Traffic management']},
+            'oraclecloud': {'name': 'Oracle Cloud DNS', 'tier': 'enterprise', 'features': ['DDoS protection', 'Anycast', 'Cloud integration']},
             'nsone': {'name': 'NS1 (IBM)', 'tier': 'enterprise', 'features': ['DDoS protection', 'Anycast', 'Intelligent DNS']},
             'azure-dns': {'name': 'Azure DNS', 'tier': 'enterprise', 'features': ['DDoS protection', 'Anycast', 'Azure integration']},
             'google': {'name': 'Google Cloud DNS', 'tier': 'enterprise', 'features': ['DDoS protection', 'Anycast', 'Auto-scaling']},
             'verisign': {'name': 'Verisign DNS', 'tier': 'enterprise', 'features': ['DDoS protection', 'Anycast', 'Critical infrastructure']},
+            'f5cloudservices': {'name': 'F5 Distributed Cloud DNS', 'tier': 'enterprise', 'features': ['DDoS protection', 'Anycast', 'Global distribution']},
+            'uu.net': {'name': 'Verizon Business DNS', 'tier': 'enterprise', 'features': ['Enterprise infrastructure', 'Global backbone', 'Managed security']},
+            'els-gms.att.net': {'name': 'AT&T Managed DNS', 'tier': 'enterprise', 'features': ['Enterprise infrastructure', 'Global backbone', 'Managed security']},
+            'csc.com': {'name': 'CSC Global DNS', 'tier': 'enterprise', 'features': ['Enterprise management', 'Brand protection', 'Global infrastructure']},
+            'cscdns': {'name': 'CSC Global DNS', 'tier': 'enterprise', 'features': ['Enterprise management', 'Brand protection', 'Global infrastructure']},
+            'markmonitor': {'name': 'MarkMonitor DNS', 'tier': 'enterprise', 'features': ['Brand protection', 'Enterprise management', 'Anti-fraud']},
         }
         
         # Major companies running their own enterprise-grade DNS infrastructure
@@ -2420,8 +2427,15 @@ class DNSAnalyzer:
             'akam': 'Akamai Edge DNS',
             'ultradns': 'Vercara UltraDNS',
             'dynect': 'Oracle Dyn',
+            'oraclecloud': 'Oracle Cloud DNS',
             'nsone': 'NS1 (IBM)',
             'verisign': 'Verisign DNS',
+            'f5cloudservices': 'F5 Distributed Cloud DNS',
+            'uu.net': 'Verizon Business DNS',
+            'els-gms.att.net': 'AT&T Managed DNS',
+            'csc.com': 'CSC Global DNS',
+            'cscdns': 'CSC Global DNS',
+            'markmonitor': 'MarkMonitor DNS',
             'googledomains': 'Google Domains',
             'google': 'Google Cloud DNS',
             'azure-dns': 'Azure DNS',
@@ -2441,10 +2455,15 @@ class DNSAnalyzer:
             'squarespace': 'Squarespace'
         }
         
+        ns_list_hosting = [r.lower() for r in ns_records if r]
+        matched_dns = {}
         for key, name in dns_providers.items():
-            if key in ns_str:
-                dns_hosting = name
-                break
+            count = sum(1 for ns in ns_list_hosting if key in ns)
+            if count > 0:
+                matched_dns[key] = (name, count)
+        if matched_dns:
+            best_key = max(matched_dns, key=lambda k: matched_dns[k][1])
+            dns_hosting = matched_dns[best_key][0]
 
         # 2. Detect Web Hosting from A records
         a_records = results.get('basic_records', {}).get('A', [])
