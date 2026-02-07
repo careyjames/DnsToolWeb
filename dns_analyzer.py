@@ -749,7 +749,7 @@ class DNSAnalyzer:
                 elif permissiveness == 'STRICT':
                     message = f'SPF valid with strict enforcement (-all), {lookup_count}/10 lookups'
                 elif permissiveness == 'SOFT':
-                    message = f'SPF valid with soft fail (~all), {lookup_count}/10 lookups'
+                    message = f'SPF valid with industry-standard soft fail (~all), {lookup_count}/10 lookups'
                 else:
                     message = f'SPF valid, {lookup_count}/10 lookups'
         

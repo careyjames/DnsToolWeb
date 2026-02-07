@@ -403,7 +403,7 @@
                                         {{ results.spf_analysis.status|title }}
                                     </span>
                                     {% if results.spf_analysis.permissiveness %}
-                                        <span class="badge bg-{{ 'danger' if results.spf_analysis.permissiveness == 'DANGEROUS' else 'success' if results.spf_analysis.permissiveness == 'STRICT' else 'warning' }} ms-1">{{ results.spf_analysis.all_mechanism or '' }}</span>
+                                        <span class="badge bg-{{ 'danger' if results.spf_analysis.permissiveness == 'DANGEROUS' else 'success' if results.spf_analysis.permissiveness in ['STRICT', 'SOFT'] else 'warning' }} ms-1">{{ results.spf_analysis.all_mechanism or '' }}</span>
                                     {% endif %}
                                     {% if results.spf_analysis.lookup_count is defined %}
                                         <span class="badge bg-{{ 'danger' if results.spf_analysis.lookup_count > 10 else 'warning' if results.spf_analysis.lookup_count >= 8 else 'secondary' }} ms-1" data-bs-toggle="tooltip" title="DNS lookup limit is 10">{{ results.spf_analysis.lookup_count }}/10 lookups</span>
@@ -420,6 +420,22 @@
                                         {% for issue in results.spf_analysis.issues %}
                                             <div class="text-warning"><i class="fas fa-exclamation-triangle me-1"></i>{{ issue }}</div>
                                         {% endfor %}
+                                    </div>
+                                {% endif %}
+                                {% if results.spf_analysis.permissiveness == 'SOFT' %}
+                                    <div class="mt-2 p-2 bg-info bg-opacity-10 border border-info border-opacity-25 rounded small">
+                                        <i class="fas fa-info-circle text-info me-1"></i>
+                                        <strong class="text-info">~all is the industry standard.</strong>
+                                        <span class="text-muted">Google, Apple, and most providers default to soft fail. Microsoft is the notable exception recommending -all. DMARC policy — not SPF alone — is the primary security control.
+                                        {% if results.dmarc_analysis.policy == 'reject' %}
+                                            <strong class="text-success">This domain uses ~all + DMARC reject: the strongest compatible security stance.</strong>
+                                        {% elif results.dmarc_analysis.policy == 'quarantine' %}
+                                            <strong class="text-warning">This domain uses ~all + DMARC quarantine — good protection. Moving to p=reject would achieve the strongest stance.</strong>
+                                        {% elif results.dmarc_analysis.policy == 'none' %}
+                                            <strong class="text-danger">This domain has DMARC p=none (monitoring only). Enforcing quarantine or reject is recommended to gain real protection.</strong>
+                                        {% elif results.dmarc_analysis.status == 'error' %}
+                                            <strong class="text-danger">No DMARC record found. Without DMARC, SPF alone cannot prevent spoofing. Adding a DMARC policy is strongly recommended.</strong>
+                                        {% endif %}</span>
                                     </div>
                                 {% endif %}
                                 {% if results.spf_analysis.spf_like %}
