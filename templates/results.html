@@ -6,11 +6,8 @@
     <meta name="theme-color" content="#212529">
     <title>{{ domain }} - DNS Tool</title>
     <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='favicon.svg') }}">
-    <link rel="preconnect" href="https://cdn.replit.com">
     <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
-    <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://cdn.replit.com/agent/bootstrap-agent-dark-theme.min.css" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/bootstrap-dark-theme.min.css') }}" rel="stylesheet">
     <link href="{{ url_for('static', filename='css/custom.min.css') }}" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/fontawesome-subset.min.css') }}">
     <style nonce="{{ csp_nonce }}">

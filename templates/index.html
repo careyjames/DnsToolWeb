@@ -13,11 +13,7 @@
     
     <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='favicon.svg') }}">
     <!-- Preconnect to external domains for faster loading -->
-    <link rel="preconnect" href="https://cdn.replit.com">
     <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
-    <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link rel="dns-prefetch" href="https://cdn.replit.com">
     
     <!-- Facebook / Open Graph -->
     <meta property="og:url" content="https://dnstool.it-help.tech/">
@@ -193,7 +189,7 @@
         @media(min-width:992px){.collapse.navbar-collapse{display:flex!important}}
     </style>
     <!-- Load Bootstrap first (sync) to prevent CLS when it applies styles -->
-    <link rel="stylesheet" href="https://cdn.replit.com/agent/bootstrap-agent-dark-theme.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap-dark-theme.min.css') }}">
     <link href="{{ url_for('static', filename='css/custom.min.css') }}" rel="stylesheet">
     <!-- Font Awesome - self-hosted subset (54 icons, ~22KB total vs ~231KB from CDN) -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/fontawesome-subset.min.css') }}">

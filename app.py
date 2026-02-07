@@ -15,7 +15,7 @@ from sqlalchemy import JSON
 from dns_analyzer import DNSAnalyzer
 
 # App version - format: YY.M.patch (bump last number for small changes)
-APP_VERSION = "26.10.26"
+APP_VERSION = "26.10.27"
 
 
 class TraceIDFilter(logging.Filter):
@@ -378,6 +378,9 @@ app.secret_key = os.environ.get("SESSION_SECRET")
 # Enable gzip/brotli compression
 Compress(app)
 
+# Static files cache: 1 year (files are versioned via APP_VERSION)
+app.config["SEND_FILE_MAX_AGE_DEFAULT"] = 31536000
+
 # Configure the database - use PostgreSQL from environment
 app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get("DATABASE_URL")
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
@@ -443,13 +446,13 @@ def add_security_headers(response):
     # Content Security Policy - balanced for security AND real-world compatibility
     # - script-src uses nonces (critical for XSS prevention)
     # - style-src uses 'unsafe-inline' (acceptable - inline style attrs can't use nonces)
-    # - fonts allowed for Replit Bootstrap compatibility
+    # - Bootstrap CSS self-hosted (no external font/style CDN needed)
     nonce = getattr(g, 'csp_nonce', '')
     csp = (
         "default-src 'self'; "
         f"script-src 'self' https://cdn.jsdelivr.net 'nonce-{nonce}'; "
-        "style-src 'self' https://cdn.replit.com https://fonts.googleapis.com 'unsafe-inline'; "
-        "font-src 'self' https://fonts.gstatic.com; "
+        "style-src 'self' 'unsafe-inline'; "
+        "font-src 'self'; "
         "img-src 'self' data: https:; "
         "object-src 'none'; "
         "connect-src 'self'; "

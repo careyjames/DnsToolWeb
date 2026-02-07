@@ -4,7 +4,12 @@
 
 A web-based DNS intelligence tool for comprehensive domain record analysis, email security validation (SPF, DMARC, DKIM), email security management provider detection, and DNS security intelligence reports. The application aims to provide a robust, user-friendly platform for understanding and improving domain and email security posture, offering insights into business vision, market potential, and project ambitions.
 
-## Recent Changes (v26.10.26)
+## Recent Changes (v26.10.27)
+- Self-hosted Bootstrap dark theme CSS — eliminates external cdn.replit.com dependency and removes wasted 750ms Google Fonts (IBM Plex Sans) render-blocking load (v26.10.27).
+- CSP tightened: style-src and font-src now 'self' only (no external CDN allowlisting needed) (v26.10.27).
+- Static file cache headers: 1-year max-age for all static assets (v26.10.27).
+- Removed all Google Fonts preconnect hints and cdn.replit.com preconnect/dns-prefetch from all templates (v26.10.27).
+- CSS properly minified with real minification (comments, whitespace, redundant semicolons removed) (v26.10.27).
 - Provider attribution badges use warm gold/amber `.provider-badge` class for trust-signal readability (v26.10.24).
 - Code blocks optimized with explicit text color, line-height 1.65, letter-spacing 0.015em for monospace readability (v26.10.24).
 - DNS Hosting column badges (Gov/Enterprise) no longer truncated — removed text-truncate (v26.10.25).
