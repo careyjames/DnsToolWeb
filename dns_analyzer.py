@@ -1072,11 +1072,24 @@ class DNSAnalyzer:
         'dmarcduty.com': {'name': 'DynamicSPF', 'vendor': 'Dmarcduty'},
     }
 
-    def _detect_email_security_management(self, spf_analysis: dict, dmarc_analysis: dict, tlsrpt_analysis: dict, mta_sts_analysis: dict = None) -> dict:
-        """Detect email security management providers from DMARC rua/ruf, TLS-RPT rua, SPF includes, and MTA-STS.
+    NS_DELEGATION_PROVIDERS = {
+        'ondmarc.com': {'name': 'OnDMARC', 'vendor': 'Red Sift'},
+        'redsift.cloud': {'name': 'OnDMARC', 'vendor': 'Red Sift'},
+        'mailhardener.com': {'name': 'Mailhardener', 'vendor': 'Mailhardener'},
+    }
+
+    NS_ZONE_CAPABILITIES = {
+        '_dmarc': 'DMARC management',
+        '_domainkey': 'DKIM management',
+        '_mta-sts': 'MTA-STS management',
+        '_smtp._tls': 'TLS-RPT management',
+    }
+
+    def _detect_email_security_management(self, spf_analysis: dict, dmarc_analysis: dict, tlsrpt_analysis: dict, mta_sts_analysis: dict = None, domain: str = None) -> dict:
+        """Detect email security management providers from DMARC rua/ruf, TLS-RPT rua, SPF includes, MTA-STS, and NS delegations.
         
         Extracts the operational security partner network from DNS records — intelligence
-        most tools ignore.
+        most tools ignore. Includes NS delegation detection for Dynamic Services (Red Sift, Mailhardener).
         """
         import re
         providers = {}
@@ -1107,11 +1120,11 @@ class DNSAnalyzer:
         dmarc_rua_domains = _extract_mailto_domains(dmarc_rua)
         dmarc_ruf_domains = _extract_mailto_domains(dmarc_ruf)
 
-        for domain in dmarc_rua_domains + dmarc_ruf_domains:
-            provider = _match_provider(domain)
+        for rua_domain in dmarc_rua_domains + dmarc_ruf_domains:
+            provider = _match_provider(rua_domain)
             if provider and provider['name'] not in providers:
-                source = 'DMARC forensic reports (ruf)' if domain in dmarc_ruf_domains and domain not in dmarc_rua_domains else 'DMARC aggregate reports (rua)'
-                if domain in dmarc_rua_domains and domain in dmarc_ruf_domains:
+                source = 'DMARC forensic reports (ruf)' if rua_domain in dmarc_ruf_domains and rua_domain not in dmarc_rua_domains else 'DMARC aggregate reports (rua)'
+                if rua_domain in dmarc_rua_domains and rua_domain in dmarc_ruf_domains:
                     source = 'DMARC aggregate (rua) and forensic (ruf) reports'
                 providers[provider['name']] = {
                     **provider,
@@ -1122,8 +1135,8 @@ class DNSAnalyzer:
         tlsrpt_rua = tlsrpt_analysis.get('rua', '')
         tlsrpt_domains = _extract_mailto_domains(tlsrpt_rua)
 
-        for domain in tlsrpt_domains:
-            provider = _match_provider(domain)
+        for rua_domain in tlsrpt_domains:
+            provider = _match_provider(rua_domain)
             if provider:
                 if provider['name'] in providers:
                     if 'TLS-RPT' not in providers[provider['name']]['detected_from']:
@@ -1189,6 +1202,56 @@ class DNSAnalyzer:
                                 'detected_from': ['MTA-STS']
                             }
                         break
+
+        if domain:
+            ns_zones = {
+                '_dmarc': f'_dmarc.{domain}',
+                '_domainkey': f'_domainkey.{domain}',
+                '_mta-sts': f'_mta-sts.{domain}',
+                '_smtp._tls': f'_smtp._tls.{domain}',
+            }
+            ns_delegations = {}
+            for zone_key, zone_fqdn in ns_zones.items():
+                try:
+                    ns_answers = dns.resolver.resolve(zone_fqdn, 'NS')
+                    for rdata in ns_answers:
+                        ns_host = str(rdata).rstrip('.').lower()
+                        for ns_pattern, ns_info in self.NS_DELEGATION_PROVIDERS.items():
+                            if ns_host.endswith(ns_pattern):
+                                prov_name = ns_info['name']
+                                cap = self.NS_ZONE_CAPABILITIES.get(zone_key, f'{zone_key} delegation')
+                                if prov_name not in ns_delegations:
+                                    ns_delegations[prov_name] = {
+                                        'info': ns_info,
+                                        'capabilities': [],
+                                        'zones': [],
+                                    }
+                                if cap not in ns_delegations[prov_name]['capabilities']:
+                                    ns_delegations[prov_name]['capabilities'].append(cap)
+                                if zone_key not in ns_delegations[prov_name]['zones']:
+                                    ns_delegations[prov_name]['zones'].append(zone_key)
+                                break
+                except Exception:
+                    pass
+
+            for prov_name, ns_data in ns_delegations.items():
+                zone_labels = ', '.join(ns_data['zones'])
+                if prov_name in providers:
+                    if 'NS delegation' not in providers[prov_name]['detected_from']:
+                        providers[prov_name]['detected_from'].append('NS delegation')
+                        providers[prov_name]['sources'].append(f'NS delegation ({zone_labels})')
+                    for cap in ns_data['capabilities']:
+                        if cap not in providers[prov_name].get('capabilities', []):
+                            providers[prov_name].setdefault('capabilities', []).append(cap)
+                else:
+                    info = ns_data['info']
+                    providers[prov_name] = {
+                        'name': prov_name,
+                        'vendor': info['vendor'],
+                        'capabilities': ns_data['capabilities'],
+                        'sources': [f'NS delegation ({zone_labels})'],
+                        'detected_from': ['NS delegation'],
+                    }
 
         actively_managed = len(providers) > 0
         provider_list = list(providers.values())
@@ -3112,7 +3175,8 @@ class DNSAnalyzer:
             results.get('spf_analysis', {}),
             results.get('dmarc_analysis', {}),
             results.get('tlsrpt_analysis', {}),
-            results.get('mta_sts_analysis', {})
+            results.get('mta_sts_analysis', {}),
+            domain=domain
         )
         
         # Calculate Posture Score
