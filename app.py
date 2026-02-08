@@ -1191,6 +1191,18 @@ def api_analysis(analysis_id):
     analysis = DomainAnalysis.query.get_or_404(analysis_id)
     return jsonify(analysis.to_dict())
 
+@app.route('/api/subdomains/<path:domain>')
+def api_subdomains(domain):
+    """Discover subdomains via Certificate Transparency logs."""
+    from flask import jsonify
+    
+    domain = domain.strip().lower()
+    if not dns_analyzer.validate_domain(domain):
+        return jsonify({'status': 'error', 'message': 'Invalid domain'}), 400
+    
+    result = dns_analyzer.discover_subdomains(domain)
+    return jsonify(result)
+
 @app.errorhandler(404)
 def not_found_error(error):
     return render_template('index.html'), 404

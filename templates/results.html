@@ -1268,13 +1268,26 @@
                             {% set auth_records = results.authoritative_records.get(record_type, []) if results.authoritative_records else [] %}
                             {% set max_len = [resolver_records|length, auth_records|length]|max %}
                             
-                            {% if max_len > 0 or record_type in ['A', 'AAAA', 'MX', 'NS', 'TXT', 'DMARC', 'MTA-STS', 'TLS-RPT'] %}
+                            {% if max_len > 0 or record_type in ['A', 'AAAA', 'MX', 'NS', 'TXT', 'CAA', 'SOA', 'DMARC', 'MTA-STS', 'TLS-RPT'] %}
                                 <!-- Record Type Header -->
                                 <div class="dns-diff-type-header">
                                     <span class="badge bg-secondary me-2">{{ record_type }}</span>
                                     {% if record_type == 'DMARC' %}<small class="text-muted me-1">_dmarc.{{ domain }}</small>
+                                        <a href="https://datatracker.ietf.org/doc/html/rfc7489" target="_blank" rel="noopener" class="badge bg-dark bg-opacity-25 text-muted text-decoration-none fw-normal" style="font-size: 0.6rem;" title="Domain-based Message Authentication, Reporting, and Conformance">RFC 7489</a>
                                     {% elif record_type == 'MTA-STS' %}<small class="text-muted me-1">_mta-sts.{{ domain }}</small>
+                                        <a href="https://datatracker.ietf.org/doc/html/rfc8461" target="_blank" rel="noopener" class="badge bg-dark bg-opacity-25 text-muted text-decoration-none fw-normal" style="font-size: 0.6rem;" title="SMTP MTA Strict Transport Security">RFC 8461</a>
                                     {% elif record_type == 'TLS-RPT' %}<small class="text-muted me-1">_smtp._tls.{{ domain }}</small>
+                                        <a href="https://datatracker.ietf.org/doc/html/rfc8460" target="_blank" rel="noopener" class="badge bg-dark bg-opacity-25 text-muted text-decoration-none fw-normal" style="font-size: 0.6rem;" title="SMTP TLS Reporting">RFC 8460</a>
+                                    {% elif record_type == 'CAA' %}
+                                        <a href="https://datatracker.ietf.org/doc/html/rfc8659" target="_blank" rel="noopener" class="badge bg-dark bg-opacity-25 text-muted text-decoration-none fw-normal" style="font-size: 0.6rem;" title="DNS Certification Authority Authorization">RFC 8659</a>
+                                    {% elif record_type == 'SOA' %}
+                                        <a href="https://datatracker.ietf.org/doc/html/rfc1035#section-3.3.13" target="_blank" rel="noopener" class="badge bg-dark bg-opacity-25 text-muted text-decoration-none fw-normal" style="font-size: 0.6rem;" title="Start of Authority record">RFC 1035</a>
+                                    {% elif record_type == 'MX' %}
+                                        <a href="https://datatracker.ietf.org/doc/html/rfc5321#section-5" target="_blank" rel="noopener" class="badge bg-dark bg-opacity-25 text-muted text-decoration-none fw-normal" style="font-size: 0.6rem;" title="Mail Exchange record">RFC 5321</a>
+                                    {% elif record_type == 'TXT' %}
+                                        <a href="https://datatracker.ietf.org/doc/html/rfc7208" target="_blank" rel="noopener" class="badge bg-dark bg-opacity-25 text-muted text-decoration-none fw-normal" style="font-size: 0.6rem;" title="Sender Policy Framework">RFC 7208</a>
+                                    {% elif record_type == 'NS' %}
+                                        <a href="https://datatracker.ietf.org/doc/html/rfc1035#section-3.3.11" target="_blank" rel="noopener" class="badge bg-dark bg-opacity-25 text-muted text-decoration-none fw-normal" style="font-size: 0.6rem;" title="Name Server record">RFC 1035</a>
                                     {% endif %}
                                     {% if results.propagation_status and record_type in results.propagation_status %}
                                         {% set p_info = results.propagation_status[record_type] %}
@@ -1288,20 +1301,34 @@
                                             </span>
                                         {% endif %}
                                     {% endif %}
-                                    <span class="ms-auto text-muted small">
+                                    <span class="ms-auto text-muted small d-flex align-items-center gap-2">
+                                        {% set r_ttl = results.resolver_ttl.get(record_type) if results.resolver_ttl else none %}
+                                        {% set a_ttl = results.auth_ttl.get(record_type) if results.auth_ttl else none %}
+                                        {% if r_ttl is not none or a_ttl is not none %}
+                                            {% set ttl_val = r_ttl if r_ttl is not none else a_ttl %}
+                                            <span class="badge bg-dark bg-opacity-50 fw-normal" style="font-size: 0.65rem;" title="Time-to-live: how long resolvers cache this record">TTL {{ ttl_val }}s</span>
+                                        {% endif %}
                                         {{ resolver_records|length }} / {{ auth_records|length }} records
+                                        {% set hdr_auth_status = results.auth_query_status.get(record_type, '') if results.auth_query_status else '' %}
+                                        {% if hdr_auth_status == 'timeout' %}
+                                            <span class="text-warning-emphasis" title="Authoritative nameserver timed out"><i class="fas fa-clock"></i></span>
+                                        {% elif hdr_auth_status in ('error', 'servfail') %}
+                                            <span class="text-warning-emphasis" title="Authoritative query failed"><i class="fas fa-exclamation-triangle"></i></span>
+                                        {% endif %}
                                     </span>
                                 </div>
                                 
                                 <!-- Record Rows -->
+                                {% set auth_status = results.auth_query_status.get(record_type, '') if results.auth_query_status else '' %}
+                                {% set auth_unavailable = auth_status in ('timeout', 'error', 'servfail') %}
                                 {% if max_len > 0 %}
                                     {% for i in range(max_len) %}
                                         {% set resolver_val = resolver_records[i] if i < resolver_records|length else none %}
                                         {% set auth_val = auth_records[i] if i < auth_records|length else none %}
                                         {% set is_match = resolver_val == auth_val %}
                                         
-                                        <div class="dns-diff-row {% if not is_match and resolver_val and auth_val %}dns-diff-changed{% elif not resolver_val %}dns-diff-added{% elif not auth_val %}dns-diff-removed{% endif %}">
-                                            <div class="dns-diff-col dns-diff-left {% if not resolver_val %}dns-diff-empty{% elif not is_match %}dns-diff-highlight-old{% endif %}">
+                                        <div class="dns-diff-row {% if not is_match and resolver_val and auth_val %}dns-diff-changed{% elif not resolver_val %}dns-diff-added{% elif not auth_val and not auth_unavailable %}dns-diff-removed{% endif %}">
+                                            <div class="dns-diff-col dns-diff-left {% if not resolver_val %}dns-diff-empty{% elif not is_match and not auth_unavailable %}dns-diff-highlight-old{% endif %}">
                                                 {% if resolver_val %}
                                                     <code class="dns-diff-value">{{ resolver_val }}</code>
                                                 {% else %}
@@ -1311,6 +1338,8 @@
                                             <div class="dns-diff-col dns-diff-right {% if not auth_val %}dns-diff-empty{% elif not is_match %}dns-diff-highlight-new{% endif %}">
                                                 {% if auth_val %}
                                                     <code class="dns-diff-value">{{ auth_val }}</code>
+                                                {% elif auth_unavailable %}
+                                                    <span class="dns-diff-placeholder text-warning-emphasis"><i class="fas fa-clock me-1"></i>{{ 'Timeout' if auth_status == 'timeout' else 'Unavailable' }}</span>
                                                 {% else %}
                                                     <span class="dns-diff-placeholder">—</span>
                                                 {% endif %}
@@ -1337,6 +1366,33 @@
                             </div>
                         {% endif %}
                     </div>
+                </div>
+            </div>
+        </div>
+        </div>
+
+        <!-- Subdomain Discovery (Certificate Transparency) -->
+        <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex align-items-center">
+                    <h5 class="mb-0 flex-grow-1">
+                        <i class="fas fa-sitemap me-2"></i>Subdomain Discovery
+                        <a href="https://datatracker.ietf.org/doc/html/rfc6962" target="_blank" rel="noopener" class="badge bg-dark bg-opacity-25 text-muted text-decoration-none fw-normal ms-2" style="font-size: 0.6rem;" title="Certificate Transparency">RFC 6962</a>
+                    </h5>
+                    <button id="btn-discover-subdomains" class="btn btn-outline-primary btn-sm" data-domain="{{ domain }}">
+                        <i class="fas fa-search me-1"></i>Discover Subdomains
+                    </button>
+                </div>
+                <div id="subdomain-results" class="card-body" style="display: none;">
+                </div>
+                <div id="subdomain-placeholder" class="card-body">
+                    <p class="text-muted mb-0 small">
+                        <i class="fas fa-shield-alt me-1"></i>
+                        Passive discovery using <strong>Certificate Transparency Logs</strong> — publicly auditable records of every TLS certificate ever issued.
+                        Click "Discover Subdomains" to query CT logs for subdomains that have had certificates issued.
+                        No active scanning or brute-forcing is performed.
+                    </p>
                 </div>
             </div>
         </div>
@@ -1482,6 +1538,105 @@
             }
         });
     })();
+    
+    (function() {
+        var sdBtn = document.getElementById('btn-discover-subdomains');
+        if (sdBtn) {
+            sdBtn.addEventListener('click', function() {
+                discoverSubdomains(this.getAttribute('data-domain'));
+            });
+        }
+    })();
+    
+    function escHtml(str) {
+        var d = document.createElement('div');
+        d.appendChild(document.createTextNode(str));
+        return d.innerHTML;
+    }
+    
+    function discoverSubdomains(domain) {
+        var btn = document.getElementById('btn-discover-subdomains');
+        var resultsDiv = document.getElementById('subdomain-results');
+        var placeholder = document.getElementById('subdomain-placeholder');
+        
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Querying CT Logs...';
+        
+        fetch('/api/subdomains/' + encodeURIComponent(domain))
+            .then(function(response) { return response.json(); })
+            .then(function(data) {
+                placeholder.style.display = 'none';
+                resultsDiv.style.display = 'block';
+                
+                if (data.status !== 'success' || !data.subdomains || data.subdomains.length === 0) {
+                    resultsDiv.innerHTML = '<p class="text-muted mb-0"><i class="fas fa-info-circle me-1"></i>' +
+                        (data.message || 'No subdomains found in Certificate Transparency logs for this domain.') + '</p>';
+                    btn.innerHTML = '<i class="fas fa-check me-1"></i>Complete';
+                    return;
+                }
+                
+                var currentCount = data.current_count || 0;
+                var expiredCount = data.expired_count || 0;
+                
+                var html = '<div class="mb-3">';
+                html += '<div class="d-flex flex-wrap align-items-center gap-2 mb-2">';
+                html += '<span class="badge bg-info-subtle text-info border border-info-subtle"><i class="fas fa-certificate me-1"></i>' + data.total_certs + ' certificates analyzed</span>';
+                html += '<span class="badge bg-success-subtle text-success border border-success-subtle"><i class="fas fa-check me-1"></i>' + currentCount + ' current</span>';
+                html += '<span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle"><i class="fas fa-history me-1"></i>' + expiredCount + ' expired</span>';
+                html += '<span class="badge bg-dark bg-opacity-25 text-muted fw-normal"><i class="fas fa-database me-1"></i>Source: ' + data.source + '</span>';
+                html += '</div>';
+                html += '<small class="text-muted"><i class="fas fa-info-circle me-1"></i>' + data.caveat + '</small>';
+                html += '</div>';
+                
+                html += '<div class="table-responsive"><table class="table table-sm table-hover mb-0">';
+                html += '<thead><tr>';
+                html += '<th class="border-secondary">Subdomain</th>';
+                html += '<th class="border-secondary text-center">Status</th>';
+                html += '<th class="border-secondary text-center">Certificates</th>';
+                html += '<th class="border-secondary">First Seen</th>';
+                html += '<th class="border-secondary">Issuer(s)</th>';
+                html += '</tr></thead><tbody>';
+                
+                var maxShow = 100;
+                var subdomains = data.subdomains.slice(0, maxShow);
+                
+                for (var i = 0; i < subdomains.length; i++) {
+                    var s = subdomains[i];
+                    var statusBadge = s.is_current
+                        ? '<span class="badge bg-success-subtle text-success border border-success-subtle" style="font-size:0.7rem;">Current</span>'
+                        : '<span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle" style="font-size:0.7rem;">Expired</span>';
+                    var wildcardBadge = s.is_wildcard
+                        ? ' <span class="badge bg-warning-subtle text-warning border border-warning-subtle" style="font-size:0.6rem;">Wildcard</span>'
+                        : '';
+                    
+                    html += '<tr>';
+                    html += '<td class="border-secondary"><code class="small">' + escHtml(s.name) + '</code>' + wildcardBadge + '</td>';
+                    html += '<td class="border-secondary text-center">' + statusBadge + '</td>';
+                    html += '<td class="border-secondary text-center"><span class="small text-muted">' + s.cert_count + '</span></td>';
+                    html += '<td class="border-secondary"><span class="small text-muted">' + s.first_seen + '</span></td>';
+                    html += '<td class="border-secondary"><span class="small text-muted">' + (s.issuers ? s.issuers.map(escHtml).join(', ') : '') + '</span></td>';
+                    html += '</tr>';
+                }
+                
+                html += '</tbody></table></div>';
+                
+                if (data.subdomains.length > maxShow) {
+                    html += '<p class="text-muted small mt-2 mb-0"><i class="fas fa-ellipsis-h me-1"></i>Showing ' + maxShow + ' of ' + data.unique_subdomains + ' subdomains</p>';
+                }
+                
+                resultsDiv.innerHTML = html;
+                btn.innerHTML = '<i class="fas fa-check me-1"></i>' + data.unique_subdomains + ' Subdomains Found';
+                btn.classList.remove('btn-outline-primary');
+                btn.classList.add('btn-outline-success');
+            })
+            .catch(function(err) {
+                placeholder.style.display = 'none';
+                resultsDiv.style.display = 'block';
+                resultsDiv.innerHTML = '<p class="text-danger mb-0"><i class="fas fa-exclamation-triangle me-1"></i>Failed to query Certificate Transparency logs. Please try again.</p>';
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-redo me-1"></i>Retry';
+            });
+    }
     </script>
 </body>
 </html>

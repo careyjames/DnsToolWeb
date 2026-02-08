@@ -2,55 +2,7 @@
 
 ## Overview
 
-A web-based DNS intelligence tool for comprehensive domain record analysis, email security validation (SPF, DMARC, DKIM), email security management provider detection, and DNS security intelligence reports. The application aims to provide a robust, user-friendly platform for understanding and improving domain and email security posture, offering insights into business vision, market potential, and project ambitions.
-
-## Recent Changes (v26.10.46)
-- DNS Evidence Diff now includes email security subdomain records (v26.10.46):
-  - **DMARC** (`_dmarc.domain`), **MTA-STS** (`_mta-sts.domain`), and **TLS-RPT** (`_smtp._tls.domain`) TXT records now appear in the side-by-side diff alongside standard record types (A, AAAA, MX, TXT, NS).
-  - Each email security record shows its full subdomain label (e.g., `_dmarc.google.com`) for transparency.
-  - Both resolver (public DNS cache) and authoritative (source of truth) records queried and compared for propagation checking.
-  - Authoritative NS timeout increased from 1s to 2s to improve reliability for subdomain TXT queries.
-  - Previously these records were analyzed and displayed in the Email Security section but omitted from the DNS Evidence Diff.
-- Null MX (RFC 7505) recognition and No-Mail Domain detection (v26.10.45):
-  - **Null MX**: `MX 0 .` now recognized as an explicit "this domain does not accept mail" declaration per RFC 7505. Previously displayed as a regular mail server entry.
-  - **No-Mail Domain banner**: When SPF is `-all` AND MX is Null MX (or absent), a prominent info banner appears in Email Security section with evidence badges (SPF -all, Null MX, DMARC reject) explaining the domain intentionally does not send or receive email.
-  - **Email Service Provider**: Shows "No Mail (Null MX)" with subtitle "Domain declares no email (intentional)" instead of "Unknown" / "Where email is hosted (MX)".
-  - **MX display**: Traffic & Routing MX column shows "Null MX" badge with RFC 7505 link and "Domain explicitly does not accept email" instead of "Priority + mail server for email delivery".
-  - **Posture scoring**: MTA-STS, BIMI, and TLS-RPT no longer listed as "Not Configured" for non-mail domains (they're irrelevant). Posture message says "Non-mail domain fully secured" when all applicable controls are in place.
-  - **Email verdict**: Specific verdict "Non-mail domain with full anti-spoofing protection" replaces generic DMARC reject message.
-  - **Traffic summary**: Shows "Null MX (no mail)" instead of "1 server".
-  - `is_no_mail_domain` detection expanded: now also triggers when Null MX is present (previously required zero MX records).
-- Subdomain-aware analysis: subdomains (e.g., `dnstool.it-help.tech`) now correctly detected and handled across three areas (v26.10.43):
-  - **DNSSEC**: When a subdomain has no DNSKEY/DS records but the AD flag is set (parent zone is signed), shows "Inherited" badge with parent zone algorithm info instead of false "Unsigned" warning. Uses `_find_parent_zone()` helper to walk up domain labels and find the zone apex via NS records.
-  - **NS Delegation**: When a subdomain has no NS records (normal — it's within the parent zone), shows "Subdomain" badge and parent zone nameservers instead of false "Check Failed / Mismatch" error. No longer triggers the "Partial Results" error banner.
-  - **Registrar (RDAP)**: When RDAP/WHOIS fails for a subdomain, automatically tries the parent/registered domain. Shows "Registrar for {parent_domain}" instead of "Unknown".
-  - Posture scoring updated: inherited DNSSEC counts as configured. Domain Security verdict says "authenticated via parent zone DNSSEC" for subdomains.
-- BIMI logo proxy fix: Changed from `resp.raw.read()` to `resp.content` to auto-decompress gzip-encoded upstream SVGs. Upstream servers (e.g., apple.com) return `Content-Encoding: gzip`, and raw reads served compressed bytes to the browser. Also passes through upstream `Content-Type` instead of forcing `charset=utf-8` (v26.10.42).
-
-### Older Changes (v26.10.41)
-- Proofpoint Government detection: `gpphosted.com` added alongside `pphosted.com` for SPF flattening, Hosted DKIM CNAME, and MX provider detection. Government infrastructure shows as "Proofpoint EFD (Gov)" vs commercial "Proofpoint EFD". Also added `ppops.net` to MX provider detection. Dict ordering ensures `gpphosted.com` matches before the `pphosted.com` substring (v26.10.41).
-  - Note: `ppops.net` is Proofpoint-owned (SOA/NS = proofpoint.com) but only used as an internal SPF include (`i.ppops.net` = `v=spf1 ?all`, a no-op). Not used in MX records — all Proofpoint MX uses `pphosted.com` or `gpphosted.com`. Removed from MX detection dicts.
-  - SPF flattening accuracy fix: Static Proofpoint SPF includes (`spf-XXXXXX.gpphosted.com`) are NOT flattening — they resolve to plain IP lists (e.g., cisa.gov → 2 IPs). Only Proofpoint's macro-based SPF (`%{ir}.%{v}.%{d}.spf.has.pphosted.com`) is real flattening (dynamic per-IP, per-domain lookups). Detection keys changed from `pphosted.com`/`gpphosted.com` → `spf.has.pphosted.com`/`spf.has.gpphosted.com`.
-- Expanded provider detection: Valimail added to Dynamic Services (NS delegation via `ns.vali.email` for `_dmarc` and `_domainkey`). Proofpoint Hosted SPF added (`pphosted.com` macro-based includes). Hosted DKIM CNAME detection added for Proofpoint (`pphosted.com`), Mimecast, Agari/Fortra, Sendmarc, Dmarcian — detects when DKIM selectors use CNAME chains to provider infrastructure (v26.10.40).
-- Renamed "NS delegation" to "Dynamic Services" for email security subzone delegation detection. "NS delegation" now reserved for actual authoritative nameserver delegation (e.g., domain at GoDaddy with NS at Cloudflare). Dynamic Services detection shows capability labels (Dynamic DMARC, Dynamic DKIM, Dynamic MTA-STS, Dynamic TLS-RPT) instead of raw zone names (v26.10.39).
-- Dynamic Services provider detection: detects providers (Red Sift/OnDMARC, Mailhardener) via DNS subzone delegation on _dmarc, _domainkey, _mta-sts, _smtp._tls zones. Merges with existing provider detection (DMARC rua, TLS-RPT, MTA-STS CNAME). Fixed variable shadowing bug where loop variable `domain` overwrote method parameter (v26.10.38).
-
-### Older Changes (v26.10.29)
-- Self-hosted Bootstrap JS bundle — eliminates last external CDN dependency (cdn.jsdelivr.net), removes intermittent Cloudflare `__cf_bm` third-party cookie that caused Best Practices score to drop to 81 (v26.10.29).
-- CSP tightened: script-src no longer allowlists cdn.jsdelivr.net (v26.10.29).
-- PWA support: web app manifest, service worker, and app icons enable Chrome "Install App" and Mac dock pinning — opens as standalone app without browser chrome (v26.10.28).
-- AI agent documentation: `llms.txt` and `llms-full.txt` rewritten as step-by-step guides teaching AI agents (ChatGPT, Gemini, Claude, Perplexity) how to operate the tool — direct URL method, form interaction, result interpretation, and re-analyze flow (v26.10.28).
-- Dynamic sitemap: `/sitemap.xml` now generated dynamically with automatic `lastmod` dates (always today's date), includes `/statistics` route (v26.10.28).
-- `robots.txt` updated with AI agent documentation pointers (`/llms.txt`, `/llms-full.txt`) (v26.10.28).
-- Self-hosted Bootstrap dark theme CSS — eliminates external cdn.replit.com dependency and removes wasted 750ms Google Fonts (IBM Plex Sans) render-blocking load (v26.10.27).
-- CSP tightened: style-src and font-src now 'self' only (no external CDN allowlisting needed) (v26.10.27).
-- Static file cache headers: 1-year max-age for all static assets (v26.10.27).
-- Removed all Google Fonts preconnect hints and cdn.replit.com preconnect/dns-prefetch from all templates (v26.10.27).
-- CSS properly minified with real minification (comments, whitespace, redundant semicolons removed) (v26.10.27).
-- Provider attribution badges use warm gold/amber `.provider-badge` class for trust-signal readability (v26.10.24).
-- Code blocks optimized with explicit text color, line-height 1.65, letter-spacing 0.015em for monospace readability (v26.10.24).
-- DNS Hosting column badges (Gov/Enterprise) no longer truncated — removed text-truncate (v26.10.25).
-- Homepage meta descriptions, OG/Twitter tags, keywords, JSON-LD schema, feature cards, persona cards, and FAQ answers updated to reflect email security management provider detection, TLS-RPT, and SMTP transport encryption capabilities (v26.10.26).
+This project is a web-based DNS intelligence tool designed for comprehensive domain record analysis, email security validation (SPF, DMARC, DKIM), email security management provider detection, and generation of DNS security intelligence reports. Its primary purpose is to offer a robust, user-friendly platform that helps users understand and enhance their domain and email security posture. The tool provides insights into crucial aspects of domain configuration, aiming to improve overall digital security.
 
 ## User Preferences
 
@@ -59,74 +11,74 @@ Preferred communication style: Simple, everyday language.
 ## System Architecture
 
 ### Backend Framework
-- **Flask** as the web framework.
-- **SQLAlchemy** for ORM functionality.
-- **PostgreSQL** for database storage.
+- **Flask** is used as the web framework.
+- **SQLAlchemy** provides ORM functionality.
+- **PostgreSQL** is the chosen database.
 
 ### Core Components
 
 **Application Entry Points:**
-- `main.py`: Simple entry point.
-- `app.py`: Main application file, including Flask configuration, database models, and route handlers.
+- `main.py`: The application's simple entry point.
+- `app.py`: Contains Flask configuration, database models, and route handlers.
 
 **DNS Analysis Engine:**
-- `dns_analyzer.py`: Core DNS analysis logic using `dnspython`.
-- Features: Domain validation, IDNA encoding, DNS record queries, email security analysis (SPF, DMARC, DKIM).
-- Utilizes multiple external DNS resolvers (Cloudflare, Google, Quad9, OpenDNS/Cisco Umbrella) for consensus and discrepancy detection.
+- `dns_analyzer.py`: Encapsulates the core DNS analysis logic utilizing `dnspython`.
+- **Features**: Domain validation, IDNA encoding, DNS record queries, and email security analysis (SPF, DMARC, DKIM, MTA-STS, TLS-RPT).
+- Employs multiple external DNS resolvers (Cloudflare, Google, Quad9, OpenDNS/Cisco Umbrella) for consensus and discrepancy detection.
 - Fetches IANA RDAP data for domain registry lookups.
 - Performs SMTP Transport Verification (STARTTLS, TLS version, cipher strength, certificate validity).
-- Conducts DNS Infrastructure Analysis to detect enterprise DNS providers and suggest security measures.
+- Conducts DNS Infrastructure Analysis to identify enterprise DNS providers.
 - Implements comprehensive DKIM selector discovery and key strength analysis.
-- Detects and displays DMARC monitoring, TLS-RPT reporting, and SPF flattening services.
-- Context-aware DKIM selector attribution and SPF evidence hierarchy.
+- Detects DMARC monitoring, TLS-RPT reporting, and SPF flattening services.
+- Supports context-aware DKIM selector attribution and SPF evidence hierarchy.
+- **DNS Evidence Diff**: Compares resolver and authoritative records for various types, including A, AAAA, MX, TXT, NS, CAA, and SOA records, along with email security-related records (`_dmarc`, `_mta-sts`, `_smtp._tls`). Displays TTL values and RFC reference badges.
+- **Subdomain Discovery**: An opt-in feature that queries crt.sh Certificate Transparency logs (RFC 6962) via `/api/subdomains/<domain>` to discover subdomains with TLS certificates, providing details like expiry, issuer, and wildcard status.
+- **Null MX and No-Mail Domain Detection**: Recognizes `MX 0 .` (RFC 7505) and identifies domains explicitly configured not to send or receive email, adjusting posture scoring and verdicts accordingly.
+- **Subdomain-aware analysis**: Correctly handles DNSSEC inheritance, NS delegation, and RDAP lookups for subdomains.
 
 **Data Model:**
-- `DomainAnalysis` model: Stores analysis results with JSON fields for DNS records, authoritative records, SPF/DMARC status, policies, and visitor location (`country_code`, `country_name`).
+- `DomainAnalysis` model: Stores analysis results including DNS records, authoritative records, SPF/DMARC status, policies, and visitor location in JSON fields.
 
 ### Frontend Architecture
-- Server-rendered HTML templates using Jinja2.
-- Bootstrap dark theme with a native system font stack.
-- Self-hosted and subsetted Font Awesome icons.
-- Custom CSS (`static/css/custom.min.css`) and client-side JavaScript (`static/js/main.js`).
+- Server-rendered HTML templates powered by Jinja2.
+- Utilizes a self-hosted Bootstrap dark theme with a native system font stack.
+- Incorporates self-hosted and subsetted Font Awesome icons.
+- Custom CSS (`static/css/custom.min.css`) and client-side JavaScript (`static/js/main.js`) are used for styling and interactivity.
+- **PWA Support**: Includes a web app manifest, service worker, and app icons for "Install App" functionality and standalone operation.
 
 **Pages:**
 - Index (home): Domain input form.
 - Results: Detailed DNS analysis display.
 - History: List of past analyses.
-- Statistics: Usage trends and metrics, including visitor countries.
+- Statistics: Usage trends and metrics.
 
 **Route Structure:**
 - `GET /`: Homepage.
-- `GET|POST /analyze`: Processes domain analysis (GET via `?domain=` query param, POST via form).
+- `GET|POST /analyze`: Domain analysis processing.
 - `GET /analysis/{id}`: View saved analysis.
 - `GET /history`: List of past analyses.
 - `GET /stats`: Usage metrics dashboard.
 - `GET /statistics`: Redirects to `/stats`.
-- `GET /robots.txt`: Search engine crawler guidance (static file).
-- `GET /sitemap.xml`: Dynamic sitemap with automatic `lastmod` dates.
-- `GET /llms.txt`: AI agent quick-start guide (static file).
-- `GET /llms-full.txt`: AI agent comprehensive driving guide (static file).
+- `GET /robots.txt`: Search engine crawler guidance.
+- `GET /sitemap.xml`: Dynamic sitemap.
+- `GET /llms.txt`: AI agent quick-start guide.
+- `GET /llms-full.txt`: AI agent comprehensive driving guide.
 
 ### Design Patterns
-- MVC-style separation (Flask routes, SQLAlchemy models, Jinja2 templates).
-- Singleton pattern for `DNSAnalyzer`.
-- JSON columns in PostgreSQL for flexible data.
+- Adheres to an MVC-style separation.
+- Employs a Singleton pattern for `DNSAnalyzer`.
+- Utilizes JSON columns in PostgreSQL for flexible data storage.
 
 ### Quality of Life & Performance
-- Critical inline CSS and preconnect hints for performance.
-- Per-IP rate limiting (8 analyses per minute) with Redis-backed solution.
-- Re-analyze countdown UI.
-- Data freshness: DNS records always fetched fresh; RDAP data cached (6-hour TTL).
-- SEO optimization with rich schema and meta tags.
-- Native system font stack for improved performance and aesthetics.
-- Provider attribution badges use warm gold/amber `.provider-badge` class for trust-signal readability (v26.10.24).
-- Code blocks optimized with explicit text color, line-height 1.65, letter-spacing for monospace readability.
-- Print styles for `.provider-badge` (cream/brown) and code blocks ensure paper readability.
-- IMPORTANT: `custom.min.css` must be kept in sync with `custom.css` (templates reference the `.min` version).
-- IMPORTANT: When adding new public routes, add them to the dynamic sitemap in `app.py` (`sitemap()` function) and update `llms.txt`/`llms-full.txt` if user-facing.
-- Sitemap `lastmod` is automatic (always today's date) — no manual updates needed.
-- `llms.txt` (static/llms.txt): Quick-start guide for AI agents. Update when capabilities change.
-- `llms-full.txt` (static/llms-full.txt): Comprehensive agent driving guide. Update when result page structure, routes, or analysis features change.
+- Implements critical inline CSS and preconnect hints.
+- Features per-IP rate limiting (8 analyses per minute) backed by Redis.
+- Offers a re-analyze countdown UI.
+- Ensures data freshness: DNS records are fetched live; RDAP data is cached with a 6-hour TTL.
+- SEO optimized with rich schema and meta tags.
+- Uses a native system font stack.
+- Provider attribution badges use a warm gold/amber color for readability.
+- Code blocks are optimized for monospace readability.
+- Includes print styles for readability on paper.
 
 ## External Dependencies
 
@@ -144,6 +96,7 @@ Preferred communication style: Simple, everyday language.
 - **OpenDNS/Cisco Umbrella (208.67.222.222)**: Consensus resolver.
 - **IANA RDAP**: Registry data lookups.
 - **ip-api.com**: Free IP-to-country lookup service.
+- **crt.sh**: Certificate Transparency logs for subdomain discovery.
 
 ### Database
-- PostgreSQL (Replit-managed).
+- **PostgreSQL**: Managed by Replit.

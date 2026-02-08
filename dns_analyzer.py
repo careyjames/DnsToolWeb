@@ -510,9 +510,50 @@ class DNSAnalyzer:
         result['error'] = 'Could not verify AD flag'
         return result
     
+    def _dns_query_with_ttl(self, record_type: str, domain: str) -> tuple:
+        """Query DNS with TTL. Returns (records_list, ttl_seconds_or_None)."""
+        try:
+            url = "https://dns.google/resolve"
+            params = {'name': domain, 'type': record_type.upper()}
+            response = requests.get(url, params=params, timeout=5, headers={'Accept': 'application/dns-json'})
+            if response.status_code == 200:
+                data = response.json()
+                if data.get('Status', -1) != 0:
+                    return ([], None)
+                answers = data.get('Answer', [])
+                if not answers:
+                    return ([], None)
+                ttl = answers[0].get('TTL')
+                results = []
+                for answer in answers:
+                    rd = answer.get('data', '').strip()
+                    if not rd:
+                        continue
+                    if record_type.upper() == 'TXT':
+                        rd = rd.strip('"')
+                    if rd and rd not in results:
+                        results.append(rd)
+                return (results, ttl)
+        except Exception:
+            pass
+        for resolver_ip in self.resolvers:
+            resolver = dns.resolver.Resolver(configure=False)
+            resolver.nameservers = [resolver_ip]
+            resolver.timeout = self.dns_timeout
+            resolver.lifetime = self.dns_timeout * self.dns_tries
+            try:
+                answer = resolver.resolve(domain, record_type)
+                ttl = answer.rrset.ttl if answer.rrset else None
+                return ([str(rr) for rr in answer], ttl)
+            except dns.resolver.NXDOMAIN:
+                return ([], None)
+            except (dns.resolver.NoAnswer, dns.resolver.Timeout, Exception):
+                continue
+        return ([], None)
+    
     def get_basic_records(self, domain: str) -> Dict[str, List[str]]:
         """Get basic DNS records for domain (parallel for speed)."""
-        record_types = ["A", "AAAA", "MX", "TXT", "NS", "CNAME"]
+        record_types = ["A", "AAAA", "MX", "TXT", "NS", "CNAME", "CAA", "SOA"]
         records = {t: [] for t in record_types}
         records["SRV"] = []  # SRV needs special handling
         
@@ -528,8 +569,11 @@ class DNSAnalyzer:
             "_submission._tcp",    # Email submission
         ]
         
+        records['_ttl'] = {}
+        
         def query_type(rtype):
-            return (rtype, self.dns_query(rtype, domain))
+            values, ttl = self._dns_query_with_ttl(rtype, domain)
+            return (rtype, values, ttl)
         
         def query_srv(prefix):
             result = self.dns_query("SRV", f"{prefix}.{domain}")
@@ -538,15 +582,15 @@ class DNSAnalyzer:
             return None
         
         with ThreadPoolExecutor(max_workers=15) as executor:
-            # Query basic record types
             type_futures = {executor.submit(query_type, t): t for t in record_types}
-            # Query SRV prefixes in parallel
             srv_futures = {executor.submit(query_srv, p): p for p in srv_prefixes}
             
             for future in as_completed(type_futures, timeout=5):
                 try:
-                    rtype, result = future.result()
+                    rtype, result, ttl = future.result()
                     records[rtype] = result
+                    if ttl is not None:
+                        records['_ttl'][rtype] = ttl
                 except:
                     pass
             
@@ -555,7 +599,6 @@ class DNSAnalyzer:
                     result = future.result()
                     if result:
                         prefix, srv_records = result
-                        # Format: "service: target:port priority weight"
                         for rec in srv_records:
                             records["SRV"].append(f"{prefix}: {rec}")
                 except:
@@ -565,7 +608,7 @@ class DNSAnalyzer:
     
     def get_authoritative_records(self, domain: str) -> Dict[str, List[str]]:
         """Get DNS records directly from authoritative nameservers (optimized for speed)."""
-        record_types = ["A", "AAAA", "MX", "TXT", "NS"]
+        record_types = ["A", "AAAA", "MX", "TXT", "NS", "CAA", "SOA"]
         email_subdomains = {
             'DMARC': f'_dmarc.{domain}',
             'MTA-STS': f'_mta-sts.{domain}',
@@ -574,6 +617,8 @@ class DNSAnalyzer:
         results = {t: [] for t in record_types}
         for key in email_subdomains:
             results[key] = []
+        results['_query_status'] = {}
+        results['_ttl'] = {}
         
         try:
             ns_records = self.dns_query("NS", domain)
@@ -599,20 +644,32 @@ class DNSAnalyzer:
             def query_auth_type(result_key, qname=None, dns_type=None):
                 try:
                     answer = resolver.resolve(qname or domain, dns_type or result_key)
-                    return (result_key, [str(rr).strip('"') for rr in answer])
-                except:
-                    return (result_key, [])
+                    ttl = answer.rrset.ttl if answer.rrset else None
+                    return (result_key, [str(rr).strip('"') for rr in answer], 'success', ttl)
+                except dns.resolver.NXDOMAIN:
+                    return (result_key, [], 'nxdomain', None)
+                except dns.resolver.NoAnswer:
+                    return (result_key, [], 'nodata', None)
+                except dns.resolver.NoNameservers:
+                    return (result_key, [], 'servfail', None)
+                except (dns.exception.Timeout, dns.resolver.LifetimeTimeout):
+                    return (result_key, [], 'timeout', None)
+                except Exception:
+                    return (result_key, [], 'error', None)
             
-            with ThreadPoolExecutor(max_workers=8) as executor:
+            with ThreadPoolExecutor(max_workers=12) as executor:
                 futures = {}
                 for t in record_types:
                     futures[executor.submit(query_auth_type, t)] = t
                 for key, qname in email_subdomains.items():
                     futures[executor.submit(query_auth_type, key, qname, 'TXT')] = key
-                for future in as_completed(futures, timeout=4):
+                for future in as_completed(futures, timeout=5):
                     try:
-                        rtype, vals = future.result()
+                        rtype, vals, status, ttl = future.result()
                         results[rtype] = vals
+                        results['_query_status'][rtype] = status
+                        if ttl is not None:
+                            results['_ttl'][rtype] = ttl
                     except:
                         pass
                     
@@ -3140,6 +3197,9 @@ class DNSAnalyzer:
         
         basic = results_map.get('basic', {})
         auth = results_map.get('auth', {})
+        auth_query_status = auth.pop('_query_status', {}) if isinstance(auth, dict) else {}
+        resolver_ttl = basic.pop('_ttl', {}) if isinstance(basic, dict) else {}
+        auth_ttl = auth.pop('_ttl', {}) if isinstance(auth, dict) else {}
         
         dkim_result = results_map.get('dkim', {'status': 'error'})
         if isinstance(dkim_result, dict) and dkim_result.get('selectors'):
@@ -3254,6 +3314,9 @@ class DNSAnalyzer:
             'section_status': section_status,
             'basic_records': basic,
             'authoritative_records': auth,
+            'auth_query_status': auth_query_status,
+            'resolver_ttl': resolver_ttl,
+            'auth_ttl': auth_ttl,
             'propagation_status': propagation_status,
             'spf_analysis': results_map.get('spf', {'status': 'error'}),
             'dmarc_analysis': results_map.get('dmarc', {'status': 'error'}),
@@ -3334,6 +3397,130 @@ class DNSAnalyzer:
         results['posture'] = self._calculate_posture(results)
         
         return results
+    
+    def discover_subdomains(self, domain: str) -> Dict[str, Any]:
+        """Discover subdomains via Certificate Transparency logs (crt.sh).
+        
+        Uses passive reconnaissance only - queries public CT log aggregator.
+        No active scanning or brute-forcing. All data comes from publicly
+        auditable certificate transparency logs per RFC 6962.
+        """
+        result = {
+            'status': 'success',
+            'source': 'Certificate Transparency Logs',
+            'source_url': 'https://crt.sh',
+            'rfc': 'RFC 6962',
+            'domain': domain,
+            'subdomains': [],
+            'total_certs': 0,
+            'unique_subdomains': 0,
+            'caveat': 'Shows subdomains that have had TLS certificates issued. '
+                      'Does not include subdomains without certificates or internal-only names.',
+        }
+        
+        try:
+            url = f"https://crt.sh/?q=%25.{domain}&output=json"
+            response = requests.get(url, timeout=15, headers={
+                'User-Agent': 'DNSTool-SecurityAudit/1.0'
+            })
+            
+            if response.status_code != 200:
+                result['status'] = 'error'
+                result['message'] = f'CT log query returned status {response.status_code}'
+                return result
+            
+            data = response.json()
+            result['total_certs'] = len(data)
+            
+            subdomain_map = {}
+            
+            for entry in data:
+                names = set()
+                cn = entry.get('common_name', '')
+                if cn:
+                    names.add(cn.lower().strip())
+                name_value = entry.get('name_value', '')
+                if name_value:
+                    for name in name_value.split('\n'):
+                        name = name.strip().lower()
+                        if name and '@' not in name:
+                            names.add(name)
+                
+                not_before = entry.get('not_before', '')
+                not_after = entry.get('not_after', '')
+                issuer = entry.get('issuer_name', '')
+                
+                for name in names:
+                    if name.endswith(f'.{domain}') or name == domain:
+                        clean_name = name.lstrip('*.')
+                        if clean_name == domain:
+                            continue
+                        
+                        is_wildcard = name.startswith('*.')
+                        
+                        if clean_name not in subdomain_map:
+                            subdomain_map[clean_name] = {
+                                'name': clean_name,
+                                'first_seen': not_before,
+                                'last_seen': not_before,
+                                'not_after': not_after,
+                                'cert_count': 0,
+                                'is_wildcard': is_wildcard,
+                                'issuers': set(),
+                            }
+                        
+                        entry_data = subdomain_map[clean_name]
+                        entry_data['cert_count'] += 1
+                        if not_before and (not entry_data['first_seen'] or not_before < entry_data['first_seen']):
+                            entry_data['first_seen'] = not_before
+                        if not_before and (not entry_data['last_seen'] or not_before > entry_data['last_seen']):
+                            entry_data['last_seen'] = not_before
+                        if not_after and (not entry_data['not_after'] or not_after > entry_data['not_after']):
+                            entry_data['not_after'] = not_after
+                        
+                        issuer_cn = ''
+                        if 'CN=' in issuer:
+                            issuer_cn = issuer.split('CN=')[1].split(',')[0].strip()
+                        if issuer_cn:
+                            entry_data['issuers'].add(issuer_cn)
+            
+            from datetime import datetime
+            now = datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%S')
+            
+            subdomains = []
+            for name, data in subdomain_map.items():
+                is_expired = data['not_after'] < now if data['not_after'] else True
+                is_current = not is_expired
+                
+                subdomains.append({
+                    'name': data['name'],
+                    'first_seen': data['first_seen'][:10] if data['first_seen'] else '',
+                    'last_seen': data['last_seen'][:10] if data['last_seen'] else '',
+                    'cert_count': data['cert_count'],
+                    'is_wildcard': data['is_wildcard'],
+                    'is_current': is_current,
+                    'issuers': sorted(list(data['issuers']))[:3],
+                })
+            
+            subdomains.sort(key=lambda x: (not x['is_current'], -x['cert_count'], x['name']))
+            
+            result['subdomains'] = subdomains
+            result['unique_subdomains'] = len(subdomains)
+            result['current_count'] = sum(1 for s in subdomains if s['is_current'])
+            result['expired_count'] = sum(1 for s in subdomains if not s['is_current'])
+            
+        except requests.exceptions.Timeout:
+            result['status'] = 'timeout'
+            result['message'] = 'CT log query timed out (crt.sh may be slow)'
+        except requests.exceptions.ConnectionError:
+            result['status'] = 'error'
+            result['message'] = 'Could not connect to CT log service'
+        except Exception as e:
+            result['status'] = 'error'
+            result['message'] = f'CT log query failed: {str(e)}'
+            logging.error(f"Subdomain discovery error for {domain}: {e}")
+        
+        return result
     
     def _read_smtp_response(self, sock: socket.socket, timeout: float = 2.0) -> str:
         """Read complete SMTP multi-line response with proper termination detection."""
