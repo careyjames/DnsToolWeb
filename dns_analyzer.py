@@ -3357,21 +3357,18 @@ class DNSAnalyzer:
         ) if mx_records else False
         results['has_null_mx'] = has_null_mx
         
-        # Detect "no-mail domain" pattern and adjust DMARC messaging
-        # A domain with SPF "v=spf1 -all" (no senders) + no MX or Null MX is intentionally not sending email
+        # Classify mail posture using graduated RFC-grounded model
+        mail_posture = self._classify_mail_posture(results)
+        results['mail_posture'] = mail_posture
+        
+        # Legacy compatibility: is_no_mail_domain used by posture scoring and verdicts
         spf = results.get('spf_analysis', {})
         dmarc = results.get('dmarc_analysis', {})
-        
-        is_no_mail_domain = (
-            spf.get('no_mail_intent', False) and 
-            (len(mx_records) == 0 or has_null_mx)
-        )
+        is_no_mail_domain = mail_posture['classification'] in ('no_mail_verified', 'no_mail_partial')
         results['is_no_mail_domain'] = is_no_mail_domain
         
         if is_no_mail_domain:
-            # Domain explicitly declares no email - this is a security posture, not misconfiguration
             if dmarc.get('status') == 'error' and 'No valid DMARC' in dmarc.get('message', ''):
-                # Instead of "Error - No DMARC", show a recommendation
                 results['dmarc_analysis'] = {
                     **dmarc,
                     'status': 'warning',
@@ -3380,7 +3377,6 @@ class DNSAnalyzer:
                     'suggested_record': 'v=DMARC1; p=reject;'
                 }
             elif dmarc.get('policy') == 'reject':
-                # Perfect! They have both SPF -all and DMARC reject
                 results['dmarc_analysis'] = {
                     **dmarc,
                     'message': 'DMARC policy reject - excellent anti-spoofing protection for non-mail domain'
@@ -3854,6 +3850,165 @@ class DNSAnalyzer:
         
         return result
     
+    def _classify_mail_posture(self, results: Dict[str, Any]) -> Dict[str, Any]:
+        """Classify domain's mail posture using a graduated RFC-grounded model.
+        
+        Returns a structured assessment of whether the domain intends to send/receive
+        email, based on observable DNS signals. Each signal is individually evaluated
+        and the overall classification is derived from the combination.
+        
+        Classifications:
+          - no_mail_verified:  All three layers configured (Null MX + SPF -all + DMARC reject)
+          - no_mail_partial:   Some no-mail signals present but gaps remain
+          - email_ambiguous:   Signals are inconsistent or insufficient to determine intent
+          - email_enabled:     Domain has active mail infrastructure
+        
+        RFC basis:
+          - RFC 7505: Null MX (explicit inbound refusal)
+          - RFC 7208: SPF (sender authorization, -all = no senders)
+          - RFC 7489: DMARC (policy enforcement)
+          - RFC 5321 §5.1: MX fallback to A/AAAA (why "no MX" ≠ "no mail")
+        """
+        spf = results.get('spf_analysis', {})
+        dmarc = results.get('dmarc_analysis', {})
+        mx_records = results.get('basic_records', {}).get('MX', [])
+        has_null_mx = results.get('has_null_mx', False)
+        
+        spf_deny_all = spf.get('no_mail_intent', False)
+        spf_status = spf.get('status', '')
+        spf_permissiveness = spf.get('permissiveness', '')
+        
+        dmarc_policy = (dmarc.get('policy') or '').lower()
+        dmarc_status = dmarc.get('status', '')
+        has_dmarc = dmarc_status in ('success', 'warning', 'info') or bool(dmarc_policy)
+        dmarc_reject = dmarc_policy == 'reject'
+        dmarc_quarantine = dmarc_policy == 'quarantine'
+        
+        has_mx = len(mx_records) > 0 and not has_null_mx
+        has_senders = (
+            bool(spf.get('includes')) or
+            bool(spf.get('lookup_mechanisms')) or
+            spf_permissiveness in ('DANGEROUS', 'NEUTRAL') or
+            (spf_status == 'success' and not spf_deny_all and spf_permissiveness in ('SOFT', 'STRICT'))
+        )
+        
+        signals = {
+            'null_mx': {
+                'present': has_null_mx,
+                'rfc': 'RFC 7505',
+                'rfc_url': 'https://datatracker.ietf.org/doc/html/rfc7505',
+                'label': 'Null MX',
+                'description': 'Explicitly refuses inbound mail delivery',
+                'missing_risk': 'Without Null MX, SMTP servers may still attempt delivery via A/AAAA fallback (RFC 5321 §5.1)'
+            },
+            'spf_deny_all': {
+                'present': spf_deny_all,
+                'rfc': 'RFC 7208',
+                'rfc_url': 'https://datatracker.ietf.org/doc/html/rfc7208',
+                'label': 'SPF v=spf1 -all',
+                'description': 'Declares no servers are authorized to send email',
+                'missing_risk': 'Without SPF -all, attackers can send email appearing to come from this domain'
+            },
+            'dmarc_reject': {
+                'present': dmarc_reject,
+                'rfc': 'RFC 7489',
+                'rfc_url': 'https://datatracker.ietf.org/doc/html/rfc7489',
+                'label': 'DMARC p=reject',
+                'description': 'Instructs receivers to reject spoofed messages',
+                'missing_risk': 'Without DMARC reject, spoofed messages may still reach inboxes even with SPF -all'
+            }
+        }
+        
+        present_count = sum(1 for s in signals.values() if s['present'])
+        
+        missing_steps = []
+        for key, sig in signals.items():
+            if not sig['present']:
+                missing_steps.append({
+                    'control': sig['label'],
+                    'rfc': sig['rfc'],
+                    'rfc_url': sig['rfc_url'],
+                    'action': sig['description'],
+                    'risk': sig['missing_risk']
+                })
+        
+        if present_count == 3:
+            classification = 'no_mail_verified'
+            label = 'No-Mail: Verified'
+            color = 'success'
+            icon = 'shield-alt'
+            summary = 'This domain is fully hardened against email abuse. All three layers of no-mail protection are configured per RFC best practices.'
+        elif present_count >= 1 and (spf_deny_all or has_null_mx) and not has_senders:
+            classification = 'no_mail_partial'
+            label = 'No-Mail: Partial'
+            color = 'warning'
+            icon = 'exclamation-triangle'
+            if spf_deny_all and not has_null_mx and not dmarc_reject:
+                summary = 'Outbound email is blocked (SPF -all), but inbound mail delivery is still possible via A/AAAA fallback (RFC 5321 §5.1) and spoofed messages may still reach inboxes.'
+            elif spf_deny_all and not has_null_mx and dmarc_reject:
+                summary = 'Outbound email is blocked and spoofed messages will be rejected, but inbound mail delivery is still possible via A/AAAA fallback (RFC 5321 §5.1).'
+            elif spf_deny_all and has_null_mx and not dmarc_reject:
+                summary = 'Inbound and outbound email are both blocked, but DMARC reject is missing — spoofed messages may still be delivered by receivers that don\'t check SPF.'
+            elif has_null_mx and not spf_deny_all:
+                summary = 'Inbound mail is explicitly refused (Null MX), but outbound spoofing is not fully prevented. Add SPF -all and DMARC reject to complete protection.'
+            else:
+                summary = 'Some no-mail signals are configured, but gaps remain. Complete all three layers for full protection.'
+        elif not has_mx and not has_senders and spf_status != 'success':
+            classification = 'email_ambiguous'
+            label = 'Email: Ambiguous'
+            color = 'secondary'
+            icon = 'question-circle'
+            summary = 'No mail infrastructure detected, but no explicit no-mail declarations either. Without Null MX (RFC 7505), SMTP servers fall back to A/AAAA records (RFC 5321 §5.1), meaning mail delivery may still be attempted. This domain\'s email intent is unclear.'
+        elif has_mx and has_senders:
+            classification = 'email_enabled'
+            label = 'Email: Enabled'
+            color = 'info'
+            icon = 'envelope'
+            summary = 'This domain has active mail infrastructure with MX records and authorized senders.'
+        elif has_mx and not has_senders:
+            classification = 'email_enabled'
+            label = 'Email: Enabled (Inbound Only)'
+            color = 'info'
+            icon = 'envelope'
+            summary = 'This domain accepts inbound mail but has no authorized outbound senders in SPF.'
+        elif not has_mx and has_senders:
+            classification = 'email_ambiguous'
+            label = 'Email: Ambiguous'
+            color = 'secondary'
+            icon = 'question-circle'
+            summary = 'SPF authorizes senders but no MX records exist. This domain may send email but cannot receive it reliably. Configuration is inconsistent.'
+        else:
+            classification = 'email_ambiguous'
+            label = 'Email: Ambiguous'
+            color = 'secondary'
+            icon = 'question-circle'
+            summary = 'Insufficient DNS signals to determine this domain\'s email intent.'
+        
+        recommended_record = None
+        if classification in ('no_mail_partial', 'email_ambiguous') and not has_senders and not has_mx:
+            parts = []
+            if not has_null_mx:
+                parts.append('Add MX record: 0 . (Null MX per RFC 7505)')
+            if not spf_deny_all:
+                parts.append('Add TXT record: v=spf1 -all')
+            if not dmarc_reject:
+                parts.append('Add TXT record at _dmarc: v=DMARC1; p=reject;')
+            recommended_record = parts
+        
+        return {
+            'classification': classification,
+            'label': label,
+            'color': color,
+            'icon': icon,
+            'summary': summary,
+            'signals': signals,
+            'present_count': present_count,
+            'total_signals': 3,
+            'missing_steps': missing_steps,
+            'recommended_records': recommended_record,
+            'is_no_mail': classification in ('no_mail_verified', 'no_mail_partial'),
+        }
+
     def _calculate_posture(self, results: Dict[str, Any]) -> Dict[str, Any]:
         """Calculate overall DNS & Trust Posture based on security controls."""
         issues = []  # Critical problems that need action

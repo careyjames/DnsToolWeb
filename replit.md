@@ -8,7 +8,15 @@ This project is a web-based DNS intelligence tool designed for comprehensive dom
 
 Preferred communication style: Simple, everyday language.
 
-## Recent Changes (v26.10.49)
+## Recent Changes (v26.10.50)
+- Graduated Mail Posture classification (v26.10.50):
+  - New `_classify_mail_posture()` method provides RFC-grounded assessment of email intent.
+  - Four graduated classifications: No-Mail: Verified, No-Mail: Partial, Email: Ambiguous, Email: Enabled.
+  - Each signal (Null MX / RFC 7505, SPF -all / RFC 7208, DMARC reject / RFC 7489) evaluated individually.
+  - Missing-step checklist with RFC citations and risk explanations for partial configurations.
+  - Recommended DNS records displayed for incomplete no-mail domains.
+  - Replaces binary is_no_mail_domain banner with context-aware graduated alerts.
+  - RFC 5321 §5.1 A/AAAA fallback risk properly communicated for domains without Null MX.
 - Intelligent subdomain detection (v26.10.49):
   - When analyzing a subdomain (e.g., `dnstool.it-help.tech`), the tool now detects this via the Public Suffix List (`tldextract`) and provides context-aware messaging instead of "no subdomains found".
   - Explains that CT enumeration scope is bounded by the queried label (RFC 1034 §3.1, RFC 8499).
