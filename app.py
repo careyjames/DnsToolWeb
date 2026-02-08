@@ -1093,9 +1093,12 @@ def view_analysis_static(analysis_id):
     wait_seconds = request.args.get('wait_seconds', type=int)
     wait_reason = request.args.get('wait_reason', '')
     
+    is_legacy_report = not analysis.full_results
+    
     if analysis.full_results:
         results = analysis.full_results
     else:
+        legacy_msg = 'This is an older report — re-analyze for complete results'
         results = {
             'basic_records': analysis.basic_records or {},
             'authoritative_records': analysis.authoritative_records or {},
@@ -1119,13 +1122,12 @@ def view_analysis_static(analysis_id):
                 'registrar': analysis.registrar_name,
                 'source': analysis.registrar_source,
             },
-            'mta_sts_analysis': {'status': 'unknown', 'message': 'This is an older report — re-analyze for complete results'},
-            'tlsrpt_analysis': {'status': 'unknown', 'message': 'This is an older report — re-analyze for complete results'},
-            'bimi_analysis': {'status': 'unknown', 'message': 'This is an older report — re-analyze for complete results'},
-            'caa_analysis': {'status': 'unknown', 'message': 'This is an older report — re-analyze for complete results'},
-            'dnssec_analysis': {'status': 'unknown', 'message': 'This is an older report — re-analyze for complete results'},
-            'ns_delegation_analysis': {'status': 'unknown', 'message': 'This is an older report — re-analyze for complete results'},
-            'hosting_summary': {},
+            'mta_sts_analysis': {'status': 'unknown', 'message': legacy_msg},
+            'tlsrpt_analysis': {'status': 'unknown', 'message': legacy_msg},
+            'bimi_analysis': {'status': 'unknown', 'message': legacy_msg},
+            'caa_analysis': {'status': 'unknown', 'message': legacy_msg},
+            'dnssec_analysis': {'status': 'unknown', 'message': legacy_msg},
+            'ns_delegation_analysis': {'status': 'unknown', 'message': legacy_msg},
             'dns_infrastructure': {},
             'email_security_mgmt': {'actively_managed': False, 'providers': [], 'spf_flattening': None, 'provider_count': 0},
             'posture': None,
@@ -1135,7 +1137,12 @@ def view_analysis_static(analysis_id):
             'section_status': {},
             'ct_subdomains': analysis.ct_subdomains or {'status': 'not_available', 'subdomains': [], 'unique_subdomains': 0, 'message': 'Subdomain discovery data not available for this report'},
             'domain_status_message': '',
+            'is_legacy_report': True,
         }
+        try:
+            results['hosting_summary'] = dns_analyzer.get_hosting_info(ascii_domain, results)
+        except Exception:
+            results['hosting_summary'] = {}
     
     return render_template('results.html',
                          domain=domain,
@@ -1145,6 +1152,7 @@ def view_analysis_static(analysis_id):
                          analysis_duration=analysis.analysis_duration,
                          analysis_timestamp=analysis.updated_at or analysis.created_at,
                          from_history=True,
+                         is_legacy_report=is_legacy_report,
                          wait_seconds=wait_seconds,
                          wait_reason=wait_reason)
 
