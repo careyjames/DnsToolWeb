@@ -2,6 +2,21 @@ if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('/sw.js').catch(function() {});
 }
 
+function startStatusCycle(overlayEl) {
+    var statusDiv = overlayEl.querySelector('.loading-status');
+    if (!statusDiv) return;
+    var spans = statusDiv.querySelectorAll('span');
+    if (spans.length === 0) return;
+    var current = 0;
+    spans.forEach(function(s) { s.classList.remove('active'); });
+    spans[0].classList.add('active');
+    setInterval(function() {
+        spans[current].classList.remove('active');
+        current = (current + 1) % spans.length;
+        spans[current].classList.add('active');
+    }, 1800);
+}
+
 document.addEventListener('DOMContentLoaded', function() {
     const domainForm = document.getElementById('domainForm');
     const domainInput = document.getElementById('domain');
@@ -43,7 +58,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 return;
             }
             
-            // Show loading overlay (use classList to avoid CSP inline style restrictions)
             const overlay = document.getElementById('loadingOverlay');
             const loadingDomain = document.getElementById('loadingDomain');
             if (overlay) {
@@ -51,6 +65,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     loadingDomain.textContent = domain;
                 }
                 overlay.classList.remove('d-none');
+                startStatusCycle(overlay);
             }
             analyzeBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Analyzing...';
             analyzeBtn.disabled = true;

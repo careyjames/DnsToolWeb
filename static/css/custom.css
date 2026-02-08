@@ -604,6 +604,7 @@ main.container {
     position: relative;
     height: 1.5em;
     overflow: hidden;
+    text-align: center;
 }
 
 .loading-status span {
@@ -611,26 +612,11 @@ main.container {
     left: 0;
     right: 0;
     opacity: 0;
-    animation: msgCycle 15s infinite;
+    transition: opacity 0.3s ease;
 }
 
-.loading-status span:nth-child(1)  { animation-delay: 0s; }
-.loading-status span:nth-child(2)  { animation-delay: 1.5s; }
-.loading-status span:nth-child(3)  { animation-delay: 3s; }
-.loading-status span:nth-child(4)  { animation-delay: 4.5s; }
-.loading-status span:nth-child(5)  { animation-delay: 6s; }
-.loading-status span:nth-child(6)  { animation-delay: 7.5s; }
-.loading-status span:nth-child(7)  { animation-delay: 9s; }
-.loading-status span:nth-child(8)  { animation-delay: 10.5s; }
-.loading-status span:nth-child(9)  { animation-delay: 12s; }
-.loading-status span:nth-child(10) { animation-delay: 13.5s; }
-
-@keyframes msgCycle {
-    0%   { opacity: 0; }
-    1%   { opacity: 1; }
-    9%   { opacity: 1; }
-    10%  { opacity: 0; }
-    100% { opacity: 0; }
+.loading-status span.active {
+    opacity: 1;
 }
 
 /* DNS Diff Styles - Code Diff Style Layout */

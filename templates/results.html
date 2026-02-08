@@ -1879,9 +1879,11 @@
                     btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Analyzing...';
                     btn.disabled = true;
                     
-                    // Show loading overlay
                     if (overlay) {
                         overlay.classList.remove('d-none');
+                        if (typeof startStatusCycle === 'function') {
+                            startStatusCycle(overlay);
+                        }
                     }
                     
                     // Add cache-busting parameter to force fresh analysis
