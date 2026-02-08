@@ -1093,62 +1093,11 @@ def view_analysis_static(analysis_id):
     wait_seconds = request.args.get('wait_seconds', type=int)
     wait_reason = request.args.get('wait_reason', '')
     
-    is_legacy_report = not analysis.full_results
+    if not analysis.full_results:
+        flash('This report is no longer available. Please re-analyze the domain for a full report.', 'warning')
+        return redirect(url_for('index'))
     
-    if analysis.full_results:
-        results = analysis.full_results
-    else:
-        legacy_msg = 'This is an older report — re-analyze for complete results'
-        results = {
-            'basic_records': analysis.basic_records or {},
-            'authoritative_records': analysis.authoritative_records or {},
-            'spf_analysis': {
-                'status': analysis.spf_status,
-                'records': analysis.spf_records or [],
-                'message': '',
-            },
-            'dmarc_analysis': {
-                'status': analysis.dmarc_status,
-                'policy': analysis.dmarc_policy,
-                'records': analysis.dmarc_records or [],
-                'message': '',
-            },
-            'dkim_analysis': {
-                'status': analysis.dkim_status,
-                'selectors': analysis.dkim_selectors or {},
-                'message': '',
-            },
-            'registrar_info': {
-                'registrar': analysis.registrar_name,
-                'source': analysis.registrar_source,
-            },
-            'mta_sts_analysis': {'status': 'unknown', 'message': legacy_msg},
-            'tlsrpt_analysis': {'status': 'unknown', 'message': legacy_msg},
-            'bimi_analysis': {'status': 'unknown', 'message': legacy_msg},
-            'caa_analysis': {'status': 'unknown', 'message': legacy_msg},
-            'dnssec_analysis': {'status': 'unknown', 'message': legacy_msg},
-            'ns_delegation_analysis': {'status': 'unknown', 'message': legacy_msg},
-            'dns_infrastructure': {},
-            'email_security_mgmt': {'actively_managed': False, 'providers': [], 'spf_flattening': None, 'provider_count': 0},
-            'posture': None,
-            'domain_exists': True,
-            'smtp_tls_analysis': {},
-            'propagation_status': {},
-            'section_status': {},
-            'ct_subdomains': analysis.ct_subdomains or {'status': 'not_available', 'subdomains': [], 'unique_subdomains': 0, 'message': 'Subdomain discovery data not available for this report'},
-            'domain_status_message': '',
-            'is_legacy_report': True,
-        }
-        mx_records = (analysis.basic_records or {}).get('MX', [])
-        results['has_null_mx'] = any(
-            r.strip().rstrip('.').replace(' ', '') in ['0.', '0'] or r.strip() == '0 .'
-            for r in mx_records
-        ) if mx_records else False
-        results['is_no_mail_domain'] = results['has_null_mx']
-        try:
-            results['hosting_summary'] = dns_analyzer.get_hosting_info(ascii_domain, results)
-        except Exception:
-            results['hosting_summary'] = {}
+    results = analysis.full_results
     
     return render_template('results.html',
                          domain=domain,
@@ -1158,7 +1107,6 @@ def view_analysis_static(analysis_id):
                          analysis_duration=analysis.analysis_duration,
                          analysis_timestamp=analysis.updated_at or analysis.created_at,
                          from_history=True,
-                         is_legacy_report=is_legacy_report,
                          wait_seconds=wait_seconds,
                          wait_reason=wait_reason)
 

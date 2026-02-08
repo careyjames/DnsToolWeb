@@ -158,15 +158,6 @@
         </div>
         {% else %}
         
-        <!-- Legacy Report Banner - for older reports without full analysis data -->
-        {% if is_legacy_report %}
-        <div class="alert alert-info border-info py-2 mb-3 d-flex align-items-center justify-content-between flex-wrap" role="alert" style="background-color: rgba(13, 202, 240, 0.1);">
-            <div>
-                <i class="fas fa-info-circle me-2"></i>
-                <strong>Historical Report</strong> — This report was generated before full analysis storage was available. Posture scoring, DNSSEC, MTA-STS, BIMI, CAA, and SMTP/TLS data are not included. Click <strong>Re-analyze</strong> for a complete report.
-            </div>
-        </div>
-        {% endif %}
         
         <!-- Global Posture Score -->
         {% if results.posture %}
@@ -226,7 +217,7 @@
         {% endif %}
         
         <!-- Executive Scorecard - At-a-Glance Security Status -->
-        {% if not is_legacy_report %}
+        {% if results.posture %}
         <div class="row mb-3">
             <div class="col-12">
                 <div class="card bg-dark bg-opacity-25" style="border: 1px solid rgba(255,255,255,0.1);">
