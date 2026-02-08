@@ -8,7 +8,12 @@ This project is a web-based DNS intelligence tool designed for comprehensive dom
 
 Preferred communication style: Simple, everyday language.
 
-## Recent Changes (v26.10.51)
+## Recent Changes (v26.10.52)
+- Performance optimization: Parallel resolver consensus (v26.10.52):
+  - Resolver consensus checks for 4 critical record types (A, MX, NS, TXT) now run in parallel via `ThreadPoolExecutor(max_workers=4)` instead of sequentially.
+  - `resolver_consensus` task reduced from ~17s to ~4.4s (74% faster).
+  - Overall analysis time improvements: example.com 17.5s→6.6s (-62%), cloudflare.com 17.1s→11.3s (-34%).
+  - Enhanced timing instrumentation: parallel lookup log line now shows the 5 slowest tasks with per-task durations.
 - DNS-augmented Subdomain Discovery (v26.10.51):
   - Wildcard TLS certificate detection: identifies `*.domain` certificates in CT logs and flags them in the UI.
   - When a wildcard cert is found, DNS probing of ~80 common subdomain names runs in parallel (20 workers) to discover subdomains covered by the wildcard.
