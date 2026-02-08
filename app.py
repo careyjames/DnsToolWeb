@@ -1139,6 +1139,12 @@ def view_analysis_static(analysis_id):
             'domain_status_message': '',
             'is_legacy_report': True,
         }
+        mx_records = (analysis.basic_records or {}).get('MX', [])
+        results['has_null_mx'] = any(
+            r.strip().rstrip('.').replace(' ', '') in ['0.', '0'] or r.strip() == '0 .'
+            for r in mx_records
+        ) if mx_records else False
+        results['is_no_mail_domain'] = results['has_null_mx']
         try:
             results['hosting_summary'] = dns_analyzer.get_hosting_info(ascii_domain, results)
         except Exception:
