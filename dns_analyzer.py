@@ -2182,6 +2182,110 @@ class DNSAnalyzer:
             'mpic_note': 'Since September 2025, all public CAs must verify domain control from multiple geographic locations (Multi-Perspective Issuance Corroboration, CA/B Forum Ballot SC-067). CAA records are now checked from multiple network perspectives before certificate issuance.'
         }
     
+    DANE_MX_CAPABILITY = {
+        'google': {
+            'name': 'Google Workspace',
+            'dane_inbound': False,
+            'dane_outbound': False,
+            'reason': 'Google uses shared, multi-tenant MX infrastructure (aspmx.l.google.com) with certificate rotation. Google does not publish TLSA records for its MX hosts and does not allow customers to do so. Google also does not validate DANE/TLSA when sending outbound mail.',
+            'alternative': 'MTA-STS',
+            'patterns': ['google.com', 'googlemail.com', 'smtp.goog'],
+        },
+        'microsoft_dane': {
+            'name': 'Microsoft 365 (DANE-enabled)',
+            'dane_inbound': True,
+            'dane_outbound': True,
+            'reason': 'Microsoft 365 supports inbound DANE with DNSSEC (GA October 2024) via *.mx.microsoft endpoints, and validates DANE/TLSA on outbound SMTP.',
+            'patterns': ['mx.microsoft'],
+        },
+        'microsoft_legacy': {
+            'name': 'Microsoft 365',
+            'dane_inbound': False,
+            'dane_outbound': True,
+            'reason': 'This domain uses legacy Microsoft 365 MX endpoints (*.mail.protection.outlook.com) which do not publish TLSA records. Microsoft supports DANE on newer *.mx.microsoft endpoints — migration is available. Microsoft does validate DANE/TLSA when sending outbound mail.',
+            'alternative': 'Migrate MX to *.mx.microsoft endpoints for inbound DANE, or use MTA-STS',
+            'patterns': ['outlook.com', 'protection.outlook.com', 'olc.protection.outlook.com'],
+        },
+        'protonmail': {
+            'name': 'Proton Mail',
+            'dane_inbound': True,
+            'dane_outbound': True,
+            'reason': 'Proton Mail publishes DANE/TLSA records for its MX hosts and validates DANE on outbound delivery.',
+            'patterns': ['protonmail.ch', 'mail.protonmail.ch'],
+        },
+        'zoho': {
+            'name': 'Zoho Mail',
+            'dane_inbound': False,
+            'dane_outbound': False,
+            'reason': 'Zoho does not publish TLSA records for its MX hosts. Zoho MX infrastructure is shared and does not support per-customer DANE.',
+            'alternative': 'MTA-STS',
+            'patterns': ['zoho.com', 'zoho.eu', 'zoho.in'],
+        },
+        'fastmail': {
+            'name': 'Fastmail',
+            'dane_inbound': True,
+            'dane_outbound': True,
+            'reason': 'Fastmail publishes DANE/TLSA records for its MX hosts and supports DNSSEC.',
+            'patterns': ['fastmail.com', 'messagingengine.com'],
+        },
+        'mimecast': {
+            'name': 'Mimecast',
+            'dane_inbound': False,
+            'dane_outbound': False,
+            'reason': 'Mimecast is a security gateway with shared MX infrastructure. It does not publish per-customer TLSA records.',
+            'alternative': 'MTA-STS',
+            'patterns': ['mimecast.com'],
+        },
+        'proofpoint': {
+            'name': 'Proofpoint',
+            'dane_inbound': False,
+            'dane_outbound': False,
+            'reason': 'Proofpoint is a security gateway with shared MX infrastructure. It does not publish per-customer TLSA records.',
+            'alternative': 'MTA-STS',
+            'patterns': ['pphosted.com', 'ppe-hosted.com'],
+        },
+        'barracuda': {
+            'name': 'Barracuda',
+            'dane_inbound': False,
+            'dane_outbound': False,
+            'reason': 'Barracuda is a security gateway with shared MX infrastructure. It does not publish per-customer TLSA records.',
+            'alternative': 'MTA-STS',
+            'patterns': ['barracudanetworks.com'],
+        },
+        'icloud': {
+            'name': 'iCloud Mail',
+            'dane_inbound': False,
+            'dane_outbound': False,
+            'reason': 'Apple iCloud Mail does not publish TLSA records for its MX hosts.',
+            'alternative': 'MTA-STS',
+            'patterns': ['icloud.com'],
+        },
+        'yahoo': {
+            'name': 'Yahoo Mail',
+            'dane_inbound': False,
+            'dane_outbound': False,
+            'reason': 'Yahoo Mail does not publish TLSA records for its MX hosts.',
+            'alternative': 'MTA-STS',
+            'patterns': ['yahoodns.net'],
+        },
+    }
+
+    def _detect_mx_dane_capability(self, mx_hosts: List[str]) -> Optional[Dict[str, Any]]:
+        """Detect if MX hosts belong to a known provider and return DANE capability info."""
+        mx_str = ' '.join(h.lower() for h in mx_hosts)
+        for provider_key, info in self.DANE_MX_CAPABILITY.items():
+            for pattern in info['patterns']:
+                if pattern in mx_str:
+                    return {
+                        'provider_key': provider_key,
+                        'provider_name': info['name'],
+                        'dane_inbound': info['dane_inbound'],
+                        'dane_outbound': info.get('dane_outbound', False),
+                        'reason': info['reason'],
+                        'alternative': info.get('alternative'),
+                    }
+        return None
+
     def analyze_dane(self, domain: str, mx_records: List[str] = None) -> Dict[str, Any]:
         """Check DANE/TLSA records for domain's mail servers (RFC 6698, RFC 7672).
 
@@ -2217,7 +2321,9 @@ class DNSAnalyzer:
             'mx_hosts_with_dane': 0,
             'tlsa_records': [],
             'requires_dnssec': True,
-            'issues': []
+            'issues': [],
+            'mx_provider': None,
+            'dane_deployable': True,
         }
 
         if not mx_records:
@@ -2242,6 +2348,13 @@ class DNSAnalyzer:
             return base_result
 
         mx_hosts = list(dict.fromkeys(mx_hosts))[:10]
+
+        mx_capability = self._detect_mx_dane_capability(mx_hosts)
+        if mx_capability:
+            base_result['mx_provider'] = mx_capability
+            base_result['dane_deployable'] = mx_capability['dane_inbound']
+            if not mx_capability['dane_inbound']:
+                logging.info(f"[DANE] MX provider {mx_capability['provider_name']} does not support inbound DANE for {domain}")
 
         usage_names = {
             0: 'PKIX-TA (CA constraint)',
@@ -2352,7 +2465,13 @@ class DNSAnalyzer:
             base_result['message'] = f'DANE/TLSA lookup timed out (checked {len(mx_hosts)} MX host{"s" if len(mx_hosts) > 1 else ""})'
         else:
             base_result['status'] = 'info'
-            base_result['message'] = f'No DANE/TLSA records found (checked {len(mx_hosts)} MX host{"s" if len(mx_hosts) > 1 else ""})'
+            if mx_capability and not mx_capability['dane_inbound']:
+                provider_name = mx_capability['provider_name']
+                alt = mx_capability.get('alternative', 'MTA-STS')
+                base_result['message'] = f'DANE not available — {provider_name} does not support inbound DANE/TLSA on its MX infrastructure'
+                base_result['dane_deployable'] = False
+            else:
+                base_result['message'] = f'No DANE/TLSA records found (checked {len(mx_hosts)} MX host{"s" if len(mx_hosts) > 1 else ""})'
 
         base_result['issues'] = issues
         return base_result
@@ -5066,6 +5185,8 @@ class DNSAnalyzer:
         # DANE's security guarantees depend on DNSSEC; without it, TLSA records can be spoofed
         dane = results.get('dane_analysis', {})
         has_mta_sts_configured = results.get('mta_sts_analysis', {}).get('status') == 'success'
+        dane_deployable = dane.get('dane_deployable', True)
+        dane_mx_provider = dane.get('mx_provider', {})
         if dane.get('has_dane'):
             if has_dnssec and dane.get('status') == 'success':
                 configured_items.append(f"DANE/TLSA ({dane.get('mx_hosts_with_dane', 0)} MX host(s) with TLSA records, DNSSEC-validated)")
@@ -5078,9 +5199,14 @@ class DNSAnalyzer:
             elif dane.get('status') == 'warning':
                 monitoring_items.append(f"DANE partial ({dane.get('mx_hosts_with_dane', 0)}/{dane.get('mx_hosts_checked', 0)} MX hosts)")
         elif not is_no_mail_domain:
-            absent_items.append('DANE/TLSA (certificate pinning for mail transport)')
-            if has_mta_sts_configured and not has_dnssec:
-                pass
+            if not dane_deployable and dane_mx_provider:
+                provider_name = dane_mx_provider.get('provider_name', 'hosted provider')
+                if has_mta_sts_configured:
+                    pass
+                else:
+                    monitoring_items.append(f'DANE not available on {provider_name} — deploy MTA-STS as the recommended transport security alternative')
+            else:
+                absent_items.append('DANE/TLSA (certificate pinning for mail transport)')
         
         # Check NS delegation
         ns_del = results.get('ns_delegation_analysis', {})

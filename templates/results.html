@@ -962,6 +962,8 @@
                                     <span class="badge bg-{{ 'success' if results.dane_analysis.status == 'success' else 'warning' if results.dane_analysis.status == 'warning' else 'secondary' }} ms-2">
                                         {% if results.dane_analysis.has_dane %}
                                             {{ results.dane_analysis.mx_hosts_with_dane }}/{{ results.dane_analysis.mx_hosts_checked }} MX
+                                        {% elif not results.dane_analysis.get('dane_deployable', True) %}
+                                            Not Available
                                         {% else %}
                                             Not Configured
                                         {% endif %}
@@ -1016,9 +1018,23 @@
                                     </div>
                                 {% endif %}
                                 {% if not results.dane_analysis.has_dane %}
-                                    <div class="small text-muted mt-1">
-                                        <i class="fas fa-info-circle me-1"></i>DANE binds TLS certificates to DNS via TLSA records, protecting email transport against man-in-the-middle attacks and rogue CAs. It requires DNSSEC to be enabled. Over 1 million domains now use DANE globally, with Microsoft Exchange Online and Google Workspace supporting it. Best practice: deploy both DANE (cryptographic strength) and MTA-STS (broader compatibility).
+                                    {% if results.dane_analysis.get('mx_provider') and not results.dane_analysis.get('dane_deployable', True) %}
+                                    {% set mx_prov = results.dane_analysis.mx_provider %}
+                                    <div class="small mt-1 p-2 rounded" style="background: rgba(255,193,7,0.08); border-left: 3px solid #ffc107;">
+                                        <i class="fas fa-exclamation-circle text-warning me-1"></i><strong>DANE not deployable on {{ mx_prov.provider_name }}</strong>
+                                        <p class="mb-1 mt-1">{{ mx_prov.reason }}</p>
+                                        {% if mx_prov.get('alternative') %}
+                                        <p class="mb-0"><i class="fas fa-arrow-right me-1"></i><strong>Recommended alternative:</strong> {{ mx_prov.alternative }}{% if results.mta_sts_analysis is defined and results.mta_sts_analysis.status == 'success' %} <span class="text-success">(already configured)</span>{% endif %}</p>
+                                        {% endif %}
+                                        {% if mx_prov.get('dane_outbound') %}
+                                        <p class="mb-0 mt-1 text-muted"><i class="fas fa-info-circle me-1"></i>Note: {{ mx_prov.provider_name }} does validate DANE/TLSA when <em>sending</em> mail to DANE-enabled recipients (outbound DANE).</p>
+                                        {% endif %}
                                     </div>
+                                    {% else %}
+                                    <div class="small text-muted mt-1">
+                                        <i class="fas fa-info-circle me-1"></i>DANE binds TLS certificates to DNS via TLSA records, protecting email transport against man-in-the-middle attacks and rogue CAs. It requires DNSSEC to be enabled. Over 1 million domains now use DANE globally, with Microsoft Exchange Online, Proton Mail, and Fastmail supporting it. Best practice: deploy both DANE (cryptographic strength) and MTA-STS (broader compatibility).
+                                    </div>
+                                    {% endif %}
                                 {% endif %}
 
                                 {% set has_dane = results.dane_analysis.has_dane %}
@@ -1036,11 +1052,19 @@
                                     {% elif has_dane and not has_mta_sts %}
                                         <span class="text-info"><i class="fas fa-info-circle me-1"></i><strong>This domain uses DANE only.</strong></span> DANE provides the strongest cryptographic guarantees, but not all receiving mail servers validate DNSSEC. Adding MTA-STS would extend protection to receivers that support MTA-STS but not DANE.
                                     {% elif has_mta_sts and not has_dane %}
+                                        {% if results.dane_analysis.get('mx_provider') and not results.dane_analysis.get('dane_deployable', True) %}
+                                        <span class="text-success"><i class="fas fa-check-circle me-1"></i><strong>This domain uses MTA-STS &mdash; the best available option for {{ results.dane_analysis.mx_provider.provider_name }}.</strong></span> Since {{ results.dane_analysis.mx_provider.provider_name }} does not support inbound DANE, MTA-STS is the strongest transport security this domain can deploy. MTA-STS enforces TLS via HTTPS-based policy, protecting against downgrade attacks.
+                                        {% else %}
                                         <span class="text-info"><i class="fas fa-info-circle me-1"></i><strong>This domain uses MTA-STS only.</strong></span> MTA-STS provides good transport security through HTTPS-based policy. Adding DANE (which requires DNSSEC) would provide cryptographic certificate pinning independent of certificate authorities {% if not has_dnssec %}&mdash; this domain would first need to enable DNSSEC{% endif %}.
+                                        {% endif %}
                                     {% else %}
+                                        {% if results.dane_analysis.get('mx_provider') and not results.dane_analysis.get('dane_deployable', True) %}
+                                        <span class="text-warning"><i class="fas fa-exclamation-circle me-1"></i><strong>This domain has neither DANE nor MTA-STS.</strong></span> Since {{ results.dane_analysis.mx_provider.provider_name }} does not support inbound DANE, MTA-STS is the recommended transport security option. Deploy MTA-STS to enforce TLS and protect against downgrade attacks.
+                                        {% else %}
                                         <span class="text-muted"><i class="fas fa-info-circle me-1"></i><strong>This domain has neither DANE nor MTA-STS.</strong></span> Mail transport relies on opportunistic TLS without policy enforcement, leaving it vulnerable to downgrade attacks. Consider deploying MTA-STS (simpler, no DNSSEC required) or both DANE and MTA-STS for maximum protection.
+                                        {% endif %}
                                     {% endif %}
-                                    <p class="mb-0 mt-1 text-muted" style="font-size: 0.8em;"><i class="fas fa-chart-line me-1"></i><strong>Industry trend:</strong> Microsoft Exchange Online enforces inbound DANE with DNSSEC (GA October 2024), while domains like google.com and apple.com use MTA-STS without DNSSEC. Both approaches coexist today because DANE is backward-compatible &mdash; senders skip the check if the domain isn't DNSSEC-signed. The question facing the industry is whether Microsoft's enforcement momentum will tip the balance toward universal DNSSEC+DANE adoption.</p>
+                                    <p class="mb-0 mt-1 text-muted" style="font-size: 0.8em;"><i class="fas fa-chart-line me-1"></i><strong>Industry trend:</strong> Microsoft Exchange Online enforces inbound DANE with DNSSEC (GA October 2024), and providers like Proton Mail and Fastmail also support DANE. Meanwhile, Google Workspace does not support DANE in either direction and relies on MTA-STS for transport security. Both approaches coexist because DANE is backward-compatible &mdash; senders skip the check if the domain isn't DNSSEC-signed.</p>
                                 </div>
                             </div>
                         </div>

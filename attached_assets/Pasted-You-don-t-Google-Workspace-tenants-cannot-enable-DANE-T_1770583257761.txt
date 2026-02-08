@@ -1,0 +1,132 @@
+You don’t. Google Workspace tenants cannot enable DANE/TLSA for their inbound mail. Full stop.
+
+Here’s the precise reality, no marketing gloss.
+
+⸻
+
+What DANE actually requires (SMTP per RFC 6698 / RFC 7672)
+
+For SMTP DANE, the receiving MTA must:
+	1.	Terminate SMTP on port 25
+	2.	Present a known, stable TLS certificate
+	3.	Publish TLSA records for its MX hosts
+	4.	Have DNSSEC enabled and validated
+
+The TLSA records bind that exact certificate (or key) to DNS.
+
+⸻
+
+Why Google Workspace can’t do this for your domain
+
+When you use Google Workspace:
+	•	Your MX points to:
+
+aspmx.l.google.com
+alt1.aspmx.l.google.com
+…
+
+
+	•	Those MTAs are:
+	•	Shared, multi-tenant
+	•	Certificate-rotated by Google
+	•	Not dedicated to your domain
+	•	Google does not publish per-customer TLSA records
+	•	Google does not allow customers to publish TLSA records for Google’s MX
+
+➡️ You do not control the SMTP endpoint or its certificates
+➡️ Therefore you cannot safely publish TLSA records
+➡️ Therefore DANE inbound is impossible on Google Workspace
+
+This is a hard architectural limitation, not a missing toggle.
+
+⸻
+
+What Google does support
+
+1. Outbound DANE validation
+
+Google Workspace will validate TLSA records when sending mail to other domains that publish DANE.
+
+That is:
+	•	Sender-side DANE support
+	•	Transparent
+	•	No admin setting
+	•	Automatically enabled
+
+So if you email a DANE-enabled domain, Google will honor it.
+
+⸻
+
+2. MTA-STS (policy-based, not cryptographic)
+
+This you can and should enable.
+
+Google fully supports:
+	•	mta-sts.example.com
+	•	HTTPS policy hosting
+	•	._mta-sts.example.com TXT
+	•	tlsrpt.example.com reporting
+
+This protects against downgrade and opportunistic TLS stripping without requiring TLSA.
+
+⸻
+
+The only ways to actually deploy inbound DANE
+
+Option A — Run your own MTA
+
+You control:
+	•	MX
+	•	Certificates
+	•	DNSSEC
+	•	TLSA
+
+Works with:
+	•	Postfix
+	•	Exim
+	•	OpenSMTPD
+
+This is the only way to get real SMTP DANE today.
+
+⸻
+
+Option B — Enterprise mail gateway that supports DANE
+
+Some high-end gateways support:
+	•	Dedicated MX
+	•	Stable certs
+	•	TLSA publishing
+
+Still rare. Still complex.
+
+⸻
+
+Best-practice reality for Google Workspace domains
+
+Do this instead (this is the correct 2026 posture):
+
+Control	Status
+DNSSEC	✅ Enable at registrar
+SPF	✅
+DKIM	✅
+DMARC (p=quarantine or reject)	✅
+MTA-STS (mode=enforce)	✅
+TLS-RPT	✅
+DANE inbound	❌ Not possible on Google Workspace
+DANE outbound	✅ Automatic
+
+Your earlier statement is directionally correct in theory — DANE + MTA-STS is ideal — but Google Workspace can only ever be half of that equation.
+
+⸻
+
+Bottom line
+	•	There is no way to “turn on DANE” for inbound mail in Google Workspace
+	•	Anyone claiming otherwise is confusing outbound validation with inbound TLSA publishing
+	•	If you see “DANE not configured” on a Workspace domain, that is expected and correct
+
+If you want, next step we can:
+	•	Tune your MTA-STS policy to maximum strictness
+	•	Make your DNS tool explicitly explain why DANE is impossible on Workspace (this would save users a lot of confusion)
+	•	Add logic to flag “DANE impossible due to hosted MX” vs “DANE missing but deployable”
+
+Just say the word.
