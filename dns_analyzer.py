@@ -2826,11 +2826,18 @@ class DNSAnalyzer:
         except Exception as e:
             logging.warning(f"[REGISTRAR] WHOIS failed: {e}")
         
-        # Try NS-based inference as third fallback
-        lookup_domain = domain
         parent_zone = self._find_parent_zone(domain)
+        
+        # For subdomains, try parent zone RDAP/WHOIS before NS inference
         if parent_zone and parent_zone != domain:
-            lookup_domain = parent_zone
+            logging.info(f"[REGISTRAR] Trying parent zone {parent_zone} for subdomain {domain}")
+            parent_result = self.get_registrar_info(parent_zone)
+            if parent_result.get('status') == 'success':
+                parent_result['subdomain_of'] = parent_zone
+                return parent_result
+        
+        # Try NS-based inference as third fallback
+        lookup_domain = parent_zone if (parent_zone and parent_zone != domain) else domain
         
         ns_result = self._infer_registrar_from_ns(lookup_domain)
         if ns_result:
@@ -2840,14 +2847,6 @@ class DNSAnalyzer:
                 ns_result['registry_restricted'] = True
                 ns_result['registry_restricted_tld'] = whois_restricted_tld
             return ns_result
-        
-        # If this is a subdomain, try parent zone with full RDAP/WHOIS
-        if parent_zone and parent_zone != domain:
-            logging.info(f"[REGISTRAR] Trying parent zone {parent_zone} for subdomain {domain}")
-            parent_result = self.get_registrar_info(parent_zone)
-            if parent_result.get('status') == 'success':
-                parent_result['subdomain_of'] = parent_zone
-                return parent_result
 
         logging.warning(f"[REGISTRAR] FAILED - No registrar info found for {domain}")
         
@@ -3168,13 +3167,23 @@ class DNSAnalyzer:
             
             output_lower = output.lower()
             restricted_indicators = [
-                'not authorised', 'no autorizada', 'access denied',
+                'not authorised', 'not authorized', 'no autorizada',
+                'access denied', 'authorization required',
                 'ip address used to perform the query',
-                'exceeded the established limit',
+                'exceeded the established limit', 'exceeded the maximum',
                 'request access to the service',
+                'access to whois is restricted', 'access restricted',
+                'you are not allowed', 'permission denied',
+                'query rate limit exceeded', 'too many queries',
+                'connection refused', 'service unavailable',
             ]
             if any(indicator in output_lower for indicator in restricted_indicators):
                 logging.warning(f"[WHOIS] Registry restricts WHOIS access for .{tld} domains")
+                return f"__RESTRICTED__{tld}"
+            
+            stripped = output.strip()
+            if len(stripped) < 50 and not re.search(r'(?i)(registr|domain|creat|expir)', stripped):
+                logging.warning(f"[WHOIS] Unusable response ({len(stripped)} bytes) for .{tld}")
                 return f"__RESTRICTED__{tld}"
             
             registrar = None

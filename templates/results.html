@@ -316,7 +316,7 @@
                     <div class="card-body py-3">
                         <div class="row align-items-center">
                             <div class="col-md-3 border-end border-primary border-opacity-10">
-                                <small class="text-uppercase text-muted fw-bold d-block" style="font-size: 0.7rem;">Registrar <span class="text-info">({{ results.registrar_info.source|upper if results.registrar_info.source else 'RDAP' }})</span></small>
+                                <small class="text-uppercase text-muted fw-bold d-block" style="font-size: 0.7rem;">Registrar <span class="text-info">({% if results.registrar_info.get('ns_inferred') %}NS INFERENCE{% elif results.registrar_info.get('status') == 'restricted' %}RESTRICTED{% elif results.registrar_info.source %}{{ results.registrar_info.source|upper }}{% else %}RDAP{% endif %})</span></small>
                                 <div class="text-truncate" title="{{ results.registrar_info.registrar or results.registrar_info.get('message', 'Unknown') }}">
                                     <i class="fas fa-id-card text-primary me-2"></i>
                                     {% if results.registrar_info.registrar %}
