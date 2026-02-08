@@ -7,9 +7,9 @@
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <title>DNS Tool - Domain Security Audit & Email Authentication Checker | SPF DKIM DMARC DNSSEC</title>
-    <meta name="description" content="Free domain security audit tool. Check SPF, DKIM, DMARC, DNSSEC, BIMI, MTA-STS, TLS-RPT, and CAA records instantly. Detect email security management providers, SMTP transport encryption, and enterprise DNS infrastructure. Executive-ready posture reports trusted by government agencies and enterprises worldwide.">
-    <meta name="keywords" content="DNS lookup, SPF checker, DKIM validator, DMARC lookup, DNSSEC validation, domain security audit, email authentication, email spoofing protection, cybersecurity posture report, DNS intelligence, BIMI checker, MTA-STS checker, TLS-RPT checker, CAA record check, domain reputation, email security assessment, email security management, DMARC monitoring, SPF flattening, SMTP transport encryption">
+    <title>DNS Tool - Domain Security Audit & Email Authentication Checker | SPF DKIM DMARC DANE DNSSEC</title>
+    <meta name="description" content="Free domain security audit tool. Check SPF, DKIM, DMARC, DANE/TLSA, DNSSEC, BIMI, MTA-STS, TLS-RPT, and CAA records instantly. Detect email security management providers, SMTP transport encryption, and enterprise DNS infrastructure. DANE/TLSA certificate pinning analysis, DMARCbis readiness checks, and MPIC-aware CAA validation. Executive-ready posture reports trusted by government agencies and enterprises worldwide.">
+    <meta name="keywords" content="DNS lookup, SPF checker, DKIM validator, DMARC lookup, DNSSEC validation, DANE checker, TLSA record lookup, DANE TLSA email security, domain security audit, email authentication, email spoofing protection, cybersecurity posture report, DNS intelligence, BIMI checker, MTA-STS checker, TLS-RPT checker, CAA record check, DMARCbis, MPIC, domain reputation, email security assessment, email security management, DMARC monitoring, SPF flattening, SMTP transport encryption">
     
     <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='favicon.svg') }}">
     <link rel="manifest" href="/manifest.json">
@@ -19,7 +19,7 @@
     <meta property="og:url" content="https://dnstool.it-help.tech/">
     <meta property="og:type" content="website">
     <meta property="og:title" content="DNS Tool - Domain Security Audit & Email Authentication Checker">
-    <meta property="og:description" content="Free domain security audit. Check SPF, DKIM, DMARC, DNSSEC, BIMI, MTA-STS, TLS-RPT instantly. Detect email security management providers and SMTP transport encryption. Executive-ready reports trusted by government agencies and enterprises.">
+    <meta property="og:description" content="Free domain security audit. Check SPF, DKIM, DMARC, DANE/TLSA, DNSSEC, BIMI, MTA-STS, TLS-RPT instantly. DANE certificate pinning, DMARCbis readiness, MPIC-aware CAA. Executive-ready reports trusted by government agencies and enterprises.">
     <meta property="og:image" content="https://dnstool.it-help.tech/static/images/og-image.png">
     
     <!-- Twitter -->
@@ -27,7 +27,7 @@
     <meta property="twitter:domain" content="dnstool.it-help.tech">
     <meta property="twitter:url" content="https://dnstool.it-help.tech/">
     <meta name="twitter:title" content="DNS Tool - Domain Security Audit & Email Authentication Checker">
-    <meta name="twitter:description" content="Free domain security audit. Check SPF, DKIM, DMARC, DNSSEC, BIMI, MTA-STS, TLS-RPT instantly. Detect email security management providers and SMTP transport encryption. Executive-ready reports trusted by government agencies and enterprises.">
+    <meta name="twitter:description" content="Free domain security audit. Check SPF, DKIM, DMARC, DANE/TLSA, DNSSEC, BIMI, MTA-STS, TLS-RPT instantly. DANE certificate pinning, DMARCbis readiness, MPIC-aware CAA. Executive-ready reports trusted by government agencies and enterprises.">
     <meta name="twitter:image" content="https://dnstool.it-help.tech/static/images/og-image.png">
     
     <!-- JSON-LD Schema -->
@@ -36,8 +36,8 @@
         "@context": "https://schema.org",
         "@type": "WebApplication",
         "name": "DNS Tool - Domain Security Audit",
-        "alternateName": ["DNS Checker", "SPF Checker", "DMARC Lookup", "DKIM Validator", "DNSSEC Checker", "Email Security Audit Tool", "Email Security Management Detector", "MTA-STS Checker", "TLS-RPT Checker"],
-        "description": "Free domain security audit tool for IT professionals, executives, and DNS specialists. Check SPF, DKIM, DMARC, DNSSEC, BIMI, MTA-STS, TLS-RPT, and CAA records. Detect email security management providers (DMARC monitoring, SPF flattening), SMTP transport encryption, and enterprise DNS infrastructure. Get executive-ready security posture reports instantly.",
+        "alternateName": ["DNS Checker", "SPF Checker", "DMARC Lookup", "DKIM Validator", "DNSSEC Checker", "DANE Checker", "TLSA Lookup", "Email Security Audit Tool", "Email Security Management Detector", "MTA-STS Checker", "TLS-RPT Checker"],
+        "description": "Free domain security audit tool for IT professionals, executives, and DNS specialists. Check SPF, DKIM, DMARC, DANE/TLSA, DNSSEC, BIMI, MTA-STS, TLS-RPT, and CAA records. DANE certificate pinning analysis for mail transport, DMARCbis readiness checks, MPIC-aware CAA validation. Detect email security management providers (DMARC monitoring, SPF flattening), SMTP transport encryption, and enterprise DNS infrastructure. Executive-ready security posture reports.",
         "url": "https://dnstool.it-help.tech",
         "applicationCategory": "SecurityApplication",
         "applicationSubCategory": "DNS Security Analysis",
@@ -83,7 +83,7 @@
                 "name": "What is a domain security audit?",
                 "acceptedAnswer": {
                     "@type": "Answer",
-                    "text": "A domain security audit examines your domain's DNS configuration, email authentication records (SPF, DKIM, DMARC), encryption settings (DNSSEC, MTA-STS, TLS-RPT), certificate controls (CAA), and email security management providers. It reveals whether your domain is protected against email spoofing, DNS hijacking, and brand impersonation — and whether that protection is actively managed or unmonitored."
+                    "text": "A domain security audit examines your domain's DNS configuration, email authentication records (SPF, DKIM, DMARC), transport security (DANE/TLSA, MTA-STS, TLS-RPT), encryption settings (DNSSEC), certificate controls (CAA with MPIC verification), and email security management providers. It reveals whether your domain is protected against email spoofing, DNS hijacking, man-in-the-middle attacks, and brand impersonation — and whether that protection is actively managed or unmonitored."
                 }
             },
             {
@@ -123,7 +123,7 @@
                 "name": "How is this different from other DNS lookup tools?",
                 "acceptedAnswer": {
                     "@type": "Answer",
-                    "text": "Most DNS tools show raw records. DNS Tool provides a complete security intelligence report including multi-resolver consensus verification, email authentication scoring, DKIM key strength analysis, enterprise DNS provider detection, email security management provider identification (DMARC monitoring, SPF flattening, TLS-RPT reporting), SMTP transport encryption checks, BIMI brand verification, and a clear SECURE / PARTIAL / INSECURE verdict designed for both technical and executive audiences."
+                    "text": "Most DNS tools show raw records — and most skip advanced protocols entirely. DNS Tool provides a complete security intelligence report including multi-resolver consensus verification, email authentication scoring, DKIM key strength analysis, DANE/TLSA certificate pinning analysis for mail transport (a protocol most tools ignore), DMARCbis readiness checks, enterprise DNS provider detection, email security management provider identification (DMARC monitoring, SPF flattening, TLS-RPT reporting), SMTP transport encryption checks, BIMI brand verification, MPIC-aware CAA validation, and a clear SECURE / PARTIAL / INSECURE verdict designed for both technical and executive audiences."
                 }
             },
             {
@@ -136,10 +136,10 @@
             },
             {
                 "@type": "Question",
-                "name": "What are BIMI, MTA-STS, and CAA records?",
+                "name": "What are DANE, BIMI, MTA-STS, and CAA records?",
                 "acceptedAnswer": {
                     "@type": "Answer",
-                    "text": "BIMI (Brand Indicators for Message Identification) displays your brand logo next to emails in recipients' inboxes. MTA-STS (Mail Transfer Agent Strict Transport Security) enforces encrypted email delivery. TLS-RPT (TLS Reporting) sends delivery failure reports when encrypted email connections fail. CAA (Certificate Authority Authorization) restricts which certificate authorities can issue SSL certificates for your domain. DNS Tool checks all of these in a single scan."
+                    "text": "DANE (DNS-based Authentication of Named Entities) pins TLS certificates to DNS via TLSA records, protecting email transport against man-in-the-middle attacks — over 1.1 million domains use it globally, including Microsoft Exchange Online. BIMI (Brand Indicators for Message Identification) displays your brand logo next to emails in recipients' inboxes. MTA-STS (Mail Transfer Agent Strict Transport Security) enforces encrypted email delivery. TLS-RPT (TLS Reporting) sends delivery failure reports when encrypted email connections fail. CAA (Certificate Authority Authorization) restricts which certificate authorities can issue SSL certificates for your domain, now verified from multiple geographic locations via MPIC (Multi-Perspective Issuance Corroboration). DNS Tool checks all of these in a single scan."
                 }
             },
             {
@@ -156,6 +156,14 @@
                 "acceptedAnswer": {
                     "@type": "Answer",
                     "text": "DMARC p=none is only a monitoring policy — it tells receiving servers to deliver everything, even messages that fail authentication, and just send you reports. It doesn't actually block spoofed emails. Similarly, p=quarantine is better but still lets suspicious messages land in spam folders where recipients might still open them. The gold standard for modern email security is DMARC p=reject. With reject, spoofed messages are outright refused by receiving mail servers — they never reach the inbox or spam folder. The recommended modern setup is SPF ~all (soft fail) combined with DMARC p=reject and verified DKIM signing. This ensures every authentication method is fully evaluated before a decision is made, and unauthorized messages are definitively blocked."
+                }
+            },
+            {
+                "@type": "Question",
+                "name": "I thought DANE was a niche Dutch thing that nobody uses. Why does DNS Tool check it?",
+                "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "This is one of the most widespread misconceptions in email security. The Netherlands adopted DANE early and aggressively — SIDN (the .nl registry) promoted it and the Dutch government mandated it, creating the false impression DANE was only a Dutch phenomenon. Making things worse, DANE for web browsers genuinely failed (Let's Encrypt solved HTTPS differently), so people conflated 'DANE for websites is dead' with 'DANE is dead' — missing that DANE for email (SMTP, RFC 7672) was thriving separately. What actually happened: over 1.1 million domains now publish TLSA records globally. Microsoft Exchange Online announced GA of inbound SMTP DANE with DNSSEC in October 2024, available to all tenants at no extra cost. Outbound DANE has been live since March 2022. The IETF itself uses DANE on mail.ietf.org. Adoption extends beyond the Netherlands: Sweden, Norway, Czech Republic, and EU public agencies all deploy it. Most security audit tools still skip DANE because it requires DNSSEC (RFC 7672 §1.3) and was historically complex to check, creating a self-reinforcing blind spot. DNS Tool breaks that cycle by checking DANE/TLSA for every MX host alongside MTA-STS. Best practice: deploy both DANE (cryptographic strength) and MTA-STS (broader compatibility)."
                 }
             }
         ]
@@ -436,7 +444,7 @@
                         </h3>
                         <div id="faq1" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
                             <div class="accordion-body text-muted small">
-                                A domain security audit examines your domain's DNS configuration, email authentication records (SPF, DKIM, DMARC), encryption settings (DNSSEC, MTA-STS, TLS-RPT), certificate controls (CAA), and email security management providers. It reveals whether your domain is protected against email spoofing, DNS hijacking, and brand impersonation — and whether that protection is actively managed or left unmonitored. DNS Tool performs all these checks in a single scan and delivers a clear security posture verdict.
+                                A domain security audit examines your domain's DNS configuration, email authentication records (SPF, DKIM, DMARC), transport security (DANE/TLSA certificate pinning, MTA-STS, TLS-RPT), encryption settings (DNSSEC), certificate controls (CAA with MPIC multi-perspective verification), and email security management providers. It reveals whether your domain is protected against email spoofing, DNS hijacking, man-in-the-middle attacks, and brand impersonation — and whether that protection is actively managed or left unmonitored. DNS Tool performs all these checks in a single scan and delivers a clear security posture verdict.
                             </div>
                         </div>
                     </div>
@@ -496,7 +504,7 @@
                         </h3>
                         <div id="faq6" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
                             <div class="accordion-body text-muted small">
-                                Most DNS tools show raw records. DNS Tool goes further with a complete security intelligence report: multi-resolver consensus verification across Cloudflare, Google, Quad9, and OpenDNS; email authentication scoring; DKIM key strength analysis; enterprise DNS provider detection; email security management provider identification (DMARC monitoring, SPF flattening, TLS-RPT reporting); SMTP transport encryption checks; BIMI brand verification; and a clear SECURE / PARTIAL / INSECURE verdict designed for both technical and executive audiences. Every query fetches fresh data — we never show cached results.
+                                Most DNS tools show raw records — and most skip advanced protocols entirely. DNS Tool goes further with a complete security intelligence report: multi-resolver consensus verification across Cloudflare, Google, Quad9, and OpenDNS; email authentication scoring; DKIM key strength analysis; <strong>DANE/TLSA certificate pinning analysis</strong> for mail transport (a protocol most tools ignore); <strong>DMARCbis readiness checks</strong> for upcoming DMARC standard changes; enterprise DNS provider detection; email security management provider identification (DMARC monitoring, SPF flattening, TLS-RPT reporting); SMTP transport encryption checks; BIMI brand verification; <strong>MPIC-aware CAA validation</strong>; and a clear SECURE / PARTIAL / INSECURE verdict designed for both technical and executive audiences. Every query fetches fresh data — we never show cached results.
                             </div>
                         </div>
                     </div>
@@ -515,12 +523,12 @@
                     <div class="accordion-item bg-dark border-secondary">
                         <h3 class="accordion-header">
                             <button class="accordion-button collapsed bg-dark text-light" type="button" data-bs-toggle="collapse" data-bs-target="#faq8">
-                                What are BIMI, MTA-STS, and CAA records?
+                                What are DANE, BIMI, MTA-STS, and CAA records?
                             </button>
                         </h3>
                         <div id="faq8" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
                             <div class="accordion-body text-muted small">
-                                <strong>BIMI</strong> (Brand Indicators for Message Identification) displays your brand logo next to emails in recipients' inboxes, fighting phishing by making legitimate emails visually identifiable. <strong>MTA-STS</strong> (Mail Transfer Agent Strict Transport Security) enforces encrypted email delivery, preventing downgrade attacks. <strong>TLS-RPT</strong> (TLS Reporting) sends delivery failure reports when encrypted email connections fail, giving you visibility into transport security issues. <strong>CAA</strong> (Certificate Authority Authorization) restricts which certificate authorities can issue SSL certificates for your domain, preventing unauthorized certificate issuance. These are advanced security controls that complement SPF, DKIM, and DMARC. DNS Tool checks all of them in a single scan.
+                                <strong>DANE</strong> (DNS-based Authentication of Named Entities) pins TLS certificates to DNS via TLSA records, protecting email transport against man-in-the-middle attacks and rogue CAs — it requires DNSSEC and is used by over 1.1 million domains globally, including Microsoft Exchange Online. <strong>BIMI</strong> (Brand Indicators for Message Identification) displays your brand logo next to emails in recipients' inboxes, fighting phishing by making legitimate emails visually identifiable. <strong>MTA-STS</strong> (Mail Transfer Agent Strict Transport Security) enforces encrypted email delivery, preventing downgrade attacks. <strong>TLS-RPT</strong> (TLS Reporting) sends delivery failure reports when encrypted email connections fail, giving you visibility into transport security issues. <strong>CAA</strong> (Certificate Authority Authorization) restricts which certificate authorities can issue SSL certificates for your domain, now verified from multiple geographic locations via MPIC (Multi-Perspective Issuance Corroboration, mandatory since September 2025). These are advanced security controls that complement SPF, DKIM, and DMARC. DNS Tool checks all of them in a single scan.
                             </div>
                         </div>
                     </div>
@@ -546,6 +554,22 @@
                         <div id="faq10" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
                             <div class="accordion-body text-muted small">
                                 This is a simple way to remember that <strong>DMARC p=none</strong> is only a monitoring policy — it tells receiving servers to deliver everything, even messages that fail authentication, and just send you reports. It doesn't actually block spoofed emails. Similarly, <strong>p=quarantine</strong> is better but still lets suspicious messages land in spam folders where recipients might still open them. The gold standard for modern email security is <strong>DMARC p=reject</strong>. With reject, spoofed messages are outright refused by receiving mail servers — they never reach the inbox or spam folder. The recommended modern setup is <strong>SPF ~all</strong> (soft fail) combined with <strong>DMARC p=reject</strong> and verified <strong>DKIM</strong> signing. This ensures every authentication method is fully evaluated before a decision is made, and unauthorized messages are definitively blocked.
+                            </div>
+                        </div>
+                    </div>
+                    <div class="accordion-item bg-dark border-secondary">
+                        <h3 class="accordion-header">
+                            <button class="accordion-button collapsed bg-dark text-light" type="button" data-bs-toggle="collapse" data-bs-target="#faq11">
+                                I thought DANE was a niche Dutch thing that nobody uses. Why does DNS Tool check it?
+                            </button>
+                        </h3>
+                        <div id="faq11" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                            <div class="accordion-body text-muted small">
+                                This is one of the most widespread misconceptions in email security, and it's easy to see why it took hold. The Netherlands adopted DANE early and aggressively &mdash; SIDN (the .nl registry) promoted it, and the Dutch government mandated it. That high visibility created the false impression DANE was <em>only</em> a Dutch phenomenon. Making things worse, <strong>DANE for web browsers genuinely did fail</strong> &mdash; browsers never adopted it because Let's Encrypt solved HTTPS certificate distribution differently. People conflated "DANE for websites is dead" with "DANE is dead," missing that <strong>DANE for email (SMTP) was thriving separately</strong> the entire time.
+                                <br><br><strong>What actually happened:</strong> DANE for SMTP (<a href="https://datatracker.ietf.org/doc/html/rfc7672" target="_blank" rel="noopener" class="text-info">RFC 7672</a>) quietly grew into a global standard. Over <strong>1.1 million domains</strong> now publish TLSA records (<a href="https://stats.dnssec-tools.org/" target="_blank" rel="noopener" class="text-info">stats.dnssec-tools.org</a> tracks daily). Adoption extends well beyond the Netherlands: Sweden (.se), Norway (.no), Czech Republic (.cz), and EU public agencies all have significant DANE deployment.
+                                <br><br><strong>The turning point:</strong> <a href="https://techcommunity.microsoft.com/blog/exchange/announcing-general-availability-of-inbound-smtp-dane-with-dnssec-for-exchange-on/4281292" target="_blank" rel="noopener" class="text-info">Microsoft Exchange Online announced General Availability</a> of inbound SMTP DANE with DNSSEC in October 2024 &mdash; available to <strong>all Exchange Online tenants at no extra cost</strong>. Outbound DANE has been live since March 2022. By Q4 2025, Microsoft plans to make outbound SMTP DANE mandatory per-tenant. The IETF itself uses DANE on <strong>mail.ietf.org</strong>. This isn't a niche experiment &mdash; it's the world's largest email platform betting on it.
+                                <br><br><strong>Why most tools ignore DANE:</strong> DANE requires DNSSEC (<a href="https://datatracker.ietf.org/doc/html/rfc7672#section-1.3" target="_blank" rel="noopener" class="text-info">RFC 7672 &sect;1.3</a>), and DNSSEC adoption was historically slow. Most security audit tools skipped DANE because checking it was complex and few domains had it. This created a self-reinforcing blind spot: if your tool doesn't check DANE, you never see it, so you assume nobody uses it. DNS Tool breaks that cycle.
+                                <br><br><strong>Try it yourself</strong> &mdash; analyze these domains to see DANE in action: <a href="/analyze?domain=ietf.org" class="text-info">ietf.org</a> (the IETF's own infrastructure), <a href="/analyze?domain=nlnetlabs.nl" class="text-info">nlnetlabs.nl</a> (creators of the Unbound DNS resolver), <a href="/analyze?domain=freebsd.org" class="text-info">freebsd.org</a> (the FreeBSD project). DANE works alongside <strong>MTA-STS</strong> &mdash; best practice is to deploy both: DANE provides cryptographic strength via DNSSEC, while MTA-STS provides broader compatibility for receivers that don't validate DNSSEC.
                             </div>
                         </div>
                     </div>
@@ -582,6 +606,7 @@
                 <span>Parsing SPF record from TXT...</span>
                 <span>Validating DMARC policy...</span>
                 <span>Checking DKIM selectors...</span>
+                <span>Querying DANE/TLSA records for MX hosts...</span>
                 <span>Querying DNSSEC chain of trust...</span>
                 <span>Aggregating multi-resolver consensus...</span>
             </div>

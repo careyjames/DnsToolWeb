@@ -1,9 +1,9 @@
 # DNS Tool - Complete Agent & Technical Guide
 
 ## Overview
-DNS Tool is an authoritative DNS intelligence platform at https://dnstool.it-help.tech. It provides comprehensive domain security analysis including DNS records, email authentication (SPF, DKIM, DMARC), DNSSEC, BIMI, MTA-STS, TLS-RPT, CAA, SMTP transport encryption, email security management provider detection, and domain registrar information via RDAP.
+DNS Tool is an authoritative DNS intelligence platform at https://dnstool.it-help.tech. It provides comprehensive domain security analysis including DNS records, email authentication (SPF, DKIM, DMARC), DANE/TLSA certificate pinning, DNSSEC, BIMI, MTA-STS, TLS-RPT, CAA with MPIC awareness, DMARCbis readiness, SMTP transport encryption, email security management provider detection, subdomain discovery, and domain registrar information via RDAP.
 
-Every query fetches fresh data from multiple DNS resolvers — results are never cached.
+Every query fetches fresh data from multiple DNS resolvers — results are never cached. Every recommendation is backed by RFC citations. Accuracy above all else — truthful, transparent, and provable.
 
 ---
 
@@ -58,7 +58,7 @@ The overall security rating appears prominently at the top:
 - **PARTIAL** (yellow/amber): Some protections in place but gaps exist
 - **INSECURE** (red): Critical security controls missing
 
-A brief executive summary explains the reasoning.
+A brief executive summary explains the reasoning. The posture considers: SPF, DKIM, DMARC, DNSSEC, MTA-STS, TLS-RPT, BIMI, CAA, DANE/TLSA, and NS delegation.
 
 ### 2. Email Security Section
 Contains cards for each email authentication protocol:
@@ -83,6 +83,7 @@ Contains cards for each email authentication protocol:
 - Percentage enforcement (pct=)
 - Reporting addresses (rua=, ruf=)
 - Alignment modes (adkim=, aspf=)
+- DMARCbis readiness: np= (non-existent subdomain policy), t= (testing mode, replaces pct=), psd= (public suffix domain) — these are tags from the upcoming DMARCbis standard (draft-ietf-dmarc-dmarcbis)
 
 **Email Security Providers (Gold Badges)**
 - DMARC monitoring services detected from reporting addresses
@@ -108,7 +109,23 @@ Contains cards for each email authentication protocol:
 - Record at _smtp._tls.{domain}
 - Reporting endpoint (rua=)
 
-### 4. Domain Security Section
+### 4. Transport Security Section
+**DANE/TLSA (DNS-based Authentication of Named Entities)**
+- TLSA records queried for each MX host at _25._tcp.{mx_host} (RFC 6698, RFC 7672)
+- Certificate usage parsing: PKIX-TA (0), PKIX-EE (1), DANE-TA (2), DANE-EE (3)
+- Selector: Full certificate (0) vs SubjectPublicKeyInfo (1)
+- Matching type: Exact (0), SHA-256 (1), SHA-512 (2)
+- DNSSEC dependency check: DANE requires DNSSEC for security guarantees (RFC 7672 §1.3)
+- Complementarity with MTA-STS: best practice is to deploy both
+- Status: configured / partial / not found / timeout
+
+**SMTP Transport Encryption**
+- MX server STARTTLS support
+- TLS version (1.2 or 1.3)
+- Cipher suite and strength
+- Certificate validity
+
+### 5. Domain Security Section
 **DNSSEC (DNS Security Extensions)**
 - Chain validation status from root to domain
 - DS and DNSKEY records
@@ -120,8 +137,9 @@ Contains cards for each email authentication protocol:
 - Which certificate authorities are authorized
 - Wildcard restrictions
 - Issue and issuewild tags
+- MPIC context: Multi-Perspective Issuance Corroboration (CA/B Forum Ballot SC-067, mandatory September 2025) — CAA records are now verified from multiple geographic locations before certificate issuance
 
-### 5. Traffic & Routing Section
+### 6. Traffic & Routing Section
 All DNS record types displayed:
 - A Records (IPv4 addresses)
 - AAAA Records (IPv6 addresses)
@@ -138,17 +156,20 @@ Results from Cloudflare (1.1.1.1), Google (8.8.8.8), Quad9 (9.9.9.9), and OpenDN
 **DNS Infrastructure Detection**
 Enterprise DNS providers identified (Cloudflare, AWS Route 53, Google Cloud DNS, Akamai, Azure DNS, etc.)
 
-### 6. SMTP Transport Security
-- MX server STARTTLS support
-- TLS version (1.2 or 1.3)
-- Cipher suite and strength
-- Certificate validity
+**DNS Evidence Diff**
+Compares resolver and authoritative records for A, AAAA, MX, TXT, NS, CAA, SOA, _dmarc, _mta-sts, _smtp._tls — with TTL values and RFC reference badges.
 
 ### 7. Domain Intelligence (RDAP)
 - Registrar name
 - Domain creation and expiration dates
 - Nameserver delegation
 - Registry information
+
+### 8. Subdomain Discovery
+- Dual-method approach: Certificate Transparency logs (crt.sh, RFC 6962) + DNS probing of ~290 common service names
+- Source attribution: "CT Log" vs "DNS" for each subdomain
+- Wildcard certificate detection and DNS wildcard filtering
+- Subdomain-aware context: detects when the analyzed domain is itself a subdomain and offers a link to scan the registered domain
 
 ---
 
@@ -181,9 +202,11 @@ When reporting results back to a user, focus on:
 
 1. **The overall security posture** (SECURE / PARTIAL / INSECURE) and why
 2. **Email authentication status**: Do they have SPF + DKIM + DMARC? Is DMARC set to reject?
-3. **Actionable gaps**: What's missing and what should they fix first?
-4. **Provider attribution**: Who manages their email security? Are they using a DMARC monitoring service?
-5. **Advanced protections**: DNSSEC, MTA-STS, BIMI, CAA — these are differentiators
+3. **Transport security**: Is DANE/TLSA configured? Is MTA-STS enforcing? Are both deployed?
+4. **Actionable gaps**: What's missing and what should they fix first?
+5. **Provider attribution**: Who manages their email security? Are they using a DMARC monitoring service?
+6. **Advanced protections**: DNSSEC, DANE, MTA-STS, BIMI, CAA — these are differentiators
+7. **DMARCbis readiness**: Are they prepared for the upcoming DMARC standard changes?
 
 ### Priority Order for Recommendations
 If a domain is missing protections, recommend in this order:
@@ -192,12 +215,16 @@ If a domain is missing protections, recommend in this order:
 3. DMARC policy (start with p=none, work toward p=reject)
 4. DMARC monitoring service (visibility into authentication results)
 5. MTA-STS (enforce encrypted email delivery)
-6. DNSSEC (DNS response integrity)
-7. CAA (certificate issuance control)
-8. BIMI (brand logo in inboxes — requires DMARC p=quarantine or p=reject)
+6. DNSSEC (DNS response integrity — also enables DANE)
+7. DANE/TLSA (certificate pinning for mail transport — requires DNSSEC)
+8. CAA (certificate issuance control)
+9. BIMI (brand logo in inboxes — requires DMARC p=quarantine or p=reject)
 
 ### Important Nuance: Symbiotic Security
-DNS Tool recognizes that security is not binary. A domain without DNSSEC but with strong DMARC p=reject and MTA-STS enforce may have excellent email security. The tool evaluates the full picture rather than penalizing individual missing records in isolation.
+DNS Tool recognizes that security is not binary. A domain without DNSSEC but with strong DMARC p=reject and MTA-STS enforce may have excellent email security. The tool evaluates the full picture rather than penalizing individual missing records in isolation. DANE and MTA-STS complement each other: DANE provides cryptographic strength via DNSSEC, while MTA-STS provides broader compatibility for receivers that don't validate DNSSEC.
+
+### Common Misconception: DANE
+Many people believe DANE is a niche protocol only used in the Netherlands. This is false. Over 1.1 million domains globally publish TLSA records. Microsoft Exchange Online has full DANE support (outbound since March 2022, inbound GA October 2024). The IETF itself uses DANE on mail.ietf.org. The misconception arose because DANE for web browsers failed (Let's Encrypt solved HTTPS differently), but DANE for email (SMTP, RFC 7672) thrived separately. Most security audit tools skip DANE, creating a self-reinforcing blind spot. DNS Tool breaks that cycle.
 
 ---
 
@@ -212,9 +239,10 @@ DNS Tool recognizes that security is not binary. A domain without DNSSEC but wit
 - SOA: Start of authority with TTL and refresh intervals
 - CAA: Certificate Authority Authorization
 - SRV: Service discovery (_autodiscover, _sip, _caldavs, etc.)
+- TLSA: DANE certificate pinning records (_25._tcp.{mx_host})
 
 ### Security Posture Levels
-- **EXCELLENT**: Full email security + DNSSEC + advanced protections
+- **EXCELLENT**: Full email security + DNSSEC + DANE + advanced protections
 - **GOOD**: Strong email security controls in place
 - **MODERATE**: Basic protections present but gaps exist
 - **WEAK**: Missing critical security records
@@ -233,12 +261,30 @@ DNS Tool recognizes that security is not binary. A domain without DNSSEC but wit
 - RFC 7208: SPF (Sender Policy Framework)
 - RFC 6376: DKIM (DomainKeys Identified Mail)
 - RFC 7489: DMARC (Domain-based Message Authentication)
+- draft-ietf-dmarc-dmarcbis: DMARCbis (DMARC protocol updates — np=, t=, psd= tags)
+- RFC 6698: DANE/TLSA (DNS-based Authentication of Named Entities)
+- RFC 7672: SMTP Security via Opportunistic DANE TLS
 - RFC 4033-4035: DNSSEC (DNS Security Extensions)
 - RFC 8461: MTA-STS (Mail Transfer Agent Strict Transport Security)
 - RFC 8460: TLS-RPT (SMTP TLS Reporting)
 - RFC 8659: CAA (Certificate Authority Authorization)
+- CA/B Forum Ballot SC-067: MPIC (Multi-Perspective Issuance Corroboration)
 - BIMI Group Specification: Brand Indicators for Message Identification
 - RFC 7483: RDAP (Registration Data Access Protocol)
+- RFC 6962: Certificate Transparency
+- RFC 7505: Null MX (No Service MX)
+
+---
+
+## Sample Domains for Testing
+
+These domains demonstrate various security configurations:
+- `ietf.org` — DANE/TLSA configured (the IETF's own infrastructure)
+- `nlnetlabs.nl` — DANE + DNSSEC (creators of Unbound DNS resolver)
+- `freebsd.org` — DANE configured (the FreeBSD project)
+- `cloudflare.com` — Strong email security, enterprise DNS
+- `google.com` — Comprehensive security controls
+- `whitehouse.gov` — Federal compliance (CISA BOD 18-01)
 
 ---
 

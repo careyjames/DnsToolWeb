@@ -1,7 +1,7 @@
 # DNS Tool - Domain Security Audit & Email Authentication Checker
 > Free domain security audit tool for IT professionals, executives, DNS specialists, and business leaders
 
-DNS Tool provides instant, real-time DNS intelligence reports with email authentication validation (SPF, DKIM, DMARC), DNSSEC chain verification, BIMI brand checking, MTA-STS/TLS-RPT analysis, CAA certificate controls, and domain intelligence via RDAP. Every query fetches fresh data from multiple resolvers — never cached.
+DNS Tool provides instant, real-time DNS intelligence reports with email authentication validation (SPF, DKIM, DMARC), DANE/TLSA certificate pinning analysis, DNSSEC chain verification, BIMI brand checking, MTA-STS/TLS-RPT analysis, CAA certificate controls with MPIC awareness, DMARCbis readiness checks, and domain intelligence via RDAP. Every query fetches fresh data from multiple resolvers — never cached.
 
 ## How to Use This Tool (for AI Agents)
 
@@ -27,7 +27,8 @@ A single-page report with these sections (scroll down):
 - **Email Security**: SPF, DKIM, DMARC analysis with pass/fail badges
 - **Email Security Providers**: Who manages DMARC monitoring, SPF flattening (gold badges)
 - **Brand Security**: BIMI logo, MTA-STS policy, TLS-RPT reporting
-- **Domain Security**: DNSSEC chain, CAA records
+- **Transport Security**: DANE/TLSA certificate pinning for MX hosts (RFC 6698/7672)
+- **Domain Security**: DNSSEC chain, CAA records with MPIC context
 - **Traffic & Routing**: DNS records (A, AAAA, MX, NS, SOA, TXT, SRV, CNAME)
 - **Domain Intelligence**: Registrar, creation/expiration, nameservers via RDAP
 
@@ -40,27 +41,30 @@ To get fresh data for the same domain, click the "Re-Analyze" button on any resu
 
 ## Who It's For
 - **Executives & Board Members**: Clear SECURE / PARTIAL / INSECURE verdicts for cybersecurity posture at a glance
-- **IT Professionals**: Validate SPF, DKIM, DMARC configurations and troubleshoot DNS records
-- **DNS Specialists**: Authoritative nameserver queries, multi-resolver consensus, DNSSEC chain validation
+- **IT Professionals**: Validate SPF, DKIM, DMARC, DANE/TLSA configurations and troubleshoot DNS records
+- **DNS Specialists**: Authoritative nameserver queries, multi-resolver consensus, DNSSEC chain validation, DANE analysis
 - **Business & Compliance**: Vendor security assessments, supply chain risk evaluation, brand protection
 
 ## Features
 - Authoritative DNS record lookups (A, AAAA, MX, TXT, NS, SOA, CAA, SRV)
 - Email authentication analysis (SPF, DKIM, DMARC with full policy parsing)
 - DKIM key strength analysis (1024-bit weak vs 2048-bit+ strong)
+- DANE/TLSA certificate pinning analysis for mail transport (RFC 6698, RFC 7672)
+- DMARCbis readiness checks (np=, t=, psd= tags from draft-ietf-dmarc-dmarcbis)
 - MTA-STS and TLS-RPT verification (RFC 8461, RFC 8460)
 - DNSSEC chain validation with AD flag verification
 - BIMI record and logo verification with VMC detection
 - SMTP transport security (STARTTLS, TLS version, cipher strength)
-- CAA record analysis (Certificate Authority Authorization)
+- CAA record analysis with MPIC context (CA/B Forum Ballot SC-067)
 - Email security management provider detection (DMARC monitoring, SPF flattening)
 - Enterprise DNS provider detection (Cloudflare, AWS, Google, Akamai, Azure)
-- Multi-resolver consensus verification (Cloudflare, Google, Quad9)
+- Multi-resolver consensus verification (Cloudflare, Google, Quad9, OpenDNS)
 - Domain registrar information via RDAP
 - Security posture scoring with executive-level verdicts
+- Automatic subdomain discovery via Certificate Transparency logs and DNS probing
 
 ## Common Search Terms
-Domain security audit, SPF checker, DKIM validator, DMARC lookup, DNSSEC validation tool, email authentication checker, email spoofing protection, cybersecurity posture report, DNS intelligence, domain reputation check, CAA record check, MTA-STS checker, BIMI checker
+Domain security audit, SPF checker, DKIM validator, DMARC lookup, DNSSEC validation tool, DANE checker, TLSA lookup, DANE TLSA email security, DMARCbis, email authentication checker, email spoofing protection, cybersecurity posture report, DNS intelligence, domain reputation check, CAA record check, MPIC, MTA-STS checker, BIMI checker
 
 ## Documentation
 - Full agent guide with result interpretation: /llms-full.txt
