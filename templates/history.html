@@ -148,8 +148,12 @@
                                     <td>
                                         <div class="btn-group" role="group">
                                             <a href="{{ url_for('view_analysis_static', analysis_id=analysis.id) }}" 
-                                               class="btn btn-sm btn-outline-primary history-view-btn" title="View Details">
+                                               class="btn btn-sm btn-outline-primary history-view-btn" title="View this report">
                                                 <i class="fas fa-eye"></i>
+                                            </a>
+                                            <a href="{{ url_for('analyze', domain=analysis.domain) }}" 
+                                               class="btn btn-sm btn-outline-success history-reanalyze-btn" title="Re-analyze now">
+                                                <i class="fas fa-sync-alt"></i>
                                             </a>
                                         </div>
                                     </td>
@@ -225,24 +229,31 @@
     <div id="historyLoadingOverlay" style="display:none;position:fixed;inset:0;background:rgba(33,37,41,0.92);z-index:9999;justify-content:center;align-items:center;flex-direction:column;">
         <div class="spinner-border text-primary mb-3" role="status" style="width:3rem;height:3rem;"><span class="visually-hidden">Loading...</span></div>
         <div class="text-light fw-medium" id="historyLoadingText">Loading analysis results...</div>
+        <div class="text-muted small mt-1" id="historyLoadingSubtext" style="display:none;"></div>
     </div>
 
     <script src="{{ url_for('static', filename='js/bootstrap.bundle.min.js') }}" defer></script>
     <script src="{{ url_for('static', filename='js/main.js') }}?v={{ app_version }}" defer></script>
     <script nonce="{{ csp_nonce }}">
     document.addEventListener('DOMContentLoaded',function(){
+        function showOverlay(btn,msg,sub){
+            var row=btn.closest('tr');
+            var domain=row?row.querySelector('.fw-medium'):null;
+            var name=domain?domain.textContent.trim():'';
+            var overlay=document.getElementById('historyLoadingOverlay');
+            var txt=document.getElementById('historyLoadingText');
+            var subtxt=document.getElementById('historyLoadingSubtext');
+            if(txt)txt.textContent=name?msg.replace('{d}',name):msg.replace(' {d}','');
+            if(subtxt&&sub){subtxt.textContent=sub;subtxt.style.display='block';}
+            if(overlay)overlay.style.display='flex';
+            btn.classList.add('disabled');
+            btn.innerHTML='<i class="fas fa-spinner fa-spin"></i>';
+        }
         document.querySelectorAll('.history-view-btn').forEach(function(btn){
-            btn.addEventListener('click',function(e){
-                var row=btn.closest('tr');
-                var domain=row?row.querySelector('.fw-medium'):null;
-                var name=domain?domain.textContent.trim():'';
-                var overlay=document.getElementById('historyLoadingOverlay');
-                var txt=document.getElementById('historyLoadingText');
-                if(txt&&name)txt.textContent='Loading results for '+name+'...';
-                if(overlay)overlay.style.display='flex';
-                btn.classList.add('disabled');
-                btn.innerHTML='<i class="fas fa-spinner fa-spin"></i>';
-            });
+            btn.addEventListener('click',function(){showOverlay(btn,'Loading results for {d}...','');});
+        });
+        document.querySelectorAll('.history-reanalyze-btn').forEach(function(btn){
+            btn.addEventListener('click',function(){showOverlay(btn,'Running fresh analysis on {d}...','This typically takes 10\u201320 seconds');});
         });
     });
     </script>
