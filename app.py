@@ -1110,6 +1110,18 @@ def view_analysis_static(analysis_id):
                          wait_seconds=wait_seconds,
                          wait_reason=wait_reason)
 
+@app.route('/admin/cleanup-legacy-9x7k2m')
+def admin_cleanup_legacy():
+    """One-time cleanup: remove records without full_results."""
+    legacy_count = DomainAnalysis.query.filter(DomainAnalysis.full_results.is_(None)).count()
+    if legacy_count == 0:
+        return jsonify({'status': 'nothing_to_clean', 'total': DomainAnalysis.query.count()})
+    DomainAnalysis.query.filter(DomainAnalysis.full_results.is_(None)).delete()
+    AnalysisStats.query.delete()
+    db.session.commit()
+    remaining = DomainAnalysis.query.count()
+    return jsonify({'status': 'cleaned', 'removed': legacy_count, 'remaining': remaining})
+
 @app.route('/statistics')
 def statistics_redirect():
     """Redirect /statistics to /stats for URL consistency."""
