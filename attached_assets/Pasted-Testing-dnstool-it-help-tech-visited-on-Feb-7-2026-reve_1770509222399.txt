@@ -1,0 +1,17 @@
+Testing dnstool.it‑help.tech (visited on Feb 7 2026) reveals several troubling facts that warrant a harsh critique:
+
+1. The site transmits all queries over insecure HTTP. There’s no TLS padlock—Chromium flags the connection as “Not secure,” meaning anyone on the network can intercept or tamper with queries.  For a tool that claims to audit security, ignoring HTTPS is negligent.  Google’s own security guidance stresses that every web site must use HTTPS to protect user privacy and data integrity ￼.
+
+2. All lookups are logged and published without consent.  The “History” page displays a live list of every domain others have analyzed, including sensitive government domains like cia.gov, nsa.gov, and cisa.gov, along with timestamps and whether SPF/DMARC/DKIM checks succeeded ￼.  Anyone can browse or enumerate this list.  The “Statistics” page goes further, ranking the “most analyzed domains” (again highlighting cia.gov, nsa.gov, openai.com, etc.) and exposing visitor‑country counts ￼.  This means the tool publicly reveals what sites others are investigating and where those visitors came from.
+
+3. The site captures and exposes personal data without a privacy policy.  The homepage admits it logs domains and visitor country (derived from IP addresses) for “usage statistics,” with no sign‑up or consent ￼.  IP addresses and geolocation are considered personally identifiable information under GDPR and other privacy laws; the IETF warns service operators to minimise such data collection ￼ ￼.  Yet dnstool.it‑help.tech offers no privacy policy, no data‑retention statement and no opt‑out mechanism.
+
+4. Reports and IDs can be enumerated.  Each report lives at /analysis/{id}, and IDs are sequential (e.g., /analysis/471 for google.com).  There is no authentication or rate limit, so anyone can iterate through IDs to download all past reports.  Combined with the public history page, this design invites scraping and abuse.
+
+5. Accuracy and methodology are questionable.  When I tested example.com, the tool claimed to find “37 DKIM selectors” and flagged several as “revoked.”  In reality, example.com uses a handful of dummy DKIM records with empty public keys; 37 selectors seems implausible, and the tool does not cite sources.  It also tries to infer “brand security” status and corporate email providers, yet without any explanation or official references.  This makes its assessments hard to trust.
+
+6. No consideration for responsible disclosure or ethical use.  The tool encourages scanning any domain without permission.  There is no disclaimer about respecting target policies, and the ability to run scans via simple GET requests could be abused by others (e.g., embedding the URL to force the site to query arbitrary domains).
+
+7. Absence of professional polish.  There is no HTTPS, no privacy policy, and no contact information.  The site claims to be built by “IT Help San Diego Inc.” but does not list any legal entity details or support channels.  For a service that handles network‑security data, these omissions are unprofessional.
+
+In summary, dnstool.it‑help.tech presents itself as a security auditing platform, yet it violates basic security principles by serving content over HTTP, logging and publishing users’ queries and geolocation without consent, and offering no privacy policy.  The tool’s methodology is opaque and sometimes dubious, and its design allows unrestricted enumeration of sensitive reports.  These verifiable facts make it a poor choice for anyone concerned with security or privacy.
