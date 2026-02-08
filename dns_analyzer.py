@@ -156,6 +156,22 @@ class DNSAnalyzer:
         self.consensus_enabled = True  # Enable multi-resolver consensus
         self._fetch_iana_rdap_data()
     
+    def _find_parent_zone(self, domain: str) -> Optional[str]:
+        """Find the parent zone that contains this domain by looking for NS records.
+        For 'dnstool.it-help.tech', returns 'it-help.tech'.
+        For 'it-help.tech', returns None (it IS the zone apex).
+        """
+        parts = domain.split('.')
+        for i in range(1, len(parts) - 1):
+            candidate = '.'.join(parts[i:])
+            try:
+                ns_result = self.dns_query("NS", candidate)
+                if ns_result:
+                    return candidate
+            except Exception:
+                continue
+        return None
+
     def domain_to_ascii(self, domain: str) -> str:
         """Convert Unicode domain names to ASCII using IDNA."""
         domain = domain.rstrip(".")
@@ -2110,6 +2126,36 @@ class DNSAnalyzer:
                 'ad_resolver': ad_resolver
             }
         else:
+            if ad_flag:
+                parent_zone = self._find_parent_zone(domain)
+                parent_algo = None
+                parent_algo_name = None
+                if parent_zone:
+                    try:
+                        parent_ds = self.dns_query("DS", parent_zone)
+                        if parent_ds:
+                            ds_parts = parent_ds[0].split()
+                            if len(ds_parts) >= 2:
+                                alg_num = int(ds_parts[1])
+                                parent_algo = alg_num
+                                parent_algo_name = algorithm_names.get(alg_num, f'Algorithm {alg_num}')
+                    except Exception:
+                        pass
+                return {
+                    'status': 'success',
+                    'message': f'DNSSEC inherited from parent zone ({parent_zone}) - DNS responses are authenticated' if parent_zone else 'DNSSEC validated by resolver - DNS responses are authenticated',
+                    'has_dnskey': False,
+                    'has_ds': False,
+                    'dnskey_records': [],
+                    'ds_records': [],
+                    'algorithm': parent_algo,
+                    'algorithm_name': parent_algo_name,
+                    'chain_of_trust': 'inherited',
+                    'ad_flag': True,
+                    'ad_resolver': ad_resolver,
+                    'is_subdomain': True,
+                    'parent_zone': parent_zone
+                }
             return {
                 'status': 'warning',
                 'message': 'DNSSEC not configured - DNS responses are unsigned',
@@ -2171,6 +2217,25 @@ class DNSAnalyzer:
                 pass
         
         if not child_ns:
+            parent_zone = self._find_parent_zone(domain)
+            if parent_zone:
+                parent_zone_ns = []
+                try:
+                    pz_result = self.dns_query("NS", parent_zone)
+                    if pz_result:
+                        parent_zone_ns = sorted([ns.rstrip('.').lower() for ns in pz_result if ns])
+                except Exception:
+                    pass
+                return {
+                    'status': 'success',
+                    'message': f'Subdomain within {parent_zone} zone - no separate delegation needed',
+                    'child_ns': [],
+                    'parent_ns': parent_zone_ns,
+                    'match': None,
+                    'delegation_ok': True,
+                    'is_subdomain': True,
+                    'parent_zone': parent_zone
+                }
             return {
                 'status': 'error',
                 'message': 'Could not retrieve NS records',
@@ -2263,6 +2328,14 @@ class DNSAnalyzer:
         except Exception as e:
             logging.warning(f"[REGISTRAR] WHOIS failed: {e}")
         
+        parent_zone = self._find_parent_zone(domain)
+        if parent_zone and parent_zone != domain:
+            logging.info(f"[REGISTRAR] Trying parent zone {parent_zone} for subdomain {domain}")
+            parent_result = self.get_registrar_info(parent_zone)
+            if parent_result.get('status') == 'success':
+                parent_result['subdomain_of'] = parent_zone
+                return parent_result
+
         logging.warning(f"[REGISTRAR] FAILED - No registrar info found for {domain}")
         return {
             'status': 'error',
@@ -3595,7 +3668,10 @@ class DNSAnalyzer:
         if chain == 'broken':
             issues.append('DNSSEC chain incomplete (DS record missing at registrar)')
         elif dnssec.get('status') == 'success':
-            configured_items.append('DNSSEC (DNS responses signed)')
+            if chain == 'inherited':
+                configured_items.append('DNSSEC (inherited from parent zone)')
+            else:
+                configured_items.append('DNSSEC (DNS responses signed)')
         else:
             # Unsigned is tracked as "not configured" - a design choice, not an error
             absent_items.append('DNSSEC (DNS response signing)')
@@ -3763,10 +3839,14 @@ class DNSAnalyzer:
         
         # Domain Security verdict
         dnssec_ok = results.get('dnssec_analysis', {}).get('status') == 'success'
+        dnssec_inherited = results.get('dnssec_analysis', {}).get('chain_of_trust') == 'inherited'
         ns_ok = results.get('ns_delegation_analysis', {}).get('delegation_ok', False)
         
         if dnssec_ok and ns_ok:
-            verdicts['domain'] = 'DNS responses are authenticated from the root downward. Delegation is verified.'
+            if dnssec_inherited:
+                verdicts['domain'] = 'DNS responses are authenticated via parent zone DNSSEC. Subdomain within a signed zone.'
+            else:
+                verdicts['domain'] = 'DNS responses are authenticated from the root downward. Delegation is verified.'
             verdicts['domain_answer'] = 'No'
         elif dnssec_ok:
             verdicts['domain'] = 'DNS responses are signed but delegation verification had issues.'
