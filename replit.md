@@ -8,6 +8,17 @@ This project is a web-based DNS intelligence tool designed for comprehensive dom
 
 Preferred communication style: Simple, everyday language.
 
+## Recent Changes (v26.10.48)
+- Subdomain Discovery now automatic (v26.10.48):
+  - CT log query runs in parallel with all DNS lookups — no button click needed.
+  - Results stored in `ct_subdomains` JSON column, persisted across report views.
+  - Server-rendered via Jinja2 template instead of client-side JavaScript fetch.
+  - Older reports without CT data show "not available" message.
+  - Thread pool increased to 15 workers; futures timeout to 25s.
+- DNS Evidence Diff improvements (v26.10.47):
+  - CAA and SOA record types added; TTL badges; RFC reference links.
+  - Auth timeout shows "Timeout" status instead of misleading red styling.
+
 ## System Architecture
 
 ### Backend Framework
@@ -32,7 +43,7 @@ Preferred communication style: Simple, everyday language.
 - Detects DMARC monitoring, TLS-RPT reporting, and SPF flattening services.
 - Supports context-aware DKIM selector attribution and SPF evidence hierarchy.
 - **DNS Evidence Diff**: Compares resolver and authoritative records for various types, including A, AAAA, MX, TXT, NS, CAA, and SOA records, along with email security-related records (`_dmarc`, `_mta-sts`, `_smtp._tls`). Displays TTL values and RFC reference badges.
-- **Subdomain Discovery**: An opt-in feature that queries crt.sh Certificate Transparency logs (RFC 6962) via `/api/subdomains/<domain>` to discover subdomains with TLS certificates, providing details like expiry, issuer, and wildcard status.
+- **Subdomain Discovery**: Automatic Certificate Transparency log query (crt.sh, RFC 6962) runs in parallel during analysis. Discovers subdomains with TLS certificates, providing details like expiry, issuer, and wildcard status. Results stored in database and rendered server-side.
 - **Null MX and No-Mail Domain Detection**: Recognizes `MX 0 .` (RFC 7505) and identifies domains explicitly configured not to send or receive email, adjusting posture scoring and verdicts accordingly.
 - **Subdomain-aware analysis**: Correctly handles DNSSEC inheritance, NS delegation, and RDAP lookups for subdomains.
 

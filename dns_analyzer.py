@@ -3143,6 +3143,7 @@ class DNSAnalyzer:
                 'ns_delegation_analysis': {'status': 'error', 'delegation_ok': False, 'message': 'Domain does not exist'},
                 'registrar_info': {'status': 'n/a', 'registrar': None},
                 'smtp_transport': None,
+                'ct_subdomains': {'status': 'success', 'subdomains': [], 'unique_subdomains': 0, 'total_certs': 0, 'source': 'Certificate Transparency Logs', 'caveat': 'Domain does not exist or is not delegated.'},
                 'email_security_mgmt': {'actively_managed': False, 'providers': [], 'spf_flattening': None, 'provider_count': 0},
                 'hosting_summary': {'hosting': 'N/A', 'dns_hosting': 'N/A', 'email_hosting': 'N/A'},
                 'posture': {
@@ -3155,7 +3156,7 @@ class DNSAnalyzer:
             }
         
         # Run all lookups in parallel for speed (5-10s target)
-        with ThreadPoolExecutor(max_workers=14) as executor:
+        with ThreadPoolExecutor(max_workers=15) as executor:
             futures = {
                 executor.submit(self.get_basic_records, domain): 'basic',
                 executor.submit(self.get_authoritative_records, domain): 'auth',
@@ -3170,11 +3171,12 @@ class DNSAnalyzer:
                 executor.submit(self.analyze_ns_delegation, domain): 'ns_delegation',
                 executor.submit(self.get_registrar_info, domain): 'registrar',
                 executor.submit(self.validate_resolver_consensus, domain): 'resolver_consensus',
+                executor.submit(self.discover_subdomains, domain): 'ct_subdomains',
             }
             
             results_map = {}
             try:
-                for future in as_completed(futures, timeout=20):
+                for future in as_completed(futures, timeout=25):
                     key = futures[future]
                     try:
                         results_map[key] = future.result()
@@ -3334,7 +3336,8 @@ class DNSAnalyzer:
                 'checks_performed': 0,
                 'discrepancies': [],
                 'per_record_consensus': {}
-            })
+            }),
+            'ct_subdomains': results_map.get('ct_subdomains', {'status': 'error', 'subdomains': [], 'unique_subdomains': 0}),
         }
         
         # SMTP Transport verification disabled - port 25 blocked in production

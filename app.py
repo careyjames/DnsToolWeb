@@ -16,7 +16,7 @@ from sqlalchemy import JSON
 from dns_analyzer import DNSAnalyzer
 
 # App version - format: YY.M.patch (bump last number for small changes)
-APP_VERSION = "26.10.47"
+APP_VERSION = "26.10.48"
 
 
 class TraceIDFilter(logging.Filter):
@@ -497,6 +497,9 @@ class DomainAnalysis(db.Model):
     country_code = db.Column(db.String(10))
     country_name = db.Column(db.String(100))
     
+    # Subdomain Discovery (Certificate Transparency)
+    ct_subdomains = db.Column(JSON)
+    
     # Analysis metadata
     analysis_success = db.Column(db.Boolean, default=True)
     error_message = db.Column(db.Text)
@@ -913,6 +916,7 @@ def analyze():
             dkim_selectors=results.get('dkim_analysis', {}).get('selectors', {}),
             registrar_name=results.get('registrar_info', {}).get('registrar'),
             registrar_source=results.get('registrar_info', {}).get('source'),
+            ct_subdomains=results.get('ct_subdomains'),
             country_code=geo.get('code'),
             country_name=geo.get('name'),
             analysis_success=True,
@@ -1053,6 +1057,7 @@ def view_analysis(analysis_id):
     analysis.dkim_selectors = results.get('dkim_analysis', {}).get('selectors', {})
     analysis.registrar_name = results.get('registrar_info', {}).get('registrar')
     analysis.registrar_source = results.get('registrar_info', {}).get('source')
+    analysis.ct_subdomains = results.get('ct_subdomains')
     analysis.country_code = geo.get('code') or analysis.country_code
     analysis.country_name = geo.get('name') or analysis.country_name
     analysis.analysis_duration = analysis_duration
@@ -1122,6 +1127,7 @@ def view_analysis_static(analysis_id):
         'smtp_tls_analysis': {},
         'propagation_status': {},
         'section_status': {},
+        'ct_subdomains': analysis.ct_subdomains or {'status': 'not_available', 'subdomains': [], 'unique_subdomains': 0, 'message': 'Subdomain discovery data not available for this report'},
         'domain_status_message': '',
     }
     

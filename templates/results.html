@@ -1372,6 +1372,7 @@
         </div>
 
         <!-- Subdomain Discovery (Certificate Transparency) -->
+        {% set ct = results.get('ct_subdomains', {}) %}
         <div class="row mt-4">
         <div class="col-12">
             <div class="card">
@@ -1380,19 +1381,81 @@
                         <i class="fas fa-sitemap me-2"></i>Subdomain Discovery
                         <a href="https://datatracker.ietf.org/doc/html/rfc6962" target="_blank" rel="noopener" class="badge bg-dark bg-opacity-25 text-muted text-decoration-none fw-normal ms-2" style="font-size: 0.6rem;" title="Certificate Transparency">RFC 6962</a>
                     </h5>
-                    <button id="btn-discover-subdomains" class="btn btn-outline-primary btn-sm" data-domain="{{ domain }}">
-                        <i class="fas fa-search me-1"></i>Discover Subdomains
-                    </button>
+                    {% if ct.get('status') == 'success' and ct.get('unique_subdomains', 0) > 0 %}
+                    <span class="badge bg-info-subtle text-info border border-info-subtle">{{ ct.unique_subdomains }} subdomain{{ 's' if ct.unique_subdomains != 1 else '' }}</span>
+                    {% endif %}
                 </div>
-                <div id="subdomain-results" class="card-body" style="display: none;">
-                </div>
-                <div id="subdomain-placeholder" class="card-body">
+                <div class="card-body">
+                    {% if ct.get('status') == 'success' and ct.get('subdomains') and ct.subdomains|length > 0 %}
+                    <div class="mb-3">
+                        <div class="d-flex flex-wrap align-items-center gap-2 mb-2">
+                            <span class="badge bg-info-subtle text-info border border-info-subtle"><i class="fas fa-certificate me-1"></i>{{ ct.total_certs }} certificates analyzed</span>
+                            <span class="badge bg-success-subtle text-success border border-success-subtle"><i class="fas fa-check me-1"></i>{{ ct.get('current_count', 0) }} current</span>
+                            <span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle"><i class="fas fa-history me-1"></i>{{ ct.get('expired_count', 0) }} expired</span>
+                            <span class="badge bg-dark bg-opacity-25 text-muted fw-normal"><i class="fas fa-database me-1"></i>Source: {{ ct.source }}</span>
+                        </div>
+                        <small class="text-muted"><i class="fas fa-info-circle me-1"></i>{{ ct.caveat }}</small>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-sm table-hover mb-0">
+                            <thead>
+                                <tr>
+                                    <th class="border-secondary">Subdomain</th>
+                                    <th class="border-secondary text-center">Status</th>
+                                    <th class="border-secondary text-center">Certificates</th>
+                                    <th class="border-secondary">First Seen</th>
+                                    <th class="border-secondary">Issuer(s)</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for sub in ct.subdomains[:100] %}
+                                <tr>
+                                    <td class="border-secondary">
+                                        <code class="small">{{ sub.name }}</code>
+                                        {% if sub.is_wildcard %}
+                                        <span class="badge bg-warning-subtle text-warning border border-warning-subtle" style="font-size:0.6rem;">Wildcard</span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="border-secondary text-center">
+                                        {% if sub.is_current %}
+                                        <span class="badge bg-success-subtle text-success border border-success-subtle" style="font-size:0.7rem;">Current</span>
+                                        {% else %}
+                                        <span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle" style="font-size:0.7rem;">Expired</span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="border-secondary text-center"><span class="small text-muted">{{ sub.cert_count }}</span></td>
+                                    <td class="border-secondary"><span class="small text-muted">{{ sub.first_seen }}</span></td>
+                                    <td class="border-secondary"><span class="small text-muted">{{ sub.issuers|join(', ') if sub.issuers else '' }}</span></td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% if ct.subdomains|length > 100 %}
+                    <p class="text-muted small mt-2 mb-0"><i class="fas fa-ellipsis-h me-1"></i>Showing 100 of {{ ct.unique_subdomains }} subdomains</p>
+                    {% endif %}
+                    {% elif ct.get('status') == 'success' and ct.get('unique_subdomains', 0) == 0 %}
+                    <p class="text-muted mb-0 small">
+                        <i class="fas fa-info-circle me-1"></i>
+                        No subdomains found in Certificate Transparency logs for this domain. This means no TLS certificates have been issued for subdomains of <strong>{{ domain }}</strong>.
+                    </p>
+                    {% elif ct.get('status') == 'timeout' %}
+                    <p class="text-muted mb-0 small">
+                        <i class="fas fa-clock me-1"></i>
+                        Certificate Transparency log query timed out. The CT log service (crt.sh) may be experiencing high load. Re-analyze the domain to try again.
+                    </p>
+                    {% elif ct.get('status') == 'not_available' %}
+                    <p class="text-muted mb-0 small">
+                        <i class="fas fa-info-circle me-1"></i>
+                        Subdomain discovery data is not available for this older report. Re-analyze the domain to include CT log results.
+                    </p>
+                    {% else %}
                     <p class="text-muted mb-0 small">
                         <i class="fas fa-shield-alt me-1"></i>
                         Passive discovery using <strong>Certificate Transparency Logs</strong> — publicly auditable records of every TLS certificate ever issued.
-                        Click "Discover Subdomains" to query CT logs for subdomains that have had certificates issued.
-                        No active scanning or brute-forcing is performed.
+                        {% if ct.get('message') %}{{ ct.message }}{% endif %}
                     </p>
+                    {% endif %}
                 </div>
             </div>
         </div>
@@ -1539,104 +1602,6 @@
         });
     })();
     
-    (function() {
-        var sdBtn = document.getElementById('btn-discover-subdomains');
-        if (sdBtn) {
-            sdBtn.addEventListener('click', function() {
-                discoverSubdomains(this.getAttribute('data-domain'));
-            });
-        }
-    })();
-    
-    function escHtml(str) {
-        var d = document.createElement('div');
-        d.appendChild(document.createTextNode(str));
-        return d.innerHTML;
-    }
-    
-    function discoverSubdomains(domain) {
-        var btn = document.getElementById('btn-discover-subdomains');
-        var resultsDiv = document.getElementById('subdomain-results');
-        var placeholder = document.getElementById('subdomain-placeholder');
-        
-        btn.disabled = true;
-        btn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Querying CT Logs...';
-        
-        fetch('/api/subdomains/' + encodeURIComponent(domain))
-            .then(function(response) { return response.json(); })
-            .then(function(data) {
-                placeholder.style.display = 'none';
-                resultsDiv.style.display = 'block';
-                
-                if (data.status !== 'success' || !data.subdomains || data.subdomains.length === 0) {
-                    resultsDiv.innerHTML = '<p class="text-muted mb-0"><i class="fas fa-info-circle me-1"></i>' +
-                        (data.message || 'No subdomains found in Certificate Transparency logs for this domain.') + '</p>';
-                    btn.innerHTML = '<i class="fas fa-check me-1"></i>Complete';
-                    return;
-                }
-                
-                var currentCount = data.current_count || 0;
-                var expiredCount = data.expired_count || 0;
-                
-                var html = '<div class="mb-3">';
-                html += '<div class="d-flex flex-wrap align-items-center gap-2 mb-2">';
-                html += '<span class="badge bg-info-subtle text-info border border-info-subtle"><i class="fas fa-certificate me-1"></i>' + data.total_certs + ' certificates analyzed</span>';
-                html += '<span class="badge bg-success-subtle text-success border border-success-subtle"><i class="fas fa-check me-1"></i>' + currentCount + ' current</span>';
-                html += '<span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle"><i class="fas fa-history me-1"></i>' + expiredCount + ' expired</span>';
-                html += '<span class="badge bg-dark bg-opacity-25 text-muted fw-normal"><i class="fas fa-database me-1"></i>Source: ' + data.source + '</span>';
-                html += '</div>';
-                html += '<small class="text-muted"><i class="fas fa-info-circle me-1"></i>' + data.caveat + '</small>';
-                html += '</div>';
-                
-                html += '<div class="table-responsive"><table class="table table-sm table-hover mb-0">';
-                html += '<thead><tr>';
-                html += '<th class="border-secondary">Subdomain</th>';
-                html += '<th class="border-secondary text-center">Status</th>';
-                html += '<th class="border-secondary text-center">Certificates</th>';
-                html += '<th class="border-secondary">First Seen</th>';
-                html += '<th class="border-secondary">Issuer(s)</th>';
-                html += '</tr></thead><tbody>';
-                
-                var maxShow = 100;
-                var subdomains = data.subdomains.slice(0, maxShow);
-                
-                for (var i = 0; i < subdomains.length; i++) {
-                    var s = subdomains[i];
-                    var statusBadge = s.is_current
-                        ? '<span class="badge bg-success-subtle text-success border border-success-subtle" style="font-size:0.7rem;">Current</span>'
-                        : '<span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle" style="font-size:0.7rem;">Expired</span>';
-                    var wildcardBadge = s.is_wildcard
-                        ? ' <span class="badge bg-warning-subtle text-warning border border-warning-subtle" style="font-size:0.6rem;">Wildcard</span>'
-                        : '';
-                    
-                    html += '<tr>';
-                    html += '<td class="border-secondary"><code class="small">' + escHtml(s.name) + '</code>' + wildcardBadge + '</td>';
-                    html += '<td class="border-secondary text-center">' + statusBadge + '</td>';
-                    html += '<td class="border-secondary text-center"><span class="small text-muted">' + s.cert_count + '</span></td>';
-                    html += '<td class="border-secondary"><span class="small text-muted">' + s.first_seen + '</span></td>';
-                    html += '<td class="border-secondary"><span class="small text-muted">' + (s.issuers ? s.issuers.map(escHtml).join(', ') : '') + '</span></td>';
-                    html += '</tr>';
-                }
-                
-                html += '</tbody></table></div>';
-                
-                if (data.subdomains.length > maxShow) {
-                    html += '<p class="text-muted small mt-2 mb-0"><i class="fas fa-ellipsis-h me-1"></i>Showing ' + maxShow + ' of ' + data.unique_subdomains + ' subdomains</p>';
-                }
-                
-                resultsDiv.innerHTML = html;
-                btn.innerHTML = '<i class="fas fa-check me-1"></i>' + data.unique_subdomains + ' Subdomains Found';
-                btn.classList.remove('btn-outline-primary');
-                btn.classList.add('btn-outline-success');
-            })
-            .catch(function(err) {
-                placeholder.style.display = 'none';
-                resultsDiv.style.display = 'block';
-                resultsDiv.innerHTML = '<p class="text-danger mb-0"><i class="fas fa-exclamation-triangle me-1"></i>Failed to query Certificate Transparency logs. Please try again.</p>';
-                btn.disabled = false;
-                btn.innerHTML = '<i class="fas fa-redo me-1"></i>Retry';
-            });
-    }
     </script>
 </body>
 </html>
