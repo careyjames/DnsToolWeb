@@ -501,7 +501,8 @@ class DomainAnalysis(db.Model):
     ct_subdomains = db.Column(JSON)
     
     # Complete analysis results (stores everything for full history playback)
-    full_results = db.Column(JSON)
+    # NOT NULL enforced at database level — no record may exist without complete data
+    full_results = db.Column(JSON, nullable=False)
     
     # Analysis metadata
     analysis_success = db.Column(db.Boolean, default=True)
@@ -949,25 +950,12 @@ def analyze():
         error_message = str(e)
         logging.error(f"Error analyzing domain {domain}: {e}")
         
-        # Save failed analysis to database
-        analysis = DomainAnalysis(
-            domain=domain,
-            ascii_domain=dns_analyzer.domain_to_ascii(domain),
-            country_code=geo.get('code'),
-            country_name=geo.get('name'),
-            analysis_success=False,
-            error_message=error_message,
-            analysis_duration=analysis_duration
-        )
-        
         try:
-            db.session.add(analysis)
-            db.session.commit()
             update_daily_stats(analysis_success=False, duration=analysis_duration, domain=domain)
-        except Exception:  # nosec B110
-            pass  # Intentional: Don't fail if we can't save the error
+        except Exception:
+            pass
         
-        flash(f'Error analyzing domain: {error_message}', 'danger')
+        flash('An internal error occurred. Please try again.', 'danger')
         return redirect(url_for('index'))
 
 def update_daily_stats(analysis_success: bool, duration: float, domain: str):
