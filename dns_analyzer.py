@@ -153,9 +153,11 @@ class DNSAnalyzer:
         {"name": "OpenDNS", "ip": "208.67.222.222", "doh": None},
     ]
     
+    USER_AGENT = 'DNSTool-DomainSecurityAudit/1.0 (+https://dnstool.it-help.tech)'
+    
     def __init__(self):
-        self.dns_timeout = 1
-        self.dns_tries = 1
+        self.dns_timeout = 2
+        self.dns_tries = 2
         self.default_resolvers = ["1.1.1.1"]
         self.resolvers = self.default_resolvers.copy()
         self.iana_rdap_map = {}
@@ -201,7 +203,7 @@ class DNSAnalyzer:
         """Populate IANA_RDAP_MAP with TLD to RDAP endpoint mappings."""
         url = "https://data.iana.org/rdap/dns.json"
         try:
-            r = requests.get(url, timeout=5)
+            r = requests.get(url, timeout=5, headers={'User-Agent': self.USER_AGENT})
             r.raise_for_status()
             j = r.json()
             for svc in j.get("services", []):
@@ -234,7 +236,8 @@ class DNSAnalyzer:
         
         try:
             response = requests.get(url, params=params, timeout=DOH_TIMEOUT, headers={
-                'Accept': 'application/dns-json'
+                'Accept': 'application/dns-json',
+                'User-Agent': self.USER_AGENT
             })
             response.raise_for_status()
             data = response.json()
@@ -400,28 +403,34 @@ class DNSAnalyzer:
             'per_record_consensus': {}
         }
         
-        for record_type in critical_types:
-            try:
-                consensus_result = self.dns_query_with_consensus(record_type, domain)
-                validation_results['checks_performed'] += 1
-                validation_results['per_record_consensus'][record_type] = {
-                    'consensus': consensus_result['consensus'],
-                    'resolver_count': consensus_result['resolver_count'],
-                    'discrepancies': consensus_result['discrepancies']
-                }
-                
-                if not consensus_result['consensus']:
-                    validation_results['consensus_reached'] = False
-                    for disc in consensus_result['discrepancies']:
-                        validation_results['discrepancies'].append(f"{record_type}: {disc}")
-            except Exception as e:
-                logging.warning(f"Consensus check failed for {record_type}: {e}")
-                validation_results['per_record_consensus'][record_type] = {
-                    'consensus': True,  # Assume consensus if check failed
-                    'resolver_count': 0,
-                    'discrepancies': [],
-                    'error': str(e)
-                }
+        with ThreadPoolExecutor(max_workers=4) as executor:
+            consensus_futures = {
+                executor.submit(self.dns_query_with_consensus, rt, domain): rt
+                for rt in critical_types
+            }
+            for future in as_completed(consensus_futures, timeout=8):
+                record_type = consensus_futures[future]
+                try:
+                    consensus_result = future.result()
+                    validation_results['checks_performed'] += 1
+                    validation_results['per_record_consensus'][record_type] = {
+                        'consensus': consensus_result['consensus'],
+                        'resolver_count': consensus_result['resolver_count'],
+                        'discrepancies': consensus_result['discrepancies']
+                    }
+                    
+                    if not consensus_result['consensus']:
+                        validation_results['consensus_reached'] = False
+                        for disc in consensus_result['discrepancies']:
+                            validation_results['discrepancies'].append(f"{record_type}: {disc}")
+                except Exception as e:
+                    logging.warning(f"Consensus check failed for {record_type}: {e}")
+                    validation_results['per_record_consensus'][record_type] = {
+                        'consensus': True,
+                        'resolver_count': 0,
+                        'discrepancies': [],
+                        'error': str(e)
+                    }
         
         return validation_results
     
@@ -521,7 +530,7 @@ class DNSAnalyzer:
         try:
             url = "https://dns.google/resolve"
             params = {'name': domain, 'type': record_type.upper()}
-            response = requests.get(url, params=params, timeout=5, headers={'Accept': 'application/dns-json'})
+            response = requests.get(url, params=params, timeout=5, headers={'Accept': 'application/dns-json', 'User-Agent': self.USER_AGENT})
             if response.status_code == 200:
                 data = response.json()
                 if data.get('Status', -1) != 0:
@@ -587,27 +596,27 @@ class DNSAnalyzer:
                 return (prefix, result)
             return None
         
-        with ThreadPoolExecutor(max_workers=15) as executor:
+        with ThreadPoolExecutor(max_workers=8) as executor:
             type_futures = {executor.submit(query_type, t): t for t in record_types}
             srv_futures = {executor.submit(query_srv, p): p for p in srv_prefixes}
             
-            for future in as_completed(type_futures, timeout=5):
+            for future in as_completed(type_futures, timeout=6):
                 try:
                     rtype, result, ttl = future.result()
                     records[rtype] = result
                     if ttl is not None:
                         records['_ttl'][rtype] = ttl
-                except:
+                except Exception:
                     pass
             
-            for future in as_completed(srv_futures, timeout=5):
+            for future in as_completed(srv_futures, timeout=6):
                 try:
                     result = future.result()
                     if result:
                         prefix, srv_records = result
                         for rec in srv_records:
                             records["SRV"].append(f"{prefix}: {rec}")
-                except:
+                except Exception:
                     pass
         
         return records
@@ -663,20 +672,20 @@ class DNSAnalyzer:
                 except Exception:
                     return (result_key, [], 'error', None)
             
-            with ThreadPoolExecutor(max_workers=12) as executor:
+            with ThreadPoolExecutor(max_workers=8) as executor:
                 futures = {}
                 for t in record_types:
                     futures[executor.submit(query_auth_type, t)] = t
                 for key, qname in email_subdomains.items():
                     futures[executor.submit(query_auth_type, key, qname, 'TXT')] = key
-                for future in as_completed(futures, timeout=5):
+                for future in as_completed(futures, timeout=6):
                     try:
                         rtype, vals, status, ttl = future.result()
                         results[rtype] = vals
                         results['_query_status'][rtype] = status
                         if ttl is not None:
                             results['_ttl'][rtype] = ttl
-                    except:
+                    except Exception:
                         pass
                     
         except Exception as e:
@@ -1527,11 +1536,24 @@ class DNSAnalyzer:
         key_strengths = []
         
         def check_selector(selector):
-            records = self.dns_query("TXT", f"{selector}.{domain}")
-            if records:
-                dkim_records = [r for r in records if "v=dkim1" in r.lower() or "k=" in r.lower() or "p=" in r.lower()]
-                if dkim_records:
-                    return (selector, dkim_records)
+            fqdn = f"{selector}.{domain}"
+            try:
+                resolver = dns.resolver.Resolver(configure=False)
+                resolver.nameservers = ['1.1.1.1', '8.8.8.8']
+                resolver.timeout = 1.5
+                resolver.lifetime = 2.0
+                answer = resolver.resolve(fqdn, 'TXT')
+                records = [str(rr).strip('"') for rr in answer]
+                if records:
+                    dkim_records = [r for r in records if "v=dkim1" in r.lower() or "k=" in r.lower() or "p=" in r.lower()]
+                    if dkim_records:
+                        return (selector, dkim_records)
+            except (dns.resolver.NXDOMAIN, dns.resolver.NoAnswer, dns.resolver.NoNameservers):
+                pass
+            except dns.exception.Timeout:
+                pass
+            except Exception:
+                pass
             return None
         
         def analyze_dkim_key(record):
@@ -1585,7 +1607,7 @@ class DNSAnalyzer:
         
         with ThreadPoolExecutor(max_workers=10) as executor:
             futures = {executor.submit(check_selector, s): s for s in selectors}
-            for future in as_completed(futures, timeout=8):
+            for future in as_completed(futures, timeout=10):
                 try:
                     result = future.result()
                     if result:
@@ -1796,7 +1818,7 @@ class DNSAnalyzer:
         }
         
         try:
-            response = requests.get(url, timeout=5, allow_redirects=True)
+            response = requests.get(url, timeout=5, allow_redirects=True, headers={'User-Agent': self.USER_AGENT})
             if response.status_code == 200:
                 policy_text = response.text
                 result['fetched'] = True
@@ -2040,7 +2062,7 @@ class DNSAnalyzer:
             return result
         
         try:
-            response = requests.head(url, timeout=5, allow_redirects=True)
+            response = requests.head(url, timeout=5, allow_redirects=True, headers={'User-Agent': self.USER_AGENT})
             if response.status_code == 200:
                 content_type = response.headers.get('Content-Type', '')
                 if 'svg' in content_type.lower():
@@ -2051,7 +2073,7 @@ class DNSAnalyzer:
                     result['format'] = content_type.split('/')[-1].upper()
                 else:
                     # Try GET to check content
-                    get_resp = requests.get(url, timeout=5, allow_redirects=True)
+                    get_resp = requests.get(url, timeout=5, allow_redirects=True, headers={'User-Agent': self.USER_AGENT})
                     if get_resp.status_code == 200:
                         content = get_resp.text[:500].lower()
                         if '<svg' in content:
@@ -2083,7 +2105,7 @@ class DNSAnalyzer:
             return result
         
         try:
-            response = requests.get(url, timeout=5, allow_redirects=True)
+            response = requests.get(url, timeout=5, allow_redirects=True, headers={'User-Agent': self.USER_AGENT})
             if response.status_code == 200:
                 content = response.text
                 # VMC is a PEM-encoded certificate
@@ -2454,7 +2476,7 @@ class DNSAnalyzer:
         logging.warning("[RDAP] Falling back to direct requests")
         headers = {
             'Accept': 'application/rdap+json',
-            'User-Agent': 'DNS-Analyzer/1.0'
+            'User-Agent': self.USER_AGENT
         }
         
         direct_endpoints = {
@@ -3161,6 +3183,7 @@ class DNSAnalyzer:
                 }
             }
         
+        analysis_start = time.time()
         # Run all lookups in parallel for speed (5-10s target)
         with ThreadPoolExecutor(max_workers=15) as executor:
             futures = {
@@ -3181,9 +3204,12 @@ class DNSAnalyzer:
             }
             
             results_map = {}
+            task_times = {}
             try:
                 for future in as_completed(futures, timeout=25):
                     key = futures[future]
+                    task_elapsed = round(time.time() - analysis_start, 2)
+                    task_times[key] = task_elapsed
                     try:
                         results_map[key] = future.result()
                     except Exception as e:
@@ -3202,6 +3228,11 @@ class DNSAnalyzer:
                         else:
                             logging.warning(f"Lookup {key} timed out for {domain}")
                             results_map[key] = {} if key in ['basic', 'auth'] else {'status': 'timeout'}
+        
+        parallel_elapsed = round(time.time() - analysis_start, 2)
+        sorted_tasks = sorted(task_times.items(), key=lambda x: x[1], reverse=True)
+        slowest = ', '.join(f"{k}={v}s" for k, v in sorted_tasks[:5])
+        logging.info(f"Parallel lookups for {domain} completed in {parallel_elapsed}s ({len(results_map)}/{len(futures)} tasks) | Slowest: {slowest}")
         
         basic = results_map.get('basic', {})
         auth = results_map.get('auth', {})
@@ -3459,7 +3490,7 @@ class DNSAnalyzer:
         try:
             url = f"https://crt.sh/?q=%25.{domain}&output=json"
             response = requests.get(url, timeout=15, headers={
-                'User-Agent': 'DNSTool-SecurityAudit/1.0'
+                'User-Agent': self.USER_AGENT
             })
             
             if response.status_code != 200:
