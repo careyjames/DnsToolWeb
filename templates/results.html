@@ -1580,7 +1580,7 @@
                         <a href="https://datatracker.ietf.org/doc/html/rfc6962" target="_blank" rel="noopener" class="badge bg-dark bg-opacity-25 text-muted text-decoration-none fw-normal ms-2" style="font-size: 0.6rem;" title="Certificate Transparency">RFC 6962</a>
                     </h5>
                     {% if ct.get('status') == 'success' and ct.get('unique_subdomains', 0) > 0 %}
-                    <span class="badge bg-info-subtle text-info border border-info-subtle">{{ ct.unique_subdomains }} subdomain{{ 's' if ct.unique_subdomains != 1 else '' }}</span>
+                    <span class="badge bg-info-subtle text-info border border-info-subtle">{% if ct.get('was_truncated') %}{{ ct.display_count }} of {% endif %}{{ ct.unique_subdomains }} subdomain{{ 's' if ct.unique_subdomains != 1 else '' }}</span>
                     {% endif %}
                 </div>
                 <div class="card-body">
@@ -1647,7 +1647,7 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                {% for sub in ct.subdomains[:100] %}
+                                {% for sub in ct.subdomains %}
                                 <tr>
                                     <td class="border-secondary">
                                         <code class="small">{{ sub.name }}</code>
@@ -1691,8 +1691,14 @@
                             </tbody>
                         </table>
                     </div>
-                    {% if ct.subdomains|length > 100 %}
-                    <p class="text-muted small mt-2 mb-0"><i class="fas fa-ellipsis-h me-1"></i>Showing 100 of {{ ct.unique_subdomains }} subdomains</p>
+                    {% if ct.get('was_truncated') %}
+                    <div class="text-muted small mt-2 mb-0 p-2 rounded" style="background: rgba(255,255,255,0.03);">
+                        <i class="fas fa-filter me-1"></i><strong>Showing {{ ct.display_count }} of {{ ct.unique_subdomains }} subdomains</strong> &mdash; curated by security relevance.
+                        Well-known service names (mail, vpn, api, sso, admin, etc.), DNS-resolving hosts, and subdomains with the most certificate activity are prioritized.
+                        {% if ct.expired_count > 0 %}
+                        <span class="ms-1">{{ ct.expired_count }} expired-certificate-only subdomain{{ 's' if ct.expired_count != 1 else '' }} {{ 'mostly omitted' if ct.expired_count > ct.display_count else 'included where relevant' }}.</span>
+                        {% endif %}
+                    </div>
                     {% endif %}
                     {% elif ct.get('status') == 'success' and ct.get('unique_subdomains', 0) == 0 %}
                     {% if ct.get('is_analyzed_subdomain') and ct.get('registered_domain') %}

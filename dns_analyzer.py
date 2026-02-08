@@ -4016,17 +4016,35 @@ class DNSAnalyzer:
                         'source': 'dns',
                     })
             
-            provider_summary = self._enrich_subdomains_with_cnames(subdomains)
+            total_count = len(subdomains)
+            current_count = sum(1 for s in subdomains if s['is_current'])
+            expired_count = total_count - current_count
             
-            subdomains.sort(key=lambda x: (not x['is_current'], not bool(x.get('provider')), -x['cert_count'], x['name']))
+            DISPLAY_LIMIT = 100
             
-            result['subdomains'] = subdomains
-            result['unique_subdomains'] = len(subdomains)
-            result['current_count'] = sum(1 for s in subdomains if s['is_current'])
-            result['expired_count'] = sum(1 for s in subdomains if not s['is_current'])
+            display_set, was_truncated = self._curate_subdomain_display(
+                subdomains, domain, limit=DISPLAY_LIMIT
+            )
+            
+            provider_summary = self._enrich_subdomains_with_cnames(display_set)
+            
+            display_set.sort(key=lambda x: (
+                not x['is_current'],
+                not bool(x.get('provider')),
+                not x.get('_priority', False),
+                -x['cert_count'],
+                x['name']
+            ))
+            
+            result['subdomains'] = display_set
+            result['unique_subdomains'] = total_count
+            result['display_count'] = len(display_set)
+            result['current_count'] = current_count
+            result['expired_count'] = expired_count
+            result['was_truncated'] = was_truncated
             result['provider_summary'] = provider_summary
             result['providers_found'] = len(provider_summary)
-            result['cname_count'] = sum(1 for s in subdomains if s.get('cname_chain'))
+            result['cname_count'] = sum(1 for s in display_set if s.get('cname_chain'))
             
         except requests.exceptions.Timeout:
             result['status'] = 'timeout'
@@ -4041,6 +4059,74 @@ class DNSAnalyzer:
         
         return result
     
+    SECURITY_RELEVANT_PREFIXES = frozenset([
+        'www', 'mail', 'email', 'webmail', 'smtp', 'imap', 'pop', 'pop3',
+        'mx', 'mx1', 'mx2', 'relay', 'mta',
+        'api', 'api2', 'app', 'admin', 'portal', 'dashboard', 'console',
+        'vpn', 'remote', 'sso', 'auth', 'login', 'signin', 'oauth', 'id', 'identity', 'accounts',
+        'autodiscover', 'autoconfig', 'lyncdiscover', 'sip',
+        'owa', 'exchange', 'outlook', 'sharepoint',
+        'ftp', 'sftp', 'ssh', 'bastion',
+        'ns1', 'ns2', 'ns3', 'ns4', 'dns',
+        'dev', 'staging', 'beta', 'test',
+        'cdn', 'static', 'assets', 'media',
+        'git', 'gitlab', 'ci',
+        'status', 'monitor', 'grafana', 'sentry',
+        'blog', 'shop', 'store', 'docs', 'help', 'support', 'kb',
+        'crm', 'erp', 'jira', 'confluence',
+        'pay', 'payment', 'checkout', 'billing',
+        'cloud', 'server', 'proxy', 'gateway', 'lb', 'waf',
+        'secure', 'security', 'firewall',
+        'intranet', 'corp', 'office', 'internal',
+        'zendesk', 'hubspot', 'salesforce',
+        'm', 'mobile',
+        'calendar', 'meet', 'chat', 'teams', 'zoom',
+    ])
+
+    def _curate_subdomain_display(self, subdomains: list, domain: str, limit: int = 100) -> tuple:
+        """Select the most security-relevant subdomains for display.
+        
+        Uses a priority scoring system to surface subdomains that matter most
+        for security analysis while keeping the report concise and actionable.
+        
+        Returns (display_list, was_truncated) tuple.
+        """
+        if len(subdomains) <= limit:
+            return subdomains, False
+        
+        for sub in subdomains:
+            prefix = sub['name'].replace(f'.{domain}', '').split('.')[0] if sub['name'].endswith(f'.{domain}') else sub['name'].split('.')[0]
+            sub['_priority'] = prefix.lower() in self.SECURITY_RELEVANT_PREFIXES
+            sub['_source_dns'] = sub.get('source') == 'dns'
+        
+        current_priority = [s for s in subdomains if s['is_current'] and s['_priority']]
+        current_dns_only = [s for s in subdomains if s['is_current'] and s['_source_dns'] and not s['_priority']]
+        current_other = [s for s in subdomains if s['is_current'] and not s['_priority'] and not s['_source_dns']]
+        expired_priority = [s for s in subdomains if not s['is_current'] and s['_priority']]
+        expired_other = [s for s in subdomains if not s['is_current'] and not s['_priority']]
+        
+        current_priority.sort(key=lambda x: (-x['cert_count'], x['name']))
+        current_dns_only.sort(key=lambda x: x['name'])
+        current_other.sort(key=lambda x: (-x['cert_count'], x['name']))
+        expired_priority.sort(key=lambda x: (-x['cert_count'], x['name']))
+        expired_other.sort(key=lambda x: (-x['cert_count'], x['name']))
+        
+        display = []
+        remaining = limit
+        
+        for tier in [current_priority, current_dns_only, current_other, expired_priority, expired_other]:
+            take = min(len(tier), remaining)
+            display.extend(tier[:take])
+            remaining -= take
+            if remaining <= 0:
+                break
+        
+        logging.info(f"Subdomain curation for {domain}: {len(subdomains)} total -> {len(display)} displayed "
+                     f"(priority={len(current_priority)}, dns={len(current_dns_only)}, "
+                     f"other_current={len(current_other)}, expired_priority={len(expired_priority)})")
+        
+        return display, True
+
     def _resolve_cname_chain(self, fqdn: str, max_depth: int = 8) -> dict:
         """Resolve the full CNAME chain for a given FQDN.
         
