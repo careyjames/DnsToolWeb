@@ -1568,6 +1568,12 @@
                             <span class="badge bg-info-subtle text-info border border-info-subtle"><i class="fas fa-certificate me-1"></i>{{ ct.total_certs }} certificates analyzed</span>
                             <span class="badge bg-success-subtle text-success border border-success-subtle"><i class="fas fa-check me-1"></i>{{ ct.get('current_count', 0) }} current</span>
                             <span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle"><i class="fas fa-history me-1"></i>{{ ct.get('expired_count', 0) }} expired</span>
+                            {% if ct.get('cname_count', 0) > 0 %}
+                            <span class="badge bg-primary-subtle text-primary border border-primary-subtle"><i class="fas fa-link me-1"></i>{{ ct.cname_count }} CNAME{{ 's' if ct.cname_count != 1 else '' }}</span>
+                            {% endif %}
+                            {% if ct.get('providers_found', 0) > 0 %}
+                            <span class="badge bg-warning-subtle text-warning border border-warning-subtle"><i class="fas fa-building me-1"></i>{{ ct.providers_found }} provider{{ 's' if ct.providers_found != 1 else '' }} identified</span>
+                            {% endif %}
                             <span class="badge bg-dark bg-opacity-25 text-muted fw-normal"><i class="fas fa-database me-1"></i>Source: {{ ct.source }}</span>
                         </div>
                         <small class="text-muted"><i class="fas fa-info-circle me-1"></i>{{ ct.caveat }}</small>
@@ -1586,6 +1592,25 @@
                         </div>
                         {% endif %}
                     </div>
+                    {% if ct.get('provider_summary') and ct.provider_summary|length > 0 %}
+                    <div class="alert alert-warning bg-warning bg-opacity-10 border-warning border-opacity-25 py-2 mt-2 mb-3 small">
+                        <i class="fas fa-building me-1"></i>
+                        <strong>Third-party services detected via CNAME:</strong>
+                        <div class="d-flex flex-wrap gap-1 mt-2">
+                            {% set categories = {} %}
+                            {% for pname, pdata in ct.provider_summary.items() %}
+                            {% set cat = pdata.get('category', 'Other') %}
+                            {% if cat not in categories %}{% if categories.update({cat: []}) %}{% endif %}{% endif %}
+                            {% if categories[cat].append(pdata) %}{% endif %}
+                            {% endfor %}
+                            {% for cat, providers in categories|items %}
+                            {% for pdata in providers %}
+                            <span class="badge bg-{{ 'primary' if cat in ('Cloud', 'CDN', 'PaaS') else 'success' if cat in ('Website', 'Hosting') else 'info' if cat in ('Email', 'Support', 'Collaboration') else 'warning' if cat in ('Marketing', 'Analytics') else 'danger' if cat in ('Security', 'Identity') else 'secondary' }}-subtle text-{{ 'primary' if cat in ('Cloud', 'CDN', 'PaaS') else 'success' if cat in ('Website', 'Hosting') else 'info' if cat in ('Email', 'Support', 'Collaboration') else 'warning' if cat in ('Marketing', 'Analytics') else 'danger' if cat in ('Security', 'Identity') else 'secondary' }} border border-{{ 'primary' if cat in ('Cloud', 'CDN', 'PaaS') else 'success' if cat in ('Website', 'Hosting') else 'info' if cat in ('Email', 'Support', 'Collaboration') else 'warning' if cat in ('Marketing', 'Analytics') else 'danger' if cat in ('Security', 'Identity') else 'secondary' }}-subtle" data-bs-toggle="tooltip" title="{{ cat }} — {{ pdata.subdomains|join(', ') }}">{{ pdata.name }} <span class="opacity-75">({{ cat }})</span></span>
+                            {% endfor %}
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
                     <div class="table-responsive">
                         <table class="table table-sm table-hover mb-0">
                             <thead>
@@ -1593,6 +1618,7 @@
                                     <th class="border-secondary">Subdomain</th>
                                     <th class="border-secondary text-center">Source</th>
                                     <th class="border-secondary text-center">Status</th>
+                                    <th class="border-secondary">Provider / CNAME</th>
                                     <th class="border-secondary text-center">Certificates</th>
                                     <th class="border-secondary">First Seen</th>
                                     <th class="border-secondary">Issuer(s)</th>
@@ -1619,6 +1645,20 @@
                                         <span class="badge bg-success-subtle text-success border border-success-subtle" style="font-size:0.7rem;">Current</span>
                                         {% else %}
                                         <span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle" style="font-size:0.7rem;">Expired</span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="border-secondary">
+                                        {% if sub.get('provider') %}
+                                        <span class="badge bg-warning-subtle text-warning border border-warning-subtle" style="font-size:0.65rem;" data-bs-toggle="tooltip" title="CNAME chain: {{ sub.name }} → {{ sub.get('cname_chain', [])|join(' → ') }}">
+                                            <i class="fas fa-building me-1"></i>{{ sub.provider }}
+                                        </span>
+                                        <span class="d-block text-muted" style="font-size:0.6rem;">{{ sub.get('provider_category', '') }}</span>
+                                        {% elif sub.get('cname_target') %}
+                                        <span class="text-muted small" data-bs-toggle="tooltip" title="CNAME chain: {{ sub.name }} → {{ sub.get('cname_chain', [])|join(' → ') }}">
+                                            <i class="fas fa-link me-1" style="font-size:0.6rem;"></i><code style="font-size:0.65rem;">{{ sub.cname_target }}</code>
+                                        </span>
+                                        {% else %}
+                                        <span class="small text-muted">—</span>
                                         {% endif %}
                                     </td>
                                     <td class="border-secondary text-center"><span class="small text-muted">{{ sub.cert_count if sub.cert_count else '—' }}</span></td>

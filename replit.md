@@ -27,7 +27,8 @@ Preferred communication style: Simple, everyday language.
     - Identifies enterprise DNS providers and performs comprehensive DKIM analysis.
     - Detects DMARC monitoring, TLS-RPT reporting, and SPF flattening services.
     - **DNS Evidence Diff**: Compares resolver and authoritative records for various types (A, AAAA, MX, TXT, NS, CAA, SOA, _dmarc, _mta-sts, _smtp._tls).
-    - **Subdomain Discovery**: Combines Certificate Transparency logs (`crt.sh`) and DNS probing of common service names. Runs in parallel and attributes sources.
+    - **Subdomain Discovery**: Combines Certificate Transparency logs (`crt.sh`) and DNS probing of ~290 common service names. Runs in parallel and attributes sources.
+    - **CNAME Provider Identification**: Resolves CNAME chains for all discovered subdomains (up to 8 hops, loop-safe) and maps targets to 160+ known SaaS/cloud providers (Shopify, Zendesk, HubSpot, AWS, Azure, Cloudflare, Akamai, etc.) across categories (E-commerce, CDN, Cloud, Marketing, Support, CRM, Identity, Monitoring, etc.). Results shown with provider badges, category labels, and CNAME chain tooltips.
     - **Null MX and No-Mail Domain Detection**: Recognizes `MX 0 .` (RFC 7505) to classify non-mail domains.
     - **DANE/TLSA Analysis**: Queries and parses TLSA records for MX hosts, integrated into posture scoring, with educational context on adoption and complementarity with MTA-STS.
     - **DMARCbis Readiness**: Detects and displays `np=`, `t=`, and `psd=` tags, raising educational issues for missing `np=` on enforcing domains.

@@ -154,7 +154,188 @@ class DNSAnalyzer:
     ]
     
     USER_AGENT = 'DNSTool-DomainSecurityAudit/1.0 (+https://dnstool.it-help.tech)'
-    
+
+    CNAME_PROVIDER_MAP = {
+        'shopify.com': {'name': 'Shopify', 'category': 'E-commerce'},
+        'myshopify.com': {'name': 'Shopify', 'category': 'E-commerce'},
+        'bigcommerce.com': {'name': 'BigCommerce', 'category': 'E-commerce'},
+        'squarespace.com': {'name': 'Squarespace', 'category': 'Website'},
+        'wixdns.net': {'name': 'Wix', 'category': 'Website'},
+        'wix.com': {'name': 'Wix', 'category': 'Website'},
+        'wordpress.com': {'name': 'WordPress.com', 'category': 'Website'},
+        'wpengine.com': {'name': 'WP Engine', 'category': 'Website'},
+        'pantheonsite.io': {'name': 'Pantheon', 'category': 'Website'},
+        'netlify.app': {'name': 'Netlify', 'category': 'Website'},
+        'netlify.com': {'name': 'Netlify', 'category': 'Website'},
+        'vercel.app': {'name': 'Vercel', 'category': 'Website'},
+        'vercel-dns.com': {'name': 'Vercel', 'category': 'Website'},
+        'webflow.io': {'name': 'Webflow', 'category': 'Website'},
+        'ghost.io': {'name': 'Ghost', 'category': 'Website'},
+        'cargo.site': {'name': 'Cargo', 'category': 'Website'},
+        'strikingly.com': {'name': 'Strikingly', 'category': 'Website'},
+        'hubspot.net': {'name': 'HubSpot', 'category': 'Marketing'},
+        'hubspot.com': {'name': 'HubSpot', 'category': 'Marketing'},
+        'hs-sites.com': {'name': 'HubSpot', 'category': 'Marketing'},
+        'marketo.com': {'name': 'Marketo (Adobe)', 'category': 'Marketing'},
+        'mktoweb.com': {'name': 'Marketo (Adobe)', 'category': 'Marketing'},
+        'pardot.com': {'name': 'Pardot (Salesforce)', 'category': 'Marketing'},
+        'mailchimp.com': {'name': 'Mailchimp', 'category': 'Marketing'},
+        'mailgun.org': {'name': 'Mailgun', 'category': 'Email'},
+        'sendgrid.net': {'name': 'SendGrid (Twilio)', 'category': 'Email'},
+        'postmarkapp.com': {'name': 'Postmark', 'category': 'Email'},
+        'mandrillapp.com': {'name': 'Mandrill (Mailchimp)', 'category': 'Email'},
+        'zendesk.com': {'name': 'Zendesk', 'category': 'Support'},
+        'zendeskhost.com': {'name': 'Zendesk', 'category': 'Support'},
+        'freshdesk.com': {'name': 'Freshdesk', 'category': 'Support'},
+        'freshservice.com': {'name': 'Freshservice', 'category': 'Support'},
+        'intercom.io': {'name': 'Intercom', 'category': 'Support'},
+        'helpscout.com': {'name': 'Help Scout', 'category': 'Support'},
+        'helpscout.net': {'name': 'Help Scout', 'category': 'Support'},
+        'salesforce.com': {'name': 'Salesforce', 'category': 'CRM'},
+        'force.com': {'name': 'Salesforce', 'category': 'CRM'},
+        'salesforceliveagent.com': {'name': 'Salesforce', 'category': 'CRM'},
+        'zoho.com': {'name': 'Zoho', 'category': 'CRM'},
+        'zoho.eu': {'name': 'Zoho', 'category': 'CRM'},
+        'pipedrive.com': {'name': 'Pipedrive', 'category': 'CRM'},
+        'cloudfront.net': {'name': 'AWS CloudFront', 'category': 'CDN'},
+        'amazonaws.com': {'name': 'AWS', 'category': 'Cloud'},
+        'awsglobalaccelerator.com': {'name': 'AWS Global Accelerator', 'category': 'Cloud'},
+        'elasticbeanstalk.com': {'name': 'AWS Elastic Beanstalk', 'category': 'Cloud'},
+        's3.amazonaws.com': {'name': 'AWS S3', 'category': 'Cloud'},
+        'azurewebsites.net': {'name': 'Azure App Service', 'category': 'Cloud'},
+        'azure-api.net': {'name': 'Azure API Management', 'category': 'Cloud'},
+        'azurefd.net': {'name': 'Azure Front Door', 'category': 'CDN'},
+        'azureedge.net': {'name': 'Azure CDN', 'category': 'CDN'},
+        'trafficmanager.net': {'name': 'Azure Traffic Manager', 'category': 'Cloud'},
+        'cloudapp.azure.com': {'name': 'Azure', 'category': 'Cloud'},
+        'blob.core.windows.net': {'name': 'Azure Blob Storage', 'category': 'Cloud'},
+        'windows.net': {'name': 'Azure', 'category': 'Cloud'},
+        'googleapis.com': {'name': 'Google Cloud', 'category': 'Cloud'},
+        'appspot.com': {'name': 'Google App Engine', 'category': 'Cloud'},
+        'googleplex.com': {'name': 'Google', 'category': 'Cloud'},
+        'run.app': {'name': 'Google Cloud Run', 'category': 'Cloud'},
+        'web.app': {'name': 'Firebase Hosting', 'category': 'Cloud'},
+        'firebaseapp.com': {'name': 'Firebase', 'category': 'Cloud'},
+        'cdn.cloudflare.net': {'name': 'Cloudflare', 'category': 'CDN'},
+        'cloudflare.net': {'name': 'Cloudflare', 'category': 'CDN'},
+        'cdn77.org': {'name': 'CDN77', 'category': 'CDN'},
+        'fastly.net': {'name': 'Fastly', 'category': 'CDN'},
+        'edgekey.net': {'name': 'Akamai', 'category': 'CDN'},
+        'akamaiedge.net': {'name': 'Akamai', 'category': 'CDN'},
+        'akadns.net': {'name': 'Akamai', 'category': 'CDN'},
+        'akamaized.net': {'name': 'Akamai', 'category': 'CDN'},
+        'edgesuite.net': {'name': 'Akamai', 'category': 'CDN'},
+        'stackpathdns.com': {'name': 'StackPath', 'category': 'CDN'},
+        'stackpathcdn.com': {'name': 'StackPath', 'category': 'CDN'},
+        'sucuri.net': {'name': 'Sucuri', 'category': 'Security'},
+        'incapdns.net': {'name': 'Imperva (Incapsula)', 'category': 'Security'},
+        'impervadns.net': {'name': 'Imperva', 'category': 'Security'},
+        'heroku.com': {'name': 'Heroku', 'category': 'PaaS'},
+        'herokuapp.com': {'name': 'Heroku', 'category': 'PaaS'},
+        'herokudns.com': {'name': 'Heroku', 'category': 'PaaS'},
+        'render.com': {'name': 'Render', 'category': 'PaaS'},
+        'onrender.com': {'name': 'Render', 'category': 'PaaS'},
+        'fly.dev': {'name': 'Fly.io', 'category': 'PaaS'},
+        'digitaloceanspaces.com': {'name': 'DigitalOcean Spaces', 'category': 'Cloud'},
+        'ondigitalocean.app': {'name': 'DigitalOcean App Platform', 'category': 'Cloud'},
+        'github.io': {'name': 'GitHub Pages', 'category': 'Website'},
+        'githubusercontents.com': {'name': 'GitHub', 'category': 'DevOps'},
+        'gitlab.io': {'name': 'GitLab Pages', 'category': 'Website'},
+        'bitbucket.io': {'name': 'Bitbucket', 'category': 'DevOps'},
+        'atlassian.net': {'name': 'Atlassian', 'category': 'Collaboration'},
+        'statuspage.io': {'name': 'Statuspage (Atlassian)', 'category': 'Status Page'},
+        'status.io': {'name': 'Status.io', 'category': 'Status Page'},
+        'readthedocs.io': {'name': 'Read the Docs', 'category': 'Documentation'},
+        'gitbook.io': {'name': 'GitBook', 'category': 'Documentation'},
+        'readme.io': {'name': 'ReadMe', 'category': 'Documentation'},
+        'outlook.com': {'name': 'Microsoft 365', 'category': 'Email'},
+        'protection.outlook.com': {'name': 'Microsoft 365 (Exchange Online)', 'category': 'Email'},
+        'mx.microsoft': {'name': 'Microsoft 365 (DANE)', 'category': 'Email'},
+        'office365.com': {'name': 'Microsoft 365', 'category': 'Email'},
+        'sharepoint.com': {'name': 'SharePoint Online', 'category': 'Collaboration'},
+        'lync.com': {'name': 'Skype for Business', 'category': 'Collaboration'},
+        'microsoftonline.com': {'name': 'Microsoft Entra ID', 'category': 'Identity'},
+        'msappproxy.net': {'name': 'Azure AD App Proxy', 'category': 'Identity'},
+        'aspmx.l.google.com': {'name': 'Google Workspace', 'category': 'Email'},
+        'googlemail.com': {'name': 'Google Workspace', 'category': 'Email'},
+        'ghs.googlehosted.com': {'name': 'Google Sites', 'category': 'Website'},
+        'googlehosted.com': {'name': 'Google', 'category': 'Cloud'},
+        'stripe.com': {'name': 'Stripe', 'category': 'Payments'},
+        'chargebee.com': {'name': 'Chargebee', 'category': 'Payments'},
+        'recurly.com': {'name': 'Recurly', 'category': 'Payments'},
+        'braintreegateway.com': {'name': 'Braintree (PayPal)', 'category': 'Payments'},
+        'squareup.com': {'name': 'Square', 'category': 'Payments'},
+        'typeform.com': {'name': 'Typeform', 'category': 'Forms'},
+        'wufoo.com': {'name': 'Wufoo', 'category': 'Forms'},
+        'surveygizmo.com': {'name': 'Alchemer', 'category': 'Forms'},
+        'unbounce.com': {'name': 'Unbounce', 'category': 'Landing Pages'},
+        'instapage.com': {'name': 'Instapage', 'category': 'Landing Pages'},
+        'leadpages.net': {'name': 'Leadpages', 'category': 'Landing Pages'},
+        'canva.com': {'name': 'Canva', 'category': 'Design'},
+        'calendly.com': {'name': 'Calendly', 'category': 'Scheduling'},
+        'acuityscheduling.com': {'name': 'Acuity Scheduling', 'category': 'Scheduling'},
+        'eventbrite.com': {'name': 'Eventbrite', 'category': 'Events'},
+        'zoom.us': {'name': 'Zoom', 'category': 'Video'},
+        'webex.com': {'name': 'Webex (Cisco)', 'category': 'Video'},
+        'auth0.com': {'name': 'Auth0 (Okta)', 'category': 'Identity'},
+        'okta.com': {'name': 'Okta', 'category': 'Identity'},
+        'onelogin.com': {'name': 'OneLogin', 'category': 'Identity'},
+        'duosecurity.com': {'name': 'Duo (Cisco)', 'category': 'Identity'},
+        'greenhouse.io': {'name': 'Greenhouse', 'category': 'Recruiting'},
+        'lever.co': {'name': 'Lever', 'category': 'Recruiting'},
+        'workday.com': {'name': 'Workday', 'category': 'HR'},
+        'bamboohr.com': {'name': 'BambooHR', 'category': 'HR'},
+        'namely.com': {'name': 'Namely', 'category': 'HR'},
+        'gusto.com': {'name': 'Gusto', 'category': 'HR'},
+        'slack.com': {'name': 'Slack', 'category': 'Collaboration'},
+        'notion.so': {'name': 'Notion', 'category': 'Collaboration'},
+        'monday.com': {'name': 'monday.com', 'category': 'Collaboration'},
+        'asana.com': {'name': 'Asana', 'category': 'Collaboration'},
+        'pagerduty.com': {'name': 'PagerDuty', 'category': 'Monitoring'},
+        'datadoghq.com': {'name': 'Datadog', 'category': 'Monitoring'},
+        'datadoghq.eu': {'name': 'Datadog', 'category': 'Monitoring'},
+        'sentry.io': {'name': 'Sentry', 'category': 'Monitoring'},
+        'newrelic.com': {'name': 'New Relic', 'category': 'Monitoring'},
+        'sumologic.com': {'name': 'Sumo Logic', 'category': 'Monitoring'},
+        'grafana.net': {'name': 'Grafana Cloud', 'category': 'Monitoring'},
+        'docusign.com': {'name': 'DocuSign', 'category': 'Documents'},
+        'docusign.net': {'name': 'DocuSign', 'category': 'Documents'},
+        'hellosign.com': {'name': 'HelloSign (Dropbox)', 'category': 'Documents'},
+        'box.com': {'name': 'Box', 'category': 'Storage'},
+        'dropbox.com': {'name': 'Dropbox', 'category': 'Storage'},
+        'egnyte.com': {'name': 'Egnyte', 'category': 'Storage'},
+        'teachable.com': {'name': 'Teachable', 'category': 'Learning'},
+        'thinkific.com': {'name': 'Thinkific', 'category': 'Learning'},
+        'kajabi.com': {'name': 'Kajabi', 'category': 'Learning'},
+        'discourse.org': {'name': 'Discourse', 'category': 'Community'},
+        'discourse.cloud': {'name': 'Discourse', 'category': 'Community'},
+        'mattermost.com': {'name': 'Mattermost', 'category': 'Collaboration'},
+        'tawk.to': {'name': 'tawk.to', 'category': 'Live Chat'},
+        'crisp.chat': {'name': 'Crisp', 'category': 'Live Chat'},
+        'drift.com': {'name': 'Drift', 'category': 'Live Chat'},
+        'livechatinc.com': {'name': 'LiveChat', 'category': 'Live Chat'},
+        'segment.com': {'name': 'Segment (Twilio)', 'category': 'Analytics'},
+        'segment.io': {'name': 'Segment (Twilio)', 'category': 'Analytics'},
+        'amplitude.com': {'name': 'Amplitude', 'category': 'Analytics'},
+        'mixpanel.com': {'name': 'Mixpanel', 'category': 'Analytics'},
+        'hotjar.com': {'name': 'Hotjar', 'category': 'Analytics'},
+        'optimizely.com': {'name': 'Optimizely', 'category': 'Analytics'},
+        'crazyegg.com': {'name': 'Crazy Egg', 'category': 'Analytics'},
+        'wpenginepowered.com': {'name': 'WP Engine', 'category': 'Website'},
+        'flywheel.io': {'name': 'Flywheel', 'category': 'Website'},
+        'kinsta.cloud': {'name': 'Kinsta', 'category': 'Website'},
+        'cloudwaysapps.com': {'name': 'Cloudways', 'category': 'Website'},
+        'siteground.net': {'name': 'SiteGround', 'category': 'Hosting'},
+        'bluehost.com': {'name': 'Bluehost', 'category': 'Hosting'},
+        'godaddysites.com': {'name': 'GoDaddy', 'category': 'Hosting'},
+        'secureserver.net': {'name': 'GoDaddy', 'category': 'Hosting'},
+        'hostgator.com': {'name': 'HostGator', 'category': 'Hosting'},
+        'dreamhost.com': {'name': 'DreamHost', 'category': 'Hosting'},
+        'wpcomstaging.com': {'name': 'WordPress.com', 'category': 'Website'},
+        'service-now.com': {'name': 'ServiceNow', 'category': 'ITSM'},
+        'servicenow.com': {'name': 'ServiceNow', 'category': 'ITSM'},
+    }
+
     def __init__(self):
         self.dns_timeout = 2
         self.dns_tries = 2
@@ -3835,12 +4016,17 @@ class DNSAnalyzer:
                         'source': 'dns',
                     })
             
-            subdomains.sort(key=lambda x: (not x['is_current'], -x['cert_count'], x['name']))
+            provider_summary = self._enrich_subdomains_with_cnames(subdomains)
+            
+            subdomains.sort(key=lambda x: (not x['is_current'], not bool(x.get('provider')), -x['cert_count'], x['name']))
             
             result['subdomains'] = subdomains
             result['unique_subdomains'] = len(subdomains)
             result['current_count'] = sum(1 for s in subdomains if s['is_current'])
             result['expired_count'] = sum(1 for s in subdomains if not s['is_current'])
+            result['provider_summary'] = provider_summary
+            result['providers_found'] = len(provider_summary)
+            result['cname_count'] = sum(1 for s in subdomains if s.get('cname_chain'))
             
         except requests.exceptions.Timeout:
             result['status'] = 'timeout'
@@ -3855,6 +4041,112 @@ class DNSAnalyzer:
         
         return result
     
+    def _resolve_cname_chain(self, fqdn: str, max_depth: int = 8) -> dict:
+        """Resolve the full CNAME chain for a given FQDN.
+        
+        Returns dict with:
+          - chain: list of CNAME targets in order
+          - target: final CNAME target (or None if no CNAME)
+          - provider: identified provider dict or None
+        """
+        chain = []
+        seen = set()
+        current = fqdn
+        
+        r = dns.resolver.Resolver()
+        r.nameservers = ['1.1.1.1', '8.8.8.8']
+        r.lifetime = 2.0
+        r.timeout = 1.5
+        
+        for _ in range(max_depth):
+            if current in seen:
+                break
+            seen.add(current)
+            try:
+                answers = r.resolve(current, 'CNAME')
+                for rdata in answers:
+                    target = str(rdata.target).rstrip('.')
+                    chain.append(target)
+                    current = target
+                    break
+            except (dns.resolver.NoAnswer, dns.resolver.NXDOMAIN, dns.resolver.NoNameservers):
+                break
+            except Exception:
+                break
+        
+        provider = None
+        for cname_target in reversed(chain):
+            provider = self._identify_cname_provider(cname_target)
+            if provider:
+                break
+        
+        return {
+            'chain': chain,
+            'target': chain[-1] if chain else None,
+            'provider': provider,
+        }
+
+    def _identify_cname_provider(self, cname_target: str) -> Optional[dict]:
+        """Match a CNAME target against known SaaS/cloud provider patterns."""
+        target_lower = cname_target.lower()
+        for pattern, info in self.CNAME_PROVIDER_MAP.items():
+            if target_lower == pattern or target_lower.endswith('.' + pattern):
+                return info
+        return None
+
+    def _enrich_subdomains_with_cnames(self, subdomains: list) -> dict:
+        """Resolve CNAME chains for all discovered subdomains in parallel.
+        
+        Returns a provider_summary dict counting providers by category.
+        Also mutates each subdomain dict to add cname_chain, cname_target, provider keys.
+        """
+        from concurrent.futures import ThreadPoolExecutor, as_completed
+        
+        current_subs = [s for s in subdomains if s.get('is_current', False)]
+        
+        def resolve_one(sub):
+            name = sub['name']
+            result = self._resolve_cname_chain(name)
+            return (name, result)
+        
+        cname_results = {}
+        with ThreadPoolExecutor(max_workers=30) as executor:
+            futures = {executor.submit(resolve_one, s): s for s in current_subs}
+            try:
+                for future in as_completed(futures, timeout=20):
+                    try:
+                        name, result = future.result(timeout=3)
+                        cname_results[name] = result
+                    except Exception:
+                        continue
+            except TimeoutError:
+                for future in futures:
+                    if future.done():
+                        try:
+                            name, result = future.result(timeout=0)
+                            cname_results[name] = result
+                        except Exception:
+                            continue
+        
+        provider_summary = {}
+        for sub in subdomains:
+            cname_data = cname_results.get(sub['name'])
+            if cname_data and cname_data['chain']:
+                sub['cname_chain'] = cname_data['chain']
+                sub['cname_target'] = cname_data['target']
+                if cname_data['provider']:
+                    sub['provider'] = cname_data['provider']['name']
+                    sub['provider_category'] = cname_data['provider']['category']
+                    cat = cname_data['provider']['category']
+                    pname = cname_data['provider']['name']
+                    if pname not in provider_summary:
+                        provider_summary[pname] = {'name': pname, 'category': cat, 'count': 0, 'subdomains': []}
+                    provider_summary[pname]['count'] += 1
+                    provider_summary[pname]['subdomains'].append(sub['name'])
+        
+        logging.info(f"CNAME enrichment: resolved {len(cname_results)} subdomains, identified {len(provider_summary)} providers")
+        return provider_summary
+
     def _probe_common_subdomains(self, domain: str) -> list:
         """Probe common subdomain names via DNS A/AAAA lookups.
         
