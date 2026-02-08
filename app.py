@@ -16,7 +16,7 @@ from sqlalchemy import JSON
 from dns_analyzer import DNSAnalyzer
 
 # App version - format: YY.M.patch (bump last number for small changes)
-APP_VERSION = "26.10.64"
+APP_VERSION = "26.10.65"
 
 
 class TraceIDFilter(logging.Filter):
@@ -500,6 +500,9 @@ class DomainAnalysis(db.Model):
     # Subdomain Discovery (Certificate Transparency)
     ct_subdomains = db.Column(JSON)
     
+    # Complete analysis results (stores everything for full history playback)
+    full_results = db.Column(JSON)
+    
     # Analysis metadata
     analysis_success = db.Column(db.Boolean, default=True)
     error_message = db.Column(db.Text)
@@ -917,6 +920,7 @@ def analyze():
             registrar_name=results.get('registrar_info', {}).get('registrar'),
             registrar_source=results.get('registrar_info', {}).get('source'),
             ct_subdomains=results.get('ct_subdomains'),
+            full_results=results,
             country_code=geo.get('code'),
             country_name=geo.get('name'),
             analysis_success=True,
@@ -1058,6 +1062,7 @@ def view_analysis(analysis_id):
     analysis.registrar_name = results.get('registrar_info', {}).get('registrar')
     analysis.registrar_source = results.get('registrar_info', {}).get('source')
     analysis.ct_subdomains = results.get('ct_subdomains')
+    analysis.full_results = results
     analysis.country_code = geo.get('code') or analysis.country_code
     analysis.country_name = geo.get('name') or analysis.country_name
     analysis.analysis_duration = analysis_duration
@@ -1088,48 +1093,49 @@ def view_analysis_static(analysis_id):
     wait_seconds = request.args.get('wait_seconds', type=int)
     wait_reason = request.args.get('wait_reason', '')
     
-    # Reconstruct results from stored data with safe defaults for template
-    results = {
-        'basic_records': analysis.basic_records or {},
-        'authoritative_records': analysis.authoritative_records or {},
-        'spf_analysis': {
-            'status': analysis.spf_status,
-            'records': analysis.spf_records or [],
-            'message': '',
-        },
-        'dmarc_analysis': {
-            'status': analysis.dmarc_status,
-            'policy': analysis.dmarc_policy,
-            'records': analysis.dmarc_records or [],
-            'message': '',
-        },
-        'dkim_analysis': {
-            'status': analysis.dkim_status,
-            'selectors': analysis.dkim_selectors or {},
-            'message': '',
-        },
-        'registrar_info': {
-            'registrar': analysis.registrar_name,
-            'source': analysis.registrar_source,
-        },
-        # Safe defaults for fields not stored in DB
-        'mta_sts_analysis': {'status': 'unknown', 'message': 'Data not available in cached view'},
-        'tlsrpt_analysis': {'status': 'unknown', 'message': 'Data not available in cached view'},
-        'bimi_analysis': {'status': 'unknown', 'message': 'Data not available in cached view'},
-        'caa_analysis': {'status': 'unknown', 'message': 'Data not available in cached view'},
-        'dnssec_analysis': {'status': 'unknown', 'message': 'Data not available in cached view'},
-        'ns_delegation_analysis': {'status': 'unknown', 'message': 'Data not available in cached view'},
-        'hosting_summary': {},
-        'dns_infrastructure': {},
-        'email_security_mgmt': {'actively_managed': False, 'providers': [], 'spf_flattening': None, 'provider_count': 0},
-        'posture': None,
-        'domain_exists': True,
-        'smtp_tls_analysis': {},
-        'propagation_status': {},
-        'section_status': {},
-        'ct_subdomains': analysis.ct_subdomains or {'status': 'not_available', 'subdomains': [], 'unique_subdomains': 0, 'message': 'Subdomain discovery data not available for this report'},
-        'domain_status_message': '',
-    }
+    if analysis.full_results:
+        results = analysis.full_results
+    else:
+        results = {
+            'basic_records': analysis.basic_records or {},
+            'authoritative_records': analysis.authoritative_records or {},
+            'spf_analysis': {
+                'status': analysis.spf_status,
+                'records': analysis.spf_records or [],
+                'message': '',
+            },
+            'dmarc_analysis': {
+                'status': analysis.dmarc_status,
+                'policy': analysis.dmarc_policy,
+                'records': analysis.dmarc_records or [],
+                'message': '',
+            },
+            'dkim_analysis': {
+                'status': analysis.dkim_status,
+                'selectors': analysis.dkim_selectors or {},
+                'message': '',
+            },
+            'registrar_info': {
+                'registrar': analysis.registrar_name,
+                'source': analysis.registrar_source,
+            },
+            'mta_sts_analysis': {'status': 'unknown', 'message': 'This is an older report — re-analyze for complete results'},
+            'tlsrpt_analysis': {'status': 'unknown', 'message': 'This is an older report — re-analyze for complete results'},
+            'bimi_analysis': {'status': 'unknown', 'message': 'This is an older report — re-analyze for complete results'},
+            'caa_analysis': {'status': 'unknown', 'message': 'This is an older report — re-analyze for complete results'},
+            'dnssec_analysis': {'status': 'unknown', 'message': 'This is an older report — re-analyze for complete results'},
+            'ns_delegation_analysis': {'status': 'unknown', 'message': 'This is an older report — re-analyze for complete results'},
+            'hosting_summary': {},
+            'dns_infrastructure': {},
+            'email_security_mgmt': {'actively_managed': False, 'providers': [], 'spf_flattening': None, 'provider_count': 0},
+            'posture': None,
+            'domain_exists': True,
+            'smtp_tls_analysis': {},
+            'propagation_status': {},
+            'section_status': {},
+            'ct_subdomains': analysis.ct_subdomains or {'status': 'not_available', 'subdomains': [], 'unique_subdomains': 0, 'message': 'Subdomain discovery data not available for this report'},
+            'domain_status_message': '',
+        }
     
     return render_template('results.html',
                          domain=domain,
