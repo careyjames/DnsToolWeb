@@ -35,7 +35,7 @@ Preferred communication style: Simple, everyday language.
     - **DMARCbis Readiness**: Detects and displays `np=`, `t=`, and `psd=` tags, raising educational issues for missing `np=` on enforcing domains.
     - **MPIC Awareness**: CAA analysis includes context on Multi-Perspective Issuance Corroboration (CA/B Forum Ballot SC-067).
     - **Subdomain-aware analysis**: Handles DNSSEC inheritance, NS delegation, and RDAP lookups for subdomains, providing context-aware messaging when analyzing a subdomain.
-- **Data Model**: `DomainAnalysis` stores all results including DNS records, SPF/DMARC status, and policies in JSON fields.
+- **Data Model**: `DomainAnalysis` stores complete analysis results in a `full_results` JSON column for full history playback. Every stored report contains the complete picture — posture, verdicts, all sections — so historical views are identical to live results. Individual columns (spf_status, dmarc_policy, etc.) are retained for query/filtering but `full_results` is the source of truth for rendering. If `full_results` is missing, the view redirects to re-analyze rather than showing degraded data.
 
 ### Frontend Architecture
 - Server-rendered HTML using Jinja2 templates.
