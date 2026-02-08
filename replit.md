@@ -36,6 +36,12 @@ Preferred communication style: Simple, everyday language.
     - **MPIC Awareness**: CAA analysis includes context on Multi-Perspective Issuance Corroboration (CA/B Forum Ballot SC-067).
     - **Subdomain-aware analysis**: Handles DNSSEC inheritance, NS delegation, and RDAP lookups for subdomains, providing context-aware messaging when analyzing a subdomain.
 - **Data Model**: `DomainAnalysis` stores complete analysis results in a `full_results` JSON column for full history playback. Every stored report contains the complete picture — posture, verdicts, all sections — so historical views are identical to live results. Individual columns (spf_status, dmarc_policy, etc.) are retained for query/filtering but `full_results` is the source of truth for rendering. If `full_results` is missing, the view redirects to re-analyze rather than showing degraded data.
+- **Data Integrity Safeguards (v26.10.68)**:
+    - `full_results` column has a database-level `NOT NULL` constraint — PostgreSQL will reject any insert without complete data.
+    - SQLAlchemy `before_insert` and `before_update` event listeners validate that `full_results` contains all required sections (`basic_records`, `spf_analysis`, `dmarc_analysis`, `dkim_analysis`, `registrar_info`, `posture`) before any write reaches the database.
+    - Failed analyses are **never saved** to the database. Only successful, fully-populated reports are persisted. Stats are still tracked for failed attempts.
+    - History queries filter to `analysis_success=True AND full_results IS NOT NULL` as an additional safety net.
+    - **Schema versioning**: Every `full_results` payload includes a `_schema_version` field (currently `2`). Future code changes can use this to migrate or adapt older records without data loss. Schema changes must always be additive (new fields) — never remove or rename existing fields.
 
 ### Frontend Architecture
 - Server-rendered HTML using Jinja2 templates.

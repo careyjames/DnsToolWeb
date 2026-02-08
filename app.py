@@ -12,11 +12,11 @@ from flask import Flask, render_template, request, flash, redirect, url_for, jso
 from flask_sqlalchemy import SQLAlchemy
 from flask_compress import Compress
 from sqlalchemy.orm import DeclarativeBase
-from sqlalchemy import JSON
+from sqlalchemy import JSON, event
 from dns_analyzer import DNSAnalyzer
 
 # App version - format: YY.M.patch (bump last number for small changes)
-APP_VERSION = "26.10.67"
+APP_VERSION = "26.10.68"
 
 
 class TraceIDFilter(logging.Filter):
@@ -513,9 +513,31 @@ class DomainAnalysis(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
+    SCHEMA_VERSION = 2
+
+    REQUIRED_SECTIONS = [
+        'basic_records', 'spf_analysis', 'dmarc_analysis',
+        'dkim_analysis', 'registrar_info', 'posture'
+    ]
+
     def __init__(self, **kwargs):
+        if 'full_results' in kwargs and kwargs['full_results'] is not None:
+            kwargs['full_results']['_schema_version'] = self.SCHEMA_VERSION
         super().__init__(**kwargs)
-    
+
+    def validate_integrity(self):
+        if not self.full_results:
+            raise ValueError(f"DomainAnalysis {self.domain}: full_results is empty")
+        missing = [s for s in self.REQUIRED_SECTIONS if s not in self.full_results]
+        if missing:
+            raise ValueError(f"DomainAnalysis {self.domain}: missing sections: {missing}")
+        empty = [s for s in self.REQUIRED_SECTIONS if not self.full_results.get(s)]
+        if empty:
+            raise ValueError(f"DomainAnalysis {self.domain}: empty sections: {empty}")
+        if '_schema_version' not in self.full_results:
+            self.full_results['_schema_version'] = self.SCHEMA_VERSION
+        return True
+
     def __repr__(self):
         return f'<DomainAnalysis {self.domain}>'
     
@@ -571,6 +593,15 @@ class AnalysisStats(db.Model):
     
     def __repr__(self):
         return f'<AnalysisStats {self.date}>'
+
+@event.listens_for(DomainAnalysis, 'before_insert')
+def validate_before_insert(mapper, connection, target):
+    target.validate_integrity()
+
+@event.listens_for(DomainAnalysis, 'before_update')
+def validate_before_update(mapper, connection, target):
+    if target.full_results is not None:
+        target.validate_integrity()
 
 # Create tables - wrapped in try-except to prevent startup failures
 try:
@@ -905,45 +936,45 @@ def analyze():
         # Calculate analysis duration
         analysis_duration = time.time() - start_time
         
-        # Save analysis to database
-        analysis = DomainAnalysis(
-            domain=domain,
-            ascii_domain=ascii_domain,
-            basic_records=results.get('basic_records', {}),
-            authoritative_records=results.get('authoritative_records', {}),
-            spf_status=results.get('spf_analysis', {}).get('status'),
-            spf_records=results.get('spf_analysis', {}).get('records', []),
-            dmarc_status=results.get('dmarc_analysis', {}).get('status'),
-            dmarc_policy=results.get('dmarc_analysis', {}).get('policy'),
-            dmarc_records=results.get('dmarc_analysis', {}).get('records', []),
-            dkim_status=results.get('dkim_analysis', {}).get('status'),
-            dkim_selectors=results.get('dkim_analysis', {}).get('selectors', {}),
-            registrar_name=results.get('registrar_info', {}).get('registrar'),
-            registrar_source=results.get('registrar_info', {}).get('source'),
-            ct_subdomains=results.get('ct_subdomains'),
-            full_results=results,
-            country_code=geo.get('code'),
-            country_name=geo.get('name'),
-            analysis_success=True,
-            analysis_duration=analysis_duration
-        )
+        # Save analysis to database (integrity validated by before_insert listener)
+        try:
+            analysis = DomainAnalysis(
+                domain=domain,
+                ascii_domain=ascii_domain,
+                basic_records=results.get('basic_records', {}),
+                authoritative_records=results.get('authoritative_records', {}),
+                spf_status=results.get('spf_analysis', {}).get('status'),
+                spf_records=results.get('spf_analysis', {}).get('records', []),
+                dmarc_status=results.get('dmarc_analysis', {}).get('status'),
+                dmarc_policy=results.get('dmarc_analysis', {}).get('policy'),
+                dmarc_records=results.get('dmarc_analysis', {}).get('records', []),
+                dkim_status=results.get('dkim_analysis', {}).get('status'),
+                dkim_selectors=results.get('dkim_analysis', {}).get('selectors', {}),
+                registrar_name=results.get('registrar_info', {}).get('registrar'),
+                registrar_source=results.get('registrar_info', {}).get('source'),
+                ct_subdomains=results.get('ct_subdomains'),
+                full_results=results,
+                country_code=geo.get('code'),
+                country_name=geo.get('name'),
+                analysis_success=True,
+                analysis_duration=analysis_duration
+            )
+            db.session.add(analysis)
+            db.session.commit()
+        except (ValueError, Exception) as save_err:
+            db.session.rollback()
+            logging.warning(f"Could not save analysis for {domain}: {save_err}")
+            analysis = None
         
-        # Add propagation data to results for template if not stored in DB
-        # We don't change the model schema in fast mode to avoid migration issues
-        
-        db.session.add(analysis)
-        db.session.commit()
-        
-        # Update daily statistics (rate limit already recorded in check_and_record)
         update_daily_stats(analysis_success=True, duration=analysis_duration, domain=domain)
         
         return render_template('results.html', 
                              domain=domain, 
                              ascii_domain=ascii_domain,
                              results=results,
-                             analysis_id=analysis.id,
+                             analysis_id=analysis.id if analysis else None,
                              analysis_duration=analysis_duration,
-                             analysis_timestamp=analysis.created_at)
+                             analysis_timestamp=analysis.created_at if analysis else datetime.utcnow())
         
     except Exception as e:
         analysis_duration = time.time() - start_time
@@ -1006,7 +1037,10 @@ def history():
     page = request.args.get('page', 1, type=int)
     per_page = 20
     
-    analyses = DomainAnalysis.query.order_by(
+    analyses = DomainAnalysis.query.filter(
+        DomainAnalysis.full_results.isnot(None),
+        DomainAnalysis.analysis_success == True
+    ).order_by(
         DomainAnalysis.created_at.desc()
     ).paginate(
         page=page, per_page=per_page, error_out=False
@@ -1050,6 +1084,7 @@ def view_analysis(analysis_id):
     analysis.registrar_name = results.get('registrar_info', {}).get('registrar')
     analysis.registrar_source = results.get('registrar_info', {}).get('source')
     analysis.ct_subdomains = results.get('ct_subdomains')
+    results['_schema_version'] = DomainAnalysis.SCHEMA_VERSION
     analysis.full_results = results
     analysis.country_code = geo.get('code') or analysis.country_code
     analysis.country_name = geo.get('name') or analysis.country_name
