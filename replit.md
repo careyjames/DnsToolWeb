@@ -4,7 +4,13 @@
 
 A web-based DNS intelligence tool for comprehensive domain record analysis, email security validation (SPF, DMARC, DKIM), email security management provider detection, and DNS security intelligence reports. The application aims to provide a robust, user-friendly platform for understanding and improving domain and email security posture, offering insights into business vision, market potential, and project ambitions.
 
-## Recent Changes (v26.10.45)
+## Recent Changes (v26.10.46)
+- DNS Evidence Diff now includes email security subdomain records (v26.10.46):
+  - **DMARC** (`_dmarc.domain`), **MTA-STS** (`_mta-sts.domain`), and **TLS-RPT** (`_smtp._tls.domain`) TXT records now appear in the side-by-side diff alongside standard record types (A, AAAA, MX, TXT, NS).
+  - Each email security record shows its full subdomain label (e.g., `_dmarc.google.com`) for transparency.
+  - Both resolver (public DNS cache) and authoritative (source of truth) records queried and compared for propagation checking.
+  - Authoritative NS timeout increased from 1s to 2s to improve reliability for subdomain TXT queries.
+  - Previously these records were analyzed and displayed in the Email Security section but omitted from the DNS Evidence Diff.
 - Null MX (RFC 7505) recognition and No-Mail Domain detection (v26.10.45):
   - **Null MX**: `MX 0 .` now recognized as an explicit "this domain does not accept mail" declaration per RFC 7505. Previously displayed as a regular mail server entry.
   - **No-Mail Domain banner**: When SPF is `-all` AND MX is Null MX (or absent), a prominent info banner appears in Email Security section with evidence badges (SPF -all, Null MX, DMARC reject) explaining the domain intentionally does not send or receive email.

@@ -566,10 +566,16 @@ class DNSAnalyzer:
     def get_authoritative_records(self, domain: str) -> Dict[str, List[str]]:
         """Get DNS records directly from authoritative nameservers (optimized for speed)."""
         record_types = ["A", "AAAA", "MX", "TXT", "NS"]
+        email_subdomains = {
+            'DMARC': f'_dmarc.{domain}',
+            'MTA-STS': f'_mta-sts.{domain}',
+            'TLS-RPT': f'_smtp._tls.{domain}',
+        }
         results = {t: [] for t in record_types}
+        for key in email_subdomains:
+            results[key] = []
         
         try:
-            # 1. Find authoritative nameservers (quick lookup)
             ns_records = self.dns_query("NS", domain)
             if not ns_records:
                 parts = domain.split(".")
@@ -580,7 +586,6 @@ class DNSAnalyzer:
             if not ns_records:
                 return results
 
-            # 2. Use only first nameserver for speed
             ns_host = ns_records[0]
             ns_ips = self.dns_query("A", ns_host.rstrip("."))
             if not ns_ips:
@@ -588,20 +593,23 @@ class DNSAnalyzer:
                 
             resolver = dns.resolver.Resolver(configure=False)
             resolver.nameservers = ns_ips
-            resolver.timeout = 1
-            resolver.lifetime = 1
+            resolver.timeout = 2
+            resolver.lifetime = 2
             
-            # 3. Query all record types in parallel
-            def query_auth_type(rtype):
+            def query_auth_type(result_key, qname=None, dns_type=None):
                 try:
-                    answer = resolver.resolve(domain, rtype)
-                    return (rtype, [str(rr).strip('"') for rr in answer])
+                    answer = resolver.resolve(qname or domain, dns_type or result_key)
+                    return (result_key, [str(rr).strip('"') for rr in answer])
                 except:
-                    return (rtype, [])
+                    return (result_key, [])
             
-            with ThreadPoolExecutor(max_workers=5) as executor:
-                futures = {executor.submit(query_auth_type, t): t for t in record_types}
-                for future in as_completed(futures, timeout=3):
+            with ThreadPoolExecutor(max_workers=8) as executor:
+                futures = {}
+                for t in record_types:
+                    futures[executor.submit(query_auth_type, t)] = t
+                for key, qname in email_subdomains.items():
+                    futures[executor.submit(query_auth_type, key, qname, 'TXT')] = key
+                for future in as_completed(futures, timeout=4):
                     try:
                         rtype, vals = future.result()
                         results[rtype] = vals
@@ -3197,6 +3205,14 @@ class DNSAnalyzer:
                         dkim_result['primary_dkim_note'] = ''
                 
                 results_map['dkim'] = dkim_result
+        
+        # Inject email security subdomain TXT records into basic_records for DNS Evidence Diff
+        dmarc_data = results_map.get('dmarc', {})
+        mta_sts_data = results_map.get('mta_sts', {})
+        tlsrpt_data = results_map.get('tlsrpt', {})
+        basic['DMARC'] = dmarc_data.get('valid_records', []) if isinstance(dmarc_data, dict) and dmarc_data.get('status') in ('success', 'warning') else []
+        basic['MTA-STS'] = [mta_sts_data.get('record', '')] if isinstance(mta_sts_data, dict) and mta_sts_data.get('record') else []
+        basic['TLS-RPT'] = [tlsrpt_data.get('record', '')] if isinstance(tlsrpt_data, dict) and tlsrpt_data.get('record') else []
         
         # Determine propagation status
         propagation_status = {}

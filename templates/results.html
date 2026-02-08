@@ -1268,10 +1268,14 @@
                             {% set auth_records = results.authoritative_records.get(record_type, []) if results.authoritative_records else [] %}
                             {% set max_len = [resolver_records|length, auth_records|length]|max %}
                             
-                            {% if max_len > 0 or record_type in ['A', 'AAAA', 'MX', 'NS', 'TXT'] %}
+                            {% if max_len > 0 or record_type in ['A', 'AAAA', 'MX', 'NS', 'TXT', 'DMARC', 'MTA-STS', 'TLS-RPT'] %}
                                 <!-- Record Type Header -->
                                 <div class="dns-diff-type-header">
                                     <span class="badge bg-secondary me-2">{{ record_type }}</span>
+                                    {% if record_type == 'DMARC' %}<small class="text-muted me-1">_dmarc.{{ domain }}</small>
+                                    {% elif record_type == 'MTA-STS' %}<small class="text-muted me-1">_mta-sts.{{ domain }}</small>
+                                    {% elif record_type == 'TLS-RPT' %}<small class="text-muted me-1">_smtp._tls.{{ domain }}</small>
+                                    {% endif %}
                                     {% if results.propagation_status and record_type in results.propagation_status %}
                                         {% set p_info = results.propagation_status[record_type] %}
                                         {% if p_info.status == 'synchronized' %}
