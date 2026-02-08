@@ -5189,11 +5189,11 @@ class DNSAnalyzer:
         dane_mx_provider = dane.get('mx_provider', {})
         if dane.get('has_dane'):
             if has_dnssec and dane.get('status') == 'success':
-                configured_items.append(f"DANE/TLSA ({dane.get('mx_hosts_with_dane', 0)} MX host(s) with TLSA records, DNSSEC-validated)")
                 if has_mta_sts_configured:
+                    configured_items.append(f"DANE/TLSA ({dane.get('mx_hosts_with_dane', 0)} MX host(s) with TLSA records, DNSSEC-validated)")
                     configured_items.append('Dual transport security: DANE (cryptographic) + MTA-STS (HTTPS-based) — strongest posture')
                 else:
-                    monitoring_items.append('DANE configured without MTA-STS — consider adding MTA-STS for receivers that don\'t validate DNSSEC')
+                    configured_items.append(f"DANE/TLSA ({dane.get('mx_hosts_with_dane', 0)} MX host(s) with TLSA records, DNSSEC-validated) — strongest cryptographic transport security")
             elif dane.get('has_dane') and not has_dnssec:
                 monitoring_items.append(f"DANE/TLSA records present but DNSSEC not validated — DANE requires DNSSEC for security (RFC 7672 §1.3)")
             elif dane.get('status') == 'warning':
