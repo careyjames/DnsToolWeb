@@ -8,7 +8,7 @@ import requests as http_requests
 from collections import defaultdict
 from threading import Lock
 from datetime import datetime, date
-from flask import Flask, render_template, request, flash, redirect, url_for, jsonify, send_from_directory, g
+from flask import Flask, render_template, request, flash, redirect, url_for, jsonify, send_from_directory, g, Response, stream_with_context
 from flask_sqlalchemy import SQLAlchemy
 from flask_compress import Compress
 from sqlalchemy.orm import DeclarativeBase
@@ -471,10 +471,14 @@ def add_security_headers(response):
 class DomainAnalysis(db.Model):
     """Store DNS analysis results for domains."""
     __tablename__ = 'domain_analyses'
+    __table_args__ = (
+        db.Index('ix_domain_analyses_created_at', 'created_at'),
+        db.Index('ix_domain_analyses_success_results', 'analysis_success', 'created_at'),
+    )
     
     id = db.Column(db.Integer, primary_key=True)
     domain = db.Column(db.String(255), nullable=False, index=True)
-    ascii_domain = db.Column(db.String(255), nullable=False)
+    ascii_domain = db.Column(db.String(255), nullable=False, index=True)
     
     # DNS Records (JSON fields)
     basic_records = db.Column(JSON)
@@ -1104,6 +1108,42 @@ def view_analysis(analysis_id):
                          analysis_timestamp=analysis.updated_at or analysis.created_at,
                          from_history=False)
 
+def normalize_results(full_results):
+    """Normalize stored full_results for rendering. Ensures forward/backward compatibility.
+    
+    When new sections are added to the analyzer, old records won't have them.
+    This function fills in safe defaults so templates never crash on missing keys.
+    Schema version is used to know what transformations are needed.
+    """
+    if not full_results:
+        return None
+    
+    schema_v = full_results.get('_schema_version', 1)
+    
+    defaults = {
+        'basic_records': {},
+        'authoritative_records': {},
+        'spf_analysis': {'status': 'unknown', 'records': []},
+        'dmarc_analysis': {'status': 'unknown', 'policy': None, 'records': []},
+        'dkim_analysis': {'status': 'unknown', 'selectors': {}},
+        'registrar_info': {'registrar': None, 'source': None},
+        'posture': {'state': 'unknown', 'label': 'Unknown'},
+        'dane_analysis': {},
+        'mta_sts_analysis': {},
+        'tls_rpt_analysis': {},
+        'bimi_analysis': {},
+        'caa_analysis': {},
+        'dnssec_analysis': {},
+        'ct_subdomains': {},
+        'mail_posture': {'classification': 'unknown'},
+    }
+    
+    for key, default_val in defaults.items():
+        if key not in full_results:
+            full_results[key] = default_val
+    
+    return full_results
+
 @app.route('/analysis/<int:analysis_id>/view')
 def view_analysis_static(analysis_id):
     """View a specific analysis WITHOUT re-analyzing (for rate limit redirects)."""
@@ -1120,7 +1160,7 @@ def view_analysis_static(analysis_id):
         flash('This report is no longer available. Please re-analyze the domain for a full report.', 'warning')
         return redirect(url_for('index'))
     
-    results = analysis.full_results
+    results = normalize_results(analysis.full_results)
     
     return render_template('results.html',
                          domain=domain,
@@ -1181,6 +1221,52 @@ def stats():
                          unique_domains=unique_domains,
                          popular_domains=popular_domains,
                          country_stats=country_stats)
+
+@app.route('/export/json')
+def export_json():
+    """Export all successful analyses as streaming NDJSON (one JSON object per line)."""
+    import json as json_mod
+
+    def generate():
+        page = 1
+        per_page = 100
+        while True:
+            analyses = DomainAnalysis.query.filter(
+                DomainAnalysis.full_results.isnot(None),
+                DomainAnalysis.analysis_success == True
+            ).order_by(
+                DomainAnalysis.created_at.desc()
+            ).paginate(page=page, per_page=per_page, error_out=False)
+
+            if not analyses.items:
+                break
+
+            for a in analyses.items:
+                record = {
+                    'id': a.id,
+                    'domain': a.domain,
+                    'ascii_domain': a.ascii_domain,
+                    'created_at': a.created_at.isoformat() if a.created_at else None,
+                    'updated_at': a.updated_at.isoformat() if a.updated_at else None,
+                    'analysis_duration': a.analysis_duration,
+                    'country_code': a.country_code,
+                    'country_name': a.country_name,
+                    'full_results': a.full_results,
+                }
+                yield json_mod.dumps(record, default=str) + '\n'
+
+            if not analyses.has_next:
+                break
+            page += 1
+
+    timestamp = datetime.utcnow().strftime('%Y%m%d_%H%M%S')
+    return Response(
+        generate(),
+        mimetype='application/x-ndjson',
+        headers={
+            'Content-Disposition': f'attachment; filename=dns_tool_export_{timestamp}.ndjson'
+        }
+    )
 
 @app.route('/api/analysis/<int:analysis_id>')
 def api_analysis(analysis_id):
