@@ -38,7 +38,12 @@ Every result must be truthful, RFC-cited, and provable. Speed is optimized withi
 
 Preferred communication style: Simple, everyday language.
 
-## Recent Changes (v26.10.52)
+## Recent Changes (v26.10.53)
+- Expanded subdomain discovery (v26.10.53):
+  - DNS probe list expanded from ~80 to ~290 curated service names covering: web, mail, DNS infrastructure, development/CI/CD, SaaS platforms (Zoho, Salesforce, HubSpot, Zendesk), Microsoft 365/Google Workspace, e-commerce/payments, VoIP/telephony, learning/training, marketing/analytics, events/booking, careers, file storage, monitoring, security, and international variants (correo, posta, tienda, magasin).
+  - DNS probing now always runs alongside CT log discovery regardless of wildcard certificate status, ensuring subdomains without individual TLS certificates are found.
+  - Worker pool increased to 50 for faster parallel resolution of 293 names.
+  - Probe timeout tuned (1.0s timeout, 1.5s lifetime) to maintain speed with larger list.
 - Performance optimization: Parallel resolver consensus (v26.10.52):
   - Resolver consensus checks for 4 critical record types (A, MX, NS, TXT) now run in parallel via `ThreadPoolExecutor(max_workers=4)` instead of sequentially.
   - `resolver_consensus` task reduced from ~17s to ~4.4s (74% faster).

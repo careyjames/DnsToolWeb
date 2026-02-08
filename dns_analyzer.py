@@ -3632,37 +3632,63 @@ class DNSAnalyzer:
     def _probe_common_subdomains(self, domain: str) -> list:
         """Probe common subdomain names via DNS A/AAAA lookups.
         
-        Used when a wildcard TLS certificate (*.domain) is present, which means
-        subdomains are covered by the wildcard and won't appear individually in
-        Certificate Transparency logs. This lightweight DNS probing discovers
-        subdomains that actually resolve, complementing CT-based discovery.
+        Complements CT log discovery by resolving ~290 common service names
+        that businesses actually use. CT logs only find subdomains with TLS
+        certificates; DNS probing finds subdomains that resolve but may lack
+        certificates (e.g., CNAME to SaaS providers, internal services).
+        
+        Categories covered: web, mail, DNS infrastructure, development/CI,
+        collaboration (Microsoft 365, Google Workspace, Zoom, etc.), databases,
+        monitoring, authentication, e-commerce/payments, VoIP/telephony,
+        file storage, learning/training, marketing/analytics, SaaS platforms
+        (Zendesk, HubSpot, Salesforce, Zoho), events/booking, careers,
+        and international variants (correo, posta, tienda, etc.).
         
         Only resolves names — no active scanning or brute-forcing beyond
-        a curated list of common service names.
+        the curated list of common service names.
         """
         common_prefixes = [
-            'www', 'mail', 'email', 'webmail', 'smtp', 'imap', 'pop', 'pop3',
-            'ftp', 'sftp', 'ssh', 'vpn', 'remote', 'rdp',
-            'api', 'app', 'dev', 'staging', 'test', 'beta', 'demo',
-            'admin', 'panel', 'cpanel', 'whm', 'dashboard', 'portal',
-            'blog', 'shop', 'store', 'docs', 'wiki', 'help', 'support',
-            'cdn', 'static', 'assets', 'media', 'img', 'images',
-            'ns1', 'ns2', 'dns', 'dns1', 'dns2',
-            'mx', 'mx1', 'mx2', 'relay',
-            'db', 'database', 'sql', 'mysql', 'postgres', 'redis', 'mongo',
-            'git', 'gitlab', 'jenkins', 'ci', 'jira', 'confluence',
-            'status', 'monitor', 'grafana', 'prometheus', 'kibana',
-            'auth', 'login', 'sso', 'id', 'identity', 'oauth',
-            'calendar', 'cal', 'meet', 'video', 'chat', 'slack',
-            'cloud', 'server', 'host', 'node', 'cluster',
-            'intranet', 'internal', 'office', 'corp',
+            'www', 'www2', 'www3', 'web', 'web1', 'web2', 'web3',
+            'mail', 'mail2', 'mail3', 'email', 'webmail', 'smtp', 'smtp2', 'imap', 'pop', 'pop3',
+            'mx', 'mx1', 'mx2', 'mx3', 'relay', 'mta',
+            'ftp', 'sftp', 'ssh', 'vpn', 'vpn2', 'remote', 'rdp', 'bastion',
+            'ns1', 'ns2', 'ns3', 'ns4', 'dns', 'dns1', 'dns2',
+            'api', 'api2', 'app', 'app2', 'dev', 'dev2', 'staging', 'stage', 'test', 'beta', 'demo', 'sandbox', 'uat', 'qa',
+            'admin', 'panel', 'cpanel', 'whm', 'dashboard', 'portal', 'console', 'manage', 'manager',
+            'blog', 'shop', 'store', 'boutique', 'docs', 'wiki', 'help', 'support', 'kb', 'faq',
+            'cdn', 'static', 'assets', 'media', 'img', 'images', 'video', 'streaming',
+            'db', 'database', 'sql', 'mysql', 'postgres', 'redis', 'mongo', 'elastic', 'elasticsearch',
+            'git', 'gitlab', 'github', 'bitbucket', 'jenkins', 'ci', 'cd', 'build', 'deploy', 'registry', 'docker', 'repo', 'artifacts',
+            'jira', 'confluence', 'trello', 'asana', 'notion',
+            'status', 'monitor', 'monitoring', 'grafana', 'prometheus', 'kibana', 'sentry', 'alerts', 'logs', 'logging',
+            'auth', 'login', 'signin', 'signup', 'sso', 'id', 'identity', 'oauth', 'accounts',
+            'calendar', 'cal', 'meet', 'meeting', 'meetings', 'chat', 'slack', 'teams', 'zoom', 'webex',
+            'cloud', 'server', 'server1', 'server2', 'host', 'host1', 'host2', 'node', 'node1', 'cluster',
+            'intranet', 'internal', 'office', 'corp', 'corporate', 'extranet',
             'm', 'mobile', 'wap',
-            'autodiscover', 'autoconfig', 'lyncdiscover', 'sip',
-            'owa', 'exchange', 'outlook',
-            'www2', 'web', 'web1', 'web2',
+            'autodiscover', 'autoconfig', 'lyncdiscover', 'sip', 'sipfed',
+            'owa', 'exchange', 'outlook', 'sharepoint', 'onedrive', 'lync', 'skype',
             'backup', 'bak', 'old', 'legacy', 'archive',
-            'schedule', 'screen', 'proxy', 'gateway', 'lb',
-            'crm', 'erp', 'hr', 'finance',
+            'schedule', 'scheduling', 'booking', 'book', 'reserve', 'appointments',
+            'screen', 'proxy', 'gateway', 'gw', 'lb', 'loadbalancer', 'cache', 'waf',
+            'crm', 'erp', 'hr', 'finance', 'billing', 'invoice', 'invoices', 'accounting',
+            'pay', 'payment', 'payments', 'checkout', 'orders', 'cart',
+            'voip', 'pbx', 'phone', 'tel', 'sbc', 'fax',
+            'print', 'printer', 'scan', 'nas', 'storage', 'files', 'file', 'share', 'download', 'upload', 'drive',
+            'learn', 'learning', 'lms', 'training', 'academy', 'courses', 'edu', 'education', 'classroom', 'moodle',
+            'analytics', 'tracking', 'stats', 'marketing', 'newsletter', 'campaigns', 'ads',
+            'zendesk', 'hubspot', 'salesforce', 'zoho', 'freshdesk',
+            'forum', 'community', 'social', 'press', 'news', 'updates',
+            'events', 'tickets', 'webinar', 'register', 'registration', 'rsvp',
+            'careers', 'jobs', 'hiring', 'recruit', 'talent',
+            'survey', 'feedback', 'reviews', 'forms',
+            'maps', 'location', 'locations', 'directory',
+            'secure', 'security', 'firewall', 'ids',
+            'new', 'preview', 'next', 'launch', 'go',
+            'reports', 'reporting', 'data', 'bi', 'tableau',
+            'correo', 'posta', 'webshop', 'tienda', 'magasin',
+            'link', 'links', 'url', 'redirect', 'r',
+            'ws', 'socket', 'realtime', 'push', 'notify', 'notifications',
         ]
         
         from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -3672,8 +3698,8 @@ class DNSAnalyzer:
         def make_resolver():
             r = dns.resolver.Resolver()
             r.nameservers = ['1.1.1.1', '8.8.8.8']
-            r.lifetime = 2.0
-            r.timeout = 1.5
+            r.lifetime = 1.5
+            r.timeout = 1.0
             return r
         
         wildcard_ips = set()
@@ -3697,7 +3723,7 @@ class DNSAnalyzer:
             except Exception:
                 return None
         
-        with ThreadPoolExecutor(max_workers=20) as executor:
+        with ThreadPoolExecutor(max_workers=50) as executor:
             futures = {executor.submit(probe_one, p): p for p in common_prefixes}
             try:
                 for future in as_completed(futures, timeout=15):
