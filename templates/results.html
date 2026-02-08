@@ -316,12 +316,18 @@
                     <div class="card-body py-3">
                         <div class="row align-items-center">
                             <div class="col-md-3 border-end border-primary border-opacity-10">
-                                <small class="text-uppercase text-muted fw-bold d-block" style="font-size: 0.7rem;">Registrar <span class="text-info">({{ results.registrar_info.source|upper if results.registrar_info.source else '?' }})</span></small>
-                                <div class="text-truncate" title="{{ results.registrar_info.registrar or 'Unknown' }}">
+                                <small class="text-uppercase text-muted fw-bold d-block" style="font-size: 0.7rem;">Registrar <span class="text-info">({{ results.registrar_info.source|upper if results.registrar_info.source else 'RDAP' }})</span></small>
+                                <div class="text-truncate" title="{{ results.registrar_info.registrar or results.registrar_info.get('message', 'Unknown') }}">
                                     <i class="fas fa-id-card text-primary me-2"></i>
-                                    <strong>{{ results.registrar_info.registrar.split('(')[0].strip() if results.registrar_info.registrar else 'Unknown' }}</strong>
+                                    {% if results.registrar_info.registrar %}
+                                    <strong>{{ results.registrar_info.registrar.split('(')[0].strip() }}</strong>
+                                    {% elif results.registrar_info.get('status') == 'restricted' %}
+                                    <strong class="text-warning">Registry Restricted</strong>
+                                    {% else %}
+                                    <strong>Unknown</strong>
+                                    {% endif %}
                                 </div>
-                                <small class="text-muted d-block" style="font-size: 0.65rem;">{% if results.registrar_info.subdomain_of is defined and results.registrar_info.subdomain_of %}Registrar for {{ results.registrar_info.subdomain_of }}{% else %}Where you pay to own domain{% endif %}</small>
+                                <small class="text-muted d-block" style="font-size: 0.65rem;">{% if results.registrar_info.get('ns_inferred') %}Inferred from NS records{% elif results.registrar_info.get('registry_restricted') %}.{{ results.registrar_info.get('registry_restricted_tld', '') }} restricts public WHOIS{% elif results.registrar_info.subdomain_of is defined and results.registrar_info.subdomain_of %}Registrar for {{ results.registrar_info.subdomain_of }}{% else %}Where you pay to own domain{% endif %}</small>
                             </div>
                             <div class="col-md-3 border-end border-primary border-opacity-10">
                                 <small class="text-uppercase text-muted fw-bold d-block" style="font-size: 0.7rem;">Email Service Provider</small>

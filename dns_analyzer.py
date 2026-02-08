@@ -2811,15 +2811,37 @@ class DNSAnalyzer:
         
         # RDAP failed - fall back to WHOIS (backup source)
         logging.info(f"[REGISTRAR] RDAP failed, trying WHOIS as backup...")
+        whois_restricted = False
+        whois_restricted_tld = None
         try:
             whois_result = self._whois_lookup_registrar(domain)
             if whois_result:
-                logging.info(f"[REGISTRAR] SUCCESS via WHOIS (backup): {whois_result}")
-                return {'status': 'success', 'source': 'WHOIS', 'registrar': whois_result}
+                if whois_result.startswith('__RESTRICTED__'):
+                    whois_restricted = True
+                    whois_restricted_tld = whois_result.replace('__RESTRICTED__', '')
+                    logging.info(f"[REGISTRAR] WHOIS access restricted for .{whois_restricted_tld}")
+                else:
+                    logging.info(f"[REGISTRAR] SUCCESS via WHOIS (backup): {whois_result}")
+                    return {'status': 'success', 'source': 'WHOIS', 'registrar': whois_result}
         except Exception as e:
             logging.warning(f"[REGISTRAR] WHOIS failed: {e}")
         
+        # Try NS-based inference as third fallback
+        lookup_domain = domain
         parent_zone = self._find_parent_zone(domain)
+        if parent_zone and parent_zone != domain:
+            lookup_domain = parent_zone
+        
+        ns_result = self._infer_registrar_from_ns(lookup_domain)
+        if ns_result:
+            if lookup_domain != domain:
+                ns_result['subdomain_of'] = lookup_domain
+            if whois_restricted:
+                ns_result['registry_restricted'] = True
+                ns_result['registry_restricted_tld'] = whois_restricted_tld
+            return ns_result
+        
+        # If this is a subdomain, try parent zone with full RDAP/WHOIS
         if parent_zone and parent_zone != domain:
             logging.info(f"[REGISTRAR] Trying parent zone {parent_zone} for subdomain {domain}")
             parent_result = self.get_registrar_info(parent_zone)
@@ -2828,6 +2850,25 @@ class DNSAnalyzer:
                 return parent_result
 
         logging.warning(f"[REGISTRAR] FAILED - No registrar info found for {domain}")
+        
+        if whois_restricted:
+            restricted_registries = {
+                'es': 'Red.es (Spain)',
+                'br': 'Registro.br (Brazil)',
+                'kr': 'KISA (South Korea)',
+                'cn': 'CNNIC (China)',
+                'ru': 'RIPN (Russia)',
+            }
+            registry_name = restricted_registries.get(whois_restricted_tld, f'.{whois_restricted_tld} registry')
+            return {
+                'status': 'restricted',
+                'source': 'WHOIS',
+                'registrar': None,
+                'registry_restricted': True,
+                'registry_restricted_tld': whois_restricted_tld,
+                'message': f'{registry_name} restricts public WHOIS/RDAP access — registrar data requires authorized IP',
+            }
+        
         return {
             'status': 'error',
             'source': None,
@@ -3125,17 +3166,26 @@ class DNSAnalyzer:
             output = response.decode('utf-8', errors='ignore')
             logging.info(f"[WHOIS] Got {len(output)} bytes from {server}")
             
+            output_lower = output.lower()
+            restricted_indicators = [
+                'not authorised', 'no autorizada', 'access denied',
+                'ip address used to perform the query',
+                'exceeded the established limit',
+                'request access to the service',
+            ]
+            if any(indicator in output_lower for indicator in restricted_indicators):
+                logging.warning(f"[WHOIS] Registry restricts WHOIS access for .{tld} domains")
+                return f"__RESTRICTED__{tld}"
+            
             registrar = None
             registrant = None
             
-            # Parse registrar
             registrar_match = re.search(r"(?i)^(?:registrar|sponsoring registrar|registrar[- ]name)\s*:\s*(.+)$", output, re.MULTILINE)
             if registrar_match:
                 val = registrar_match.group(1).strip()
                 if val and not val.lower().startswith('http') and val.lower() != 'not available':
                     registrar = val
             
-            # Parse registrant
             registrant_match = re.search(r"(?i)^(?:registrant organization|registrant name|registrant)\s*:\s*(.+)$", output, re.MULTILINE)
             if registrant_match:
                 val = registrant_match.group(1).strip()
@@ -3149,6 +3199,79 @@ class DNSAnalyzer:
         except Exception as e:
             logging.error(f"[WHOIS] Socket error for {domain}: {e}")
             return None
+    
+    def _infer_registrar_from_ns(self, domain: str) -> Optional[Dict[str, Any]]:
+        """Infer registrar/hosting provider from NS records when RDAP/WHOIS are unavailable.
+        
+        Many registrars use distinctive nameserver patterns. While NS records
+        technically indicate DNS hosting (not necessarily the registrar), for
+        registrar-integrated DNS like Gandi, OVH, and others, the NS records
+        reliably indicate the registrar.
+        """
+        try:
+            r = dns.resolver.Resolver()
+            r.nameservers = ['1.1.1.1', '8.8.8.8']
+            r.lifetime = 4.0
+            r.timeout = 3.0
+            
+            answers = r.resolve(domain, 'NS')
+            ns_list = [str(rdata.target).rstrip('.').lower() for rdata in answers]
+        except Exception:
+            return None
+        
+        ns_str = ' '.join(ns_list)
+        
+        ns_registrar_patterns = {
+            'gandi.net': 'Gandi SAS',
+            'ovh.net': 'OVHcloud',
+            'ovh.com': 'OVHcloud',
+            'domaincontrol.com': 'GoDaddy',
+            'registrar-servers.com': 'Namecheap',
+            'name-services.com': 'Enom / Tucows',
+            'hostgator.com': 'HostGator',
+            'bluehost.com': 'Bluehost',
+            'dreamhost.com': 'DreamHost',
+            'ionos.com': '1&1 IONOS',
+            'ui-dns.com': '1&1 IONOS',
+            'ui-dns.de': '1&1 IONOS',
+            'ui-dns.org': '1&1 IONOS',
+            'ui-dns.biz': '1&1 IONOS',
+            'strato.de': 'Strato',
+            'strato-hosting.eu': 'Strato',
+            'hetzner.com': 'Hetzner',
+            'netcup.net': 'Netcup',
+            'inwx.de': 'INWX',
+            'inwx.eu': 'INWX',
+            'hover.com': 'Hover / Tucows',
+            'porkbun.com': 'Porkbun',
+            'dynadot.com': 'Dynadot',
+            'epik.com': 'Epik',
+            'sav.com': 'SAV',
+            'squarespace.com': 'Squarespace Domains',
+            'wixdns.net': 'Wix',
+            'wordpress.com': 'WordPress.com',
+            'pair.com': 'pair Domains',
+            'aruba.it': 'Aruba S.p.A.',
+            'dnsmadeeasy.com': 'DNS Made Easy',
+            'netim.net': 'Netim',
+            'infomaniak.ch': 'Infomaniak',
+            'bookmyname.com': 'BookMyName (Gandi)',
+            'one.com': 'one.com',
+            'hostpoint.ch': 'Hostpoint',
+        }
+        
+        for pattern, registrar_name in ns_registrar_patterns.items():
+            if pattern in ns_str:
+                logging.info(f"[REGISTRAR] Inferred '{registrar_name}' from NS records ({pattern}) for {domain}")
+                return {
+                    'status': 'success',
+                    'source': 'NS inference',
+                    'registrar': registrar_name,
+                    'ns_inferred': True,
+                    'caveat': 'Inferred from nameserver records — indicates DNS hosting provider, which for integrated registrars typically matches the registrar.',
+                }
+        
+        return None
     
     def analyze_dns_infrastructure(self, domain: str, results: Dict) -> Dict[str, Any]:
         """Analyze DNS infrastructure to detect enterprise providers and security posture.
