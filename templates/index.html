@@ -285,6 +285,7 @@
                                        placeholder="example.com" 
                                        required
                                        autocomplete="off"
+                                       autofocus
                                        value="{{ request.args.get('wait_domain', '') }}">
                                 <button class="btn btn-primary search-btn" type="submit" id="analyzeBtn" aria-label="Analyze domain"
                                     {% if request.args.get('wait_seconds') %}
