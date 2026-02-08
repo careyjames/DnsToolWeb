@@ -2,7 +2,7 @@
 
 ## Overview
 
-A web-based DNS intelligence tool performing comprehensive RFC-compliant domain security analysis (SPF, DKIM, DMARC, DNSSEC, MTA-STS, TLS-RPT, BIMI, CAA) with automatic subdomain discovery via Certificate Transparency logs and DNS probing. Serves as an educational authority where every result is truthful, RFC-cited, and provable.
+A web-based DNS intelligence tool performing comprehensive RFC-compliant domain security analysis (SPF, DKIM, DMARC, DANE/TLSA, DNSSEC, MTA-STS, TLS-RPT, BIMI, CAA) with automatic subdomain discovery via Certificate Transparency logs and DNS probing. Serves as an educational authority where every result is truthful, RFC-cited, and provable.
 
 ## Project Philosophy
 
@@ -38,7 +38,12 @@ Every result must be truthful, RFC-cited, and provable. Speed is optimized withi
 
 Preferred communication style: Simple, everyday language.
 
-## Recent Changes (v26.10.53)
+## Recent Changes (v26.10.54)
+- DANE/TLSA analysis, DMARCbis readiness, MPIC context (v26.10.54):
+  - **DANE/TLSA Analysis** (RFC 6698, RFC 7672): New `analyze_dane()` method queries TLSA records for each MX host at `_25._tcp.<mx_host>`. Parses certificate usage (PKIX-TA/EE, DANE-TA/EE), selector (full cert vs public key), and matching type (exact/SHA-256/SHA-512). Checks run in parallel with ThreadPoolExecutor. Results displayed with RFC-linked badges, TLSA record table, and educational messaging about DANE's 1M+ domain adoption and MTA-STS complementarity.
+  - **DMARCbis Tag Awareness** (draft-ietf-dmarc-dmarcbis): DMARC analysis now detects and displays `np=` (non-existent subdomain policy), `t=` (testing mode, replaces `pct=`), and `psd=` (public suffix domain) tags. Badges with tooltips explain each tag's purpose. Educational issue raised when `np=` is absent on enforcing domains.
+  - **MPIC Context in CAA**: CAA analysis now includes an educational note about Multi-Perspective Issuance Corroboration (CA/B Forum Ballot SC-067, mandatory September 2025), explaining that CAA records are now verified from multiple geographic locations before certificate issuance.
+  - **Posture Scoring**: DANE/TLSA included in security posture assessment — configured DANE adds to "configured" items, partial DANE flagged as monitoring, absent DANE listed as recommended.
 - Expanded subdomain discovery (v26.10.53):
   - DNS probe list expanded from ~80 to ~290 curated service names covering: web, mail, DNS infrastructure, development/CI/CD, SaaS platforms (Zoho, Salesforce, HubSpot, Zendesk), Microsoft 365/Google Workspace, e-commerce/payments, VoIP/telephony, learning/training, marketing/analytics, events/booking, careers, file storage, monitoring, security, and international variants (correo, posta, tienda, magasin).
   - DNS probing now always runs alongside CT log discovery regardless of wildcard certificate status, ensuring subdomains without individual TLS certificates are found.
@@ -94,7 +99,7 @@ Preferred communication style: Simple, everyday language.
 
 **DNS Analysis Engine:**
 - `dns_analyzer.py`: Encapsulates the core DNS analysis logic utilizing `dnspython`.
-- **Features**: Domain validation, IDNA encoding, DNS record queries, and email security analysis (SPF, DMARC, DKIM, MTA-STS, TLS-RPT).
+- **Features**: Domain validation, IDNA encoding, DNS record queries, and email security analysis (SPF, DMARC, DKIM, DANE/TLSA, MTA-STS, TLS-RPT).
 - Employs multiple external DNS resolvers (Cloudflare, Google, Quad9, OpenDNS/Cisco Umbrella) for consensus and discrepancy detection.
 - Fetches IANA RDAP data for domain registry lookups.
 - Performs SMTP Transport Verification (STARTTLS, TLS version, cipher strength, certificate validity).
@@ -105,6 +110,9 @@ Preferred communication style: Simple, everyday language.
 - **DNS Evidence Diff**: Compares resolver and authoritative records for various types, including A, AAAA, MX, TXT, NS, CAA, and SOA records, along with email security-related records (`_dmarc`, `_mta-sts`, `_smtp._tls`). Displays TTL values and RFC reference badges.
 - **Subdomain Discovery**: Dual-method approach combining Certificate Transparency logs (crt.sh, RFC 6962) with DNS probing of ~80 common service names. CT logs find subdomains with TLS certificates; DNS probing finds subdomains that resolve but may lack certificates. Both methods run in parallel during analysis. Results stored in database and rendered server-side with source attribution (CT Log vs DNS).
 - **Null MX and No-Mail Domain Detection**: Recognizes `MX 0 .` (RFC 7505) and identifies domains explicitly configured not to send or receive email, adjusting posture scoring and verdicts accordingly.
+- **DANE/TLSA Analysis** (RFC 6698, RFC 7672): Queries TLSA records for each MX host (`_25._tcp.<mx_host>`), parsing certificate usage (PKIX-TA/EE, DANE-TA/EE per §2.1.1), selector (full cert vs public key per §2.1.2), and matching type (exact/SHA-256/SHA-512 per §2.1.3). Checks run in parallel. Integrated into posture scoring. Educational messaging explains DANE's complementarity with MTA-STS and its growing global adoption (1M+ domains, Microsoft Exchange Online GA).
+- **DMARCbis Readiness** (draft-ietf-dmarc-dmarcbis): Detects and displays `np=` (non-existent subdomain policy), `t=` (testing mode, replaces `pct=`), and `psd=` (public suffix domain) tags. Raises educational issues when `np=` is absent on enforcing domains.
+- **MPIC Awareness**: CAA analysis includes educational context about Multi-Perspective Issuance Corroboration (CA/B Forum Ballot SC-067, mandatory September 2025).
 - **Subdomain-aware analysis**: Correctly handles DNSSEC inheritance, NS delegation, and RDAP lookups for subdomains.
 - **Subdomain-aware CT discovery**: Detects when the analyzed domain is itself a subdomain (via Public Suffix List / `tldextract`) and provides context-aware messaging with RFC references (RFC 8499, RFC 1034 §3.1), offering a one-click link to scan the registered domain for broader discovery.
 

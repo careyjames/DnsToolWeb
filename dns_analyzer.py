@@ -915,6 +915,9 @@ class DNSAnalyzer:
         adkim = 'relaxed'
         rua = None
         ruf = None
+        np_policy = None
+        t_testing = None
+        psd_flag = None
         
         if len(valid_dmarc) == 0:
             status = 'error'
@@ -960,6 +963,28 @@ class DNSAnalyzer:
             if ruf_match:
                 ruf = ruf_match.group(1)
             
+            # DMARCbis tag detection (draft-ietf-dmarc-dmarcbis)
+            # np= : Non-existent subdomain policy — blocks spoofing via fake subdomains
+            np_match = re.search(r'\bnp=(\w+)', record_lower)
+            if np_match:
+                np_policy = np_match.group(1)
+            else:
+                np_policy = None
+            
+            # t= : Testing mode (replaces pct= in DMARCbis)
+            t_match = re.search(r'\bt=([yn])', record_lower)
+            if t_match:
+                t_testing = t_match.group(1)
+            else:
+                t_testing = None
+            
+            # psd= : Public Suffix Domain flag
+            psd_match = re.search(r'\bpsd=([yn])', record_lower)
+            if psd_match:
+                psd_flag = psd_match.group(1)
+            else:
+                psd_flag = None
+            
             # Build status and message
             if policy == 'none':
                 status = 'warning'
@@ -989,9 +1014,21 @@ class DNSAnalyzer:
             if policy in ('reject', 'quarantine') and subdomain_policy == 'none':
                 issues.append(f'Subdomains unprotected (sp=none while p={policy})')
             
+            # DMARCbis subdomain spoofing gap: no np= and no sp= with enforcing p=
+            if policy in ('reject', 'quarantine') and not np_policy and not subdomain_policy:
+                issues.append('No np= tag (DMARCbis) — non-existent subdomains inherit p= policy but adding np=reject provides explicit protection against subdomain spoofing')
+            
             # Note about forensic reporting
             if ruf:
                 issues.append('Forensic reports (ruf) configured - many providers ignore these')
+        
+        dmarcbis_tags = {}
+        if np_policy:
+            dmarcbis_tags['np'] = np_policy
+        if t_testing:
+            dmarcbis_tags['t'] = t_testing
+        if psd_flag:
+            dmarcbis_tags['psd'] = psd_flag
         
         return {
             'status': status,
@@ -1006,6 +1043,10 @@ class DNSAnalyzer:
             'adkim': adkim,
             'rua': rua,
             'ruf': ruf,
+            'np_policy': np_policy,
+            't_testing': t_testing,
+            'psd_flag': psd_flag,
+            'dmarcbis_tags': dmarcbis_tags,
             'issues': issues
         }
     
@@ -1956,9 +1997,185 @@ class DNSAnalyzer:
             'records': records,
             'issuers': issuers,
             'has_wildcard': has_wildcard,
-            'has_iodef': has_iodef
+            'has_iodef': has_iodef,
+            'mpic_note': 'Since September 2025, all public CAs must verify domain control from multiple geographic locations (Multi-Perspective Issuance Corroboration, CA/B Forum Ballot SC-067). CAA records are now checked from multiple network perspectives before certificate issuance.'
         }
     
+    def analyze_dane(self, domain: str, mx_records: List[str] = None) -> Dict[str, Any]:
+        """Check DANE/TLSA records for domain's mail servers (RFC 6698, RFC 7672).
+
+        DANE (DNS-based Authentication of Named Entities) publishes TLS
+        certificate information in DNSSEC-signed TLSA DNS records, enabling
+        mail servers to verify TLS certificates without relying solely on
+        certificate authorities.
+
+        For SMTP, TLSA records are queried at _25._tcp.<mx_host>.
+
+        Certificate Usage values (RFC 6698 §2.1.1):
+          0 = PKIX-TA  (CA constraint, PKIX-validated)
+          1 = PKIX-EE  (Service certificate constraint, PKIX-validated)
+          2 = DANE-TA  (Trust anchor assertion, no PKIX required)
+          3 = DANE-EE  (Domain-issued certificate, no PKIX required)
+
+        Selector values (RFC 6698 §2.1.2):
+          0 = Full certificate
+          1 = SubjectPublicKeyInfo (public key only)
+
+        Matching Type values (RFC 6698 §2.1.3):
+          0 = Exact match (full DER)
+          1 = SHA-256 hash
+          2 = SHA-512 hash
+        """
+        import dns.resolver
+
+        base_result = {
+            'status': 'info',
+            'message': 'No DANE/TLSA records found for mail servers',
+            'has_dane': False,
+            'mx_hosts_checked': 0,
+            'mx_hosts_with_dane': 0,
+            'tlsa_records': [],
+            'requires_dnssec': True,
+            'issues': []
+        }
+
+        if not mx_records:
+            base_result['message'] = 'No MX records available — DANE check skipped'
+            base_result['status'] = 'info'
+            return base_result
+
+        mx_hosts = []
+        for mx in mx_records:
+            parts = mx.strip().split()
+            if len(parts) >= 2:
+                host = parts[-1].rstrip('.')
+                if host and host != '.':
+                    mx_hosts.append(host)
+            elif len(parts) == 1:
+                host = parts[0].rstrip('.')
+                if host and host != '.':
+                    mx_hosts.append(host)
+
+        if not mx_hosts:
+            base_result['message'] = 'No valid MX hosts — DANE check skipped'
+            return base_result
+
+        mx_hosts = list(dict.fromkeys(mx_hosts))[:10]
+
+        usage_names = {
+            0: 'PKIX-TA (CA constraint)',
+            1: 'PKIX-EE (Certificate constraint)',
+            2: 'DANE-TA (Trust anchor)',
+            3: 'DANE-EE (Domain-issued certificate)'
+        }
+        selector_names = {
+            0: 'Full certificate',
+            1: 'Public key only (SubjectPublicKeyInfo)'
+        }
+        matching_names = {
+            0: 'Exact match',
+            1: 'SHA-256',
+            2: 'SHA-512'
+        }
+
+        all_tlsa = []
+        hosts_with_dane = []
+        issues = []
+
+        def check_mx_tlsa(mx_host):
+            tlsa_name = f"_25._tcp.{mx_host}"
+            found = []
+            try:
+                resolver = dns.resolver.Resolver()
+                resolver.nameservers = ['1.1.1.1', '8.8.8.8']
+                resolver.timeout = 3
+                resolver.lifetime = 5
+                answers = resolver.resolve(tlsa_name, 'TLSA')
+                for rdata in answers:
+                    usage = rdata.usage
+                    selector = rdata.selector
+                    mtype = rdata.mtype
+                    cert_data = rdata.cert.hex()
+
+                    rec = {
+                        'mx_host': mx_host,
+                        'tlsa_name': tlsa_name,
+                        'usage': usage,
+                        'usage_name': usage_names.get(usage, f'Unknown ({usage})'),
+                        'selector': selector,
+                        'selector_name': selector_names.get(selector, f'Unknown ({selector})'),
+                        'matching_type': mtype,
+                        'matching_name': matching_names.get(mtype, f'Unknown ({mtype})'),
+                        'certificate_data': cert_data[:64] + '...' if len(cert_data) > 64 else cert_data,
+                        'full_record': f'{usage} {selector} {mtype} {cert_data[:64]}...'
+                    }
+
+                    if usage in (0, 1):
+                        rec['recommendation'] = 'RFC 7672 §3.1 recommends usage 2 (DANE-TA) or 3 (DANE-EE) for SMTP'
+
+                    found.append(rec)
+            except dns.resolver.NoAnswer:
+                pass
+            except dns.resolver.NXDOMAIN:
+                pass
+            except dns.resolver.NoNameservers:
+                pass
+            except Exception:
+                pass
+            return mx_host, found
+
+        timed_out_hosts = []
+        with ThreadPoolExecutor(max_workers=min(len(mx_hosts), 5)) as executor:
+            futures = {executor.submit(check_mx_tlsa, host): host for host in mx_hosts}
+            try:
+                for future in as_completed(futures, timeout=10):
+                    try:
+                        mx_host, records = future.result(timeout=5)
+                        if records:
+                            hosts_with_dane.append(mx_host)
+                            all_tlsa.extend(records)
+                    except Exception:
+                        pass
+            except FuturesTimeoutError:
+                logging.warning(f"DANE/TLSA lookup timed out for {domain}, returning partial results")
+                for future, host in futures.items():
+                    if not future.done():
+                        timed_out_hosts.append(host)
+
+        base_result['mx_hosts_checked'] = len(mx_hosts)
+        base_result['mx_hosts_with_dane'] = len(hosts_with_dane)
+        base_result['tlsa_records'] = all_tlsa
+
+        if timed_out_hosts:
+            issues.append(f"TLSA lookup timed out for: {', '.join(timed_out_hosts[:3])}")
+
+        if all_tlsa:
+            base_result['has_dane'] = True
+            base_result['status'] = 'success'
+
+            for rec in all_tlsa:
+                if rec['usage'] in (0, 1):
+                    issues.append(f"TLSA for {rec['mx_host']}: usage {rec['usage']} (PKIX-based) — RFC 7672 §3.1 recommends usage 2 or 3 for SMTP")
+                if rec['matching_type'] == 0:
+                    issues.append(f"TLSA for {rec['mx_host']}: exact match (type 0) — SHA-256 (type 1) is preferred for resilience")
+
+            if len(hosts_with_dane) == len(mx_hosts):
+                base_result['message'] = f'DANE configured — TLSA records found for all {len(mx_hosts)} MX host{"s" if len(mx_hosts) > 1 else ""}'
+            else:
+                base_result['message'] = f'DANE partially configured — TLSA records on {len(hosts_with_dane)}/{len(mx_hosts)} MX hosts'
+                base_result['status'] = 'warning'
+                missing = [h for h in mx_hosts if h not in hosts_with_dane]
+                issues.append(f"Missing DANE for: {', '.join(missing[:3])}")
+        elif timed_out_hosts:
+            base_result['status'] = 'timeout'
+            base_result['message'] = f'DANE/TLSA lookup timed out (checked {len(mx_hosts)} MX host{"s" if len(mx_hosts) > 1 else ""})'
+        else:
+            base_result['status'] = 'info'
+            base_result['message'] = f'No DANE/TLSA records found (checked {len(mx_hosts)} MX host{"s" if len(mx_hosts) > 1 else ""})'
+
+        base_result['issues'] = issues
+        return base_result
+
     def analyze_bimi(self, domain: str) -> Dict[str, Any]:
         """Check BIMI (Brand Indicators for Message Identification) for domain.
         
@@ -3166,6 +3383,7 @@ class DNSAnalyzer:
                 'mta_sts_analysis': {'status': 'n/a'},
                 'tlsrpt_analysis': {'status': 'n/a'},
                 'bimi_analysis': {'status': 'n/a'},
+                'dane_analysis': {'status': 'n/a', 'has_dane': False, 'tlsa_records': [], 'issues': []},
                 'caa_analysis': {'status': 'n/a'},
                 'dnssec_analysis': {'status': 'n/a'},
                 'ns_delegation_analysis': {'status': 'error', 'delegation_ok': False, 'message': 'Domain does not exist'},
@@ -3239,6 +3457,13 @@ class DNSAnalyzer:
         auth_query_status = auth.pop('_query_status', {}) if isinstance(auth, dict) else {}
         resolver_ttl = basic.pop('_ttl', {}) if isinstance(basic, dict) else {}
         auth_ttl = auth.pop('_ttl', {}) if isinstance(auth, dict) else {}
+        
+        dane_start = time.time()
+        mx_for_dane = basic.get('MX', [])
+        dane_result = self.analyze_dane(domain, mx_for_dane)
+        results_map['dane'] = dane_result
+        dane_elapsed = round(time.time() - dane_start, 2)
+        logging.info(f"DANE/TLSA check for {domain} completed in {dane_elapsed}s")
         
         dkim_result = results_map.get('dkim', {'status': 'error'})
         if isinstance(dkim_result, dict) and dkim_result.get('selectors'):
@@ -3363,6 +3588,7 @@ class DNSAnalyzer:
             'mta_sts_analysis': results_map.get('mta_sts', {'status': 'warning'}),
             'tlsrpt_analysis': results_map.get('tlsrpt', {'status': 'warning'}),
             'bimi_analysis': results_map.get('bimi', {'status': 'warning'}),
+            'dane_analysis': results_map.get('dane', {'status': 'info', 'has_dane': False, 'tlsa_records': [], 'issues': []}),
             'caa_analysis': results_map.get('caa', {'status': 'warning'}),
             'dnssec_analysis': results_map.get('dnssec', {'status': 'warning'}),
             'ns_delegation_analysis': results_map.get('ns_delegation', {'status': 'warning'}),
@@ -4274,6 +4500,19 @@ class DNSAnalyzer:
         else:
             # Unsigned is tracked as "not configured" - a design choice, not an error
             absent_items.append('DNSSEC (DNS response signing)')
+        
+        # Check DANE/TLSA (RFC 6698, RFC 7672) - advanced email transport security
+        # DANE's security guarantees depend on DNSSEC; without it, TLSA records can be spoofed
+        dane = results.get('dane_analysis', {})
+        if dane.get('has_dane'):
+            if has_dnssec and dane.get('status') == 'success':
+                configured_items.append(f"DANE/TLSA ({dane.get('mx_hosts_with_dane', 0)} MX host(s) with TLSA records, DNSSEC-validated)")
+            elif dane.get('has_dane') and not has_dnssec:
+                monitoring_items.append(f"DANE/TLSA records present but DNSSEC not validated — DANE requires DNSSEC for security (RFC 7672 §1.3)")
+            elif dane.get('status') == 'warning':
+                monitoring_items.append(f"DANE partial ({dane.get('mx_hosts_with_dane', 0)}/{dane.get('mx_hosts_checked', 0)} MX hosts)")
+        elif not is_no_mail_domain:
+            absent_items.append('DANE/TLSA (certificate pinning for mail transport)')
         
         # Check NS delegation
         ns_del = results.get('ns_delegation_analysis', {})
