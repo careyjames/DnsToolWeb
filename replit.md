@@ -42,6 +42,11 @@ Preferred communication style: Simple, everyday language.
     - Failed analyses are **never saved** to the database. Only successful, fully-populated reports are persisted. Stats are still tracked for failed attempts.
     - History queries filter to `analysis_success=True AND full_results IS NOT NULL` as an additional safety net.
     - **Schema versioning**: Every `full_results` payload includes a `_schema_version` field (currently `2`). Future code changes can use this to migrate or adapt older records without data loss. Schema changes must always be additive (new fields) — never remove or rename existing fields.
+- **Growth & Scalability (v26.10.68)**:
+    - Database indexes on `domain`, `ascii_domain`, `created_at`, and composite `(analysis_success, created_at)` for fast queries at scale.
+    - **Data export**: `/export/json` streams all analyses as NDJSON (one JSON record per line) for backup, migration, or external processing. Uses paginated streaming to handle any volume without memory issues.
+    - **Rendering contract**: `normalize_results()` fills safe defaults for any missing sections before template rendering. Old records from earlier schema versions display correctly even when new analysis sections are added later. Templates never crash on missing keys.
+    - **Schema evolution rules**: Only add new fields — never remove or rename existing fields. Use `_schema_version` to gate any version-specific rendering or migration logic.
 
 ### Frontend Architecture
 - Server-rendered HTML using Jinja2 templates.

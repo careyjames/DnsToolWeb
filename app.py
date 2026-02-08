@@ -1261,7 +1261,7 @@ def export_json():
 
     timestamp = datetime.utcnow().strftime('%Y%m%d_%H%M%S')
     return Response(
-        generate(),
+        stream_with_context(generate()),
         mimetype='application/x-ndjson',
         headers={
             'Content-Disposition': f'attachment; filename=dns_tool_export_{timestamp}.ndjson'
