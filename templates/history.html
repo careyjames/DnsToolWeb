@@ -226,12 +226,14 @@
         </footer>
     </main>
 
-    <div id="historyViewOverlay" style="display:none;position:fixed;inset:0;background:rgba(33,37,41,0.92);z-index:9999;justify-content:center;align-items:center;flex-direction:column;">
-        <div class="spinner-border text-primary mb-3" role="status" style="width:3rem;height:3rem;"><span class="visually-hidden">Loading...</span></div>
-        <div class="text-light fw-medium" id="historyViewText">Loading analysis results...</div>
+    <div id="historyViewOverlay" class="loading-overlay d-none" role="status" aria-live="polite" aria-label="Loading stored results">
+        <div class="loading-content">
+            <div class="spinner-border text-primary mb-3" style="width:3rem;height:3rem;"><span class="visually-hidden">Loading...</span></div>
+            <div class="text-light fw-medium" id="historyViewText">Loading analysis results...</div>
+        </div>
     </div>
 
-    <div id="historyAnalyzeOverlay" class="loading-overlay d-none">
+    <div id="historyAnalyzeOverlay" class="loading-overlay d-none" role="status" aria-live="polite" aria-busy="true" aria-label="Running domain analysis">
         <div class="loading-content">
             <div class="loading-spinner">
                 <i class="fas fa-globe fa-spin"></i>
@@ -267,14 +269,20 @@
             var el=row?row.querySelector('.fw-medium'):null;
             return el?el.textContent.trim():'';
         }
+        function disableAllActions(){
+            document.querySelectorAll('.history-view-btn,.history-reanalyze-btn').forEach(function(b){
+                b.classList.add('disabled');
+                b.setAttribute('aria-disabled','true');
+            });
+        }
         document.querySelectorAll('.history-view-btn').forEach(function(btn){
             btn.addEventListener('click',function(){
                 var name=getDomain(btn);
                 var overlay=document.getElementById('historyViewOverlay');
                 var txt=document.getElementById('historyViewText');
                 if(txt&&name)txt.textContent='Loading results for '+name+'...';
-                if(overlay)overlay.style.display='flex';
-                btn.classList.add('disabled');
+                if(overlay)overlay.classList.remove('d-none');
+                disableAllActions();
                 btn.innerHTML='<i class="fas fa-spinner fa-spin"></i>';
             });
         });
@@ -285,7 +293,7 @@
                 var domainEl=document.getElementById('historyAnalyzeDomain');
                 if(domainEl)domainEl.textContent=name;
                 if(overlay){overlay.classList.remove('d-none');startStatusCycle(overlay);}
-                btn.classList.add('disabled');
+                disableAllActions();
                 btn.innerHTML='<i class="fas fa-spinner fa-spin"></i>';
             });
         });
