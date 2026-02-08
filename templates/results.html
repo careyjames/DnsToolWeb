@@ -1032,7 +1032,7 @@
                                     </div>
                                     {% else %}
                                     <div class="small text-muted mt-1">
-                                        <i class="fas fa-info-circle me-1"></i>DANE binds TLS certificates to DNS via TLSA records, protecting email transport against man-in-the-middle attacks and rogue CAs. It requires DNSSEC to be enabled. Over 1 million domains now use DANE globally, with Microsoft Exchange Online, Proton Mail, and Fastmail supporting it. Best practice: deploy both DANE (cryptographic strength) and MTA-STS (broader compatibility).
+                                        <i class="fas fa-info-circle me-1"></i>DANE (<a href="https://datatracker.ietf.org/doc/html/rfc7672" target="_blank" rel="noopener" class="text-info">RFC 7672</a>) binds TLS certificates to DNSSEC-signed DNS records, protecting email transport against man-in-the-middle attacks and rogue CAs. It is the primary transport security standard &mdash; MTA-STS (<a href="https://datatracker.ietf.org/doc/html/rfc8461#section-2" target="_blank" rel="noopener" class="text-info">RFC 8461</a>) was created as the alternative for domains that cannot deploy DNSSEC. Over 1 million domains use DANE globally, including Microsoft Exchange Online, Proton Mail, and Fastmail. Best practice: deploy both for defense in depth.
                                     </div>
                                     {% endif %}
                                 {% endif %}

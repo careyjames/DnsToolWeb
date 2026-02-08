@@ -27,7 +27,7 @@ A single-page report with these sections (scroll down):
 - **Email Security**: SPF, DKIM, DMARC analysis with pass/fail badges
 - **Email Security Providers**: Who manages DMARC monitoring, SPF flattening (gold badges)
 - **Brand Security**: BIMI logo, MTA-STS policy, TLS-RPT reporting
-- **Transport Security**: DANE/TLSA certificate pinning for MX hosts (RFC 6698/7672), with educational context on the DANE+DNSSEC vs MTA-STS philosophical tension and Microsoft's enforcement momentum
+- **Transport Security**: DANE/TLSA certificate pinning for MX hosts (RFC 6698/7672) — DANE is the primary standard, MTA-STS (RFC 8461) is the alternative for domains that cannot deploy DNSSEC. Provider-aware analysis with Microsoft's DANE enforcement momentum
 - **Domain Security**: DNSSEC chain, CAA records with MPIC context
 - **Traffic & Routing**: DNS records (A, AAAA, MX, NS, SOA, TXT, SRV, CNAME)
 - **Domain Intelligence**: Registrar, creation/expiration, nameservers via RDAP
