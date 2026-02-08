@@ -8,7 +8,14 @@ This project is a web-based DNS intelligence tool designed for comprehensive dom
 
 Preferred communication style: Simple, everyday language.
 
-## Recent Changes (v26.10.50)
+## Recent Changes (v26.10.51)
+- DNS-augmented Subdomain Discovery (v26.10.51):
+  - Wildcard TLS certificate detection: identifies `*.domain` certificates in CT logs and flags them in the UI.
+  - When a wildcard cert is found, DNS probing of ~80 common subdomain names runs in parallel (20 workers) to discover subdomains covered by the wildcard.
+  - Wildcard DNS filtering: probes a random non-existent subdomain to detect wildcard DNS records, filtering out false positives.
+  - Subdomain table gains a "Source" column showing "CT Log" or "DNS" for each entry.
+  - Wildcard cert info alert explains why subdomains may not appear individually in CT logs (RFC 6962).
+  - Fixes unreadable badge contrast on dark theme: "3/3 controls" and "X/3 controls" badges now use solid backgrounds with proper text contrast.
 - Graduated Mail Posture classification (v26.10.50):
   - New `_classify_mail_posture()` method provides RFC-grounded assessment of email intent.
   - Four graduated classifications: No-Mail: Verified, No-Mail: Partial, Email: Ambiguous, Email: Enabled.

@@ -3471,6 +3471,7 @@ class DNSAnalyzer:
             result['total_certs'] = len(data)
             
             subdomain_map = {}
+            wildcard_certs = []
             
             for entry in data:
                 names = set()
@@ -3489,6 +3490,17 @@ class DNSAnalyzer:
                 issuer = entry.get('issuer_name', '')
                 
                 for name in names:
+                    if name == f'*.{domain}':
+                        issuer_cn = ''
+                        if 'CN=' in issuer:
+                            issuer_cn = issuer.split('CN=')[1].split(',')[0].strip()
+                        wildcard_certs.append({
+                            'name': name,
+                            'not_before': not_before,
+                            'not_after': not_after,
+                            'issuer': issuer_cn,
+                        })
+                    
                     if name.endswith(f'.{domain}') or name == domain:
                         clean_name = name.lstrip('*.')
                         if clean_name == domain:
@@ -3540,6 +3552,33 @@ class DNSAnalyzer:
                     'issuers': sorted(list(data['issuers']))[:3],
                 })
             
+            has_current_wildcard = False
+            if wildcard_certs:
+                has_current_wildcard = any(
+                    wc['not_after'] >= now for wc in wildcard_certs if wc.get('not_after')
+                )
+                result['wildcard_certs'] = {
+                    'present': True,
+                    'current': has_current_wildcard,
+                    'count': len(wildcard_certs),
+                    'pattern': f'*.{domain}',
+                }
+            
+            if has_current_wildcard:
+                dns_found = self._probe_common_subdomains(domain)
+                for sub_name in dns_found:
+                    if sub_name not in subdomain_map:
+                        subdomains.append({
+                            'name': sub_name,
+                            'first_seen': '',
+                            'last_seen': '',
+                            'cert_count': 0,
+                            'is_wildcard': False,
+                            'is_current': True,
+                            'issuers': [],
+                            'source': 'dns',
+                        })
+            
             subdomains.sort(key=lambda x: (not x['is_current'], -x['cert_count'], x['name']))
             
             result['subdomains'] = subdomains
@@ -3560,6 +3599,97 @@ class DNSAnalyzer:
         
         return result
     
+    def _probe_common_subdomains(self, domain: str) -> list:
+        """Probe common subdomain names via DNS A/AAAA lookups.
+        
+        Used when a wildcard TLS certificate (*.domain) is present, which means
+        subdomains are covered by the wildcard and won't appear individually in
+        Certificate Transparency logs. This lightweight DNS probing discovers
+        subdomains that actually resolve, complementing CT-based discovery.
+        
+        Only resolves names — no active scanning or brute-forcing beyond
+        a curated list of common service names.
+        """
+        common_prefixes = [
+            'www', 'mail', 'email', 'webmail', 'smtp', 'imap', 'pop', 'pop3',
+            'ftp', 'sftp', 'ssh', 'vpn', 'remote', 'rdp',
+            'api', 'app', 'dev', 'staging', 'test', 'beta', 'demo',
+            'admin', 'panel', 'cpanel', 'whm', 'dashboard', 'portal',
+            'blog', 'shop', 'store', 'docs', 'wiki', 'help', 'support',
+            'cdn', 'static', 'assets', 'media', 'img', 'images',
+            'ns1', 'ns2', 'dns', 'dns1', 'dns2',
+            'mx', 'mx1', 'mx2', 'relay',
+            'db', 'database', 'sql', 'mysql', 'postgres', 'redis', 'mongo',
+            'git', 'gitlab', 'jenkins', 'ci', 'jira', 'confluence',
+            'status', 'monitor', 'grafana', 'prometheus', 'kibana',
+            'auth', 'login', 'sso', 'id', 'identity', 'oauth',
+            'calendar', 'cal', 'meet', 'video', 'chat', 'slack',
+            'cloud', 'server', 'host', 'node', 'cluster',
+            'intranet', 'internal', 'office', 'corp',
+            'm', 'mobile', 'wap',
+            'autodiscover', 'autoconfig', 'lyncdiscover', 'sip',
+            'owa', 'exchange', 'outlook',
+            'www2', 'web', 'web1', 'web2',
+            'backup', 'bak', 'old', 'legacy', 'archive',
+            'schedule', 'screen', 'proxy', 'gateway', 'lb',
+            'crm', 'erp', 'hr', 'finance',
+        ]
+        
+        from concurrent.futures import ThreadPoolExecutor, as_completed
+        
+        found = []
+        
+        def make_resolver():
+            r = dns.resolver.Resolver()
+            r.nameservers = ['1.1.1.1', '8.8.8.8']
+            r.lifetime = 2.0
+            r.timeout = 1.5
+            return r
+        
+        wildcard_ips = set()
+        try:
+            r = make_resolver()
+            answers = r.resolve(f'unlikely-random-xz9q7w.{domain}', 'A')
+            for rdata in answers:
+                wildcard_ips.add(str(rdata))
+        except Exception:
+            pass
+        
+        def probe_one(prefix):
+            fqdn = f'{prefix}.{domain}'
+            try:
+                r = make_resolver()
+                answers = r.resolve(fqdn, 'A')
+                resolved_ips = {str(rdata) for rdata in answers}
+                if wildcard_ips and resolved_ips == wildcard_ips:
+                    return None
+                return fqdn
+            except Exception:
+                return None
+        
+        with ThreadPoolExecutor(max_workers=20) as executor:
+            futures = {executor.submit(probe_one, p): p for p in common_prefixes}
+            try:
+                for future in as_completed(futures, timeout=15):
+                    try:
+                        fqdn = future.result(timeout=3)
+                        if fqdn:
+                            found.append(fqdn)
+                    except Exception:
+                        continue
+            except TimeoutError:
+                for future in futures:
+                    if future.done():
+                        try:
+                            fqdn = future.result(timeout=0)
+                            if fqdn:
+                                found.append(fqdn)
+                        except Exception:
+                            continue
+        
+        logging.info(f"DNS subdomain probing for {domain}: found {len(found)} subdomains, wildcard_ips={wildcard_ips or 'none'}")
+        return found
+
     def _read_smtp_response(self, sock: socket.socket, timeout: float = 2.0) -> str:
         """Read complete SMTP multi-line response with proper termination detection."""
         sock.settimeout(timeout)

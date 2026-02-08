@@ -381,7 +381,7 @@
                             <div class="alert alert-success py-2 mb-3 small border-success border-opacity-50">
                                 <div class="d-flex align-items-center mb-1">
                                     <i class="fas fa-shield-alt me-2"></i><strong>{{ mp.label }}</strong>
-                                    <span class="badge bg-success bg-opacity-25 text-success-emphasis ms-2">{{ mp.present_count }}/{{ mp.total_signals }} controls</span>
+                                    <span class="badge bg-success ms-2">{{ mp.present_count }}/{{ mp.total_signals }} controls</span>
                                 </div>
                                 <div class="mb-2">{{ mp.summary }}</div>
                                 <div class="d-flex flex-wrap gap-1">
@@ -399,7 +399,7 @@
                             <div class="alert alert-warning py-2 mb-3 small border-warning border-opacity-50">
                                 <div class="d-flex align-items-center mb-1">
                                     <i class="fas fa-exclamation-triangle me-2"></i><strong>{{ mp.label }}</strong>
-                                    <span class="badge bg-warning bg-opacity-25 text-warning-emphasis ms-2">{{ mp.present_count }}/{{ mp.total_signals }} controls</span>
+                                    <span class="badge bg-warning text-dark ms-2">{{ mp.present_count }}/{{ mp.total_signals }} controls</span>
                                 </div>
                                 <div class="mb-2">{{ mp.summary }}</div>
                                 <div class="d-flex flex-wrap gap-1 mb-2">
@@ -1478,12 +1478,27 @@
                             <span class="badge bg-dark bg-opacity-25 text-muted fw-normal"><i class="fas fa-database me-1"></i>Source: {{ ct.source }}</span>
                         </div>
                         <small class="text-muted"><i class="fas fa-info-circle me-1"></i>{{ ct.caveat }}</small>
+                        {% if ct.get('wildcard_certs', {}).get('present') %}
+                        <div class="alert alert-info bg-info bg-opacity-10 border-info border-opacity-25 py-2 mt-2 mb-0 small">
+                            <i class="fas fa-asterisk me-1"></i>
+                            <strong>Wildcard certificate detected:</strong> <code>{{ ct.wildcard_certs.pattern }}</code>
+                            {% if ct.wildcard_certs.current %}
+                            <span class="badge bg-success-subtle text-success border border-success-subtle ms-1" style="font-size:0.65rem;">Active</span>
+                            {% else %}
+                            <span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle ms-1" style="font-size:0.65rem;">Expired</span>
+                            {% endif %}
+                            <div class="mt-1 text-muted">
+                                Subdomains covered by this wildcard won't appear individually in CT logs (RFC 6962). DNS probing of common service names was used to discover additional subdomains below.
+                            </div>
+                        </div>
+                        {% endif %}
                     </div>
                     <div class="table-responsive">
                         <table class="table table-sm table-hover mb-0">
                             <thead>
                                 <tr>
                                     <th class="border-secondary">Subdomain</th>
+                                    <th class="border-secondary text-center">Source</th>
                                     <th class="border-secondary text-center">Status</th>
                                     <th class="border-secondary text-center">Certificates</th>
                                     <th class="border-secondary">First Seen</th>
@@ -1500,15 +1515,22 @@
                                         {% endif %}
                                     </td>
                                     <td class="border-secondary text-center">
+                                        {% if sub.get('source') == 'dns' %}
+                                        <span class="badge bg-info-subtle text-info border border-info-subtle" style="font-size:0.6rem;" title="Found via DNS A record lookup">DNS</span>
+                                        {% else %}
+                                        <span class="badge bg-dark bg-opacity-25 text-muted" style="font-size:0.6rem;" title="Found in Certificate Transparency logs">CT Log</span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="border-secondary text-center">
                                         {% if sub.is_current %}
                                         <span class="badge bg-success-subtle text-success border border-success-subtle" style="font-size:0.7rem;">Current</span>
                                         {% else %}
                                         <span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle" style="font-size:0.7rem;">Expired</span>
                                         {% endif %}
                                     </td>
-                                    <td class="border-secondary text-center"><span class="small text-muted">{{ sub.cert_count }}</span></td>
-                                    <td class="border-secondary"><span class="small text-muted">{{ sub.first_seen }}</span></td>
-                                    <td class="border-secondary"><span class="small text-muted">{{ sub.issuers|join(', ') if sub.issuers else '' }}</span></td>
+                                    <td class="border-secondary text-center"><span class="small text-muted">{{ sub.cert_count if sub.cert_count else '—' }}</span></td>
+                                    <td class="border-secondary"><span class="small text-muted">{{ sub.first_seen if sub.first_seen else '—' }}</span></td>
+                                    <td class="border-secondary"><span class="small text-muted">{{ sub.issuers|join(', ') if sub.issuers else ('Wildcard (*.%s)'|format(domain) if sub.get('source') == 'dns' else '') }}</span></td>
                                 </tr>
                                 {% endfor %}
                             </tbody>
