@@ -326,10 +326,10 @@
                             <div class="col-md-3 border-end border-primary border-opacity-10">
                                 <small class="text-uppercase text-muted fw-bold d-block" style="font-size: 0.7rem;">Email Service Provider</small>
                                 <div class="text-truncate">
-                                    <i class="fas fa-envelope text-primary me-2"></i>
+                                    <i class="fas fa-{{ 'ban' if results.is_no_mail_domain else 'envelope' }} text-primary me-2"></i>
                                     <strong>{{ results.hosting_summary.email_hosting if results.hosting_summary and results.hosting_summary.email_hosting else 'Unknown' }}</strong>
                                 </div>
-                                <small class="text-muted d-block" style="font-size: 0.65rem;">Where email is hosted (MX)</small>
+                                <small class="text-muted d-block" style="font-size: 0.65rem;">{% if results.is_no_mail_domain %}Domain declares no email (intentional){% else %}Where email is hosted (MX){% endif %}</small>
                             </div>
                             <div class="col-md-3 border-end border-primary border-opacity-10">
                                 <small class="text-uppercase text-muted fw-bold d-block" style="font-size: 0.7rem;">Web Hosting</small>
@@ -374,6 +374,17 @@
                         </h5>
                     </div>
                     <div class="card-body">
+                        {% if results.is_no_mail_domain %}
+                            <div class="alert alert-info py-2 mb-3 small border-info border-opacity-50">
+                                <i class="fas fa-ban me-2"></i><strong>Non-Mail Domain</strong> &mdash; This domain has explicitly declared it does not send or receive email.
+                                <span class="d-block mt-1 text-info-emphasis">
+                                    Evidence:
+                                    <span class="badge bg-success bg-opacity-75 ms-1">SPF -all</span> rejects all senders
+                                    {% if results.has_null_mx %}<span class="badge bg-success bg-opacity-75 ms-1">Null MX</span> refuses inbound mail (RFC 7505){% endif %}
+                                    {% if results.dmarc_analysis.policy == 'reject' %}<span class="badge bg-success bg-opacity-75 ms-1">DMARC reject</span> blocks spoofed messages{% endif %}
+                                </span>
+                            </div>
+                        {% endif %}
                         {% if results.posture and results.posture.verdicts.email %}
                             <div class="alert alert-{{ 'success' if results.posture.verdicts.email_answer == 'No' else 'warning' if 'Mostly' in results.posture.verdicts.email_answer or 'Partially' in results.posture.verdicts.email_answer else 'danger' }} py-2 mb-3 small">
                                 <i class="fas fa-gavel me-2"></i><strong>Verdict:</strong> {{ results.posture.verdicts.email }}
@@ -1084,19 +1095,30 @@
                                     <span class="badge bg-warning text-dark me-2">MX</span>Mail Servers
                                 </h6>
                                 {% if results.basic_records.MX %}
-                                    {% set mx_list = results.basic_records.MX|join(' ')|lower %}
-                                    {% set is_google = 'google' in mx_list or 'googlemail' in mx_list %}
-                                    {% set mx_count = results.basic_records.MX|length %}
-                                    {% for record in results.basic_records.MX %}
-                                        <div class="code-block small mb-1">{{ record }}</div>
-                                    {% endfor %}
-                                    {% if is_google and mx_count > 1 %}
-                                        <div class="text-warning small mt-1">
-                                            <i class="fas fa-exclamation-triangle me-1"></i>
-                                            <strong>Legacy setup:</strong> Google Workspace now only needs 1 MX record (smtp.google.com). You can simplify by removing the extra {{ mx_count - 1 }} record{{ 's' if mx_count > 2 else '' }}.
+                                    {% if results.has_null_mx %}
+                                        {% for record in results.basic_records.MX %}
+                                            <div class="code-block small mb-1">{{ record }}</div>
+                                        {% endfor %}
+                                        <div class="mt-1">
+                                            <span class="badge bg-info bg-opacity-75"><i class="fas fa-ban me-1"></i>Null MX</span>
+                                            <a href="https://datatracker.ietf.org/doc/html/rfc7505" target="_blank" rel="noopener" class="ms-1 text-muted rfc-link" data-bs-toggle="tooltip" data-bs-html="true" title="<strong>Null MX</strong><br>An explicit declaration that this domain does not accept email. Priority 0 with a dot (.) as the mail server." aria-label="Learn about Null MX - RFC 7505"><i class="fas fa-info-circle"></i><span class="rfc-label">RFC 7505</span></a>
                                         </div>
+                                        <small class="text-info">Domain explicitly does not accept email</small>
                                     {% else %}
-                                        <small class="text-muted">Priority + mail server for email delivery</small>
+                                        {% set mx_list = results.basic_records.MX|join(' ')|lower %}
+                                        {% set is_google = 'google' in mx_list or 'googlemail' in mx_list %}
+                                        {% set mx_count = results.basic_records.MX|length %}
+                                        {% for record in results.basic_records.MX %}
+                                            <div class="code-block small mb-1">{{ record }}</div>
+                                        {% endfor %}
+                                        {% if is_google and mx_count > 1 %}
+                                            <div class="text-warning small mt-1">
+                                                <i class="fas fa-exclamation-triangle me-1"></i>
+                                                <strong>Legacy setup:</strong> Google Workspace now only needs 1 MX record (smtp.google.com). You can simplify by removing the extra {{ mx_count - 1 }} record{{ 's' if mx_count > 2 else '' }}.
+                                            </div>
+                                        {% else %}
+                                            <small class="text-muted">Priority + mail server for email delivery</small>
+                                        {% endif %}
                                     {% endif %}
                                 {% else %}
                                     <div class="text-muted small"><i class="fas fa-minus me-1"></i>No MX records</div>
@@ -1137,7 +1159,9 @@
                                 <span>
                                     <i class="fas fa-envelope me-1 text-warning"></i>
                                     <strong>Mail:</strong>
-                                    {% if results.basic_records.MX %}
+                                    {% if results.has_null_mx %}
+                                        <span class="text-info">Null MX (no mail)</span>
+                                    {% elif results.basic_records.MX %}
                                         <span class="text-success">{{ results.basic_records.MX|length }} server{{ 's' if results.basic_records.MX|length > 1 else '' }}</span>
                                     {% else %}
                                         <span class="text-danger">Not configured</span>

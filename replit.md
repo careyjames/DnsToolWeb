@@ -4,7 +4,16 @@
 
 A web-based DNS intelligence tool for comprehensive domain record analysis, email security validation (SPF, DMARC, DKIM), email security management provider detection, and DNS security intelligence reports. The application aims to provide a robust, user-friendly platform for understanding and improving domain and email security posture, offering insights into business vision, market potential, and project ambitions.
 
-## Recent Changes (v26.10.44)
+## Recent Changes (v26.10.45)
+- Null MX (RFC 7505) recognition and No-Mail Domain detection (v26.10.45):
+  - **Null MX**: `MX 0 .` now recognized as an explicit "this domain does not accept mail" declaration per RFC 7505. Previously displayed as a regular mail server entry.
+  - **No-Mail Domain banner**: When SPF is `-all` AND MX is Null MX (or absent), a prominent info banner appears in Email Security section with evidence badges (SPF -all, Null MX, DMARC reject) explaining the domain intentionally does not send or receive email.
+  - **Email Service Provider**: Shows "No Mail (Null MX)" with subtitle "Domain declares no email (intentional)" instead of "Unknown" / "Where email is hosted (MX)".
+  - **MX display**: Traffic & Routing MX column shows "Null MX" badge with RFC 7505 link and "Domain explicitly does not accept email" instead of "Priority + mail server for email delivery".
+  - **Posture scoring**: MTA-STS, BIMI, and TLS-RPT no longer listed as "Not Configured" for non-mail domains (they're irrelevant). Posture message says "Non-mail domain fully secured" when all applicable controls are in place.
+  - **Email verdict**: Specific verdict "Non-mail domain with full anti-spoofing protection" replaces generic DMARC reject message.
+  - **Traffic summary**: Shows "Null MX (no mail)" instead of "1 server".
+  - `is_no_mail_domain` detection expanded: now also triggers when Null MX is present (previously required zero MX records).
 - Subdomain-aware analysis: subdomains (e.g., `dnstool.it-help.tech`) now correctly detected and handled across three areas (v26.10.43):
   - **DNSSEC**: When a subdomain has no DNSKEY/DS records but the AD flag is set (parent zone is signed), shows "Inherited" badge with parent zone algorithm info instead of false "Unsigned" warning. Uses `_find_parent_zone()` helper to walk up domain labels and find the zone apex via NS records.
   - **NS Delegation**: When a subdomain has no NS records (normal — it's within the parent zone), shows "Subdomain" badge and parent zone nameservers instead of false "Check Failed / Mismatch" error. No longer triggers the "Partial Results" error banner.

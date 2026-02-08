@@ -2988,14 +2988,20 @@ class DNSAnalyzer:
                 email_hosting = name
                 break
         
-        # If no match but MX exists, show first MX server
+        # Check for Null MX (RFC 7505) - domain explicitly does not accept mail
         if email_hosting == "Unknown" and mx_records:
-            first_mx = mx_records[0].split()[-1] if mx_records else ""
-            if first_mx:
-                # Clean up and shorten
-                parts = first_mx.rstrip('.').split('.')
-                if len(parts) >= 2:
-                    email_hosting = '.'.join(parts[-2:]).title()
+            is_null_mx = any(
+                r.strip().rstrip('.').replace(' ', '') in ['0.', '0'] or r.strip() == '0 .'
+                for r in mx_records
+            )
+            if is_null_mx:
+                email_hosting = "No Mail (Null MX)"
+            else:
+                first_mx = mx_records[0].split()[-1] if mx_records else ""
+                if first_mx:
+                    parts = first_mx.rstrip('.').split('.')
+                    if len(parts) >= 2:
+                        email_hosting = '.'.join(parts[-2:]).title()
         
         return {
             'hosting': hosting,
@@ -3255,15 +3261,22 @@ class DNSAnalyzer:
         # SMTP Transport verification disabled - port 25 blocked in production
         results['smtp_transport'] = None
         
+        # Detect Null MX (RFC 7505): "MX 0 ." means domain explicitly does not accept mail
+        mx_records = basic.get('MX', [])
+        has_null_mx = any(
+            r.strip().rstrip('.').replace(' ', '') in ['0.', '0'] or r.strip() == '0 .'
+            for r in mx_records
+        ) if mx_records else False
+        results['has_null_mx'] = has_null_mx
+        
         # Detect "no-mail domain" pattern and adjust DMARC messaging
-        # A domain with SPF "v=spf1 -all" (no senders) + no MX is intentionally not sending email
+        # A domain with SPF "v=spf1 -all" (no senders) + no MX or Null MX is intentionally not sending email
         spf = results.get('spf_analysis', {})
         dmarc = results.get('dmarc_analysis', {})
-        mx_records = basic.get('MX', [])
         
         is_no_mail_domain = (
             spf.get('no_mail_intent', False) and 
-            len(mx_records) == 0
+            (len(mx_records) == 0 or has_null_mx)
         )
         results['is_no_mail_domain'] = is_no_mail_domain
         
@@ -3693,21 +3706,21 @@ class DNSAnalyzer:
         mta_sts = results.get('mta_sts_analysis', {})
         if mta_sts.get('status') == 'success':
             configured_items.append('MTA-STS (policy present)')
-        else:
+        elif not is_no_mail_domain:
             absent_items.append('MTA-STS (email TLS policy)')
         
         # Check TLS-RPT (runtime-dependent - record presence only)
         tls_rpt = results.get('tlsrpt_analysis', {})  # Note: key is 'tlsrpt_analysis' not 'tls_rpt_analysis'
         if tls_rpt.get('status') == 'success':
             configured_items.append('TLS-RPT (reporting configured)')
-        else:
+        elif not is_no_mail_domain:
             absent_items.append('TLS-RPT (TLS delivery reporting)')
         
         # Check BIMI (runtime-dependent - record presence only)
         bimi = results.get('bimi_analysis', {})
         if bimi.get('status') == 'success':
             configured_items.append('BIMI (brand logo configured)')
-        else:
+        elif not is_no_mail_domain:
             absent_items.append('BIMI (brand logo in inboxes)')
         
         # Check if DNSSEC is configured (affects overall posture label)
@@ -3719,7 +3732,12 @@ class DNSAnalyzer:
         # PARTIAL = some controls missing
         # AT RISK = critical gaps
         if not issues and not monitoring_items:
-            if has_dnssec:
+            if has_dnssec and is_no_mail_domain:
+                state = 'SECURE'
+                color = 'success'
+                icon = 'shield-alt'
+                message = 'Non-mail domain fully secured. Anti-spoofing and DNSSEC enforced.'
+            elif has_dnssec:
                 state = 'SECURE'
                 color = 'success'
                 icon = 'shield-alt'
@@ -3804,7 +3822,14 @@ class DNSAnalyzer:
         else:
             dkim_note = ''
         
-        if spf_ok and dmarc_ok and dmarc_reject:
+        is_no_mail = results.get('is_no_mail_domain', False)
+        has_null_mx = results.get('has_null_mx', False)
+        
+        if is_no_mail and dmarc_reject:
+            null_mx_note = ' Null MX (RFC 7505) confirms no inbound mail.' if has_null_mx else ''
+            verdicts['email'] = f'Non-mail domain with full anti-spoofing protection. SPF -all rejects all senders, DMARC reject blocks spoofed messages.{null_mx_note}'
+            verdicts['email_answer'] = 'No'
+        elif spf_ok and dmarc_ok and dmarc_reject:
             verdicts['email'] = f'DMARC policy is reject - spoofed messages will be blocked by receiving servers.{dkim_note}'
             verdicts['email_answer'] = 'No'
         elif spf_ok and dmarc_ok and dmarc_quarantine:
