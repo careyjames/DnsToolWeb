@@ -4793,18 +4793,27 @@ class DNSAnalyzer:
             # Unsigned is tracked as "not configured" - a design choice, not an error
             absent_items.append('DNSSEC (DNS response signing)')
         
+        has_dnssec = dnssec.get('status') == 'success'
+        
         # Check DANE/TLSA (RFC 6698, RFC 7672) - advanced email transport security
         # DANE's security guarantees depend on DNSSEC; without it, TLSA records can be spoofed
         dane = results.get('dane_analysis', {})
+        has_mta_sts_configured = results.get('mta_sts_analysis', {}).get('status') == 'success'
         if dane.get('has_dane'):
             if has_dnssec and dane.get('status') == 'success':
                 configured_items.append(f"DANE/TLSA ({dane.get('mx_hosts_with_dane', 0)} MX host(s) with TLSA records, DNSSEC-validated)")
+                if has_mta_sts_configured:
+                    configured_items.append('Dual transport security: DANE (cryptographic) + MTA-STS (HTTPS-based) — strongest posture')
+                else:
+                    monitoring_items.append('DANE configured without MTA-STS — consider adding MTA-STS for receivers that don\'t validate DNSSEC')
             elif dane.get('has_dane') and not has_dnssec:
                 monitoring_items.append(f"DANE/TLSA records present but DNSSEC not validated — DANE requires DNSSEC for security (RFC 7672 §1.3)")
             elif dane.get('status') == 'warning':
                 monitoring_items.append(f"DANE partial ({dane.get('mx_hosts_with_dane', 0)}/{dane.get('mx_hosts_checked', 0)} MX hosts)")
         elif not is_no_mail_domain:
             absent_items.append('DANE/TLSA (certificate pinning for mail transport)')
+            if has_mta_sts_configured and not has_dnssec:
+                pass
         
         # Check NS delegation
         ns_del = results.get('ns_delegation_analysis', {})
@@ -4839,9 +4848,6 @@ class DNSAnalyzer:
             configured_items.append('BIMI (brand logo configured)')
         elif not is_no_mail_domain:
             absent_items.append('BIMI (brand logo in inboxes)')
-        
-        # Check if DNSSEC is configured (affects overall posture label)
-        has_dnssec = dnssec.get('status') == 'success'
         
         # Determine posture state
         # SECURE = all controls enforced INCLUDING DNSSEC

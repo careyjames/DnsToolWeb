@@ -1014,6 +1014,28 @@
                                         <i class="fas fa-info-circle me-1"></i>DANE binds TLS certificates to DNS via TLSA records, protecting email transport against man-in-the-middle attacks and rogue CAs. It requires DNSSEC to be enabled. Over 1 million domains now use DANE globally, with Microsoft Exchange Online and Google Workspace supporting it. Best practice: deploy both DANE (cryptographic strength) and MTA-STS (broader compatibility).
                                     </div>
                                 {% endif %}
+
+                                {% set has_dane = results.dane_analysis.has_dane %}
+                                {% set has_mta_sts = results.mta_sts_analysis is defined and results.mta_sts_analysis.status == 'success' %}
+                                {% set has_dnssec = results.dnssec_analysis is defined and results.dnssec_analysis.status == 'success' %}
+                                <div class="small mt-2 p-2 rounded" style="background: rgba(255,255,255,0.03); border-left: 3px solid {% if has_dane and has_mta_sts %}#198754{% elif has_dane or has_mta_sts %}#0dcaf0{% else %}#6c757d{% endif %};">
+                                    <strong><i class="fas fa-balance-scale me-1"></i>Two Approaches to Email Transport Security</strong>
+                                    <p class="mb-1 mt-1">The email security community has two competing philosophies for securing mail transport:</p>
+                                    <ul class="mb-1 ps-3">
+                                        <li><strong>DNSSEC + DANE</strong> (<a href="https://datatracker.ietf.org/doc/html/rfc7672" target="_blank" rel="noopener" class="text-info">RFC 7672</a>) &mdash; Cryptographic chain of trust from DNS root to mail server certificate. Eliminates reliance on certificate authorities. Requires DNSSEC signing of the domain.</li>
+                                        <li><strong>MTA-STS</strong> (<a href="https://datatracker.ietf.org/doc/html/rfc8461" target="_blank" rel="noopener" class="text-info">RFC 8461</a>) &mdash; HTTPS-based policy requiring TLS for mail delivery. Works without DNSSEC, using the existing web PKI trust model. Easier to deploy but relies on CA trust.</li>
+                                    </ul>
+                                    {% if has_dane and has_mta_sts %}
+                                        <span class="text-success"><i class="fas fa-check-circle me-1"></i><strong>This domain deploys both approaches</strong></span> &mdash; the strongest posture. DANE provides cryptographic certificate binding via DNSSEC, while MTA-STS ensures compatibility with receivers that don't validate DNSSEC. This is the recommended configuration.
+                                    {% elif has_dane and not has_mta_sts %}
+                                        <span class="text-info"><i class="fas fa-info-circle me-1"></i><strong>This domain uses DANE only.</strong></span> DANE provides the strongest cryptographic guarantees, but not all receiving mail servers validate DNSSEC. Adding MTA-STS would extend protection to receivers that support MTA-STS but not DANE.
+                                    {% elif has_mta_sts and not has_dane %}
+                                        <span class="text-info"><i class="fas fa-info-circle me-1"></i><strong>This domain uses MTA-STS only.</strong></span> MTA-STS provides good transport security through HTTPS-based policy. Adding DANE (which requires DNSSEC) would provide cryptographic certificate pinning independent of certificate authorities {% if not has_dnssec %}&mdash; this domain would first need to enable DNSSEC{% endif %}.
+                                    {% else %}
+                                        <span class="text-muted"><i class="fas fa-info-circle me-1"></i><strong>This domain has neither DANE nor MTA-STS.</strong></span> Mail transport relies on opportunistic TLS without policy enforcement, leaving it vulnerable to downgrade attacks. Consider deploying MTA-STS (simpler, no DNSSEC required) or both DANE and MTA-STS for maximum protection.
+                                    {% endif %}
+                                    <p class="mb-0 mt-1 text-muted" style="font-size: 0.8em;"><i class="fas fa-chart-line me-1"></i><strong>Industry trend:</strong> Microsoft Exchange Online enforces inbound DANE with DNSSEC (GA October 2024), while domains like google.com and apple.com use MTA-STS without DNSSEC. Both approaches coexist today because DANE is backward-compatible &mdash; senders skip the check if the domain isn't DNSSEC-signed. The question facing the industry is whether Microsoft's enforcement momentum will tip the balance toward universal DNSSEC+DANE adoption.</p>
+                                </div>
                             </div>
                         </div>
                         {% endif %}
