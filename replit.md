@@ -1,8 +1,38 @@
-# DNS Analysis Tool
+# DNS Tool — Domain Security Audit
 
 ## Overview
 
-This project is a web-based DNS intelligence tool designed for comprehensive domain record analysis, email security validation (SPF, DMARC, DKIM), email security management provider detection, and generation of DNS security intelligence reports. Its primary purpose is to offer a robust, user-friendly platform that helps users understand and enhance their domain and email security posture. The tool provides insights into crucial aspects of domain configuration, aiming to improve overall digital security.
+A web-based DNS intelligence tool performing comprehensive RFC-compliant domain security analysis (SPF, DKIM, DMARC, DNSSEC, MTA-STS, TLS-RPT, BIMI, CAA) with automatic subdomain discovery via Certificate Transparency logs and DNS probing. Serves as an educational authority where every result is truthful, RFC-cited, and provable.
+
+## Project Philosophy
+
+### Accuracy Above All Else
+Every result must be truthful, RFC-cited, and provable. Speed is optimized within that constraint, never at the expense of accuracy. When there is any tension between speed and correctness, correctness wins.
+
+### Security-First, Compliant by Design
+- No secrets or keys exposed in code or logs.
+- All recommendations backed by RFC citations (e.g., RFC 7505 for Null MX, RFC 7208 for SPF, RFC 7489 for DMARC).
+- Error classification is transparent: timeout vs error vs not-found are distinct states, never masked.
+- ORM-only database access; no raw SQL in application code.
+- Rate limiting enforced per-IP.
+
+### Solid Foundation, Clean Code
+- Build from a tested, passing baseline — never ship broken code.
+- End-to-end tests validate every feature before delivery.
+- Each change is versioned (YY.M.patch format) with a changelog in this document.
+- Technical debt is addressed proactively, not deferred.
+
+### Performance Through Correctness
+- Accurate first, then fast. Parallelization (ThreadPoolExecutor) is used extensively but only where thread-safety is guaranteed.
+- DNS timeouts set for reliability (2s timeout, 2 retries) — not aggressively short.
+- Multi-resolver consensus (4 resolvers queried in parallel) ensures results are verifiable, not just fast.
+- Timing instrumentation identifies bottlenecks scientifically, guiding optimization effort.
+
+### Educational Authority
+- Every recommendation includes the governing RFC and section reference.
+- Graduated assessments (e.g., 4-tier mail posture) replace simplistic pass/fail verdicts.
+- Missing-step checklists explain *why* a configuration is incomplete, not just *that* it is.
+- Context-aware messaging adapts to what the domain actually is (subdomain vs registered domain, mail-enabled vs no-mail).
 
 ## User Preferences
 
@@ -68,7 +98,7 @@ Preferred communication style: Simple, everyday language.
 - Detects DMARC monitoring, TLS-RPT reporting, and SPF flattening services.
 - Supports context-aware DKIM selector attribution and SPF evidence hierarchy.
 - **DNS Evidence Diff**: Compares resolver and authoritative records for various types, including A, AAAA, MX, TXT, NS, CAA, and SOA records, along with email security-related records (`_dmarc`, `_mta-sts`, `_smtp._tls`). Displays TTL values and RFC reference badges.
-- **Subdomain Discovery**: Automatic Certificate Transparency log query (crt.sh, RFC 6962) runs in parallel during analysis. Discovers subdomains with TLS certificates, providing details like expiry, issuer, and wildcard status. Results stored in database and rendered server-side.
+- **Subdomain Discovery**: Dual-method approach combining Certificate Transparency logs (crt.sh, RFC 6962) with DNS probing of ~80 common service names. CT logs find subdomains with TLS certificates; DNS probing finds subdomains that resolve but may lack certificates. Both methods run in parallel during analysis. Results stored in database and rendered server-side with source attribution (CT Log vs DNS).
 - **Null MX and No-Mail Domain Detection**: Recognizes `MX 0 .` (RFC 7505) and identifies domains explicitly configured not to send or receive email, adjusting posture scoring and verdicts accordingly.
 - **Subdomain-aware analysis**: Correctly handles DNSSEC inheritance, NS delegation, and RDAP lookups for subdomains.
 - **Subdomain-aware CT discovery**: Detects when the analyzed domain is itself a subdomain (via Public Suffix List / `tldextract`) and provides context-aware messaging with RFC references (RFC 8499, RFC 1034 §3.1), offering a one-click link to scan the registered domain for broader discovery.
