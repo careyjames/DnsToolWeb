@@ -226,34 +226,68 @@
         </footer>
     </main>
 
-    <div id="historyLoadingOverlay" style="display:none;position:fixed;inset:0;background:rgba(33,37,41,0.92);z-index:9999;justify-content:center;align-items:center;flex-direction:column;">
+    <div id="historyViewOverlay" style="display:none;position:fixed;inset:0;background:rgba(33,37,41,0.92);z-index:9999;justify-content:center;align-items:center;flex-direction:column;">
         <div class="spinner-border text-primary mb-3" role="status" style="width:3rem;height:3rem;"><span class="visually-hidden">Loading...</span></div>
-        <div class="text-light fw-medium" id="historyLoadingText">Loading analysis results...</div>
-        <div class="text-muted small mt-1" id="historyLoadingSubtext" style="display:none;"></div>
+        <div class="text-light fw-medium" id="historyViewText">Loading analysis results...</div>
+    </div>
+
+    <div id="historyAnalyzeOverlay" class="loading-overlay d-none">
+        <div class="loading-content">
+            <div class="loading-spinner">
+                <i class="fas fa-globe fa-spin"></i>
+            </div>
+            <h4 class="mt-4 mb-2">Analyzing Domain</h4>
+            <p class="text-muted mb-0" id="historyAnalyzeDomain"></p>
+            <div class="loading-dots mt-3">
+                <span></span><span></span><span></span>
+            </div>
+            <div class="loading-status mt-3">
+                <span>Initializing DNS resolver...</span>
+                <span>Querying authoritative nameservers...</span>
+                <span>Pulling A/AAAA records via DoH...</span>
+                <span>Fetching MX records for mail routing...</span>
+                <span>Running RDAP lookup for registrar info...</span>
+                <span>Parsing SPF record from TXT...</span>
+                <span>Validating DMARC policy...</span>
+                <span>Checking DKIM selectors...</span>
+                <span>Querying DANE/TLSA records for MX hosts...</span>
+                <span>Querying DNSSEC chain of trust...</span>
+                <span>Resolving CNAME chains for provider identification...</span>
+                <span>Aggregating multi-resolver consensus...</span>
+            </div>
+        </div>
     </div>
 
     <script src="{{ url_for('static', filename='js/bootstrap.bundle.min.js') }}" defer></script>
     <script src="{{ url_for('static', filename='js/main.js') }}?v={{ app_version }}" defer></script>
     <script nonce="{{ csp_nonce }}">
     document.addEventListener('DOMContentLoaded',function(){
-        function showOverlay(btn,msg,sub){
+        function getDomain(btn){
             var row=btn.closest('tr');
-            var domain=row?row.querySelector('.fw-medium'):null;
-            var name=domain?domain.textContent.trim():'';
-            var overlay=document.getElementById('historyLoadingOverlay');
-            var txt=document.getElementById('historyLoadingText');
-            var subtxt=document.getElementById('historyLoadingSubtext');
-            if(txt)txt.textContent=name?msg.replace('{d}',name):msg.replace(' {d}','');
-            if(subtxt&&sub){subtxt.textContent=sub;subtxt.style.display='block';}
-            if(overlay)overlay.style.display='flex';
-            btn.classList.add('disabled');
-            btn.innerHTML='<i class="fas fa-spinner fa-spin"></i>';
+            var el=row?row.querySelector('.fw-medium'):null;
+            return el?el.textContent.trim():'';
         }
         document.querySelectorAll('.history-view-btn').forEach(function(btn){
-            btn.addEventListener('click',function(){showOverlay(btn,'Loading results for {d}...','');});
+            btn.addEventListener('click',function(){
+                var name=getDomain(btn);
+                var overlay=document.getElementById('historyViewOverlay');
+                var txt=document.getElementById('historyViewText');
+                if(txt&&name)txt.textContent='Loading results for '+name+'...';
+                if(overlay)overlay.style.display='flex';
+                btn.classList.add('disabled');
+                btn.innerHTML='<i class="fas fa-spinner fa-spin"></i>';
+            });
         });
         document.querySelectorAll('.history-reanalyze-btn').forEach(function(btn){
-            btn.addEventListener('click',function(){showOverlay(btn,'Running fresh analysis on {d}...','This typically takes 10\u201320 seconds');});
+            btn.addEventListener('click',function(){
+                var name=getDomain(btn);
+                var overlay=document.getElementById('historyAnalyzeOverlay');
+                var domainEl=document.getElementById('historyAnalyzeDomain');
+                if(domainEl)domainEl.textContent=name;
+                if(overlay){overlay.classList.remove('d-none');startStatusCycle(overlay);}
+                btn.classList.add('disabled');
+                btn.innerHTML='<i class="fas fa-spinner fa-spin"></i>';
+            });
         });
     });
     </script>
