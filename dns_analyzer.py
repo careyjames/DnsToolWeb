@@ -12,6 +12,12 @@ from typing import Dict, List, Optional, Any
 from concurrent.futures import ThreadPoolExecutor, as_completed, TimeoutError as FuturesTimeoutError
 from datetime import datetime
 
+try:
+    import tldextract
+    HAS_TLDEXTRACT = True
+except ImportError:
+    HAS_TLDEXTRACT = False
+
 # RDAP cache - registry data rarely changes, so longer TTL is appropriate
 # Note: DNS records are ALWAYS fresh (no cache), only RDAP registry info is cached
 _RDAP_CACHE_TTL = 21600  # 6 hours - registrar/registry data changes infrequently
@@ -3143,7 +3149,7 @@ class DNSAnalyzer:
                 'ns_delegation_analysis': {'status': 'error', 'delegation_ok': False, 'message': 'Domain does not exist'},
                 'registrar_info': {'status': 'n/a', 'registrar': None},
                 'smtp_transport': None,
-                'ct_subdomains': {'status': 'success', 'subdomains': [], 'unique_subdomains': 0, 'total_certs': 0, 'source': 'Certificate Transparency Logs', 'caveat': 'Domain does not exist or is not delegated.'},
+                'ct_subdomains': {'status': 'success', 'subdomains': [], 'unique_subdomains': 0, 'total_certs': 0, 'source': 'Certificate Transparency Logs', 'caveat': 'Domain does not exist or is not delegated.', 'is_analyzed_subdomain': False, 'registered_domain': None},
                 'email_security_mgmt': {'actively_managed': False, 'providers': [], 'spf_flattening': None, 'provider_count': 0},
                 'hosting_summary': {'hosting': 'N/A', 'dns_hosting': 'N/A', 'email_hosting': 'N/A'},
                 'posture': {
@@ -3401,13 +3407,44 @@ class DNSAnalyzer:
         
         return results
     
+    def _get_registered_domain(self, domain: str) -> Optional[str]:
+        """Return the registered/base domain (eTLD+1) using the Public Suffix List.
+        
+        Per RFC 8499 (DNS Terminology), a subdomain is any domain that is
+        a descendant of another domain in the DNS namespace hierarchy.
+        The Public Suffix List (used by all major browsers) determines the
+        boundary between registry-controlled labels and registrable domains.
+        
+        Returns None if the domain IS the registered domain (not a subdomain),
+        or if tldextract is not available.
+        """
+        if not HAS_TLDEXTRACT:
+            return None
+        try:
+            extracted = tldextract.extract(domain)
+            if not extracted.domain or not extracted.suffix:
+                return None
+            registered = f"{extracted.domain}.{extracted.suffix}"
+            if registered.lower() == domain.lower():
+                return None
+            return registered
+        except Exception:
+            return None
+
     def discover_subdomains(self, domain: str) -> Dict[str, Any]:
         """Discover subdomains via Certificate Transparency logs (crt.sh).
         
         Uses passive reconnaissance only - queries public CT log aggregator.
         No active scanning or brute-forcing. All data comes from publicly
         auditable certificate transparency logs per RFC 6962.
+        
+        When analyzing a subdomain, detects this via the Public Suffix List
+        and annotates the result so the UI can suggest scanning the registered
+        domain for broader subdomain enumeration.
         """
+        registered_domain = self._get_registered_domain(domain)
+        is_analyzed_subdomain = registered_domain is not None
+
         result = {
             'status': 'success',
             'source': 'Certificate Transparency Logs',
@@ -3417,6 +3454,8 @@ class DNSAnalyzer:
             'subdomains': [],
             'total_certs': 0,
             'unique_subdomains': 0,
+            'is_analyzed_subdomain': is_analyzed_subdomain,
+            'registered_domain': registered_domain,
             'caveat': 'Shows subdomains that have had TLS certificates issued. '
                       'Does not include subdomains without certificates or internal-only names.',
         }

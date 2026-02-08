@@ -1435,10 +1435,33 @@
                     <p class="text-muted small mt-2 mb-0"><i class="fas fa-ellipsis-h me-1"></i>Showing 100 of {{ ct.unique_subdomains }} subdomains</p>
                     {% endif %}
                     {% elif ct.get('status') == 'success' and ct.get('unique_subdomains', 0) == 0 %}
+                    {% if ct.get('is_analyzed_subdomain') and ct.get('registered_domain') %}
+                    <div class="alert alert-info bg-info bg-opacity-10 border-info border-opacity-25 mb-0 small">
+                        <div class="mb-2">
+                            <i class="fas fa-project-diagram me-1"></i>
+                            <strong>{{ domain }}</strong> is itself a subdomain of <strong>{{ ct.registered_domain }}</strong>.
+                        </div>
+                        <p class="mb-2">
+                            Certificate Transparency logs record certificates by fully qualified domain name
+                            (<a href="https://datatracker.ietf.org/doc/html/rfc8499#section-2" target="_blank" rel="noopener" class="text-info">RFC 8499</a>).
+                            This search queried for names beneath <code>{{ domain }}</code> in the DNS hierarchy
+                            (<a href="https://datatracker.ietf.org/doc/html/rfc1034#section-3.1" target="_blank" rel="noopener" class="text-info">RFC 1034 §3.1</a>),
+                            which found no issued certificates.
+                        </p>
+                        <p class="mb-2">
+                            To discover sibling subdomains (e.g., <code>mail.{{ ct.registered_domain }}</code>, <code>www.{{ ct.registered_domain }}</code>),
+                            scan the registered domain instead:
+                        </p>
+                        <a href="{{ url_for('analyze') }}?domain={{ ct.registered_domain }}" class="btn btn-sm btn-outline-info">
+                            <i class="fas fa-search me-1"></i>Scan {{ ct.registered_domain }}
+                        </a>
+                    </div>
+                    {% else %}
                     <p class="text-muted mb-0 small">
                         <i class="fas fa-info-circle me-1"></i>
                         No subdomains found in Certificate Transparency logs for this domain. This means no TLS certificates have been issued for subdomains of <strong>{{ domain }}</strong>.
                     </p>
+                    {% endif %}
                     {% elif ct.get('status') == 'timeout' %}
                     <p class="text-muted mb-0 small">
                         <i class="fas fa-clock me-1"></i>

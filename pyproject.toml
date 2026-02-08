@@ -21,6 +21,7 @@ dependencies = [
     "redis>=7.1.0",
     "requests>=2.32.3",
     "sqlalchemy>=2.0.41",
+    "tldextract>=5.3.1",
     "urllib3>=2.6.3",
     "whodap>=0.1.14",
 ]

@@ -8,7 +8,12 @@ This project is a web-based DNS intelligence tool designed for comprehensive dom
 
 Preferred communication style: Simple, everyday language.
 
-## Recent Changes (v26.10.48)
+## Recent Changes (v26.10.49)
+- Intelligent subdomain detection (v26.10.49):
+  - When analyzing a subdomain (e.g., `dnstool.it-help.tech`), the tool now detects this via the Public Suffix List (`tldextract`) and provides context-aware messaging instead of "no subdomains found".
+  - Explains that CT enumeration scope is bounded by the queried label (RFC 1034 §3.1, RFC 8499).
+  - Offers a one-click link to scan the registered/base domain for broader subdomain discovery.
+  - `_get_registered_domain()` method added to dns_analyzer.py using eTLD+1 computation.
 - Subdomain Discovery now automatic (v26.10.48):
   - CT log query runs in parallel with all DNS lookups — no button click needed.
   - Results stored in `ct_subdomains` JSON column, persisted across report views.
@@ -46,6 +51,7 @@ Preferred communication style: Simple, everyday language.
 - **Subdomain Discovery**: Automatic Certificate Transparency log query (crt.sh, RFC 6962) runs in parallel during analysis. Discovers subdomains with TLS certificates, providing details like expiry, issuer, and wildcard status. Results stored in database and rendered server-side.
 - **Null MX and No-Mail Domain Detection**: Recognizes `MX 0 .` (RFC 7505) and identifies domains explicitly configured not to send or receive email, adjusting posture scoring and verdicts accordingly.
 - **Subdomain-aware analysis**: Correctly handles DNSSEC inheritance, NS delegation, and RDAP lookups for subdomains.
+- **Subdomain-aware CT discovery**: Detects when the analyzed domain is itself a subdomain (via Public Suffix List / `tldextract`) and provides context-aware messaging with RFC references (RFC 8499, RFC 1034 §3.1), offering a one-click link to scan the registered domain for broader discovery.
 
 **Data Model:**
 - `DomainAnalysis` model: Stores analysis results including DNS records, authoritative records, SPF/DMARC status, policies, and visitor location in JSON fields.
