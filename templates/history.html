@@ -9,7 +9,7 @@
     <link rel="manifest" href="/manifest.json">
     <link rel="apple-touch-icon" href="{{ url_for('static', filename='icons/icon-192x192.png') }}">
     <link href="{{ url_for('static', filename='css/bootstrap-dark-theme.min.css') }}" rel="stylesheet">
-    <link href="{{ url_for('static', filename='css/custom.min.css') }}" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/custom.min.css') }}?v={{ app_version }}" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/fontawesome-subset.min.css') }}">
     <style nonce="{{ csp_nonce }}">
         :root{--bs-body-bg:#212529;--bs-body-color:#dee2e6;--bs-primary:#0d6efd;--bs-secondary:#6c757d;--bs-body-font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text','SF Pro Display',system-ui,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;--bs-font-sans-serif:-apple-system,BlinkMacSystemFont,'SF Pro Text','SF Pro Display',system-ui,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif}
@@ -223,6 +223,6 @@
     </main>
 
     <script src="{{ url_for('static', filename='js/bootstrap.bundle.min.js') }}" defer></script>
-    <script src="{{ url_for('static', filename='js/main.js') }}" defer></script>
+    <script src="{{ url_for('static', filename='js/main.js') }}?v={{ app_version }}" defer></script>
 </body>
 </html>

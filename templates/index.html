@@ -214,7 +214,7 @@
     </style>
     <!-- Load Bootstrap first (sync) to prevent CLS when it applies styles -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap-dark-theme.min.css') }}">
-    <link href="{{ url_for('static', filename='css/custom.min.css') }}" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/custom.min.css') }}?v={{ app_version }}" rel="stylesheet">
     <!-- Font Awesome - self-hosted subset (54 icons, ~22KB total vs ~231KB from CDN) -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/fontawesome-subset.min.css') }}">
 </head>
@@ -676,6 +676,6 @@
     </script>
 
     <script src="{{ url_for('static', filename='js/bootstrap.bundle.min.js') }}" defer></script>
-    <script src="{{ url_for('static', filename='js/main.js') }}" defer></script>
+    <script src="{{ url_for('static', filename='js/main.js') }}?v={{ app_version }}" defer></script>
 </body>
 </html>
