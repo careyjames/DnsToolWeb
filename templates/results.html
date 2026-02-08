@@ -1564,7 +1564,7 @@
                     {% else %}
                     <p class="text-muted mb-0 small">
                         <i class="fas fa-info-circle me-1"></i>
-                        No subdomains found in Certificate Transparency logs for this domain. This means no TLS certificates have been issued for subdomains of <strong>{{ domain }}</strong>.
+                        No subdomains found via Certificate Transparency logs or DNS probing for this domain. No TLS certificates have been issued and no common service names resolve for subdomains of <strong>{{ domain }}</strong>.
                     </p>
                     {% endif %}
                     {% elif ct.get('status') == 'timeout' %}

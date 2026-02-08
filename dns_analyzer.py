@@ -3474,7 +3474,7 @@ class DNSAnalyzer:
 
         result = {
             'status': 'success',
-            'source': 'Certificate Transparency Logs',
+            'source': 'Certificate Transparency Logs + DNS Probing',
             'source_url': 'https://crt.sh',
             'rfc': 'RFC 6962',
             'domain': domain,
@@ -3483,8 +3483,8 @@ class DNSAnalyzer:
             'unique_subdomains': 0,
             'is_analyzed_subdomain': is_analyzed_subdomain,
             'registered_domain': registered_domain,
-            'caveat': 'Shows subdomains that have had TLS certificates issued. '
-                      'Does not include subdomains without certificates or internal-only names.',
+            'caveat': 'Combines CT log certificates (RFC 6962) with DNS probing of common service names. '
+                      'Does not include internal-only names or uncommon subdomain prefixes.',
         }
         
         try:
@@ -3595,20 +3595,19 @@ class DNSAnalyzer:
                     'pattern': f'*.{domain}',
                 }
             
-            if has_current_wildcard:
-                dns_found = self._probe_common_subdomains(domain)
-                for sub_name in dns_found:
-                    if sub_name not in subdomain_map:
-                        subdomains.append({
-                            'name': sub_name,
-                            'first_seen': '',
-                            'last_seen': '',
-                            'cert_count': 0,
-                            'is_wildcard': False,
-                            'is_current': True,
-                            'issuers': [],
-                            'source': 'dns',
-                        })
+            dns_found = self._probe_common_subdomains(domain)
+            for sub_name in dns_found:
+                if sub_name not in subdomain_map:
+                    subdomains.append({
+                        'name': sub_name,
+                        'first_seen': '',
+                        'last_seen': '',
+                        'cert_count': 0,
+                        'is_wildcard': False,
+                        'is_current': True,
+                        'issuers': [],
+                        'source': 'dns',
+                    })
             
             subdomains.sort(key=lambda x: (not x['is_current'], -x['cert_count'], x['name']))
             
