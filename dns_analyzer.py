@@ -4022,16 +4022,31 @@ class DNSAnalyzer:
             
             DISPLAY_LIMIT = 100
             
+            all_known_names = {s['name'] for s in subdomains}
+            
             display_set, was_truncated = self._curate_subdomain_display(
                 subdomains, domain, limit=DISPLAY_LIMIT
             )
             
-            provider_summary = self._enrich_subdomains_with_cnames(display_set)
+            provider_summary, cname_discovered = self._enrich_subdomains_with_cnames(display_set, domain, all_known_names)
+            
+            if cname_discovered:
+                existing_names = {s['name'] for s in display_set}
+                for cname_sub in cname_discovered:
+                    if cname_sub['name'] not in existing_names:
+                        prefix = cname_sub['name'].replace(f'.{domain}', '').split('.')[0] if cname_sub['name'].endswith(f'.{domain}') else cname_sub['name'].split('.')[0]
+                        cname_sub['_priority'] = prefix.lower() in self.SECURITY_RELEVANT_PREFIXES
+                        display_set.append(cname_sub)
+                        existing_names.add(cname_sub['name'])
+                total_count += len(cname_discovered)
+                current_count += sum(1 for s in cname_discovered if s['is_current'])
+                logging.info(f"CNAME discovery added {len(cname_discovered)} new subdomains for {domain}")
             
             display_set.sort(key=lambda x: (
                 not x['is_current'],
                 not bool(x.get('provider')),
                 not x.get('_priority', False),
+                x.get('source') != 'cname',
                 -x['cert_count'],
                 x['name']
             ))
@@ -4045,6 +4060,7 @@ class DNSAnalyzer:
             result['provider_summary'] = provider_summary
             result['providers_found'] = len(provider_summary)
             result['cname_count'] = sum(1 for s in display_set if s.get('cname_chain'))
+            result['cname_discovered_count'] = len(cname_discovered) if cname_discovered else 0
             
         except requests.exceptions.Timeout:
             result['status'] = 'timeout'
@@ -4180,15 +4196,28 @@ class DNSAnalyzer:
                 return info
         return None
 
-    def _enrich_subdomains_with_cnames(self, subdomains: list) -> dict:
+    def _enrich_subdomains_with_cnames(self, subdomains: list, domain: str = None, all_known_names: set = None) -> tuple:
         """Resolve CNAME chains for all discovered subdomains in parallel.
         
-        Returns a provider_summary dict counting providers by category.
+        Returns (provider_summary, cname_discovered) tuple:
+          - provider_summary: dict counting providers by category
+          - cname_discovered: list of new subdomains found as intermediate
+            CNAME hops within the analyzed domain (source='cname')
+        
         Also mutates each subdomain dict to add cname_chain, cname_target, provider keys.
+        
+        When domain is provided, intermediate CNAME chain hops that are subdomains
+        of that domain get collected as newly discovered subdomains. This makes CNAME
+        resolution a third discovery method alongside CT logs and DNS probing.
+        
+        all_known_names should include ALL discovered subdomain names (pre-curation),
+        not just the display set, to prevent re-discovering subdomains that were
+        already found by CT/DNS but excluded during curation.
         """
         from concurrent.futures import ThreadPoolExecutor, as_completed
         
         current_subs = [s for s in subdomains if s.get('is_current', False)]
+        known_names = all_known_names if all_known_names else {s['name'] for s in subdomains}
         
         def resolve_one(sub):
             name = sub['name']
@@ -4215,6 +4244,9 @@ class DNSAnalyzer:
                             continue
         
         provider_summary = {}
+        cname_discovered = {}
+        domain_suffix = f'.{domain}' if domain else None
+        
         for sub in subdomains:
             cname_data = cname_results.get(sub['name'])
             if cname_data and cname_data['chain']:
@@ -4229,9 +4261,26 @@ class DNSAnalyzer:
                         provider_summary[pname] = {'name': pname, 'category': cat, 'count': 0, 'subdomains': []}
                     provider_summary[pname]['count'] += 1
                     provider_summary[pname]['subdomains'].append(sub['name'])
+                
+                if domain_suffix:
+                    for hop in cname_data['chain']:
+                        hop_lower = hop.lower()
+                        if hop_lower.endswith(domain_suffix) and hop_lower != domain and hop_lower not in known_names and hop_lower not in cname_discovered:
+                            cname_discovered[hop_lower] = {
+                                'name': hop_lower,
+                                'first_seen': '',
+                                'last_seen': '',
+                                'cert_count': 0,
+                                'is_wildcard': False,
+                                'is_current': True,
+                                'issuers': [],
+                                'source': 'cname',
+                                'discovered_via': sub['name'],
+                            }
         
-        logging.info(f"CNAME enrichment: resolved {len(cname_results)} subdomains, identified {len(provider_summary)} providers")
-        return provider_summary
+        cname_discovered_list = list(cname_discovered.values())
+        logging.info(f"CNAME enrichment: resolved {len(cname_results)} subdomains, identified {len(provider_summary)} providers, discovered {len(cname_discovered_list)} new subdomains via CNAME chains")
+        return provider_summary, cname_discovered_list
 
     def _probe_common_subdomains(self, domain: str) -> list:
         """Probe common subdomain names via DNS A/AAAA lookups.

@@ -1593,6 +1593,9 @@
                             {% if ct.get('cname_count', 0) > 0 %}
                             <span class="badge bg-primary-subtle text-primary border border-primary-subtle"><i class="fas fa-link me-1"></i>{{ ct.cname_count }} CNAME{{ 's' if ct.cname_count != 1 else '' }}</span>
                             {% endif %}
+                            {% if ct.get('cname_discovered_count', 0) > 0 %}
+                            <span class="badge border" style="font-size:0.7rem; color: #a855f7; background: rgba(168,85,247,0.1); border-color: rgba(168,85,247,0.25) !important;"><i class="fas fa-project-diagram me-1"></i>{{ ct.cname_discovered_count }} discovered via CNAME</span>
+                            {% endif %}
                             {% if ct.get('providers_found', 0) > 0 %}
                             <span class="badge bg-warning-subtle text-warning border border-warning-subtle"><i class="fas fa-building me-1"></i>{{ ct.providers_found }} provider{{ 's' if ct.providers_found != 1 else '' }} identified</span>
                             {% endif %}
@@ -1609,7 +1612,7 @@
                             <span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle ms-1" style="font-size:0.65rem;">Expired</span>
                             {% endif %}
                             <div class="mt-1 text-muted">
-                                Subdomains covered by this wildcard won't appear individually in CT logs (RFC 6962). DNS probing of common service names was used to discover additional subdomains below.
+                                Subdomains covered by this wildcard won't appear individually in CT logs (RFC 6962). DNS probing and CNAME chain traversal were used to discover additional subdomains below.
                             </div>
                         </div>
                         {% endif %}
@@ -1657,9 +1660,11 @@
                                     </td>
                                     <td class="border-secondary text-center">
                                         {% if sub.get('source') == 'dns' %}
-                                        <span class="badge bg-info-subtle text-info border border-info-subtle" style="font-size:0.6rem;" title="Found via DNS A record lookup">DNS</span>
+                                        <span class="badge bg-info-subtle text-info border border-info-subtle" style="font-size:0.6rem;" title="Found via DNS A/AAAA record lookup of common service names">DNS</span>
+                                        {% elif sub.get('source') == 'cname' %}
+                                        <span class="badge bg-purple-subtle text-purple border border-purple-subtle" style="font-size:0.6rem; --bs-purple: #a855f7; color: #a855f7 !important; background: rgba(168,85,247,0.1) !important; border-color: rgba(168,85,247,0.25) !important;" title="Discovered as intermediate hop in CNAME chain from {{ sub.get('discovered_via', 'another subdomain') }}">CNAME</span>
                                         {% else %}
-                                        <span class="badge bg-dark bg-opacity-25 text-muted" style="font-size:0.6rem;" title="Found in Certificate Transparency logs">CT Log</span>
+                                        <span class="badge bg-dark bg-opacity-25 text-muted" style="font-size:0.6rem;" title="Found in Certificate Transparency logs (RFC 6962)">CT Log</span>
                                         {% endif %}
                                     </td>
                                     <td class="border-secondary text-center">
@@ -1685,7 +1690,7 @@
                                     </td>
                                     <td class="border-secondary text-center"><span class="small text-muted">{{ sub.cert_count if sub.cert_count else '—' }}</span></td>
                                     <td class="border-secondary"><span class="small text-muted">{{ sub.first_seen if sub.first_seen else '—' }}</span></td>
-                                    <td class="border-secondary"><span class="small text-muted">{{ sub.issuers|join(', ') if sub.issuers else ('Wildcard (*.%s)'|format(domain) if sub.get('source') == 'dns' else '') }}</span></td>
+                                    <td class="border-secondary"><span class="small text-muted">{{ sub.issuers|join(', ') if sub.issuers else ('Wildcard (*.%s)'|format(domain) if sub.get('source') == 'dns' else ('via ' + sub.get('discovered_via', '') if sub.get('source') == 'cname' and sub.get('discovered_via') else '')) }}</span></td>
                                 </tr>
                                 {% endfor %}
                             </tbody>
@@ -1694,6 +1699,7 @@
                     {% if ct.get('was_truncated') %}
                     <div class="text-muted small mt-2 mb-0 p-2 rounded" style="background: rgba(255,255,255,0.03);">
                         <i class="fas fa-filter me-1"></i><strong>Showing {{ ct.display_count }} of {{ ct.unique_subdomains }} subdomains</strong> &mdash; curated by security relevance.
+                        Three cooperative discovery methods — CT logs (RFC 6962), DNS probing of ~290 common service names, and CNAME chain traversal — feed into a unified view.
                         Well-known service names (mail, vpn, api, sso, admin, etc.), DNS-resolving hosts, and subdomains with the most certificate activity are prioritized.
                         {% if ct.expired_count > 0 %}
                         <span class="ms-1">{{ ct.expired_count }} expired-certificate-only subdomain{{ 's' if ct.expired_count != 1 else '' }} {{ 'mostly omitted' if ct.expired_count > ct.display_count else 'included where relevant' }}.</span>
@@ -1725,7 +1731,7 @@
                     {% else %}
                     <p class="text-muted mb-0 small">
                         <i class="fas fa-info-circle me-1"></i>
-                        No subdomains found via Certificate Transparency logs or DNS probing for this domain. No TLS certificates have been issued and no common service names resolve for subdomains of <strong>{{ domain }}</strong>.
+                        No subdomains found via Certificate Transparency logs, DNS probing, or CNAME chain traversal for this domain. No TLS certificates have been issued and no common service names resolve for subdomains of <strong>{{ domain }}</strong>.
                     </p>
                     {% endif %}
                     {% elif ct.get('status') == 'timeout' %}
