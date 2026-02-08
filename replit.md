@@ -4,7 +4,7 @@
 
 A web-based DNS intelligence tool for comprehensive domain record analysis, email security validation (SPF, DMARC, DKIM), email security management provider detection, and DNS security intelligence reports. The application aims to provide a robust, user-friendly platform for understanding and improving domain and email security posture, offering insights into business vision, market potential, and project ambitions.
 
-## Recent Changes (v26.10.43)
+## Recent Changes (v26.10.44)
 - Subdomain-aware analysis: subdomains (e.g., `dnstool.it-help.tech`) now correctly detected and handled across three areas (v26.10.43):
   - **DNSSEC**: When a subdomain has no DNSKEY/DS records but the AD flag is set (parent zone is signed), shows "Inherited" badge with parent zone algorithm info instead of false "Unsigned" warning. Uses `_find_parent_zone()` helper to walk up domain labels and find the zone apex via NS records.
   - **NS Delegation**: When a subdomain has no NS records (normal — it's within the parent zone), shows "Subdomain" badge and parent zone nameservers instead of false "Check Failed / Mismatch" error. No longer triggers the "Partial Results" error banner.
