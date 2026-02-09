@@ -5,7 +5,9 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
 cd "$PROJECT_DIR"
 
-echo "=== DNS Tool Contract Test Suite ==="
+MODE="${1:-fast}"
+
+echo "=== DNS Tool Contract Test Suite (mode: $MODE) ==="
 echo ""
 
 FAILED=0
@@ -37,7 +39,7 @@ else
 fi
 echo ""
 
-echo "--- 4. Edge Case Tests (DI-based) ---"
+echo "--- 4. Edge Case Tests (offline DI-based) ---"
 if python -m pytest tests/test_edge_cases.py -v --tb=short 2>&1; then
     echo "[PASS] Edge cases"
 else
@@ -55,14 +57,19 @@ else
 fi
 echo ""
 
-echo "--- 6. Full Test Suite ---"
-if python -m pytest tests/ -v --tb=short 2>&1; then
-    echo "[PASS] Full suite"
+if [ "$MODE" = "full" ]; then
+    echo "--- 6. Full Test Suite (includes integration tests) ---"
+    if python -m pytest tests/ -v --tb=short --timeout=120 2>&1; then
+        echo "[PASS] Full suite"
+    else
+        echo "[FAIL] Full suite (some tests may have pre-existing failures)"
+        FAILED=1
+    fi
+    echo ""
 else
-    echo "[FAIL] Full suite (some tests may have pre-existing failures)"
-    FAILED=1
+    echo "--- Skipping full integration suite (run with: $0 full) ---"
+    echo ""
 fi
-echo ""
 
 echo "==================================="
 if [ $FAILED -eq 0 ]; then

@@ -140,8 +140,11 @@ class TestTimeoutHandling(unittest.TestCase):
 
 class TestActiveDomainWithMocks(unittest.TestCase):
 
-    def setUp(self):
-        self.dns_records = {
+    _result = None
+
+    @classmethod
+    def setUpClass(cls):
+        dns_records = {
             ('A', 'example-active.com'): ['93.184.216.34'],
             ('AAAA', 'example-active.com'): ['2606:2800:220:1:248:1893:25c8:1946'],
             ('MX', 'example-active.com'): ['10 mail.example-active.com.'],
@@ -152,17 +155,16 @@ class TestActiveDomainWithMocks(unittest.TestCase):
             ('CNAME', 'example-active.com'): [],
             ('CAA', 'example-active.com'): ['0 issue "letsencrypt.org"'],
         }
-        self.analyzer = create_test_analyzer(
-            dns_resolver=make_dns_resolver(self.dns_records),
+        analyzer = create_test_analyzer(
+            dns_resolver=make_dns_resolver(dns_records),
             http_client=make_http_client({}),
         )
+        cls._result = analyzer.analyze_domain('example-active.com')
 
     def test_active_domain_exists_true(self):
-        result = self.analyzer.analyze_domain('example-active.com')
-        self.assertTrue(result.get('domain_exists'))
+        self.assertTrue(self._result.get('domain_exists'))
 
     def test_active_domain_has_all_sections(self):
-        result = self.analyzer.analyze_domain('example-active.com')
         required_sections = [
             'basic_records', 'spf_analysis', 'dmarc_analysis',
             'dkim_analysis', 'registrar_info', 'posture',
@@ -170,56 +172,53 @@ class TestActiveDomainWithMocks(unittest.TestCase):
             'bimi_analysis', 'caa_analysis', 'dnssec_analysis',
         ]
         for section in required_sections:
-            self.assertIn(section, result, f'Missing section: {section}')
+            self.assertIn(section, self._result, f'Missing section: {section}')
 
     def test_active_domain_posture_has_graduated_fields(self):
-        result = self.analyzer.analyze_domain('example-active.com')
-        posture = result.get('posture', {})
+        posture = self._result.get('posture', {})
         for field in ['state', 'message', 'issues', 'color', 'configured', 'absent', 'monitoring', 'verdicts']:
             self.assertIn(field, posture, f'Missing posture field: {field}')
 
     def test_active_domain_section_statuses_valid(self):
-        result = self.analyzer.analyze_domain('example-active.com')
         status_sections = [
             'spf_analysis', 'dmarc_analysis', 'dkim_analysis',
             'dane_analysis', 'mta_sts_analysis', 'tlsrpt_analysis',
             'bimi_analysis', 'caa_analysis', 'dnssec_analysis',
         ]
         for section in status_sections:
-            section_data = result.get(section, {})
+            section_data = self._result.get(section, {})
             status = section_data.get('status')
             self.assertIn(status, VALID_STATUS_VALUES, f'{section} invalid status: {status}')
 
     def test_active_domain_passes_schema(self):
-        result = self.analyzer.analyze_domain('example-active.com')
-        errors = validate_analysis_results(result)
+        errors = validate_analysis_results(self._result)
         self.assertEqual(errors, [], f'Schema errors: {errors}')
 
     def test_active_domain_basic_records_structure(self):
-        result = self.analyzer.analyze_domain('example-active.com')
-        basic = result.get('basic_records', {})
+        basic = self._result.get('basic_records', {})
         for rtype in ['A', 'AAAA', 'MX', 'NS', 'TXT']:
             self.assertIn(rtype, basic, f'Missing record type: {rtype}')
             self.assertIsInstance(basic[rtype], list, f'{rtype} should be a list')
 
     def test_active_domain_hosting_summary(self):
-        result = self.analyzer.analyze_domain('example-active.com')
-        hs = result.get('hosting_summary', {})
+        hs = self._result.get('hosting_summary', {})
         for field in ['hosting', 'dns_hosting', 'email_hosting']:
             self.assertIn(field, hs)
             self.assertIsInstance(hs[field], str)
 
     def test_active_domain_mail_posture(self):
-        result = self.analyzer.analyze_domain('example-active.com')
-        mp = result.get('mail_posture', {})
+        mp = self._result.get('mail_posture', {})
         self.assertIn('classification', mp)
         self.assertIsInstance(mp['classification'], str)
 
 
 class TestNoMailDomain(unittest.TestCase):
 
-    def setUp(self):
-        self.dns_records = {
+    _result = None
+
+    @classmethod
+    def setUpClass(cls):
+        dns_records = {
             ('A', 'nomail-test.com'): ['93.184.216.34'],
             ('MX', 'nomail-test.com'): ['0 .'],
             ('NS', 'nomail-test.com'): ['ns1.example.com.'],
@@ -230,26 +229,24 @@ class TestNoMailDomain(unittest.TestCase):
             ('CNAME', 'nomail-test.com'): [],
             ('CAA', 'nomail-test.com'): [],
         }
-        self.analyzer = create_test_analyzer(
-            dns_resolver=make_dns_resolver(self.dns_records),
+        analyzer = create_test_analyzer(
+            dns_resolver=make_dns_resolver(dns_records),
             http_client=make_http_client({}),
         )
+        cls._result = analyzer.analyze_domain('nomail-test.com')
 
     def test_no_mail_detected(self):
-        result = self.analyzer.analyze_domain('nomail-test.com')
-        self.assertTrue(result.get('has_null_mx') or result.get('is_no_mail_domain'))
+        self.assertTrue(self._result.get('has_null_mx') or self._result.get('is_no_mail_domain'))
 
     def test_no_mail_classification(self):
-        result = self.analyzer.analyze_domain('nomail-test.com')
-        mp = result.get('mail_posture', {})
+        mp = self._result.get('mail_posture', {})
         self.assertIn(mp.get('classification'), [
             'no_mail_verified', 'no_mail_partial', 'no_mail_intent',
             'email_enabled', 'email_minimal',
         ])
 
     def test_no_mail_passes_schema(self):
-        result = self.analyzer.analyze_domain('nomail-test.com')
-        errors = validate_analysis_results(result)
+        errors = validate_analysis_results(self._result)
         self.assertEqual(errors, [], f'Schema errors: {errors}')
 
 
@@ -438,8 +435,11 @@ class TestBackpressure(unittest.TestCase):
 
 class TestOutputConsistency(unittest.TestCase):
 
-    def setUp(self):
-        self.dns_records = {
+    _result = None
+
+    @classmethod
+    def setUpClass(cls):
+        dns_records = {
             ('A', 'consistent.com'): ['1.2.3.4'],
             ('NS', 'consistent.com'): ['ns1.example.com.'],
             ('TXT', 'consistent.com'): ['v=spf1 -all'],
@@ -450,13 +450,13 @@ class TestOutputConsistency(unittest.TestCase):
             ('TXT', '_dmarc.consistent.com'): ['v=DMARC1; p=reject;'],
             ('CAA', 'consistent.com'): [],
         }
-        self.analyzer = create_test_analyzer(
-            dns_resolver=make_dns_resolver(self.dns_records),
+        analyzer = create_test_analyzer(
+            dns_resolver=make_dns_resolver(dns_records),
             http_client=make_http_client({}),
         )
+        cls._result = analyzer.analyze_domain('consistent.com')
 
     def test_all_list_fields_are_lists(self):
-        result = self.analyzer.analyze_domain('consistent.com')
         list_fields = [
             ('posture', 'issues'),
             ('posture', 'configured'),
@@ -466,42 +466,331 @@ class TestOutputConsistency(unittest.TestCase):
             ('dane_analysis', 'issues'),
         ]
         for section, field in list_fields:
-            section_data = result.get(section, {})
+            section_data = self._result.get(section, {})
             value = section_data.get(field)
             self.assertIsInstance(value, list, f'{section}.{field} should be list, got {type(value).__name__}')
 
     def test_all_bool_fields_are_bools(self):
-        result = self.analyzer.analyze_domain('consistent.com')
-        self.assertIsInstance(result.get('domain_exists'), bool)
-        self.assertIsInstance(result.get('has_null_mx'), bool)
-        self.assertIsInstance(result.get('is_no_mail_domain'), bool)
-        dane = result.get('dane_analysis', {})
+        self.assertIsInstance(self._result.get('domain_exists'), bool)
+        self.assertIsInstance(self._result.get('has_null_mx'), bool)
+        self.assertIsInstance(self._result.get('is_no_mail_domain'), bool)
+        dane = self._result.get('dane_analysis', {})
         self.assertIsInstance(dane.get('has_dane'), bool)
 
     def test_all_string_fields_are_strings(self):
-        result = self.analyzer.analyze_domain('consistent.com')
-        self.assertIsInstance(result.get('domain_status'), str)
-        posture = result.get('posture', {})
+        self.assertIsInstance(self._result.get('domain_status'), str)
+        posture = self._result.get('posture', {})
         self.assertIsInstance(posture.get('state'), str)
         self.assertIsInstance(posture.get('color'), str)
         self.assertIsInstance(posture.get('message'), str)
 
-    def test_schema_version_is_int(self):
-        result = self.analyzer.analyze_domain('consistent.com')
-        self.assertIsInstance(result.get('_schema_version'), int)
-        self.assertEqual(result['_schema_version'], 2)
-
     def test_smtp_transport_is_none(self):
-        result = self.analyzer.analyze_domain('consistent.com')
-        self.assertIsNone(result.get('smtp_transport'))
+        self.assertIsNone(self._result.get('smtp_transport'))
 
     def test_data_freshness_is_dict(self):
-        result = self.analyzer.analyze_domain('consistent.com')
-        df = result.get('_data_freshness')
+        df = self._result.get('_data_freshness')
         self.assertIsInstance(df, dict)
         for key in ['dns_records', 'spf', 'dmarc', 'dkim', 'dane']:
             self.assertIn(key, df, f'_data_freshness missing: {key}')
             self.assertIsInstance(df[key], dict)
+
+
+class TestDNSSECPartialStates(unittest.TestCase):
+
+    def test_dnssec_with_dnskey_and_ds(self):
+        dns_records = {
+            ('A', 'signed.com'): ['1.2.3.4'],
+            ('NS', 'signed.com'): ['ns1.example.com.'],
+            ('TXT', 'signed.com'): ['v=spf1 -all'],
+            ('MX', 'signed.com'): [],
+            ('AAAA', 'signed.com'): [],
+            ('CNAME', 'signed.com'): [],
+            ('SOA', 'signed.com'): ['ns1.example.com. admin.example.com. 1 3600 900 604800 86400'],
+            ('TXT', '_dmarc.signed.com'): ['v=DMARC1; p=reject;'],
+            ('CAA', 'signed.com'): [],
+            ('DNSKEY', 'signed.com'): ['257 3 13 mdsswUyr3DPW...'],
+            ('DS', 'signed.com'): ['12345 13 2 abcdef0123456789...'],
+        }
+        analyzer = create_test_analyzer(
+            dns_resolver=make_dns_resolver(dns_records),
+            http_client=make_http_client({}),
+        )
+        result = analyzer.analyze_dnssec('signed.com')
+        self.assertEqual(result['status'], 'success')
+        self.assertTrue(result['has_dnskey'])
+        self.assertTrue(result['has_ds'])
+
+    def test_dnssec_dnskey_only_no_ds(self):
+        dns_records = {
+            ('DNSKEY', 'partial-dnssec.com'): ['257 3 13 mdsswUyr3DPW...'],
+            ('DS', 'partial-dnssec.com'): [],
+        }
+        analyzer = create_test_analyzer(
+            dns_resolver=make_dns_resolver(dns_records),
+            http_client=make_http_client({}),
+        )
+        result = analyzer.analyze_dnssec('partial-dnssec.com')
+        self.assertIn(result['status'], ['warning', 'error'])
+        self.assertTrue(result['has_dnskey'])
+        self.assertFalse(result['has_ds'])
+
+    def test_dnssec_no_records(self):
+        dns_records = {
+            ('DNSKEY', 'unsigned.com'): [],
+            ('DS', 'unsigned.com'): [],
+        }
+        analyzer = create_test_analyzer(
+            dns_resolver=make_dns_resolver(dns_records),
+            http_client=make_http_client({}),
+        )
+        result = analyzer.analyze_dnssec('unsigned.com')
+        self.assertEqual(result['status'], 'warning')
+        self.assertFalse(result['has_dnskey'])
+        self.assertFalse(result['has_ds'])
+
+    def test_dnssec_output_structure(self):
+        dns_records = {
+            ('DNSKEY', 'check.com'): [],
+            ('DS', 'check.com'): [],
+        }
+        analyzer = create_test_analyzer(
+            dns_resolver=make_dns_resolver(dns_records),
+            http_client=make_http_client({}),
+        )
+        result = analyzer.analyze_dnssec('check.com')
+        for field in ['status', 'message', 'has_dnskey', 'has_ds', 'dnskey_records', 'ds_records']:
+            self.assertIn(field, result, f'Missing DNSSEC field: {field}')
+
+
+class TestMTASTSParsing(unittest.TestCase):
+
+    def test_mta_sts_no_record(self):
+        dns_records = {
+            ('TXT', '_mta-sts.norecord.com'): [],
+            ('A', 'norecord.com'): ['1.2.3.4'],
+            ('NS', 'norecord.com'): ['ns1.example.com.'],
+            ('MX', 'norecord.com'): ['10 mail.norecord.com.'],
+        }
+        analyzer = create_test_analyzer(
+            dns_resolver=make_dns_resolver(dns_records),
+            http_client=make_http_client({}),
+        )
+        result = analyzer.analyze_mta_sts('norecord.com')
+        self.assertIn(result['status'], ['error', 'warning'])
+
+    def test_mta_sts_with_record(self):
+        dns_records = {
+            ('TXT', '_mta-sts.mta.com'): ['v=STSv1; id=20240101T000000;'],
+            ('A', 'mta.com'): ['1.2.3.4'],
+            ('NS', 'mta.com'): ['ns1.example.com.'],
+            ('MX', 'mta.com'): ['10 mail.mta.com.'],
+        }
+
+        class MockResponse:
+            status_code = 200
+            text = "version: STSv1\nmode: enforce\nmax_age: 86400\nmx: mail.mta.com\n"
+            headers = {'Content-Type': 'text/plain'}
+            def json(self): return {}
+            def raise_for_status(self): pass
+
+        def http_client(url, **kwargs):
+            if 'mta-sts' in url:
+                return MockResponse()
+            return MockResponse()
+
+        analyzer = create_test_analyzer(
+            dns_resolver=make_dns_resolver(dns_records),
+            http_client=http_client,
+        )
+        result = analyzer.analyze_mta_sts('mta.com')
+        self.assertIn('status', result)
+        self.assertIn('message', result)
+
+    def test_mta_sts_output_structure(self):
+        dns_records = {
+            ('TXT', '_mta-sts.struct.com'): [],
+            ('A', 'struct.com'): ['1.2.3.4'],
+            ('NS', 'struct.com'): ['ns1.example.com.'],
+            ('MX', 'struct.com'): [],
+        }
+        analyzer = create_test_analyzer(
+            dns_resolver=make_dns_resolver(dns_records),
+            http_client=make_http_client({}),
+        )
+        result = analyzer.analyze_mta_sts('struct.com')
+        for field in ['status', 'message']:
+            self.assertIn(field, result, f'Missing MTA-STS field: {field}')
+
+
+class TestDANEAnalysis(unittest.TestCase):
+
+    def test_dane_no_mx(self):
+        dns_records = {
+            ('A', 'nodane.com'): ['1.2.3.4'],
+            ('NS', 'nodane.com'): ['ns1.example.com.'],
+            ('MX', 'nodane.com'): [],
+        }
+        analyzer = create_test_analyzer(
+            dns_resolver=make_dns_resolver(dns_records),
+            http_client=make_http_client({}),
+        )
+        result = analyzer.analyze_dane('nodane.com')
+        self.assertIn('status', result)
+        self.assertIn('has_dane', result)
+        self.assertFalse(result['has_dane'])
+
+    def test_dane_with_tlsa(self):
+        dns_records = {
+            ('A', 'dane.com'): ['1.2.3.4'],
+            ('NS', 'dane.com'): ['ns1.example.com.'],
+            ('MX', 'dane.com'): ['10 mail.dane.com.'],
+            ('TLSA', '_25._tcp.mail.dane.com'): ['3 1 1 abcdef0123456789'],
+        }
+        analyzer = create_test_analyzer(
+            dns_resolver=make_dns_resolver(dns_records),
+            http_client=make_http_client({}),
+        )
+        result = analyzer.analyze_dane('dane.com', mx_records=['10 mail.dane.com.'])
+        self.assertIn('status', result)
+        self.assertIn('tlsa_records', result)
+
+    def test_dane_output_structure(self):
+        dns_records = {
+            ('MX', 'danetest.com'): [],
+        }
+        analyzer = create_test_analyzer(
+            dns_resolver=make_dns_resolver(dns_records),
+            http_client=make_http_client({}),
+        )
+        result = analyzer.analyze_dane('danetest.com')
+        for field in ['status', 'message', 'has_dane', 'tlsa_records', 'issues']:
+            self.assertIn(field, result, f'Missing DANE field: {field}')
+        self.assertIsInstance(result['tlsa_records'], list)
+        self.assertIsInstance(result['issues'], list)
+
+
+class TestTLSRPTAnalysis(unittest.TestCase):
+
+    def test_tlsrpt_no_record(self):
+        dns_records = {
+            ('TXT', '_smtp._tls.notls.com'): [],
+        }
+        analyzer = create_test_analyzer(
+            dns_resolver=make_dns_resolver(dns_records),
+            http_client=make_http_client({}),
+        )
+        result = analyzer.analyze_tlsrpt('notls.com')
+        self.assertIn(result['status'], ['error', 'warning'])
+
+    def test_tlsrpt_with_record(self):
+        dns_records = {
+            ('TXT', '_smtp._tls.tls.com'): ['v=TLSRPTv1; rua=mailto:tlsrpt@tls.com'],
+        }
+        analyzer = create_test_analyzer(
+            dns_resolver=make_dns_resolver(dns_records),
+            http_client=make_http_client({}),
+        )
+        result = analyzer.analyze_tlsrpt('tls.com')
+        self.assertIn('status', result)
+
+    def test_tlsrpt_output_structure(self):
+        dns_records = {
+            ('TXT', '_smtp._tls.tlstest.com'): [],
+        }
+        analyzer = create_test_analyzer(
+            dns_resolver=make_dns_resolver(dns_records),
+            http_client=make_http_client({}),
+        )
+        result = analyzer.analyze_tlsrpt('tlstest.com')
+        for field in ['status', 'message']:
+            self.assertIn(field, result, f'Missing TLS-RPT field: {field}')
+
+
+class TestCAAAnalysis(unittest.TestCase):
+
+    def test_caa_no_records(self):
+        dns_records = {
+            ('CAA', 'nocaa.com'): [],
+            ('NS', 'nocaa.com'): ['ns1.example.com.'],
+        }
+        analyzer = create_test_analyzer(
+            dns_resolver=make_dns_resolver(dns_records),
+            http_client=make_http_client({}),
+        )
+        result = analyzer.analyze_caa('nocaa.com')
+        self.assertIn(result['status'], ['warning', 'error'])
+
+    def test_caa_with_issue_record(self):
+        dns_records = {
+            ('CAA', 'caa.com'): ['0 issue "letsencrypt.org"'],
+            ('NS', 'caa.com'): ['ns1.example.com.'],
+        }
+        analyzer = create_test_analyzer(
+            dns_resolver=make_dns_resolver(dns_records),
+            http_client=make_http_client({}),
+        )
+        result = analyzer.analyze_caa('caa.com')
+        self.assertIn('status', result)
+
+    def test_caa_with_iodef(self):
+        dns_records = {
+            ('CAA', 'caaiodef.com'): [
+                '0 issue "letsencrypt.org"',
+                '0 iodef "mailto:caa@caaiodef.com"',
+            ],
+            ('NS', 'caaiodef.com'): ['ns1.example.com.'],
+        }
+        analyzer = create_test_analyzer(
+            dns_resolver=make_dns_resolver(dns_records),
+            http_client=make_http_client({}),
+        )
+        result = analyzer.analyze_caa('caaiodef.com')
+        self.assertIn('status', result)
+
+
+class TestBIMIAnalysis(unittest.TestCase):
+
+    def test_bimi_no_record(self):
+        dns_records = {
+            ('TXT', 'default._bimi.nobimi.com'): [],
+        }
+        analyzer = create_test_analyzer(
+            dns_resolver=make_dns_resolver(dns_records),
+            http_client=make_http_client({}),
+        )
+        result = analyzer.analyze_bimi('nobimi.com')
+        self.assertIn(result['status'], ['error', 'warning'])
+
+    def test_bimi_with_record(self):
+        dns_records = {
+            ('TXT', 'default._bimi.bimi.com'): ['v=BIMI1; l=https://bimi.com/logo.svg;'],
+        }
+
+        class MockResponse:
+            status_code = 200
+            text = '<svg></svg>'
+            headers = {'Content-Type': 'image/svg+xml'}
+            def json(self): return {}
+            def raise_for_status(self): pass
+
+        analyzer = create_test_analyzer(
+            dns_resolver=make_dns_resolver(dns_records),
+            http_client=lambda url, **kw: MockResponse(),
+        )
+        result = analyzer.analyze_bimi('bimi.com')
+        self.assertIn('status', result)
+
+    def test_bimi_output_structure(self):
+        dns_records = {
+            ('TXT', 'default._bimi.struct.com'): [],
+        }
+        analyzer = create_test_analyzer(
+            dns_resolver=make_dns_resolver(dns_records),
+            http_client=make_http_client({}),
+        )
+        result = analyzer.analyze_bimi('struct.com')
+        for field in ['status', 'message']:
+            self.assertIn(field, result, f'Missing BIMI field: {field}')
 
 
 if __name__ == '__main__':

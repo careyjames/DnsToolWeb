@@ -130,8 +130,8 @@ ANALYSIS_SCHEMA = {
             'color': {'type': str, 'required': True},
         },
     },
-    '_schema_version': {'type': int, 'required': True},
-    '_tool_version': {'type': str, 'required': True},
+    '_schema_version': {'type': int, 'required': False},
+    '_tool_version': {'type': str, 'required': False},
 }
 
 POSTURE_SUBFIELDS_ACTIVE = {

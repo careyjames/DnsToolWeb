@@ -107,7 +107,7 @@ class DNSAnalyzer:
 
     MAX_CONCURRENT_ANALYSES = 6
 
-    def __init__(self, dns_resolver=None, http_client=None, skip_network_init=False):
+    def __init__(self, dns_resolver=None, http_client=None, skip_network_init=False, offline_mode=False):
         self.dns_timeout = 2
         self.dns_tries = 2
         self.default_resolvers = ["1.1.1.1"]
@@ -126,7 +126,8 @@ class DNSAnalyzer:
         self._CT_CACHE_TTL = 3600
         self._custom_dns_resolver = dns_resolver
         self._custom_http_client = http_client
-        if not skip_network_init:
+        self._offline_mode = offline_mode
+        if not skip_network_init and not offline_mode:
             self._fetch_iana_rdap_data()
 
     def _dns_cache_get(self, key: str) -> Optional[List[str]]:
@@ -278,6 +279,8 @@ class DNSAnalyzer:
         Returns empty list for both 'record not found' and 'service unavailable'.
         Errors are logged with enough context to distinguish failure modes.
         """
+        if self._offline_mode:
+            return []
         DOH_TIMEOUT = 5  # seconds
         url = "https://dns.google/resolve"
         
@@ -455,6 +458,9 @@ class DNSAnalyzer:
             'per_record_consensus': {}
         }
         
+        if self._offline_mode:
+            return validation_results
+        
         with ThreadPoolExecutor(max_workers=4) as executor:
             consensus_futures = {
                 executor.submit(self.dns_query_with_consensus, rt, domain): rt
@@ -545,7 +551,9 @@ class DNSAnalyzer:
             'error': None
         }
         
-        # Use Google's public DNS (8.8.8.8) which is a validating resolver
+        if self._offline_mode:
+            return result
+        
         validating_resolvers = ['8.8.8.8', '1.1.1.1']
         
         for resolver_ip in validating_resolvers:
@@ -587,6 +595,8 @@ class DNSAnalyzer:
     
     def _dns_query_with_ttl(self, record_type: str, domain: str) -> tuple:
         """Query DNS with TTL. Returns (records_list, ttl_seconds_or_None)."""
+        if self._offline_mode:
+            return ([], None)
         try:
             url = "https://dns.google/resolve"
             params = {'name': domain, 'type': record_type.upper()}
@@ -694,6 +704,9 @@ class DNSAnalyzer:
             results[key] = []
         results['_query_status'] = {}
         results['_ttl'] = {}
+        
+        if self._offline_mode:
+            return results
         
         try:
             ns_records = self.dns_query("NS", domain)
@@ -2103,6 +2116,36 @@ class DNSAnalyzer:
             tlsa_name = f"_25._tcp.{mx_host}"
             found = []
             try:
+                if self._offline_mode or self._custom_dns_resolver:
+                    raw = self.dns_query('TLSA', tlsa_name)
+                    if not raw:
+                        return found
+                    answers = raw
+                    parsed_answers = []
+                    for entry in answers:
+                        parts = entry.split()
+                        if len(parts) >= 4:
+                            parsed_answers.append({
+                                'usage': int(parts[0]),
+                                'selector': int(parts[1]),
+                                'mtype': int(parts[2]),
+                                'cert_data': ''.join(parts[3:]),
+                            })
+                    for pa in parsed_answers:
+                        rec = {
+                            'mx_host': mx_host,
+                            'tlsa_name': tlsa_name,
+                            'usage': pa['usage'],
+                            'usage_name': usage_names.get(pa['usage'], f"Unknown ({pa['usage']})"),
+                            'selector': pa['selector'],
+                            'selector_name': selector_names.get(pa['selector'], f"Unknown ({pa['selector']})"),
+                            'matching_type': pa['mtype'],
+                            'matching_name': matching_names.get(pa['mtype'], f"Unknown ({pa['mtype']})"),
+                            'certificate_data': pa['cert_data'][:64] + '...' if len(pa['cert_data']) > 64 else pa['cert_data'],
+                            'full_record': f"{pa['usage']} {pa['selector']} {pa['mtype']} {pa['cert_data'][:64]}..."
+                        }
+                        found.append(rec)
+                    return found
                 resolver = dns.resolver.Resolver()
                 resolver.nameservers = ['1.1.1.1', '8.8.8.8']
                 resolver.timeout = 3
@@ -2305,10 +2348,10 @@ class DNSAnalyzer:
             return result
         
         try:
-            if not _validate_url_target(url):
+            if not self._offline_mode and not _validate_url_target(url):
                 result['error'] = 'Target resolves to private IP'
                 return result
-            response = requests.head(url, timeout=5, allow_redirects=True, headers={'User-Agent': self.USER_AGENT})
+            response = self._safe_http_get(url, timeout=5, allow_redirects=True)
             if response.status_code == 200:
                 content_type = response.headers.get('Content-Type', '')
                 if 'svg' in content_type.lower():
@@ -2520,20 +2563,16 @@ class DNSAnalyzer:
         except Exception:
             pass
         
-        # Get parent zone and query for delegation
         parts = domain.split('.')
-        if len(parts) >= 2:
+        if len(parts) >= 2 and not self._offline_mode:
             parent_zone = '.'.join(parts[1:]) if len(parts) > 2 else parts[-1]
             
-            # Try to get NS from parent by querying authoritative servers for parent
             try:
-                # Query the parent zone's NS directly
                 resolver = dns.resolver.Resolver()
                 resolver.nameservers = self.resolvers
                 resolver.timeout = self.dns_timeout
                 resolver.lifetime = self.dns_timeout * 2
                 
-                # Get parent NS servers
                 parent_ns_servers = resolver.resolve(parent_zone, 'NS')
                 if parent_ns_servers:
                     # Query one of the parent's NS for the child's delegation
@@ -2723,9 +2762,10 @@ class DNSAnalyzer:
     
     def _rdap_lookup(self, domain: str) -> Dict:
         """Return RDAP JSON data for domain using whodap library with retry."""
+        if self._offline_mode:
+            return {}
         import whodap
         
-        # Check cache first to avoid hammering registries
         cached_data = _rdap_cache.get(domain)
         if cached_data is not None:
             logging.warning(f"[RDAP] Using cached data for {domain}")
@@ -2903,6 +2943,8 @@ class DNSAnalyzer:
 
     def _whois_lookup_registrar(self, domain: str) -> Optional[str]:
         """Return registrar name using direct socket WHOIS query (port 43)."""
+        if self._offline_mode:
+            return None
         import socket
         
         tld = self._get_tld(domain)
@@ -3063,6 +3105,8 @@ class DNSAnalyzer:
         registrar-integrated DNS like Gandi, OVH, and others, the NS records
         reliably indicate the registrar.
         """
+        if self._offline_mode:
+            return None
         try:
             r = dns.resolver.Resolver()
             r.nameservers = ['1.1.1.1', '8.8.8.8']
@@ -3949,31 +3993,34 @@ class DNSAnalyzer:
             logging.info(f"CT cache hit for {domain}: {len(data)} certs")
         else:
             data = None
-            try:
-                ct_timeout = min(CT_TIMEOUT, _budget_remaining())
-                if ct_timeout < 2:
-                    raise requests.exceptions.Timeout("Insufficient time budget for CT query")
-                
-                url = f"https://crt.sh/?q=%25.{domain}&output=json"
-                response = requests.get(url, timeout=ct_timeout, headers={
-                    'User-Agent': self.USER_AGENT
-                })
-                
-                if response.status_code == 200:
-                    data = response.json()
-                    result['total_certs'] = len(data)
-                    ct_success = True
-                    self._set_ct_cache(domain, data)
-                    logging.info(f"CT query for {domain}: {len(data)} certs in {round(time.time() - ct_start, 1)}s")
-                else:
-                    logging.warning(f"CT log query for {domain} returned status {response.status_code}")
+            if self._offline_mode:
+                logging.debug(f"CT query skipped for {domain} (offline mode)")
+            else:
+                try:
+                    ct_timeout = min(CT_TIMEOUT, _budget_remaining())
+                    if ct_timeout < 2:
+                        raise requests.exceptions.Timeout("Insufficient time budget for CT query")
                     
-            except requests.exceptions.Timeout:
-                logging.warning(f"CT log query timed out for {domain} after {round(time.time() - ct_start, 1)}s — falling back to DNS probing")
-            except requests.exceptions.ConnectionError:
-                logging.warning(f"CT log connection failed for {domain} — falling back to DNS probing")
-            except Exception as e:
-                logging.warning(f"CT log query error for {domain}: {e} — falling back to DNS probing")
+                    url = f"https://crt.sh/?q=%25.{domain}&output=json"
+                    response = requests.get(url, timeout=ct_timeout, headers={
+                        'User-Agent': self.USER_AGENT
+                    })
+                    
+                    if response.status_code == 200:
+                        data = response.json()
+                        result['total_certs'] = len(data)
+                        ct_success = True
+                        self._set_ct_cache(domain, data)
+                        logging.info(f"CT query for {domain}: {len(data)} certs in {round(time.time() - ct_start, 1)}s")
+                    else:
+                        logging.warning(f"CT log query for {domain} returned status {response.status_code}")
+                        
+                except requests.exceptions.Timeout:
+                    logging.warning(f"CT log query timed out for {domain} after {round(time.time() - ct_start, 1)}s — falling back to DNS probing")
+                except requests.exceptions.ConnectionError:
+                    logging.warning(f"CT log connection failed for {domain} — falling back to DNS probing")
+                except Exception as e:
+                    logging.warning(f"CT log query error for {domain}: {e} — falling back to DNS probing")
         
         if ct_success and data:
             CT_ENTRY_CAP = 5000
@@ -4680,13 +4727,15 @@ class DNSAnalyzer:
                 'tls_1_3': 0,
                 'tls_1_2': 0,
                 'valid_certs': 0,
-                'expiring_soon': 0  # certs expiring in < 30 days
+                'expiring_soon': 0
             },
             'issues': [],
             'mta_sts_enforced': False
         }
         
-        # Get MX records if not provided
+        if self._offline_mode:
+            return result
+        
         if mx_records is None:
             mx_records = self.dns_query('MX', domain)
         

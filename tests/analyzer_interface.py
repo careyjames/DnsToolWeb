@@ -40,6 +40,10 @@ INJECTABLE_DEPENDENCIES = {
         'description': 'Skip IANA RDAP bootstrap data fetch on init (for fast test startup)',
         'default': False,
     },
+    'offline_mode': {
+        'description': 'Disable ALL outbound network calls (DoH, RDAP, WHOIS, CT, SMTP, AD flag, NS delegation). Methods return empty/stub data. Enables fast deterministic testing.',
+        'default': False,
+    },
 }
 
 ANALYSIS_METHODS = {
@@ -73,19 +77,23 @@ def create_test_analyzer(**overrides):
     """Create a DNSAnalyzer instance suitable for testing.
     
     Usage:
-        analyzer = create_test_analyzer(skip_network_init=True)
+        analyzer = create_test_analyzer()
         
     For fully deterministic tests with recorded responses:
         analyzer = create_test_analyzer(
-            skip_network_init=True,
             dns_resolver=my_recorded_dns_fn,
             http_client=my_recorded_http_fn,
         )
+    
+    By default, offline_mode=True disables all outbound network calls
+    (DoH, RDAP, WHOIS, CT logs, SMTP, AD flag checks, NS delegation).
+    Pass offline_mode=False for integration tests that need live network.
     """
     from dns_analyzer import DNSAnalyzer
     
     defaults = {
         'skip_network_init': True,
+        'offline_mode': True,
     }
     defaults.update(overrides)
     return DNSAnalyzer(**defaults)
