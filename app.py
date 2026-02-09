@@ -781,11 +781,22 @@ def proxy_bimi_logo():
         if 'svg' not in content_type.lower() and 'image' not in content_type.lower():
             return 'Response is not an image', 400
 
-        body = resp.content
-        if len(body) > MAX_RESPONSE_BYTES:
-            return 'Response too large', 400
+        chunks = []
+        bytes_read = 0
+        for chunk in resp.iter_content(chunk_size=8192):
+            bytes_read += len(chunk)
+            if bytes_read > MAX_RESPONSE_BYTES:
+                resp.close()
+                return 'Response too large', 400
+            chunks.append(chunk)
+        body = b''.join(chunks)
 
-        upstream_ct = resp.headers.get('Content-Type', 'image/svg+xml')
+        ALLOWED_CONTENT_TYPES = {
+            'image/svg+xml', 'image/png', 'image/jpeg',
+            'image/gif', 'image/webp',
+        }
+        safe_ct = content_type.split(';')[0].strip().lower()
+        upstream_ct = safe_ct if safe_ct in ALLOWED_CONTENT_TYPES else 'image/svg+xml'
 
         return Response(
             body,
