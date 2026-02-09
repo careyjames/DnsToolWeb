@@ -37,7 +37,25 @@ else
 fi
 echo ""
 
-echo "--- 4. Full Test Suite ---"
+echo "--- 4. Edge Case Tests (DI-based) ---"
+if python -m pytest tests/test_edge_cases.py -v --tb=short 2>&1; then
+    echo "[PASS] Edge cases"
+else
+    echo "[FAIL] Edge cases"
+    FAILED=1
+fi
+echo ""
+
+echo "--- 5. Behavioral Contract Tests ---"
+if python -m pytest tests/test_behavioral_contracts.py -v --tb=short 2>&1; then
+    echo "[PASS] Behavioral contracts"
+else
+    echo "[FAIL] Behavioral contracts"
+    FAILED=1
+fi
+echo ""
+
+echo "--- 6. Full Test Suite ---"
 if python -m pytest tests/ -v --tb=short 2>&1; then
     echo "[PASS] Full suite"
 else

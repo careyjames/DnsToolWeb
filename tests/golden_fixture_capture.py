@@ -8,7 +8,13 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from dns_analyzer import DNSAnalyzer
 
-CURATED_DOMAINS = ["google.com", "example.com"]
+CURATED_DOMAINS = [
+    "google.com",
+    "example.com",
+    "thisdoesnotexist-xz9q.com",
+    "whitehouse.gov",
+    "cloudflare.com",
+]
 
 FIXTURES_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'golden_fixtures')
 

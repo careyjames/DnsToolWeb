@@ -258,3 +258,53 @@ def _validate_hosting_summary(results, errors):
             errors.append(f'Missing hosting_summary.{field}')
         elif not isinstance(hs[field], str):
             errors.append(f'Wrong type for hosting_summary.{field}: expected str, got {type(hs[field]).__name__}')
+
+
+VALID_POSTURE_STATES = {'STRONG', 'GOOD', 'MODERATE', 'WEAK', 'CRITICAL'}
+VALID_POSTURE_COLORS = {'success', 'info', 'warning', 'danger', 'secondary'}
+VALID_MAIL_CLASSIFICATIONS = {
+    'email_enabled', 'email_minimal', 'email_passive',
+    'no_mail_verified', 'no_mail_partial', 'no_mail_intent',
+    'unknown',
+}
+VALID_DMARC_POLICIES = {'none', 'quarantine', 'reject'}
+
+
+def validate_analysis_deep(results: dict) -> list:
+    """Deep validation — checks field value constraints beyond types.
+    Used for Go migration parity verification."""
+    errors = validate_analysis_results(results)
+    if errors:
+        return errors
+
+    domain_exists = results.get('domain_exists', True)
+
+    posture = results.get('posture', {})
+    if domain_exists:
+        state = posture.get('state', '')
+        if state and state not in VALID_POSTURE_STATES:
+            errors.append(f'Invalid posture state: {state}')
+
+    color = posture.get('color', '')
+    if color and color not in VALID_POSTURE_COLORS:
+        errors.append(f'Invalid posture color: {color}')
+
+    mp = results.get('mail_posture', {})
+    classification = mp.get('classification', '')
+    if classification and classification not in VALID_MAIL_CLASSIFICATIONS:
+        errors.append(f'Invalid mail_posture classification: {classification}')
+
+    dmarc = results.get('dmarc_analysis', {})
+    if dmarc.get('status') in ('success', 'warning') and dmarc.get('policy'):
+        policy = dmarc['policy']
+        if policy not in VALID_DMARC_POLICIES:
+            errors.append(f'Invalid DMARC policy: {policy}')
+
+    spf = results.get('spf_analysis', {})
+    if spf.get('status') in ('success', 'warning'):
+        if 'lookup_count' in spf:
+            lc = spf['lookup_count']
+            if not isinstance(lc, int) or lc < 0:
+                errors.append(f'Invalid SPF lookup_count: {lc}')
+
+    return errors
