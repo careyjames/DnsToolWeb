@@ -19,7 +19,7 @@ Preferred communication style: Simple, everyday language.
 - **Data Model**: Stores complete analysis results in a `full_results` JSON column for historical playback and integrity. Includes schema versioning for future compatibility.
 - **Security Hardening**: Implements SSRF protection, CSRF protection, thread-safe caching, and strict IDNA encoding.
 - **Performance**: Utilizes a shared ThreadPoolExecutor, DNS result TTL cache, and CT cache. Includes semaphore-based concurrency control.
-- **Testing**: Employs formal JSON Schema for contract testing, a golden fixture system for regression testing, and dependency injection for deterministic testing. CI script at `scripts/run_contract_tests.sh`.
+- **Testing**: Employs formal JSON Schema for contract testing, a golden fixture system for regression testing, and dependency injection for deterministic testing. DNSAnalyzer supports `offline_mode` to disable all outbound network calls (DoH, RDAP, WHOIS, CT logs, SMTP, DNSSEC AD validation, NS delegation) for fast deterministic tests. CI script at `scripts/run_contract_tests.sh` (default: fast offline tests; `./scripts/run_contract_tests.sh full` for integration tests). Test suite: 94 tests in ~38s.
 - **History Export**: Streaming NDJSON export of all analysis history via `/export/json`.
 - **Comparison View**: Side-by-side diff of two analyses of the same domain at `/compare`.
 
