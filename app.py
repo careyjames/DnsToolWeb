@@ -357,8 +357,11 @@ def create_rate_limiter():
         except Exception as e:
             logging.warning(f"Failed to create Redis rate limiter: {e}")
     
+    limiter = InMemoryRateLimiter()
     logging.info("Rate limiter using backend: memory")
-    return InMemoryRateLimiter()
+    logging.warning("Rate limiter: in-memory backend is per-process only. "
+                    "Set REDIS_URL for shared rate limiting across workers.")
+    return limiter
 
 
 # Global rate limiter instance
@@ -401,19 +404,31 @@ dns_analyzer = DNSAnalyzer()
 
 @app.before_request
 def setup_request_context():
-    """Set up request context including CSP nonce and trace ID."""
-    # Generate CSP nonce
+    """Set up request context including CSP nonce, trace ID, and CSRF validation."""
     g.csp_nonce = secrets.token_urlsafe(16)
-    # Generate trace ID for structured logging (correlates all logs for this request)
-    g.trace_id = str(uuid.uuid4())[:8]  # Short 8-char ID for readability
+    g.trace_id = str(uuid.uuid4())[:8]
     g.request_start_time = time.time()
+
+    if request.method == 'POST':
+        from flask import session, abort
+        token = request.form.get('csrf_token') or request.headers.get('X-CSRF-Token')
+        if not token or token != session.get('csrf_token'):
+            abort(403)
+
+def generate_csrf_token():
+    """Generate or return existing CSRF token for the session."""
+    from flask import session
+    if 'csrf_token' not in session:
+        session['csrf_token'] = secrets.token_urlsafe(32)
+    return session['csrf_token']
 
 @app.context_processor
 def inject_globals():
-    """Inject app version and CSP nonce into all templates."""
+    """Inject app version, CSP nonce, and CSRF token into all templates."""
     return {
         'app_version': APP_VERSION,
-        'csp_nonce': getattr(g, 'csp_nonce', '')
+        'csp_nonce': getattr(g, 'csp_nonce', ''),
+        'csrf_token': generate_csrf_token()
     }
 
 @app.template_filter('country_flag')
@@ -521,7 +536,9 @@ class DomainAnalysis(db.Model):
 
     REQUIRED_SECTIONS = [
         'basic_records', 'spf_analysis', 'dmarc_analysis',
-        'dkim_analysis', 'registrar_info', 'posture'
+        'dkim_analysis', 'registrar_info', 'posture',
+        'dane_analysis', 'mta_sts_analysis', 'tlsrpt_analysis',
+        'bimi_analysis', 'caa_analysis', 'dnssec_analysis',
     ]
 
     def __init__(self, **kwargs):
@@ -704,9 +721,37 @@ def proxy_bimi_logo():
             return 'URL points to a disallowed address', 400
 
     try:
-        resp = requests.get(logo_url, timeout=5, allow_redirects=True, headers={
+        resp = requests.get(logo_url, timeout=5, allow_redirects=False, headers={
             'User-Agent': 'DNS-Analyzer/1.0 BIMI-Logo-Fetcher'
-        })
+        }, stream=True)
+
+        redirect_count = 0
+        max_redirects = 5
+        while resp.status_code in (301, 302, 303, 307, 308) and redirect_count < max_redirects:
+            redirect_count += 1
+            redirect_url = resp.headers.get('Location')
+            if not redirect_url:
+                return 'Redirect without Location header', 502
+
+            r_parsed = urlparse(redirect_url)
+            if r_parsed.scheme != 'https':
+                return 'Redirect to non-HTTPS URL blocked', 400
+            if not r_parsed.hostname:
+                return 'Invalid redirect URL', 400
+
+            try:
+                r_ips = socket.getaddrinfo(r_parsed.hostname, None)
+            except socket.gaierror:
+                return 'Could not resolve redirect hostname', 400
+            for _f, _t, _p, _c, sa in r_ips:
+                r_ip = ipaddress.ip_address(sa[0])
+                if r_ip.is_private or r_ip.is_loopback or r_ip.is_link_local or r_ip.is_reserved:
+                    return 'Redirect points to a disallowed address', 400
+
+            resp.close()
+            resp = requests.get(redirect_url, timeout=5, allow_redirects=False, headers={
+                'User-Agent': 'DNS-Analyzer/1.0 BIMI-Logo-Fetcher'
+            }, stream=True)
 
         if resp.status_code != 200:
             return f'Failed to fetch logo: {resp.status_code}', 502
@@ -1128,12 +1173,12 @@ def normalize_results(full_results):
         'dkim_analysis': {'status': 'unknown', 'selectors': {}},
         'registrar_info': {'registrar': None, 'source': None},
         'posture': {'state': 'unknown', 'label': 'Unknown'},
-        'dane_analysis': {},
-        'mta_sts_analysis': {},
-        'tls_rpt_analysis': {},
-        'bimi_analysis': {},
-        'caa_analysis': {},
-        'dnssec_analysis': {},
+        'dane_analysis': {'status': 'info', 'has_dane': False, 'tlsa_records': [], 'issues': []},
+        'mta_sts_analysis': {'status': 'warning'},
+        'tlsrpt_analysis': {'status': 'warning'},
+        'bimi_analysis': {'status': 'warning'},
+        'caa_analysis': {'status': 'warning'},
+        'dnssec_analysis': {'status': 'warning'},
         'ct_subdomains': {},
         'mail_posture': {'classification': 'unknown'},
     }

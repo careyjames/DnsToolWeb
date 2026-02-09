@@ -18,92 +18,10 @@ try:
 except ImportError:
     HAS_TLDEXTRACT = False
 
-# RDAP cache - registry data rarely changes, so longer TTL is appropriate
-# Note: DNS records are ALWAYS fresh (no cache), only RDAP registry info is cached
-_RDAP_CACHE_TTL = 21600  # 6 hours - registrar/registry data changes infrequently
-
-
-class RDAPCache:
-    """Hybrid RDAP cache - uses Redis if available, falls back to in-memory."""
-    
-    def __init__(self):
-        self._memory_cache: Dict[str, tuple] = {}  # In-memory fallback
-        self._redis = None
-        self._use_redis = False
-        self._init_redis()
-    
-    def _init_redis(self):
-        """Initialize Redis connection if REDIS_URL is set."""
-        redis_url = os.environ.get('REDIS_URL')
-        if redis_url:
-            try:
-                import redis
-                self._redis = redis.from_url(redis_url, decode_responses=True)
-                self._redis.ping()
-                self._use_redis = True
-                logging.info("RDAP cache using Redis backend")
-            except Exception as e:
-                logging.warning(f"Redis connection failed for RDAP cache, using memory: {e}")
-                self._use_redis = False
-    
-    def get(self, domain: str) -> Optional[Dict]:
-        """Get cached RDAP data for domain."""
-        cache_key = f"rdap:{domain.lower()}"
-        
-        if self._use_redis:
-            try:
-                import json
-                cached = self._redis.get(cache_key)
-                if cached:
-                    return json.loads(cached)
-                return None
-            except Exception as e:
-                logging.debug(f"Redis get failed: {e}")
-                # Fall through to memory cache
-        
-        # In-memory fallback
-        if domain.lower() in self._memory_cache:
-            timestamp, data = self._memory_cache[domain.lower()]
-            if time.time() - timestamp < _RDAP_CACHE_TTL:
-                return data
-            else:
-                del self._memory_cache[domain.lower()]
-        return None
-    
-    def set(self, domain: str, data: Dict):
-        """Cache RDAP data for domain."""
-        cache_key = f"rdap:{domain.lower()}"
-        
-        if self._use_redis:
-            try:
-                import json
-                self._redis.setex(cache_key, _RDAP_CACHE_TTL, json.dumps(data))
-            except Exception as e:
-                logging.debug(f"Redis set failed: {e}")
-                # Fall through to memory cache
-        
-        # Always store in memory as backup
-        self._memory_cache[domain.lower()] = (time.time(), data)
-    
-    def clear(self):
-        """Clear all cached data (primarily for testing)."""
-        self._memory_cache.clear()
-        if self._use_redis:
-            try:
-                # Clear only RDAP keys
-                for key in self._redis.scan_iter("rdap:*"):
-                    self._redis.delete(key)
-            except Exception:
-                pass
-    
-    @property
-    def backend(self) -> str:
-        """Return the current backend type."""
-        return 'redis' if self._use_redis else 'memory'
-
-
-# Global RDAP cache instance
-_rdap_cache = RDAPCache()
+from dns_providers import (CNAME_PROVIDER_MAP, DANE_MX_CAPABILITY,
+    DMARC_MONITORING_PROVIDERS, SPF_FLATTENING_PROVIDERS,
+    DYNAMIC_SERVICES_PROVIDERS, DYNAMIC_SERVICES_ZONES, HOSTED_DKIM_PROVIDERS)
+from rdap_cache import RDAPCache, _rdap_cache, _RDAP_CACHE_TTL
 
 try:
     import requests
@@ -155,186 +73,7 @@ class DNSAnalyzer:
     
     USER_AGENT = 'DNSTool-DomainSecurityAudit/1.0 (+https://dnstool.it-help.tech)'
 
-    CNAME_PROVIDER_MAP = {
-        'shopify.com': {'name': 'Shopify', 'category': 'E-commerce'},
-        'myshopify.com': {'name': 'Shopify', 'category': 'E-commerce'},
-        'bigcommerce.com': {'name': 'BigCommerce', 'category': 'E-commerce'},
-        'squarespace.com': {'name': 'Squarespace', 'category': 'Website'},
-        'wixdns.net': {'name': 'Wix', 'category': 'Website'},
-        'wix.com': {'name': 'Wix', 'category': 'Website'},
-        'wordpress.com': {'name': 'WordPress.com', 'category': 'Website'},
-        'wpengine.com': {'name': 'WP Engine', 'category': 'Website'},
-        'pantheonsite.io': {'name': 'Pantheon', 'category': 'Website'},
-        'netlify.app': {'name': 'Netlify', 'category': 'Website'},
-        'netlify.com': {'name': 'Netlify', 'category': 'Website'},
-        'vercel.app': {'name': 'Vercel', 'category': 'Website'},
-        'vercel-dns.com': {'name': 'Vercel', 'category': 'Website'},
-        'webflow.io': {'name': 'Webflow', 'category': 'Website'},
-        'ghost.io': {'name': 'Ghost', 'category': 'Website'},
-        'cargo.site': {'name': 'Cargo', 'category': 'Website'},
-        'strikingly.com': {'name': 'Strikingly', 'category': 'Website'},
-        'hubspot.net': {'name': 'HubSpot', 'category': 'Marketing'},
-        'hubspot.com': {'name': 'HubSpot', 'category': 'Marketing'},
-        'hs-sites.com': {'name': 'HubSpot', 'category': 'Marketing'},
-        'marketo.com': {'name': 'Marketo (Adobe)', 'category': 'Marketing'},
-        'mktoweb.com': {'name': 'Marketo (Adobe)', 'category': 'Marketing'},
-        'pardot.com': {'name': 'Pardot (Salesforce)', 'category': 'Marketing'},
-        'mailchimp.com': {'name': 'Mailchimp', 'category': 'Marketing'},
-        'mailgun.org': {'name': 'Mailgun', 'category': 'Email'},
-        'sendgrid.net': {'name': 'SendGrid (Twilio)', 'category': 'Email'},
-        'postmarkapp.com': {'name': 'Postmark', 'category': 'Email'},
-        'mandrillapp.com': {'name': 'Mandrill (Mailchimp)', 'category': 'Email'},
-        'zendesk.com': {'name': 'Zendesk', 'category': 'Support'},
-        'zendeskhost.com': {'name': 'Zendesk', 'category': 'Support'},
-        'freshdesk.com': {'name': 'Freshdesk', 'category': 'Support'},
-        'freshservice.com': {'name': 'Freshservice', 'category': 'Support'},
-        'intercom.io': {'name': 'Intercom', 'category': 'Support'},
-        'helpscout.com': {'name': 'Help Scout', 'category': 'Support'},
-        'helpscout.net': {'name': 'Help Scout', 'category': 'Support'},
-        'salesforce.com': {'name': 'Salesforce', 'category': 'CRM'},
-        'force.com': {'name': 'Salesforce', 'category': 'CRM'},
-        'salesforceliveagent.com': {'name': 'Salesforce', 'category': 'CRM'},
-        'zoho.com': {'name': 'Zoho', 'category': 'CRM'},
-        'zoho.eu': {'name': 'Zoho', 'category': 'CRM'},
-        'pipedrive.com': {'name': 'Pipedrive', 'category': 'CRM'},
-        'cloudfront.net': {'name': 'AWS CloudFront', 'category': 'CDN'},
-        'amazonaws.com': {'name': 'AWS', 'category': 'Cloud'},
-        'awsglobalaccelerator.com': {'name': 'AWS Global Accelerator', 'category': 'Cloud'},
-        'elasticbeanstalk.com': {'name': 'AWS Elastic Beanstalk', 'category': 'Cloud'},
-        's3.amazonaws.com': {'name': 'AWS S3', 'category': 'Cloud'},
-        'azurewebsites.net': {'name': 'Azure App Service', 'category': 'Cloud'},
-        'azure-api.net': {'name': 'Azure API Management', 'category': 'Cloud'},
-        'azurefd.net': {'name': 'Azure Front Door', 'category': 'CDN'},
-        'azureedge.net': {'name': 'Azure CDN', 'category': 'CDN'},
-        'trafficmanager.net': {'name': 'Azure Traffic Manager', 'category': 'Cloud'},
-        'cloudapp.azure.com': {'name': 'Azure', 'category': 'Cloud'},
-        'blob.core.windows.net': {'name': 'Azure Blob Storage', 'category': 'Cloud'},
-        'windows.net': {'name': 'Azure', 'category': 'Cloud'},
-        'googleapis.com': {'name': 'Google Cloud', 'category': 'Cloud'},
-        'appspot.com': {'name': 'Google App Engine', 'category': 'Cloud'},
-        'googleplex.com': {'name': 'Google', 'category': 'Cloud'},
-        'run.app': {'name': 'Google Cloud Run', 'category': 'Cloud'},
-        'web.app': {'name': 'Firebase Hosting', 'category': 'Cloud'},
-        'firebaseapp.com': {'name': 'Firebase', 'category': 'Cloud'},
-        'cdn.cloudflare.net': {'name': 'Cloudflare', 'category': 'CDN'},
-        'cloudflare.net': {'name': 'Cloudflare', 'category': 'CDN'},
-        'cdn77.org': {'name': 'CDN77', 'category': 'CDN'},
-        'fastly.net': {'name': 'Fastly', 'category': 'CDN'},
-        'edgekey.net': {'name': 'Akamai', 'category': 'CDN'},
-        'akamaiedge.net': {'name': 'Akamai', 'category': 'CDN'},
-        'akadns.net': {'name': 'Akamai', 'category': 'CDN'},
-        'akamaized.net': {'name': 'Akamai', 'category': 'CDN'},
-        'edgesuite.net': {'name': 'Akamai', 'category': 'CDN'},
-        'stackpathdns.com': {'name': 'StackPath', 'category': 'CDN'},
-        'stackpathcdn.com': {'name': 'StackPath', 'category': 'CDN'},
-        'sucuri.net': {'name': 'Sucuri', 'category': 'Security'},
-        'incapdns.net': {'name': 'Imperva (Incapsula)', 'category': 'Security'},
-        'impervadns.net': {'name': 'Imperva', 'category': 'Security'},
-        'heroku.com': {'name': 'Heroku', 'category': 'PaaS'},
-        'herokuapp.com': {'name': 'Heroku', 'category': 'PaaS'},
-        'herokudns.com': {'name': 'Heroku', 'category': 'PaaS'},
-        'render.com': {'name': 'Render', 'category': 'PaaS'},
-        'onrender.com': {'name': 'Render', 'category': 'PaaS'},
-        'fly.dev': {'name': 'Fly.io', 'category': 'PaaS'},
-        'digitaloceanspaces.com': {'name': 'DigitalOcean Spaces', 'category': 'Cloud'},
-        'ondigitalocean.app': {'name': 'DigitalOcean App Platform', 'category': 'Cloud'},
-        'github.io': {'name': 'GitHub Pages', 'category': 'Website'},
-        'githubusercontents.com': {'name': 'GitHub', 'category': 'DevOps'},
-        'gitlab.io': {'name': 'GitLab Pages', 'category': 'Website'},
-        'bitbucket.io': {'name': 'Bitbucket', 'category': 'DevOps'},
-        'atlassian.net': {'name': 'Atlassian', 'category': 'Collaboration'},
-        'statuspage.io': {'name': 'Statuspage (Atlassian)', 'category': 'Status Page'},
-        'status.io': {'name': 'Status.io', 'category': 'Status Page'},
-        'readthedocs.io': {'name': 'Read the Docs', 'category': 'Documentation'},
-        'gitbook.io': {'name': 'GitBook', 'category': 'Documentation'},
-        'readme.io': {'name': 'ReadMe', 'category': 'Documentation'},
-        'outlook.com': {'name': 'Microsoft 365', 'category': 'Email'},
-        'protection.outlook.com': {'name': 'Microsoft 365 (Exchange Online)', 'category': 'Email'},
-        'mx.microsoft': {'name': 'Microsoft 365 (DANE)', 'category': 'Email'},
-        'office365.com': {'name': 'Microsoft 365', 'category': 'Email'},
-        'sharepoint.com': {'name': 'SharePoint Online', 'category': 'Collaboration'},
-        'lync.com': {'name': 'Skype for Business', 'category': 'Collaboration'},
-        'microsoftonline.com': {'name': 'Microsoft Entra ID', 'category': 'Identity'},
-        'msappproxy.net': {'name': 'Azure AD App Proxy', 'category': 'Identity'},
-        'aspmx.l.google.com': {'name': 'Google Workspace', 'category': 'Email'},
-        'googlemail.com': {'name': 'Google Workspace', 'category': 'Email'},
-        'ghs.googlehosted.com': {'name': 'Google Sites', 'category': 'Website'},
-        'googlehosted.com': {'name': 'Google', 'category': 'Cloud'},
-        'stripe.com': {'name': 'Stripe', 'category': 'Payments'},
-        'chargebee.com': {'name': 'Chargebee', 'category': 'Payments'},
-        'recurly.com': {'name': 'Recurly', 'category': 'Payments'},
-        'braintreegateway.com': {'name': 'Braintree (PayPal)', 'category': 'Payments'},
-        'squareup.com': {'name': 'Square', 'category': 'Payments'},
-        'typeform.com': {'name': 'Typeform', 'category': 'Forms'},
-        'wufoo.com': {'name': 'Wufoo', 'category': 'Forms'},
-        'surveygizmo.com': {'name': 'Alchemer', 'category': 'Forms'},
-        'unbounce.com': {'name': 'Unbounce', 'category': 'Landing Pages'},
-        'instapage.com': {'name': 'Instapage', 'category': 'Landing Pages'},
-        'leadpages.net': {'name': 'Leadpages', 'category': 'Landing Pages'},
-        'canva.com': {'name': 'Canva', 'category': 'Design'},
-        'calendly.com': {'name': 'Calendly', 'category': 'Scheduling'},
-        'acuityscheduling.com': {'name': 'Acuity Scheduling', 'category': 'Scheduling'},
-        'eventbrite.com': {'name': 'Eventbrite', 'category': 'Events'},
-        'zoom.us': {'name': 'Zoom', 'category': 'Video'},
-        'webex.com': {'name': 'Webex (Cisco)', 'category': 'Video'},
-        'auth0.com': {'name': 'Auth0 (Okta)', 'category': 'Identity'},
-        'okta.com': {'name': 'Okta', 'category': 'Identity'},
-        'onelogin.com': {'name': 'OneLogin', 'category': 'Identity'},
-        'duosecurity.com': {'name': 'Duo (Cisco)', 'category': 'Identity'},
-        'greenhouse.io': {'name': 'Greenhouse', 'category': 'Recruiting'},
-        'lever.co': {'name': 'Lever', 'category': 'Recruiting'},
-        'workday.com': {'name': 'Workday', 'category': 'HR'},
-        'bamboohr.com': {'name': 'BambooHR', 'category': 'HR'},
-        'namely.com': {'name': 'Namely', 'category': 'HR'},
-        'gusto.com': {'name': 'Gusto', 'category': 'HR'},
-        'slack.com': {'name': 'Slack', 'category': 'Collaboration'},
-        'notion.so': {'name': 'Notion', 'category': 'Collaboration'},
-        'monday.com': {'name': 'monday.com', 'category': 'Collaboration'},
-        'asana.com': {'name': 'Asana', 'category': 'Collaboration'},
-        'pagerduty.com': {'name': 'PagerDuty', 'category': 'Monitoring'},
-        'datadoghq.com': {'name': 'Datadog', 'category': 'Monitoring'},
-        'datadoghq.eu': {'name': 'Datadog', 'category': 'Monitoring'},
-        'sentry.io': {'name': 'Sentry', 'category': 'Monitoring'},
-        'newrelic.com': {'name': 'New Relic', 'category': 'Monitoring'},
-        'sumologic.com': {'name': 'Sumo Logic', 'category': 'Monitoring'},
-        'grafana.net': {'name': 'Grafana Cloud', 'category': 'Monitoring'},
-        'docusign.com': {'name': 'DocuSign', 'category': 'Documents'},
-        'docusign.net': {'name': 'DocuSign', 'category': 'Documents'},
-        'hellosign.com': {'name': 'HelloSign (Dropbox)', 'category': 'Documents'},
-        'box.com': {'name': 'Box', 'category': 'Storage'},
-        'dropbox.com': {'name': 'Dropbox', 'category': 'Storage'},
-        'egnyte.com': {'name': 'Egnyte', 'category': 'Storage'},
-        'teachable.com': {'name': 'Teachable', 'category': 'Learning'},
-        'thinkific.com': {'name': 'Thinkific', 'category': 'Learning'},
-        'kajabi.com': {'name': 'Kajabi', 'category': 'Learning'},
-        'discourse.org': {'name': 'Discourse', 'category': 'Community'},
-        'discourse.cloud': {'name': 'Discourse', 'category': 'Community'},
-        'mattermost.com': {'name': 'Mattermost', 'category': 'Collaboration'},
-        'tawk.to': {'name': 'tawk.to', 'category': 'Live Chat'},
-        'crisp.chat': {'name': 'Crisp', 'category': 'Live Chat'},
-        'drift.com': {'name': 'Drift', 'category': 'Live Chat'},
-        'livechatinc.com': {'name': 'LiveChat', 'category': 'Live Chat'},
-        'segment.com': {'name': 'Segment (Twilio)', 'category': 'Analytics'},
-        'segment.io': {'name': 'Segment (Twilio)', 'category': 'Analytics'},
-        'amplitude.com': {'name': 'Amplitude', 'category': 'Analytics'},
-        'mixpanel.com': {'name': 'Mixpanel', 'category': 'Analytics'},
-        'hotjar.com': {'name': 'Hotjar', 'category': 'Analytics'},
-        'optimizely.com': {'name': 'Optimizely', 'category': 'Analytics'},
-        'crazyegg.com': {'name': 'Crazy Egg', 'category': 'Analytics'},
-        'wpenginepowered.com': {'name': 'WP Engine', 'category': 'Website'},
-        'flywheel.io': {'name': 'Flywheel', 'category': 'Website'},
-        'kinsta.cloud': {'name': 'Kinsta', 'category': 'Website'},
-        'cloudwaysapps.com': {'name': 'Cloudways', 'category': 'Website'},
-        'siteground.net': {'name': 'SiteGround', 'category': 'Hosting'},
-        'bluehost.com': {'name': 'Bluehost', 'category': 'Hosting'},
-        'godaddysites.com': {'name': 'GoDaddy', 'category': 'Hosting'},
-        'secureserver.net': {'name': 'GoDaddy', 'category': 'Hosting'},
-        'hostgator.com': {'name': 'HostGator', 'category': 'Hosting'},
-        'dreamhost.com': {'name': 'DreamHost', 'category': 'Hosting'},
-        'wpcomstaging.com': {'name': 'WordPress.com', 'category': 'Website'},
-        'service-now.com': {'name': 'ServiceNow', 'category': 'ITSM'},
-        'servicenow.com': {'name': 'ServiceNow', 'category': 'ITSM'},
-    }
+    CNAME_PROVIDER_MAP = CNAME_PROVIDER_MAP
 
     def __init__(self):
         self.dns_timeout = 2
@@ -342,8 +81,32 @@ class DNSAnalyzer:
         self.default_resolvers = ["1.1.1.1"]
         self.resolvers = self.default_resolvers.copy()
         self.iana_rdap_map = {}
-        self.consensus_enabled = True  # Enable multi-resolver consensus
+        self.consensus_enabled = True
+        self._executor = ThreadPoolExecutor(max_workers=20)
+        self._dns_cache: Dict[str, tuple] = {}
+        self._dns_cache_lock = __import__('threading').Lock()
+        self._DNS_CACHE_TTL = 30
         self._fetch_iana_rdap_data()
+
+    def _dns_cache_get(self, key: str) -> Optional[List[str]]:
+        """Get cached DNS result if still valid."""
+        with self._dns_cache_lock:
+            if key in self._dns_cache:
+                ts, data = self._dns_cache[key]
+                if time.time() - ts < self._DNS_CACHE_TTL:
+                    return data
+                del self._dns_cache[key]
+        return None
+
+    def _dns_cache_set(self, key: str, data: List[str]):
+        """Cache a DNS result with TTL."""
+        with self._dns_cache_lock:
+            self._dns_cache[key] = (time.time(), data)
+            if len(self._dns_cache) > 5000:
+                cutoff = time.time() - self._DNS_CACHE_TTL
+                expired = [k for k, (ts, _) in self._dns_cache.items() if ts < cutoff]
+                for k in expired:
+                    del self._dns_cache[k]
     
     def _find_parent_zone(self, domain: str) -> Optional[str]:
         """Find the parent zone that contains this domain by looking for NS records.
@@ -1340,84 +1103,11 @@ class DNSAnalyzer:
         'spf.freshdesk': 'Freshdesk',
     }
 
-    DMARC_MONITORING_PROVIDERS = {
-        'ondmarc.com': {'name': 'OnDMARC', 'vendor': 'Red Sift', 'capabilities': ['DMARC reporting', 'TLS-RPT reporting', 'SPF management', 'MTA-STS hosting']},
-        'valimail.com': {'name': 'Valimail Enforce', 'vendor': 'Valimail', 'capabilities': ['DMARC reporting', 'DMARC enforcement', 'SPF management']},
-        'dmarcian.com': {'name': 'Dmarcian', 'vendor': 'Dmarcian', 'capabilities': ['DMARC reporting', 'DMARC analytics']},
-        'easydmarc.com': {'name': 'EasyDMARC', 'vendor': 'EasyDMARC', 'capabilities': ['DMARC reporting', 'DMARC analytics', 'SPF management']},
-        'powerdmarc.com': {'name': 'PowerDMARC', 'vendor': 'PowerDMARC', 'capabilities': ['DMARC reporting', 'DMARC enforcement', 'SPF management']},
-        'agari.com': {'name': 'Agari', 'vendor': 'Fortra (HelpSystems)', 'capabilities': ['DMARC reporting', 'brand protection']},
-        'dmarc-analyzer.com': {'name': 'DMARC Analyzer', 'vendor': 'Mimecast', 'capabilities': ['DMARC reporting', 'DMARC analytics']},
-        'postmarkapp.com': {'name': 'Postmark DMARC', 'vendor': 'ActiveCampaign', 'capabilities': ['DMARC reporting']},
-        'uriports.com': {'name': 'URIports', 'vendor': 'URIports', 'capabilities': ['DMARC reporting', 'TLS-RPT reporting']},
-        'fraudmarc.com': {'name': 'Fraudmarc', 'vendor': 'Fraudmarc', 'capabilities': ['DMARC reporting', 'SPF management']},
-        'mxtoolbox.com': {'name': 'MxToolbox', 'vendor': 'MxToolbox', 'capabilities': ['DMARC reporting']},
-        'sendmarc.com': {'name': 'Sendmarc', 'vendor': 'Sendmarc', 'capabilities': ['DMARC reporting', 'DMARC enforcement']},
-        'proofpoint.com': {'name': 'Proofpoint EFD', 'vendor': 'Proofpoint', 'capabilities': ['DMARC reporting', 'email fraud defense']},
-        'redsift.com': {'name': 'Red Sift', 'vendor': 'Red Sift', 'capabilities': ['DMARC reporting']},
-        'mailhardener.com': {'name': 'Mailhardener', 'vendor': 'Mailhardener', 'capabilities': ['DMARC reporting', 'MTA-STS hosting']},
-        'dmarc.postmarkapp.com': {'name': 'Postmark DMARC', 'vendor': 'ActiveCampaign', 'capabilities': ['DMARC reporting']},
-        'emailsecuritycheck.net': {'name': 'DMARC Report', 'vendor': 'DMARC Report', 'capabilities': ['DMARC reporting']},
-        'app.dmarcdigests.com': {'name': 'DMARC Digests', 'vendor': 'DMARC Digests', 'capabilities': ['DMARC reporting']},
-        'dmarc.report': {'name': 'DMARC Report', 'vendor': 'DMARC Report', 'capabilities': ['DMARC reporting']},
-        'ag.dmarcly.com': {'name': 'DMARCLY', 'vendor': 'DMARCLY', 'capabilities': ['DMARC reporting', 'DMARC analytics']},
-        'dmarcly.com': {'name': 'DMARCLY', 'vendor': 'DMARCLY', 'capabilities': ['DMARC reporting', 'DMARC analytics']},
-        'dmarc-reports.cloudflare.net': {'name': 'Cloudflare DMARC', 'vendor': 'Cloudflare', 'capabilities': ['DMARC reporting', 'DMARC analytics']},
-        'cloudflare.net': {'name': 'Cloudflare DMARC', 'vendor': 'Cloudflare', 'capabilities': ['DMARC reporting', 'DMARC analytics']},
-        'glockapps.com': {'name': 'GlockApps', 'vendor': 'GlockApps', 'capabilities': ['DMARC reporting', 'deliverability testing']},
-        'dmarcadvisor.com': {'name': 'DMARC Advisor', 'vendor': 'DMARC Advisor', 'capabilities': ['DMARC reporting', 'DMARC analytics']},
-        'dmarcmanager.app': {'name': 'DMARC Advisor', 'vendor': 'DMARC Advisor', 'capabilities': ['DMARC reporting', 'DMARC analytics']},
-        'dmarcduty.com': {'name': 'DynamicSPF', 'vendor': 'Dmarcduty', 'capabilities': ['DMARC reporting', 'SPF management']},
-        'dmarcreport.com': {'name': 'DMARC Report', 'vendor': 'DMARC Report', 'capabilities': ['DMARC reporting', 'AI-assisted analysis']},
-        'ironscales.com': {'name': 'IRONSCALES', 'vendor': 'IRONSCALES', 'capabilities': ['DMARC reporting', 'email security']},
-        'redsift.cloud': {'name': 'OnDMARC', 'vendor': 'Red Sift', 'capabilities': ['DMARC reporting', 'TLS-RPT reporting', 'SPF management', 'MTA-STS hosting']},
-    }
-
-    SPF_FLATTENING_PROVIDERS = {
-        'ondmarc.com': {'name': 'OnDMARC', 'vendor': 'Red Sift'},
-        'smart.ondmarc.com': {'name': 'OnDMARC', 'vendor': 'Red Sift'},
-        'redsift.cloud': {'name': 'OnDMARC', 'vendor': 'Red Sift'},
-        'vali.email': {'name': 'Valimail Enforce', 'vendor': 'Valimail'},
-        'valimail.com': {'name': 'Valimail Enforce', 'vendor': 'Valimail'},
-        'autospf.com': {'name': 'AutoSPF', 'vendor': 'AutoSPF'},
-        'sendmarc.com': {'name': 'Sendmarc', 'vendor': 'Sendmarc'},
-        'fraudmarc.com': {'name': 'Fraudmarc', 'vendor': 'Fraudmarc'},
-        'dmarcian.com': {'name': 'Dmarcian', 'vendor': 'Dmarcian'},
-        'easydmarc.pro': {'name': 'EasySPF', 'vendor': 'EasyDMARC'},
-        'easydmarc.com': {'name': 'EasySPF', 'vendor': 'EasyDMARC'},
-        'powerspf.com': {'name': 'PowerSPF', 'vendor': 'PowerDMARC'},
-        'powerdmarc.com': {'name': 'PowerSPF', 'vendor': 'PowerDMARC'},
-        'dmarcly.com': {'name': 'DMARCLY', 'vendor': 'DMARCLY'},
-        'dmarcduty.com': {'name': 'DynamicSPF', 'vendor': 'Dmarcduty'},
-        'spf.has.gpphosted.com': {'name': 'Proofpoint EFD (Gov)', 'vendor': 'Proofpoint'},
-        'spf.has.pphosted.com': {'name': 'Proofpoint EFD', 'vendor': 'Proofpoint'},
-    }
-
-    DYNAMIC_SERVICES_PROVIDERS = {
-        'ondmarc.com': {'name': 'OnDMARC', 'vendor': 'Red Sift'},
-        'redsift.cloud': {'name': 'OnDMARC', 'vendor': 'Red Sift'},
-        'mailhardener.com': {'name': 'Mailhardener', 'vendor': 'Mailhardener'},
-        'vali.email': {'name': 'Valimail Enforce', 'vendor': 'Valimail'},
-    }
-
-    DYNAMIC_SERVICES_ZONES = {
-        '_dmarc': 'Dynamic DMARC',
-        '_domainkey': 'Dynamic DKIM',
-        '_mta-sts': 'Dynamic MTA-STS',
-        '_smtp._tls': 'Dynamic TLS-RPT',
-    }
-
-    HOSTED_DKIM_PROVIDERS = {
-        'gpphosted.com': {'name': 'Proofpoint EFD (Gov)', 'vendor': 'Proofpoint'},
-        'pphosted.com': {'name': 'Proofpoint EFD', 'vendor': 'Proofpoint'},
-        'proofpoint.com': {'name': 'Proofpoint EFD', 'vendor': 'Proofpoint'},
-        'dkim.mimecast.com': {'name': 'Mimecast DMARC Analyzer', 'vendor': 'Mimecast'},
-        'mimecast.com': {'name': 'Mimecast DMARC Analyzer', 'vendor': 'Mimecast'},
-        'agari.com': {'name': 'Agari', 'vendor': 'Fortra'},
-        'emailsecurity.fortra.com': {'name': 'Agari', 'vendor': 'Fortra'},
-        'sendmarc.com': {'name': 'Sendmarc', 'vendor': 'Sendmarc'},
-        'dmarcian.com': {'name': 'Dmarcian', 'vendor': 'Dmarcian'},
-    }
+    DMARC_MONITORING_PROVIDERS = DMARC_MONITORING_PROVIDERS
+    SPF_FLATTENING_PROVIDERS = SPF_FLATTENING_PROVIDERS
+    DYNAMIC_SERVICES_PROVIDERS = DYNAMIC_SERVICES_PROVIDERS
+    DYNAMIC_SERVICES_ZONES = DYNAMIC_SERVICES_ZONES
+    HOSTED_DKIM_PROVIDERS = HOSTED_DKIM_PROVIDERS
 
     def _detect_email_security_management(self, spf_analysis: dict, dmarc_analysis: dict, tlsrpt_analysis: dict, mta_sts_analysis: dict = None, domain: str = None, dkim_analysis: dict = None) -> dict:
         """Detect email security management providers from DMARC rua/ruf, TLS-RPT rua, SPF includes, MTA-STS, Hosted DKIM, and Dynamic Services.
@@ -2182,94 +1872,7 @@ class DNSAnalyzer:
             'mpic_note': 'Since September 2025, all public CAs must verify domain control from multiple geographic locations (Multi-Perspective Issuance Corroboration, CA/B Forum Ballot SC-067). CAA records are now checked from multiple network perspectives before certificate issuance.'
         }
     
-    DANE_MX_CAPABILITY = {
-        'google': {
-            'name': 'Google Workspace',
-            'dane_inbound': False,
-            'dane_outbound': False,
-            'reason': 'Google uses shared, multi-tenant MX infrastructure (aspmx.l.google.com) with certificate rotation. Google does not publish TLSA records for its MX hosts and does not allow customers to do so. Google also does not validate DANE/TLSA when sending outbound mail.',
-            'alternative': 'MTA-STS',
-            'patterns': ['google.com', 'googlemail.com', 'smtp.goog'],
-        },
-        'microsoft_dane': {
-            'name': 'Microsoft 365 (DANE-enabled)',
-            'dane_inbound': True,
-            'dane_outbound': True,
-            'reason': 'Microsoft 365 supports inbound DANE with DNSSEC (GA October 2024) via *.mx.microsoft endpoints, and validates DANE/TLSA on outbound SMTP.',
-            'patterns': ['mx.microsoft'],
-        },
-        'microsoft_legacy': {
-            'name': 'Microsoft 365',
-            'dane_inbound': False,
-            'dane_outbound': True,
-            'dane_migration_available': True,
-            'reason': 'This domain uses legacy Microsoft 365 MX endpoints (*.mail.protection.outlook.com) which do not publish TLSA records. Microsoft supports DANE with DNSSEC on newer *.mx.microsoft.com endpoints (GA October 2024). Migrating MX records enables inbound DANE. Microsoft does validate DANE/TLSA when sending outbound mail.',
-            'alternative': 'Migrate MX to *.mx.microsoft.com endpoints for inbound DANE, or use MTA-STS',
-            'patterns': ['outlook.com', 'protection.outlook.com', 'olc.protection.outlook.com'],
-        },
-        'protonmail': {
-            'name': 'Proton Mail',
-            'dane_inbound': True,
-            'dane_outbound': True,
-            'reason': 'Proton Mail publishes DANE/TLSA records for its MX hosts and validates DANE on outbound delivery.',
-            'patterns': ['protonmail.ch', 'mail.protonmail.ch'],
-        },
-        'zoho': {
-            'name': 'Zoho Mail',
-            'dane_inbound': False,
-            'dane_outbound': False,
-            'reason': 'Zoho does not publish TLSA records for its MX hosts. Zoho MX infrastructure is shared and does not support per-customer DANE.',
-            'alternative': 'MTA-STS',
-            'patterns': ['zoho.com', 'zoho.eu', 'zoho.in'],
-        },
-        'fastmail': {
-            'name': 'Fastmail',
-            'dane_inbound': True,
-            'dane_outbound': True,
-            'reason': 'Fastmail publishes DANE/TLSA records for its MX hosts and supports DNSSEC.',
-            'patterns': ['fastmail.com', 'messagingengine.com'],
-        },
-        'mimecast': {
-            'name': 'Mimecast',
-            'dane_inbound': False,
-            'dane_outbound': False,
-            'reason': 'Mimecast is a security gateway with shared MX infrastructure. It does not publish per-customer TLSA records.',
-            'alternative': 'MTA-STS',
-            'patterns': ['mimecast.com'],
-        },
-        'proofpoint': {
-            'name': 'Proofpoint',
-            'dane_inbound': False,
-            'dane_outbound': False,
-            'reason': 'Proofpoint is a security gateway with shared MX infrastructure. It does not publish per-customer TLSA records.',
-            'alternative': 'MTA-STS',
-            'patterns': ['pphosted.com', 'ppe-hosted.com'],
-        },
-        'barracuda': {
-            'name': 'Barracuda',
-            'dane_inbound': False,
-            'dane_outbound': False,
-            'reason': 'Barracuda is a security gateway with shared MX infrastructure. It does not publish per-customer TLSA records.',
-            'alternative': 'MTA-STS',
-            'patterns': ['barracudanetworks.com'],
-        },
-        'icloud': {
-            'name': 'iCloud Mail',
-            'dane_inbound': False,
-            'dane_outbound': False,
-            'reason': 'Apple iCloud Mail does not publish TLSA records for its MX hosts.',
-            'alternative': 'MTA-STS',
-            'patterns': ['icloud.com'],
-        },
-        'yahoo': {
-            'name': 'Yahoo Mail',
-            'dane_inbound': False,
-            'dane_outbound': False,
-            'reason': 'Yahoo Mail does not publish TLSA records for its MX hosts.',
-            'alternative': 'MTA-STS',
-            'patterns': ['yahoodns.net'],
-        },
-    }
+    DANE_MX_CAPABILITY = DANE_MX_CAPABILITY
 
     def _detect_mx_dane_capability(self, mx_hosts: List[str]) -> Optional[Dict[str, Any]]:
         """Detect if MX hosts belong to a known provider and return DANE capability info."""

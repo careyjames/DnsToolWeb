@@ -290,6 +290,7 @@
                 <div class="col-lg-7 col-xl-6">
                     <div class="search-card">
                         <form method="POST" action="{{ url_for('analyze') }}" id="domainForm">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
                             <label for="domain" class="form-label search-label">
                                 <i class="fas fa-search me-2"></i>Domain Name
                             </label>
