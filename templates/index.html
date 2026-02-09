@@ -354,7 +354,7 @@
 
             <!-- Trust indicators -->
             <div class="text-center mt-4 hero-trust">
-                <span><i class="fas fa-bolt me-1"></i> Always fresh, never cached</span>
+                <span><i class="fas fa-bolt me-1"></i> Live DNS, real-time results</span>
                 <span class="trust-divider"></span>
                 <span><i class="fas fa-lock me-1"></i> No sign-up required</span>
                 <span class="trust-divider"></span>
@@ -627,30 +627,35 @@
     </div>
     </main>
 
-    <!-- Loading Overlay -->
     <div id="loadingOverlay" class="loading-overlay d-none" role="status" aria-live="polite" aria-busy="true" aria-label="Running domain analysis">
         <div class="loading-content">
             <div class="loading-spinner">
                 <i class="fas fa-globe fa-spin"></i>
             </div>
-            <h4 class="mt-4 mb-2">Analyzing Domain</h4>
+            <h4 class="mt-4 mb-2">Running Full Security Audit</h4>
             <p class="text-muted mb-0" id="loadingDomain"></p>
-            <div class="loading-dots mt-3">
+            <div class="loading-elapsed mt-2">
+                <span class="text-muted small" id="loadingTimer">0s</span>
+            </div>
+            <div class="loading-dots mt-2">
                 <span></span><span></span><span></span>
             </div>
+            <p class="text-muted small mt-3 mb-0" id="loadingNote" style="max-width: 340px; margin: 0 auto; opacity: 0; transition: opacity 0.5s;">
+                A thorough audit queries multiple DNS resolvers, certificate transparency logs, and validates email transport security. This typically takes 15&ndash;30 seconds.
+            </p>
             <div class="loading-status mt-3">
-                <span>Initializing DNS resolver...</span>
                 <span>Querying authoritative nameservers...</span>
-                <span>Pulling A/AAAA records via DoH...</span>
-                <span>Fetching MX records for mail routing...</span>
+                <span>Checking SPF, DMARC, and DKIM records...</span>
                 <span>Running RDAP lookup for registrar info...</span>
-                <span>Parsing SPF record from TXT...</span>
-                <span>Validating DMARC policy...</span>
-                <span>Checking DKIM selectors...</span>
+                <span>Scanning Certificate Transparency logs...</span>
+                <span>Probing common subdomains via DNS...</span>
+                <span>Validating DNSSEC chain of trust...</span>
                 <span>Querying DANE/TLSA records for MX hosts...</span>
-                <span>Querying DNSSEC chain of trust...</span>
-                <span>Resolving CNAME chains for provider identification...</span>
+                <span>Checking MTA-STS, TLS-RPT, and BIMI...</span>
+                <span>Resolving CNAME chains for provider detection...</span>
+                <span>Verifying SMTP transport encryption...</span>
                 <span>Aggregating multi-resolver consensus...</span>
+                <span>Compiling security posture report...</span>
             </div>
         </div>
     </div>

@@ -14,7 +14,22 @@ function startStatusCycle(overlayEl) {
         spans[current].classList.remove('active');
         current = (current + 1) % spans.length;
         spans[current].classList.add('active');
-    }, 1800);
+    }, 2500);
+
+    var timerEl = document.getElementById('loadingTimer');
+    var noteEl = document.getElementById('loadingNote');
+    var startTime = Date.now();
+    if (timerEl) {
+        setInterval(function() {
+            var elapsed = Math.floor((Date.now() - startTime) / 1000);
+            timerEl.textContent = elapsed + 's';
+        }, 1000);
+    }
+    if (noteEl) {
+        setTimeout(function() {
+            noteEl.style.opacity = '1';
+        }, 4000);
+    }
 }
 
 document.addEventListener('DOMContentLoaded', function() {

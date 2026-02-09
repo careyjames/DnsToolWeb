@@ -3486,7 +3486,7 @@ class DNSAnalyzer:
         results_map = {}
         task_times = {}
         try:
-            for future in as_completed(futures, timeout=20):
+            for future in as_completed(futures, timeout=35):
                 key = futures[future]
                 task_elapsed = round(time.time() - analysis_start, 2)
                 task_times[key] = task_elapsed
@@ -3795,7 +3795,8 @@ class DNSAnalyzer:
                       'Does not include internal-only names or uncommon subdomain prefixes.',
         }
         
-        TOTAL_BUDGET = 18
+        TOTAL_BUDGET = 30
+        CT_TIMEOUT = 12
         ct_start = time.time()
         
         def _budget_remaining():
@@ -3815,7 +3816,7 @@ class DNSAnalyzer:
         else:
             data = None
             try:
-                ct_timeout = min(8, _budget_remaining())
+                ct_timeout = min(CT_TIMEOUT, _budget_remaining())
                 if ct_timeout < 2:
                     raise requests.exceptions.Timeout("Insufficient time budget for CT query")
                 

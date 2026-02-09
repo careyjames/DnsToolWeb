@@ -32,3 +32,8 @@ waitForPort = 5000
 [[ports]]
 localPort = 5000
 externalPort = 80
+
+[userenv]
+
+[userenv.shared]
+GUNICORN_CMD_ARGS = "--timeout 60"

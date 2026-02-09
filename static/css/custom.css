@@ -573,6 +573,13 @@ main.container {
     50% { opacity: 0.7; transform: scale(1.1); }
 }
 
+.loading-elapsed {
+    font-family: 'SF Mono', SFMono-Regular, ui-monospace, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
+    font-size: 0.95rem;
+    color: #6ea8fe;
+    letter-spacing: 0.05em;
+}
+
 .loading-dots {
     display: flex;
     justify-content: center;
