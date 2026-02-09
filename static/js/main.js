@@ -38,14 +38,32 @@ document.addEventListener('DOMContentLoaded', function() {
     const analyzeBtn = document.getElementById('analyzeBtn');
     
     if (domainForm && domainInput && analyzeBtn) {
-        // Domain validation regex
-        const domainRegex = /^[a-zA-Z0-9]([a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?(\.[a-zA-Z0-9]([a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?)*\.[a-zA-Z]{2,}$/;
-        
-        // Real-time validation
+        function isValidDomain(domain) {
+            if (!domain) return false;
+            var d = domain.replace(/\.$/, '');
+            if (d.length > 253 || d.length === 0) return false;
+            var labels = d.split('.');
+            if (labels.length < 2) return false;
+            for (var i = 0; i < labels.length; i++) {
+                var label = labels[i];
+                if (label.length === 0 || label.length > 63) return false;
+                if (label.startsWith('-') || label.endsWith('-')) return false;
+            }
+            var tld = labels[labels.length - 1];
+            if (/^\d+$/.test(tld)) return false;
+            var hasNonAscii = /[^\x00-\x7F]/.test(d);
+            if (!hasNonAscii) {
+                for (var j = 0; j < labels.length; j++) {
+                    if (!/^[a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?$/.test(labels[j])) return false;
+                }
+            }
+            return true;
+        }
+
         domainInput.addEventListener('input', function() {
-            const domain = this.value.trim();
-            const isValid = domain === '' || domainRegex.test(domain);
-            
+            var domain = this.value.trim();
+            var isValid = domain === '' || isValidDomain(domain);
+
             if (domain && !isValid) {
                 this.classList.add('is-invalid');
                 analyzeBtn.disabled = true;
@@ -55,11 +73,9 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
         
-        // Form submission handling - traditional form submit for CSP nonce compatibility
         domainForm.addEventListener('submit', function(e) {
-            // Normalize to lowercase (domains are case-insensitive)
             var domain = domainInput.value.trim().toLowerCase();
-            domainInput.value = domain; // Update the input to show normalized value
+            domainInput.value = domain;
             
             if (!domain) {
                 e.preventDefault();
@@ -67,7 +83,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 return;
             }
             
-            if (!domainRegex.test(domain)) {
+            if (!isValidDomain(domain)) {
                 e.preventDefault();
                 domainInput.classList.add('is-invalid');
                 return;

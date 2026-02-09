@@ -194,12 +194,15 @@ class RedisRateLimiter:
         self._redis = redis_lib.from_url(redis_url, decode_responses=True)
         self._fallback = InMemoryRateLimiter()
         self.backend = 'redis'
-        # Test connection
+        self._degraded_since = None
         try:
             self._redis.ping()
+            logging.info("Redis rate limiter: connection verified")
         except Exception as e:
-            logging.warning(f"Redis connection failed, falling back to memory: {e}")
+            logging.warning(f"Redis rate limiter: initial connection failed, "
+                          f"operating in degraded mode (per-process memory). Reason: {e}")
             self.backend = 'memory'
+            self._degraded_since = time.time()
     
     def _get_rate_key(self, ip: str) -> str:
         return f"ratelimit:ip:{ip}"
@@ -261,7 +264,12 @@ class RedisRateLimiter:
             return True, 'ok', 0
             
         except Exception as e:
-            logging.warning(f"Redis error, using fallback: {e}")
+            if not self._degraded_since:
+                self._degraded_since = time.time()
+                logging.warning(f"Redis rate limiter: runtime degradation to per-process memory. "
+                              f"Redis error: {e}")
+            else:
+                logging.debug(f"Redis rate limiter: still degraded, using memory fallback. Error: {e}")
             return self._fallback.check_and_record(ip, domain)
     
     def check_rate_limit(self, ip: str) -> tuple[bool, int]:
@@ -347,20 +355,30 @@ def create_rate_limiter():
     """Create the appropriate rate limiter based on environment.
     
     Uses Redis if REDIS_URL is set, otherwise in-memory.
+    Multi-worker note: in-memory rate limiting is per-process only.
+    Each Gunicorn worker maintains its own counters, so effective limits
+    are multiplied by worker count. Set REDIS_URL for shared limits.
     """
     redis_url = os.environ.get('REDIS_URL')
     if redis_url:
         try:
             limiter = RedisRateLimiter(redis_url)
-            logging.info(f"Rate limiter using backend: {limiter.backend}")
+            if limiter.backend == 'redis':
+                logging.info("Rate limiter: Redis backend active — shared across all workers")
+            else:
+                logging.warning("Rate limiter: Redis configured but unreachable at startup. "
+                              "Operating in degraded mode (per-process memory). "
+                              "Will attempt Redis on each request.")
             return limiter
         except Exception as e:
-            logging.warning(f"Failed to create Redis rate limiter: {e}")
+            logging.warning(f"Rate limiter: failed to initialize Redis backend: {e}")
     
     limiter = InMemoryRateLimiter()
-    logging.info("Rate limiter using backend: memory")
-    logging.warning("Rate limiter: in-memory backend is per-process only. "
-                    "Set REDIS_URL for shared rate limiting across workers.")
+    logging.info("Rate limiter: in-memory backend (per-process only)")
+    logging.warning("Rate limiter: each Gunicorn worker tracks limits independently. "
+                    "Effective rate limit = %d × worker_count per IP. "
+                    "Set REDIS_URL for shared rate limiting across workers.",
+                    RATE_LIMIT_MAX_REQUESTS)
     return limiter
 
 
