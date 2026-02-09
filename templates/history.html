@@ -194,7 +194,7 @@
                                         </div>
                                     </td>
                                     <td>
-                                        <div class="btn-group" role="group">
+                                        <div class="btn-group">
                                             <a href="{{ url_for('view_analysis_static', analysis_id=analysis.id) }}" 
                                                class="btn btn-sm btn-outline-primary history-view-btn" title="View this report">
                                                 <i class="fas fa-eye"></i>
@@ -228,7 +228,7 @@
                                     <div class="fw-medium text-truncate">{{ analysis.domain }}</div>
                                 </div>
                             </div>
-                            <div class="btn-group flex-shrink-0 ms-2" role="group">
+                            <div class="btn-group flex-shrink-0 ms-2">
                                 <a href="{{ url_for('view_analysis_static', analysis_id=analysis.id) }}" 
                                    class="btn btn-sm btn-outline-primary history-view-btn" title="View">
                                     <i class="fas fa-eye"></i>
@@ -337,14 +337,14 @@
         </footer>
     </main>
 
-    <div id="historyViewOverlay" class="loading-overlay d-none" role="status" aria-live="polite" aria-label="Loading stored results">
+    <output id="historyViewOverlay" class="loading-overlay d-none" aria-live="polite" aria-label="Loading stored results">
         <div class="loading-content">
             <div class="spinner-border text-primary mb-3" style="width:3rem;height:3rem;"><span class="visually-hidden">Loading...</span></div>
             <div class="text-light fw-medium" id="historyViewText">Loading analysis results...</div>
         </div>
-    </div>
+    </output>
 
-    <div id="historyAnalyzeOverlay" class="loading-overlay d-none" role="status" aria-live="polite" aria-busy="true" aria-label="Running domain analysis">
+    <output id="historyAnalyzeOverlay" class="loading-overlay d-none" aria-live="polite" aria-busy="true" aria-label="Running domain analysis">
         <div class="loading-content">
             <div class="loading-spinner">
                 <i class="fas fa-globe fa-spin"></i>
@@ -369,28 +369,28 @@
                 <span>Aggregating multi-resolver consensus...</span>
             </div>
         </div>
-    </div>
+    </output>
 
     <script src="{{ url_for('static', filename='js/bootstrap.bundle.min.js') }}" defer></script>
     <script src="{{ url_for('static', filename='js/main.js') }}?v={{ app_version }}" defer></script>
     <script nonce="{{ csp_nonce }}">
+    function getDomain(btn){
+        const row=btn.closest('tr')||btn.closest('.list-group-item');
+        const el=row?row.querySelector('.fw-medium'):null;
+        return el?el.textContent.trim():'';
+    }
+    function disableAllActions(){
+        document.querySelectorAll('.history-view-btn,.history-reanalyze-btn').forEach(function(b){
+            b.classList.add('disabled');
+            b.setAttribute('aria-disabled','true');
+        });
+    }
     document.addEventListener('DOMContentLoaded',function(){
-        function getDomain(btn){
-            var row=btn.closest('tr');
-            var el=row?row.querySelector('.fw-medium'):null;
-            return el?el.textContent.trim():'';
-        }
-        function disableAllActions(){
-            document.querySelectorAll('.history-view-btn,.history-reanalyze-btn').forEach(function(b){
-                b.classList.add('disabled');
-                b.setAttribute('aria-disabled','true');
-            });
-        }
         document.querySelectorAll('.history-view-btn').forEach(function(btn){
             btn.addEventListener('click',function(){
-                var name=getDomain(btn);
-                var overlay=document.getElementById('historyViewOverlay');
-                var txt=document.getElementById('historyViewText');
+                const name=getDomain(btn);
+                const overlay=document.getElementById('historyViewOverlay');
+                const txt=document.getElementById('historyViewText');
                 if(txt&&name)txt.textContent='Loading results for '+name+'...';
                 if(overlay)overlay.classList.remove('d-none');
                 disableAllActions();
@@ -399,9 +399,9 @@
         });
         document.querySelectorAll('.history-reanalyze-btn').forEach(function(btn){
             btn.addEventListener('click',function(){
-                var name=getDomain(btn);
-                var overlay=document.getElementById('historyAnalyzeOverlay');
-                var domainEl=document.getElementById('historyAnalyzeDomain');
+                const name=getDomain(btn);
+                const overlay=document.getElementById('historyAnalyzeOverlay');
+                const domainEl=document.getElementById('historyAnalyzeDomain');
                 if(domainEl)domainEl.textContent=name;
                 if(overlay){overlay.classList.remove('d-none');startStatusCycle(overlay);}
                 disableAllActions();

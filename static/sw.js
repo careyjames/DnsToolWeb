@@ -1,5 +1,5 @@
-var CACHE_NAME = 'dnstool-v1';
-var STATIC_ASSETS = [
+const CACHE_NAME = 'dnstool-v1';
+const STATIC_ASSETS = [
   '/static/css/bootstrap-dark-theme.min.css',
   '/static/css/custom.min.css',
   '/static/css/fontawesome-subset.min.css',
@@ -30,14 +30,14 @@ self.addEventListener('activate', function(event) {
 });
 
 self.addEventListener('fetch', function(event) {
-  var url = new URL(event.request.url);
+  const url = new URL(event.request.url);
   if (url.pathname.startsWith('/static/')) {
     event.respondWith(
       caches.match(event.request).then(function(cached) {
         if (cached) return cached;
         return fetch(event.request).then(function(response) {
           if (response.ok) {
-            var clone = response.clone();
+            const clone = response.clone();
             caches.open(CACHE_NAME).then(function(cache) {
               cache.put(event.request, clone);
             });

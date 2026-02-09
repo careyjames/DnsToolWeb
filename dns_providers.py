@@ -1,3 +1,26 @@
+PROVIDER_MICROSOFT_365 = "Microsoft 365"
+PROVIDER_GOOGLE_WORKSPACE = "Google Workspace"
+PROVIDER_RED_SIFT = "Red Sift"
+PROVIDER_VALIMAIL_ENFORCE = "Valimail Enforce"
+PROVIDER_PROOFPOINT_EFD = "Proofpoint EFD"
+PROVIDER_DMARC_REPORT = "DMARC Report"
+PROVIDER_DMARC_ADVISOR = "DMARC Advisor"
+
+DOMAIN_ONDMARC_COM = "ondmarc.com"
+DOMAIN_DMARCIAN_COM = "dmarcian.com"
+DOMAIN_SENDMARC_COM = "sendmarc.com"
+DOMAIN_REDSIFT_CLOUD = "redsift.cloud"
+
+CATEGORY_LANDING_PAGES = "Landing Pages"
+CATEGORY_LIVE_CHAT = "Live Chat"
+
+CAPABILITY_DMARC_REPORTING = "DMARC reporting"
+CAPABILITY_DMARC_ENFORCEMENT = "DMARC enforcement"
+CAPABILITY_DMARC_ANALYTICS = "DMARC analytics"
+CAPABILITY_MTA_STS_HOSTING = "MTA-STS hosting"
+CAPABILITY_SPF_MANAGEMENT = "SPF management"
+CAPABILITY_TLS_RPT_REPORTING = "TLS-RPT reporting"
+
 CNAME_PROVIDER_MAP = {
     'shopify.com': {'name': 'Shopify', 'category': 'E-commerce'},
     'myshopify.com': {'name': 'Shopify', 'category': 'E-commerce'},
@@ -91,16 +114,16 @@ CNAME_PROVIDER_MAP = {
     'readthedocs.io': {'name': 'Read the Docs', 'category': 'Documentation'},
     'gitbook.io': {'name': 'GitBook', 'category': 'Documentation'},
     'readme.io': {'name': 'ReadMe', 'category': 'Documentation'},
-    'outlook.com': {'name': 'Microsoft 365', 'category': 'Email'},
+    'outlook.com': {'name': PROVIDER_MICROSOFT_365, 'category': 'Email'},
     'protection.outlook.com': {'name': 'Microsoft 365 (Exchange Online)', 'category': 'Email'},
     'mx.microsoft': {'name': 'Microsoft 365 (DANE)', 'category': 'Email'},
-    'office365.com': {'name': 'Microsoft 365', 'category': 'Email'},
+    'office365.com': {'name': PROVIDER_MICROSOFT_365, 'category': 'Email'},
     'sharepoint.com': {'name': 'SharePoint Online', 'category': 'Collaboration'},
     'lync.com': {'name': 'Skype for Business', 'category': 'Collaboration'},
     'microsoftonline.com': {'name': 'Microsoft Entra ID', 'category': 'Identity'},
     'msappproxy.net': {'name': 'Azure AD App Proxy', 'category': 'Identity'},
-    'aspmx.l.google.com': {'name': 'Google Workspace', 'category': 'Email'},
-    'googlemail.com': {'name': 'Google Workspace', 'category': 'Email'},
+    'aspmx.l.google.com': {'name': PROVIDER_GOOGLE_WORKSPACE, 'category': 'Email'},
+    'googlemail.com': {'name': PROVIDER_GOOGLE_WORKSPACE, 'category': 'Email'},
     'ghs.googlehosted.com': {'name': 'Google Sites', 'category': 'Website'},
     'googlehosted.com': {'name': 'Google', 'category': 'Cloud'},
     'stripe.com': {'name': 'Stripe', 'category': 'Payments'},
@@ -111,9 +134,9 @@ CNAME_PROVIDER_MAP = {
     'typeform.com': {'name': 'Typeform', 'category': 'Forms'},
     'wufoo.com': {'name': 'Wufoo', 'category': 'Forms'},
     'surveygizmo.com': {'name': 'Alchemer', 'category': 'Forms'},
-    'unbounce.com': {'name': 'Unbounce', 'category': 'Landing Pages'},
-    'instapage.com': {'name': 'Instapage', 'category': 'Landing Pages'},
-    'leadpages.net': {'name': 'Leadpages', 'category': 'Landing Pages'},
+    'unbounce.com': {'name': 'Unbounce', 'category': CATEGORY_LANDING_PAGES},
+    'instapage.com': {'name': 'Instapage', 'category': CATEGORY_LANDING_PAGES},
+    'leadpages.net': {'name': 'Leadpages', 'category': CATEGORY_LANDING_PAGES},
     'canva.com': {'name': 'Canva', 'category': 'Design'},
     'calendly.com': {'name': 'Calendly', 'category': 'Scheduling'},
     'acuityscheduling.com': {'name': 'Acuity Scheduling', 'category': 'Scheduling'},
@@ -153,10 +176,10 @@ CNAME_PROVIDER_MAP = {
     'discourse.org': {'name': 'Discourse', 'category': 'Community'},
     'discourse.cloud': {'name': 'Discourse', 'category': 'Community'},
     'mattermost.com': {'name': 'Mattermost', 'category': 'Collaboration'},
-    'tawk.to': {'name': 'tawk.to', 'category': 'Live Chat'},
-    'crisp.chat': {'name': 'Crisp', 'category': 'Live Chat'},
-    'drift.com': {'name': 'Drift', 'category': 'Live Chat'},
-    'livechatinc.com': {'name': 'LiveChat', 'category': 'Live Chat'},
+    'tawk.to': {'name': 'tawk.to', 'category': CATEGORY_LIVE_CHAT},
+    'crisp.chat': {'name': 'Crisp', 'category': CATEGORY_LIVE_CHAT},
+    'drift.com': {'name': 'Drift', 'category': CATEGORY_LIVE_CHAT},
+    'livechatinc.com': {'name': 'LiveChat', 'category': CATEGORY_LIVE_CHAT},
     'segment.com': {'name': 'Segment (Twilio)', 'category': 'Analytics'},
     'segment.io': {'name': 'Segment (Twilio)', 'category': 'Analytics'},
     'amplitude.com': {'name': 'Amplitude', 'category': 'Analytics'},
@@ -180,48 +203,48 @@ CNAME_PROVIDER_MAP = {
 }
 
 DMARC_MONITORING_PROVIDERS = {
-    'ondmarc.com': {'name': 'OnDMARC', 'vendor': 'Red Sift', 'capabilities': ['DMARC reporting', 'TLS-RPT reporting', 'SPF management', 'MTA-STS hosting']},
-    'valimail.com': {'name': 'Valimail Enforce', 'vendor': 'Valimail', 'capabilities': ['DMARC reporting', 'DMARC enforcement', 'SPF management']},
-    'dmarcian.com': {'name': 'Dmarcian', 'vendor': 'Dmarcian', 'capabilities': ['DMARC reporting', 'DMARC analytics']},
-    'easydmarc.com': {'name': 'EasyDMARC', 'vendor': 'EasyDMARC', 'capabilities': ['DMARC reporting', 'DMARC analytics', 'SPF management']},
-    'powerdmarc.com': {'name': 'PowerDMARC', 'vendor': 'PowerDMARC', 'capabilities': ['DMARC reporting', 'DMARC enforcement', 'SPF management']},
-    'agari.com': {'name': 'Agari', 'vendor': 'Fortra (HelpSystems)', 'capabilities': ['DMARC reporting', 'brand protection']},
-    'dmarc-analyzer.com': {'name': 'DMARC Analyzer', 'vendor': 'Mimecast', 'capabilities': ['DMARC reporting', 'DMARC analytics']},
-    'postmarkapp.com': {'name': 'Postmark DMARC', 'vendor': 'ActiveCampaign', 'capabilities': ['DMARC reporting']},
-    'uriports.com': {'name': 'URIports', 'vendor': 'URIports', 'capabilities': ['DMARC reporting', 'TLS-RPT reporting']},
-    'fraudmarc.com': {'name': 'Fraudmarc', 'vendor': 'Fraudmarc', 'capabilities': ['DMARC reporting', 'SPF management']},
-    'mxtoolbox.com': {'name': 'MxToolbox', 'vendor': 'MxToolbox', 'capabilities': ['DMARC reporting']},
-    'sendmarc.com': {'name': 'Sendmarc', 'vendor': 'Sendmarc', 'capabilities': ['DMARC reporting', 'DMARC enforcement']},
-    'proofpoint.com': {'name': 'Proofpoint EFD', 'vendor': 'Proofpoint', 'capabilities': ['DMARC reporting', 'email fraud defense']},
-    'redsift.com': {'name': 'Red Sift', 'vendor': 'Red Sift', 'capabilities': ['DMARC reporting']},
-    'mailhardener.com': {'name': 'Mailhardener', 'vendor': 'Mailhardener', 'capabilities': ['DMARC reporting', 'MTA-STS hosting']},
-    'dmarc.postmarkapp.com': {'name': 'Postmark DMARC', 'vendor': 'ActiveCampaign', 'capabilities': ['DMARC reporting']},
-    'emailsecuritycheck.net': {'name': 'DMARC Report', 'vendor': 'DMARC Report', 'capabilities': ['DMARC reporting']},
-    'app.dmarcdigests.com': {'name': 'DMARC Digests', 'vendor': 'DMARC Digests', 'capabilities': ['DMARC reporting']},
-    'dmarc.report': {'name': 'DMARC Report', 'vendor': 'DMARC Report', 'capabilities': ['DMARC reporting']},
-    'ag.dmarcly.com': {'name': 'DMARCLY', 'vendor': 'DMARCLY', 'capabilities': ['DMARC reporting', 'DMARC analytics']},
-    'dmarcly.com': {'name': 'DMARCLY', 'vendor': 'DMARCLY', 'capabilities': ['DMARC reporting', 'DMARC analytics']},
-    'dmarc-reports.cloudflare.net': {'name': 'Cloudflare DMARC', 'vendor': 'Cloudflare', 'capabilities': ['DMARC reporting', 'DMARC analytics']},
-    'cloudflare.net': {'name': 'Cloudflare DMARC', 'vendor': 'Cloudflare', 'capabilities': ['DMARC reporting', 'DMARC analytics']},
-    'glockapps.com': {'name': 'GlockApps', 'vendor': 'GlockApps', 'capabilities': ['DMARC reporting', 'deliverability testing']},
-    'dmarcadvisor.com': {'name': 'DMARC Advisor', 'vendor': 'DMARC Advisor', 'capabilities': ['DMARC reporting', 'DMARC analytics']},
-    'dmarcmanager.app': {'name': 'DMARC Advisor', 'vendor': 'DMARC Advisor', 'capabilities': ['DMARC reporting', 'DMARC analytics']},
-    'dmarcduty.com': {'name': 'DynamicSPF', 'vendor': 'Dmarcduty', 'capabilities': ['DMARC reporting', 'SPF management']},
-    'dmarcreport.com': {'name': 'DMARC Report', 'vendor': 'DMARC Report', 'capabilities': ['DMARC reporting', 'AI-assisted analysis']},
-    'ironscales.com': {'name': 'IRONSCALES', 'vendor': 'IRONSCALES', 'capabilities': ['DMARC reporting', 'email security']},
-    'redsift.cloud': {'name': 'OnDMARC', 'vendor': 'Red Sift', 'capabilities': ['DMARC reporting', 'TLS-RPT reporting', 'SPF management', 'MTA-STS hosting']},
+    DOMAIN_ONDMARC_COM: {'name': 'OnDMARC', 'vendor': PROVIDER_RED_SIFT, 'capabilities': [CAPABILITY_DMARC_REPORTING, CAPABILITY_TLS_RPT_REPORTING, CAPABILITY_SPF_MANAGEMENT, CAPABILITY_MTA_STS_HOSTING]},
+    'valimail.com': {'name': PROVIDER_VALIMAIL_ENFORCE, 'vendor': 'Valimail', 'capabilities': [CAPABILITY_DMARC_REPORTING, CAPABILITY_DMARC_ENFORCEMENT, CAPABILITY_SPF_MANAGEMENT]},
+    DOMAIN_DMARCIAN_COM: {'name': 'Dmarcian', 'vendor': 'Dmarcian', 'capabilities': [CAPABILITY_DMARC_REPORTING, CAPABILITY_DMARC_ANALYTICS]},
+    'easydmarc.com': {'name': 'EasyDMARC', 'vendor': 'EasyDMARC', 'capabilities': [CAPABILITY_DMARC_REPORTING, CAPABILITY_DMARC_ANALYTICS, CAPABILITY_SPF_MANAGEMENT]},
+    'powerdmarc.com': {'name': 'PowerDMARC', 'vendor': 'PowerDMARC', 'capabilities': [CAPABILITY_DMARC_REPORTING, CAPABILITY_DMARC_ENFORCEMENT, CAPABILITY_SPF_MANAGEMENT]},
+    'agari.com': {'name': 'Agari', 'vendor': 'Fortra (HelpSystems)', 'capabilities': [CAPABILITY_DMARC_REPORTING, 'brand protection']},
+    'dmarc-analyzer.com': {'name': 'DMARC Analyzer', 'vendor': 'Mimecast', 'capabilities': [CAPABILITY_DMARC_REPORTING, CAPABILITY_DMARC_ANALYTICS]},
+    'postmarkapp.com': {'name': 'Postmark DMARC', 'vendor': 'ActiveCampaign', 'capabilities': [CAPABILITY_DMARC_REPORTING]},
+    'uriports.com': {'name': 'URIports', 'vendor': 'URIports', 'capabilities': [CAPABILITY_DMARC_REPORTING, CAPABILITY_TLS_RPT_REPORTING]},
+    'fraudmarc.com': {'name': 'Fraudmarc', 'vendor': 'Fraudmarc', 'capabilities': [CAPABILITY_DMARC_REPORTING, CAPABILITY_SPF_MANAGEMENT]},
+    'mxtoolbox.com': {'name': 'MxToolbox', 'vendor': 'MxToolbox', 'capabilities': [CAPABILITY_DMARC_REPORTING]},
+    DOMAIN_SENDMARC_COM: {'name': 'Sendmarc', 'vendor': 'Sendmarc', 'capabilities': [CAPABILITY_DMARC_REPORTING, CAPABILITY_DMARC_ENFORCEMENT]},
+    'proofpoint.com': {'name': PROVIDER_PROOFPOINT_EFD, 'vendor': 'Proofpoint', 'capabilities': [CAPABILITY_DMARC_REPORTING, 'email fraud defense']},
+    'redsift.com': {'name': PROVIDER_RED_SIFT, 'vendor': PROVIDER_RED_SIFT, 'capabilities': [CAPABILITY_DMARC_REPORTING]},
+    'mailhardener.com': {'name': 'Mailhardener', 'vendor': 'Mailhardener', 'capabilities': [CAPABILITY_DMARC_REPORTING, CAPABILITY_MTA_STS_HOSTING]},
+    'dmarc.postmarkapp.com': {'name': 'Postmark DMARC', 'vendor': 'ActiveCampaign', 'capabilities': [CAPABILITY_DMARC_REPORTING]},
+    'emailsecuritycheck.net': {'name': PROVIDER_DMARC_REPORT, 'vendor': PROVIDER_DMARC_REPORT, 'capabilities': [CAPABILITY_DMARC_REPORTING]},
+    'app.dmarcdigests.com': {'name': 'DMARC Digests', 'vendor': 'DMARC Digests', 'capabilities': [CAPABILITY_DMARC_REPORTING]},
+    'dmarc.report': {'name': PROVIDER_DMARC_REPORT, 'vendor': PROVIDER_DMARC_REPORT, 'capabilities': [CAPABILITY_DMARC_REPORTING]},
+    'ag.dmarcly.com': {'name': 'DMARCLY', 'vendor': 'DMARCLY', 'capabilities': [CAPABILITY_DMARC_REPORTING, CAPABILITY_DMARC_ANALYTICS]},
+    'dmarcly.com': {'name': 'DMARCLY', 'vendor': 'DMARCLY', 'capabilities': [CAPABILITY_DMARC_REPORTING, CAPABILITY_DMARC_ANALYTICS]},
+    'dmarc-reports.cloudflare.net': {'name': 'Cloudflare DMARC', 'vendor': 'Cloudflare', 'capabilities': [CAPABILITY_DMARC_REPORTING, CAPABILITY_DMARC_ANALYTICS]},
+    'cloudflare.net': {'name': 'Cloudflare DMARC', 'vendor': 'Cloudflare', 'capabilities': [CAPABILITY_DMARC_REPORTING, CAPABILITY_DMARC_ANALYTICS]},
+    'glockapps.com': {'name': 'GlockApps', 'vendor': 'GlockApps', 'capabilities': [CAPABILITY_DMARC_REPORTING, 'deliverability testing']},
+    'dmarcadvisor.com': {'name': PROVIDER_DMARC_ADVISOR, 'vendor': PROVIDER_DMARC_ADVISOR, 'capabilities': [CAPABILITY_DMARC_REPORTING, CAPABILITY_DMARC_ANALYTICS]},
+    'dmarcmanager.app': {'name': PROVIDER_DMARC_ADVISOR, 'vendor': PROVIDER_DMARC_ADVISOR, 'capabilities': [CAPABILITY_DMARC_REPORTING, CAPABILITY_DMARC_ANALYTICS]},
+    'dmarcduty.com': {'name': 'DynamicSPF', 'vendor': 'Dmarcduty', 'capabilities': [CAPABILITY_DMARC_REPORTING, CAPABILITY_SPF_MANAGEMENT]},
+    'dmarcreport.com': {'name': PROVIDER_DMARC_REPORT, 'vendor': PROVIDER_DMARC_REPORT, 'capabilities': [CAPABILITY_DMARC_REPORTING, 'AI-assisted analysis']},
+    'ironscales.com': {'name': 'IRONSCALES', 'vendor': 'IRONSCALES', 'capabilities': [CAPABILITY_DMARC_REPORTING, 'email security']},
+    DOMAIN_REDSIFT_CLOUD: {'name': 'OnDMARC', 'vendor': PROVIDER_RED_SIFT, 'capabilities': [CAPABILITY_DMARC_REPORTING, CAPABILITY_TLS_RPT_REPORTING, CAPABILITY_SPF_MANAGEMENT, CAPABILITY_MTA_STS_HOSTING]},
 }
 
 SPF_FLATTENING_PROVIDERS = {
-    'ondmarc.com': {'name': 'OnDMARC', 'vendor': 'Red Sift'},
-    'smart.ondmarc.com': {'name': 'OnDMARC', 'vendor': 'Red Sift'},
-    'redsift.cloud': {'name': 'OnDMARC', 'vendor': 'Red Sift'},
-    'vali.email': {'name': 'Valimail Enforce', 'vendor': 'Valimail'},
-    'valimail.com': {'name': 'Valimail Enforce', 'vendor': 'Valimail'},
+    DOMAIN_ONDMARC_COM: {'name': 'OnDMARC', 'vendor': PROVIDER_RED_SIFT},
+    'smart.ondmarc.com': {'name': 'OnDMARC', 'vendor': PROVIDER_RED_SIFT},
+    DOMAIN_REDSIFT_CLOUD: {'name': 'OnDMARC', 'vendor': PROVIDER_RED_SIFT},
+    'vali.email': {'name': PROVIDER_VALIMAIL_ENFORCE, 'vendor': 'Valimail'},
+    'valimail.com': {'name': PROVIDER_VALIMAIL_ENFORCE, 'vendor': 'Valimail'},
     'autospf.com': {'name': 'AutoSPF', 'vendor': 'AutoSPF'},
-    'sendmarc.com': {'name': 'Sendmarc', 'vendor': 'Sendmarc'},
+    DOMAIN_SENDMARC_COM: {'name': 'Sendmarc', 'vendor': 'Sendmarc'},
     'fraudmarc.com': {'name': 'Fraudmarc', 'vendor': 'Fraudmarc'},
-    'dmarcian.com': {'name': 'Dmarcian', 'vendor': 'Dmarcian'},
+    DOMAIN_DMARCIAN_COM: {'name': 'Dmarcian', 'vendor': 'Dmarcian'},
     'easydmarc.pro': {'name': 'EasySPF', 'vendor': 'EasyDMARC'},
     'easydmarc.com': {'name': 'EasySPF', 'vendor': 'EasyDMARC'},
     'powerspf.com': {'name': 'PowerSPF', 'vendor': 'PowerDMARC'},
@@ -229,14 +252,14 @@ SPF_FLATTENING_PROVIDERS = {
     'dmarcly.com': {'name': 'DMARCLY', 'vendor': 'DMARCLY'},
     'dmarcduty.com': {'name': 'DynamicSPF', 'vendor': 'Dmarcduty'},
     'spf.has.gpphosted.com': {'name': 'Proofpoint EFD (Gov)', 'vendor': 'Proofpoint'},
-    'spf.has.pphosted.com': {'name': 'Proofpoint EFD', 'vendor': 'Proofpoint'},
+    'spf.has.pphosted.com': {'name': PROVIDER_PROOFPOINT_EFD, 'vendor': 'Proofpoint'},
 }
 
 DYNAMIC_SERVICES_PROVIDERS = {
-    'ondmarc.com': {'name': 'OnDMARC', 'vendor': 'Red Sift'},
-    'redsift.cloud': {'name': 'OnDMARC', 'vendor': 'Red Sift'},
+    DOMAIN_ONDMARC_COM: {'name': 'OnDMARC', 'vendor': PROVIDER_RED_SIFT},
+    DOMAIN_REDSIFT_CLOUD: {'name': 'OnDMARC', 'vendor': PROVIDER_RED_SIFT},
     'mailhardener.com': {'name': 'Mailhardener', 'vendor': 'Mailhardener'},
-    'vali.email': {'name': 'Valimail Enforce', 'vendor': 'Valimail'},
+    'vali.email': {'name': PROVIDER_VALIMAIL_ENFORCE, 'vendor': 'Valimail'},
 }
 
 DYNAMIC_SERVICES_ZONES = {
@@ -248,19 +271,19 @@ DYNAMIC_SERVICES_ZONES = {
 
 HOSTED_DKIM_PROVIDERS = {
     'gpphosted.com': {'name': 'Proofpoint EFD (Gov)', 'vendor': 'Proofpoint'},
-    'pphosted.com': {'name': 'Proofpoint EFD', 'vendor': 'Proofpoint'},
-    'proofpoint.com': {'name': 'Proofpoint EFD', 'vendor': 'Proofpoint'},
+    'pphosted.com': {'name': PROVIDER_PROOFPOINT_EFD, 'vendor': 'Proofpoint'},
+    'proofpoint.com': {'name': PROVIDER_PROOFPOINT_EFD, 'vendor': 'Proofpoint'},
     'dkim.mimecast.com': {'name': 'Mimecast DMARC Analyzer', 'vendor': 'Mimecast'},
     'mimecast.com': {'name': 'Mimecast DMARC Analyzer', 'vendor': 'Mimecast'},
     'agari.com': {'name': 'Agari', 'vendor': 'Fortra'},
     'emailsecurity.fortra.com': {'name': 'Agari', 'vendor': 'Fortra'},
-    'sendmarc.com': {'name': 'Sendmarc', 'vendor': 'Sendmarc'},
-    'dmarcian.com': {'name': 'Dmarcian', 'vendor': 'Dmarcian'},
+    DOMAIN_SENDMARC_COM: {'name': 'Sendmarc', 'vendor': 'Sendmarc'},
+    DOMAIN_DMARCIAN_COM: {'name': 'Dmarcian', 'vendor': 'Dmarcian'},
 }
 
 DANE_MX_CAPABILITY = {
     'google': {
-        'name': 'Google Workspace',
+        'name': PROVIDER_GOOGLE_WORKSPACE,
         'dane_inbound': False,
         'dane_outbound': False,
         'reason': 'Google uses shared, multi-tenant MX infrastructure (aspmx.l.google.com) with certificate rotation. Google does not publish TLSA records for its MX hosts and does not allow customers to do so. Google also does not validate DANE/TLSA when sending outbound mail.',
@@ -275,7 +298,7 @@ DANE_MX_CAPABILITY = {
         'patterns': ['mx.microsoft'],
     },
     'microsoft_legacy': {
-        'name': 'Microsoft 365',
+        'name': PROVIDER_MICROSOFT_365,
         'dane_inbound': False,
         'dane_outbound': True,
         'dane_migration_available': True,

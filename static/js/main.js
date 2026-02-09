@@ -32,33 +32,44 @@ function startStatusCycle(overlayEl) {
     }
 }
 
+function isValidDomain(domain) {
+    if (!domain) return false;
+    const d = domain.replace(/\.$/, '');
+    if (d.length > 253 || d.length === 0) return false;
+    const labels = d.split('.');
+    if (labels.length < 2) return false;
+    for (const label of labels) {
+        if (label.length === 0 || label.length > 63) return false;
+        if (label.startsWith('-') || label.endsWith('-')) return false;
+    }
+    const tld = labels[labels.length - 1];
+    if (/^\d+$/.test(tld)) return false;
+    const hasNonAscii = /[^\x20-\x7F]/.test(d);
+    if (!hasNonAscii) {
+        for (const label of labels) {
+            if (!/^[a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?$/.test(label)) return false;
+        }
+    }
+    return true;
+}
+
+function resetCopyIcon(icon) {
+    icon.className = 'fas fa-copy copy-icon';
+    icon.style.color = '';
+}
+
+function handleCopyResult(icon, success) {
+    icon.className = success ? 'fas fa-check copy-icon' : 'fas fa-times copy-icon';
+    icon.style.color = success ? 'var(--bs-success)' : 'var(--bs-warning)';
+    setTimeout(function() { resetCopyIcon(icon); }, 1500);
+}
+
 document.addEventListener('DOMContentLoaded', function() {
     const domainForm = document.getElementById('domainForm');
     const domainInput = document.getElementById('domain');
     const analyzeBtn = document.getElementById('analyzeBtn');
     
     if (domainForm && domainInput && analyzeBtn) {
-        function isValidDomain(domain) {
-            if (!domain) return false;
-            const d = domain.replace(/\.$/, '');
-            if (d.length > 253 || d.length === 0) return false;
-            const labels = d.split('.');
-            if (labels.length < 2) return false;
-            for (const label of labels) {
-                if (label.length === 0 || label.length > 63) return false;
-                if (label.startsWith('-') || label.endsWith('-')) return false;
-            }
-            const tld = labels[labels.length - 1];
-            if (/^\d+$/.test(tld)) return false;
-            const hasNonAscii = /[^\u0000-\u007F]/.test(d);
-            if (!hasNonAscii) {
-                for (const label of labels) {
-                    if (!/^[a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?$/.test(label)) return false;
-                }
-            }
-            return true;
-        }
-
         domainInput.addEventListener('input', function() {
             const domain = this.value.trim();
             const isValid = domain === '' || isValidDomain(domain);
@@ -102,13 +113,11 @@ document.addEventListener('DOMContentLoaded', function() {
             document.body.classList.add('loading');
         });
         
-        // Clear validation on focus
         domainInput.addEventListener('focus', function() {
             this.classList.remove('is-invalid');
         });
     }
     
-    // Auto-dismiss flash message alerts after 5 seconds (not Verdict alerts)
     const alerts = document.querySelectorAll('.alert-dismissible');
     alerts.forEach(function(alert) {
         setTimeout(function() {
@@ -117,7 +126,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }, 5000);
     });
     
-    // Smooth scrolling for anchor links
     document.querySelectorAll('a[href^="#"]').forEach(function(anchor) {
         anchor.addEventListener('click', function(e) {
             e.preventDefault();
@@ -131,7 +139,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
     
-    // Copy code blocks to clipboard
     document.querySelectorAll('.code-block').forEach(function(codeBlock) {
         codeBlock.style.cursor = 'pointer';
         codeBlock.title = 'Click to copy';
@@ -143,28 +150,17 @@ document.addEventListener('DOMContentLoaded', function() {
         codeBlock.addEventListener('click', function() {
             let copyText = '';
             codeBlock.childNodes.forEach(function(node) {
-                if (!node.classList || !node.classList.contains('copy-icon')) {
+                if (!node.classList?.contains('copy-icon')) {
                     copyText += node.textContent;
                 }
             });
             copyText = copyText.trim();
 
-            navigator.clipboard.writeText(copyText).then(function() {
-                icon.className = 'fas fa-check copy-icon';
-                icon.style.color = 'var(--bs-success)';
-
-                setTimeout(function() {
-                    icon.className = 'fas fa-copy copy-icon';
-                    icon.style.color = '';
-                }, 1500);
-            }).catch(function() {
-                icon.className = 'fas fa-times copy-icon';
-                icon.style.color = 'var(--bs-warning)';
-                setTimeout(function() {
-                    icon.className = 'fas fa-copy copy-icon';
-                    icon.style.color = '';
-                }, 1500);
-            });
+            navigator.clipboard.writeText(copyText).then(
+                function() { handleCopyResult(icon, true); }
+            ).catch(
+                function() { handleCopyResult(icon, false); }
+            );
         });
     });
 });

@@ -289,7 +289,7 @@ class TestRemediationGuidanceContract(unittest.TestCase):
         }
         rem = generate_remediation(results)
         dmarc_fixes = [f for f in rem['top_fixes'] if f['section'] == 'dmarc']
-        self.assertTrue(len(dmarc_fixes) > 0, "DMARC p=none should generate escalation fix")
+        self.assertGreater(len(dmarc_fixes), 0, "DMARC p=none should generate escalation fix")
         self.assertIn('escalat', dmarc_fixes[0]['title'].lower())
 
     def test_no_mail_domain_skips_dkim(self):
@@ -327,7 +327,7 @@ class TestRemediationGuidanceContract(unittest.TestCase):
         }
         rem = generate_remediation(results)
         dnssec_fixes = [f for f in rem['top_fixes'] if f['section'] == 'dnssec']
-        self.assertTrue(len(dnssec_fixes) > 0)
+        self.assertGreater(len(dnssec_fixes), 0)
         self.assertEqual(dnssec_fixes[0]['severity_label'], 'Critical')
 
     def test_remediation_fix_has_rfc_url(self):

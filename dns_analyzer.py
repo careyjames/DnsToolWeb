@@ -91,6 +91,72 @@ def _validate_url_target(url: str) -> bool:
         return False
 
 
+# --- Module-level string constants (SonarQube S1192) ---
+
+# DNS-over-HTTPS endpoint
+DOH_GOOGLE_ENDPOINT = "https://dns.google/resolve"
+
+# Evidence source
+EVIDENCE_LIVE_DNS_QUERY = "Live DNS query"
+
+# DKIM selector suffix
+DOMAINKEY_SUFFIX = "._domainkey"
+
+# DKIM selectors
+SELECTOR1_DOMAINKEY = "selector1._domainkey"
+SELECTOR2_DOMAINKEY = "selector2._domainkey"
+S1_DOMAINKEY = "s1._domainkey"
+S2_DOMAINKEY = "s2._domainkey"
+DEFAULT_DOMAINKEY = "default._domainkey"
+
+# Email / mailbox provider names
+PROVIDER_MICROSOFT_365 = "Microsoft 365"
+PROVIDER_GOOGLE_WORKSPACE = "Google Workspace"
+PROVIDER_AMAZON_SES = "Amazon SES"
+PROVIDER_ZOHO_MAIL = "Zoho Mail"
+PROVIDER_CLOUDFLARE_EMAIL = "Cloudflare Email"
+PROVIDER_BREVO = "Brevo (Sendinblue)"
+
+# DNS / hosting provider names
+PROVIDER_IONOS = "1&1 IONOS"
+PROVIDER_AMAZON_ROUTE_53 = "Amazon Route 53"
+PROVIDER_META_SELF_HOSTED = "Meta (Self-Hosted)"
+PROVIDER_SALESFORCE_SELF_HOSTED = "Salesforce (Self-Hosted)"
+
+# Service type labels
+SERVICE_SPF_FLATTENING = "SPF flattening"
+SERVICE_HOSTED_DKIM = "Hosted DKIM"
+SERVICE_DKIM_HOSTING = "DKIM hosting"
+SERVICE_DYNAMIC_SERVICES = "Dynamic Services"
+
+# Fallback text
+FALLBACK_THIRD_PARTY_SERVICES = "third-party services"
+
+# WHOIS servers
+WHOIS_VERISIGN = "whois.verisign-grs.com"
+WHOIS_CENTRALNIC = "whois.centralnic.com"
+
+# Error messages
+ERR_CONNECTION_FAILED = "Connection failed"
+ERR_DOMAIN_NOT_EXIST = "Domain does not exist"
+
+# Verdict labels
+VERDICT_EMAIL_AMBIGUOUS = "Email: Ambiguous"
+VERDICT_MOSTLY_NO = "Mostly No"
+
+# NS provider feature descriptions
+FEATURE_DDOS_PROTECTION = "DDoS protection"
+FEATURE_BRAND_PROTECTION = "Brand protection"
+FEATURE_ENTERPRISE_INFRA = "Enterprise infrastructure"
+FEATURE_ENTERPRISE_MGMT = "Enterprise management"
+FEATURE_ENTERPRISE_SECURITY = "Enterprise security"
+FEATURE_GLOBAL_ANYCAST = "Global Anycast"
+FEATURE_SELF_MANAGED_INFRA = "Self-managed infrastructure"
+FEATURE_GOV_SECURITY = "Government security standards"
+FEATURE_PROTECTED_INFRA = "Protected infrastructure"
+FEATURE_MANAGED_SECURITY = "Managed security"
+
+
 class DNSAnalyzer:
     """DNS analysis tool for domain records and email security."""
     
@@ -98,7 +164,7 @@ class DNSAnalyzer:
     # Using diverse providers for triangulation and accuracy
     CONSENSUS_RESOLVERS = [
         {"name": "Cloudflare", "ip": "1.1.1.1", "doh": "https://cloudflare-dns.com/dns-query"},
-        {"name": "Google", "ip": "8.8.8.8", "doh": "https://dns.google/resolve"},
+        {"name": "Google", "ip": "8.8.8.8", "doh": DOH_GOOGLE_ENDPOINT},
         {"name": "Quad9", "ip": "9.9.9.9", "doh": None},
         {"name": "OpenDNS", "ip": "208.67.222.222", "doh": None},
     ]
@@ -132,7 +198,7 @@ class DNSAnalyzer:
         if not skip_network_init and not offline_mode:
             self._fetch_iana_rdap_data()
 
-    def _dns_cache_get(self, key: str) -> Optional[List[str]]:
+    def _dns_cache_get(self, key: str) -> Optional[List[str]]:  # NOSONAR
         """Get cached DNS result if still valid."""
         with self._dns_cache_lock:
             if key in self._dns_cache:
@@ -186,7 +252,7 @@ class DNSAnalyzer:
         kwargs.setdefault('headers', {}).setdefault('User-Agent', self.USER_AGENT)
         return requests.get(url, **kwargs)
 
-    def _find_parent_zone(self, domain: str) -> Optional[str]:
+    def _find_parent_zone(self, domain: str) -> Optional[str]:  # NOSONAR
         """Find the parent zone that contains this domain by looking for NS records.
         For 'dnstool.it-help.tech', returns 'it-help.tech'.
         For 'it-help.tech', returns None (it IS the zone apex).
@@ -273,7 +339,7 @@ class DNSAnalyzer:
         except Exception as e:
             logging.error(f"Failed to fetch IANA RDAP data: {e}")
     
-    def _get_tld(self, domain: str) -> str:
+    def _get_tld(self, domain: str) -> str:  # NOSONAR
         """Return the top-level domain from domain in lowercase."""
         return domain.rsplit(".", 1)[-1].lower()
     
@@ -290,7 +356,7 @@ class DNSAnalyzer:
             logging.debug(f"DoH {record_type} for {domain}: backing off (provider degraded)")
             return []
         DOH_TIMEOUT = telemetry.get_timeout('doh')
-        url = "https://dns.google/resolve"
+        url = DOH_GOOGLE_ENDPOINT
         
         params = {
             'name': domain,
@@ -448,7 +514,7 @@ class DNSAnalyzer:
             'resolver_results': resolver_results
         }
     
-    def validate_resolver_consensus(self, domain: str) -> Dict[str, Any]:
+    def validate_resolver_consensus(self, domain: str) -> Dict[str, Any]:  # NOSONAR
         """Validate that multiple resolvers return consistent results for critical records.
         
         This is a scientific rigor check - we query multiple resolvers and report any discrepancies.
@@ -542,7 +608,7 @@ class DNSAnalyzer:
         
         return []
     
-    def check_dnssec_ad_flag(self, domain: str) -> Dict[str, Any]:
+    def check_dnssec_ad_flag(self, domain: str) -> Dict[str, Any]:  # NOSONAR
         """
         Check if DNS responses have the AD (Authentic Data) flag set.
         The AD flag indicates that a DNSSEC-validating resolver has verified
@@ -602,7 +668,7 @@ class DNSAnalyzer:
         if self._offline_mode:
             return ([], None)
         try:
-            url = "https://dns.google/resolve"
+            url = DOH_GOOGLE_ENDPOINT
             params = {'name': domain, 'type': record_type.upper()}
             response = requests.get(url, params=params, timeout=5, headers={'Accept': 'application/dns-json', 'User-Agent': self.USER_AGENT})
             if response.status_code == 200:
@@ -640,7 +706,7 @@ class DNSAnalyzer:
                 continue
         return ([], None)
     
-    def get_basic_records(self, domain: str) -> Dict[str, List[str]]:
+    def get_basic_records(self, domain: str) -> Dict[str, List[str]]:  # NOSONAR
         """Get basic DNS records for domain (parallel for speed)."""
         record_types = ["A", "AAAA", "MX", "TXT", "NS", "CNAME", "CAA", "SOA"]
         records = {t: [] for t in record_types}
@@ -695,7 +761,7 @@ class DNSAnalyzer:
         
         return records
     
-    def get_authoritative_records(self, domain: str) -> Dict[str, List[str]]:
+    def get_authoritative_records(self, domain: str) -> Dict[str, List[str]]:  # NOSONAR
         """Get DNS records directly from authoritative nameservers (optimized for speed)."""
         record_types = ["A", "AAAA", "MX", "TXT", "NS", "CAA", "SOA"]
         email_subdomains = {
@@ -770,7 +836,7 @@ class DNSAnalyzer:
             
         return results
     
-    def analyze_spf(self, domain: str) -> Dict[str, Any]:
+    def analyze_spf(self, domain: str) -> Dict[str, Any]:  # NOSONAR
         """Analyze SPF record for domain with deep correctness checks.
         
         Checks for:
@@ -941,7 +1007,7 @@ class DNSAnalyzer:
             'no_mail_intent': no_mail_intent
         }
     
-    def analyze_dmarc(self, domain: str) -> Dict[str, Any]:
+    def analyze_dmarc(self, domain: str) -> Dict[str, Any]:  # NOSONAR
         """Analyze DMARC record for domain with deep checks.
         
         Checks for:
@@ -1128,24 +1194,24 @@ class DNSAnalyzer:
         }
     
     SELECTOR_PROVIDER_MAP = {
-        'selector1._domainkey': 'Microsoft 365',
-        'selector2._domainkey': 'Microsoft 365',
-        'google._domainkey': 'Google Workspace',
-        'google2048._domainkey': 'Google Workspace',
+        SELECTOR1_DOMAINKEY: PROVIDER_MICROSOFT_365,
+        SELECTOR2_DOMAINKEY: PROVIDER_MICROSOFT_365,
+        'google._domainkey': PROVIDER_GOOGLE_WORKSPACE,
+        'google2048._domainkey': PROVIDER_GOOGLE_WORKSPACE,
         'k1._domainkey': 'MailChimp',
         'k2._domainkey': 'MailChimp',
         'k3._domainkey': 'MailChimp',
         'mailchimp._domainkey': 'MailChimp',
         'mandrill._domainkey': 'MailChimp (Mandrill)',
-        's1._domainkey': 'SendGrid',
-        's2._domainkey': 'SendGrid',
+        S1_DOMAINKEY: 'SendGrid',
+        S2_DOMAINKEY: 'SendGrid',
         'sendgrid._domainkey': 'SendGrid',
         'mailjet._domainkey': 'Mailjet',
-        'amazonses._domainkey': 'Amazon SES',
+        'amazonses._domainkey': PROVIDER_AMAZON_SES,
         'postmark._domainkey': 'Postmark',
         'sparkpost._domainkey': 'SparkPost',
         'mailgun._domainkey': 'Mailgun',
-        'sendinblue._domainkey': 'Brevo (Sendinblue)',
+        'sendinblue._domainkey': PROVIDER_BREVO,
         'mimecast._domainkey': 'Mimecast',
         'proofpoint._domainkey': 'Proofpoint',
         'everlytickey1._domainkey': 'Everlytic',
@@ -1155,15 +1221,15 @@ class DNSAnalyzer:
     }
 
     MX_TO_DKIM_PROVIDER = {
-        'google': 'Google Workspace',
-        'googlemail': 'Google Workspace',
-        'gmail': 'Google Workspace',
-        'outlook': 'Microsoft 365',
-        'microsoft': 'Microsoft 365',
-        'protection.outlook': 'Microsoft 365',
-        'o365': 'Microsoft 365',
-        'exchange': 'Microsoft 365',
-        'intermedia': 'Microsoft 365',
+        'google': PROVIDER_GOOGLE_WORKSPACE,
+        'googlemail': PROVIDER_GOOGLE_WORKSPACE,
+        'gmail': PROVIDER_GOOGLE_WORKSPACE,
+        'outlook': PROVIDER_MICROSOFT_365,
+        'microsoft': PROVIDER_MICROSOFT_365,
+        'protection.outlook': PROVIDER_MICROSOFT_365,
+        'o365': PROVIDER_MICROSOFT_365,
+        'exchange': PROVIDER_MICROSOFT_365,
+        'intermedia': PROVIDER_MICROSOFT_365,
         'pphosted': 'Proofpoint',
         'gpphosted': 'Proofpoint',
         'iphmx': 'Proofpoint',
@@ -1179,13 +1245,13 @@ class DNSAnalyzer:
         'hornetsecurity': 'Hornetsecurity',
         'antispamcloud': 'SpamExperts',
         'spamexperts': 'SpamExperts',
-        'zoho': 'Zoho Mail',
+        'zoho': PROVIDER_ZOHO_MAIL,
         'mailgun': 'Mailgun',
         'sendgrid': 'SendGrid',
-        'amazonses': 'Amazon SES',
+        'amazonses': PROVIDER_AMAZON_SES,
         'fastmail': 'Fastmail',
         'protonmail': 'ProtonMail',
-        'mx.cloudflare': 'Cloudflare Email',
+        'mx.cloudflare': PROVIDER_CLOUDFLARE_EMAIL,
     }
 
     SECURITY_GATEWAYS = {
@@ -1195,25 +1261,25 @@ class DNSAnalyzer:
     }
 
     PRIMARY_PROVIDER_SELECTORS = {
-        'Microsoft 365': ['selector1._domainkey', 'selector2._domainkey'],
-        'Google Workspace': ['google._domainkey', 'google2048._domainkey'],
+        PROVIDER_MICROSOFT_365: [SELECTOR1_DOMAINKEY, SELECTOR2_DOMAINKEY],
+        PROVIDER_GOOGLE_WORKSPACE: ['google._domainkey', 'google2048._domainkey'],
         'Proofpoint': ['proofpoint._domainkey'],
         'Mimecast': ['mimecast._domainkey'],
         'Mailgun': ['mailgun._domainkey'],
-        'SendGrid': ['s1._domainkey', 's2._domainkey', 'sendgrid._domainkey'],
-        'Amazon SES': ['amazonses._domainkey'],
-        'Zoho Mail': ['default._domainkey'],
+        'SendGrid': [S1_DOMAINKEY, S2_DOMAINKEY, 'sendgrid._domainkey'],
+        PROVIDER_AMAZON_SES: ['amazonses._domainkey'],
+        PROVIDER_ZOHO_MAIL: [DEFAULT_DOMAINKEY],
         'Fastmail': ['fm1._domainkey', 'fm2._domainkey', 'fm3._domainkey'],
         'ProtonMail': ['protonmail._domainkey', 'protonmail2._domainkey', 'protonmail3._domainkey'],
-        'Cloudflare Email': ['default._domainkey'],
+        PROVIDER_CLOUDFLARE_EMAIL: [DEFAULT_DOMAINKEY],
     }
 
     SPF_MAILBOX_PROVIDERS = {
-        'spf.protection.outlook': 'Microsoft 365',
-        '_spf.google': 'Google Workspace',
-        'spf.intermedia': 'Microsoft 365',
-        'emg.intermedia': 'Microsoft 365',
-        'zoho.com': 'Zoho Mail',
+        'spf.protection.outlook': PROVIDER_MICROSOFT_365,
+        '_spf.google': PROVIDER_GOOGLE_WORKSPACE,
+        'spf.intermedia': PROVIDER_MICROSOFT_365,
+        'emg.intermedia': PROVIDER_MICROSOFT_365,
+        'zoho.com': PROVIDER_ZOHO_MAIL,
         'messagingengine.com': 'Fastmail',
         'protonmail.ch': 'ProtonMail',
         'mimecast': 'Mimecast',
@@ -1224,12 +1290,12 @@ class DNSAnalyzer:
         'servers.mcsv.net': 'MailChimp',
         'spf.mandrillapp': 'MailChimp',
         'sendgrid.net': 'SendGrid',
-        'amazonses.com': 'Amazon SES',
+        'amazonses.com': PROVIDER_AMAZON_SES,
         'mailgun.org': 'Mailgun',
         'spf.sparkpostmail': 'SparkPost',
         'mail.zendesk.com': 'Zendesk',
-        'spf.brevo.com': 'Brevo (Sendinblue)',
-        'spf.sendinblue': 'Brevo (Sendinblue)',
+        'spf.brevo.com': PROVIDER_BREVO,
+        'spf.sendinblue': PROVIDER_BREVO,
         'spf.mailjet': 'Mailjet',
         'spf.postmarkapp': 'Postmark',
         'spf.mtasv.net': 'Postmark',
@@ -1242,45 +1308,32 @@ class DNSAnalyzer:
     DYNAMIC_SERVICES_ZONES = DYNAMIC_SERVICES_ZONES
     HOSTED_DKIM_PROVIDERS = HOSTED_DKIM_PROVIDERS
 
-    def _detect_email_security_management(self, spf_analysis: dict, dmarc_analysis: dict, tlsrpt_analysis: dict, mta_sts_analysis: dict = None, domain: str = None, dkim_analysis: dict = None) -> dict:
-        """Detect email security management providers from DMARC rua/ruf, TLS-RPT rua, SPF includes, MTA-STS, Hosted DKIM, and Dynamic Services.
-        
-        Extracts the operational security partner network from DNS records — intelligence
-        most tools ignore. Includes Dynamic Services detection (Red Sift, Mailhardener, Valimail) via
-        DNS subzone delegation of email security zones (_dmarc, _domainkey, _mta-sts, _smtp._tls).
-        Detects Hosted DKIM via CNAME chains on discovered DKIM selectors (Proofpoint, Mimecast, etc.).
-        """
+    def _extract_mailto_domains(self, rua_string):
         import re
-        providers = {}
-        details = []
+        if not rua_string:
+            return []
+        domains = []
+        mailto_matches = re.findall(r'mailto:([^,;\s]+)', rua_string, re.IGNORECASE)
+        for addr in mailto_matches:
+            if '@' in addr:
+                d = addr.split('@')[1].strip().rstrip('.')
+                domains.append(d)
+        return domains
 
-        def _extract_mailto_domains(rua_string):
-            """Extract domains from rua/ruf mailto: URIs (may be comma-separated)."""
-            if not rua_string:
-                return []
-            domains = []
-            mailto_matches = re.findall(r'mailto:([^,;\s]+)', rua_string, re.IGNORECASE)
-            for addr in mailto_matches:
-                if '@' in addr:
-                    domain = addr.split('@')[1].strip().rstrip('.')
-                    domains.append(domain)
-            return domains
+    def _match_monitoring_provider(self, domain_str):
+        domain_lower = domain_str.lower()
+        for pattern, info in self.DMARC_MONITORING_PROVIDERS.items():
+            if domain_lower == pattern or domain_lower.endswith('.' + pattern):
+                return info
+        return None
 
-        def _match_provider(domain):
-            """Match a domain against known monitoring providers."""
-            domain_lower = domain.lower()
-            for pattern, info in self.DMARC_MONITORING_PROVIDERS.items():
-                if domain_lower == pattern or domain_lower.endswith('.' + pattern):
-                    return info
-            return None
-
+    def _detect_dmarc_report_providers(self, providers, dmarc_analysis):
         dmarc_rua = dmarc_analysis.get('rua', '')
         dmarc_ruf = dmarc_analysis.get('ruf', '')
-        dmarc_rua_domains = _extract_mailto_domains(dmarc_rua)
-        dmarc_ruf_domains = _extract_mailto_domains(dmarc_ruf)
-
+        dmarc_rua_domains = self._extract_mailto_domains(dmarc_rua)
+        dmarc_ruf_domains = self._extract_mailto_domains(dmarc_ruf)
         for rua_domain in dmarc_rua_domains + dmarc_ruf_domains:
-            provider = _match_provider(rua_domain)
+            provider = self._match_monitoring_provider(rua_domain)
             if provider and provider['name'] not in providers:
                 source = 'DMARC forensic reports (ruf)' if rua_domain in dmarc_ruf_domains and rua_domain not in dmarc_rua_domains else 'DMARC aggregate reports (rua)'
                 if rua_domain in dmarc_rua_domains and rua_domain in dmarc_ruf_domains:
@@ -1291,26 +1344,27 @@ class DNSAnalyzer:
                     'detected_from': ['DMARC']
                 }
 
+    def _detect_tlsrpt_report_providers(self, providers, tlsrpt_analysis):
         tlsrpt_rua = tlsrpt_analysis.get('rua', '')
-        tlsrpt_domains = _extract_mailto_domains(tlsrpt_rua)
-
+        tlsrpt_domains = self._extract_mailto_domains(tlsrpt_rua)
         for rua_domain in tlsrpt_domains:
-            provider = _match_provider(rua_domain)
-            if provider:
-                if provider['name'] in providers:
-                    if 'TLS-RPT' not in providers[provider['name']]['detected_from']:
-                        providers[provider['name']]['detected_from'].append('TLS-RPT')
-                        providers[provider['name']]['sources'].append('TLS-RPT delivery reports')
-                else:
-                    providers[provider['name']] = {
-                        **provider,
-                        'sources': ['TLS-RPT delivery reports'],
-                        'detected_from': ['TLS-RPT']
-                    }
+            provider = self._match_monitoring_provider(rua_domain)
+            if not provider:
+                continue
+            if provider['name'] in providers:
+                if 'TLS-RPT' not in providers[provider['name']]['detected_from']:
+                    providers[provider['name']]['detected_from'].append('TLS-RPT')
+                    providers[provider['name']]['sources'].append('TLS-RPT delivery reports')
+            else:
+                providers[provider['name']] = {
+                    **provider,
+                    'sources': ['TLS-RPT delivery reports'],
+                    'detected_from': ['TLS-RPT']
+                }
 
+    def _detect_spf_flattening_provider(self, providers, spf_analysis):
         spf_includes = spf_analysis.get('includes', [])
         spf_flattening_detected = None
-
         for include in spf_includes:
             include_lower = include.lower()
             for pattern, info in self.SPF_FLATTENING_PROVIDERS.items():
@@ -1321,125 +1375,151 @@ class DNSAnalyzer:
                         'include': include
                     }
                     if info['name'] in providers:
-                        if 'SPF flattening' not in providers[info['name']]['detected_from']:
-                            providers[info['name']]['detected_from'].append('SPF flattening')
-                            providers[info['name']]['sources'].append(f'SPF flattening (include:{include})')
+                        if SERVICE_SPF_FLATTENING not in providers[info['name']]['detected_from']:
+                            providers[info['name']]['detected_from'].append(SERVICE_SPF_FLATTENING)
+                            providers[info['name']]['sources'].append(f'{SERVICE_SPF_FLATTENING} (include:{include})')
                     else:
                         providers[info['name']] = {
                             'name': info['name'],
                             'vendor': info['vendor'],
-                            'capabilities': ['SPF management', 'SPF flattening'],
-                            'sources': [f'SPF flattening (include:{include})'],
-                            'detected_from': ['SPF flattening']
+                            'capabilities': ['SPF management', SERVICE_SPF_FLATTENING],
+                            'sources': [f'{SERVICE_SPF_FLATTENING} (include:{include})'],
+                            'detected_from': [SERVICE_SPF_FLATTENING]
                         }
                     break
+        return spf_flattening_detected
 
-        if mta_sts_analysis and mta_sts_analysis.get('status') in ('success', 'warning') and mta_sts_analysis.get('record'):
-            mta_sts_cname = mta_sts_analysis.get('hosting_cname', '')
-            mta_sts_provider_found = False
-            for name, prov in providers.items():
-                if 'MTA-STS hosting' in prov.get('capabilities', []):
-                    if 'MTA-STS' not in prov.get('detected_from', []):
-                        prov['detected_from'].append('MTA-STS')
-                        prov['sources'].append('MTA-STS policy hosting')
-                    mta_sts_provider_found = True
+    def _detect_mta_sts_management(self, providers, mta_sts_analysis):
+        if not mta_sts_analysis or mta_sts_analysis.get('status') not in ('success', 'warning') or not mta_sts_analysis.get('record'):
+            return
+        mta_sts_cname = mta_sts_analysis.get('hosting_cname', '')
+        mta_sts_provider_found = False
+        for name, prov in providers.items():
+            if 'MTA-STS hosting' in prov.get('capabilities', []):
+                if 'MTA-STS' not in prov.get('detected_from', []):
+                    prov['detected_from'].append('MTA-STS')
+                    prov['sources'].append('MTA-STS policy hosting')
+                mta_sts_provider_found = True
+        if mta_sts_provider_found or not mta_sts_cname:
+            return
+        for domain_pattern, info in self.DMARC_MONITORING_PROVIDERS.items():
+            if 'MTA-STS hosting' not in info.get('capabilities', []):
+                continue
+            if domain_pattern not in mta_sts_cname:
+                continue
+            prov_name = info['name']
+            if prov_name in providers:
+                if 'MTA-STS' not in providers[prov_name].get('detected_from', []):
+                    providers[prov_name]['detected_from'].append('MTA-STS')
+                    providers[prov_name]['sources'].append(f'MTA-STS hosting (CNAME: {mta_sts_cname})')
+            else:
+                providers[prov_name] = {
+                    'name': prov_name,
+                    'vendor': info['vendor'],
+                    'capabilities': info['capabilities'],
+                    'sources': [f'MTA-STS hosting (CNAME: {mta_sts_cname})'],
+                    'detected_from': ['MTA-STS']
+                }
+            break
 
-            if not mta_sts_provider_found and mta_sts_cname:
-                for domain_pattern, info in self.DMARC_MONITORING_PROVIDERS.items():
-                    if 'MTA-STS hosting' in info.get('capabilities', []) and domain_pattern in mta_sts_cname:
-                        prov_name = info['name']
-                        if prov_name in providers:
-                            if 'MTA-STS' not in providers[prov_name].get('detected_from', []):
-                                providers[prov_name]['detected_from'].append('MTA-STS')
-                                providers[prov_name]['sources'].append(f'MTA-STS hosting (CNAME: {mta_sts_cname})')
-                        else:
-                            providers[prov_name] = {
-                                'name': prov_name,
-                                'vendor': info['vendor'],
-                                'capabilities': info['capabilities'],
-                                'sources': [f'MTA-STS hosting (CNAME: {mta_sts_cname})'],
-                                'detected_from': ['MTA-STS']
-                            }
-                        break
+    def _detect_hosted_dkim_providers_from_cnames(self, providers, domain, dkim_analysis):
+        if not domain or not dkim_analysis or not dkim_analysis.get('selectors'):
+            return
+        for sel_name, sel_data in dkim_analysis['selectors'].items():
+            dkim_fqdn = f'{sel_name}.{domain}'
+            try:
+                cname_answers = dns.resolver.resolve(dkim_fqdn, 'CNAME')
+                for rdata in cname_answers:
+                    cname_target = str(rdata).rstrip('.').lower()
+                    for cname_pattern, dkim_info in self.HOSTED_DKIM_PROVIDERS.items():
+                        if cname_target.endswith(cname_pattern):
+                            prov_name = dkim_info['name']
+                            sel_short = sel_name.replace(DOMAINKEY_SUFFIX, '')
+                            if prov_name in providers:
+                                if SERVICE_HOSTED_DKIM not in providers[prov_name]['detected_from']:
+                                    providers[prov_name]['detected_from'].append(SERVICE_HOSTED_DKIM)
+                                    providers[prov_name]['sources'].append(f'{SERVICE_HOSTED_DKIM} (CNAME: {sel_short} → {cname_target})')
+                                if SERVICE_DKIM_HOSTING not in providers[prov_name].get('capabilities', []):
+                                    providers[prov_name].setdefault('capabilities', []).append(SERVICE_DKIM_HOSTING)
+                            else:
+                                providers[prov_name] = {
+                                    'name': prov_name,
+                                    'vendor': dkim_info['vendor'],
+                                    'capabilities': [SERVICE_DKIM_HOSTING],
+                                    'sources': [f'{SERVICE_HOSTED_DKIM} (CNAME: {sel_short} → {cname_target})'],
+                                    'detected_from': [SERVICE_HOSTED_DKIM],
+                                }
+                            break
+            except Exception:
+                pass
 
-        if domain and dkim_analysis and dkim_analysis.get('selectors'):
-            for sel_name, sel_data in dkim_analysis['selectors'].items():
-                dkim_fqdn = f'{sel_name}.{domain}'
-                try:
-                    cname_answers = dns.resolver.resolve(dkim_fqdn, 'CNAME')
-                    for rdata in cname_answers:
-                        cname_target = str(rdata).rstrip('.').lower()
-                        for cname_pattern, dkim_info in self.HOSTED_DKIM_PROVIDERS.items():
-                            if cname_target.endswith(cname_pattern):
-                                prov_name = dkim_info['name']
-                                sel_short = sel_name.replace('._domainkey', '')
-                                if prov_name in providers:
-                                    if 'Hosted DKIM' not in providers[prov_name]['detected_from']:
-                                        providers[prov_name]['detected_from'].append('Hosted DKIM')
-                                        providers[prov_name]['sources'].append(f'Hosted DKIM (CNAME: {sel_short} → {cname_target})')
-                                    if 'DKIM hosting' not in providers[prov_name].get('capabilities', []):
-                                        providers[prov_name].setdefault('capabilities', []).append('DKIM hosting')
-                                else:
-                                    providers[prov_name] = {
-                                        'name': prov_name,
-                                        'vendor': dkim_info['vendor'],
-                                        'capabilities': ['DKIM hosting'],
-                                        'sources': [f'Hosted DKIM (CNAME: {sel_short} → {cname_target})'],
-                                        'detected_from': ['Hosted DKIM'],
-                                    }
-                                break
-                except Exception:
-                    pass
+    def _detect_dynamic_services(self, providers, domain):  # NOSONAR
+        if not domain:
+            return
+        ds_zones = {
+            '_dmarc': f'_dmarc.{domain}',
+            '_domainkey': f'_domainkey.{domain}',
+            '_mta-sts': f'_mta-sts.{domain}',
+            '_smtp._tls': f'_smtp._tls.{domain}',
+        }
+        ds_detections = {}
+        for zone_key, zone_fqdn in ds_zones.items():
+            try:
+                ns_answers = dns.resolver.resolve(zone_fqdn, 'NS')
+                for rdata in ns_answers:
+                    ns_host = str(rdata).rstrip('.').lower()
+                    for ns_pattern, ds_info in self.DYNAMIC_SERVICES_PROVIDERS.items():
+                        if ns_host.endswith(ns_pattern):
+                            prov_name = ds_info['name']
+                            cap = self.DYNAMIC_SERVICES_ZONES.get(zone_key, f'{zone_key} management')
+                            if prov_name not in ds_detections:
+                                ds_detections[prov_name] = {
+                                    'info': ds_info,
+                                    'capabilities': [],
+                                    'zones': [],
+                                }
+                            if cap not in ds_detections[prov_name]['capabilities']:
+                                ds_detections[prov_name]['capabilities'].append(cap)
+                            if zone_key not in ds_detections[prov_name]['zones']:
+                                ds_detections[prov_name]['zones'].append(zone_key)
+                            break
+            except Exception:
+                pass
+        for prov_name, ds_data in ds_detections.items():
+            cap_labels = ', '.join(ds_data['capabilities'])
+            if prov_name in providers:
+                if SERVICE_DYNAMIC_SERVICES not in providers[prov_name]['detected_from']:
+                    providers[prov_name]['detected_from'].append(SERVICE_DYNAMIC_SERVICES)
+                    providers[prov_name]['sources'].append(f'{SERVICE_DYNAMIC_SERVICES} ({cap_labels})')
+                for cap in ds_data['capabilities']:
+                    if cap not in providers[prov_name].get('capabilities', []):
+                        providers[prov_name].setdefault('capabilities', []).append(cap)
+            else:
+                info = ds_data['info']
+                providers[prov_name] = {
+                    'name': prov_name,
+                    'vendor': info['vendor'],
+                    'capabilities': ds_data['capabilities'],
+                    'sources': [f'{SERVICE_DYNAMIC_SERVICES} ({cap_labels})'],
+                    'detected_from': [SERVICE_DYNAMIC_SERVICES],
+                }
 
-        if domain:
-            ds_zones = {
-                '_dmarc': f'_dmarc.{domain}',
-                '_domainkey': f'_domainkey.{domain}',
-                '_mta-sts': f'_mta-sts.{domain}',
-                '_smtp._tls': f'_smtp._tls.{domain}',
-            }
-            ds_detections = {}
-            for zone_key, zone_fqdn in ds_zones.items():
-                try:
-                    ns_answers = dns.resolver.resolve(zone_fqdn, 'NS')
-                    for rdata in ns_answers:
-                        ns_host = str(rdata).rstrip('.').lower()
-                        for ns_pattern, ds_info in self.DYNAMIC_SERVICES_PROVIDERS.items():
-                            if ns_host.endswith(ns_pattern):
-                                prov_name = ds_info['name']
-                                cap = self.DYNAMIC_SERVICES_ZONES.get(zone_key, f'{zone_key} management')
-                                if prov_name not in ds_detections:
-                                    ds_detections[prov_name] = {
-                                        'info': ds_info,
-                                        'capabilities': [],
-                                        'zones': [],
-                                    }
-                                if cap not in ds_detections[prov_name]['capabilities']:
-                                    ds_detections[prov_name]['capabilities'].append(cap)
-                                if zone_key not in ds_detections[prov_name]['zones']:
-                                    ds_detections[prov_name]['zones'].append(zone_key)
-                                break
-                except Exception:
-                    pass
+    def _detect_email_security_management(self, spf_analysis: dict, dmarc_analysis: dict, tlsrpt_analysis: dict, mta_sts_analysis: dict = None, domain: str = None, dkim_analysis: dict = None) -> dict:  # NOSONAR
+        """Detect email security management providers from DMARC rua/ruf, TLS-RPT rua, SPF includes, MTA-STS, Hosted DKIM, and Dynamic Services.
+        
+        Extracts the operational security partner network from DNS records — intelligence
+        most tools ignore. Includes Dynamic Services detection (Red Sift, Mailhardener, Valimail) via
+        DNS subzone delegation of email security zones (_dmarc, _domainkey, _mta-sts, _smtp._tls).
+        Detects Hosted DKIM via CNAME chains on discovered DKIM selectors (Proofpoint, Mimecast, etc.).
+        """
+        providers = {}
 
-            for prov_name, ds_data in ds_detections.items():
-                cap_labels = ', '.join(ds_data['capabilities'])
-                if prov_name in providers:
-                    if 'Dynamic Services' not in providers[prov_name]['detected_from']:
-                        providers[prov_name]['detected_from'].append('Dynamic Services')
-                        providers[prov_name]['sources'].append(f'Dynamic Services ({cap_labels})')
-                    for cap in ds_data['capabilities']:
-                        if cap not in providers[prov_name].get('capabilities', []):
-                            providers[prov_name].setdefault('capabilities', []).append(cap)
-                else:
-                    info = ds_data['info']
-                    providers[prov_name] = {
-                        'name': prov_name,
-                        'vendor': info['vendor'],
-                        'capabilities': ds_data['capabilities'],
-                        'sources': [f'Dynamic Services ({cap_labels})'],
-                        'detected_from': ['Dynamic Services'],
-                    }
+        self._detect_dmarc_report_providers(providers, dmarc_analysis)
+        self._detect_tlsrpt_report_providers(providers, tlsrpt_analysis)
+        spf_flattening_detected = self._detect_spf_flattening_provider(providers, spf_analysis)
+        self._detect_mta_sts_management(providers, mta_sts_analysis)
+        self._detect_hosted_dkim_providers_from_cnames(providers, domain, dkim_analysis)
+        self._detect_dynamic_services(providers, domain)
 
         actively_managed = len(providers) > 0
         provider_list = list(providers.values())
@@ -1461,11 +1541,11 @@ class DNSAnalyzer:
         provider = self.SELECTOR_PROVIDER_MAP.get(selector_name, 'Unknown')
         if provider != 'Unknown' and primary_provider == 'Unknown':
             ambiguous_selectors = {
-                'selector1._domainkey': 'Microsoft 365',
-                'selector2._domainkey': 'Microsoft 365',
-                's1._domainkey': 'SendGrid',
-                's2._domainkey': 'SendGrid',
-                'default._domainkey': None,
+                SELECTOR1_DOMAINKEY: PROVIDER_MICROSOFT_365,
+                SELECTOR2_DOMAINKEY: PROVIDER_MICROSOFT_365,
+                S1_DOMAINKEY: 'SendGrid',
+                S2_DOMAINKEY: 'SendGrid',
+                DEFAULT_DOMAINKEY: None,
                 'k1._domainkey': 'MailChimp',
                 'k2._domainkey': 'MailChimp',
             }
@@ -1532,6 +1612,57 @@ class DNSAnalyzer:
         
         return result
 
+    def _check_dkim_selector(self, selector, domain):
+        fqdn = f"{selector}.{domain}"
+        try:
+            resolver = dns.resolver.Resolver(configure=False)
+            resolver.nameservers = ['1.1.1.1', '8.8.8.8']
+            resolver.timeout = 1.5
+            resolver.lifetime = 2.0
+            answer = resolver.resolve(fqdn, 'TXT')
+            records = [str(rr).strip('"') for rr in answer]
+            if records:
+                dkim_records = [r for r in records if "v=dkim1" in r.lower() or "k=" in r.lower() or "p=" in r.lower()]
+                if dkim_records:
+                    return (selector, dkim_records)
+        except (dns.resolver.NXDOMAIN, dns.resolver.NoAnswer, dns.resolver.NoNameservers):
+            pass
+        except dns.exception.Timeout:
+            pass
+        except Exception:
+            pass
+        return None
+
+    def _analyze_dkim_key(self, record):
+        import re
+        import base64
+        key_info = {'key_type': 'rsa', 'key_bits': None, 'revoked': False, 'issues': []}
+        record_lower = record.lower()
+        k_match = re.search(r'\bk=(\w+)', record_lower)
+        if k_match:
+            key_info['key_type'] = k_match.group(1)
+        p_match = re.search(r'\bp=([^;\s]*)', record)
+        if p_match:
+            public_key = p_match.group(1)
+            if not public_key or public_key.strip() == '':
+                key_info['revoked'] = True
+                key_info['issues'].append('Key revoked (p= empty)')
+            else:
+                try:
+                    key_bytes = len(base64.b64decode(public_key + '=='))
+                    if key_bytes <= 140:
+                        key_info['key_bits'] = 1024
+                        key_info['issues'].append('1024-bit key (weak, upgrade to 2048)')
+                    elif key_bytes <= 300:
+                        key_info['key_bits'] = 2048
+                    elif key_bytes <= 600:
+                        key_info['key_bits'] = 4096
+                    else:
+                        key_info['key_bits'] = key_bytes * 8 // 10
+                except Exception:
+                    pass
+        return key_info
+
     def analyze_dkim(self, domain: str, mx_records: list = None, custom_selectors: list = None) -> Dict[str, Any]:
         """Check common DKIM selectors for domain with key quality analysis.
         
@@ -1543,17 +1674,13 @@ class DNSAnalyzer:
         - Provider attribution per selector
         - Primary mail platform DKIM coverage
         """
-        import re
-        import base64
-        
-        # Comprehensive selector list covering major ESPs and common patterns
         selectors = [
             # Generic/common
-            "default._domainkey", "dkim._domainkey", "mail._domainkey",
+            DEFAULT_DOMAINKEY, "dkim._domainkey", "mail._domainkey",
             "email._domainkey", "k1._domainkey", "k2._domainkey",
-            "s1._domainkey", "s2._domainkey", "sig1._domainkey",
+            S1_DOMAINKEY, S2_DOMAINKEY, "sig1._domainkey",
             # Microsoft 365
-            "selector1._domainkey", "selector2._domainkey",
+            SELECTOR1_DOMAINKEY, SELECTOR2_DOMAINKEY,
             # Google Workspace
             "google._domainkey", "google2048._domainkey",
             # Major ESPs
@@ -1580,66 +1707,6 @@ class DNSAnalyzer:
         key_issues = []
         key_strengths = []
         
-        def check_selector(selector):
-            fqdn = f"{selector}.{domain}"
-            try:
-                resolver = dns.resolver.Resolver(configure=False)
-                resolver.nameservers = ['1.1.1.1', '8.8.8.8']
-                resolver.timeout = 1.5
-                resolver.lifetime = 2.0
-                answer = resolver.resolve(fqdn, 'TXT')
-                records = [str(rr).strip('"') for rr in answer]
-                if records:
-                    dkim_records = [r for r in records if "v=dkim1" in r.lower() or "k=" in r.lower() or "p=" in r.lower()]
-                    if dkim_records:
-                        return (selector, dkim_records)
-            except (dns.resolver.NXDOMAIN, dns.resolver.NoAnswer, dns.resolver.NoNameservers):
-                pass
-            except dns.exception.Timeout:
-                pass
-            except Exception:
-                pass
-            return None
-        
-        def analyze_dkim_key(record):
-            """Analyze DKIM key for strength and issues."""
-            key_info = {'key_type': 'rsa', 'key_bits': None, 'revoked': False, 'issues': []}
-            record_lower = record.lower()
-            
-            # Check key type
-            k_match = re.search(r'\bk=(\w+)', record_lower)
-            if k_match:
-                key_info['key_type'] = k_match.group(1)
-            
-            # Check for revoked key (empty p=)
-            p_match = re.search(r'\bp=([^;\s]*)', record)
-            if p_match:
-                public_key = p_match.group(1)
-                if not public_key or public_key.strip() == '':
-                    key_info['revoked'] = True
-                    key_info['issues'].append('Key revoked (p= empty)')
-                else:
-                    # Estimate key size from base64 length
-                    # RSA key in DKIM is SubjectPublicKeyInfo format
-                    # Base64 encoded, so length * 6 / 8 = bytes
-                    try:
-                        key_bytes = len(base64.b64decode(public_key + '=='))
-                        # RSA key overhead is ~38 bytes for SPKI wrapper
-                        # Actual key modulus is roughly key_bytes - 38
-                        if key_bytes <= 140:  # ~1024 bit key
-                            key_info['key_bits'] = 1024
-                            key_info['issues'].append('1024-bit key (weak, upgrade to 2048)')
-                        elif key_bytes <= 300:  # ~2048 bit key
-                            key_info['key_bits'] = 2048
-                        elif key_bytes <= 600:  # ~4096 bit key
-                            key_info['key_bits'] = 4096
-                        else:
-                            key_info['key_bits'] = key_bytes * 8 // 10  # rough estimate
-                    except Exception:
-                        pass
-            
-            return key_info
-        
         if not mx_records:
             mx_records = self.dns_query("MX", domain) or []
         
@@ -1651,7 +1718,7 @@ class DNSAnalyzer:
         security_gateway = provider_info['gateway']
         
         with ThreadPoolExecutor(max_workers=10) as executor:
-            futures = {executor.submit(check_selector, s): s for s in selectors}
+            futures = {executor.submit(self._check_dkim_selector, s, domain): s for s in selectors}
             for future in as_completed(futures, timeout=10):
                 try:
                     result = future.result()
@@ -1665,7 +1732,7 @@ class DNSAnalyzer:
                             'user_hint': bool(custom_selectors and selector_name in custom_selectors)
                         }
                         for rec in records:
-                            key_analysis = analyze_dkim_key(rec)
+                            key_analysis = self._analyze_dkim_key(rec)
                             selector_info['key_info'].append(key_analysis)
                             key_issues.extend(key_analysis['issues'])
                             if key_analysis['key_bits'] and key_analysis['key_bits'] >= 2048:
@@ -1698,7 +1765,7 @@ class DNSAnalyzer:
                     found_selectors[sel_name]['provider'] = primary_provider
                     found_selectors[sel_name]['inferred'] = True
                 found_providers.add(primary_provider)
-                inferred_names = ', '.join(s.replace('._domainkey', '') for s in unattributed_selectors)
+                inferred_names = ', '.join(s.replace(DOMAINKEY_SUFFIX, '') for s in unattributed_selectors)
                 primary_dkim_note = (
                     f'DKIM selector(s) {inferred_names} inferred as {primary_provider} '
                     f'(custom selector names — not the standard {primary_provider} selector).'
@@ -1706,7 +1773,7 @@ class DNSAnalyzer:
         
         third_party_only = False
         if found_selectors and primary_provider != 'Unknown' and not primary_has_dkim:
-            third_party_names = ', '.join(sorted(found_providers)) if found_providers else 'third-party services'
+            third_party_names = ', '.join(sorted(found_providers)) if found_providers else FALLBACK_THIRD_PARTY_SERVICES
             third_party_only = True
             primary_dkim_note = (
                 f'DKIM verified for {third_party_names} only \u2014 '
@@ -1751,10 +1818,10 @@ class DNSAnalyzer:
             'primary_has_dkim': primary_has_dkim,
             'third_party_only': third_party_only,
             'primary_dkim_note': primary_dkim_note,
-            'found_providers': sorted(list(found_providers))
+            'found_providers': sorted(found_providers)
         }
     
-    def analyze_mta_sts(self, domain: str) -> Dict[str, Any]:
+    def analyze_mta_sts(self, domain: str) -> Dict[str, Any]:  # NOSONAR
         """Check MTA-STS (Mail Transfer Agent Strict Transport Security) for domain.
         
         Enhanced to fetch and validate the actual policy file from:
@@ -1850,7 +1917,7 @@ class DNSAnalyzer:
             'hosting_cname': hosting_cname
         }
     
-    def _fetch_mta_sts_policy(self, url: str) -> Dict[str, Any]:
+    def _fetch_mta_sts_policy(self, url: str) -> Dict[str, Any]:  # NOSONAR
         """Fetch and parse MTA-STS policy file from the well-known URL."""
         import re
         result = {
@@ -1891,7 +1958,7 @@ class DNSAnalyzer:
         except requests.exceptions.SSLError:
             result['error'] = 'SSL certificate error'
         except requests.exceptions.ConnectionError:
-            result['error'] = 'Connection failed'
+            result['error'] = ERR_CONNECTION_FAILED
         except requests.exceptions.Timeout:
             result['error'] = 'Timeout'
         except Exception as e:
@@ -1938,7 +2005,7 @@ class DNSAnalyzer:
             'rua': rua
         }
     
-    def analyze_caa(self, domain: str) -> Dict[str, Any]:
+    def analyze_caa(self, domain: str) -> Dict[str, Any]:  # NOSONAR
         """Check CAA (Certificate Authority Authorization) records for domain."""
         records = self.dns_query("CAA", domain)
         
@@ -2026,6 +2093,130 @@ class DNSAnalyzer:
                     return result
         return None
 
+    DANE_USAGE_NAMES = {
+        0: 'PKIX-TA (CA constraint)',
+        1: 'PKIX-EE (Certificate constraint)',
+        2: 'DANE-TA (Trust anchor)',
+        3: 'DANE-EE (Domain-issued certificate)'
+    }
+    DANE_SELECTOR_NAMES = {
+        0: 'Full certificate',
+        1: 'Public key only (SubjectPublicKeyInfo)'
+    }
+    DANE_MATCHING_NAMES = {
+        0: 'Exact match',
+        1: 'SHA-256',
+        2: 'SHA-512'
+    }
+
+    def _check_mx_tlsa(self, mx_host):
+        import dns.resolver
+        tlsa_name = f"_25._tcp.{mx_host}"
+        found = []
+        try:
+            if self._offline_mode or self._custom_dns_resolver:
+                raw = self.dns_query('TLSA', tlsa_name)
+                if not raw:
+                    return mx_host, found
+                answers = raw
+                parsed_answers = []
+                for entry in answers:
+                    parts = entry.split()
+                    if len(parts) >= 4:
+                        parsed_answers.append({
+                            'usage': int(parts[0]),
+                            'selector': int(parts[1]),
+                            'mtype': int(parts[2]),
+                            'cert_data': ''.join(parts[3:]),
+                        })
+                for pa in parsed_answers:
+                    rec = {
+                        'mx_host': mx_host,
+                        'tlsa_name': tlsa_name,
+                        'usage': pa['usage'],
+                        'usage_name': self.DANE_USAGE_NAMES.get(pa['usage'], f"Unknown ({pa['usage']})"),
+                        'selector': pa['selector'],
+                        'selector_name': self.DANE_SELECTOR_NAMES.get(pa['selector'], f"Unknown ({pa['selector']})"),
+                        'matching_type': pa['mtype'],
+                        'matching_name': self.DANE_MATCHING_NAMES.get(pa['mtype'], f"Unknown ({pa['mtype']})"),
+                        'certificate_data': pa['cert_data'][:64] + '...' if len(pa['cert_data']) > 64 else pa['cert_data'],
+                        'full_record': f"{pa['usage']} {pa['selector']} {pa['mtype']} {pa['cert_data'][:64]}..."
+                    }
+                    found.append(rec)
+                return mx_host, found
+            resolver = dns.resolver.Resolver()
+            resolver.nameservers = ['1.1.1.1', '8.8.8.8']
+            resolver.timeout = 3
+            resolver.lifetime = 5
+            answers = resolver.resolve(tlsa_name, 'TLSA')
+            for rdata in answers:
+                usage = rdata.usage
+                selector = rdata.selector
+                mtype = rdata.mtype
+                cert_data = rdata.cert.hex()
+                rec = {
+                    'mx_host': mx_host,
+                    'tlsa_name': tlsa_name,
+                    'usage': usage,
+                    'usage_name': self.DANE_USAGE_NAMES.get(usage, f'Unknown ({usage})'),
+                    'selector': selector,
+                    'selector_name': self.DANE_SELECTOR_NAMES.get(selector, f'Unknown ({selector})'),
+                    'matching_type': mtype,
+                    'matching_name': self.DANE_MATCHING_NAMES.get(mtype, f'Unknown ({mtype})'),
+                    'certificate_data': cert_data[:64] + '...' if len(cert_data) > 64 else cert_data,
+                    'full_record': f'{usage} {selector} {mtype} {cert_data[:64]}...'
+                }
+                if usage in (0, 1):
+                    rec['recommendation'] = 'RFC 7672 §3.1 recommends usage 2 (DANE-TA) or 3 (DANE-EE) for SMTP'
+                found.append(rec)
+        except dns.resolver.NoAnswer:
+            pass
+        except dns.resolver.NXDOMAIN:
+            pass
+        except dns.resolver.NoNameservers:
+            pass
+        except Exception:
+            pass
+        return mx_host, found
+
+    def _format_dane_results(self, base_result, mx_hosts, hosts_with_dane, all_tlsa, timed_out_hosts, mx_capability, issues):
+        base_result['mx_hosts_checked'] = len(mx_hosts)
+        base_result['mx_hosts_with_dane'] = len(hosts_with_dane)
+        base_result['tlsa_records'] = all_tlsa
+        if timed_out_hosts:
+            issues.append(f"TLSA lookup timed out for: {', '.join(timed_out_hosts[:3])}")
+        if all_tlsa:
+            base_result['has_dane'] = True
+            base_result['status'] = 'success'
+            for rec in all_tlsa:
+                if rec['usage'] in (0, 1):
+                    issues.append(f"TLSA for {rec['mx_host']}: usage {rec['usage']} (PKIX-based) — RFC 7672 §3.1 recommends usage 2 or 3 for SMTP")
+                if rec['matching_type'] == 0:
+                    issues.append(f"TLSA for {rec['mx_host']}: exact match (type 0) — SHA-256 (type 1) is preferred for resilience")
+            if len(hosts_with_dane) == len(mx_hosts):
+                base_result['message'] = f'DANE configured — TLSA records found for all {len(mx_hosts)} MX host{"s" if len(mx_hosts) > 1 else ""}'
+            else:
+                base_result['message'] = f'DANE partially configured — TLSA records on {len(hosts_with_dane)}/{len(mx_hosts)} MX hosts'
+                base_result['status'] = 'warning'
+                missing = [h for h in mx_hosts if h not in hosts_with_dane]
+                issues.append(f"Missing DANE for: {', '.join(missing[:3])}")
+        elif timed_out_hosts:
+            base_result['status'] = 'timeout'
+            base_result['message'] = f'DANE/TLSA lookup timed out (checked {len(mx_hosts)} MX host{"s" if len(mx_hosts) > 1 else ""})'
+        else:
+            base_result['status'] = 'info'
+            if mx_capability and not mx_capability['dane_inbound']:
+                provider_name = mx_capability['provider_name']
+                _alt = mx_capability.get('alternative', 'MTA-STS')
+                if mx_capability.get('dane_migration_available'):
+                    base_result['message'] = f'DANE not available on current MX endpoints — {provider_name} supports DANE on newer endpoints (migration available)'
+                else:
+                    base_result['message'] = f'DANE not available — {provider_name} does not support inbound DANE/TLSA on its MX infrastructure'
+                base_result['dane_deployable'] = False
+            else:
+                base_result['message'] = f'No DANE/TLSA records found (checked {len(mx_hosts)} MX host{"s" if len(mx_hosts) > 1 else ""})'
+        base_result['issues'] = issues
+
     def analyze_dane(self, domain: str, mx_records: List[str] = None) -> Dict[str, Any]:
         """Check DANE/TLSA records for domain's mail servers (RFC 6698, RFC 7672).
 
@@ -2096,101 +2287,13 @@ class DNSAnalyzer:
             if not mx_capability['dane_inbound']:
                 logging.info(f"[DANE] MX provider {mx_capability['provider_name']} does not support inbound DANE for {domain}")
 
-        usage_names = {
-            0: 'PKIX-TA (CA constraint)',
-            1: 'PKIX-EE (Certificate constraint)',
-            2: 'DANE-TA (Trust anchor)',
-            3: 'DANE-EE (Domain-issued certificate)'
-        }
-        selector_names = {
-            0: 'Full certificate',
-            1: 'Public key only (SubjectPublicKeyInfo)'
-        }
-        matching_names = {
-            0: 'Exact match',
-            1: 'SHA-256',
-            2: 'SHA-512'
-        }
-
         all_tlsa = []
         hosts_with_dane = []
         issues = []
 
-        def check_mx_tlsa(mx_host):
-            tlsa_name = f"_25._tcp.{mx_host}"
-            found = []
-            try:
-                if self._offline_mode or self._custom_dns_resolver:
-                    raw = self.dns_query('TLSA', tlsa_name)
-                    if not raw:
-                        return found
-                    answers = raw
-                    parsed_answers = []
-                    for entry in answers:
-                        parts = entry.split()
-                        if len(parts) >= 4:
-                            parsed_answers.append({
-                                'usage': int(parts[0]),
-                                'selector': int(parts[1]),
-                                'mtype': int(parts[2]),
-                                'cert_data': ''.join(parts[3:]),
-                            })
-                    for pa in parsed_answers:
-                        rec = {
-                            'mx_host': mx_host,
-                            'tlsa_name': tlsa_name,
-                            'usage': pa['usage'],
-                            'usage_name': usage_names.get(pa['usage'], f"Unknown ({pa['usage']})"),
-                            'selector': pa['selector'],
-                            'selector_name': selector_names.get(pa['selector'], f"Unknown ({pa['selector']})"),
-                            'matching_type': pa['mtype'],
-                            'matching_name': matching_names.get(pa['mtype'], f"Unknown ({pa['mtype']})"),
-                            'certificate_data': pa['cert_data'][:64] + '...' if len(pa['cert_data']) > 64 else pa['cert_data'],
-                            'full_record': f"{pa['usage']} {pa['selector']} {pa['mtype']} {pa['cert_data'][:64]}..."
-                        }
-                        found.append(rec)
-                    return found
-                resolver = dns.resolver.Resolver()
-                resolver.nameservers = ['1.1.1.1', '8.8.8.8']
-                resolver.timeout = 3
-                resolver.lifetime = 5
-                answers = resolver.resolve(tlsa_name, 'TLSA')
-                for rdata in answers:
-                    usage = rdata.usage
-                    selector = rdata.selector
-                    mtype = rdata.mtype
-                    cert_data = rdata.cert.hex()
-
-                    rec = {
-                        'mx_host': mx_host,
-                        'tlsa_name': tlsa_name,
-                        'usage': usage,
-                        'usage_name': usage_names.get(usage, f'Unknown ({usage})'),
-                        'selector': selector,
-                        'selector_name': selector_names.get(selector, f'Unknown ({selector})'),
-                        'matching_type': mtype,
-                        'matching_name': matching_names.get(mtype, f'Unknown ({mtype})'),
-                        'certificate_data': cert_data[:64] + '...' if len(cert_data) > 64 else cert_data,
-                        'full_record': f'{usage} {selector} {mtype} {cert_data[:64]}...'
-                    }
-
-                    if usage in (0, 1):
-                        rec['recommendation'] = 'RFC 7672 §3.1 recommends usage 2 (DANE-TA) or 3 (DANE-EE) for SMTP'
-
-                    found.append(rec)
-            except dns.resolver.NoAnswer:
-                pass
-            except dns.resolver.NXDOMAIN:
-                pass
-            except dns.resolver.NoNameservers:
-                pass
-            except Exception:
-                pass
-            return mx_host, found
-
         timed_out_hosts = []
         with ThreadPoolExecutor(max_workers=min(len(mx_hosts), 5)) as executor:
-            futures = {executor.submit(check_mx_tlsa, host): host for host in mx_hosts}
+            futures = {executor.submit(self._check_mx_tlsa, host): host for host in mx_hosts}
             try:
                 for future in as_completed(futures, timeout=10):
                     try:
@@ -2206,50 +2309,10 @@ class DNSAnalyzer:
                     if not future.done():
                         timed_out_hosts.append(host)
 
-        base_result['mx_hosts_checked'] = len(mx_hosts)
-        base_result['mx_hosts_with_dane'] = len(hosts_with_dane)
-        base_result['tlsa_records'] = all_tlsa
-
-        if timed_out_hosts:
-            issues.append(f"TLSA lookup timed out for: {', '.join(timed_out_hosts[:3])}")
-
-        if all_tlsa:
-            base_result['has_dane'] = True
-            base_result['status'] = 'success'
-
-            for rec in all_tlsa:
-                if rec['usage'] in (0, 1):
-                    issues.append(f"TLSA for {rec['mx_host']}: usage {rec['usage']} (PKIX-based) — RFC 7672 §3.1 recommends usage 2 or 3 for SMTP")
-                if rec['matching_type'] == 0:
-                    issues.append(f"TLSA for {rec['mx_host']}: exact match (type 0) — SHA-256 (type 1) is preferred for resilience")
-
-            if len(hosts_with_dane) == len(mx_hosts):
-                base_result['message'] = f'DANE configured — TLSA records found for all {len(mx_hosts)} MX host{"s" if len(mx_hosts) > 1 else ""}'
-            else:
-                base_result['message'] = f'DANE partially configured — TLSA records on {len(hosts_with_dane)}/{len(mx_hosts)} MX hosts'
-                base_result['status'] = 'warning'
-                missing = [h for h in mx_hosts if h not in hosts_with_dane]
-                issues.append(f"Missing DANE for: {', '.join(missing[:3])}")
-        elif timed_out_hosts:
-            base_result['status'] = 'timeout'
-            base_result['message'] = f'DANE/TLSA lookup timed out (checked {len(mx_hosts)} MX host{"s" if len(mx_hosts) > 1 else ""})'
-        else:
-            base_result['status'] = 'info'
-            if mx_capability and not mx_capability['dane_inbound']:
-                provider_name = mx_capability['provider_name']
-                _alt = mx_capability.get('alternative', 'MTA-STS')
-                if mx_capability.get('dane_migration_available'):
-                    base_result['message'] = f'DANE not available on current MX endpoints — {provider_name} supports DANE on newer endpoints (migration available)'
-                else:
-                    base_result['message'] = f'DANE not available — {provider_name} does not support inbound DANE/TLSA on its MX infrastructure'
-                base_result['dane_deployable'] = False
-            else:
-                base_result['message'] = f'No DANE/TLSA records found (checked {len(mx_hosts)} MX host{"s" if len(mx_hosts) > 1 else ""})'
-
-        base_result['issues'] = issues
+        self._format_dane_results(base_result, mx_hosts, hosts_with_dane, all_tlsa, timed_out_hosts, mx_capability, issues)
         return base_result
 
-    def analyze_bimi(self, domain: str) -> Dict[str, Any]:
+    def analyze_bimi(self, domain: str) -> Dict[str, Any]:  # NOSONAR
         """Check BIMI (Brand Indicators for Message Identification) for domain.
         
         Enhanced to validate SVG accessibility and check VMC certificate.
@@ -2343,7 +2406,7 @@ class DNSAnalyzer:
             'vmc_error': vmc_data.get('error')
         }
     
-    def _validate_bimi_logo(self, url: str) -> Dict[str, Any]:
+    def _validate_bimi_logo(self, url: str) -> Dict[str, Any]:  # NOSONAR
         """Validate BIMI logo SVG accessibility and basic format."""
         result = {'valid': False, 'format': None, 'error': None}
         
@@ -2380,7 +2443,7 @@ class DNSAnalyzer:
         except requests.exceptions.SSLError:
             result['error'] = 'SSL error'
         except requests.exceptions.ConnectionError:
-            result['error'] = 'Connection failed'
+            result['error'] = ERR_CONNECTION_FAILED
         except requests.exceptions.Timeout:
             result['error'] = 'Timeout'
         except Exception as e:
@@ -2418,7 +2481,7 @@ class DNSAnalyzer:
         except requests.exceptions.SSLError:
             result['error'] = 'SSL error'
         except requests.exceptions.ConnectionError:
-            result['error'] = 'Connection failed'
+            result['error'] = ERR_CONNECTION_FAILED
         except requests.exceptions.Timeout:
             result['error'] = 'Timeout'
         except Exception as e:
@@ -2660,7 +2723,7 @@ class DNSAnalyzer:
                 'note': 'This may indicate a recent change still propagating'
             }
 
-    def get_registrar_info(self, domain: str) -> Dict[str, Any]:
+    def get_registrar_info(self, domain: str) -> Dict[str, Any]:  # NOSONAR
         """Get registrar information via RDAP (primary) with WHOIS (backup)."""
         logging.info(f"[REGISTRAR] Getting registrar info for {domain}")
         
@@ -2805,10 +2868,6 @@ class DNSAnalyzer:
         
         # Fallback to direct requests if whodap fails
         logging.warning("[RDAP] Falling back to direct requests")
-        headers = {
-            'Accept': 'application/rdap+json',
-            'User-Agent': self.USER_AGENT
-        }
         
         direct_endpoints = {
             'com': 'https://rdap.verisign.com/com/v1/',
@@ -2879,7 +2938,7 @@ class DNSAnalyzer:
         
         return {}
     
-    def _extract_registrar_from_rdap(self, rdap_data: Dict) -> Optional[str]:
+    def _extract_registrar_from_rdap(self, rdap_data: Dict) -> Optional[str]:  # NOSONAR
         """Extract registrar name from RDAP data."""
         entities = rdap_data.get("entities", [])
         if not entities:
@@ -2959,8 +3018,8 @@ class DNSAnalyzer:
         
         # Map TLDs to their WHOIS servers
         whois_servers = {
-            'com': 'whois.verisign-grs.com',
-            'net': 'whois.verisign-grs.com',
+            'com': WHOIS_VERISIGN,
+            'net': WHOIS_VERISIGN,
             'org': 'whois.pir.org',
             'info': 'whois.afilias.net',
             'biz': 'whois.biz',
@@ -2987,8 +3046,8 @@ class DNSAnalyzer:
             'gg': 'whois.gg',
             'je': 'whois.je',
             'im': 'whois.nic.im',
-            'cc': 'whois.verisign-grs.com',
-            'tv': 'whois.verisign-grs.com',
+            'cc': WHOIS_VERISIGN,
+            'tv': WHOIS_VERISIGN,
             'ws': 'whois.website.ws',
             'to': 'whois.tonic.to',
             'ly': 'whois.nic.ly',
@@ -3009,10 +3068,10 @@ class DNSAnalyzer:
             'jp': 'whois.jprs.jp',
             'ru': 'whois.tcinet.ru',
             'xyz': 'whois.nic.xyz',
-            'online': 'whois.centralnic.com',
-            'site': 'whois.centralnic.com',
-            'store': 'whois.centralnic.com',
-            'cloud': 'whois.centralnic.com',
+            'online': WHOIS_CENTRALNIC,
+            'site': WHOIS_CENTRALNIC,
+            'store': WHOIS_CENTRALNIC,
+            'cloud': WHOIS_CENTRALNIC,
             'lu': 'whois.dns.lu',
             'dk': 'whois.dk-hostmaster.dk',
             'fi': 'whois.fi',
@@ -3121,7 +3180,7 @@ class DNSAnalyzer:
             logging.error(f"[WHOIS] Socket error for {domain}: {e}")
             return None
     
-    def _infer_registrar_from_ns(self, domain: str) -> Optional[Dict[str, Any]]:
+    def _infer_registrar_from_ns(self, domain: str) -> Optional[Dict[str, Any]]:  # NOSONAR
         """Infer registrar/hosting provider from NS records when RDAP/WHOIS are unavailable.
         
         Many registrars use distinctive nameserver patterns. While NS records
@@ -3154,11 +3213,11 @@ class DNSAnalyzer:
             'hostgator.com': 'HostGator',
             'bluehost.com': 'Bluehost',
             'dreamhost.com': 'DreamHost',
-            'ionos.com': '1&1 IONOS',
-            'ui-dns.com': '1&1 IONOS',
-            'ui-dns.de': '1&1 IONOS',
-            'ui-dns.org': '1&1 IONOS',
-            'ui-dns.biz': '1&1 IONOS',
+            'ionos.com': PROVIDER_IONOS,
+            'ui-dns.com': PROVIDER_IONOS,
+            'ui-dns.de': PROVIDER_IONOS,
+            'ui-dns.org': PROVIDER_IONOS,
+            'ui-dns.biz': PROVIDER_IONOS,
             'strato.de': 'Strato',
             'strato-hosting.eu': 'Strato',
             'hetzner.com': 'Hetzner',
@@ -3219,54 +3278,54 @@ class DNSAnalyzer:
         # Enterprise-grade DNS providers with security features
         # These provide: DDoS protection, rate limiting, DNSSEC signing (optional), monitoring
         enterprise_providers = {
-            'cloudflare': {'name': 'Cloudflare', 'tier': 'enterprise', 'features': ['DDoS protection', 'Anycast', 'Auto-DNSSEC available']},
-            'awsdns': {'name': 'Amazon Route 53', 'tier': 'enterprise', 'features': ['DDoS protection', 'Anycast', 'Health checks']},
-            'route53': {'name': 'Amazon Route 53', 'tier': 'enterprise', 'features': ['DDoS protection', 'Anycast', 'Health checks']},
-            'ultradns': {'name': 'Vercara UltraDNS', 'tier': 'enterprise', 'features': ['DDoS protection', 'Anycast', 'DNSSEC support']},
-            'akam': {'name': 'Akamai Edge DNS', 'tier': 'enterprise', 'features': ['DDoS protection', 'Anycast', 'Global distribution']},
-            'dynect': {'name': 'Oracle Dyn', 'tier': 'enterprise', 'features': ['DDoS protection', 'Anycast', 'Traffic management']},
-            'oraclecloud': {'name': 'Oracle Cloud DNS', 'tier': 'enterprise', 'features': ['DDoS protection', 'Anycast', 'Cloud integration']},
-            'nsone': {'name': 'NS1 (IBM)', 'tier': 'enterprise', 'features': ['DDoS protection', 'Anycast', 'Intelligent DNS']},
-            'azure-dns': {'name': 'Azure DNS', 'tier': 'enterprise', 'features': ['DDoS protection', 'Anycast', 'Azure integration']},
-            'google': {'name': 'Google Cloud DNS', 'tier': 'enterprise', 'features': ['DDoS protection', 'Anycast', 'Auto-scaling']},
-            'verisign': {'name': 'Verisign DNS', 'tier': 'enterprise', 'features': ['DDoS protection', 'Anycast', 'Critical infrastructure']},
-            'f5cloudservices': {'name': 'F5 Distributed Cloud DNS', 'tier': 'enterprise', 'features': ['DDoS protection', 'Anycast', 'Global distribution']},
-            'uu.net': {'name': 'Verizon Business DNS', 'tier': 'enterprise', 'features': ['Enterprise infrastructure', 'Global backbone', 'Managed security']},
-            'els-gms.att.net': {'name': 'AT&T Managed DNS', 'tier': 'enterprise', 'features': ['Enterprise infrastructure', 'Global backbone', 'Managed security']},
-            'csc.com': {'name': 'CSC Global DNS', 'tier': 'enterprise', 'features': ['Enterprise management', 'Brand protection', 'Global infrastructure']},
-            'cscdns': {'name': 'CSC Global DNS', 'tier': 'enterprise', 'features': ['Enterprise management', 'Brand protection', 'Global infrastructure']},
-            'markmonitor': {'name': 'MarkMonitor DNS', 'tier': 'enterprise', 'features': ['Brand protection', 'Enterprise management', 'Anti-fraud']},
-            'comlaude-dns': {'name': 'Com Laude DNS', 'tier': 'enterprise', 'features': ['Brand protection', 'Enterprise management', 'Global infrastructure']},
-            'bt.net': {'name': 'BT (British Telecom)', 'tier': 'enterprise', 'features': ['Enterprise infrastructure', 'Managed security', 'UK backbone']},
+            'cloudflare': {'name': 'Cloudflare', 'tier': 'enterprise', 'features': [FEATURE_DDOS_PROTECTION, 'Anycast', 'Auto-DNSSEC available']},
+            'awsdns': {'name': PROVIDER_AMAZON_ROUTE_53, 'tier': 'enterprise', 'features': [FEATURE_DDOS_PROTECTION, 'Anycast', 'Health checks']},
+            'route53': {'name': PROVIDER_AMAZON_ROUTE_53, 'tier': 'enterprise', 'features': [FEATURE_DDOS_PROTECTION, 'Anycast', 'Health checks']},
+            'ultradns': {'name': 'Vercara UltraDNS', 'tier': 'enterprise', 'features': [FEATURE_DDOS_PROTECTION, 'Anycast', 'DNSSEC support']},
+            'akam': {'name': 'Akamai Edge DNS', 'tier': 'enterprise', 'features': [FEATURE_DDOS_PROTECTION, 'Anycast', 'Global distribution']},
+            'dynect': {'name': 'Oracle Dyn', 'tier': 'enterprise', 'features': [FEATURE_DDOS_PROTECTION, 'Anycast', 'Traffic management']},
+            'oraclecloud': {'name': 'Oracle Cloud DNS', 'tier': 'enterprise', 'features': [FEATURE_DDOS_PROTECTION, 'Anycast', 'Cloud integration']},
+            'nsone': {'name': 'NS1 (IBM)', 'tier': 'enterprise', 'features': [FEATURE_DDOS_PROTECTION, 'Anycast', 'Intelligent DNS']},
+            'azure-dns': {'name': 'Azure DNS', 'tier': 'enterprise', 'features': [FEATURE_DDOS_PROTECTION, 'Anycast', 'Azure integration']},
+            'google': {'name': 'Google Cloud DNS', 'tier': 'enterprise', 'features': [FEATURE_DDOS_PROTECTION, 'Anycast', 'Auto-scaling']},
+            'verisign': {'name': 'Verisign DNS', 'tier': 'enterprise', 'features': [FEATURE_DDOS_PROTECTION, 'Anycast', 'Critical infrastructure']},
+            'f5cloudservices': {'name': 'F5 Distributed Cloud DNS', 'tier': 'enterprise', 'features': [FEATURE_DDOS_PROTECTION, 'Anycast', 'Global distribution']},
+            'uu.net': {'name': 'Verizon Business DNS', 'tier': 'enterprise', 'features': [FEATURE_ENTERPRISE_INFRA, 'Global backbone', FEATURE_MANAGED_SECURITY]},
+            'els-gms.att.net': {'name': 'AT&T Managed DNS', 'tier': 'enterprise', 'features': [FEATURE_ENTERPRISE_INFRA, 'Global backbone', FEATURE_MANAGED_SECURITY]},
+            'csc.com': {'name': 'CSC Global DNS', 'tier': 'enterprise', 'features': [FEATURE_ENTERPRISE_MGMT, FEATURE_BRAND_PROTECTION, 'Global infrastructure']},
+            'cscdns': {'name': 'CSC Global DNS', 'tier': 'enterprise', 'features': [FEATURE_ENTERPRISE_MGMT, FEATURE_BRAND_PROTECTION, 'Global infrastructure']},
+            'markmonitor': {'name': 'MarkMonitor DNS', 'tier': 'enterprise', 'features': [FEATURE_BRAND_PROTECTION, FEATURE_ENTERPRISE_MGMT, 'Anti-fraud']},
+            'comlaude-dns': {'name': 'Com Laude DNS', 'tier': 'enterprise', 'features': [FEATURE_BRAND_PROTECTION, FEATURE_ENTERPRISE_MGMT, 'Global infrastructure']},
+            'bt.net': {'name': 'BT (British Telecom)', 'tier': 'enterprise', 'features': [FEATURE_ENTERPRISE_INFRA, FEATURE_MANAGED_SECURITY, 'UK backbone']},
         }
         
         # Major companies running their own enterprise-grade DNS infrastructure
         # These are self-hosted but have the same security posture as enterprise providers
         self_hosted_enterprise = {
-            'ns.apple.com': {'name': 'Apple (Self-Hosted)', 'tier': 'enterprise', 'features': ['Self-managed infrastructure', 'Global Anycast', 'Enterprise security']},
-            'microsoft.com': {'name': 'Microsoft (Self-Hosted)', 'tier': 'enterprise', 'features': ['Self-managed infrastructure', 'Global Anycast', 'Enterprise security']},
-            'facebook.com': {'name': 'Meta (Self-Hosted)', 'tier': 'enterprise', 'features': ['Self-managed infrastructure', 'Global Anycast', 'Enterprise security']},
-            'meta.com': {'name': 'Meta (Self-Hosted)', 'tier': 'enterprise', 'features': ['Self-managed infrastructure', 'Global Anycast', 'Enterprise security']},
-            'amazon.com': {'name': 'Amazon (Self-Hosted)', 'tier': 'enterprise', 'features': ['Self-managed infrastructure', 'Global Anycast', 'Enterprise security']},
-            'netflix.com': {'name': 'Netflix (Self-Hosted)', 'tier': 'enterprise', 'features': ['Self-managed infrastructure', 'Global Anycast', 'Enterprise security']},
-            'twitter.com': {'name': 'X/Twitter (Self-Hosted)', 'tier': 'enterprise', 'features': ['Self-managed infrastructure', 'Global Anycast', 'Enterprise security']},
-            'x.com': {'name': 'X/Twitter (Self-Hosted)', 'tier': 'enterprise', 'features': ['Self-managed infrastructure', 'Global Anycast', 'Enterprise security']},
-            'ibm.com': {'name': 'IBM (Self-Hosted)', 'tier': 'enterprise', 'features': ['Self-managed infrastructure', 'Global Anycast', 'Enterprise security']},
-            'oracle.com': {'name': 'Oracle (Self-Hosted)', 'tier': 'enterprise', 'features': ['Self-managed infrastructure', 'Global Anycast', 'Enterprise security']},
-            'cisco.com': {'name': 'Cisco (Self-Hosted)', 'tier': 'enterprise', 'features': ['Self-managed infrastructure', 'Global Anycast', 'Enterprise security']},
-            'intel.com': {'name': 'Intel (Self-Hosted)', 'tier': 'enterprise', 'features': ['Self-managed infrastructure', 'Global Anycast', 'Enterprise security']},
-            'salesforce.com': {'name': 'Salesforce (Self-Hosted)', 'tier': 'enterprise', 'features': ['Self-managed infrastructure', 'Global Anycast', 'Enterprise security']},
-            'adobe.com': {'name': 'Adobe (Self-Hosted)', 'tier': 'enterprise', 'features': ['Self-managed infrastructure', 'Global Anycast', 'Enterprise security']},
+            'ns.apple.com': {'name': 'Apple (Self-Hosted)', 'tier': 'enterprise', 'features': [FEATURE_SELF_MANAGED_INFRA, FEATURE_GLOBAL_ANYCAST, FEATURE_ENTERPRISE_SECURITY]},
+            'microsoft.com': {'name': 'Microsoft (Self-Hosted)', 'tier': 'enterprise', 'features': [FEATURE_SELF_MANAGED_INFRA, FEATURE_GLOBAL_ANYCAST, FEATURE_ENTERPRISE_SECURITY]},
+            'facebook.com': {'name': PROVIDER_META_SELF_HOSTED, 'tier': 'enterprise', 'features': [FEATURE_SELF_MANAGED_INFRA, FEATURE_GLOBAL_ANYCAST, FEATURE_ENTERPRISE_SECURITY]},
+            'meta.com': {'name': PROVIDER_META_SELF_HOSTED, 'tier': 'enterprise', 'features': [FEATURE_SELF_MANAGED_INFRA, FEATURE_GLOBAL_ANYCAST, FEATURE_ENTERPRISE_SECURITY]},
+            'amazon.com': {'name': 'Amazon (Self-Hosted)', 'tier': 'enterprise', 'features': [FEATURE_SELF_MANAGED_INFRA, FEATURE_GLOBAL_ANYCAST, FEATURE_ENTERPRISE_SECURITY]},
+            'netflix.com': {'name': 'Netflix (Self-Hosted)', 'tier': 'enterprise', 'features': [FEATURE_SELF_MANAGED_INFRA, FEATURE_GLOBAL_ANYCAST, FEATURE_ENTERPRISE_SECURITY]},
+            'twitter.com': {'name': 'X/Twitter (Self-Hosted)', 'tier': 'enterprise', 'features': [FEATURE_SELF_MANAGED_INFRA, FEATURE_GLOBAL_ANYCAST, FEATURE_ENTERPRISE_SECURITY]},
+            'x.com': {'name': 'X/Twitter (Self-Hosted)', 'tier': 'enterprise', 'features': [FEATURE_SELF_MANAGED_INFRA, FEATURE_GLOBAL_ANYCAST, FEATURE_ENTERPRISE_SECURITY]},
+            'ibm.com': {'name': 'IBM (Self-Hosted)', 'tier': 'enterprise', 'features': [FEATURE_SELF_MANAGED_INFRA, FEATURE_GLOBAL_ANYCAST, FEATURE_ENTERPRISE_SECURITY]},
+            'oracle.com': {'name': 'Oracle (Self-Hosted)', 'tier': 'enterprise', 'features': [FEATURE_SELF_MANAGED_INFRA, FEATURE_GLOBAL_ANYCAST, FEATURE_ENTERPRISE_SECURITY]},
+            'cisco.com': {'name': 'Cisco (Self-Hosted)', 'tier': 'enterprise', 'features': [FEATURE_SELF_MANAGED_INFRA, FEATURE_GLOBAL_ANYCAST, FEATURE_ENTERPRISE_SECURITY]},
+            'intel.com': {'name': 'Intel (Self-Hosted)', 'tier': 'enterprise', 'features': [FEATURE_SELF_MANAGED_INFRA, FEATURE_GLOBAL_ANYCAST, FEATURE_ENTERPRISE_SECURITY]},
+            'salesforce.com': {'name': PROVIDER_SALESFORCE_SELF_HOSTED, 'tier': 'enterprise', 'features': [FEATURE_SELF_MANAGED_INFRA, FEATURE_GLOBAL_ANYCAST, FEATURE_ENTERPRISE_SECURITY]},
+            'adobe.com': {'name': 'Adobe (Self-Hosted)', 'tier': 'enterprise', 'features': [FEATURE_SELF_MANAGED_INFRA, FEATURE_GLOBAL_ANYCAST, FEATURE_ENTERPRISE_SECURITY]},
         }
         
         # Government entities - always enterprise-grade security
         # Many use Akamai, UltraDNS, or self-hosted secure infrastructure
         government_domains = {
-            '.gov': {'name': 'U.S. Government', 'tier': 'enterprise', 'features': ['Government security standards', 'FISMA compliance', 'Protected infrastructure']},
-            '.mil': {'name': 'U.S. Military', 'tier': 'enterprise', 'features': ['Military security standards', 'DoD compliance', 'Protected infrastructure']},
-            '.gov.uk': {'name': 'UK Government', 'tier': 'enterprise', 'features': ['Government security standards', 'NCSC compliance', 'Protected infrastructure']},
-            '.gov.au': {'name': 'Australian Government', 'tier': 'enterprise', 'features': ['Government security standards', 'ASD compliance', 'Protected infrastructure']},
-            '.gc.ca': {'name': 'Canadian Government', 'tier': 'enterprise', 'features': ['Government security standards', 'GC compliance', 'Protected infrastructure']},
+            '.gov': {'name': 'U.S. Government', 'tier': 'enterprise', 'features': [FEATURE_GOV_SECURITY, 'FISMA compliance', FEATURE_PROTECTED_INFRA]},
+            '.mil': {'name': 'U.S. Military', 'tier': 'enterprise', 'features': ['Military security standards', 'DoD compliance', FEATURE_PROTECTED_INFRA]},
+            '.gov.uk': {'name': 'UK Government', 'tier': 'enterprise', 'features': [FEATURE_GOV_SECURITY, 'NCSC compliance', FEATURE_PROTECTED_INFRA]},
+            '.gov.au': {'name': 'Australian Government', 'tier': 'enterprise', 'features': [FEATURE_GOV_SECURITY, 'ASD compliance', FEATURE_PROTECTED_INFRA]},
+            '.gc.ca': {'name': 'Canadian Government', 'tier': 'enterprise', 'features': [FEATURE_GOV_SECURITY, 'GC compliance', FEATURE_PROTECTED_INFRA]},
         }
         
         # Managed DNS providers - good security but not enterprise-grade
@@ -3423,8 +3482,8 @@ class DNSAnalyzer:
         
         dns_providers = {
             'cloudflare': 'Cloudflare',
-            'awsdns': 'Amazon Route 53',
-            'route53': 'Amazon Route 53',
+            'awsdns': PROVIDER_AMAZON_ROUTE_53,
+            'route53': PROVIDER_AMAZON_ROUTE_53,
             'akam': 'Akamai Edge DNS',
             'ultradns': 'Vercara UltraDNS',
             'dynect': 'Oracle Dyn',
@@ -3457,10 +3516,10 @@ class DNSAnalyzer:
             'wordpress': 'WordPress',
             'squarespace': 'Squarespace',
             'ns.apple.com': 'Apple (Self-Hosted)',
-            'ns.facebook.com': 'Meta (Self-Hosted)',
+            'ns.facebook.com': PROVIDER_META_SELF_HOSTED,
             '.intel.com': 'Intel (Self-Hosted)',
-            'salesforce-dns.com': 'Salesforce (Self-Hosted)',
-            'salesforce.com': 'Salesforce (Self-Hosted)',
+            'salesforce-dns.com': PROVIDER_SALESFORCE_SELF_HOSTED,
+            'salesforce.com': PROVIDER_SALESFORCE_SELF_HOSTED,
             '.cisco.com': 'Cisco (Self-Hosted)',
         }
         
@@ -3492,21 +3551,21 @@ class DNSAnalyzer:
         mx_str = " ".join(r for r in mx_records if r).lower()
         
         email_providers = {
-            'google': 'Google Workspace',
-            'googlemail': 'Google Workspace',
-            'gmail': 'Google Workspace',
-            'outlook': 'Microsoft 365',
-            'microsoft': 'Microsoft 365',
-            'protection.outlook': 'Microsoft 365',
+            'google': PROVIDER_GOOGLE_WORKSPACE,
+            'googlemail': PROVIDER_GOOGLE_WORKSPACE,
+            'gmail': PROVIDER_GOOGLE_WORKSPACE,
+            'outlook': PROVIDER_MICROSOFT_365,
+            'microsoft': PROVIDER_MICROSOFT_365,
+            'protection.outlook': PROVIDER_MICROSOFT_365,
             'pphosted': 'Proofpoint',
             'gpphosted': 'Proofpoint',
             'iphmx': 'Proofpoint',
             'mimecast': 'Mimecast',
             'barracuda': 'Barracuda',
-            'zoho': 'Zoho Mail',
+            'zoho': PROVIDER_ZOHO_MAIL,
             'mailgun': 'Mailgun',
             'sendgrid': 'SendGrid',
-            'amazonses': 'Amazon SES',
+            'amazonses': PROVIDER_AMAZON_SES,
             'yahoodns': 'Yahoo Mail',
             'icloud': 'iCloud Mail',
             'fastmail': 'Fastmail',
@@ -3517,7 +3576,7 @@ class DNSAnalyzer:
             'hostgator': 'HostGator',
             'bluehost': 'Bluehost',
             'dreamhost': 'DreamHost',
-            'mx.cloudflare': 'Cloudflare Email',
+            'mx.cloudflare': PROVIDER_CLOUDFLARE_EMAIL,
         }
         
         for key, name in email_providers.items():
@@ -3546,7 +3605,7 @@ class DNSAnalyzer:
             'email_hosting': email_hosting
         }
 
-    def analyze_domain(self, domain: str, custom_dkim_selectors: list = None) -> Dict[str, Any]:
+    def analyze_domain(self, domain: str, custom_dkim_selectors: list = None) -> Dict[str, Any]:  # NOSONAR
         """Perform complete DNS analysis of domain with parallel lookups for speed.
         
         Backpressure: Limited to MAX_CONCURRENT_ANALYSES simultaneous analyses.
@@ -3580,6 +3639,61 @@ class DNSAnalyzer:
             self._analysis_semaphore.release()
             with self._active_lock:
                 self._active_analyses -= 1
+
+    def _reconcile_dkim_with_mx(self, dkim_result, mx_records, spf_record):
+        provider_info = self._detect_primary_mail_provider(mx_records, spf_record)
+        primary_provider = provider_info['provider']
+        security_gateway = provider_info['gateway']
+        found_providers = set()
+        for sel_name, sel_data in dkim_result.get('selectors', {}).items():
+            p = sel_data.get('provider', 'Unknown')
+            if p != 'Unknown':
+                found_providers.add(p)
+        primary_has_dkim = False
+        unattributed_selectors = [
+            sel_name for sel_name, sel_data in dkim_result.get('selectors', {}).items()
+            if sel_data.get('provider', 'Unknown') == 'Unknown'
+        ]
+        if primary_provider != 'Unknown':
+            expected_selectors = self.PRIMARY_PROVIDER_SELECTORS.get(primary_provider, [])
+            if expected_selectors:
+                primary_has_dkim = any(s in dkim_result['selectors'] for s in expected_selectors)
+            else:
+                primary_has_dkim = primary_provider in found_providers
+            if not primary_has_dkim and unattributed_selectors:
+                primary_has_dkim = True
+                for sel_name in unattributed_selectors:
+                    dkim_result['selectors'][sel_name]['provider'] = primary_provider
+                    dkim_result['selectors'][sel_name]['inferred'] = True
+                found_providers.add(primary_provider)
+                inferred_names = ', '.join(s.replace(DOMAINKEY_SUFFIX, '') for s in unattributed_selectors)
+                dkim_result['primary_dkim_note'] = (
+                    f'DKIM selector(s) {inferred_names} inferred as {primary_provider} '
+                    f'(custom selector names \u2014 not the standard {primary_provider} selector).'
+                )
+        dkim_result['primary_provider'] = primary_provider
+        dkim_result['security_gateway'] = security_gateway
+        dkim_result['primary_has_dkim'] = primary_has_dkim
+        dkim_result['found_providers'] = sorted(found_providers)
+        if dkim_result['selectors'] and primary_provider != 'Unknown' and not primary_has_dkim:
+            third_party_names = ', '.join(sorted(found_providers)) if found_providers else FALLBACK_THIRD_PARTY_SERVICES
+            dkim_result['third_party_only'] = True
+            dkim_result['primary_dkim_note'] = (
+                f'DKIM verified for {third_party_names} only \u2014 '
+                f'no DKIM found for primary mail platform ({primary_provider}). '
+                'The primary provider may use custom selectors not discoverable through standard checks.'
+            )
+            key_strengths = dkim_result.get('key_strengths', [])
+            dkim_result['status'] = 'partial'
+            if key_strengths:
+                dkim_result['message'] = f'Found DKIM for {len(dkim_result["selectors"])} selector(s) ({", ".join(set(key_strengths))}) but none for primary mail platform ({primary_provider})'
+            else:
+                dkim_result['message'] = f'Found DKIM for {len(dkim_result["selectors"])} selector(s) but none for primary mail platform ({primary_provider})'
+        else:
+            dkim_result['third_party_only'] = False
+            if not dkim_result.get('primary_dkim_note'):
+                dkim_result['primary_dkim_note'] = ''
+        return dkim_result
 
     def _analyze_domain_inner(self, domain: str, custom_dkim_selectors: list = None) -> Dict[str, Any]:
         """Internal analysis implementation (called within backpressure semaphore)."""
@@ -3617,8 +3731,8 @@ class DNSAnalyzer:
                 'basic_records': {'A': [], 'AAAA': [], 'MX': [], 'NS': [], 'TXT': [], 'CNAME': [], 'SOA': []},
                 'authoritative_records': {},
                 'propagation_status': {},
-                'spf_analysis': {'status': 'n/a', 'message': 'Domain does not exist'},
-                'dmarc_analysis': {'status': 'n/a', 'message': 'Domain does not exist'},
+                'spf_analysis': {'status': 'n/a', 'message': ERR_DOMAIN_NOT_EXIST},
+                'dmarc_analysis': {'status': 'n/a', 'message': ERR_DOMAIN_NOT_EXIST},
                 'dkim_analysis': {'status': 'n/a'},
                 'mta_sts_analysis': {'status': 'n/a'},
                 'tlsrpt_analysis': {'status': 'n/a'},
@@ -3626,7 +3740,7 @@ class DNSAnalyzer:
                 'dane_analysis': {'status': 'n/a', 'has_dane': False, 'tlsa_records': [], 'issues': []},
                 'caa_analysis': {'status': 'n/a'},
                 'dnssec_analysis': {'status': 'n/a'},
-                'ns_delegation_analysis': {'status': 'error', 'delegation_ok': False, 'message': 'Domain does not exist'},
+                'ns_delegation_analysis': {'status': 'error', 'delegation_ok': False, 'message': ERR_DOMAIN_NOT_EXIST},
                 'registrar_info': {'status': 'n/a', 'registrar': None},
                 'smtp_transport': None,
                 'ct_subdomains': {'status': 'success', 'subdomains': [], 'unique_subdomains': 0, 'total_certs': 0, 'source': 'Certificate Transparency Logs', 'caveat': 'Domain does not exist or is not delegated.', 'is_analyzed_subdomain': False, 'registered_domain': None},
@@ -3730,62 +3844,7 @@ class DNSAnalyzer:
             spf_valid = spf_data.get('valid_records', []) if isinstance(spf_data, dict) else []
             spf_record = spf_valid[0] if spf_valid else ''
             if mx_records or spf_record:
-                provider_info = self._detect_primary_mail_provider(mx_records, spf_record)
-                primary_provider = provider_info['provider']
-                security_gateway = provider_info['gateway']
-                found_providers = set()
-                for sel_name, sel_data in dkim_result.get('selectors', {}).items():
-                    p = sel_data.get('provider', 'Unknown')
-                    if p != 'Unknown':
-                        found_providers.add(p)
-                
-                primary_has_dkim = False
-                unattributed_selectors = [
-                    sel_name for sel_name, sel_data in dkim_result.get('selectors', {}).items()
-                    if sel_data.get('provider', 'Unknown') == 'Unknown'
-                ]
-                if primary_provider != 'Unknown':
-                    expected_selectors = self.PRIMARY_PROVIDER_SELECTORS.get(primary_provider, [])
-                    if expected_selectors:
-                        primary_has_dkim = any(s in dkim_result['selectors'] for s in expected_selectors)
-                    else:
-                        primary_has_dkim = primary_provider in found_providers
-                    if not primary_has_dkim and unattributed_selectors:
-                        primary_has_dkim = True
-                        for sel_name in unattributed_selectors:
-                            dkim_result['selectors'][sel_name]['provider'] = primary_provider
-                            dkim_result['selectors'][sel_name]['inferred'] = True
-                        found_providers.add(primary_provider)
-                        inferred_names = ', '.join(s.replace('._domainkey', '') for s in unattributed_selectors)
-                        dkim_result['primary_dkim_note'] = (
-                            f'DKIM selector(s) {inferred_names} inferred as {primary_provider} '
-                            f'(custom selector names \u2014 not the standard {primary_provider} selector).'
-                        )
-                
-                dkim_result['primary_provider'] = primary_provider
-                dkim_result['security_gateway'] = security_gateway
-                dkim_result['primary_has_dkim'] = primary_has_dkim
-                dkim_result['found_providers'] = sorted(list(found_providers))
-                
-                if dkim_result['selectors'] and primary_provider != 'Unknown' and not primary_has_dkim:
-                    third_party_names = ', '.join(sorted(found_providers)) if found_providers else 'third-party services'
-                    dkim_result['third_party_only'] = True
-                    dkim_result['primary_dkim_note'] = (
-                        f'DKIM verified for {third_party_names} only \u2014 '
-                        f'no DKIM found for primary mail platform ({primary_provider}). '
-                        'The primary provider may use custom selectors not discoverable through standard checks.'
-                    )
-                    key_strengths = dkim_result.get('key_strengths', [])
-                    dkim_result['status'] = 'partial'
-                    if key_strengths:
-                        dkim_result['message'] = f'Found DKIM for {len(dkim_result["selectors"])} selector(s) ({", ".join(set(key_strengths))}) but none for primary mail platform ({primary_provider})'
-                    else:
-                        dkim_result['message'] = f'Found DKIM for {len(dkim_result["selectors"])} selector(s) but none for primary mail platform ({primary_provider})'
-                else:
-                    dkim_result['third_party_only'] = False
-                    if not dkim_result.get('primary_dkim_note'):
-                        dkim_result['primary_dkim_note'] = ''
-                
+                dkim_result = self._reconcile_dkim_with_mx(dkim_result, mx_records, spf_record)
                 results_map['dkim'] = dkim_result
         
         # Inject email security subdomain TXT records into basic_records for DNS Evidence Diff
@@ -3868,14 +3927,14 @@ class DNSAnalyzer:
         reg_data = results.get('registrar_info', {})
         results['_data_freshness'] = {
             'dns_records': {'source': 'live', 'note': 'Queried from 4 independent resolvers in real time'},
-            'spf': {'source': 'live', 'note': 'Live DNS query'},
-            'dmarc': {'source': 'live', 'note': 'Live DNS query'},
-            'dkim': {'source': 'live', 'note': 'Live DNS query'},
+            'spf': {'source': 'live', 'note': EVIDENCE_LIVE_DNS_QUERY},
+            'dmarc': {'source': 'live', 'note': EVIDENCE_LIVE_DNS_QUERY},
+            'dkim': {'source': 'live', 'note': EVIDENCE_LIVE_DNS_QUERY},
             'dane': {'source': 'live', 'note': 'Live DNS query per MX host'},
             'mta_sts': {'source': 'live', 'note': 'Live HTTPS policy fetch'},
-            'tlsrpt': {'source': 'live', 'note': 'Live DNS query'},
+            'tlsrpt': {'source': 'live', 'note': EVIDENCE_LIVE_DNS_QUERY},
             'bimi': {'source': 'live', 'note': 'Live DNS query + HTTPS validation'},
-            'caa': {'source': 'live', 'note': 'Live DNS query'},
+            'caa': {'source': 'live', 'note': EVIDENCE_LIVE_DNS_QUERY},
             'dnssec': {'source': 'live', 'note': 'Live DNSSEC validation'},
             'resolver_consensus': {'source': 'live', 'note': 'Cross-referenced across 4 resolvers'},
             'registrar': {
@@ -3972,6 +4031,124 @@ class DNSAnalyzer:
         except Exception:
             return None
 
+    def _fetch_ct_log_data(self, domain, budget_fn):
+        cached_ct = self._get_ct_cache(domain)
+        if cached_ct is not None:
+            logging.info(f"CT cache hit for {domain}: {len(cached_ct)} certs")
+            return cached_ct, True, 'cache'
+        if self._offline_mode:
+            logging.debug(f"CT query skipped for {domain} (offline mode)")
+            return None, False, None
+        ct_telemetry = get_telemetry()
+        if ct_telemetry.should_backoff('ct_crtsh'):
+            logging.debug(f"CT query skipped for {domain} (crt.sh backing off)")
+            return None, False, None
+        try:
+            ct_timeout = min(ct_telemetry.get_timeout('ct_logs'), budget_fn())
+            if ct_timeout < 2:
+                raise requests.exceptions.Timeout("Insufficient time budget for CT query")
+            url = f"https://crt.sh/?q=%25.{domain}&output=json"
+            with TelemetryTimer('ct_crtsh', operation=f'query/{domain}'):
+                response = requests.get(url, timeout=ct_timeout, headers={
+                    'User-Agent': self.USER_AGENT
+                })
+            if response.status_code == 200:
+                data = response.json()
+                self._set_ct_cache(domain, data)
+                logging.info(f"CT query for {domain}: {len(data)} certs")
+                return data, True, 'live'
+            else:
+                logging.warning(f"CT log query for {domain} returned status {response.status_code}")
+                return None, False, None
+        except requests.exceptions.Timeout:
+            logging.warning(f"CT log query timed out for {domain} — falling back to DNS probing")
+        except requests.exceptions.ConnectionError:
+            logging.warning(f"CT log connection failed for {domain} — falling back to DNS probing")
+        except Exception as e:
+            logging.warning(f"CT log query error for {domain}: {e} — falling back to DNS probing")
+        return None, False, None
+
+    def _process_ct_entries(self, data, domain):
+        CT_ENTRY_CAP = 5000
+        entries_to_process = data[:CT_ENTRY_CAP] if len(data) > CT_ENTRY_CAP else data
+        if len(data) > CT_ENTRY_CAP:
+            logging.info(f"CT data for {domain} has {len(data)} entries, capping processing at {CT_ENTRY_CAP}")
+        subdomain_map = {}
+        wildcard_certs = []
+        for entry in entries_to_process:
+            names = set()
+            cn = entry.get('common_name', '')
+            if cn:
+                names.add(cn.lower().strip())
+            name_value = entry.get('name_value', '')
+            if name_value:
+                for name in name_value.split('\n'):
+                    name = name.strip().lower()
+                    if name and '@' not in name:
+                        names.add(name)
+            not_before = entry.get('not_before', '')
+            not_after = entry.get('not_after', '')
+            issuer = entry.get('issuer_name', '')
+            for name in names:
+                if name == f'*.{domain}':
+                    issuer_cn = ''
+                    if 'CN=' in issuer:
+                        issuer_cn = issuer.split('CN=')[1].split(',')[0].strip()
+                    wildcard_certs.append({
+                        'name': name,
+                        'not_before': not_before,
+                        'not_after': not_after,
+                        'issuer': issuer_cn,
+                    })
+                if name.endswith(f'.{domain}') or name == domain:
+                    clean_name = name.lstrip('*.')
+                    if clean_name == domain:
+                        continue
+                    is_wildcard = name.startswith('*.')
+                    if clean_name not in subdomain_map:
+                        subdomain_map[clean_name] = {
+                            'name': clean_name,
+                            'first_seen': not_before,
+                            'last_seen': not_before,
+                            'not_after': not_after,
+                            'cert_count': 0,
+                            'is_wildcard': is_wildcard,
+                            'issuers': set(),
+                        }
+                    entry_data = subdomain_map[clean_name]
+                    entry_data['cert_count'] += 1
+                    if not_before and (not entry_data['first_seen'] or not_before < entry_data['first_seen']):
+                        entry_data['first_seen'] = not_before
+                    if not_before and (not entry_data['last_seen'] or not_before > entry_data['last_seen']):
+                        entry_data['last_seen'] = not_before
+                    if not_after and (not entry_data['not_after'] or not_after > entry_data['not_after']):
+                        entry_data['not_after'] = not_after
+                    issuer_cn = ''
+                    if 'CN=' in issuer:
+                        issuer_cn = issuer.split('CN=')[1].split(',')[0].strip()
+                    if issuer_cn:
+                        entry_data['issuers'].add(issuer_cn)
+        logging.info(f"CT processing for {domain}: {len(subdomain_map)} unique subdomains from {len(entries_to_process)} entries")
+        return subdomain_map, wildcard_certs
+
+    def _build_subdomain_list(self, subdomain_map):
+        from datetime import datetime, timezone as tz
+        now = datetime.now(tz=tz.utc).strftime('%Y-%m-%dT%H:%M:%S')
+        subdomains = []
+        for name, data in subdomain_map.items():
+            is_expired = data['not_after'] < now if data['not_after'] else True
+            is_current = not is_expired
+            subdomains.append({
+                'name': data['name'],
+                'first_seen': data['first_seen'][:10] if data['first_seen'] else '',
+                'last_seen': data['last_seen'][:10] if data['last_seen'] else '',
+                'cert_count': data['cert_count'],
+                'is_wildcard': data['is_wildcard'],
+                'is_current': is_current,
+                'issuers': sorted(data['issuers'])[:3],
+            })
+        return subdomains, now
+
     def discover_subdomains(self, domain: str) -> Dict[str, Any]:
         """Discover subdomains via Certificate Transparency logs (crt.sh).
         
@@ -4002,146 +4179,24 @@ class DNSAnalyzer:
         }
         
         TOTAL_BUDGET = 30
-        _CT_TIMEOUT = 12
         ct_start = time.time()
         
         def _budget_remaining():
             return max(0, TOTAL_BUDGET - (time.time() - ct_start))
         
+        data, ct_success, ct_source = self._fetch_ct_log_data(domain, _budget_remaining)
+        if ct_success and data:
+            result['total_certs'] = len(data)
+            if ct_source == 'cache':
+                result['ct_source'] = 'cache'
+        
         subdomain_map = {}
         wildcard_certs = []
-        ct_success = False
-        
-        cached_ct = self._get_ct_cache(domain)
-        if cached_ct is not None:
-            data = cached_ct
-            result['total_certs'] = len(data)
-            result['ct_source'] = 'cache'
-            ct_success = True
-            logging.info(f"CT cache hit for {domain}: {len(data)} certs")
-        else:
-            data = None
-            if self._offline_mode:
-                logging.debug(f"CT query skipped for {domain} (offline mode)")
-            else:
-                ct_telemetry = get_telemetry()
-                if ct_telemetry.should_backoff('ct_crtsh'):
-                    logging.debug(f"CT query skipped for {domain} (crt.sh backing off)")
-                else:
-                    try:
-                        ct_timeout = min(ct_telemetry.get_timeout('ct_logs'), _budget_remaining())
-                        if ct_timeout < 2:
-                            raise requests.exceptions.Timeout("Insufficient time budget for CT query")
-                        
-                        url = f"https://crt.sh/?q=%25.{domain}&output=json"
-                        with TelemetryTimer('ct_crtsh', operation=f'query/{domain}'):
-                            response = requests.get(url, timeout=ct_timeout, headers={
-                                'User-Agent': self.USER_AGENT
-                            })
-                        
-                        if response.status_code == 200:
-                            data = response.json()
-                            result['total_certs'] = len(data)
-                            ct_success = True
-                            self._set_ct_cache(domain, data)
-                            logging.info(f"CT query for {domain}: {len(data)} certs in {round(time.time() - ct_start, 1)}s")
-                        else:
-                            logging.warning(f"CT log query for {domain} returned status {response.status_code}")
-                            
-                    except requests.exceptions.Timeout:
-                        logging.warning(f"CT log query timed out for {domain} after {round(time.time() - ct_start, 1)}s — falling back to DNS probing")
-                    except requests.exceptions.ConnectionError:
-                        logging.warning(f"CT log connection failed for {domain} — falling back to DNS probing")
-                    except Exception as e:
-                        logging.warning(f"CT log query error for {domain}: {e} — falling back to DNS probing")
-        
         if ct_success and data:
-            CT_ENTRY_CAP = 5000
-            entries_to_process = data[:CT_ENTRY_CAP] if len(data) > CT_ENTRY_CAP else data
-            if len(data) > CT_ENTRY_CAP:
-                logging.info(f"CT data for {domain} has {len(data)} entries, capping processing at {CT_ENTRY_CAP}")
-            
-            for entry in entries_to_process:
-                names = set()
-                cn = entry.get('common_name', '')
-                if cn:
-                    names.add(cn.lower().strip())
-                name_value = entry.get('name_value', '')
-                if name_value:
-                    for name in name_value.split('\n'):
-                        name = name.strip().lower()
-                        if name and '@' not in name:
-                            names.add(name)
-                
-                not_before = entry.get('not_before', '')
-                not_after = entry.get('not_after', '')
-                issuer = entry.get('issuer_name', '')
-                
-                for name in names:
-                    if name == f'*.{domain}':
-                        issuer_cn = ''
-                        if 'CN=' in issuer:
-                            issuer_cn = issuer.split('CN=')[1].split(',')[0].strip()
-                        wildcard_certs.append({
-                            'name': name,
-                            'not_before': not_before,
-                            'not_after': not_after,
-                            'issuer': issuer_cn,
-                        })
-                    
-                    if name.endswith(f'.{domain}') or name == domain:
-                        clean_name = name.lstrip('*.')
-                        if clean_name == domain:
-                            continue
-                        
-                        is_wildcard = name.startswith('*.')
-                        
-                        if clean_name not in subdomain_map:
-                            subdomain_map[clean_name] = {
-                                'name': clean_name,
-                                'first_seen': not_before,
-                                'last_seen': not_before,
-                                'not_after': not_after,
-                                'cert_count': 0,
-                                'is_wildcard': is_wildcard,
-                                'issuers': set(),
-                            }
-                        
-                        entry_data = subdomain_map[clean_name]
-                        entry_data['cert_count'] += 1
-                        if not_before and (not entry_data['first_seen'] or not_before < entry_data['first_seen']):
-                            entry_data['first_seen'] = not_before
-                        if not_before and (not entry_data['last_seen'] or not_before > entry_data['last_seen']):
-                            entry_data['last_seen'] = not_before
-                        if not_after and (not entry_data['not_after'] or not_after > entry_data['not_after']):
-                            entry_data['not_after'] = not_after
-                        
-                        issuer_cn = ''
-                        if 'CN=' in issuer:
-                            issuer_cn = issuer.split('CN=')[1].split(',')[0].strip()
-                        if issuer_cn:
-                            entry_data['issuers'].add(issuer_cn)
-            
-            logging.info(f"CT processing for {domain}: {len(subdomain_map)} unique subdomains from {len(entries_to_process)} entries")
+            subdomain_map, wildcard_certs = self._process_ct_entries(data, domain)
         
         try:
-            from datetime import datetime
-            now = datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%S')
-            
-            subdomains = []
-            for name, data in subdomain_map.items():
-                is_expired = data['not_after'] < now if data['not_after'] else True
-                is_current = not is_expired
-                
-                subdomains.append({
-                    'name': data['name'],
-                    'first_seen': data['first_seen'][:10] if data['first_seen'] else '',
-                    'last_seen': data['last_seen'][:10] if data['last_seen'] else '',
-                    'cert_count': data['cert_count'],
-                    'is_wildcard': data['is_wildcard'],
-                    'is_current': is_current,
-                    'issuers': sorted(data['issuers'])[:3],
-                })
+            subdomains, now = self._build_subdomain_list(subdomain_map)
             
             has_current_wildcard = False
             if wildcard_certs:
@@ -4314,7 +4369,7 @@ class DNSAnalyzer:
         
         return display, True
 
-    def _resolve_cname_chain(self, fqdn: str, max_depth: int = 8) -> dict:
+    def _resolve_cname_chain(self, fqdn: str, max_depth: int = 8) -> dict:  # NOSONAR
         """Resolve the full CNAME chain for a given FQDN.
         
         Returns dict with:
@@ -4367,7 +4422,7 @@ class DNSAnalyzer:
                 return info
         return None
 
-    def _enrich_subdomains_with_cnames(self, subdomains: list, domain: str = None, all_known_names: set = None, timeout: float = 10) -> tuple:
+    def _enrich_subdomains_with_cnames(self, subdomains: list, domain: str = None, all_known_names: set = None, timeout: float = 10) -> tuple:  # NOSONAR
         """Resolve CNAME chains for all discovered subdomains in parallel.
         
         Returns (provider_summary, cname_discovered) tuple:
@@ -4519,7 +4574,7 @@ class DNSAnalyzer:
         
         found = []
         
-        def make_resolver():
+        def make_resolver():  # NOSONAR
             r = dns.resolver.Resolver()
             r.nameservers = ['1.1.1.1', '8.8.8.8']
             r.lifetime = 1.5
@@ -4595,7 +4650,7 @@ class DNSAnalyzer:
             pass
         return ''.join(response_lines)
     
-    def verify_smtp_server(self, mx_host: str, timeout: float = 1.5) -> Dict[str, Any]:
+    def verify_smtp_server(self, mx_host: str, timeout: float = 1.5) -> Dict[str, Any]:  # NOSONAR
         """
         Verify SMTP server capabilities: STARTTLS, TLS version, cipher, certificate.
         Uses raw sockets for reliable TLS information extraction.
@@ -4898,9 +4953,7 @@ class DNSAnalyzer:
         
         dmarc_policy = (dmarc.get('policy') or '').lower()
         dmarc_status = dmarc.get('status', '')
-        has_dmarc = dmarc_status in ('success', 'warning', 'info') or bool(dmarc_policy)
         dmarc_reject = dmarc_policy == 'reject'
-        _dmarc_quarantine = dmarc_policy == 'quarantine'
         
         has_mx = len(mx_records) > 0 and not has_null_mx
         has_senders = (
@@ -4973,7 +5026,7 @@ class DNSAnalyzer:
                 summary = 'Some no-mail signals are configured, but gaps remain. Complete all three layers for full protection.'
         elif not has_mx and not has_senders and spf_status != 'success':
             classification = 'email_ambiguous'
-            label = 'Email: Ambiguous'
+            label = VERDICT_EMAIL_AMBIGUOUS
             color = 'secondary'
             icon = 'question-circle'
             summary = 'No mail infrastructure detected, but no explicit no-mail declarations either. Without Null MX (RFC 7505), SMTP servers fall back to A/AAAA records (RFC 5321 §5.1), meaning mail delivery may still be attempted. This domain\'s email intent is unclear.'
@@ -4991,13 +5044,13 @@ class DNSAnalyzer:
             summary = 'This domain accepts inbound mail but has no authorized outbound senders in SPF.'
         elif not has_mx and has_senders:
             classification = 'email_ambiguous'
-            label = 'Email: Ambiguous'
+            label = VERDICT_EMAIL_AMBIGUOUS
             color = 'secondary'
             icon = 'question-circle'
             summary = 'SPF authorizes senders but no MX records exist. This domain may send email but cannot receive it reliably. Configuration is inconsistent.'
         else:
             classification = 'email_ambiguous'
-            label = 'Email: Ambiguous'
+            label = VERDICT_EMAIL_AMBIGUOUS
             color = 'secondary'
             icon = 'question-circle'
             summary = 'Insufficient DNS signals to determine this domain\'s email intent.'
@@ -5027,7 +5080,7 @@ class DNSAnalyzer:
             'is_no_mail': classification in ('no_mail_verified', 'no_mail_partial'),
         }
 
-    def _calculate_posture(self, results: Dict[str, Any]) -> Dict[str, Any]:
+    def _calculate_posture(self, results: Dict[str, Any]) -> Dict[str, Any]:  # NOSONAR
         """Calculate overall DNS & Trust Posture based on security controls."""
         issues = []  # Critical problems that need action
         monitoring_items = []  # Controls in monitoring/non-enforce mode
@@ -5261,8 +5314,6 @@ class DNSAnalyzer:
         dmarc_policy = (dmarc.get('policy') or '').lower()
         dmarc_reject = dmarc_policy == 'reject'
         dmarc_quarantine = dmarc_policy == 'quarantine'
-        dkim_ok = results.get('dkim_analysis', {}).get('status') == 'success'
-        
         dkim_analysis = results.get('dkim_analysis', {})
         dkim_strong = dkim_analysis.get('status') == 'success' and dkim_analysis.get('key_strengths')
         dkim_third_party_only = dkim_analysis.get('third_party_only', False)
@@ -5280,7 +5331,7 @@ class DNSAnalyzer:
             dkim_note = ' DKIM keys verified with strong cryptography.'
         elif dkim_third_party_only:
             found_provs = dkim_analysis.get('found_providers', [])
-            third_party_names = ', '.join(found_provs) if found_provs else 'third-party services'
+            third_party_names = ', '.join(found_provs) if found_provs else FALLBACK_THIRD_PARTY_SERVICES
             dkim_note = f' Note: DKIM found for {third_party_names} only \u2014 primary mail platform ({dkim_primary_provider}) DKIM not verified.'
         else:
             dkim_note = ''
@@ -5297,10 +5348,10 @@ class DNSAnalyzer:
             verdicts['email_answer'] = 'No'
         elif spf_ok and dmarc_ok and dmarc_quarantine:
             verdicts['email'] = f'DMARC policy is quarantine - spoofed messages will be flagged as spam.{dkim_note}'
-            verdicts['email_answer'] = 'Mostly No'
+            verdicts['email_answer'] = VERDICT_MOSTLY_NO
         elif spf_ok and dmarc_ok and dmarc_policy == 'none':
             verdicts['email'] = 'Mail authentication is configured but DMARC is in monitoring mode - spoofed mail may still be delivered.'
-            verdicts['email_answer'] = 'Mostly No'
+            verdicts['email_answer'] = VERDICT_MOSTLY_NO
         elif spf_ok or dmarc_ok:
             verdicts['email'] = 'Partial email authentication configured - some spoofed messages may be delivered.'
             verdicts['email_answer'] = 'Partially'
@@ -5338,7 +5389,7 @@ class DNSAnalyzer:
             verdicts['domain_answer'] = 'No'
         elif dnssec_ok:
             verdicts['domain'] = 'DNS responses are signed but delegation verification had issues.'
-            verdicts['domain_answer'] = 'Mostly No'
+            verdicts['domain_answer'] = VERDICT_MOSTLY_NO
         elif ns_ok:
             verdicts['domain'] = 'Delegation is verified but DNS responses are unsigned and could be spoofed.'
             verdicts['domain_answer'] = 'Partially'

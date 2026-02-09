@@ -627,7 +627,7 @@
     </div>
     </main>
 
-    <div id="loadingOverlay" class="loading-overlay d-none" role="status" aria-live="polite" aria-busy="true" aria-label="Running domain analysis">
+    <output id="loadingOverlay" class="loading-overlay d-none" aria-live="polite" aria-busy="true" aria-label="Running domain analysis">
         <div class="loading-content">
             <div class="loading-spinner">
                 <i class="fas fa-globe fa-spin"></i>
@@ -660,11 +660,11 @@
                 <span>Compiling verified security posture report...</span>
             </div>
         </div>
-    </div>
+    </output>
     <script nonce="{{ csp_nonce }}">
     (function() {
         document.addEventListener('DOMContentLoaded', function() {
-            var analyzeBtn = document.getElementById('analyzeBtn');
+            const analyzeBtn = document.getElementById('analyzeBtn');
             if (analyzeBtn && analyzeBtn.dataset.waitSeconds) {
                 var waitSeconds = Number.parseInt(analyzeBtn.dataset.waitSeconds, 10);
                 var originalHTML = analyzeBtn.innerHTML;

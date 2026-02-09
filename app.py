@@ -7,7 +7,7 @@ import uuid
 import requests as http_requests
 from collections import defaultdict
 from threading import Lock
-from datetime import datetime, date
+from datetime import datetime, date, timezone
 from flask import Flask, render_template, request, flash, redirect, url_for, jsonify, send_from_directory, g, Response, stream_with_context
 from flask_sqlalchemy import SQLAlchemy
 from flask_compress import Compress
@@ -19,6 +19,10 @@ from rdap_cache import _rdap_cache
 
 # App version - format: YY.M.patch (bump last number for small changes)
 APP_VERSION = "26.10.88"
+
+TEMPLATE_RESULTS = "results.html"
+TEMPLATE_INDEX = "index.html"
+CONTENT_TYPE_TEXT_PLAIN = "text/plain"
 
 
 class TraceIDFilter(logging.Filter):
@@ -551,8 +555,8 @@ class DomainAnalysis(db.Model):
     analysis_duration = db.Column(db.Float)  # seconds
     
     # Timestamps
-    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
-    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
+    updated_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda ctx: datetime.now(timezone.utc))
     
     SCHEMA_VERSION = 2
 
@@ -628,8 +632,8 @@ class AnalysisStats(db.Model):
     unique_domains = db.Column(db.Integer, default=0)
     avg_analysis_time = db.Column(db.Float, default=0.0)
     
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+    updated_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda ctx: datetime.now(timezone.utc))
     
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -658,12 +662,12 @@ except Exception as e:
 @app.route('/', methods=['GET'])
 def index():
     """Main page with domain input form."""
-    return render_template('index.html')
+    return render_template(TEMPLATE_INDEX)
 
 @app.route('/robots.txt', methods=['GET'])
 def robots():
     """Serve robots.txt for search engines."""
-    return send_from_directory('static', 'robots.txt', mimetype='text/plain')
+    return send_from_directory('static', 'robots.txt', mimetype=CONTENT_TYPE_TEXT_PLAIN)
 
 @app.route('/sitemap.xml', methods=['GET'])
 def sitemap():
@@ -690,12 +694,12 @@ def sitemap():
 @app.route('/llms.txt', methods=['GET'])
 def llms():
     """Serve llms.txt for AI crawlers."""
-    return send_from_directory('static', 'llms.txt', mimetype='text/plain')
+    return send_from_directory('static', 'llms.txt', mimetype=CONTENT_TYPE_TEXT_PLAIN)
 
 @app.route('/llms-full.txt', methods=['GET'])
 def llms_full():
     """Serve llms-full.txt for AI crawlers."""
-    return send_from_directory('static', 'llms-full.txt', mimetype='text/plain')
+    return send_from_directory('static', 'llms-full.txt', mimetype=CONTENT_TYPE_TEXT_PLAIN)
 
 @app.route('/manifest.json', methods=['GET'])
 def manifest():
@@ -724,17 +728,83 @@ def _build_safe_url(parsed_url):
         url = f'{url}#{fragment}'
     return url
 
+
+def _validate_parsed_url(parsed):
+    if parsed.scheme != 'https':
+        return 'Only HTTPS URLs allowed', 400
+    if not parsed.hostname:
+        return 'Invalid URL', 400
+    return None
+
+
+def _check_ssrf(hostname):
+    import ipaddress
+    import socket
+    try:
+        resolved_ips = socket.getaddrinfo(hostname, None)
+    except socket.gaierror:
+        return 'Could not resolve hostname', 400
+    for _family, _type, _proto, _canonname, sockaddr in resolved_ips:
+        ip = ipaddress.ip_address(sockaddr[0])
+        is_disallowed = ip.is_private or ip.is_loopback or ip.is_link_local or ip.is_reserved
+        if is_disallowed:
+            return 'URL points to a disallowed address', 400
+    return None
+
+
+_BIMI_FETCH_HEADERS = {'User-Agent': 'DNS-Analyzer/1.0 BIMI-Logo-Fetcher'}
+_BIMI_MAX_REDIRECTS = 5
+_BIMI_MAX_RESPONSE_BYTES = 512 * 1024
+_BIMI_ALLOWED_CONTENT_TYPES = {
+    'image/svg+xml', 'image/png', 'image/jpeg',
+    'image/gif', 'image/webp',
+}
+
+
+def _follow_bimi_redirects(resp):
+    import requests
+    from urllib.parse import urlparse
+    redirect_count = 0
+    while resp.status_code in (301, 302, 303, 307, 308) and redirect_count < _BIMI_MAX_REDIRECTS:
+        redirect_count += 1
+        redirect_url = resp.headers.get('Location')
+        if not redirect_url:
+            return None, ('Redirect without Location header', 502)
+
+        r_parsed = urlparse(redirect_url)
+        validation_error = _validate_parsed_url(r_parsed)
+        if validation_error:
+            return None, validation_error
+
+        ssrf_error = _check_ssrf(r_parsed.hostname)
+        if ssrf_error:
+            return None, ssrf_error
+
+        resp.close()
+        validated_redirect = _build_safe_url(r_parsed)
+        resp = requests.get(validated_redirect, timeout=5, allow_redirects=False,
+                            headers=_BIMI_FETCH_HEADERS, stream=True)
+    return resp, None
+
+
+def _read_bimi_body(resp):
+    chunks = []
+    bytes_read = 0
+    for chunk in resp.iter_content(chunk_size=8192):
+        bytes_read += len(chunk)
+        if bytes_read > _BIMI_MAX_RESPONSE_BYTES:
+            resp.close()
+            return None, ('Response too large', 400)
+        chunks.append(chunk)
+    return b''.join(chunks), None
+
+
 @app.route('/proxy/bimi-logo', methods=['GET'])
 def proxy_bimi_logo():
     """Proxy BIMI logos to avoid CORS issues with external SVGs."""
-    import ipaddress
-    import socket
     from urllib.parse import urlparse
-
     import requests
     from flask import Response
-
-    MAX_RESPONSE_BYTES = 512 * 1024
 
     logo_url = request.args.get('url')
     if not logo_url:
@@ -742,81 +812,38 @@ def proxy_bimi_logo():
 
     parsed = urlparse(logo_url)
 
-    if parsed.scheme != 'https':
-        return 'Only HTTPS URLs allowed', 400
+    validation_error = _validate_parsed_url(parsed)
+    if validation_error:
+        return validation_error
 
-    if not parsed.hostname:
-        return 'Invalid URL', 400
-
-    try:
-        resolved_ips = socket.getaddrinfo(parsed.hostname, None)
-    except socket.gaierror:
-        return 'Could not resolve hostname', 400
-
-    for _family, _type, _proto, _canonname, sockaddr in resolved_ips:
-        ip = ipaddress.ip_address(sockaddr[0])
-        if ip.is_private or ip.is_loopback or ip.is_link_local or ip.is_reserved:
-            return 'URL points to a disallowed address', 400
+    ssrf_error = _check_ssrf(parsed.hostname)
+    if ssrf_error:
+        return ssrf_error
 
     validated_url = _build_safe_url(parsed)
 
     try:
-        resp = requests.get(validated_url, timeout=5, allow_redirects=False, headers={
-            'User-Agent': 'DNS-Analyzer/1.0 BIMI-Logo-Fetcher'
-        }, stream=True)
+        resp = requests.get(validated_url, timeout=5, allow_redirects=False,
+                            headers=_BIMI_FETCH_HEADERS, stream=True)
 
-        redirect_count = 0
-        max_redirects = 5
-        while resp.status_code in (301, 302, 303, 307, 308) and redirect_count < max_redirects:
-            redirect_count += 1
-            redirect_url = resp.headers.get('Location')
-            if not redirect_url:
-                return 'Redirect without Location header', 502
-
-            r_parsed = urlparse(redirect_url)
-            if r_parsed.scheme != 'https':
-                return 'Redirect to non-HTTPS URL blocked', 400
-            if not r_parsed.hostname:
-                return 'Invalid redirect URL', 400
-
-            try:
-                r_ips = socket.getaddrinfo(r_parsed.hostname, None)
-            except socket.gaierror:
-                return 'Could not resolve redirect hostname', 400
-            for _f, _t, _p, _c, sa in r_ips:
-                r_ip = ipaddress.ip_address(sa[0])
-                if r_ip.is_private or r_ip.is_loopback or r_ip.is_link_local or r_ip.is_reserved:
-                    return 'Redirect points to a disallowed address', 400
-
-            resp.close()
-            validated_redirect = _build_safe_url(r_parsed)
-            resp = requests.get(validated_redirect, timeout=5, allow_redirects=False, headers={
-                'User-Agent': 'DNS-Analyzer/1.0 BIMI-Logo-Fetcher'
-            }, stream=True)
+        resp, redirect_error = _follow_bimi_redirects(resp)
+        if redirect_error:
+            return redirect_error
 
         if resp.status_code != 200:
             return f'Failed to fetch logo: {resp.status_code}', 502
 
         content_type = resp.headers.get('Content-Type', '')
-        if 'svg' not in content_type.lower() and 'image' not in content_type.lower():
+        is_image = 'svg' in content_type.lower() or 'image' in content_type.lower()
+        if not is_image:
             return 'Response is not an image', 400
 
-        chunks = []
-        bytes_read = 0
-        for chunk in resp.iter_content(chunk_size=8192):
-            bytes_read += len(chunk)
-            if bytes_read > MAX_RESPONSE_BYTES:
-                resp.close()
-                return 'Response too large', 400
-            chunks.append(chunk)
-        body = b''.join(chunks)
+        body, body_error = _read_bimi_body(resp)
+        if body_error:
+            return body_error
 
-        ALLOWED_CONTENT_TYPES = {
-            'image/svg+xml', 'image/png', 'image/jpeg',
-            'image/gif', 'image/webp',
-        }
         safe_ct = content_type.split(';')[0].strip().lower()
-        upstream_ct = safe_ct if safe_ct in ALLOWED_CONTENT_TYPES else 'image/svg+xml'
+        upstream_ct = safe_ct if safe_ct in _BIMI_ALLOWED_CONTENT_TYPES else 'image/svg+xml'
 
         return Response(
             body,
@@ -979,10 +1006,7 @@ def lookup_country(ip: str) -> dict:
     return {}
 
 
-@app.route('/analyze', methods=['GET', 'POST'])
-def analyze():
-    """Analyze DNS records for the submitted domain."""
-    # Get domain from form (POST) or query string (GET)
+def _parse_analyze_inputs():
     if request.method == 'POST':
         domain = request.form.get('domain', '').strip()
         dkim_selector1 = request.form.get('dkim_selector1', '').strip()
@@ -991,119 +1015,129 @@ def analyze():
         domain = request.args.get('domain', '').strip()
         dkim_selector1 = request.args.get('dkim_selector1', '').strip()
         dkim_selector2 = request.args.get('dkim_selector2', '').strip()
-    
+    return domain, dkim_selector1, dkim_selector2
+
+
+def _sanitize_dkim_selector(sel):
+    if not sel:
+        return None
+    sel = re.sub(r'[^a-zA-Z0-9._-]', '', sel)[:63]
+    sel = sel.rstrip('.').removesuffix('._domainkey').removesuffix('._domainkey.')
+    if sel:
+        return f"{sel}._domainkey"
+    return None
+
+
+def _handle_rate_limit_redirect(domain, wait_seconds, reason):
+    is_refresh = request.args.get('refresh')
+    if is_refresh:
+        recent = DomainAnalysis.query.filter_by(domain=domain).order_by(
+            DomainAnalysis.created_at.desc()
+        ).first()
+        if recent:
+            return redirect(url_for('view_analysis_static', analysis_id=recent.id,
+                                   wait_seconds=wait_seconds, wait_reason=reason))
+    return redirect(url_for('index', wait_seconds=wait_seconds, wait_domain=domain, wait_reason=reason))
+
+
+def _save_analysis_to_db(domain, ascii_domain, results, geo, analysis_duration):
+    try:
+        analysis = DomainAnalysis(
+            domain=domain,
+            ascii_domain=ascii_domain,
+            basic_records=results.get('basic_records', {}),
+            authoritative_records=results.get('authoritative_records', {}),
+            spf_status=results.get('spf_analysis', {}).get('status'),
+            spf_records=results.get('spf_analysis', {}).get('records', []),
+            dmarc_status=results.get('dmarc_analysis', {}).get('status'),
+            dmarc_policy=results.get('dmarc_analysis', {}).get('policy'),
+            dmarc_records=results.get('dmarc_analysis', {}).get('records', []),
+            dkim_status=results.get('dkim_analysis', {}).get('status'),
+            dkim_selectors=results.get('dkim_analysis', {}).get('selectors', {}),
+            registrar_name=results.get('registrar_info', {}).get('registrar'),
+            registrar_source=results.get('registrar_info', {}).get('source'),
+            ct_subdomains=results.get('ct_subdomains'),
+            full_results={**results, '_tool_version': APP_VERSION},
+            country_code=geo.get('code'),
+            country_name=geo.get('name'),
+            analysis_success=True,
+            analysis_duration=analysis_duration
+        )
+        db.session.add(analysis)
+        db.session.commit()
+        return analysis
+    except Exception as save_err:
+        db.session.rollback()
+        logging.warning(f"Could not save analysis for {domain}: {save_err}")
+        return None
+
+
+def _safe_update_daily_stats(analysis_success, duration, domain):
+    try:
+        update_daily_stats(analysis_success=analysis_success, duration=duration, domain=domain)
+    except Exception:
+        pass
+
+
+@app.route('/analyze', methods=['GET', 'POST'])
+def analyze():
+    """Analyze DNS records for the submitted domain."""
+    domain, dkim_selector1, dkim_selector2 = _parse_analyze_inputs()
+
     custom_selectors = []
     for sel in [dkim_selector1, dkim_selector2]:
-        if sel:
-            sel = re.sub(r'[^a-zA-Z0-9._-]', '', sel)[:63]
-            sel = sel.rstrip('.').removesuffix('._domainkey').removesuffix('._domainkey.')
-            if sel:
-                custom_selectors.append(f"{sel}._domainkey")
-    
+        sanitized = _sanitize_dkim_selector(sel)
+        if sanitized:
+            custom_selectors.append(sanitized)
+
     if not domain:
         flash('Please enter a domain name.', 'danger')
         return redirect(url_for('index'))
-    
-    # Validate domain
+
     if not dns_analyzer.validate_domain(domain):
         flash(f'Invalid domain name: {domain}', 'danger')
         return redirect(url_for('index'))
-    
-    # Get client IP for rate limiting and geo lookup
+
     client_ip = get_client_ip()
     geo = lookup_country(client_ip)
-    
-    # Atomic check and record (prevents race conditions with concurrent requests)
+
     allowed, reason, wait_seconds = rate_limiter.check_and_record(client_ip, domain)
     if not allowed:
-        # Check if this was a re-analyze (has refresh param) - redirect back to results page
-        if request.args.get('refresh'):
-            # Find the most recent analysis for this domain to redirect back to
-            recent = DomainAnalysis.query.filter_by(domain=domain).order_by(
-                DomainAnalysis.created_at.desc()
-            ).first()
-            if recent:
-                return redirect(url_for('view_analysis_static', analysis_id=recent.id, 
-                                       wait_seconds=wait_seconds, wait_reason=reason))
-        # Otherwise return to index with countdown
-        return redirect(url_for('index', wait_seconds=wait_seconds, wait_domain=domain, wait_reason=reason))
-    
+        return _handle_rate_limit_redirect(domain, wait_seconds, reason)
+
     start_time = time.time()
-    _analysis_success = True
-    _error_message = None
-    
+
     try:
-        # Convert to ASCII for IDNA domains
         ascii_domain = dns_analyzer.domain_to_ascii(domain)
-        
-        # Perform DNS analysis
         results = dns_analyzer.analyze_domain(ascii_domain, custom_dkim_selectors=custom_selectors)
-        
-        if results.get('analysis_success') is False and results.get('error'):
-            try:
-                update_daily_stats(analysis_success=False, duration=time.time() - start_time, domain=domain)
-            except Exception:
-                pass
+
+        analysis_failed = results.get('analysis_success') is False and results.get('error')
+        if analysis_failed:
+            _safe_update_daily_stats(False, time.time() - start_time, domain)
             flash(results['error'], 'warning')
             return redirect(url_for('index'))
 
-        # Calculate analysis duration
         analysis_duration = time.time() - start_time
-        
-        # Save analysis to database (integrity validated by before_insert listener)
-        try:
-            analysis = DomainAnalysis(
-                domain=domain,
-                ascii_domain=ascii_domain,
-                basic_records=results.get('basic_records', {}),
-                authoritative_records=results.get('authoritative_records', {}),
-                spf_status=results.get('spf_analysis', {}).get('status'),
-                spf_records=results.get('spf_analysis', {}).get('records', []),
-                dmarc_status=results.get('dmarc_analysis', {}).get('status'),
-                dmarc_policy=results.get('dmarc_analysis', {}).get('policy'),
-                dmarc_records=results.get('dmarc_analysis', {}).get('records', []),
-                dkim_status=results.get('dkim_analysis', {}).get('status'),
-                dkim_selectors=results.get('dkim_analysis', {}).get('selectors', {}),
-                registrar_name=results.get('registrar_info', {}).get('registrar'),
-                registrar_source=results.get('registrar_info', {}).get('source'),
-                ct_subdomains=results.get('ct_subdomains'),
-                full_results={**results, '_tool_version': APP_VERSION},
-                country_code=geo.get('code'),
-                country_name=geo.get('name'),
-                analysis_success=True,
-                analysis_duration=analysis_duration
-            )
-            db.session.add(analysis)
-            db.session.commit()
-        except Exception as save_err:
-            db.session.rollback()
-            logging.warning(f"Could not save analysis for {domain}: {save_err}")
-            analysis = None
-        
+        analysis = _save_analysis_to_db(domain, ascii_domain, results, geo, analysis_duration)
+
         update_daily_stats(analysis_success=True, duration=analysis_duration, domain=domain)
-        
-        return render_template('results.html', 
-                             domain=domain, 
+
+        return render_template(TEMPLATE_RESULTS,
+                             domain=domain,
                              ascii_domain=ascii_domain,
                              results=results,
                              analysis_id=analysis.id if analysis else None,
                              analysis_duration=analysis_duration,
-                             analysis_timestamp=analysis.created_at if analysis else datetime.utcnow())
-        
+                             analysis_timestamp=analysis.created_at if analysis else datetime.now(timezone.utc))
+
     except Exception as e:
         analysis_duration = time.time() - start_time
-        _error_message = str(e)
         logging.error(f"Error analyzing domain {domain}: {e}")
-        
-        try:
-            update_daily_stats(analysis_success=False, duration=analysis_duration, domain=domain)
-        except Exception:
-            pass
-        
+        _safe_update_daily_stats(False, analysis_duration, domain)
         flash('An internal error occurred. Please try again.', 'danger')
         return redirect(url_for('index'))
 
-def update_daily_stats(analysis_success: bool, duration: float, domain: str):
+def update_daily_stats(analysis_success: bool, duration: float, domain: str = ""):  # noqa: S1172 - domain kept for call-site compatibility
     """Update daily statistics for analyses."""
     today = date.today()
     
@@ -1222,7 +1256,7 @@ def view_analysis(analysis_id):
     except Exception:
         db.session.rollback()
     
-    return render_template('results.html',
+    return render_template(TEMPLATE_RESULTS,
                          domain=domain,
                          ascii_domain=ascii_domain,
                          results=results,
@@ -1230,6 +1264,26 @@ def view_analysis(analysis_id):
                          analysis_duration=analysis_duration,
                          analysis_timestamp=analysis.updated_at or analysis.created_at,
                          from_history=False)
+
+_NORMALIZE_DEFAULTS = {
+    'basic_records': {},
+    'authoritative_records': {},
+    'spf_analysis': {'status': 'unknown', 'records': []},
+    'dmarc_analysis': {'status': 'unknown', 'policy': None, 'records': []},
+    'dkim_analysis': {'status': 'unknown', 'selectors': {}},
+    'registrar_info': {'registrar': None, 'source': None},
+    'posture': {'state': 'unknown', 'label': 'Unknown', 'deliberate_monitoring': False, 'deliberate_monitoring_note': None},
+    'dane_analysis': {'status': 'info', 'has_dane': False, 'tlsa_records': [], 'issues': []},
+    'mta_sts_analysis': {'status': 'warning'},
+    'tlsrpt_analysis': {'status': 'warning'},
+    'bimi_analysis': {'status': 'warning'},
+    'caa_analysis': {'status': 'warning'},
+    'dnssec_analysis': {'status': 'warning'},
+    'ct_subdomains': {},
+    'mail_posture': {'classification': 'unknown'},
+    '_data_freshness': {},
+}
+
 
 def normalize_results(full_results):
     """Normalize stored full_results for rendering. Ensures forward/backward compatibility.
@@ -1240,32 +1294,11 @@ def normalize_results(full_results):
     """
     if not full_results:
         return None
-    
-    schema_v = full_results.get('_schema_version', 1)
-    
-    defaults = {
-        'basic_records': {},
-        'authoritative_records': {},
-        'spf_analysis': {'status': 'unknown', 'records': []},
-        'dmarc_analysis': {'status': 'unknown', 'policy': None, 'records': []},
-        'dkim_analysis': {'status': 'unknown', 'selectors': {}},
-        'registrar_info': {'registrar': None, 'source': None},
-        'posture': {'state': 'unknown', 'label': 'Unknown', 'deliberate_monitoring': False, 'deliberate_monitoring_note': None},
-        'dane_analysis': {'status': 'info', 'has_dane': False, 'tlsa_records': [], 'issues': []},
-        'mta_sts_analysis': {'status': 'warning'},
-        'tlsrpt_analysis': {'status': 'warning'},
-        'bimi_analysis': {'status': 'warning'},
-        'caa_analysis': {'status': 'warning'},
-        'dnssec_analysis': {'status': 'warning'},
-        'ct_subdomains': {},
-        'mail_posture': {'classification': 'unknown'},
-        '_data_freshness': {},
-    }
-    
-    for key, default_val in defaults.items():
+
+    for key, default_val in _NORMALIZE_DEFAULTS.items():
         if key not in full_results:
             full_results[key] = default_val
-    
+
     return full_results
 
 @app.route('/analysis/<int:analysis_id>/view', methods=['GET'])
@@ -1286,7 +1319,7 @@ def view_analysis_static(analysis_id):
     
     results = normalize_results(analysis.full_results)
     
-    return render_template('results.html',
+    return render_template(TEMPLATE_RESULTS,
                          domain=domain,
                          ascii_domain=ascii_domain,
                          results=results,
@@ -1346,6 +1379,56 @@ def stats():
                          popular_domains=popular_domains,
                          country_stats=country_stats)
 
+_COMPARE_SECTIONS = [
+    ('spf_analysis', 'SPF', 'fa-envelope-open-text'),
+    ('dmarc_analysis', 'DMARC', 'fa-shield-alt'),
+    ('dkim_analysis', 'DKIM', 'fa-key'),
+    ('dnssec_analysis', 'DNSSEC', 'fa-lock'),
+    ('dane_analysis', 'DANE / TLSA', 'fa-certificate'),
+    ('mta_sts_analysis', 'MTA-STS', 'fa-paper-plane'),
+    ('tlsrpt_analysis', 'TLS-RPT', 'fa-file-alt'),
+    ('bimi_analysis', 'BIMI', 'fa-image'),
+    ('caa_analysis', 'CAA', 'fa-certificate'),
+    ('posture', 'Mail Posture', 'fa-mail-bulk'),
+]
+
+_COMPARE_SKIP_KEYS = {'status', 'state', '_schema_version', '_tool_version', '_captured_at'}
+
+
+def _compute_section_diff(sec_a, sec_b, key, label, icon):
+    status_a = sec_a.get('status', sec_a.get('state', 'unknown'))
+    status_b = sec_b.get('status', sec_b.get('state', 'unknown'))
+    detail_changes = []
+    all_keys = set(list(sec_a.keys()) + list(sec_b.keys()))
+    for k in sorted(all_keys - _COMPARE_SKIP_KEYS):
+        val_a = sec_a.get(k)
+        val_b = sec_b.get(k)
+        if val_a != val_b:
+            detail_changes.append({
+                'field': k.replace('_', ' ').title(),
+                'old': val_a,
+                'new': val_b,
+            })
+    return {
+        'key': key,
+        'label': label,
+        'icon': icon,
+        'status_a': status_a,
+        'status_b': status_b,
+        'changed': (status_a != status_b) or len(detail_changes) > 0,
+        'detail_changes': detail_changes,
+    }
+
+
+def _compute_all_diffs(results_a, results_b):
+    diffs = []
+    for key, label, icon in _COMPARE_SECTIONS:
+        sec_a = results_a.get(key, {})
+        sec_b = results_b.get(key, {})
+        diffs.append(_compute_section_diff(sec_a, sec_b, key, label, icon))
+    return diffs
+
+
 @app.route('/compare', methods=['GET'])
 def compare():
     """Compare two analyses of the same domain side by side."""
@@ -1353,74 +1436,37 @@ def compare():
     id_a = request.args.get('a', type=int)
     id_b = request.args.get('b', type=int)
 
-    if id_a and id_b:
-        analysis_a = DomainAnalysis.query.get_or_404(id_a)
-        analysis_b = DomainAnalysis.query.get_or_404(id_b)
+    if not (id_a and id_b):
+        return _compare_select_domain(domain)
 
-        if analysis_a.domain != analysis_b.domain:
-            flash('Cannot compare analyses of different domains.', 'warning')
-            return redirect(url_for('history'))
+    analysis_a = DomainAnalysis.query.get_or_404(id_a)
+    analysis_b = DomainAnalysis.query.get_or_404(id_b)
 
-        if analysis_a.created_at and analysis_b.created_at and analysis_a.created_at > analysis_b.created_at:
-            analysis_a, analysis_b = analysis_b, analysis_a
+    if analysis_a.domain != analysis_b.domain:
+        flash('Cannot compare analyses of different domains.', 'warning')
+        return redirect(url_for('history'))
 
-        results_a = normalize_results(dict(analysis_a.full_results)) if analysis_a.full_results else None
-        results_b = normalize_results(dict(analysis_b.full_results)) if analysis_b.full_results else None
+    both_have_timestamps = analysis_a.created_at and analysis_b.created_at
+    if both_have_timestamps and analysis_a.created_at > analysis_b.created_at:
+        analysis_a, analysis_b = analysis_b, analysis_a
 
-        if not results_a or not results_b:
-            flash('One or both analyses have no stored data.', 'warning')
-            return redirect(url_for('history'))
+    results_a = normalize_results(dict(analysis_a.full_results)) if analysis_a.full_results else None
+    results_b = normalize_results(dict(analysis_b.full_results)) if analysis_b.full_results else None
 
-        sections = [
-            ('spf_analysis', 'SPF', 'fa-envelope-open-text'),
-            ('dmarc_analysis', 'DMARC', 'fa-shield-alt'),
-            ('dkim_analysis', 'DKIM', 'fa-key'),
-            ('dnssec_analysis', 'DNSSEC', 'fa-lock'),
-            ('dane_analysis', 'DANE / TLSA', 'fa-certificate'),
-            ('mta_sts_analysis', 'MTA-STS', 'fa-paper-plane'),
-            ('tlsrpt_analysis', 'TLS-RPT', 'fa-file-alt'),
-            ('bimi_analysis', 'BIMI', 'fa-image'),
-            ('caa_analysis', 'CAA', 'fa-certificate'),
-            ('posture', 'Mail Posture', 'fa-mail-bulk'),
-        ]
+    if not results_a or not results_b:
+        flash('One or both analyses have no stored data.', 'warning')
+        return redirect(url_for('history'))
 
-        diffs = []
-        for key, label, icon in sections:
-            sec_a = results_a.get(key, {})
-            sec_b = results_b.get(key, {})
-            status_a = sec_a.get('status', sec_a.get('state', 'unknown'))
-            status_b = sec_b.get('status', sec_b.get('state', 'unknown'))
-            changed = (status_a != status_b)
+    diffs = _compute_all_diffs(results_a, results_b)
 
-            detail_changes = []
-            all_keys = set(list(sec_a.keys()) + list(sec_b.keys()))
-            skip_keys = {'status', 'state', '_schema_version', '_tool_version', '_captured_at'}
-            for k in sorted(all_keys - skip_keys):
-                val_a = sec_a.get(k)
-                val_b = sec_b.get(k)
-                if val_a != val_b:
-                    detail_changes.append({
-                        'field': k.replace('_', ' ').title(),
-                        'old': val_a,
-                        'new': val_b,
-                    })
+    return render_template('compare.html',
+                         analysis_a=analysis_a,
+                         analysis_b=analysis_b,
+                         diffs=diffs,
+                         domain=analysis_a.domain)
 
-            diffs.append({
-                'key': key,
-                'label': label,
-                'icon': icon,
-                'status_a': status_a,
-                'status_b': status_b,
-                'changed': changed or len(detail_changes) > 0,
-                'detail_changes': detail_changes,
-            })
 
-        return render_template('compare.html',
-                             analysis_a=analysis_a,
-                             analysis_b=analysis_b,
-                             diffs=diffs,
-                             domain=analysis_a.domain)
-
+def _compare_select_domain(domain):
     if not domain:
         flash('Please provide a domain to compare analyses.', 'warning')
         return redirect(url_for('history'))
@@ -1438,6 +1484,27 @@ def compare():
     return render_template('compare_select.html', domain=domain, analyses=analyses)
 
 
+def _analysis_to_export_record(a):
+    return {
+        'id': a.id,
+        'domain': a.domain,
+        'ascii_domain': a.ascii_domain,
+        'created_at': a.created_at.isoformat() if a.created_at else None,
+        'updated_at': a.updated_at.isoformat() if a.updated_at else None,
+        'analysis_duration': a.analysis_duration,
+        'country_code': a.country_code,
+        'country_name': a.country_name,
+        'full_results': a.full_results,
+    }
+
+
+def _successful_analyses_query():
+    return DomainAnalysis.query.filter(
+        DomainAnalysis.full_results.isnot(None),
+        DomainAnalysis.analysis_success == True
+    ).order_by(DomainAnalysis.created_at.desc())
+
+
 @app.route('/export/json', methods=['GET'])
 def export_json():
     """Export all successful analyses as streaming NDJSON (one JSON object per line)."""
@@ -1447,35 +1514,21 @@ def export_json():
         page = 1
         per_page = 100
         while True:
-            analyses = DomainAnalysis.query.filter(
-                DomainAnalysis.full_results.isnot(None),
-                DomainAnalysis.analysis_success == True
-            ).order_by(
-                DomainAnalysis.created_at.desc()
-            ).paginate(page=page, per_page=per_page, error_out=False)
+            analyses = _successful_analyses_query().paginate(
+                page=page, per_page=per_page, error_out=False
+            )
 
             if not analyses.items:
                 break
 
             for a in analyses.items:
-                record = {
-                    'id': a.id,
-                    'domain': a.domain,
-                    'ascii_domain': a.ascii_domain,
-                    'created_at': a.created_at.isoformat() if a.created_at else None,
-                    'updated_at': a.updated_at.isoformat() if a.updated_at else None,
-                    'analysis_duration': a.analysis_duration,
-                    'country_code': a.country_code,
-                    'country_name': a.country_name,
-                    'full_results': a.full_results,
-                }
-                yield json_mod.dumps(record, default=str) + '\n'
+                yield json_mod.dumps(_analysis_to_export_record(a), default=str) + '\n'
 
             if not analyses.has_next:
                 break
             page += 1
 
-    timestamp = datetime.utcnow().strftime('%Y%m%d_%H%M%S')
+    timestamp = datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S')
     return Response(
         stream_with_context(generate()),
         mimetype='application/x-ndjson',
@@ -1514,12 +1567,12 @@ def api_health():
 
 @app.errorhandler(404)
 def not_found_error(_error):
-    return render_template('index.html'), 404
+    return render_template(TEMPLATE_INDEX), 404
 
 @app.errorhandler(500)
 def internal_error(_error):
     flash('An internal error occurred. Please try again.', 'danger')
-    return render_template('index.html'), 500
+    return render_template(TEMPLATE_INDEX), 500
 
 if __name__ == '__main__':
     debug_mode = os.environ.get('FLASK_DEBUG', 'false').lower() == 'true'

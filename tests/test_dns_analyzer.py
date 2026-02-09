@@ -398,8 +398,8 @@ class TestMultiResolverConsensus(unittest.TestCase):
         checked_types = result.get('per_record_consensus', {}).keys()
         # At least some of the critical types should be checked
         critical_types = {'A', 'MX', 'NS', 'TXT'}
-        self.assertTrue(
-            len(set(checked_types) & critical_types) > 0,
+        self.assertGreater(
+            len(set(checked_types) & critical_types), 0,
             "Should check at least some critical record types"
         )
 

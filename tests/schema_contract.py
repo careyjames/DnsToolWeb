@@ -170,6 +170,49 @@ def get_required_sections():
     return list(REQUIRED_SECTIONS)
 
 
+def _is_none_allowed(expected_type):
+    type_tuple = expected_type if isinstance(expected_type, tuple) else (expected_type,)
+    return type(None) in type_tuple
+
+
+def _check_type(value, expected_type, label):
+    if value is None and _is_none_allowed(expected_type):
+        return None
+    if not isinstance(value, expected_type):
+        return f'Wrong type for {label}: expected {expected_type}, got {type(value).__name__}'
+    return None
+
+
+def _validate_key(key, spec, results, errors):
+    required = spec.get('required', False)
+    expected_type = spec['type']
+
+    if key not in results:
+        if required:
+            errors.append(f'Missing required key: {key}')
+        return
+
+    value = results[key]
+    type_error = _check_type(value, expected_type, key)
+    if type_error:
+        errors.append(type_error)
+        return
+
+    if 'subfields' in spec and isinstance(value, dict):
+        _validate_subfields(key, spec['subfields'], value, errors)
+
+
+def _validate_subfields(parent_key, subfields, value, errors):
+    for subkey, subspec in subfields.items():
+        if subkey not in value:
+            if subspec.get('required', False):
+                errors.append(f'Missing required subfield {parent_key}.{subkey}')
+            continue
+        type_error = _check_type(value[subkey], subspec['type'], f'{parent_key}.{subkey}')
+        if type_error:
+            errors.append(type_error)
+
+
 def validate_analysis_results(results: dict) -> list:
     errors = []
 
@@ -177,32 +220,7 @@ def validate_analysis_results(results: dict) -> list:
         return ['Results must be a dictionary']
 
     for key, spec in ANALYSIS_SCHEMA.items():
-        required = spec.get('required', False)
-        expected_type = spec['type']
-
-        if key not in results:
-            if required:
-                errors.append(f'Missing required key: {key}')
-            continue
-
-        value = results[key]
-
-        if value is not None or type(None) not in (expected_type if isinstance(expected_type, tuple) else (expected_type,)):
-            if not isinstance(value, expected_type):
-                errors.append(f'Wrong type for {key}: expected {expected_type}, got {type(value).__name__}')
-                continue
-
-        if 'subfields' in spec and isinstance(value, dict):
-            for subkey, subspec in spec['subfields'].items():
-                if subkey not in value:
-                    if subspec.get('required', False):
-                        errors.append(f'Missing required subfield {key}.{subkey}')
-                    continue
-                subval = value[subkey]
-                sub_expected = subspec['type']
-                if subval is not None or type(None) not in (sub_expected if isinstance(sub_expected, tuple) else (sub_expected,)):
-                    if not isinstance(subval, sub_expected):
-                        errors.append(f'Wrong type for {key}.{subkey}: expected {sub_expected}, got {type(subval).__name__}')
+        _validate_key(key, spec, results, errors)
 
     _validate_posture(results, errors)
     _validate_dane(results, errors)
@@ -213,29 +231,35 @@ def validate_analysis_results(results: dict) -> list:
     return errors
 
 
+def _validate_dict_fields(container, fields, prefix, errors):
+    for field, spec in fields.items():
+        if field not in container:
+            errors.append(f'Missing {prefix}: {field}')
+            continue
+        type_error = _check_type(container[field], spec['type'], f'posture.{field}')
+        if type_error:
+            errors.append(type_error)
+
+
 def _validate_posture(results, errors):
     posture = results.get('posture')
     if not isinstance(posture, dict):
         return
 
     domain_exists = results.get('domain_exists', True)
-
     if not domain_exists:
-        for field, spec in POSTURE_SUBFIELDS_NONEXISTENT.items():
-            if field not in posture:
-                errors.append(f'Missing posture field for non-existent domain: {field}')
-            elif not isinstance(posture[field], spec['type']):
-                errors.append(f'Wrong type for posture.{field}: expected {spec["type"]}, got {type(posture[field]).__name__}')
-        if 'score' in posture:
-            score = posture['score']
-            if isinstance(score, (int, float)) and not (0 <= score <= 100):
-                errors.append(f'Posture score out of range: {score} (expected 0-100)')
+        _validate_dict_fields(posture, POSTURE_SUBFIELDS_NONEXISTENT, 'posture field for non-existent domain', errors)
+        _validate_posture_score_range(posture, errors)
     else:
-        for field, spec in POSTURE_SUBFIELDS_ACTIVE.items():
-            if field not in posture:
-                errors.append(f'Missing posture field for active domain: {field}')
-            elif not isinstance(posture[field], spec['type']):
-                errors.append(f'Wrong type for posture.{field}: expected {spec["type"]}, got {type(posture[field]).__name__}')
+        _validate_dict_fields(posture, POSTURE_SUBFIELDS_ACTIVE, 'posture field for active domain', errors)
+
+
+def _validate_posture_score_range(posture, errors):
+    if 'score' not in posture:
+        return
+    score = posture['score']
+    if isinstance(score, (int, float)) and not (0 <= score <= 100):
+        errors.append(f'Posture score out of range: {score} (expected 0-100)')
 
 
 def _validate_dane(results, errors):
@@ -275,6 +299,36 @@ VALID_REMEDIATION_SEVERITIES = {'Critical', 'High', 'Medium', 'Low'}
 VALID_REMEDIATION_SECTIONS = {'spf', 'dmarc', 'dkim', 'dnssec', 'dane', 'mta_sts', 'tlsrpt', 'bimi', 'caa'}
 VALID_REMEDIATION_SECTION_STATUSES = {'ok', 'action_needed', 'not_applicable', 'blocked', 'optional'}
 
+_REMEDIATION_FIX_FIELDS = ('title', 'section', 'severity', 'severity_label', 'severity_color', 'fix', 'why', 'rfc', 'rfc_url')
+
+
+def _validate_remediation_fix(i, fix, errors):
+    if not isinstance(fix, dict):
+        errors.append(f'remediation.top_fixes[{i}] must be a dict')
+        return
+    for field in _REMEDIATION_FIX_FIELDS:
+        if field not in fix:
+            errors.append(f'Missing remediation.top_fixes[{i}].{field}')
+    severity_label = fix.get('severity_label')
+    if severity_label and severity_label not in VALID_REMEDIATION_SEVERITIES:
+        errors.append(f'Invalid severity_label in remediation fix: {severity_label}')
+    section = fix.get('section')
+    if section and section not in VALID_REMEDIATION_SECTIONS:
+        errors.append(f'Invalid section in remediation fix: {section}')
+
+
+def _validate_remediation_per_section(per_section, errors):
+    if not isinstance(per_section, dict):
+        return
+    for section_key, section_data in per_section.items():
+        if section_key not in VALID_REMEDIATION_SECTIONS:
+            errors.append(f'Invalid remediation per_section key: {section_key}')
+        if not isinstance(section_data, dict):
+            continue
+        status = section_data.get('status')
+        if status and status not in VALID_REMEDIATION_SECTION_STATUSES:
+            errors.append(f'Invalid remediation per_section status for {section_key}: {status}')
+
 
 def _validate_remediation(results, errors):
     rem = results.get('remediation')
@@ -287,25 +341,8 @@ def _validate_remediation(results, errors):
         errors.append(f'Wrong type for remediation.top_fixes: expected list, got {type(rem["top_fixes"]).__name__}')
         return
     for i, fix in enumerate(rem['top_fixes']):
-        if not isinstance(fix, dict):
-            errors.append(f'remediation.top_fixes[{i}] must be a dict')
-            continue
-        for field in ('title', 'section', 'severity', 'severity_label', 'severity_color', 'fix', 'why', 'rfc', 'rfc_url'):
-            if field not in fix:
-                errors.append(f'Missing remediation.top_fixes[{i}].{field}')
-        if fix.get('severity_label') and fix['severity_label'] not in VALID_REMEDIATION_SEVERITIES:
-            errors.append(f'Invalid severity_label in remediation fix: {fix["severity_label"]}')
-        if fix.get('section') and fix['section'] not in VALID_REMEDIATION_SECTIONS:
-            errors.append(f'Invalid section in remediation fix: {fix["section"]}')
-    per_section = rem.get('per_section', {})
-    if isinstance(per_section, dict):
-        for section_key, section_data in per_section.items():
-            if section_key not in VALID_REMEDIATION_SECTIONS:
-                errors.append(f'Invalid remediation per_section key: {section_key}')
-            if isinstance(section_data, dict):
-                status = section_data.get('status')
-                if status and status not in VALID_REMEDIATION_SECTION_STATUSES:
-                    errors.append(f'Invalid remediation per_section status for {section_key}: {status}')
+        _validate_remediation_fix(i, fix, errors)
+    _validate_remediation_per_section(rem.get('per_section', {}), errors)
 
 
 VALID_POSTURE_STATES = {'STRONG', 'GOOD', 'MODERATE', 'WEAK', 'CRITICAL'}
@@ -318,6 +355,12 @@ VALID_MAIL_CLASSIFICATIONS = {
 VALID_DMARC_POLICIES = {'none', 'quarantine', 'reject'}
 
 
+def _check_value_in_set(value, valid_set, label):
+    if value and value not in valid_set:
+        return f'Invalid {label}: {value}'
+    return None
+
+
 def validate_analysis_deep(results: dict) -> list:
     """Deep validation — checks field value constraints beyond types.
     Used for Go migration parity verification."""
@@ -326,32 +369,45 @@ def validate_analysis_deep(results: dict) -> list:
         return errors
 
     domain_exists = results.get('domain_exists', True)
-
     posture = results.get('posture', {})
-    if domain_exists:
-        state = posture.get('state', '')
-        if state and state not in VALID_POSTURE_STATES:
-            errors.append(f'Invalid posture state: {state}')
 
-    color = posture.get('color', '')
-    if color and color not in VALID_POSTURE_COLORS:
-        errors.append(f'Invalid posture color: {color}')
+    if domain_exists:
+        err = _check_value_in_set(posture.get('state', ''), VALID_POSTURE_STATES, 'posture state')
+        if err:
+            errors.append(err)
+
+    err = _check_value_in_set(posture.get('color', ''), VALID_POSTURE_COLORS, 'posture color')
+    if err:
+        errors.append(err)
 
     mp = results.get('mail_posture', {})
-    classification = mp.get('classification', '')
-    if classification and classification not in VALID_MAIL_CLASSIFICATIONS:
-        errors.append(f'Invalid mail_posture classification: {classification}')
+    err = _check_value_in_set(mp.get('classification', ''), VALID_MAIL_CLASSIFICATIONS, 'mail_posture classification')
+    if err:
+        errors.append(err)
 
-    dmarc = results.get('dmarc_analysis', {})
-    if dmarc.get('status') in ('success', 'warning') and dmarc.get('policy'):
-        policy = dmarc['policy']
-        if policy not in VALID_DMARC_POLICIES:
-            errors.append(f'Invalid DMARC policy: {policy}')
-
-    spf = results.get('spf_analysis', {})
-    if spf.get('status') in ('success', 'warning') and 'lookup_count' in spf:
-        lc = spf['lookup_count']
-        if not isinstance(lc, int) or lc < 0:
-            errors.append(f'Invalid SPF lookup_count: {lc}')
+    _validate_deep_dmarc(results, errors)
+    _validate_deep_spf(results, errors)
 
     return errors
+
+
+def _validate_deep_dmarc(results, errors):
+    dmarc = results.get('dmarc_analysis', {})
+    if dmarc.get('status') not in ('success', 'warning'):
+        return
+    policy = dmarc.get('policy')
+    if not policy:
+        return
+    if policy not in VALID_DMARC_POLICIES:
+        errors.append(f'Invalid DMARC policy: {policy}')
+
+
+def _validate_deep_spf(results, errors):
+    spf = results.get('spf_analysis', {})
+    if spf.get('status') not in ('success', 'warning'):
+        return
+    if 'lookup_count' not in spf:
+        return
+    lc = spf['lookup_count']
+    if not isinstance(lc, int) or lc < 0:
+        errors.append(f'Invalid SPF lookup_count: {lc}')

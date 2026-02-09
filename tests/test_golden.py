@@ -192,44 +192,62 @@ class TestGoldenFixtures(unittest.TestCase):
                 self.assertIn(field, hs, f'{name}: hosting_summary missing {field}')
 
 
+def _make_key_path(path, key):
+    return f'{path}.{key}' if path else key
+
+
+def _report_key_diff(differences, path, key, direction):
+    full_path = _make_key_path(path, key)
+    differences.append(f'{direction} key in fresh: {full_path}')
+
+
+def _compare_common_key(golden, fresh, key, path, differences, compare_fn):
+    if key in VOLATILE_KEYS or key in VOLATILE_VALUE_KEYS:
+        return
+    child_path = _make_key_path(path, key)
+    g_val = golden[key]
+    f_val = fresh[key]
+    if type(g_val) != type(f_val) and not (g_val is None or f_val is None):
+        differences.append(f'Type changed at {child_path}: {type(g_val).__name__} -> {type(f_val).__name__}')
+        return
+    if isinstance(g_val, dict):
+        compare_fn(g_val, f_val, child_path, differences)
+
+
+def _compare_dict_structures(golden, fresh, path, differences):
+    golden_keys = set(golden.keys())
+    fresh_keys = set(fresh.keys())
+
+    for key in golden_keys - fresh_keys - VOLATILE_KEYS:
+        _report_key_diff(differences, path, key, 'Missing')
+
+    for key in fresh_keys - golden_keys - VOLATILE_KEYS:
+        _report_key_diff(differences, path, key, 'New')
+
+    for key in golden_keys & fresh_keys:
+        _compare_common_key(golden, fresh, key, path, differences, _compare_dict_structures)
+
+
+def _compare_structure(golden, fresh, path, differences):
+    both_dicts = isinstance(golden, dict) and isinstance(fresh, dict)
+    if both_dicts:
+        _compare_dict_structures(golden, fresh, path, differences)
+        return
+
+    golden_is_dict = isinstance(golden, dict)
+    fresh_is_dict = isinstance(fresh, dict)
+    if golden_is_dict and not fresh_is_dict:
+        differences.append(f'Type changed at {path}: dict -> {type(fresh).__name__}')
+    elif not golden_is_dict and fresh_is_dict:
+        differences.append(f'Type changed at {path}: {type(golden).__name__} -> dict')
+
+
 class TestAnalysisRegression(unittest.TestCase):
 
     def compare_analysis_outputs(self, golden, fresh):
         differences = []
-        self._compare_structure(golden, fresh, '', differences)
+        _compare_structure(golden, fresh, '', differences)
         return differences
-
-    def _compare_structure(self, golden, fresh, path, differences):
-        if isinstance(golden, dict) and isinstance(fresh, dict):
-            golden_keys = set(golden.keys())
-            fresh_keys = set(fresh.keys())
-
-            missing_in_fresh = golden_keys - fresh_keys - VOLATILE_KEYS
-            added_in_fresh = fresh_keys - golden_keys - VOLATILE_KEYS
-
-            for key in missing_in_fresh:
-                differences.append(f'Missing key in fresh: {path}.{key}' if path else f'Missing key in fresh: {key}')
-
-            for key in added_in_fresh:
-                differences.append(f'New key in fresh: {path}.{key}' if path else f'New key in fresh: {key}')
-
-            for key in golden_keys & fresh_keys:
-                if key in VOLATILE_KEYS or key in VOLATILE_VALUE_KEYS:
-                    continue
-                child_path = f'{path}.{key}' if path else key
-                g_val = golden[key]
-                f_val = fresh[key]
-                if type(g_val) != type(f_val) and not (g_val is None or f_val is None):
-                    differences.append(f'Type changed at {child_path}: {type(g_val).__name__} -> {type(f_val).__name__}')
-                elif isinstance(g_val, dict):
-                    self._compare_structure(g_val, f_val, child_path, differences)
-                elif isinstance(g_val, list) and isinstance(f_val, list):
-                    pass  # List contents are volatile, only structure matters
-
-        elif isinstance(golden, dict) and not isinstance(fresh, dict):
-            differences.append(f'Type changed at {path}: dict -> {type(fresh).__name__}')
-        elif not isinstance(golden, dict) and isinstance(fresh, dict):
-            differences.append(f'Type changed at {path}: {type(golden).__name__} -> dict')
 
     def test_regression_self_comparison(self):
         fixtures = load_fixtures()
