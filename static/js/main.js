@@ -136,23 +136,31 @@ document.addEventListener('DOMContentLoaded', function() {
     document.querySelectorAll('.code-block').forEach(function(codeBlock) {
         codeBlock.style.cursor = 'pointer';
         codeBlock.title = 'Click to copy';
+
+        var icon = document.createElement('i');
+        icon.className = 'fas fa-copy copy-icon';
+        codeBlock.appendChild(icon);
         
         codeBlock.addEventListener('click', function() {
-            navigator.clipboard.writeText(this.textContent).then(function() {
-                // Show temporary feedback
-                const originalText = codeBlock.textContent;
-                const originalBg = codeBlock.style.backgroundColor;
-                
-                codeBlock.style.backgroundColor = 'var(--bs-success)';
-                codeBlock.style.transition = 'background-color 0.2s';
-                
+            var copyText = '';
+            codeBlock.childNodes.forEach(function(node) {
+                if (!node.classList || !node.classList.contains('copy-icon')) {
+                    copyText += node.textContent;
+                }
+            });
+            copyText = copyText.trim();
+
+            navigator.clipboard.writeText(copyText).then(function() {
+                icon.className = 'fas fa-check copy-icon';
+                icon.style.color = 'var(--bs-success)';
+
                 setTimeout(function() {
-                    codeBlock.style.backgroundColor = originalBg;
-                }, 200);
+                    icon.className = 'fas fa-copy copy-icon';
+                    icon.style.color = '';
+                }, 1500);
             }).catch(function() {
-                // Fallback for older browsers
-                const textArea = document.createElement('textarea');
-                textArea.value = codeBlock.textContent;
+                var textArea = document.createElement('textarea');
+                textArea.value = copyText;
                 document.body.appendChild(textArea);
                 textArea.select();
                 document.execCommand('copy');
