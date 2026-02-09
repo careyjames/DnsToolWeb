@@ -74,6 +74,44 @@
             </a>
         </div>
 
+        <!-- Domain Search -->
+        <div class="card mb-4">
+            <div class="card-body py-2">
+                <form action="{{ url_for('history') }}" method="GET" role="search" class="d-flex align-items-center gap-2">
+                    <div class="input-group">
+                        <span class="input-group-text bg-transparent border-secondary">
+                            <i class="fas fa-search text-muted"></i>
+                        </span>
+                        <input type="text" name="domain" class="form-control border-secondary" 
+                               placeholder="Search by domain name..." 
+                               aria-label="Search history by domain name"
+                               value="{{ search_domain or '' }}"
+                               autocomplete="off" autocapitalize="none" spellcheck="false">
+                    </div>
+                    <button type="submit" class="btn btn-outline-primary flex-shrink-0">Search</button>
+                    {% if search_domain %}
+                        <a href="{{ url_for('history') }}" class="btn btn-outline-secondary flex-shrink-0" title="Clear search">
+                            <i class="fas fa-times"></i>
+                        </a>
+                    {% endif %}
+                </form>
+            </div>
+        </div>
+
+        {% if search_domain %}
+            <div class="mb-3">
+                <span class="text-muted">
+                    {% if analyses.total == 0 %}
+                        No results found for "<strong>{{ search_domain }}</strong>"
+                    {% elif analyses.total == 1 %}
+                        1 result for "<strong>{{ search_domain }}</strong>"
+                    {% else %}
+                        {{ analyses.total }} results for "<strong>{{ search_domain }}</strong>"
+                    {% endif %}
+                </span>
+            </div>
+        {% endif %}
+
         {% if analyses.items %}
             <!-- Analysis list -->
             <div class="card">
@@ -173,7 +211,7 @@
                     <ul class="pagination justify-content-center">
                         {% if analyses.has_prev %}
                             <li class="page-item">
-                                <a class="page-link" href="{{ url_for('history', page=analyses.prev_num) }}">
+                                <a class="page-link" href="{{ url_for('history', page=analyses.prev_num, domain=search_domain or '') }}">
                                     <i class="fas fa-chevron-left"></i> Previous
                                 </a>
                             </li>
@@ -183,7 +221,7 @@
                             {% if page_num %}
                                 {% if page_num != analyses.page %}
                                     <li class="page-item">
-                                        <a class="page-link" href="{{ url_for('history', page=page_num) }}">{{ page_num }}</a>
+                                        <a class="page-link" href="{{ url_for('history', page=page_num, domain=search_domain or '') }}">{{ page_num }}</a>
                                     </li>
                                 {% else %}
                                     <li class="page-item active">
@@ -199,7 +237,7 @@
                         
                         {% if analyses.has_next %}
                             <li class="page-item">
-                                <a class="page-link" href="{{ url_for('history', page=analyses.next_num) }}">
+                                <a class="page-link" href="{{ url_for('history', page=analyses.next_num, domain=search_domain or '') }}">
                                     Next <i class="fas fa-chevron-right"></i>
                                 </a>
                             </li>
@@ -210,12 +248,24 @@
         {% else %}
             <!-- Empty state -->
             <div class="text-center py-5">
-                <i class="fas fa-history fa-3x text-muted mb-3"></i>
-                <h4 class="text-muted">No Analysis History</h4>
-                <p class="text-muted mb-4">You haven't performed any DNS analyses yet.</p>
-                <a href="{{ url_for('index') }}" class="btn btn-primary">
-                    <i class="fas fa-plus me-2"></i>Start Your First Analysis
-                </a>
+                {% if search_domain %}
+                    <i class="fas fa-search fa-3x text-muted mb-3"></i>
+                    <h4 class="text-muted">No Results Found</h4>
+                    <p class="text-muted mb-4">No analysis history found for "<strong>{{ search_domain }}</strong>"</p>
+                    <a href="{{ url_for('history') }}" class="btn btn-outline-secondary me-2">
+                        <i class="fas fa-times me-2"></i>Clear Search
+                    </a>
+                    <a href="{{ url_for('analyze', domain=search_domain) }}" class="btn btn-primary">
+                        <i class="fas fa-search me-2"></i>Analyze {{ search_domain }}
+                    </a>
+                {% else %}
+                    <i class="fas fa-history fa-3x text-muted mb-3"></i>
+                    <h4 class="text-muted">No Analysis History</h4>
+                    <p class="text-muted mb-4">You haven't performed any DNS analyses yet.</p>
+                    <a href="{{ url_for('index') }}" class="btn btn-primary">
+                        <i class="fas fa-plus me-2"></i>Start Your First Analysis
+                    </a>
+                {% endif %}
             </div>
         {% endif %}
 

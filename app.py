@@ -1082,20 +1082,32 @@ def update_daily_stats(analysis_success: bool, duration: float, domain: str):
 
 @app.route('/history')
 def history():
-    """View analysis history."""
+    """View analysis history with optional domain search."""
     page = request.args.get('page', 1, type=int)
+    search_domain = request.args.get('domain', '', type=str).strip().lower()
     per_page = 20
     
-    analyses = DomainAnalysis.query.filter(
+    query = DomainAnalysis.query.filter(
         DomainAnalysis.full_results.isnot(None),
         DomainAnalysis.analysis_success == True
-    ).order_by(
+    )
+    
+    if search_domain:
+        search_pattern = f"%{search_domain}%"
+        query = query.filter(
+            db.or_(
+                DomainAnalysis.domain.ilike(search_pattern),
+                DomainAnalysis.ascii_domain.ilike(search_pattern)
+            )
+        )
+    
+    analyses = query.order_by(
         DomainAnalysis.created_at.desc()
     ).paginate(
         page=page, per_page=per_page, error_out=False
     )
     
-    return render_template('history.html', analyses=analyses)
+    return render_template('history.html', analyses=analyses, search_domain=search_domain)
 
 @app.route('/analysis/<int:analysis_id>')
 def view_analysis(analysis_id):
