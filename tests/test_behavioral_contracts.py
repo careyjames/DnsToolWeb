@@ -162,7 +162,7 @@ class TestDeepValidation(unittest.TestCase):
                 'verdicts': {},
             },
             '_schema_version': 2,
-            '_tool_version': '26.10.84',
+            '_tool_version': '26.10.85',
         }
         for key, value in overrides.items():
             if isinstance(value, dict) and isinstance(result.get(key), dict):
