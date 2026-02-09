@@ -70,7 +70,8 @@ def _is_private_ip(ip_str: str) -> bool:
 
 def _validate_url_target(url: str) -> bool:
     """Validate that a URL does not resolve to a private/reserved IP (SSRF protection).
-    Returns True if the target is safe (public IP), False if private/reserved."""
+    Returns True if the target is safe (public IP), False if private/reserved or unresolvable.
+    Fail-closed: DNS resolution failures return False (deny by default)."""
     try:
         from urllib.parse import urlparse
         parsed = urlparse(url)
@@ -78,13 +79,15 @@ def _validate_url_target(url: str) -> bool:
         if not hostname:
             return False
         addrs = socket.getaddrinfo(hostname, None, socket.AF_UNSPEC, socket.SOCK_STREAM)
+        if not addrs:
+            return False
         for family, _, _, _, sockaddr in addrs:
             ip = sockaddr[0]
             if _is_private_ip(ip):
                 return False
         return True
     except (socket.gaierror, OSError):
-        return True
+        return False
 
 class DNSAnalyzer:
     """DNS analysis tool for domain records and email security."""
@@ -196,7 +199,11 @@ class DNSAnalyzer:
             return idna.encode(domain, uts46=True).decode("ascii")
         except (idna.core.IDNAError, UnicodeError) as e:
             logging.warning(f"IDNA encoding failed for '{domain}': {e}")
-            if re.match(r'^[a-zA-Z0-9._-]+$', domain):
+            if re.match(r'^[a-zA-Z0-9.-]+$', domain):
+                labels = domain.split('.')
+                for label in labels:
+                    if not label or len(label) > 63 or label.startswith('-') or label.endswith('-'):
+                        raise ValueError(f"Invalid domain name: {domain}")
                 return domain
             raise ValueError(f"Invalid internationalized domain name: {domain}")
 
@@ -3772,6 +3779,32 @@ class DNSAnalyzer:
         
         # SMTP Transport verification disabled - port 25 blocked in production
         results['smtp_transport'] = None
+
+        ct_data = results.get('ct_subdomains', {})
+        reg_data = results.get('registrar_info', {})
+        results['_data_freshness'] = {
+            'dns_records': {'source': 'live', 'note': 'Queried from 4 independent resolvers in real time'},
+            'spf': {'source': 'live', 'note': 'Live DNS query'},
+            'dmarc': {'source': 'live', 'note': 'Live DNS query'},
+            'dkim': {'source': 'live', 'note': 'Live DNS query'},
+            'dane': {'source': 'live', 'note': 'Live DNS query per MX host'},
+            'mta_sts': {'source': 'live', 'note': 'Live HTTPS policy fetch'},
+            'tlsrpt': {'source': 'live', 'note': 'Live DNS query'},
+            'bimi': {'source': 'live', 'note': 'Live DNS query + HTTPS validation'},
+            'caa': {'source': 'live', 'note': 'Live DNS query'},
+            'dnssec': {'source': 'live', 'note': 'Live DNSSEC validation'},
+            'resolver_consensus': {'source': 'live', 'note': 'Cross-referenced across 4 resolvers'},
+            'registrar': {
+                'source': 'cached' if reg_data.get('cached') else 'live',
+                'note': f"RDAP registry data (cached {reg_data.get('cached_at', '')})" if reg_data.get('cached') else 'Live RDAP registry lookup',
+                'cache_ttl': '6 hours' if reg_data.get('cached') else None,
+            },
+            'ct_subdomains': {
+                'source': ct_data.get('ct_source', 'live'),
+                'note': 'Certificate Transparency logs (cached 1 hour)' if ct_data.get('ct_source') == 'cache' else 'Live Certificate Transparency query',
+                'cache_ttl': '1 hour' if ct_data.get('ct_source') == 'cache' else None,
+            },
+        }
         
         # Detect Null MX (RFC 7505): "MX 0 ." means domain explicitly does not accept mail
         mx_records = basic.get('MX', [])

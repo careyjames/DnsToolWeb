@@ -981,6 +981,14 @@ def analyze():
         # Perform DNS analysis
         results = dns_analyzer.analyze_domain(ascii_domain, custom_dkim_selectors=custom_selectors)
         
+        if results.get('analysis_success') is False and results.get('error'):
+            try:
+                update_daily_stats(analysis_success=False, duration=time.time() - start_time, domain=domain)
+            except Exception:
+                pass
+            flash(results['error'], 'warning')
+            return redirect(url_for('index'))
+
         # Calculate analysis duration
         analysis_duration = time.time() - start_time
         
@@ -1193,6 +1201,7 @@ def normalize_results(full_results):
         'dnssec_analysis': {'status': 'warning'},
         'ct_subdomains': {},
         'mail_posture': {'classification': 'unknown'},
+        '_data_freshness': {},
     }
     
     for key, default_val in defaults.items():

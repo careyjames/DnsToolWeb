@@ -327,7 +327,7 @@
                     <div class="card-body py-3">
                         <div class="row align-items-center">
                             <div class="col-md-3 border-end border-primary border-opacity-10">
-                                <small class="text-uppercase text-muted fw-bold d-block" style="font-size: 0.7rem;">Registrar <span class="text-info">({% if results.registrar_info.get('ns_inferred') %}NS INFERENCE{% elif results.registrar_info.get('status') == 'restricted' %}RESTRICTED{% elif results.registrar_info.source %}{{ results.registrar_info.source|upper }}{% else %}RDAP{% endif %})</span></small>
+                                <small class="text-uppercase text-muted fw-bold d-block" style="font-size: 0.7rem;">Registrar <span class="text-info">({% if results.registrar_info.get('ns_inferred') %}NS INFERENCE{% elif results.registrar_info.get('status') == 'restricted' %}RESTRICTED{% elif results.registrar_info.source %}{{ results.registrar_info.source|upper }}{% else %}RDAP{% endif %})</span>{% if results.get('_data_freshness', {}).get('registrar', {}).get('source') == 'cached' %} <span class="badge bg-secondary bg-opacity-50 border border-secondary border-opacity-25" style="font-size: 0.55rem; vertical-align: middle;" data-bs-toggle="tooltip" title="{{ results._data_freshness.registrar.note }}">CACHED</span>{% else %} <span class="badge bg-success bg-opacity-25 border border-success border-opacity-25" style="font-size: 0.55rem; vertical-align: middle;" data-bs-toggle="tooltip" title="Live RDAP registry lookup">LIVE</span>{% endif %}</small>
                                 <div class="text-truncate" title="{{ results.registrar_info.registrar or results.registrar_info.get('message', 'Unknown') }}">
                                     <i class="fas fa-id-card text-primary me-2"></i>
                                     {% if results.registrar_info.registrar %}
@@ -1638,6 +1638,7 @@
                     <h5 class="mb-0 flex-grow-1">
                         <i class="fas fa-sitemap me-2"></i>Subdomain Discovery
                         <a href="https://datatracker.ietf.org/doc/html/rfc6962" target="_blank" rel="noopener" class="badge bg-dark bg-opacity-25 text-muted text-decoration-none fw-normal ms-2" style="font-size: 0.6rem;" title="Certificate Transparency">RFC 6962</a>
+                        {% if results.get('_data_freshness', {}).get('ct_subdomains', {}).get('source') == 'cache' %}<span class="badge bg-secondary bg-opacity-50 border border-secondary border-opacity-25 ms-1" style="font-size: 0.55rem;" data-bs-toggle="tooltip" title="CT log data cached for 1 hour — certificate records change infrequently">CACHED</span>{% else %}<span class="badge bg-success bg-opacity-25 border border-success border-opacity-25 ms-1" style="font-size: 0.55rem;" data-bs-toggle="tooltip" title="Live Certificate Transparency query">LIVE</span>{% endif %}
                     </h5>
                     {% if ct.get('status') == 'success' and ct.get('unique_subdomains', 0) > 0 %}
                     <span class="badge bg-info-subtle text-info border border-info-subtle">{% if ct.get('was_truncated') %}{{ ct.display_count }} of {% endif %}{{ ct.unique_subdomains }} subdomain{{ 's' if ct.unique_subdomains != 1 else '' }}</span>
@@ -1847,6 +1848,24 @@
         </div>
         {% endif %}
         
+        <!-- Data Freshness & Methodology Disclosure -->
+        <div class="card border-secondary border-opacity-25 mt-4 mb-3">
+            <div class="card-body py-3 px-4">
+                <h6 class="text-muted mb-2" style="font-size: 0.8rem;"><i class="fas fa-flask me-1"></i>DATA FRESHNESS &amp; METHODOLOGY</h6>
+                <p class="text-muted mb-2" style="font-size: 0.75rem; line-height: 1.6;">
+                    All security-critical records (SPF, DMARC, DKIM, DANE/TLSA, DNSSEC, MTA-STS, TLS-RPT, BIMI, CAA) are queried <strong>live</strong> from authoritative nameservers and cross-referenced against 4 independent public DNS resolvers (Cloudflare, Google, Quad9, OpenDNS) at the time of each analysis. No security verdict uses cached data.
+                </p>
+                <p class="text-muted mb-2" style="font-size: 0.75rem; line-height: 1.6;">
+                    <strong>Registrar data</strong> (RDAP) is cached for up to 6 hours because domain ownership and registration details change infrequently. <strong>Certificate Transparency logs</strong> (subdomain discovery via <a href="https://datatracker.ietf.org/doc/html/rfc6962" target="_blank" rel="noopener" class="text-info">RFC 6962</a>) are cached for 1 hour because CT entries are append-only historical records. Sections using cached data are marked with a <span class="badge bg-secondary bg-opacity-50 border border-secondary border-opacity-25" style="font-size: 0.55rem;">CACHED</span> badge; live queries show <span class="badge bg-success bg-opacity-25 border border-success border-opacity-25" style="font-size: 0.55rem;">LIVE</span>.
+                </p>
+                {% if results.get('ct_subdomains', {}).get('was_truncated') %}
+                <p class="text-muted mb-0" style="font-size: 0.75rem; line-height: 1.6;">
+                    <strong>Subdomain curation:</strong> From {{ results.ct_subdomains.unique_subdomains }} discovered subdomains, the {{ results.ct_subdomains.display_count }} shown were selected by security relevance: well-known service names (mail, vpn, api, sso, admin, etc.), DNS-resolving hosts, and subdomains with the most certificate activity are prioritized. CNAME chain resolution and provider identification run on the curated set for accuracy.
+                </p>
+                {% endif %}
+            </div>
+        </div>
+
         <!-- Footer -->
         <footer class="text-center mt-5 mb-4 text-muted small" role="contentinfo">
             <a href="https://www.it-help.tech" target="_blank" rel="noopener">

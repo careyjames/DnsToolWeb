@@ -42,11 +42,13 @@ Preferred communication style: Simple, everyday language.
     - Failed analyses are **never saved** to the database. Only successful, fully-populated reports are persisted. Stats are still tracked for failed attempts.
     - History queries filter to `analysis_success=True AND full_results IS NOT NULL` as an additional safety net.
     - **Schema versioning**: Every `full_results` payload includes a `_schema_version` field (currently `2`). Future code changes can use this to migrate or adapt older records without data loss. Schema changes must always be additive (new fields) — never remove or rename existing fields.
-- **Security Hardening (v26.10.70)**:
-    - **SSRF protection**: BIMI logo proxy validates each HTTP redirect hop, checking resolved IPs against private/loopback/reserved ranges before following.
+- **Security Hardening (v26.10.70, expanded v26.10.80)**:
+    - **SSRF protection**: All user-influenced outbound HTTP calls (RDAP, MTA-STS, BIMI logo/VMC) validate target IPs against private/loopback/reserved ranges before connecting. `_safe_http_get()` wrapper and `_validate_url_target()` helper enforce this for all outbound fetches.
     - **CSRF protection**: Session-based tokens generated in `before_request`, validated for all POST requests, injected into template context for forms.
     - **Thread-safe caching**: RDAP memory cache uses `threading.Lock` for all read/write operations to prevent race conditions under concurrent requests.
     - **Rate limiting**: Multi-worker warning when Redis unavailable; in-memory fallback clearly documented as per-process only.
+    - **IDNA mandatory (v26.10.80)**: International domain name support via `idna` package is required (not optional). Strict IDNA 2008 (RFC 5891) encoding with UTS #46 compatibility. Domain validation uses RFC-compliant label checks (length, character set, hyphen rules, TLD format) instead of simple regex.
+    - **Backpressure (v26.10.80)**: Semaphore-based concurrency control limits simultaneous analyses to 6 (`MAX_CONCURRENT_ANALYSES`). Requests exceeding capacity wait up to 10 seconds before returning a user-friendly capacity message. Active analysis count tracked for logging/monitoring.
 - **Code Organization (v26.10.70)**:
     - **`dns_providers.py`**: Extracted 7 provider data maps (CNAME_PROVIDER_MAP, DANE_MX_CAPABILITY, DMARC_MONITORING_PROVIDERS, SPF_FLATTENING_PROVIDERS, etc.) from dns_analyzer.py for easier maintenance.
     - **`rdap_cache.py`**: Extracted RDAPCache class into focused module with thread-safe locking.
