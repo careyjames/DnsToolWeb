@@ -788,7 +788,9 @@ def proxy_bimi_logo():
             content_type=upstream_ct,
             headers={
                 'Cache-Control': 'public, max-age=3600',
-                'X-Content-Type-Options': 'nosniff'
+                'X-Content-Type-Options': 'nosniff',
+                'Content-Security-Policy': "default-src 'none'; style-src 'unsafe-inline'",
+                'X-Frame-Options': 'DENY'
             }
         )
     except requests.Timeout:
