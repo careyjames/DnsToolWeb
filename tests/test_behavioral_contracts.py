@@ -80,8 +80,8 @@ class TestScorecardVerdictLogic(unittest.TestCase):
     def test_fully_vulnerable(self):
         self.assertEqual(self._email_spoofing_verdict('error', 'error', None), 'vulnerable')
 
-    def test_warning_spf_still_partial(self):
-        self.assertEqual(self._email_spoofing_verdict('warning', 'error', None), 'partial')
+    def test_warning_spf_is_vulnerable(self):
+        self.assertEqual(self._email_spoofing_verdict('warning', 'error', None), 'vulnerable')
 
     def _brand_impersonation_verdict(self, bimi_status, vmc_valid):
         if bimi_status == 'success' and vmc_valid:
