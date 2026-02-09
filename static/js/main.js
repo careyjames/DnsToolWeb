@@ -108,7 +108,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 overlay.classList.remove('d-none');
                 startStatusCycle(overlay);
             }
-            analyzeBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Analyzing...';
+            analyzeBtn.textContent = '';
+            const spinner = document.createElement('i');
+            spinner.className = 'fas fa-spinner fa-spin me-2';
+            analyzeBtn.appendChild(spinner);
+            analyzeBtn.appendChild(document.createTextNode('Analyzing...'));
             analyzeBtn.disabled = true;
             document.body.classList.add('loading');
         });

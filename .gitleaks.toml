@@ -1,0 +1,29 @@
+title = "Gitleaks configuration for DNS Tool"
+
+[allowlist]
+description = "DNS record data in test fixtures and RDAP responses are not secrets"
+paths = [
+    '''tests/golden_fixtures/.*\.json''',
+    '''rdap_debug\.json''',
+    '''rdap_it_help\.json''',
+    '''rdap_cache\.py''',
+    '''attached_assets/.*\.json''',
+    '''package-lock\.json''',
+    '''static/js/bootstrap\.bundle\.min\.js''',
+    '''node_modules/.*''',
+    '''.config/.*''',
+]
+regexTarget = "match"
+regexes = [
+    '''google-site-verification=''',
+    '''facebook-domain-verification=''',
+    '''apple-domain-verification=''',
+    '''cisco-ci-domain-verification=''',
+    '''onetrust-domain-verification=''',
+    '''globalsign-smime-dv=''',
+    '''docusign=''',
+    '''MS=[A-F0-9]+''',
+    '''v=spf1''',
+    '''v=DMARC1''',
+    '''v=DKIM1''',
+]
