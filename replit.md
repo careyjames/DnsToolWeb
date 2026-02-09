@@ -65,6 +65,7 @@ Preferred communication style: Simple, everyday language.
 - Custom CSS and client-side JavaScript for styling and interactivity.
 - **PWA Support**: Includes manifest, service worker (cache-first for static assets, network-first for pages with offline fallback), and app icons for installability.
 - **Accessibility (v26.10.70)**: Skip-to-content links, ARIA landmarks (`<main>`, `<nav aria-label>`, `role="search"`), semantic `<footer role="contentinfo">`.
+- **Mobile Responsiveness (v26.10.81)**: Apple-friendly meta tags (viewport-fit=cover, apple-mobile-web-app-capable, status-bar-style), safe-area insets for iPhone notch/home bar. Results header stacks vertically on mobile. Domain summary uses 2x2 grid (col-6) on mobile. History page uses card-based layout on mobile instead of table. DNSSEC and other badges use flex-wrap to prevent overflow. Touch targets meet 44px minimum. Comprehensive responsive CSS for typography, spacing, tables, badges, and code blocks. Both `custom.css` and `custom.min.css` must be kept in sync for CSS changes.
 - **Pages**: Index (home), Results, History, Statistics.
 - **Route Structure**: Standard RESTful routes for analysis, history, and static content (e.g., `/llms.txt` for AI agent guidance).
 
