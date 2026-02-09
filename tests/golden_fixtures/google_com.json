@@ -68,18 +68,18 @@
       "10 smtp.google.com."
     ],
     "TXT": [
-      "globalsign-smime-dv=CDYX+XFHUw2wml6/Gb8+59BsH31KzUr6c1l2BPvqKX8=",
-      "docusign=05958488-4752-4ef2-95eb-aa7ba8a3bd0e",
-      "google-site-verification=4ibFUgB-wXLQ_S7vsXVomSTVamuOXBiVAzpR5IZ87D0",
-      "facebook-domain-verification=22rm551cu4k0ab0bxsw536tlds4h95",
+      "globalsign-smime-dv=REDACTED_TEST_VALUE",
+      "docusign=test-0000-0000-0000-000000000001",
+      "google-site-verification=test_value_1",
+      "facebook-domain-verification=test_value",
       "v=spf1 include:_spf.google.com ~all",
-      "google-site-verification=wD8N7i1JTNTkezJ49swvWW48f8_9xveREV4oB-0Hf5o",
-      "cisco-ci-domain-verification=47c38bc8c4b74b7233e9053220c1bbe76bcc1cd33c7acf7acd36cd6a5332004b",
-      "MS=E4A68B9AB2BB9670BCE15412F62916164C0B20BB",
-      "apple-domain-verification=30afIBcvSuDV2PLX",
-      "google-site-verification=TV9-DBe4R80X4v0M4U_bd_J9cpOJM0nikft0jAgjmsQ",
-      "docusign=1b0a6754-49b1-4db5-8540-d2c12664b289",
-      "onetrust-domain-verification=6d685f1d41a94696ad7ef771f68993e0"
+      "google-site-verification=test_value_2",
+      "cisco-ci-domain-verification=test_value",
+      "MS=REDACTED_TEST",
+      "apple-domain-verification=test_value",
+      "google-site-verification=test_value_3",
+      "docusign=test-0000-0000-0000-000000000002",
+      "onetrust-domain-verification=test_value"
     ],
     "NS": [
       "ns4.google.com.",
@@ -208,18 +208,18 @@
     "status": "success",
     "message": "SPF valid with industry-standard soft fail (~all), 1/10 lookups",
     "records": [
-      "onetrust-domain-verification=6d685f1d41a94696ad7ef771f68993e0",
-      "google-site-verification=wD8N7i1JTNTkezJ49swvWW48f8_9xveREV4oB-0Hf5o",
-      "globalsign-smime-dv=CDYX+XFHUw2wml6/Gb8+59BsH31KzUr6c1l2BPvqKX8=",
-      "docusign=1b0a6754-49b1-4db5-8540-d2c12664b289",
-      "docusign=05958488-4752-4ef2-95eb-aa7ba8a3bd0e",
-      "cisco-ci-domain-verification=47c38bc8c4b74b7233e9053220c1bbe76bcc1cd33c7acf7acd36cd6a5332004b",
-      "google-site-verification=4ibFUgB-wXLQ_S7vsXVomSTVamuOXBiVAzpR5IZ87D0",
-      "apple-domain-verification=30afIBcvSuDV2PLX",
-      "facebook-domain-verification=22rm551cu4k0ab0bxsw536tlds4h95",
-      "MS=E4A68B9AB2BB9670BCE15412F62916164C0B20BB",
+      "onetrust-domain-verification=test_value",
+      "google-site-verification=test_value_2",
+      "globalsign-smime-dv=REDACTED_TEST_VALUE",
+      "docusign=test-0000-0000-0000-000000000002",
+      "docusign=test-0000-0000-0000-000000000001",
+      "cisco-ci-domain-verification=test_value",
+      "google-site-verification=test_value_1",
+      "apple-domain-verification=test_value",
+      "facebook-domain-verification=test_value",
+      "MS=REDACTED_TEST",
       "v=spf1 include:_spf.google.com ~all",
-      "google-site-verification=TV9-DBe4R80X4v0M4U_bd_J9cpOJM0nikft0jAgjmsQ"
+      "google-site-verification=test_value_3"
     ],
     "valid_records": [
       "v=spf1 include:_spf.google.com ~all"

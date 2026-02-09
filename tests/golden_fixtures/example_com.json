@@ -62,7 +62,7 @@
       "0 ."
     ],
     "TXT": [
-      "_k2n1y4vw3qtb4skdx9e7dxt97qrmmq9",
+      "_test_fixture_txt_record",
       "v=spf1 -all"
     ],
     "NS": [
@@ -181,7 +181,7 @@
     "message": "Valid SPF (no mail allowed) - domain declares it sends no email",
     "records": [
       "v=spf1 -all",
-      "_k2n1y4vw3qtb4skdx9e7dxt97qrmmq9"
+      "_test_fixture_txt_record"
     ],
     "valid_records": [
       "v=spf1 -all"
@@ -974,12 +974,12 @@
     "has_dnskey": true,
     "has_ds": true,
     "dnskey_records": [
-      "256 3 13 oJMRESz5E4gYzS/q6XDrvU1qMPYIjCWzJaOau8XNEZeqCYKD5ar0IRd8KqXXFJkqmVfRvMGPmM1x8fGAa2XhSA==",
-      "257 3 13 mdsswUyr3DPW132mOi8V9xESWE8jTo0dxCjjnopKl+GqJxpVXckHAeF+KkxLbxILfDLUT0rAK9iUzy1L53eKGQ==",
-      "256 3 13 kxipjoIbNZDsWqEKaYaGq6fM/XThrRp1ue6AV9R/n3eWxpGCeCWJb47PEEEj/Q6VAYFW/7UFo5mXoZfxKYZa3A=="
+      "256 3 13 dGVzdF9kbnNrZXlfMQ==",
+      "257 3 13 dGVzdF9kbnNrZXlfMg==",
+      "256 3 13 dGVzdF9kbnNrZXlfMw=="
     ],
     "ds_records": [
-      "2371 13 2 C988EC423E3880EB8DD8A46FE06CA230EE23F35B578D64E78B29C3E1C83D245A"
+      "2371 13 2 AABBCCDD00112233"
     ],
     "algorithm": 13,
     "algorithm_name": "ECDSA P-256/SHA-256",
