@@ -164,3 +164,17 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 });
+
+const allFixesCollapse = document.getElementById('allFixesCollapse');
+if (allFixesCollapse) {
+    const toggleBtn = document.querySelector('[data-bs-target="#allFixesCollapse"]');
+    if (toggleBtn) {
+        const originalHTML = toggleBtn.innerHTML;
+        allFixesCollapse.addEventListener('shown.bs.collapse', function() {
+            toggleBtn.innerHTML = '<i class="fas fa-chevron-up me-1"></i>Show fewer';
+        });
+        allFixesCollapse.addEventListener('hidden.bs.collapse', function() {
+            toggleBtn.innerHTML = originalHTML;
+        });
+    }
+}

@@ -78,6 +78,7 @@ def generate_remediation(results: Dict[str, Any]) -> Dict[str, Any]:
 
     return {
         'top_fixes': top_fixes,
+        'all_fixes': fixes,
         'per_section': per_section,
         'fix_count': len(fixes),
         'posture_achievable': posture_achievable,

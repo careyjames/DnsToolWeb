@@ -360,6 +360,36 @@
                             </div>
                             {% endfor %}
                         </div>
+                        {% if results.remediation.all_fixes|length > 3 %}
+                        <div class="mt-2 text-center">
+                            <button class="btn btn-sm btn-outline-warning border-opacity-50" type="button" data-bs-toggle="collapse" data-bs-target="#allFixesCollapse" aria-expanded="false" aria-controls="allFixesCollapse" style="font-size: 0.75rem;">
+                                <i class="fas fa-chevron-down me-1"></i>Show {{ results.remediation.all_fixes|length - 3 }} more fix{{ 'es' if results.remediation.all_fixes|length - 3 > 1 else '' }}
+                            </button>
+                        </div>
+                        <div class="collapse mt-2" id="allFixesCollapse">
+                            <div class="row g-2">
+                                {% for fix in results.remediation.all_fixes[3:] %}
+                                <div class="col-md-4">
+                                    <div class="p-2 rounded bg-dark bg-opacity-75 h-100">
+                                        <div class="d-flex align-items-start mb-1">
+                                            <span class="badge bg-{{ fix.severity_color }} me-2" style="min-width: 52px; font-size: 0.65rem;">{{ fix.severity_label }}</span>
+                                            <strong class="small">{{ fix.title }}</strong>
+                                        </div>
+                                        <p class="text-muted mb-1" style="font-size: 0.75rem;">{{ fix.fix }}</p>
+                                        {% if fix.dns_record %}
+                                        <div class="code-block small mt-1 border-warning" style="font-size: 0.7rem;">{{ fix.dns_record }}</div>
+                                        {% endif %}
+                                        <div class="mt-1">
+                                            <a href="{{ fix.rfc_url }}" target="_blank" rel="noopener" class="text-muted rfc-link" style="font-size: 0.65rem;">
+                                                <i class="fas fa-book me-1"></i>{{ fix.rfc }}
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        {% endif %}
                     </div>
                 </div>
             </div>
@@ -620,6 +650,8 @@
                                 {% endif %}
                                 {% if results.remediation and results.remediation.per_section.spf and results.remediation.per_section.spf.status == 'action_needed' %}
                                     {% set spf_fix = results.remediation.per_section.spf.fixes[0] %}
+                                    {% set _already_in_top = results.remediation.top_fixes|selectattr('title', 'equalto', spf_fix.title)|list|length > 0 %}
+                                    {% if not _already_in_top %}
                                     <div class="mt-2 p-2 bg-warning bg-opacity-10 border border-warning border-opacity-25 rounded small">
                                         <i class="fas fa-wrench text-warning me-1"></i>
                                         <strong class="text-warning">{{ spf_fix.title }}:</strong>
@@ -628,6 +660,7 @@
                                         <div class="code-block small mt-1 border-warning" style="font-size: 0.7rem;">{{ spf_fix.dns_record }}</div>
                                         {% endif %}
                                     </div>
+                                    {% endif %}
                                 {% endif %}
                             </div>
 
@@ -714,6 +747,8 @@
                                 {% endif %}
                                 {% if results.remediation and results.remediation.per_section.dmarc and results.remediation.per_section.dmarc.status == 'action_needed' %}
                                     {% set dmarc_fix = results.remediation.per_section.dmarc.fixes[0] %}
+                                    {% set _already_in_top = results.remediation.top_fixes|selectattr('title', 'equalto', dmarc_fix.title)|list|length > 0 %}
+                                    {% if not _already_in_top %}
                                     <div class="mt-2 p-2 bg-warning bg-opacity-10 border border-warning border-opacity-25 rounded small">
                                         <i class="fas fa-wrench text-warning me-1"></i>
                                         <strong class="text-warning">{{ dmarc_fix.title }}:</strong>
@@ -722,6 +757,7 @@
                                         <div class="code-block small mt-1 border-warning" style="font-size: 0.7rem;">{{ dmarc_fix.dns_record }}</div>
                                         {% endif %}
                                     </div>
+                                    {% endif %}
                                 {% endif %}
                             </div>
 
