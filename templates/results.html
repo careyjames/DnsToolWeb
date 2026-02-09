@@ -2,8 +2,11 @@
 <html lang="en" data-bs-theme="dark">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <meta name="theme-color" content="#212529">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>{{ domain }} - DNS Tool</title>
     <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='favicon.svg') }}">
     <link rel="manifest" href="/manifest.json">
@@ -97,8 +100,8 @@
 
     <main id="main-content" class="container my-4">
         <!-- Header -->
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <div>
+        <div class="results-header mb-4">
+            <div class="results-header-info">
                 <h1 class="h3 mb-1">DNS Intelligence Report</h1>
                 <div class="text-muted">
                     <strong>{{ domain }}</strong>
@@ -107,17 +110,17 @@
                     {% endif %}
                 </div>
                 {% if analysis_timestamp or analysis_duration %}
-                <div class="small text-muted d-flex align-items-center" style="opacity: 0.7;">
-                    {% if analysis_timestamp %}<i class="fas fa-clock me-1" style="vertical-align: middle;"></i><span>{{ analysis_timestamp.strftime('%Y-%m-%d %H:%M UTC') }}</span>{% endif %}
+                <div class="small text-muted results-meta" style="opacity: 0.7;">
+                    {% if analysis_timestamp %}<i class="fas fa-clock me-1"></i><span>{{ analysis_timestamp.strftime('%Y-%m-%d %H:%M UTC') }}</span>{% endif %}
                     {% if analysis_timestamp and analysis_duration %}<span class="mx-1">·</span>{% endif %}
-                    {% if analysis_duration %}<i class="fas fa-stopwatch me-1" style="vertical-align: middle;"></i><span>{{ "%.1f"|format(analysis_duration) }}s</span>{% endif %}
+                    {% if analysis_duration %}<i class="fas fa-stopwatch me-1"></i><span>{{ "%.1f"|format(analysis_duration) }}s</span>{% endif %}
                     {% if results and results.get('_tool_version') %}
-                        <span class="mx-1">·</span><i class="fas fa-tag me-1" style="vertical-align: middle;"></i><span>v{{ results['_tool_version'] }}</span>
+                        <span class="mx-1">·</span><i class="fas fa-tag me-1"></i><span>v{{ results['_tool_version'] }}</span>
                     {% endif %}
                 </div>
                 {% endif %}
             </div>
-            <div class="d-flex gap-2 flex-wrap">
+            <div class="results-header-actions">
                 <button type="button" id="reanalyzeBtn" class="btn btn-primary" data-domain="{{ domain }}"
                     {% if wait_seconds %}data-wait-seconds="{{ wait_seconds }}" data-wait-reason="{{ wait_reason }}"{% endif %}>
                     <i class="fas fa-sync-alt me-2"></i>Re-analyze
@@ -325,8 +328,8 @@
             <div class="col-12">
                 <div class="card border-primary border-opacity-25 bg-primary bg-opacity-10">
                     <div class="card-body py-3">
-                        <div class="row align-items-center">
-                            <div class="col-md-3 border-end border-primary border-opacity-10">
+                        <div class="row align-items-center domain-summary-row">
+                            <div class="col-6 col-md-3 domain-summary-col mb-2 mb-md-0">
                                 <small class="text-uppercase text-muted fw-bold d-block" style="font-size: 0.7rem;">Registrar <span class="text-info">({% if results.registrar_info.get('ns_inferred') %}NS INFERENCE{% elif results.registrar_info.get('status') == 'restricted' %}RESTRICTED{% elif results.registrar_info.source %}{{ results.registrar_info.source|upper }}{% else %}RDAP{% endif %})</span>{% if results.get('_data_freshness', {}).get('registrar', {}).get('source') == 'cached' %} <span class="badge bg-secondary bg-opacity-50 border border-secondary border-opacity-25" style="font-size: 0.55rem; vertical-align: middle;" data-bs-toggle="tooltip" title="{{ results._data_freshness.registrar.note }}">CACHED</span>{% else %} <span class="badge bg-success bg-opacity-25 border border-success border-opacity-25" style="font-size: 0.55rem; vertical-align: middle;" data-bs-toggle="tooltip" title="Live RDAP registry lookup">LIVE</span>{% endif %}</small>
                                 <div class="text-truncate" title="{{ results.registrar_info.registrar or results.registrar_info.get('message', 'Unknown') }}">
                                     <i class="fas fa-id-card text-primary me-2"></i>
@@ -340,7 +343,7 @@
                                 </div>
                                 <small class="text-muted d-block" style="font-size: 0.65rem;">{% if results.registrar_info.get('ns_inferred') %}Inferred from NS records{% elif results.registrar_info.get('registry_restricted') %}.{{ results.registrar_info.get('registry_restricted_tld', '') }} restricts public WHOIS{% elif results.registrar_info.subdomain_of is defined and results.registrar_info.subdomain_of %}Registrar for {{ results.registrar_info.subdomain_of }}{% else %}Where you pay to own domain{% endif %}</small>
                             </div>
-                            <div class="col-md-3 border-end border-primary border-opacity-10">
+                            <div class="col-6 col-md-3 domain-summary-col mb-2 mb-md-0">
                                 <small class="text-uppercase text-muted fw-bold d-block" style="font-size: 0.7rem;">Email Service Provider</small>
                                 <div class="text-truncate">
                                     {% set mp_icon = 'ban' if results.get('mail_posture', {}).get('classification', '') in ('no_mail_verified', 'no_mail_partial') else 'question-circle' if results.get('mail_posture', {}).get('classification', '') == 'email_ambiguous' else 'envelope' %}
@@ -349,7 +352,7 @@
                                 </div>
                                 <small class="text-muted d-block" style="font-size: 0.65rem;">{% if results.get('mail_posture', {}).get('label') %}{{ results.mail_posture.label }}{% elif results.is_no_mail_domain %}Domain declares no email{% else %}Where email is hosted (MX){% endif %}</small>
                             </div>
-                            <div class="col-md-3 border-end border-primary border-opacity-10">
+                            <div class="col-6 col-md-3 domain-summary-col mb-2 mb-md-0">
                                 <small class="text-uppercase text-muted fw-bold d-block" style="font-size: 0.7rem;">Web Hosting</small>
                                 <div class="text-truncate">
                                     <i class="fas fa-server text-primary me-2"></i>
@@ -357,7 +360,7 @@
                                 </div>
                                 <small class="text-muted d-block" style="font-size: 0.65rem;">Where website is hosted</small>
                             </div>
-                            <div class="col-md-3">
+                            <div class="col-6 col-md-3 domain-summary-col">
                                 <small class="text-uppercase text-muted fw-bold d-block" style="font-size: 0.7rem;">DNS Hosting</small>
                                 <div>
                                     <i class="fas fa-network-wired text-primary me-2"></i>
@@ -1127,14 +1130,14 @@
                         <div class="row">
                             <!-- DNSSEC Analysis -->
                             <div class="col-md-6 mb-3 mb-md-0">
-                                <h6 class="d-flex align-items-center">
+                                <h6 class="d-flex align-items-center flex-wrap">
                                     <i class="fas fa-key me-2"></i>DNSSEC
                                     <a href="https://datatracker.ietf.org/doc/html/rfc4033" target="_blank" rel="noopener" class="ms-2 text-muted rfc-link" data-bs-toggle="tooltip" data-bs-html="true" title="<strong>DNS Security Extensions</strong><br>Cryptographic signatures that prove DNS responses are authentic and untampered." aria-label="Learn about DNSSEC - RFC 4033-4035"><i class="fas fa-info-circle"></i><span class="rfc-label">RFC 4033</span></a>
                                     <span class="badge bg-{{ 'success' if results.dnssec_analysis.status == 'success' else 'warning' }} ms-2">
                                         {% if results.dnssec_analysis.status == 'success' and results.dnssec_analysis.chain_of_trust == 'inherited' %}Inherited{% elif results.dnssec_analysis.status == 'success' %}Signed{% else %}Unsigned{% endif %}
                                     </span>
                                     {% if results.dnssec_analysis.algorithm_name %}
-                                        <span class="badge bg-info ms-1">{{ results.dnssec_analysis.algorithm_name }}</span>
+                                        <span class="badge bg-info ms-1 text-break">{{ results.dnssec_analysis.algorithm_name }}</span>
                                     {% endif %}
                                 </h6>
                                 <p class="text-muted mb-2 small">{{ results.dnssec_analysis.message }}</p>

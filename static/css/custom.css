@@ -411,25 +411,85 @@ main.container {
     font-size: 1.125rem;
 }
 
+/* ============================================
+   RESULTS HEADER LAYOUT
+   ============================================ */
+.results-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 1rem;
+}
+
+.results-header-actions {
+    display: flex;
+    gap: 0.5rem;
+    flex-shrink: 0;
+}
+
+.results-meta {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0;
+}
+
+/* ============================================
+   SAFE AREA INSETS (iPhone notch, home bar)
+   ============================================ */
+body {
+    padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+}
+
+/* ============================================
+   DOMAIN SUMMARY RESPONSIVE COLUMNS
+   ============================================ */
+.domain-summary-col {
+    border-right: 1px solid rgba(var(--bs-primary-rgb), 0.1);
+}
+
+.domain-summary-col:last-child {
+    border-right: none;
+}
+
+/* ============================================
+   HISTORY MOBILE CARDS
+   ============================================ */
+.history-mobile-card {
+    border-color: rgba(255,255,255,0.1);
+}
+
+.min-width-0 {
+    min-width: 0;
+}
+
+/* ============================================
+   MOBILE RESPONSIVE STYLES
+   ============================================ */
 @media (max-width: 768px) {
     .display-4 {
         font-size: 2rem;
     }
     
     .container {
-        padding-left: 1rem;
-        padding-right: 1rem;
+        padding-left: 0.75rem;
+        padding-right: 0.75rem;
     }
     
     .code-block {
-        font-size: 0.8rem;
+        font-size: 0.75rem;
         padding: 0.5rem;
+        word-break: break-all;
     }
     
-    .btn, .nav-link, a {
+    .btn, .nav-link {
         min-height: 44px;
         display: inline-flex;
         align-items: center;
+    }
+    
+    a {
+        -webkit-tap-highlight-color: rgba(0, 0, 0, 0.1);
     }
     
     .navbar-toggler {
@@ -460,6 +520,103 @@ main.container {
     
     .search-card {
         padding: 1.25rem;
+    }
+
+    .results-header {
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+    
+    .results-header-info h1 {
+        font-size: 1.4rem;
+    }
+    
+    .results-header-actions {
+        width: 100%;
+    }
+    
+    .results-header-actions .btn {
+        flex: 1;
+        justify-content: center;
+    }
+    
+    .results-meta {
+        flex-wrap: wrap;
+    }
+
+    .domain-summary-col {
+        border-right: none;
+        border-bottom: 1px solid rgba(var(--bs-primary-rgb), 0.1);
+        padding-bottom: 0.5rem;
+    }
+    
+    .domain-summary-col:nth-child(even) {
+        border-right: none;
+    }
+    
+    .domain-summary-col:nth-last-child(-n+2) {
+        border-bottom: none;
+    }
+
+    .card-header h5 {
+        font-size: 1rem;
+    }
+    
+    .card-header h5 .badge {
+        font-size: 0.6rem !important;
+    }
+
+    h6 .badge {
+        font-size: 0.65rem !important;
+        max-width: 100%;
+        white-space: normal;
+        word-break: break-word;
+    }
+
+    .table {
+        font-size: 0.8rem;
+    }
+    
+    .table th, .table td {
+        padding: 0.4rem 0.5rem;
+        white-space: nowrap;
+    }
+    
+    .table td code {
+        font-size: 0.7rem;
+        word-break: break-all;
+        white-space: normal;
+    }
+
+    .card-body {
+        padding: 0.75rem;
+    }
+
+    .col-md-4.mb-3, .col-md-6.mb-3 {
+        margin-bottom: 1rem !important;
+    }
+    
+    .rfc-link {
+        font-size: 0.6rem;
+        padding: 0.1rem 0.25rem;
+    }
+    
+    .rfc-link .rfc-label {
+        font-size: 0.6rem;
+    }
+
+    .alert {
+        padding: 0.5rem 0.75rem;
+        font-size: 0.85rem;
+    }
+
+    footer img {
+        width: 48px;
+        height: 48px;
+    }
+    
+    footer p {
+        font-size: 0.8rem;
     }
 }
 

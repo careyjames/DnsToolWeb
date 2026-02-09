@@ -2,8 +2,11 @@
 <html lang="en" data-bs-theme="dark">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <meta name="theme-color" content="#212529">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>Analysis History - DNS Tool</title>
     <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='favicon.svg') }}">
     <link rel="manifest" href="/manifest.json">
@@ -114,7 +117,7 @@
 
         {% if analyses.items %}
             <!-- Analysis list -->
-            <div class="card">
+            <div class="card d-none d-md-block">
                 <div class="card-body">
                     <div class="table-responsive">
                         <table class="table table-hover mb-0">
@@ -206,6 +209,53 @@
                         </table>
                     </div>
                 </div>
+            </div>
+
+            <div class="d-md-none">
+                {% for analysis in analyses.items %}
+                <div class="card mb-2 history-mobile-card">
+                    <div class="card-body py-2 px-3">
+                        <div class="d-flex justify-content-between align-items-start mb-1">
+                            <div class="d-flex align-items-center min-width-0">
+                                <i class="fas fa-globe text-primary me-2 flex-shrink-0"></i>
+                                <div class="min-width-0">
+                                    <div class="fw-medium text-truncate">{{ analysis.domain }}</div>
+                                </div>
+                            </div>
+                            <div class="btn-group flex-shrink-0 ms-2" role="group">
+                                <a href="{{ url_for('view_analysis_static', analysis_id=analysis.id) }}" 
+                                   class="btn btn-sm btn-outline-primary history-view-btn" title="View">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                <a href="{{ url_for('analyze', domain=analysis.domain) }}" 
+                                   class="btn btn-sm btn-outline-success history-reanalyze-btn" title="Re-analyze">
+                                    <i class="fas fa-sync-alt"></i>
+                                </a>
+                            </div>
+                        </div>
+                        <div class="d-flex flex-wrap align-items-center gap-1 small">
+                            {% if analysis.analysis_success %}
+                                <span class="badge bg-success" style="font-size:0.65rem;"><i class="fas fa-check me-1"></i>OK</span>
+                            {% else %}
+                                <span class="badge bg-danger" style="font-size:0.65rem;"><i class="fas fa-times me-1"></i>Failed</span>
+                            {% endif %}
+                            {% if analysis.spf_status %}
+                                <span class="badge bg-{{ 'success' if analysis.spf_status == 'success' else 'warning' if analysis.spf_status == 'warning' else 'danger' }}" style="font-size:0.65rem;">SPF</span>
+                            {% endif %}
+                            {% if analysis.dmarc_status %}
+                                <span class="badge bg-{{ 'success' if analysis.dmarc_status == 'success' else 'warning' if analysis.dmarc_status == 'warning' else 'danger' }}" style="font-size:0.65rem;">DMARC</span>
+                            {% endif %}
+                            {% if analysis.dkim_status %}
+                                <span class="badge bg-{{ 'success' if analysis.dkim_status == 'success' else 'warning' }}" style="font-size:0.65rem;">DKIM</span>
+                            {% endif %}
+                            <span class="text-muted ms-auto" style="font-size:0.7rem;">
+                                {{ analysis.created_at.strftime('%Y-%m-%d %H:%M') }}
+                                {% if analysis.analysis_duration %} · {{ "%.1f"|format(analysis.analysis_duration) }}s{% endif %}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
             </div>
 
             <!-- Pagination -->
