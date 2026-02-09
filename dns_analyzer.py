@@ -4814,7 +4814,7 @@ class DNSAnalyzer:
                 if has_mta_sts_configured:
                     pass
                 else:
-                    monitoring_items.append(f'DANE not available on {provider_name} — deploy MTA-STS as the recommended transport security alternative')
+                    absent_items.append(f'DANE not available on {provider_name} — deploy MTA-STS as the recommended transport security alternative')
             else:
                 absent_items.append('DANE/TLSA (certificate pinning for mail transport)')
         
