@@ -54,10 +54,37 @@ except ImportError:
 
 try:
     import idna
-    HAS_IDNA = True
 except ImportError:
-    HAS_IDNA = False
-    idna = None
+    print("Error: the 'idna' package is required for internationalized domain name support.")
+    sys.exit(1)
+
+import ipaddress
+
+def _is_private_ip(ip_str: str) -> bool:
+    """Check if an IP address is private, loopback, or reserved (SSRF protection)."""
+    try:
+        addr = ipaddress.ip_address(ip_str)
+        return addr.is_private or addr.is_loopback or addr.is_reserved or addr.is_link_local
+    except ValueError:
+        return False
+
+def _validate_url_target(url: str) -> bool:
+    """Validate that a URL does not resolve to a private/reserved IP (SSRF protection).
+    Returns True if the target is safe (public IP), False if private/reserved."""
+    try:
+        from urllib.parse import urlparse
+        parsed = urlparse(url)
+        hostname = parsed.hostname
+        if not hostname:
+            return False
+        addrs = socket.getaddrinfo(hostname, None, socket.AF_UNSPEC, socket.SOCK_STREAM)
+        for family, _, _, _, sockaddr in addrs:
+            ip = sockaddr[0]
+            if _is_private_ip(ip):
+                return False
+        return True
+    except (socket.gaierror, OSError):
+        return True
 
 class DNSAnalyzer:
     """DNS analysis tool for domain records and email security."""
@@ -75,6 +102,8 @@ class DNSAnalyzer:
 
     CNAME_PROVIDER_MAP = CNAME_PROVIDER_MAP
 
+    MAX_CONCURRENT_ANALYSES = 6
+
     def __init__(self):
         self.dns_timeout = 2
         self.dns_tries = 2
@@ -83,6 +112,9 @@ class DNSAnalyzer:
         self.iana_rdap_map = {}
         self.consensus_enabled = True
         self._executor = ThreadPoolExecutor(max_workers=20)
+        self._analysis_semaphore = __import__('threading').Semaphore(self.MAX_CONCURRENT_ANALYSES)
+        self._active_analyses = 0
+        self._active_lock = __import__('threading').Lock()
         self._dns_cache: Dict[str, tuple] = {}
         self._dns_cache_lock = __import__('threading').Lock()
         self._DNS_CACHE_TTL = 30
@@ -130,6 +162,16 @@ class DNSAnalyzer:
                 for k in expired:
                     del self._ct_cache[k]
 
+    def _safe_http_get(self, url: str, **kwargs) -> 'requests.Response':
+        """SSRF-safe HTTP GET: validates URL target resolves to public IPs only.
+        Raises ConnectionError if target resolves to private/reserved IP ranges."""
+        if not _validate_url_target(url):
+            raise requests.exceptions.ConnectionError(
+                f"SSRF protection: URL target resolves to private/reserved IP range"
+            )
+        kwargs.setdefault('headers', {}).setdefault('User-Agent', self.USER_AGENT)
+        return requests.get(url, **kwargs)
+
     def _find_parent_zone(self, domain: str) -> Optional[str]:
         """Find the parent zone that contains this domain by looking for NS records.
         For 'dnstool.it-help.tech', returns 'it-help.tech'.
@@ -147,23 +189,52 @@ class DNSAnalyzer:
         return None
 
     def domain_to_ascii(self, domain: str) -> str:
-        """Convert Unicode domain names to ASCII using IDNA."""
-        domain = domain.rstrip(".")
-        if HAS_IDNA:
-            try:
-                import idna
-                return idna.encode(domain).decode("ascii")
-            except Exception:
-                pass
-        return domain
-    
+        """Convert Unicode domain names to ASCII using IDNA 2008 (RFC 5891).
+        Raises ValueError if the domain cannot be encoded."""
+        domain = domain.strip().rstrip(".")
+        try:
+            return idna.encode(domain, uts46=True).decode("ascii")
+        except (idna.core.IDNAError, UnicodeError) as e:
+            logging.warning(f"IDNA encoding failed for '{domain}': {e}")
+            if re.match(r'^[a-zA-Z0-9._-]+$', domain):
+                return domain
+            raise ValueError(f"Invalid internationalized domain name: {domain}")
+
     def validate_domain(self, domain: str) -> bool:
-        """Return True if domain looks like a valid domain name."""
-        if not domain or domain.startswith(".") or domain.endswith(".") or domain.endswith("-"):
+        """Validate domain using IDNA encoding and RFC-compliant checks.
+        Returns True if domain is a valid, well-formed domain name."""
+        if not domain or len(domain) > 253:
             return False
-        
-        pattern = r"^[A-Za-z0-9._-]+\.[A-Za-z0-9-]{2,}$"
-        return bool(re.match(pattern, domain))
+
+        domain = domain.strip().rstrip(".")
+        if not domain:
+            return False
+
+        try:
+            ascii_domain = self.domain_to_ascii(domain)
+        except (ValueError, Exception):
+            return False
+
+        if '..' in ascii_domain or ascii_domain.startswith('.') or ascii_domain.startswith('-'):
+            return False
+
+        labels = ascii_domain.split('.')
+        if len(labels) < 2:
+            return False
+
+        for label in labels:
+            if not label or len(label) > 63:
+                return False
+            if label.startswith('-') or label.endswith('-'):
+                return False
+            if not re.match(r'^[a-zA-Z0-9-]+$', label):
+                return False
+
+        tld = labels[-1]
+        if not re.match(r'^[a-zA-Z]{2,}$', tld) and not tld.startswith('xn--'):
+            return False
+
+        return True
     
     def _fetch_iana_rdap_data(self):
         """Populate IANA_RDAP_MAP with TLD to RDAP endpoint mappings."""
@@ -1752,7 +1823,7 @@ class DNSAnalyzer:
         }
         
         try:
-            response = requests.get(url, timeout=5, allow_redirects=True, headers={'User-Agent': self.USER_AGENT})
+            response = self._safe_http_get(url, timeout=5, allow_redirects=True)
             if response.status_code == 200:
                 policy_text = response.text
                 result['fetched'] = True
@@ -2211,6 +2282,9 @@ class DNSAnalyzer:
             return result
         
         try:
+            if not _validate_url_target(url):
+                result['error'] = 'Target resolves to private IP'
+                return result
             response = requests.head(url, timeout=5, allow_redirects=True, headers={'User-Agent': self.USER_AGENT})
             if response.status_code == 200:
                 content_type = response.headers.get('Content-Type', '')
@@ -2221,8 +2295,7 @@ class DNSAnalyzer:
                     result['valid'] = True
                     result['format'] = content_type.split('/')[-1].upper()
                 else:
-                    # Try GET to check content
-                    get_resp = requests.get(url, timeout=5, allow_redirects=True, headers={'User-Agent': self.USER_AGENT})
+                    get_resp = self._safe_http_get(url, timeout=5, allow_redirects=True)
                     if get_resp.status_code == 200:
                         content = get_resp.text[:500].lower()
                         if '<svg' in content:
@@ -2254,10 +2327,9 @@ class DNSAnalyzer:
             return result
         
         try:
-            response = requests.get(url, timeout=5, allow_redirects=True, headers={'User-Agent': self.USER_AGENT})
+            response = self._safe_http_get(url, timeout=5, allow_redirects=True)
             if response.status_code == 200:
                 content = response.text
-                # VMC is a PEM-encoded certificate
                 if '-----BEGIN CERTIFICATE-----' in content:
                     result['valid'] = True
                     # Try to extract issuer from common VMC issuers
@@ -2717,7 +2789,7 @@ class DNSAnalyzer:
         
         try:
             logging.warning(f"[RDAP] Direct request to: {url}")
-            resp = requests.get(url, timeout=10, headers=headers, allow_redirects=True)
+            resp = self._safe_http_get(url, timeout=10, allow_redirects=True)
             logging.warning(f"[RDAP] Direct request status: {resp.status_code}")
             if resp.status_code < 400:
                 data = resp.json()
@@ -3386,27 +3458,40 @@ class DNSAnalyzer:
     def analyze_domain(self, domain: str, custom_dkim_selectors: list = None) -> Dict[str, Any]:
         """Perform complete DNS analysis of domain with parallel lookups for speed.
         
+        Backpressure: Limited to MAX_CONCURRENT_ANALYSES simultaneous analyses.
+        If the system is at capacity, requests wait up to 10 seconds before
+        returning a capacity error. This prevents thread pool exhaustion under load.
+        
         Args:
             domain: The domain name to analyze (e.g., 'example.com')
             custom_dkim_selectors: Optional list of user-provided DKIM selectors to check
-                                   (e.g., ['myselector._domainkey'])
             
         Returns:
-            Dict containing comprehensive DNS analysis:
-            - domain_exists: Whether the domain has DNS records
-            - basic_records: A, AAAA, MX, NS, TXT, CNAME, SRV records
-            - spf_analysis: SPF record analysis with lookup counts and issues
-            - dmarc_analysis: DMARC policy analysis with alignment checks
-            - dkim_analysis: DKIM selector discovery and key analysis
-            - mta_sts_analysis: MTA-STS policy status
-            - tlsrpt_analysis: TLS-RPT configuration
-            - bimi_analysis: BIMI record and VMC validation
-            - caa_analysis: CAA records for certificate control
-            - dnssec_analysis: DNSSEC validation status
-            - dns_infrastructure: Enterprise provider detection, government status
-            - registrar_info: RDAP registrar data
-            - posture: Overall security assessment and scorecard
+            Dict containing comprehensive DNS analysis results.
         """
+        acquired = self._analysis_semaphore.acquire(timeout=10)
+        if not acquired:
+            logging.warning(f"Backpressure: rejected analysis for {domain} — {self.MAX_CONCURRENT_ANALYSES} concurrent analyses at capacity")
+            return {
+                'domain': domain,
+                'error': 'System is currently at capacity. Please try again in a moment.',
+                'analysis_success': False,
+            }
+
+        with self._active_lock:
+            self._active_analyses += 1
+            current = self._active_analyses
+
+        logging.info(f"Analysis started for {domain} ({current}/{self.MAX_CONCURRENT_ANALYSES} active)")
+        try:
+            return self._analyze_domain_inner(domain, custom_dkim_selectors)
+        finally:
+            self._analysis_semaphore.release()
+            with self._active_lock:
+                self._active_analyses -= 1
+
+    def _analyze_domain_inner(self, domain: str, custom_dkim_selectors: list = None) -> Dict[str, Any]:
+        """Internal analysis implementation (called within backpressure semaphore)."""
         
         # Early check: Does domain exist / is it delegated?
         # Use dns_query which uses DoH for reliability
