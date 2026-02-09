@@ -1977,7 +1977,7 @@
     (function() {
         document.addEventListener('DOMContentLoaded', function() {
             // Initialize tooltips
-            var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+            var tooltipTriggerList = Array.from(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
             tooltipTriggerList.map(function(el) {
                 return new bootstrap.Tooltip(el);
             });
@@ -1985,7 +1985,7 @@
             // Re-analyze button handler
             var reanalyzeBtn = document.getElementById('reanalyzeBtn');
             if (reanalyzeBtn) {
-                var waitSeconds = parseInt(reanalyzeBtn.getAttribute('data-wait-seconds')) || 0;
+                var waitSeconds = Number.parseInt(reanalyzeBtn.dataset.waitSeconds) || 0;
                 var countdownInterval = null;
                 
                 function startCountdown(seconds) {
@@ -2018,13 +2018,12 @@
                     e.preventDefault();
                     if (this.disabled) return;
                     
-                    var domain = this.getAttribute('data-domain');
+                    var domain = this.dataset.domain;
                     var overlay = document.getElementById('loadingOverlay');
-                    var btn = this;
                     
                     // Update button state immediately
-                    btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Analyzing...';
-                    btn.disabled = true;
+                    this.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Analyzing...';
+                    this.disabled = true;
                     
                     if (overlay) {
                         overlay.classList.remove('d-none');
@@ -2039,7 +2038,7 @@
                     
                     // Small delay to ensure overlay renders before navigation
                     setTimeout(function() {
-                        window.location.href = url;
+                        globalThis.location.href = url;
                     }, 100);
                 });
             }

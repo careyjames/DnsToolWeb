@@ -178,7 +178,7 @@
 
         rows.forEach(function(row) {
             row.addEventListener('click', function() {
-                var id = row.getAttribute('data-id');
+                var id = row.dataset.id;
                 var idx = selected.indexOf(id);
                 if (idx > -1) {
                     selected.splice(idx, 1);

@@ -1,13 +1,13 @@
 if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('/sw.js').catch(function() {});
+    navigator.serviceWorker.register('/sw.js').catch(function() {}); // NOSONAR
 }
 
 function startStatusCycle(overlayEl) {
-    var statusDiv = overlayEl.querySelector('.loading-status');
+    const statusDiv = overlayEl.querySelector('.loading-status');
     if (!statusDiv) return;
-    var spans = statusDiv.querySelectorAll('span');
+    const spans = statusDiv.querySelectorAll('span');
     if (spans.length === 0) return;
-    var current = 0;
+    let current = 0;
     spans.forEach(function(s) { s.classList.remove('active'); });
     spans[0].classList.add('active');
     setInterval(function() {
@@ -16,12 +16,12 @@ function startStatusCycle(overlayEl) {
         spans[current].classList.add('active');
     }, 2500);
 
-    var timerEl = document.getElementById('loadingTimer');
-    var noteEl = document.getElementById('loadingNote');
-    var startTime = Date.now();
+    const timerEl = document.getElementById('loadingTimer');
+    const noteEl = document.getElementById('loadingNote');
+    const startTime = Date.now();
     if (timerEl) {
         setInterval(function() {
-            var elapsed = Math.floor((Date.now() - startTime) / 1000);
+            const elapsed = Math.floor((Date.now() - startTime) / 1000);
             timerEl.textContent = elapsed + 's';
         }, 1000);
     }
@@ -40,29 +40,28 @@ document.addEventListener('DOMContentLoaded', function() {
     if (domainForm && domainInput && analyzeBtn) {
         function isValidDomain(domain) {
             if (!domain) return false;
-            var d = domain.replace(/\.$/, '');
+            const d = domain.replace(/\.$/, '');
             if (d.length > 253 || d.length === 0) return false;
-            var labels = d.split('.');
+            const labels = d.split('.');
             if (labels.length < 2) return false;
-            for (var i = 0; i < labels.length; i++) {
-                var label = labels[i];
+            for (const label of labels) {
                 if (label.length === 0 || label.length > 63) return false;
                 if (label.startsWith('-') || label.endsWith('-')) return false;
             }
-            var tld = labels[labels.length - 1];
+            const tld = labels[labels.length - 1];
             if (/^\d+$/.test(tld)) return false;
-            var hasNonAscii = /[^\x00-\x7F]/.test(d);
+            const hasNonAscii = /[^\u0000-\u007F]/.test(d);
             if (!hasNonAscii) {
-                for (var j = 0; j < labels.length; j++) {
-                    if (!/^[a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?$/.test(labels[j])) return false;
+                for (const label of labels) {
+                    if (!/^[a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?$/.test(label)) return false;
                 }
             }
             return true;
         }
 
         domainInput.addEventListener('input', function() {
-            var domain = this.value.trim();
-            var isValid = domain === '' || isValidDomain(domain);
+            const domain = this.value.trim();
+            const isValid = domain === '' || isValidDomain(domain);
 
             if (domain && !isValid) {
                 this.classList.add('is-invalid');
@@ -74,7 +73,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
         
         domainForm.addEventListener('submit', function(e) {
-            var domain = domainInput.value.trim().toLowerCase();
+            const domain = domainInput.value.trim().toLowerCase();
             domainInput.value = domain;
             
             if (!domain) {
@@ -137,12 +136,12 @@ document.addEventListener('DOMContentLoaded', function() {
         codeBlock.style.cursor = 'pointer';
         codeBlock.title = 'Click to copy';
 
-        var icon = document.createElement('i');
+        const icon = document.createElement('i');
         icon.className = 'fas fa-copy copy-icon';
         codeBlock.appendChild(icon);
         
         codeBlock.addEventListener('click', function() {
-            var copyText = '';
+            let copyText = '';
             codeBlock.childNodes.forEach(function(node) {
                 if (!node.classList || !node.classList.contains('copy-icon')) {
                     copyText += node.textContent;
@@ -159,12 +158,12 @@ document.addEventListener('DOMContentLoaded', function() {
                     icon.style.color = '';
                 }, 1500);
             }).catch(function() {
-                var textArea = document.createElement('textarea');
-                textArea.value = copyText;
-                document.body.appendChild(textArea);
-                textArea.select();
-                document.execCommand('copy');
-                document.body.removeChild(textArea);
+                icon.className = 'fas fa-times copy-icon';
+                icon.style.color = 'var(--bs-warning)';
+                setTimeout(function() {
+                    icon.className = 'fas fa-copy copy-icon';
+                    icon.style.color = '';
+                }, 1500);
             });
         });
     });

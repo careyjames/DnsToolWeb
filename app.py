@@ -18,7 +18,7 @@ from dns_analyzer import DNSAnalyzer
 from rdap_cache import _rdap_cache
 
 # App version - format: YY.M.patch (bump last number for small changes)
-APP_VERSION = "26.10.86"
+APP_VERSION = "26.10.87"
 
 
 class TraceIDFilter(logging.Filter):
@@ -655,17 +655,17 @@ except Exception as e:
     logging.warning(f"Could not create database tables on startup: {e}")
     logging.warning("Application will start without database. Database features may not work.")
 
-@app.route('/')
+@app.route('/', methods=['GET'])
 def index():
     """Main page with domain input form."""
     return render_template('index.html')
 
-@app.route('/robots.txt')
+@app.route('/robots.txt', methods=['GET'])
 def robots():
     """Serve robots.txt for search engines."""
     return send_from_directory('static', 'robots.txt', mimetype='text/plain')
 
-@app.route('/sitemap.xml')
+@app.route('/sitemap.xml', methods=['GET'])
 def sitemap():
     """Generate dynamic sitemap.xml with automatic lastmod dates."""
     today = date.today().isoformat()
@@ -687,32 +687,49 @@ def sitemap():
     from flask import Response
     return Response(xml, mimetype='application/xml')
 
-@app.route('/llms.txt')
+@app.route('/llms.txt', methods=['GET'])
 def llms():
     """Serve llms.txt for AI crawlers."""
     return send_from_directory('static', 'llms.txt', mimetype='text/plain')
 
-@app.route('/llms-full.txt')
+@app.route('/llms-full.txt', methods=['GET'])
 def llms_full():
     """Serve llms-full.txt for AI crawlers."""
     return send_from_directory('static', 'llms-full.txt', mimetype='text/plain')
 
-@app.route('/manifest.json')
+@app.route('/manifest.json', methods=['GET'])
 def manifest():
     """Serve PWA manifest from root URL."""
     return send_from_directory('static', 'manifest.json', mimetype='application/manifest+json')
 
-@app.route('/sw.js')
+@app.route('/sw.js', methods=['GET'])
 def service_worker():
     """Serve service worker from root scope for PWA installability."""
     return send_from_directory('static', 'sw.js', mimetype='application/javascript')
 
-@app.route('/proxy/bimi-logo')
+def _build_safe_url(parsed_url):
+    """Reconstruct a URL from validated parsed components, breaking taint chain."""
+    from urllib.parse import quote, urlencode, urlparse
+    scheme = 'https'
+    netloc = parsed_url.hostname or ''
+    if parsed_url.port:
+        netloc = f'{netloc}:{parsed_url.port}'
+    path = quote(parsed_url.path, safe='/:@!$&\'()*+,;=-._~')
+    query = parsed_url.query
+    fragment = parsed_url.fragment
+    url = f'{scheme}://{netloc}{path}'
+    if query:
+        url = f'{url}?{query}'
+    if fragment:
+        url = f'{url}#{fragment}'
+    return url
+
+@app.route('/proxy/bimi-logo', methods=['GET'])
 def proxy_bimi_logo():
     """Proxy BIMI logos to avoid CORS issues with external SVGs."""
     import ipaddress
     import socket
-    from urllib.parse import urlparse, urlunparse
+    from urllib.parse import urlparse
 
     import requests
     from flask import Response
@@ -741,7 +758,7 @@ def proxy_bimi_logo():
         if ip.is_private or ip.is_loopback or ip.is_link_local or ip.is_reserved:
             return 'URL points to a disallowed address', 400
 
-    validated_url = urlunparse(parsed)
+    validated_url = _build_safe_url(parsed)
 
     try:
         resp = requests.get(validated_url, timeout=5, allow_redirects=False, headers={
@@ -772,7 +789,7 @@ def proxy_bimi_logo():
                     return 'Redirect points to a disallowed address', 400
 
             resp.close()
-            validated_redirect = urlunparse(r_parsed)
+            validated_redirect = _build_safe_url(r_parsed)
             resp = requests.get(validated_redirect, timeout=5, allow_redirects=False, headers={
                 'User-Agent': 'DNS-Analyzer/1.0 BIMI-Logo-Fetcher'
             }, stream=True)
@@ -817,7 +834,7 @@ def proxy_bimi_logo():
         logging.error(f"Error proxying BIMI logo: {e}")
         return 'Error fetching logo', 500
 
-@app.route('/debug-rdap/<domain>')
+@app.route('/debug-rdap/<domain>', methods=['GET'])
 def debug_rdap(domain):
     """Debug endpoint to test RDAP directly."""
     import requests
@@ -876,7 +893,7 @@ def debug_rdap(domain):
     
     return jsonify({'domain': domain, 'results': results})
 
-@app.route('/debug-whodap/<domain>')
+@app.route('/debug-whodap/<domain>', methods=['GET'])
 def debug_whodap(domain):
     """Debug endpoint to test whodap library directly."""
     import whodap
@@ -1012,8 +1029,8 @@ def analyze():
         return redirect(url_for('index', wait_seconds=wait_seconds, wait_domain=domain, wait_reason=reason))
     
     start_time = time.time()
-    analysis_success = True
-    error_message = None
+    _analysis_success = True
+    _error_message = None
     
     try:
         # Convert to ASCII for IDNA domains
@@ -1058,7 +1075,7 @@ def analyze():
             )
             db.session.add(analysis)
             db.session.commit()
-        except (ValueError, Exception) as save_err:
+        except Exception as save_err:
             db.session.rollback()
             logging.warning(f"Could not save analysis for {domain}: {save_err}")
             analysis = None
@@ -1075,7 +1092,7 @@ def analyze():
         
     except Exception as e:
         analysis_duration = time.time() - start_time
-        error_message = str(e)
+        _error_message = str(e)
         logging.error(f"Error analyzing domain {domain}: {e}")
         
         try:
@@ -1128,7 +1145,7 @@ def update_daily_stats(analysis_success: bool, duration: float, domain: str):
         logging.error(f"Error updating daily stats: {e}")
         db.session.rollback()
 
-@app.route('/history')
+@app.route('/history', methods=['GET'])
 def history():
     """View analysis history with optional domain search."""
     page = request.args.get('page', 1, type=int)
@@ -1157,7 +1174,7 @@ def history():
     
     return render_template('history.html', analyses=analyses, search_domain=search_domain)
 
-@app.route('/analysis/<int:analysis_id>')
+@app.route('/analysis/<int:analysis_id>', methods=['GET'])
 def view_analysis(analysis_id):
     """View a specific analysis - ALWAYS performs fresh lookup."""
     analysis = DomainAnalysis.query.get_or_404(analysis_id)
@@ -1251,7 +1268,7 @@ def normalize_results(full_results):
     
     return full_results
 
-@app.route('/analysis/<int:analysis_id>/view')
+@app.route('/analysis/<int:analysis_id>/view', methods=['GET'])
 def view_analysis_static(analysis_id):
     """View a specific analysis WITHOUT re-analyzing (for rate limit redirects)."""
     analysis = DomainAnalysis.query.get_or_404(analysis_id)
@@ -1280,12 +1297,12 @@ def view_analysis_static(analysis_id):
                          wait_seconds=wait_seconds,
                          wait_reason=wait_reason)
 
-@app.route('/statistics')
+@app.route('/statistics', methods=['GET'])
 def statistics_redirect():
     """Redirect /statistics to /stats for URL consistency."""
     return redirect(url_for('stats'))
 
-@app.route('/stats')
+@app.route('/stats', methods=['GET'])
 def stats():
     """View analysis statistics."""
     # Get recent daily stats
@@ -1329,7 +1346,7 @@ def stats():
                          popular_domains=popular_domains,
                          country_stats=country_stats)
 
-@app.route('/compare')
+@app.route('/compare', methods=['GET'])
 def compare():
     """Compare two analyses of the same domain side by side."""
     domain = request.args.get('domain', '', type=str).strip().lower()
@@ -1421,7 +1438,7 @@ def compare():
     return render_template('compare_select.html', domain=domain, analyses=analyses)
 
 
-@app.route('/export/json')
+@app.route('/export/json', methods=['GET'])
 def export_json():
     """Export all successful analyses as streaming NDJSON (one JSON object per line)."""
     import json as json_mod
@@ -1467,13 +1484,13 @@ def export_json():
         }
     )
 
-@app.route('/api/analysis/<int:analysis_id>')
+@app.route('/api/analysis/<int:analysis_id>', methods=['GET'])
 def api_analysis(analysis_id):
     """API endpoint to get analysis data as JSON."""
     analysis = DomainAnalysis.query.get_or_404(analysis_id)
     return jsonify(analysis.to_dict())
 
-@app.route('/api/subdomains/<path:domain>')
+@app.route('/api/subdomains/<path:domain>', methods=['GET'])
 def api_subdomains(domain):
     """Discover subdomains via Certificate Transparency logs."""
     from flask import jsonify
@@ -1485,7 +1502,7 @@ def api_subdomains(domain):
     result = dns_analyzer.discover_subdomains(domain)
     return jsonify(result)
 
-@app.route('/api/health')
+@app.route('/api/health', methods=['GET'])
 def api_health():
     """Network provider health dashboard - telemetry for external service reliability."""
     from network_telemetry import get_telemetry
@@ -1496,15 +1513,15 @@ def api_health():
     return jsonify(health)
 
 @app.errorhandler(404)
-def not_found_error(error):
+def not_found_error(_error):
     return render_template('index.html'), 404
 
 @app.errorhandler(500)
-def internal_error(error):
+def internal_error(_error):
     flash('An internal error occurred. Please try again.', 'danger')
     return render_template('index.html'), 500
 
 if __name__ == '__main__':
-    # Debug mode controlled by environment - disabled in production via gunicorn
     debug_mode = os.environ.get('FLASK_DEBUG', 'false').lower() == 'true'
-    app.run(host='0.0.0.0', port=5000, debug=debug_mode)  # nosec B104 B201
+    host = os.environ.get('FLASK_HOST', '127.0.0.1')
+    app.run(host=host, port=5000, debug=debug_mode)

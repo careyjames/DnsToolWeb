@@ -41,7 +41,7 @@ def make_http_client(responses_map):
             return json.loads(self.text)
         def raise_for_status(self):
             if not self.ok:
-                raise Exception(f'HTTP {self.status_code}')
+                raise RuntimeError(f'HTTP {self.status_code}')
 
     def client(url, **kwargs):
         for prefix, response in responses_map.items():
@@ -591,7 +591,8 @@ class TestMTASTSParsing(unittest.TestCase):
             text = "version: STSv1\nmode: enforce\nmax_age: 86400\nmx: mail.mta.com\n"
             headers = {'Content-Type': 'text/plain'}
             def json(self): return {}
-            def raise_for_status(self): pass
+            def raise_for_status(self):
+                """No-op for mock response."""
 
         def http_client(url, **kwargs):
             if 'mta-sts' in url:
@@ -771,7 +772,8 @@ class TestBIMIAnalysis(unittest.TestCase):
             text = '<svg></svg>'
             headers = {'Content-Type': 'image/svg+xml'}
             def json(self): return {}
-            def raise_for_status(self): pass
+            def raise_for_status(self):
+                """No-op for mock response."""
 
         analyzer = create_test_analyzer(
             dns_resolver=make_dns_resolver(dns_records),

@@ -150,7 +150,8 @@ class NetworkTelemetry:
         else:
             p.record_failure(error or 'unknown', is_timeout=is_timeout)
 
-        level = 'DEBUG' if success else ('WARNING' if is_timeout else 'ERROR')
+        failure_level = 'WARNING' if is_timeout else 'ERROR'
+        level = 'DEBUG' if success else failure_level
         event = {
             'timestamp': time.time(),
             'provider': provider,

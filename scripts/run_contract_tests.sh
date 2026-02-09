@@ -57,7 +57,7 @@ else
 fi
 echo ""
 
-if [ "$MODE" = "full" ]; then
+if [[ "$MODE" = "full" ]]; then
     echo "--- 6. Full Test Suite (includes integration tests) ---"
     if python -m pytest tests/ -v --tb=short --timeout=120 2>&1; then
         echo "[PASS] Full suite"
@@ -72,7 +72,7 @@ else
 fi
 
 echo "==================================="
-if [ $FAILED -eq 0 ]; then
+if [[ $FAILED -eq 0 ]]; then
     echo "ALL CONTRACT TESTS PASSED"
     exit 0
 else

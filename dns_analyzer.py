@@ -87,8 +87,9 @@ def _validate_url_target(url: str) -> bool:
             if _is_private_ip(ip):
                 return False
         return True
-    except (socket.gaierror, OSError):
+    except OSError:
         return False
+
 
 class DNSAnalyzer:
     """DNS analysis tool for domain records and email security."""
@@ -180,7 +181,7 @@ class DNSAnalyzer:
             return self._custom_http_client(url, **kwargs)
         if not _validate_url_target(url):
             raise requests.exceptions.ConnectionError(
-                f"SSRF protection: URL target resolves to private/reserved IP range"
+                "SSRF protection: URL target resolves to private/reserved IP range"
             )
         kwargs.setdefault('headers', {}).setdefault('User-Agent', self.USER_AGENT)
         return requests.get(url, **kwargs)
@@ -229,7 +230,7 @@ class DNSAnalyzer:
 
         try:
             ascii_domain = self.domain_to_ascii(domain)
-        except (ValueError, Exception):
+        except Exception:
             return False
 
         if '..' in ascii_domain or ascii_domain.startswith('.') or ascii_domain.startswith('-'):
@@ -1634,7 +1635,7 @@ class DNSAnalyzer:
                             key_info['key_bits'] = 4096
                         else:
                             key_info['key_bits'] = key_bytes * 8 // 10  # rough estimate
-                    except:
+                    except Exception:
                         pass
             
             return key_info
@@ -1670,7 +1671,7 @@ class DNSAnalyzer:
                             if key_analysis['key_bits'] and key_analysis['key_bits'] >= 2048:
                                 key_strengths.append(f"{key_analysis['key_bits']}-bit")
                         found_selectors[selector_name] = selector_info
-                except:
+                except Exception:
                     pass
         
         found_providers = set()
@@ -1710,7 +1711,7 @@ class DNSAnalyzer:
             primary_dkim_note = (
                 f'DKIM verified for {third_party_names} only \u2014 '
                 f'no DKIM found for primary mail platform ({primary_provider}). '
-                f'The primary provider may use custom selectors not discoverable through standard checks.'
+                'The primary provider may use custom selectors not discoverable through standard checks.'
             )
         
         if found_selectors:
@@ -1750,7 +1751,7 @@ class DNSAnalyzer:
             'primary_has_dkim': primary_has_dkim,
             'third_party_only': third_party_only,
             'primary_dkim_note': primary_dkim_note,
-            'found_providers': list(sorted(found_providers))
+            'found_providers': sorted(list(found_providers))
         }
     
     def analyze_mta_sts(self, domain: str) -> Dict[str, Any]:
@@ -1829,7 +1830,7 @@ class DNSAnalyzer:
                 message = 'MTA-STS policy found'
         elif policy_data.get('error'):
             status = 'warning'
-            message = f'MTA-STS DNS record found but policy file inaccessible'
+            message = 'MTA-STS DNS record found but policy file inaccessible'
         else:
             status = 'success'
             message = 'MTA-STS record found'
@@ -2236,7 +2237,7 @@ class DNSAnalyzer:
             base_result['status'] = 'info'
             if mx_capability and not mx_capability['dane_inbound']:
                 provider_name = mx_capability['provider_name']
-                alt = mx_capability.get('alternative', 'MTA-STS')
+                _alt = mx_capability.get('alternative', 'MTA-STS')
                 if mx_capability.get('dane_migration_available'):
                     base_result['message'] = f'DANE not available on current MX endpoints — {provider_name} supports DANE on newer endpoints (migration available)'
                 else:
@@ -2472,7 +2473,7 @@ class DNSAnalyzer:
                     alg_num = int(parts[1])
                     algorithm = alg_num
                     algorithm_name = algorithm_names.get(alg_num, f'Algorithm {alg_num}')
-            except:
+            except Exception:
                 pass
         
         if has_dnskey and has_ds:
@@ -2672,9 +2673,9 @@ class DNSAnalyzer:
             cached_at = cached_data.get('_cached_at', 'recently')
         
         # TRY RDAP FIRST - it's the primary, authoritative source
-        rdap_result = None
+        _rdap_result = None
         try:
-            logging.info(f"[REGISTRAR] Trying RDAP first (primary source)...")
+            logging.info("[REGISTRAR] Trying RDAP first (primary source)...")
             rdap_data = self._rdap_lookup(domain)
             if rdap_data:
                 registrar_name = self._extract_registrar_from_rdap(rdap_data)
@@ -2691,14 +2692,14 @@ class DNSAnalyzer:
                         result['cached_at'] = cached_at
                     return result
                 else:
-                    logging.warning(f"[REGISTRAR] RDAP data found but no valid registrar name")
+                    logging.warning("[REGISTRAR] RDAP data found but no valid registrar name")
             else:
-                logging.warning(f"[REGISTRAR] RDAP returned no data")
+                logging.warning("[REGISTRAR] RDAP returned no data")
         except Exception as e:
             logging.warning(f"[REGISTRAR] RDAP failed: {e}")
         
         # RDAP failed - fall back to WHOIS (backup source)
-        logging.info(f"[REGISTRAR] RDAP failed, trying WHOIS as backup...")
+        logging.info("[REGISTRAR] RDAP failed, trying WHOIS as backup...")
         whois_restricted = False
         whois_restricted_tld = None
         try:
@@ -2771,7 +2772,7 @@ class DNSAnalyzer:
         telemetry = get_telemetry()
         
         if telemetry.should_backoff('rdap_whodap'):
-            logging.debug(f"[RDAP] Backing off whodap (provider degraded)")
+            logging.debug("[RDAP] Backing off whodap (provider degraded)")
             return {}
         
         cached_data = _rdap_cache.get(domain)
@@ -2796,11 +2797,10 @@ class DNSAnalyzer:
             except Exception as e:
                 error_str = str(e).lower()
                 logging.warning(f"[RDAP] whodap attempt {attempt+1} FAILED: {type(e).__name__}: {e}")
-                if 'rate' in error_str or '429' in error_str:
-                    if attempt == 0:
-                        logging.warning("[RDAP] Rate limited, waiting 2s before retry...")
-                        time.sleep(2)
-                        continue
+                if ('rate' in error_str or '429' in error_str) and attempt == 0:
+                    logging.warning("[RDAP] Rate limited, waiting 2s before retry...")
+                    time.sleep(2)
+                    continue
                 break
         
         # Fallback to direct requests if whodap fails
@@ -3419,7 +3419,7 @@ class DNSAnalyzer:
         
         # 1. Detect DNS Hosting from NS records
         ns_records = results.get('basic_records', {}).get('NS', [])
-        ns_str = " ".join(r for r in ns_records if r).lower()
+        _ns_str = " ".join(r for r in ns_records if r).lower()
         
         dns_providers = {
             'cloudflare': 'Cloudflare',
@@ -3765,7 +3765,7 @@ class DNSAnalyzer:
                 dkim_result['primary_provider'] = primary_provider
                 dkim_result['security_gateway'] = security_gateway
                 dkim_result['primary_has_dkim'] = primary_has_dkim
-                dkim_result['found_providers'] = list(sorted(found_providers))
+                dkim_result['found_providers'] = sorted(list(found_providers))
                 
                 if dkim_result['selectors'] and primary_provider != 'Unknown' and not primary_has_dkim:
                     third_party_names = ', '.join(sorted(found_providers)) if found_providers else 'third-party services'
@@ -3773,7 +3773,7 @@ class DNSAnalyzer:
                     dkim_result['primary_dkim_note'] = (
                         f'DKIM verified for {third_party_names} only \u2014 '
                         f'no DKIM found for primary mail platform ({primary_provider}). '
-                        f'The primary provider may use custom selectors not discoverable through standard checks.'
+                        'The primary provider may use custom selectors not discoverable through standard checks.'
                     )
                     key_strengths = dkim_result.get('key_strengths', [])
                     dkim_result['status'] = 'partial'
@@ -3903,7 +3903,7 @@ class DNSAnalyzer:
         results['mail_posture'] = mail_posture
         
         # Legacy compatibility: is_no_mail_domain used by posture scoring and verdicts
-        spf = results.get('spf_analysis', {})
+        _spf = results.get('spf_analysis', {})
         dmarc = results.get('dmarc_analysis', {})
         is_no_mail_domain = mail_posture['classification'] in ('no_mail_verified', 'no_mail_partial')
         results['is_no_mail_domain'] = is_no_mail_domain
@@ -4002,7 +4002,7 @@ class DNSAnalyzer:
         }
         
         TOTAL_BUDGET = 30
-        CT_TIMEOUT = 12
+        _CT_TIMEOUT = 12
         ct_start = time.time()
         
         def _budget_remaining():
@@ -4140,7 +4140,7 @@ class DNSAnalyzer:
                     'cert_count': data['cert_count'],
                     'is_wildcard': data['is_wildcard'],
                     'is_current': is_current,
-                    'issuers': sorted(list(data['issuers']))[:3],
+                    'issuers': sorted(data['issuers'])[:3],
                 })
             
             has_current_wildcard = False
@@ -4629,7 +4629,7 @@ class DNSAnalyzer:
             # Read banner with proper multi-line handling (fast 1s timeout)
             banner = self._read_smtp_response(sock, timeout=1.0)
             if not banner.startswith('220'):
-                result['error'] = f"Unexpected banner"
+                result['error'] = "Unexpected banner"
                 return result
             
             # Send EHLO and read full response (fast 1s timeout)
@@ -4645,10 +4645,9 @@ class DNSAnalyzer:
                 starttls_resp = self._read_smtp_response(sock, timeout=1.0)
                 
                 if starttls_resp.startswith('220'):
-                    # Wrap socket with TLS
-                    context = ssl.create_default_context()
-                    context.check_hostname = False
-                    context.verify_mode = ssl.CERT_NONE
+                    context = ssl.create_default_context()  # NOSONAR - intentional: probing TLS capabilities of remote mail servers
+                    context.check_hostname = False  # NOSONAR
+                    context.verify_mode = ssl.CERT_NONE  # NOSONAR
                     
                     ssl_sock = context.wrap_socket(sock, server_hostname=mx_host)
                     
@@ -4670,7 +4669,7 @@ class DNSAnalyzer:
                         sock.send(b'STARTTLS\r\n')
                         sock.recv(1024)
                         
-                        context_verify = ssl.create_default_context()
+                        context_verify = ssl.create_default_context()  # NOSONAR - uses secure defaults
                         ssl_sock = context_verify.wrap_socket(sock, server_hostname=mx_host)
                         
                         result['cert_valid'] = True
@@ -4724,7 +4723,7 @@ class DNSAnalyzer:
         except socket.timeout:
             result['error'] = "Connection timeout"
         except socket.gaierror as e:
-            result['error'] = f"DNS resolution failed"
+            result['error'] = "DNS resolution failed"
         except ConnectionRefusedError:
             result['error'] = "Connection refused"
         except OSError as e:
@@ -4832,14 +4831,14 @@ class DNSAnalyzer:
             logging.warning(f"SMTP verification failed: {e}")
         
         # Analyze results
-        total = result['summary']['total_servers']
+        _total = result['summary']['total_servers']
         reachable = result['summary']['reachable']
         starttls = result['summary']['starttls_supported']
         valid_certs = result['summary']['valid_certs']
         
         if reachable == 0:
             result['status'] = 'warning'
-            result['message'] = f'Port 25 check unavailable'
+            result['message'] = 'Port 25 check unavailable'
             result['issues'].append('SMTP port 25 may be blocked by hosting provider - this is common for cloud platforms')
         elif starttls == 0:
             result['status'] = 'error'
@@ -4901,7 +4900,7 @@ class DNSAnalyzer:
         dmarc_status = dmarc.get('status', '')
         has_dmarc = dmarc_status in ('success', 'warning', 'info') or bool(dmarc_policy)
         dmarc_reject = dmarc_policy == 'reject'
-        dmarc_quarantine = dmarc_policy == 'quarantine'
+        _dmarc_quarantine = dmarc_policy == 'quarantine'
         
         has_mx = len(mx_records) > 0 and not has_null_mx
         has_senders = (
@@ -5071,7 +5070,7 @@ class DNSAnalyzer:
         dkim_status = dkim.get('status')
         dkim_selectors = dkim.get('selectors', {})
         dkim_third_party_only = dkim.get('third_party_only', False)
-        dkim_has_inferred = any(
+        _dkim_has_inferred = any(
             sel_data.get('inferred') for sel_data in dkim_selectors.values()
         )
         if dkim_status == 'success' and dkim_selectors:
@@ -5124,15 +5123,13 @@ class DNSAnalyzer:
                 else:
                     configured_items.append(f"DANE/TLSA ({dane.get('mx_hosts_with_dane', 0)} MX host(s) with TLSA records, DNSSEC-validated) — strongest cryptographic transport security")
             elif dane.get('has_dane') and not has_dnssec:
-                monitoring_items.append(f"DANE/TLSA records present but DNSSEC not validated — DANE requires DNSSEC for security (RFC 7672 §1.3)")
+                monitoring_items.append("DANE/TLSA records present but DNSSEC not validated — DANE requires DNSSEC for security (RFC 7672 §1.3)")
             elif dane.get('status') == 'warning':
                 monitoring_items.append(f"DANE partial ({dane.get('mx_hosts_with_dane', 0)}/{dane.get('mx_hosts_checked', 0)} MX hosts)")
         elif not is_no_mail_domain:
             if not dane_deployable and dane_mx_provider:
                 provider_name = dane_mx_provider.get('provider_name', 'hosted provider')
-                if has_mta_sts_configured:
-                    pass
-                else:
+                if not has_mta_sts_configured:
                     absent_items.append(f'DANE not available on {provider_name} — deploy MTA-STS as the recommended transport security alternative')
             else:
                 absent_items.append('DANE/TLSA (certificate pinning for mail transport)')

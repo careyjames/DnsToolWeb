@@ -300,23 +300,25 @@ class TestScorecardLogic(unittest.TestCase):
 class TestErrorStateHandling(unittest.TestCase):
     """Tests for error vs warning state distinction."""
     
+    def _get_badge_class(self, status):
+        """Map status string to badge CSS class."""
+        if status == 'error':
+            return 'danger'
+        elif status == 'success':
+            return 'success'
+        return 'warning'
+
     def test_error_status_is_red(self):
         """Error status should map to danger badge."""
-        status = 'error'
-        badge_class = 'danger' if status == 'error' else 'warning'
-        self.assertEqual(badge_class, 'danger')
+        self.assertEqual(self._get_badge_class('error'), 'danger')
     
     def test_warning_status_is_yellow(self):
         """Warning status should map to warning badge."""
-        status = 'warning'
-        badge_class = 'danger' if status == 'error' else 'warning'
-        self.assertEqual(badge_class, 'warning')
+        self.assertEqual(self._get_badge_class('warning'), 'warning')
     
     def test_success_status_is_green(self):
         """Success status should map to success badge."""
-        status = 'success'
-        badge_class = 'success' if status == 'success' else 'warning'
-        self.assertEqual(badge_class, 'success')
+        self.assertEqual(self._get_badge_class('success'), 'success')
 
 
 class TestDNSSECEdgeStates(unittest.TestCase):
@@ -593,7 +595,7 @@ class TestDependencyInjection(unittest.TestCase):
             def json(self):
                 return {"test": True}
             def raise_for_status(self):
-                pass
+                """No-op for mock response."""
 
         def fake_http(url, **kwargs):
             calls.append(url)

@@ -666,7 +666,7 @@
         document.addEventListener('DOMContentLoaded', function() {
             var analyzeBtn = document.getElementById('analyzeBtn');
             if (analyzeBtn && analyzeBtn.dataset.waitSeconds) {
-                var waitSeconds = parseInt(analyzeBtn.dataset.waitSeconds, 10);
+                var waitSeconds = Number.parseInt(analyzeBtn.dataset.waitSeconds, 10);
                 var originalHTML = analyzeBtn.innerHTML;
                 
                 if (waitSeconds > 0) {

@@ -316,9 +316,7 @@ class TestCountdownButtonState(BaseTestCase):
     
     def test_static_view_with_wait_params(self):
         """Static view should accept wait_seconds query parameter."""
-        # First do an analysis to get a valid ID
-        response = self.client.get('/analyze?domain=example.com')
-        # We can't easily get the ID without DB query, so test param parsing
+        # Test param parsing with a non-existent ID
         response = self.client.get('/analysis/99999/view?wait_seconds=10&wait_reason=anti_repeat')
         # Should be 404 (not found) but not crash
         self.assertEqual(response.status_code, 404)

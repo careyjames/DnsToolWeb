@@ -349,10 +349,9 @@ def validate_analysis_deep(results: dict) -> list:
             errors.append(f'Invalid DMARC policy: {policy}')
 
     spf = results.get('spf_analysis', {})
-    if spf.get('status') in ('success', 'warning'):
-        if 'lookup_count' in spf:
-            lc = spf['lookup_count']
-            if not isinstance(lc, int) or lc < 0:
-                errors.append(f'Invalid SPF lookup_count: {lc}')
+    if spf.get('status') in ('success', 'warning') and 'lookup_count' in spf:
+        lc = spf['lookup_count']
+        if not isinstance(lc, int) or lc < 0:
+            errors.append(f'Invalid SPF lookup_count: {lc}')
 
     return errors

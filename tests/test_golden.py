@@ -224,7 +224,7 @@ class TestAnalysisRegression(unittest.TestCase):
                 elif isinstance(g_val, dict):
                     self._compare_structure(g_val, f_val, child_path, differences)
                 elif isinstance(g_val, list) and isinstance(f_val, list):
-                    pass
+                    pass  # List contents are volatile, only structure matters
 
         elif isinstance(golden, dict) and not isinstance(fresh, dict):
             differences.append(f'Type changed at {path}: dict -> {type(fresh).__name__}')

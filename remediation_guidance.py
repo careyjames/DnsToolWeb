@@ -170,7 +170,7 @@ def _check_spf(results, fixes, per_section, is_no_mail):
         per_section['spf'] = {'status': 'ok', 'fixes': []}
 
 
-def _check_dmarc(results, fixes, per_section, is_no_mail):
+def _check_dmarc(results, fixes, per_section, _is_no_mail):
     dmarc = results.get('dmarc_analysis', {})
     status = dmarc.get('status', '')
     policy = (dmarc.get('policy') or '').lower()

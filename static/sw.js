@@ -14,7 +14,7 @@ self.addEventListener('install', function(event) {
       return cache.addAll(STATIC_ASSETS);
     })
   );
-  self.skipWaiting();
+  globalThis.skipWaiting();
 });
 
 self.addEventListener('activate', function(event) {
