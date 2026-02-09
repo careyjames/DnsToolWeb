@@ -632,7 +632,7 @@
             <div class="loading-spinner">
                 <i class="fas fa-globe fa-spin"></i>
             </div>
-            <h4 class="mt-4 mb-2">Running Full Security Audit</h4>
+            <h4 class="mt-4 mb-2">Running Multi-Source Intelligence Audit</h4>
             <p class="text-muted mb-0" id="loadingDomain"></p>
             <div class="loading-elapsed mt-2">
                 <span class="text-muted small" id="loadingTimer">0s</span>
@@ -640,22 +640,24 @@
             <div class="loading-dots mt-2">
                 <span></span><span></span><span></span>
             </div>
-            <p class="text-muted small mt-3 mb-0" id="loadingNote" style="max-width: 340px; margin: 0 auto; opacity: 0; transition: opacity 0.5s;">
-                A thorough audit queries multiple DNS resolvers, certificate transparency logs, and validates email transport security. This typically takes 15&ndash;30 seconds.
+            <p class="text-muted small mt-3 mb-0" id="loadingNote" style="max-width: 400px; margin: 0 auto; opacity: 0; transition: opacity 0.8s;">
+                We query multiple independent DNS resolvers, certificate transparency logs, RDAP registries, and live SMTP servers in parallel &mdash; then cross-reference and verify every result to deliver the most authoritative, thoroughly validated report possible. This typically takes 15&ndash;30 seconds.
             </p>
             <div class="loading-status mt-3">
-                <span>Querying authoritative nameservers...</span>
-                <span>Checking SPF, DMARC, and DKIM records...</span>
-                <span>Running RDAP lookup for registrar info...</span>
-                <span>Scanning Certificate Transparency logs...</span>
-                <span>Probing common subdomains via DNS...</span>
+                <span>Querying 4 independent DNS resolvers in parallel...</span>
+                <span>Cross-referencing results across resolver consensus...</span>
+                <span>Verifying SPF, DMARC, and DKIM against RFC standards...</span>
+                <span>Scanning Certificate Transparency logs for subdomains...</span>
+                <span>Probing 290+ common service names via DNS...</span>
+                <span>Running RDAP &amp; WHOIS lookups for registrar verification...</span>
                 <span>Validating DNSSEC chain of trust...</span>
                 <span>Querying DANE/TLSA records for MX hosts...</span>
-                <span>Checking MTA-STS, TLS-RPT, and BIMI...</span>
-                <span>Resolving CNAME chains for provider detection...</span>
-                <span>Verifying SMTP transport encryption...</span>
-                <span>Aggregating multi-resolver consensus...</span>
-                <span>Compiling security posture report...</span>
+                <span>Checking MTA-STS, TLS-RPT, and BIMI policies...</span>
+                <span>Resolving CNAME chains to identify service providers...</span>
+                <span>Verifying SMTP transport encryption and certificates...</span>
+                <span>Cross-checking authoritative vs. resolver records...</span>
+                <span>Aggregating intelligence from all sources...</span>
+                <span>Compiling verified security posture report...</span>
             </div>
         </div>
     </div>
