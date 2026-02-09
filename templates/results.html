@@ -1024,7 +1024,11 @@
                                     {% if results.dane_analysis.get('mx_provider') and not results.dane_analysis.get('dane_deployable', True) %}
                                     {% set mx_prov = results.dane_analysis.mx_provider %}
                                     <div class="small mt-1 p-2 rounded" style="background: rgba(255,193,7,0.08); border-left: 3px solid #ffc107;">
+                                        {% if mx_prov.get('dane_migration_available') %}
+                                        <i class="fas fa-exclamation-circle text-warning me-1"></i><strong>DANE not available on current MX endpoints</strong>
+                                        {% else %}
                                         <i class="fas fa-exclamation-circle text-warning me-1"></i><strong>DANE not deployable on {{ mx_prov.provider_name }}</strong>
+                                        {% endif %}
                                         <p class="mb-1 mt-1">{{ mx_prov.reason }}</p>
                                         {% if mx_prov.get('alternative') %}
                                         <p class="mb-0"><i class="fas fa-arrow-right me-1"></i><strong>Recommended alternative:</strong> {{ mx_prov.alternative }}{% if results.mta_sts_analysis is defined and results.mta_sts_analysis.status == 'success' %} <span class="text-success">(already configured)</span>{% endif %}</p>
@@ -1056,13 +1060,21 @@
                                         <span class="text-success"><i class="fas fa-check-circle me-1"></i><strong>This domain uses DNSSEC + DANE &mdash; the strongest cryptographic transport security.</strong></span> DANE binds TLS certificates to DNSSEC-signed DNS records, creating a verifiable chain of trust from root to mail server (<a href="https://datatracker.ietf.org/doc/html/rfc7672#section-1.3" target="_blank" rel="noopener" class="text-info">RFC 7672 &sect;1.3</a>). MTA-STS could complement this for senders that don't validate DNSSEC, but DANE alone provides the highest level of protection available.
                                     {% elif has_mta_sts and not has_dane %}
                                         {% if results.dane_analysis.get('mx_provider') and not results.dane_analysis.get('dane_deployable', True) %}
+                                        {% if results.dane_analysis.mx_provider.get('dane_migration_available') %}
+                                        <span class="text-success"><i class="fas fa-check-circle me-1"></i><strong>This domain uses MTA-STS &mdash; good, but DANE is also available.</strong></span> {{ results.dane_analysis.mx_provider.provider_name }} supports inbound DANE on its newer MX endpoints. This domain's current MX records use legacy endpoints without DANE. Migrating MX records would enable DANE alongside MTA-STS for defense in depth. MTA-STS enforces TLS via HTTPS-based policy (<a href="https://datatracker.ietf.org/doc/html/rfc8461" target="_blank" rel="noopener" class="text-info">RFC 8461</a>).
+                                        {% else %}
                                         <span class="text-success"><i class="fas fa-check-circle me-1"></i><strong>This domain uses MTA-STS &mdash; the best available option for {{ results.dane_analysis.mx_provider.provider_name }}.</strong></span> Since {{ results.dane_analysis.mx_provider.provider_name }} does not support inbound DANE, MTA-STS is the strongest transport security this domain can deploy. MTA-STS enforces TLS via HTTPS-based policy, protecting against downgrade attacks (<a href="https://datatracker.ietf.org/doc/html/rfc8461" target="_blank" rel="noopener" class="text-info">RFC 8461</a>).
+                                        {% endif %}
                                         {% else %}
                                         <span class="text-info"><i class="fas fa-info-circle me-1"></i><strong>This domain uses MTA-STS without DANE.</strong></span> MTA-STS provides transport security through HTTPS-based policy (<a href="https://datatracker.ietf.org/doc/html/rfc8461" target="_blank" rel="noopener" class="text-info">RFC 8461</a>), but relies on CA trust and is vulnerable on first use. Adding DANE (<a href="https://datatracker.ietf.org/doc/html/rfc7672" target="_blank" rel="noopener" class="text-info">RFC 7672</a>) would provide cryptographic certificate pinning independent of certificate authorities{% if not has_dnssec %} &mdash; this domain would first need to enable DNSSEC{% endif %}.
                                         {% endif %}
                                     {% else %}
                                         {% if results.dane_analysis.get('mx_provider') and not results.dane_analysis.get('dane_deployable', True) %}
+                                        {% if results.dane_analysis.mx_provider.get('dane_migration_available') %}
+                                        <span class="text-warning"><i class="fas fa-exclamation-circle me-1"></i><strong>This domain has neither DANE nor MTA-STS.</strong></span> {{ results.dane_analysis.mx_provider.provider_name }} supports inbound DANE on its newer MX endpoints, but this domain uses legacy endpoints. Migrate MX records to enable DANE, or deploy MTA-STS (<a href="https://datatracker.ietf.org/doc/html/rfc8461" target="_blank" rel="noopener" class="text-info">RFC 8461</a>) to enforce TLS and protect against downgrade attacks.
+                                        {% else %}
                                         <span class="text-warning"><i class="fas fa-exclamation-circle me-1"></i><strong>This domain has neither DANE nor MTA-STS.</strong></span> Since {{ results.dane_analysis.mx_provider.provider_name }} does not support inbound DANE, deploy MTA-STS (<a href="https://datatracker.ietf.org/doc/html/rfc8461" target="_blank" rel="noopener" class="text-info">RFC 8461</a>) to enforce TLS and protect against downgrade attacks.
+                                        {% endif %}
                                         {% else %}
                                         <span class="text-muted"><i class="fas fa-info-circle me-1"></i><strong>This domain has neither DANE nor MTA-STS.</strong></span> Mail transport relies on opportunistic TLS without policy enforcement, leaving it vulnerable to downgrade attacks. Deploy DANE (<a href="https://datatracker.ietf.org/doc/html/rfc7672" target="_blank" rel="noopener" class="text-info">RFC 7672</a>) with DNSSEC for the strongest protection, or MTA-STS (<a href="https://datatracker.ietf.org/doc/html/rfc8461" target="_blank" rel="noopener" class="text-info">RFC 8461</a>) if DNSSEC is not feasible.
                                         {% endif %}

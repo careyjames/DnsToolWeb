@@ -2202,8 +2202,9 @@ class DNSAnalyzer:
             'name': 'Microsoft 365',
             'dane_inbound': False,
             'dane_outbound': True,
-            'reason': 'This domain uses legacy Microsoft 365 MX endpoints (*.mail.protection.outlook.com) which do not publish TLSA records. Microsoft supports DANE on newer *.mx.microsoft endpoints — migration is available. Microsoft does validate DANE/TLSA when sending outbound mail.',
-            'alternative': 'Migrate MX to *.mx.microsoft endpoints for inbound DANE, or use MTA-STS',
+            'dane_migration_available': True,
+            'reason': 'This domain uses legacy Microsoft 365 MX endpoints (*.mail.protection.outlook.com) which do not publish TLSA records. Microsoft supports DANE with DNSSEC on newer *.mx.microsoft.com endpoints (GA October 2024). Migrating MX records enables inbound DANE. Microsoft does validate DANE/TLSA when sending outbound mail.',
+            'alternative': 'Migrate MX to *.mx.microsoft.com endpoints for inbound DANE, or use MTA-STS',
             'patterns': ['outlook.com', 'protection.outlook.com', 'olc.protection.outlook.com'],
         },
         'protonmail': {
@@ -2276,7 +2277,7 @@ class DNSAnalyzer:
         for provider_key, info in self.DANE_MX_CAPABILITY.items():
             for pattern in info['patterns']:
                 if pattern in mx_str:
-                    return {
+                    result = {
                         'provider_key': provider_key,
                         'provider_name': info['name'],
                         'dane_inbound': info['dane_inbound'],
@@ -2284,6 +2285,9 @@ class DNSAnalyzer:
                         'reason': info['reason'],
                         'alternative': info.get('alternative'),
                     }
+                    if info.get('dane_migration_available'):
+                        result['dane_migration_available'] = True
+                    return result
         return None
 
     def analyze_dane(self, domain: str, mx_records: List[str] = None) -> Dict[str, Any]:
@@ -2468,7 +2472,10 @@ class DNSAnalyzer:
             if mx_capability and not mx_capability['dane_inbound']:
                 provider_name = mx_capability['provider_name']
                 alt = mx_capability.get('alternative', 'MTA-STS')
-                base_result['message'] = f'DANE not available — {provider_name} does not support inbound DANE/TLSA on its MX infrastructure'
+                if mx_capability.get('dane_migration_available'):
+                    base_result['message'] = f'DANE not available on current MX endpoints — {provider_name} supports DANE on newer endpoints (migration available)'
+                else:
+                    base_result['message'] = f'DANE not available — {provider_name} does not support inbound DANE/TLSA on its MX infrastructure'
                 base_result['dane_deployable'] = False
             else:
                 base_result['message'] = f'No DANE/TLSA records found (checked {len(mx_hosts)} MX host{"s" if len(mx_hosts) > 1 else ""})'
