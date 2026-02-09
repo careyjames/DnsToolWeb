@@ -169,12 +169,21 @@ const allFixesCollapse = document.getElementById('allFixesCollapse');
 if (allFixesCollapse) {
     const toggleBtn = document.querySelector('[data-bs-target="#allFixesCollapse"]');
     if (toggleBtn) {
-        const originalHTML = toggleBtn.innerHTML;
+        const originalNodes = Array.from(toggleBtn.childNodes).map(function(node) {
+            return node.cloneNode(true);
+        });
         allFixesCollapse.addEventListener('shown.bs.collapse', function() {
-            toggleBtn.innerHTML = '<i class="fas fa-chevron-up me-1"></i>Show fewer';
+            toggleBtn.textContent = '';
+            const icon = document.createElement('i');
+            icon.className = 'fas fa-chevron-up me-1';
+            toggleBtn.appendChild(icon);
+            toggleBtn.appendChild(document.createTextNode('Show fewer'));
         });
         allFixesCollapse.addEventListener('hidden.bs.collapse', function() {
-            toggleBtn.innerHTML = originalHTML;
+            toggleBtn.textContent = '';
+            originalNodes.forEach(function(node) {
+                toggleBtn.appendChild(node.cloneNode(true));
+            });
         });
     }
 }
