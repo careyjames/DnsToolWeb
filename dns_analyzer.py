@@ -86,6 +86,9 @@ class DNSAnalyzer:
         self._dns_cache: Dict[str, tuple] = {}
         self._dns_cache_lock = __import__('threading').Lock()
         self._DNS_CACHE_TTL = 30
+        self._ct_cache: Dict[str, tuple] = {}
+        self._ct_cache_lock = __import__('threading').Lock()
+        self._CT_CACHE_TTL = 3600
         self._fetch_iana_rdap_data()
 
     def _dns_cache_get(self, key: str) -> Optional[List[str]]:
@@ -108,6 +111,25 @@ class DNSAnalyzer:
                 for k in expired:
                     del self._dns_cache[k]
     
+    def _get_ct_cache(self, domain: str) -> Optional[list]:
+        with self._ct_cache_lock:
+            key = domain.lower()
+            if key in self._ct_cache:
+                ts, data = self._ct_cache[key]
+                if time.time() - ts < self._CT_CACHE_TTL:
+                    return data
+                del self._ct_cache[key]
+        return None
+
+    def _set_ct_cache(self, domain: str, data: list):
+        with self._ct_cache_lock:
+            self._ct_cache[domain.lower()] = (time.time(), data)
+            if len(self._ct_cache) > 200:
+                cutoff = time.time() - self._CT_CACHE_TTL
+                expired = [k for k, (ts, _) in self._ct_cache.items() if ts < cutoff]
+                for k in expired:
+                    del self._ct_cache[k]
+
     def _find_parent_zone(self, domain: str) -> Optional[str]:
         """Find the parent zone that contains this domain by looking for NS records.
         For 'dnstool.it-help.tech', returns 'it-help.tech'.
@@ -3444,70 +3466,68 @@ class DNSAnalyzer:
             }
         
         analysis_start = time.time()
-        # Run all lookups in parallel for speed (5-10s target)
-        with ThreadPoolExecutor(max_workers=15) as executor:
-            futures = {
-                executor.submit(self.get_basic_records, domain): 'basic',
-                executor.submit(self.get_authoritative_records, domain): 'auth',
-                executor.submit(self.analyze_spf, domain): 'spf',
-                executor.submit(self.analyze_dmarc, domain): 'dmarc',
-                executor.submit(self.analyze_dkim, domain, None, custom_dkim_selectors): 'dkim',
-                executor.submit(self.analyze_mta_sts, domain): 'mta_sts',
-                executor.submit(self.analyze_tlsrpt, domain): 'tlsrpt',
-                executor.submit(self.analyze_bimi, domain): 'bimi',
-                executor.submit(self.analyze_caa, domain): 'caa',
-                executor.submit(self.analyze_dnssec, domain): 'dnssec',
-                executor.submit(self.analyze_ns_delegation, domain): 'ns_delegation',
-                executor.submit(self.get_registrar_info, domain): 'registrar',
-                executor.submit(self.validate_resolver_consensus, domain): 'resolver_consensus',
-                executor.submit(self.discover_subdomains, domain): 'ct_subdomains',
-            }
-            
-            results_map = {}
-            task_times = {}
-            try:
-                for future in as_completed(futures, timeout=20):
-                    key = futures[future]
-                    task_elapsed = round(time.time() - analysis_start, 2)
-                    task_times[key] = task_elapsed
-                    try:
-                        results_map[key] = future.result()
-                    except Exception as e:
-                        logging.error(f"Error in {key} lookup: {e}")
-                        results_map[key] = {} if key in ['basic', 'auth'] else {'status': 'error'}
-            except FuturesTimeoutError:
-                # Some futures timed out - continue with what we have
-                logging.warning(f"Some lookups timed out for {domain}, continuing with partial results")
-                for future, key in futures.items():
-                    if key not in results_map:
-                        if future.done():
-                            try:
-                                results_map[key] = future.result()
-                            except Exception:
-                                results_map[key] = {} if key in ['basic', 'auth'] else {'status': 'error'}
+        futures = {
+            self._executor.submit(self.get_basic_records, domain): 'basic',
+            self._executor.submit(self.get_authoritative_records, domain): 'auth',
+            self._executor.submit(self.analyze_spf, domain): 'spf',
+            self._executor.submit(self.analyze_dmarc, domain): 'dmarc',
+            self._executor.submit(self.analyze_dkim, domain, None, custom_dkim_selectors): 'dkim',
+            self._executor.submit(self.analyze_mta_sts, domain): 'mta_sts',
+            self._executor.submit(self.analyze_tlsrpt, domain): 'tlsrpt',
+            self._executor.submit(self.analyze_bimi, domain): 'bimi',
+            self._executor.submit(self.analyze_caa, domain): 'caa',
+            self._executor.submit(self.analyze_dnssec, domain): 'dnssec',
+            self._executor.submit(self.analyze_ns_delegation, domain): 'ns_delegation',
+            self._executor.submit(self.get_registrar_info, domain): 'registrar',
+            self._executor.submit(self.validate_resolver_consensus, domain): 'resolver_consensus',
+            self._executor.submit(self.discover_subdomains, domain): 'ct_subdomains',
+        }
+        
+        results_map = {}
+        task_times = {}
+        try:
+            for future in as_completed(futures, timeout=20):
+                key = futures[future]
+                task_elapsed = round(time.time() - analysis_start, 2)
+                task_times[key] = task_elapsed
+                try:
+                    results_map[key] = future.result()
+                except Exception as e:
+                    logging.error(f"Error in {key} lookup: {e}")
+                    results_map[key] = {} if key in ['basic', 'auth'] else {'status': 'error'}
+        except FuturesTimeoutError:
+            logging.warning(f"Some lookups timed out for {domain}, continuing with partial results")
+            for future, key in futures.items():
+                if key not in results_map:
+                    if future.done():
+                        try:
+                            results_map[key] = future.result()
+                        except Exception:
+                            results_map[key] = {} if key in ['basic', 'auth'] else {'status': 'error'}
+                    else:
+                        future.cancel()
+                        logging.warning(f"Lookup {key} timed out for {domain}")
+                        if key in ['basic', 'auth']:
+                            results_map[key] = {}
+                        elif key == 'ct_subdomains':
+                            results_map[key] = {
+                                'status': 'warning',
+                                'message': 'Subdomain discovery exceeded time budget',
+                                'source': 'Limited (timed out)',
+                                'subdomains': [],
+                                'unique_subdomains': 0,
+                                'total_certs': 0,
+                                'display_count': 0,
+                                'current_count': 0,
+                                'expired_count': 0,
+                                'was_truncated': False,
+                                'provider_summary': {},
+                                'providers_found': 0,
+                                'cname_count': 0,
+                                'cname_discovered_count': 0,
+                            }
                         else:
-                            logging.warning(f"Lookup {key} timed out for {domain}")
-                            if key in ['basic', 'auth']:
-                                results_map[key] = {}
-                            elif key == 'ct_subdomains':
-                                results_map[key] = {
-                                    'status': 'warning',
-                                    'message': 'Subdomain discovery exceeded time budget',
-                                    'source': 'Limited (timed out)',
-                                    'subdomains': [],
-                                    'unique_subdomains': 0,
-                                    'total_certs': 0,
-                                    'display_count': 0,
-                                    'current_count': 0,
-                                    'expired_count': 0,
-                                    'was_truncated': False,
-                                    'provider_summary': {},
-                                    'providers_found': 0,
-                                    'cname_count': 0,
-                                    'cname_discovered_count': 0,
-                                }
-                            else:
-                                results_map[key] = {'status': 'timeout'}
+                            results_map[key] = {'status': 'timeout'}
         
         parallel_elapsed = round(time.time() - analysis_start, 2)
         sorted_tasks = sorted(task_times.items(), key=lambda x: x[1], reverse=True)
@@ -3785,97 +3805,109 @@ class DNSAnalyzer:
         wildcard_certs = []
         ct_success = False
         
-        try:
-            ct_timeout = min(8, _budget_remaining())
-            if ct_timeout < 2:
-                raise requests.exceptions.Timeout("Insufficient time budget for CT query")
-            
-            url = f"https://crt.sh/?q=%25.{domain}&output=json"
-            response = requests.get(url, timeout=ct_timeout, headers={
-                'User-Agent': self.USER_AGENT
-            })
-            
-            if response.status_code == 200:
-                data = response.json()
-                result['total_certs'] = len(data)
-                ct_success = True
+        cached_ct = self._get_ct_cache(domain)
+        if cached_ct is not None:
+            data = cached_ct
+            result['total_certs'] = len(data)
+            result['ct_source'] = 'cache'
+            ct_success = True
+            logging.info(f"CT cache hit for {domain}: {len(data)} certs")
+        else:
+            data = None
+            try:
+                ct_timeout = min(8, _budget_remaining())
+                if ct_timeout < 2:
+                    raise requests.exceptions.Timeout("Insufficient time budget for CT query")
                 
-                CT_ENTRY_CAP = 5000
-                entries_to_process = data[:CT_ENTRY_CAP] if len(data) > CT_ENTRY_CAP else data
-                if len(data) > CT_ENTRY_CAP:
-                    logging.info(f"CT data for {domain} has {len(data)} entries, capping processing at {CT_ENTRY_CAP}")
+                url = f"https://crt.sh/?q=%25.{domain}&output=json"
+                response = requests.get(url, timeout=ct_timeout, headers={
+                    'User-Agent': self.USER_AGENT
+                })
                 
-                for entry in entries_to_process:
-                    names = set()
-                    cn = entry.get('common_name', '')
-                    if cn:
-                        names.add(cn.lower().strip())
-                    name_value = entry.get('name_value', '')
-                    if name_value:
-                        for name in name_value.split('\n'):
-                            name = name.strip().lower()
-                            if name and '@' not in name:
-                                names.add(name)
+                if response.status_code == 200:
+                    data = response.json()
+                    result['total_certs'] = len(data)
+                    ct_success = True
+                    self._set_ct_cache(domain, data)
+                    logging.info(f"CT query for {domain}: {len(data)} certs in {round(time.time() - ct_start, 1)}s")
+                else:
+                    logging.warning(f"CT log query for {domain} returned status {response.status_code}")
                     
-                    not_before = entry.get('not_before', '')
-                    not_after = entry.get('not_after', '')
-                    issuer = entry.get('issuer_name', '')
+            except requests.exceptions.Timeout:
+                logging.warning(f"CT log query timed out for {domain} after {round(time.time() - ct_start, 1)}s — falling back to DNS probing")
+            except requests.exceptions.ConnectionError:
+                logging.warning(f"CT log connection failed for {domain} — falling back to DNS probing")
+            except Exception as e:
+                logging.warning(f"CT log query error for {domain}: {e} — falling back to DNS probing")
+        
+        if ct_success and data:
+            CT_ENTRY_CAP = 5000
+            entries_to_process = data[:CT_ENTRY_CAP] if len(data) > CT_ENTRY_CAP else data
+            if len(data) > CT_ENTRY_CAP:
+                logging.info(f"CT data for {domain} has {len(data)} entries, capping processing at {CT_ENTRY_CAP}")
+            
+            for entry in entries_to_process:
+                names = set()
+                cn = entry.get('common_name', '')
+                if cn:
+                    names.add(cn.lower().strip())
+                name_value = entry.get('name_value', '')
+                if name_value:
+                    for name in name_value.split('\n'):
+                        name = name.strip().lower()
+                        if name and '@' not in name:
+                            names.add(name)
+                
+                not_before = entry.get('not_before', '')
+                not_after = entry.get('not_after', '')
+                issuer = entry.get('issuer_name', '')
+                
+                for name in names:
+                    if name == f'*.{domain}':
+                        issuer_cn = ''
+                        if 'CN=' in issuer:
+                            issuer_cn = issuer.split('CN=')[1].split(',')[0].strip()
+                        wildcard_certs.append({
+                            'name': name,
+                            'not_before': not_before,
+                            'not_after': not_after,
+                            'issuer': issuer_cn,
+                        })
                     
-                    for name in names:
-                        if name == f'*.{domain}':
-                            issuer_cn = ''
-                            if 'CN=' in issuer:
-                                issuer_cn = issuer.split('CN=')[1].split(',')[0].strip()
-                            wildcard_certs.append({
-                                'name': name,
-                                'not_before': not_before,
-                                'not_after': not_after,
-                                'issuer': issuer_cn,
-                            })
+                    if name.endswith(f'.{domain}') or name == domain:
+                        clean_name = name.lstrip('*.')
+                        if clean_name == domain:
+                            continue
                         
-                        if name.endswith(f'.{domain}') or name == domain:
-                            clean_name = name.lstrip('*.')
-                            if clean_name == domain:
-                                continue
-                            
-                            is_wildcard = name.startswith('*.')
-                            
-                            if clean_name not in subdomain_map:
-                                subdomain_map[clean_name] = {
-                                    'name': clean_name,
-                                    'first_seen': not_before,
-                                    'last_seen': not_before,
-                                    'not_after': not_after,
-                                    'cert_count': 0,
-                                    'is_wildcard': is_wildcard,
-                                    'issuers': set(),
-                                }
-                            
-                            entry_data = subdomain_map[clean_name]
-                            entry_data['cert_count'] += 1
-                            if not_before and (not entry_data['first_seen'] or not_before < entry_data['first_seen']):
-                                entry_data['first_seen'] = not_before
-                            if not_before and (not entry_data['last_seen'] or not_before > entry_data['last_seen']):
-                                entry_data['last_seen'] = not_before
-                            if not_after and (not entry_data['not_after'] or not_after > entry_data['not_after']):
-                                entry_data['not_after'] = not_after
-                            
-                            issuer_cn = ''
-                            if 'CN=' in issuer:
-                                issuer_cn = issuer.split('CN=')[1].split(',')[0].strip()
-                            if issuer_cn:
-                                entry_data['issuers'].add(issuer_cn)
-                
-                logging.info(f"CT query for {domain}: {len(data)} certs, {len(subdomain_map)} unique subdomains in {round(time.time() - ct_start, 1)}s")
-            else:
-                logging.warning(f"CT log query for {domain} returned status {response.status_code}")
-                
-        except requests.exceptions.Timeout:
-            logging.warning(f"CT log query timed out for {domain} after {round(time.time() - ct_start, 1)}s — falling back to DNS probing")
-        except requests.exceptions.ConnectionError:
-            logging.warning(f"CT log connection failed for {domain} — falling back to DNS probing")
-        except Exception as e:
-            logging.warning(f"CT log query error for {domain}: {e} — falling back to DNS probing")
+                        is_wildcard = name.startswith('*.')
+                        
+                        if clean_name not in subdomain_map:
+                            subdomain_map[clean_name] = {
+                                'name': clean_name,
+                                'first_seen': not_before,
+                                'last_seen': not_before,
+                                'not_after': not_after,
+                                'cert_count': 0,
+                                'is_wildcard': is_wildcard,
+                                'issuers': set(),
+                            }
+                        
+                        entry_data = subdomain_map[clean_name]
+                        entry_data['cert_count'] += 1
+                        if not_before and (not entry_data['first_seen'] or not_before < entry_data['first_seen']):
+                            entry_data['first_seen'] = not_before
+                        if not_before and (not entry_data['last_seen'] or not_before > entry_data['last_seen']):
+                            entry_data['last_seen'] = not_before
+                        if not_after and (not entry_data['not_after'] or not_after > entry_data['not_after']):
+                            entry_data['not_after'] = not_after
+                        
+                        issuer_cn = ''
+                        if 'CN=' in issuer:
+                            issuer_cn = issuer.split('CN=')[1].split(',')[0].strip()
+                        if issuer_cn:
+                            entry_data['issuers'].add(issuer_cn)
+            
+            logging.info(f"CT processing for {domain}: {len(subdomain_map)} unique subdomains from {len(entries_to_process)} entries")
         
         try:
             from datetime import datetime

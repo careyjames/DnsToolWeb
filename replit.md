@@ -50,7 +50,7 @@ Preferred communication style: Simple, everyday language.
 - **Code Organization (v26.10.70)**:
     - **`dns_providers.py`**: Extracted 7 provider data maps (CNAME_PROVIDER_MAP, DANE_MX_CAPABILITY, DMARC_MONITORING_PROVIDERS, SPF_FLATTENING_PROVIDERS, etc.) from dns_analyzer.py for easier maintenance.
     - **`rdap_cache.py`**: Extracted RDAPCache class into focused module with thread-safe locking.
-    - **Performance**: Shared ThreadPoolExecutor (max 20 workers) and DNS result TTL cache (30s) reduce thread creation overhead.
+    - **Performance**: Shared ThreadPoolExecutor (max 20 workers) and DNS result TTL cache (30s) reduce thread creation overhead. Parallel analysis uses shared executor (not `with` context manager) so the 20s timeout is enforced without blocking on slow futures. CT cache (1-hour TTL) ensures consistent subdomain counts after first successful query. Single CT attempt (8s max) — no retry logic — keeps time budget predictable.
 - **Growth & Scalability (v26.10.68)**:
     - Database indexes on `domain`, `ascii_domain`, `created_at`, and composite `(analysis_success, created_at)` for fast queries at scale.
     - **Data export**: `/export/json` streams all analyses as NDJSON (one JSON record per line) for backup, migration, or external processing. Uses paginated streaming to handle any volume without memory issues.
