@@ -1,6 +1,7 @@
 # Default: allow all crawlers
 User-agent: *
 Allow: /
+Disallow: /export/
 
 # AI/LLM Search Bots - explicitly allowed
 User-agent: GPTBot
