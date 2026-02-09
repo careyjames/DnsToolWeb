@@ -1576,4 +1576,5 @@ def internal_error(_error):
 
 if __name__ == '__main__':
     debug_mode = os.environ.get('FLASK_DEBUG', 'false').lower() == 'true'
-    app.run(host='0.0.0.0', port=5000, debug=debug_mode)  # NOSONAR - 0.0.0.0 required for Replit hosting; access control handled by platform
+    host = os.environ.get('FLASK_HOST', '127.0.0.1')  # NOSONAR - default safe; workflow overrides to 0.0.0.0 for hosting
+    app.run(host=host, port=5000, debug=debug_mode)
