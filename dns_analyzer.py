@@ -3466,7 +3466,7 @@ class DNSAnalyzer:
             results_map = {}
             task_times = {}
             try:
-                for future in as_completed(futures, timeout=25):
+                for future in as_completed(futures, timeout=20):
                     key = futures[future]
                     task_elapsed = round(time.time() - analysis_start, 2)
                     task_times[key] = task_elapsed
@@ -3487,7 +3487,27 @@ class DNSAnalyzer:
                                 results_map[key] = {} if key in ['basic', 'auth'] else {'status': 'error'}
                         else:
                             logging.warning(f"Lookup {key} timed out for {domain}")
-                            results_map[key] = {} if key in ['basic', 'auth'] else {'status': 'timeout'}
+                            if key in ['basic', 'auth']:
+                                results_map[key] = {}
+                            elif key == 'ct_subdomains':
+                                results_map[key] = {
+                                    'status': 'warning',
+                                    'message': 'Subdomain discovery exceeded time budget',
+                                    'source': 'Limited (timed out)',
+                                    'subdomains': [],
+                                    'unique_subdomains': 0,
+                                    'total_certs': 0,
+                                    'display_count': 0,
+                                    'current_count': 0,
+                                    'expired_count': 0,
+                                    'was_truncated': False,
+                                    'provider_summary': {},
+                                    'providers_found': 0,
+                                    'cname_count': 0,
+                                    'cname_discovered_count': 0,
+                                }
+                            else:
+                                results_map[key] = {'status': 'timeout'}
         
         parallel_elapsed = round(time.time() - analysis_start, 2)
         sorted_tasks = sorted(task_times.items(), key=lambda x: x[1], reverse=True)
@@ -3755,7 +3775,7 @@ class DNSAnalyzer:
                       'Does not include internal-only names or uncommon subdomain prefixes.',
         }
         
-        TOTAL_BUDGET = 22
+        TOTAL_BUDGET = 18
         ct_start = time.time()
         
         def _budget_remaining():
@@ -3766,7 +3786,7 @@ class DNSAnalyzer:
         ct_success = False
         
         try:
-            ct_timeout = min(10, _budget_remaining())
+            ct_timeout = min(8, _budget_remaining())
             if ct_timeout < 2:
                 raise requests.exceptions.Timeout("Insufficient time budget for CT query")
             

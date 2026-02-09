@@ -16,7 +16,7 @@ from sqlalchemy import JSON, event
 from dns_analyzer import DNSAnalyzer
 
 # App version - format: YY.M.patch (bump last number for small changes)
-APP_VERSION = "26.10.75"
+APP_VERSION = "26.10.76"
 
 
 class TraceIDFilter(logging.Filter):
@@ -1001,7 +1001,7 @@ def analyze():
                 registrar_name=results.get('registrar_info', {}).get('registrar'),
                 registrar_source=results.get('registrar_info', {}).get('source'),
                 ct_subdomains=results.get('ct_subdomains'),
-                full_results=results,
+                full_results={**results, '_tool_version': APP_VERSION},
                 country_code=geo.get('code'),
                 country_name=geo.get('name'),
                 analysis_success=True,
@@ -1145,6 +1145,7 @@ def view_analysis(analysis_id):
     analysis.registrar_source = results.get('registrar_info', {}).get('source')
     analysis.ct_subdomains = results.get('ct_subdomains')
     results['_schema_version'] = DomainAnalysis.SCHEMA_VERSION
+    results['_tool_version'] = APP_VERSION
     analysis.full_results = results
     analysis.country_code = geo.get('code') or analysis.country_code
     analysis.country_name = geo.get('name') or analysis.country_name

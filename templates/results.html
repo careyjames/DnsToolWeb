@@ -111,6 +111,9 @@
                     {% if analysis_timestamp %}<i class="fas fa-clock me-1" style="vertical-align: middle;"></i><span>{{ analysis_timestamp.strftime('%Y-%m-%d %H:%M UTC') }}</span>{% endif %}
                     {% if analysis_timestamp and analysis_duration %}<span class="mx-1">·</span>{% endif %}
                     {% if analysis_duration %}<i class="fas fa-stopwatch me-1" style="vertical-align: middle;"></i><span>{{ "%.1f"|format(analysis_duration) }}s</span>{% endif %}
+                    {% if results and results.get('_tool_version') %}
+                        <span class="mx-1">·</span><i class="fas fa-tag me-1" style="vertical-align: middle;"></i><span>v{{ results['_tool_version'] }}</span>
+                    {% endif %}
                 </div>
                 {% endif %}
             </div>
