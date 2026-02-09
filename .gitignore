@@ -1,0 +1,5 @@
+attached_assets/
+__pycache__/
+*.pyc
+.cache/
+node_modules/
