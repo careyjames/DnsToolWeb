@@ -18,7 +18,7 @@ from dns_analyzer import DNSAnalyzer
 from rdap_cache import _rdap_cache
 
 # App version - format: YY.M.patch (bump last number for small changes)
-APP_VERSION = "26.10.87"
+APP_VERSION = "26.10.88"
 
 
 class TraceIDFilter(logging.Filter):
