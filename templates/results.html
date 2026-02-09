@@ -176,6 +176,9 @@
                                         <span class="badge bg-{{ results.posture.color }} fs-6 px-3 py-2">{{ results.posture.state }}</span>
                                     </div>
                                     <small class="text-muted">{{ results.posture.message }}</small>
+                                    {% if results.posture.deliberate_monitoring %}
+                                    <small class="text-info d-block mt-1"><i class="fas fa-flask me-1"></i>{{ results.posture.deliberate_monitoring_note }}</small>
+                                    {% endif %}
                                 </div>
                             </div>
                             {% if results.posture.issues or results.posture.monitoring %}
@@ -631,6 +634,13 @@
                                         {% for issue in results.dmarc_analysis.issues %}
                                             <div class="text-warning"><i class="fas fa-exclamation-triangle me-1"></i>{{ issue }}</div>
                                         {% endfor %}
+                                    </div>
+                                {% endif %}
+                                {% if results.posture.deliberate_monitoring %}
+                                    <div class="mt-2 p-2 bg-info bg-opacity-10 border border-info border-opacity-25 rounded small">
+                                        <i class="fas fa-flask text-info me-1"></i>
+                                        <strong class="text-info">Advanced cryptographic posture detected.</strong>
+                                        <span class="text-muted">{{ results.posture.deliberate_monitoring_note }}</span>
                                     </div>
                                 {% endif %}
                                 {% if results.email_security_mgmt and results.email_security_mgmt.providers %}

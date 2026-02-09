@@ -4895,6 +4895,25 @@ class DNSAnalyzer:
             icon = 'times-circle'
             message = 'Critical security gaps detected. Domain may be vulnerable to spoofing or tampering.'
         
+        # Detect deliberate monitoring posture:
+        # When a domain deploys advanced cryptographic controls (DNSSEC + DANE validated)
+        # alongside DMARC with reporting but p=none, this pattern suggests intentional
+        # measurement/research posture rather than oversight or negligence.
+        deliberate_monitoring = False
+        deliberate_monitoring_note = None
+        if (has_dnssec
+                and dane.get('has_dane') and dane.get('status') == 'success'
+                and dmarc_policy == 'none'
+                and (dmarc.get('rua') or dmarc.get('ruf'))):
+            deliberate_monitoring = True
+            deliberate_monitoring_note = (
+                'This domain deploys DNSSEC and DANE (advanced cryptographic transport security) '
+                'alongside DMARC monitoring with active reporting — a combination that suggests '
+                'deliberate measurement posture rather than misconfiguration. '
+                'Some operators (standards bodies, research institutions) intentionally maintain '
+                'p=none to observe ecosystem behavior without disrupting legacy or experimental mail flows.'
+            )
+        
         # Generate verdicts for each section
         verdicts = self._generate_verdicts(results)
         
@@ -4907,6 +4926,8 @@ class DNSAnalyzer:
             'configured': configured_items,
             'absent': absent_items,
             'monitoring': monitoring_items,
+            'deliberate_monitoring': deliberate_monitoring,
+            'deliberate_monitoring_note': deliberate_monitoring_note,
             'verdicts': verdicts
         }
     

@@ -16,7 +16,7 @@ from sqlalchemy import JSON, event
 from dns_analyzer import DNSAnalyzer
 
 # App version - format: YY.M.patch (bump last number for small changes)
-APP_VERSION = "26.10.73"
+APP_VERSION = "26.10.74"
 
 
 class TraceIDFilter(logging.Filter):
@@ -1184,7 +1184,7 @@ def normalize_results(full_results):
         'dmarc_analysis': {'status': 'unknown', 'policy': None, 'records': []},
         'dkim_analysis': {'status': 'unknown', 'selectors': {}},
         'registrar_info': {'registrar': None, 'source': None},
-        'posture': {'state': 'unknown', 'label': 'Unknown'},
+        'posture': {'state': 'unknown', 'label': 'Unknown', 'deliberate_monitoring': False, 'deliberate_monitoring_note': None},
         'dane_analysis': {'status': 'info', 'has_dane': False, 'tlsa_records': [], 'issues': []},
         'mta_sts_analysis': {'status': 'warning'},
         'tlsrpt_analysis': {'status': 'warning'},
