@@ -3755,84 +3755,109 @@ class DNSAnalyzer:
                       'Does not include internal-only names or uncommon subdomain prefixes.',
         }
         
+        TOTAL_BUDGET = 22
+        ct_start = time.time()
+        
+        def _budget_remaining():
+            return max(0, TOTAL_BUDGET - (time.time() - ct_start))
+        
+        subdomain_map = {}
+        wildcard_certs = []
+        ct_success = False
+        
         try:
+            ct_timeout = min(10, _budget_remaining())
+            if ct_timeout < 2:
+                raise requests.exceptions.Timeout("Insufficient time budget for CT query")
+            
             url = f"https://crt.sh/?q=%25.{domain}&output=json"
-            response = requests.get(url, timeout=15, headers={
+            response = requests.get(url, timeout=ct_timeout, headers={
                 'User-Agent': self.USER_AGENT
             })
             
-            if response.status_code != 200:
-                result['status'] = 'error'
-                result['message'] = f'CT log query returned status {response.status_code}'
-                return result
-            
-            data = response.json()
-            result['total_certs'] = len(data)
-            
-            subdomain_map = {}
-            wildcard_certs = []
-            
-            for entry in data:
-                names = set()
-                cn = entry.get('common_name', '')
-                if cn:
-                    names.add(cn.lower().strip())
-                name_value = entry.get('name_value', '')
-                if name_value:
-                    for name in name_value.split('\n'):
-                        name = name.strip().lower()
-                        if name and '@' not in name:
-                            names.add(name)
+            if response.status_code == 200:
+                data = response.json()
+                result['total_certs'] = len(data)
+                ct_success = True
                 
-                not_before = entry.get('not_before', '')
-                not_after = entry.get('not_after', '')
-                issuer = entry.get('issuer_name', '')
+                CT_ENTRY_CAP = 5000
+                entries_to_process = data[:CT_ENTRY_CAP] if len(data) > CT_ENTRY_CAP else data
+                if len(data) > CT_ENTRY_CAP:
+                    logging.info(f"CT data for {domain} has {len(data)} entries, capping processing at {CT_ENTRY_CAP}")
                 
-                for name in names:
-                    if name == f'*.{domain}':
-                        issuer_cn = ''
-                        if 'CN=' in issuer:
-                            issuer_cn = issuer.split('CN=')[1].split(',')[0].strip()
-                        wildcard_certs.append({
-                            'name': name,
-                            'not_before': not_before,
-                            'not_after': not_after,
-                            'issuer': issuer_cn,
-                        })
+                for entry in entries_to_process:
+                    names = set()
+                    cn = entry.get('common_name', '')
+                    if cn:
+                        names.add(cn.lower().strip())
+                    name_value = entry.get('name_value', '')
+                    if name_value:
+                        for name in name_value.split('\n'):
+                            name = name.strip().lower()
+                            if name and '@' not in name:
+                                names.add(name)
                     
-                    if name.endswith(f'.{domain}') or name == domain:
-                        clean_name = name.lstrip('*.')
-                        if clean_name == domain:
-                            continue
-                        
-                        is_wildcard = name.startswith('*.')
-                        
-                        if clean_name not in subdomain_map:
-                            subdomain_map[clean_name] = {
-                                'name': clean_name,
-                                'first_seen': not_before,
-                                'last_seen': not_before,
+                    not_before = entry.get('not_before', '')
+                    not_after = entry.get('not_after', '')
+                    issuer = entry.get('issuer_name', '')
+                    
+                    for name in names:
+                        if name == f'*.{domain}':
+                            issuer_cn = ''
+                            if 'CN=' in issuer:
+                                issuer_cn = issuer.split('CN=')[1].split(',')[0].strip()
+                            wildcard_certs.append({
+                                'name': name,
+                                'not_before': not_before,
                                 'not_after': not_after,
-                                'cert_count': 0,
-                                'is_wildcard': is_wildcard,
-                                'issuers': set(),
-                            }
+                                'issuer': issuer_cn,
+                            })
                         
-                        entry_data = subdomain_map[clean_name]
-                        entry_data['cert_count'] += 1
-                        if not_before and (not entry_data['first_seen'] or not_before < entry_data['first_seen']):
-                            entry_data['first_seen'] = not_before
-                        if not_before and (not entry_data['last_seen'] or not_before > entry_data['last_seen']):
-                            entry_data['last_seen'] = not_before
-                        if not_after and (not entry_data['not_after'] or not_after > entry_data['not_after']):
-                            entry_data['not_after'] = not_after
-                        
-                        issuer_cn = ''
-                        if 'CN=' in issuer:
-                            issuer_cn = issuer.split('CN=')[1].split(',')[0].strip()
-                        if issuer_cn:
-                            entry_data['issuers'].add(issuer_cn)
-            
+                        if name.endswith(f'.{domain}') or name == domain:
+                            clean_name = name.lstrip('*.')
+                            if clean_name == domain:
+                                continue
+                            
+                            is_wildcard = name.startswith('*.')
+                            
+                            if clean_name not in subdomain_map:
+                                subdomain_map[clean_name] = {
+                                    'name': clean_name,
+                                    'first_seen': not_before,
+                                    'last_seen': not_before,
+                                    'not_after': not_after,
+                                    'cert_count': 0,
+                                    'is_wildcard': is_wildcard,
+                                    'issuers': set(),
+                                }
+                            
+                            entry_data = subdomain_map[clean_name]
+                            entry_data['cert_count'] += 1
+                            if not_before and (not entry_data['first_seen'] or not_before < entry_data['first_seen']):
+                                entry_data['first_seen'] = not_before
+                            if not_before and (not entry_data['last_seen'] or not_before > entry_data['last_seen']):
+                                entry_data['last_seen'] = not_before
+                            if not_after and (not entry_data['not_after'] or not_after > entry_data['not_after']):
+                                entry_data['not_after'] = not_after
+                            
+                            issuer_cn = ''
+                            if 'CN=' in issuer:
+                                issuer_cn = issuer.split('CN=')[1].split(',')[0].strip()
+                            if issuer_cn:
+                                entry_data['issuers'].add(issuer_cn)
+                
+                logging.info(f"CT query for {domain}: {len(data)} certs, {len(subdomain_map)} unique subdomains in {round(time.time() - ct_start, 1)}s")
+            else:
+                logging.warning(f"CT log query for {domain} returned status {response.status_code}")
+                
+        except requests.exceptions.Timeout:
+            logging.warning(f"CT log query timed out for {domain} after {round(time.time() - ct_start, 1)}s — falling back to DNS probing")
+        except requests.exceptions.ConnectionError:
+            logging.warning(f"CT log connection failed for {domain} — falling back to DNS probing")
+        except Exception as e:
+            logging.warning(f"CT log query error for {domain}: {e} — falling back to DNS probing")
+        
+        try:
             from datetime import datetime
             now = datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%S')
             
@@ -3863,19 +3888,23 @@ class DNSAnalyzer:
                     'pattern': f'*.{domain}',
                 }
             
-            dns_found = self._probe_common_subdomains(domain)
-            for sub_name in dns_found:
-                if sub_name not in subdomain_map:
-                    subdomains.append({
-                        'name': sub_name,
-                        'first_seen': '',
-                        'last_seen': '',
-                        'cert_count': 0,
-                        'is_wildcard': False,
-                        'is_current': True,
-                        'issuers': [],
-                        'source': 'dns',
-                    })
+            if _budget_remaining() > 3:
+                dns_found = self._probe_common_subdomains(domain)
+                for sub_name in dns_found:
+                    if sub_name not in subdomain_map:
+                        subdomains.append({
+                            'name': sub_name,
+                            'first_seen': '',
+                            'last_seen': '',
+                            'cert_count': 0,
+                            'is_wildcard': False,
+                            'is_current': True,
+                            'issuers': [],
+                            'source': 'dns',
+                        })
+                logging.info(f"DNS probing for {domain}: {len(dns_found)} found, budget remaining: {round(_budget_remaining(), 1)}s")
+            else:
+                logging.warning(f"Skipping DNS probing for {domain} — insufficient time budget ({round(_budget_remaining(), 1)}s remaining)")
             
             total_count = len(subdomains)
             current_count = sum(1 for s in subdomains if s['is_current'])
@@ -3889,19 +3918,27 @@ class DNSAnalyzer:
                 subdomains, domain, limit=DISPLAY_LIMIT
             )
             
-            provider_summary, cname_discovered = self._enrich_subdomains_with_cnames(display_set, domain, all_known_names)
-            
-            if cname_discovered:
-                existing_names = {s['name'] for s in display_set}
-                for cname_sub in cname_discovered:
-                    if cname_sub['name'] not in existing_names:
-                        prefix = cname_sub['name'].replace(f'.{domain}', '').split('.')[0] if cname_sub['name'].endswith(f'.{domain}') else cname_sub['name'].split('.')[0]
-                        cname_sub['_priority'] = prefix.lower() in self.SECURITY_RELEVANT_PREFIXES
-                        display_set.append(cname_sub)
-                        existing_names.add(cname_sub['name'])
-                total_count += len(cname_discovered)
-                current_count += sum(1 for s in cname_discovered if s['is_current'])
-                logging.info(f"CNAME discovery added {len(cname_discovered)} new subdomains for {domain}")
+            provider_summary = {}
+            cname_discovered = []
+            cname_budget = _budget_remaining()
+            if cname_budget > 3 and display_set:
+                provider_summary, cname_discovered = self._enrich_subdomains_with_cnames(
+                    display_set, domain, all_known_names, timeout=min(cname_budget - 1, 10)
+                )
+                
+                if cname_discovered:
+                    existing_names = {s['name'] for s in display_set}
+                    for cname_sub in cname_discovered:
+                        if cname_sub['name'] not in existing_names:
+                            prefix = cname_sub['name'].replace(f'.{domain}', '').split('.')[0] if cname_sub['name'].endswith(f'.{domain}') else cname_sub['name'].split('.')[0]
+                            cname_sub['_priority'] = prefix.lower() in self.SECURITY_RELEVANT_PREFIXES
+                            display_set.append(cname_sub)
+                            existing_names.add(cname_sub['name'])
+                    total_count += len(cname_discovered)
+                    current_count += sum(1 for s in cname_discovered if s['is_current'])
+                    logging.info(f"CNAME discovery added {len(cname_discovered)} new subdomains for {domain}")
+            else:
+                logging.warning(f"Skipping CNAME enrichment for {domain} — insufficient time budget ({round(cname_budget, 1)}s remaining)")
             
             display_set.sort(key=lambda x: (
                 not x['is_current'],
@@ -3911,6 +3948,15 @@ class DNSAnalyzer:
                 -x['cert_count'],
                 x['name']
             ))
+            
+            if not ct_success and not subdomains:
+                result['status'] = 'info'
+                result['message'] = 'Subdomain discovery services were unavailable — no subdomains found via CT logs or DNS probing'
+                result['source'] = 'Limited (services unavailable)'
+            elif not ct_success and subdomains:
+                result['status'] = 'warning'
+                result['message'] = 'CT log service was slow or unavailable — showing DNS-probed subdomains only'
+                result['source'] = 'DNS Probing (CT logs unavailable)'
             
             result['subdomains'] = display_set
             result['unique_subdomains'] = total_count
@@ -3923,15 +3969,12 @@ class DNSAnalyzer:
             result['cname_count'] = sum(1 for s in display_set if s.get('cname_chain'))
             result['cname_discovered_count'] = len(cname_discovered) if cname_discovered else 0
             
-        except requests.exceptions.Timeout:
-            result['status'] = 'timeout'
-            result['message'] = 'CT log query timed out (crt.sh may be slow)'
-        except requests.exceptions.ConnectionError:
-            result['status'] = 'error'
-            result['message'] = 'Could not connect to CT log service'
+            elapsed = round(time.time() - ct_start, 1)
+            logging.info(f"Subdomain discovery for {domain} completed in {elapsed}s (CT: {'ok' if ct_success else 'failed'}, {total_count} subdomains, {len(provider_summary)} providers)")
+            
         except Exception as e:
             result['status'] = 'error'
-            result['message'] = f'CT log query failed: {str(e)}'
+            result['message'] = f'Subdomain discovery failed: {str(e)}'
             logging.error(f"Subdomain discovery error for {domain}: {e}")
         
         return result
@@ -4057,7 +4100,7 @@ class DNSAnalyzer:
                 return info
         return None
 
-    def _enrich_subdomains_with_cnames(self, subdomains: list, domain: str = None, all_known_names: set = None) -> tuple:
+    def _enrich_subdomains_with_cnames(self, subdomains: list, domain: str = None, all_known_names: set = None, timeout: float = 10) -> tuple:
         """Resolve CNAME chains for all discovered subdomains in parallel.
         
         Returns (provider_summary, cname_discovered) tuple:
@@ -4089,7 +4132,7 @@ class DNSAnalyzer:
         with ThreadPoolExecutor(max_workers=30) as executor:
             futures = {executor.submit(resolve_one, s): s for s in current_subs}
             try:
-                for future in as_completed(futures, timeout=20):
+                for future in as_completed(futures, timeout=timeout):
                     try:
                         name, result = future.result(timeout=3)
                         cname_results[name] = result
