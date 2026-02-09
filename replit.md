@@ -62,3 +62,30 @@ Preferred communication style: Simple, everyday language.
 
 ### Database
 - **PostgreSQL**: Managed by Replit.
+
+## Security Audit Log
+
+### Review Date: 2026-02-09
+
+**SSRF Protection** — Verified complete coverage:
+- `_safe_http_get()` in `dns_analyzer.py` wraps all user-influenced outbound requests with `_validate_url_target()` (DNS resolution + private IP rejection).
+- BIMI logo proxy (`/proxy/bimi-logo`) in `app.py` uses `_validate_parsed_url()` + `_check_ssrf()` + `_build_safe_url()` with redirect validation, response size limits, and content-type enforcement.
+- Direct `requests.get()` calls to hardcoded trusted endpoints (IANA RDAP bootstrap, Google DoH, crt.sh, ip-api.com) are not SSRF-vulnerable since URLs are fixed constants or query-parameterized against known hosts.
+
+**XSS Protection** — No uses of Jinja2 `|safe` filter in templates. All user-controlled data is auto-escaped by Jinja2. CSP nonces are applied to inline scripts.
+
+**Session Security** — Cookies set with `Secure`, `HttpOnly`, `SameSite=Lax`. Secret key sourced from environment variable.
+
+**Input Validation** — Domain inputs are IDNA-encoded and validated. URL inputs are parsed, scheme-restricted, and SSRF-checked.
+
+**Remaining Advisory Items** (low priority, no current exploit):
+- `models.py` is empty; DB models live in `app.py`. Consider moving them to `models.py` for separation of concerns if the file grows further.
+- `app.py` is large (~1,580 lines); routing, models, and utility functions coexist. Acceptable for now but worth modularizing if more features are added.
+- Some direct `requests.get()` calls in `dns_analyzer.py` (DoH, CT logs) bypass `_safe_http_get()` — acceptable because they target hardcoded public API endpoints, not user-supplied URLs.
+
+## Recent Changes
+
+- **2026-02-09**: Removed SonarQube report file (false positive gitleaks alert). Cleaned 271 accumulated attached asset files. Added `.gitignore` for `attached_assets/`, `__pycache__/`, `.cache/`, `node_modules/`.
+- **2026-02-09**: Security hardening — host binding, token redaction in test fixtures, safe DOM manipulation, SSRF protection on BIMI proxy with redirect validation and response size limits.
+- **2026-01-22**: Added collapsible DNS security fixes view, code block copy functionality, remediation guidance system, network telemetry with `/api/health` dashboard.
+- **2026-01-22**: Fixed critical deadlock in network telemetry singleton. Improved error handling for SMTP verification timeouts and missing DNS record values.
