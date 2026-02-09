@@ -36,12 +36,21 @@ Preferred communication style: Simple, everyday language.
     - **MPIC Awareness**: CAA analysis includes context on Multi-Perspective Issuance Corroboration (CA/B Forum Ballot SC-067).
     - **Subdomain-aware analysis**: Handles DNSSEC inheritance, NS delegation, and RDAP lookups for subdomains, providing context-aware messaging when analyzing a subdomain.
 - **Data Model**: `DomainAnalysis` stores complete analysis results in a `full_results` JSON column for full history playback. Every stored report contains the complete picture — posture, verdicts, all sections — so historical views are identical to live results. Individual columns (spf_status, dmarc_policy, etc.) are retained for query/filtering but `full_results` is the source of truth for rendering. If `full_results` is missing, the view redirects to re-analyze rather than showing degraded data.
-- **Data Integrity Safeguards (v26.10.68)**:
+- **Data Integrity Safeguards (v26.10.68, expanded v26.10.70)**:
     - `full_results` column has a database-level `NOT NULL` constraint — PostgreSQL will reject any insert without complete data.
-    - SQLAlchemy `before_insert` and `before_update` event listeners validate that `full_results` contains all required sections (`basic_records`, `spf_analysis`, `dmarc_analysis`, `dkim_analysis`, `registrar_info`, `posture`) before any write reaches the database.
+    - SQLAlchemy `before_insert` and `before_update` event listeners validate that `full_results` contains all required sections (expanded to 12: `basic_records`, `spf_analysis`, `dmarc_analysis`, `dkim_analysis`, `registrar_info`, `posture`, `dane`, `mta_sts`, `tlsrpt`, `bimi`, `caa`, `dnssec`) before any write reaches the database.
     - Failed analyses are **never saved** to the database. Only successful, fully-populated reports are persisted. Stats are still tracked for failed attempts.
     - History queries filter to `analysis_success=True AND full_results IS NOT NULL` as an additional safety net.
     - **Schema versioning**: Every `full_results` payload includes a `_schema_version` field (currently `2`). Future code changes can use this to migrate or adapt older records without data loss. Schema changes must always be additive (new fields) — never remove or rename existing fields.
+- **Security Hardening (v26.10.70)**:
+    - **SSRF protection**: BIMI logo proxy validates each HTTP redirect hop, checking resolved IPs against private/loopback/reserved ranges before following.
+    - **CSRF protection**: Session-based tokens generated in `before_request`, validated for all POST requests, injected into template context for forms.
+    - **Thread-safe caching**: RDAP memory cache uses `threading.Lock` for all read/write operations to prevent race conditions under concurrent requests.
+    - **Rate limiting**: Multi-worker warning when Redis unavailable; in-memory fallback clearly documented as per-process only.
+- **Code Organization (v26.10.70)**:
+    - **`dns_providers.py`**: Extracted 7 provider data maps (CNAME_PROVIDER_MAP, DANE_MX_CAPABILITY, DMARC_MONITORING_PROVIDERS, SPF_FLATTENING_PROVIDERS, etc.) from dns_analyzer.py for easier maintenance.
+    - **`rdap_cache.py`**: Extracted RDAPCache class into focused module with thread-safe locking.
+    - **Performance**: Shared ThreadPoolExecutor (max 20 workers) and DNS result TTL cache (30s) reduce thread creation overhead.
 - **Growth & Scalability (v26.10.68)**:
     - Database indexes on `domain`, `ascii_domain`, `created_at`, and composite `(analysis_success, created_at)` for fast queries at scale.
     - **Data export**: `/export/json` streams all analyses as NDJSON (one JSON record per line) for backup, migration, or external processing. Uses paginated streaming to handle any volume without memory issues.
@@ -52,7 +61,8 @@ Preferred communication style: Simple, everyday language.
 - Server-rendered HTML using Jinja2 templates.
 - Features a self-hosted Bootstrap dark theme with a native system font stack and subsetted Font Awesome icons.
 - Custom CSS and client-side JavaScript for styling and interactivity.
-- **PWA Support**: Includes manifest, service worker, and app icons for installability.
+- **PWA Support**: Includes manifest, service worker (cache-first for static assets, network-first for pages with offline fallback), and app icons for installability.
+- **Accessibility (v26.10.70)**: Skip-to-content links, ARIA landmarks (`<main>`, `<nav aria-label>`, `role="search"`), semantic `<footer role="contentinfo">`.
 - **Pages**: Index (home), Results, History, Statistics.
 - **Route Structure**: Standard RESTful routes for analysis, history, and static content (e.g., `/llms.txt` for AI agent guidance).
 

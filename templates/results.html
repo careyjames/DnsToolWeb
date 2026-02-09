@@ -25,6 +25,7 @@
         .d-none{display:none}
         .collapse:not(.show){display:none}
         @media(min-width:992px){.collapse.navbar-collapse{display:flex!important}}
+        .visually-hidden-focusable{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);border:0}.visually-hidden-focusable:focus{position:fixed;top:0;left:0;width:auto;height:auto;padding:1rem;margin:0;overflow:visible;clip:auto;background:#0d6efd;color:#fff;z-index:9999;font-size:1rem}
         @media print {
             /* Hide non-printable elements */
             .navbar, .btn, button, .no-print { display: none !important; }
@@ -62,13 +63,14 @@
     </style>
 </head>
 <body>
+    <a href="#main-content" class="visually-hidden-focusable">Skip to main content</a>
     <!-- Navigation -->
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark" aria-label="Main navigation">
         <div class="container">
             <a class="navbar-brand" href="{{ url_for('index') }}">
                 <i class="fas fa-globe me-2"></i>DNS Tool <span class="badge bg-info text-dark ms-1">v{{ app_version }}</span>
             </a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
@@ -93,7 +95,7 @@
         </div>
     </nav>
 
-    <main class="container my-4">
+    <main id="main-content" class="container my-4">
         <!-- Header -->
         <div class="d-flex justify-content-between align-items-center mb-4">
             <div>
@@ -212,7 +214,7 @@
                     {{ s.key|replace('_', ' ')|title }} ({{ s.status }})
                 </span>
             {% endfor %}
-            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="alert"></button>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="alert" aria-label="Close alert"></button>
         </div>
         {% endif %}
         
@@ -1833,7 +1835,7 @@
         {% endif %}
         
         <!-- Footer -->
-        <footer class="text-center mt-5 mb-4 text-muted small">
+        <footer class="text-center mt-5 mb-4 text-muted small" role="contentinfo">
             <a href="https://www.it-help.tech" target="_blank" rel="noopener">
                 <img src="{{ url_for('static', filename='images/owl-of-athena.png') }}" alt="IT Help San Diego - Owl of Athena" width="64" height="64" class="mb-2" loading="lazy" style="border-radius:50%;">
             </a>
