@@ -16,7 +16,7 @@ from sqlalchemy import JSON, event
 from dns_analyzer import DNSAnalyzer
 
 # App version - format: YY.M.patch (bump last number for small changes)
-APP_VERSION = "26.10.81"
+APP_VERSION = "26.10.82"
 
 
 class TraceIDFilter(logging.Filter):

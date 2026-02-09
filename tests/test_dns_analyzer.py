@@ -554,5 +554,67 @@ class TestResolverConsensusSchema(unittest.TestCase):
         self.assertIsInstance(result['discrepancies'], list)
 
 
+class TestDependencyInjection(unittest.TestCase):
+    """Tests that dependency injection hooks are properly wired."""
+
+    def test_custom_dns_resolver_is_used(self):
+        """Injected dns_resolver should be called instead of live DNS."""
+        calls = []
+
+        def fake_resolver(record_type, domain):
+            calls.append((record_type, domain))
+            if record_type == 'A':
+                return ['93.184.216.34']
+            return []
+
+        analyzer = DNSAnalyzer(dns_resolver=fake_resolver, skip_network_init=True)
+        result = analyzer.dns_query('A', 'test.example.com')
+        self.assertEqual(result, ['93.184.216.34'])
+        self.assertIn(('A', 'test.example.com'), calls)
+
+    def test_custom_dns_resolver_error_returns_empty(self):
+        """If custom resolver raises, dns_query should return empty list."""
+        def broken_resolver(record_type, domain):
+            raise RuntimeError("test error")
+
+        analyzer = DNSAnalyzer(dns_resolver=broken_resolver, skip_network_init=True)
+        result = analyzer.dns_query('A', 'test.example.com')
+        self.assertEqual(result, [])
+
+    def test_custom_http_client_is_used(self):
+        """Injected http_client should be called instead of live HTTP."""
+        calls = []
+
+        class FakeResponse:
+            status_code = 200
+            text = '{"test": true}'
+            content = b'{"test": true}'
+            headers = {}
+            def json(self):
+                return {"test": True}
+            def raise_for_status(self):
+                pass
+
+        def fake_http(url, **kwargs):
+            calls.append(url)
+            return FakeResponse()
+
+        analyzer = DNSAnalyzer(http_client=fake_http, skip_network_init=True)
+        response = analyzer._safe_http_get('https://example.com/test')
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('https://example.com/test', calls)
+
+    def test_skip_network_init(self):
+        """skip_network_init should prevent IANA RDAP fetch."""
+        analyzer = DNSAnalyzer(skip_network_init=True)
+        self.assertEqual(analyzer.iana_rdap_map, {})
+
+    def test_default_constructor_backwards_compatible(self):
+        """Default no-arg constructor should still work."""
+        analyzer = DNSAnalyzer()
+        self.assertIsNone(analyzer._custom_dns_resolver)
+        self.assertIsNone(analyzer._custom_http_client)
+
+
 if __name__ == '__main__':
     unittest.main()

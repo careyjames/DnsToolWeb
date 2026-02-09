@@ -107,7 +107,7 @@ class DNSAnalyzer:
 
     MAX_CONCURRENT_ANALYSES = 6
 
-    def __init__(self):
+    def __init__(self, dns_resolver=None, http_client=None, skip_network_init=False):
         self.dns_timeout = 2
         self.dns_tries = 2
         self.default_resolvers = ["1.1.1.1"]
@@ -124,7 +124,10 @@ class DNSAnalyzer:
         self._ct_cache: Dict[str, tuple] = {}
         self._ct_cache_lock = __import__('threading').Lock()
         self._CT_CACHE_TTL = 3600
-        self._fetch_iana_rdap_data()
+        self._custom_dns_resolver = dns_resolver
+        self._custom_http_client = http_client
+        if not skip_network_init:
+            self._fetch_iana_rdap_data()
 
     def _dns_cache_get(self, key: str) -> Optional[List[str]]:
         """Get cached DNS result if still valid."""
@@ -167,7 +170,12 @@ class DNSAnalyzer:
 
     def _safe_http_get(self, url: str, **kwargs) -> 'requests.Response':
         """SSRF-safe HTTP GET: validates URL target resolves to public IPs only.
-        Raises ConnectionError if target resolves to private/reserved IP ranges."""
+        Raises ConnectionError if target resolves to private/reserved IP ranges.
+        If a custom http_client was injected via constructor, it is used instead
+        (SSRF validation is skipped as the client controls its own responses)."""
+        if self._custom_http_client is not None:
+            kwargs.setdefault('headers', {}).setdefault('User-Agent', self.USER_AGENT)
+            return self._custom_http_client(url, **kwargs)
         if not _validate_url_target(url):
             raise requests.exceptions.ConnectionError(
                 f"SSRF protection: URL target resolves to private/reserved IP range"
@@ -479,9 +487,17 @@ class DNSAnalyzer:
         return validation_results
     
     def dns_query(self, record_type: str, domain: str) -> List[str]:
-        """Query domain for record type using DNS-over-HTTPS fallback."""
+        """Query domain for record type using DNS-over-HTTPS fallback.
+        If a custom dns_resolver was injected via constructor, it is used instead."""
         if not domain or not record_type:
             return []
+        
+        if self._custom_dns_resolver is not None:
+            try:
+                return self._custom_dns_resolver(record_type, domain)
+            except Exception as e:
+                logging.debug(f"Custom DNS resolver error: {e}")
+                return []
         
         # Try DNS-over-HTTPS first as it works better in restricted environments
         try:

@@ -1,0 +1,1451 @@
+{
+  "domain_exists": true,
+  "domain_status": "active",
+  "domain_status_message": null,
+  "section_status": {
+    "dmarc": {
+      "status": "ok"
+    },
+    "spf": {
+      "status": "ok"
+    },
+    "tlsrpt": {
+      "status": "ok"
+    },
+    "caa": {
+      "status": "ok"
+    },
+    "mta_sts": {
+      "status": "ok"
+    },
+    "registrar": {
+      "status": "ok"
+    },
+    "bimi": {
+      "status": "ok"
+    },
+    "ns_delegation": {
+      "status": "ok"
+    },
+    "basic": {
+      "status": "ok"
+    },
+    "auth": {
+      "status": "ok"
+    },
+    "resolver_consensus": {
+      "status": "ok"
+    },
+    "dkim": {
+      "status": "ok"
+    },
+    "dnssec": {
+      "status": "ok"
+    },
+    "ct_subdomains": {
+      "status": "ok"
+    },
+    "dane": {
+      "status": "ok"
+    }
+  },
+  "basic_records": {
+    "A": [
+      "173.194.193.101",
+      "173.194.193.102",
+      "173.194.193.138",
+      "173.194.193.113",
+      "173.194.193.100",
+      "173.194.193.139"
+    ],
+    "AAAA": [
+      "2607:f8b0:4001:c62::71",
+      "2607:f8b0:4001:c62::66",
+      "2607:f8b0:4001:c62::8b",
+      "2607:f8b0:4001:c62::8a"
+    ],
+    "MX": [
+      "10 smtp.google.com."
+    ],
+    "TXT": [
+      "globalsign-smime-dv=CDYX+XFHUw2wml6/Gb8+59BsH31KzUr6c1l2BPvqKX8=",
+      "docusign=05958488-4752-4ef2-95eb-aa7ba8a3bd0e",
+      "google-site-verification=4ibFUgB-wXLQ_S7vsXVomSTVamuOXBiVAzpR5IZ87D0",
+      "facebook-domain-verification=22rm551cu4k0ab0bxsw536tlds4h95",
+      "v=spf1 include:_spf.google.com ~all",
+      "google-site-verification=wD8N7i1JTNTkezJ49swvWW48f8_9xveREV4oB-0Hf5o",
+      "cisco-ci-domain-verification=47c38bc8c4b74b7233e9053220c1bbe76bcc1cd33c7acf7acd36cd6a5332004b",
+      "MS=E4A68B9AB2BB9670BCE15412F62916164C0B20BB",
+      "apple-domain-verification=30afIBcvSuDV2PLX",
+      "google-site-verification=TV9-DBe4R80X4v0M4U_bd_J9cpOJM0nikft0jAgjmsQ",
+      "docusign=1b0a6754-49b1-4db5-8540-d2c12664b289",
+      "onetrust-domain-verification=6d685f1d41a94696ad7ef771f68993e0"
+    ],
+    "NS": [
+      "ns4.google.com.",
+      "ns3.google.com.",
+      "ns1.google.com.",
+      "ns2.google.com."
+    ],
+    "CNAME": [],
+    "CAA": [
+      "0 issue \"pki.goog\""
+    ],
+    "SOA": [
+      "ns1.google.com. dns-admin.google.com. 867152559 900 900 1800 60"
+    ],
+    "SRV": [
+      "_caldavs._tcp: 5 0 443 calendar.google.com.",
+      "_carddavs._tcp: 5 0 443 google.com."
+    ],
+    "DMARC": [
+      "v=DMARC1; p=reject; rua=mailto:mailauth-reports@google.com"
+    ],
+    "MTA-STS": [
+      "v=STSv1; id=20210803T010101;"
+    ],
+    "TLS-RPT": [
+      "v=TLSRPTv1;rua=mailto:sts-reports@google.com"
+    ]
+  },
+  "authoritative_records": {
+    "A": [],
+    "AAAA": [],
+    "MX": [],
+    "TXT": [],
+    "NS": [],
+    "CAA": [],
+    "SOA": [],
+    "DMARC": [],
+    "MTA-STS": [],
+    "TLS-RPT": []
+  },
+  "auth_query_status": {
+    "A": "timeout",
+    "AAAA": "timeout",
+    "MX": "timeout",
+    "TXT": "timeout",
+    "NS": "timeout",
+    "CAA": "timeout",
+    "SOA": "timeout",
+    "DMARC": "timeout",
+    "MTA-STS": "timeout",
+    "TLS-RPT": "timeout"
+  },
+  "resolver_ttl": {
+    "A": 79,
+    "TXT": 300,
+    "AAAA": 300,
+    "SOA": 60,
+    "CAA": 13353,
+    "MX": 67,
+    "NS": 19004
+  },
+  "auth_ttl": {},
+  "propagation_status": {
+    "A": {
+      "status": "unknown",
+      "synced": false,
+      "mismatch": false
+    },
+    "AAAA": {
+      "status": "unknown",
+      "synced": false,
+      "mismatch": false
+    },
+    "MX": {
+      "status": "unknown",
+      "synced": false,
+      "mismatch": false
+    },
+    "TXT": {
+      "status": "unknown",
+      "synced": false,
+      "mismatch": false
+    },
+    "NS": {
+      "status": "unknown",
+      "synced": false,
+      "mismatch": false
+    },
+    "CNAME": {
+      "status": "unknown",
+      "synced": false,
+      "mismatch": false
+    },
+    "CAA": {
+      "status": "unknown",
+      "synced": false,
+      "mismatch": false
+    },
+    "SOA": {
+      "status": "unknown",
+      "synced": false,
+      "mismatch": false
+    },
+    "SRV": {
+      "status": "unknown",
+      "synced": false,
+      "mismatch": false
+    },
+    "DMARC": {
+      "status": "unknown",
+      "synced": false,
+      "mismatch": false
+    },
+    "MTA-STS": {
+      "status": "unknown",
+      "synced": false,
+      "mismatch": false
+    },
+    "TLS-RPT": {
+      "status": "unknown",
+      "synced": false,
+      "mismatch": false
+    }
+  },
+  "spf_analysis": {
+    "status": "success",
+    "message": "SPF valid with industry-standard soft fail (~all), 1/10 lookups",
+    "records": [
+      "onetrust-domain-verification=6d685f1d41a94696ad7ef771f68993e0",
+      "google-site-verification=wD8N7i1JTNTkezJ49swvWW48f8_9xveREV4oB-0Hf5o",
+      "globalsign-smime-dv=CDYX+XFHUw2wml6/Gb8+59BsH31KzUr6c1l2BPvqKX8=",
+      "docusign=1b0a6754-49b1-4db5-8540-d2c12664b289",
+      "docusign=05958488-4752-4ef2-95eb-aa7ba8a3bd0e",
+      "cisco-ci-domain-verification=47c38bc8c4b74b7233e9053220c1bbe76bcc1cd33c7acf7acd36cd6a5332004b",
+      "google-site-verification=4ibFUgB-wXLQ_S7vsXVomSTVamuOXBiVAzpR5IZ87D0",
+      "apple-domain-verification=30afIBcvSuDV2PLX",
+      "facebook-domain-verification=22rm551cu4k0ab0bxsw536tlds4h95",
+      "MS=E4A68B9AB2BB9670BCE15412F62916164C0B20BB",
+      "v=spf1 include:_spf.google.com ~all",
+      "google-site-verification=TV9-DBe4R80X4v0M4U_bd_J9cpOJM0nikft0jAgjmsQ"
+    ],
+    "valid_records": [
+      "v=spf1 include:_spf.google.com ~all"
+    ],
+    "spf_like": [],
+    "lookup_count": 1,
+    "lookup_mechanisms": [
+      "include:_spf.google.com"
+    ],
+    "permissiveness": "SOFT",
+    "all_mechanism": "~all",
+    "issues": [],
+    "includes": [
+      "_spf.google.com"
+    ],
+    "no_mail_intent": false
+  },
+  "dmarc_analysis": {
+    "status": "success",
+    "message": "DMARC policy reject (100%) - excellent protection",
+    "records": [
+      "v=DMARC1; p=reject; rua=mailto:mailauth-reports@google.com"
+    ],
+    "valid_records": [
+      "v=DMARC1; p=reject; rua=mailto:mailauth-reports@google.com"
+    ],
+    "dmarc_like": [],
+    "policy": "reject",
+    "subdomain_policy": null,
+    "pct": 100,
+    "aspf": "relaxed",
+    "adkim": "relaxed",
+    "rua": "mailto:mailauth-reports@google.com",
+    "ruf": null,
+    "np_policy": null,
+    "t_testing": null,
+    "psd_flag": null,
+    "dmarcbis_tags": {},
+    "issues": [
+      "No np= tag (DMARCbis) \u2014 non-existent subdomains inherit p= policy but adding np=reject provides explicit protection against subdomain spoofing"
+    ]
+  },
+  "dkim_analysis": {
+    "status": "info",
+    "message": "DKIM not discoverable via common selectors (large providers use rotating selectors)",
+    "selectors": {},
+    "key_issues": [],
+    "key_strengths": [],
+    "primary_provider": "Google Workspace",
+    "security_gateway": null,
+    "primary_has_dkim": false,
+    "third_party_only": false,
+    "primary_dkim_note": "",
+    "found_providers": []
+  },
+  "mta_sts_analysis": {
+    "status": "success",
+    "message": "MTA-STS enforced - TLS required for 3 mail server(s)",
+    "record": "v=STSv1; id=20210803T010101;",
+    "dns_id": "20210803T010101",
+    "mode": "enforce",
+    "policy": "version: STSv1\r\nmode: enforce\r\nmx: smtp.google.com\r\nmx: aspmx.l.google.com\r\nmx: *.aspmx.l.google.com\r\nmax_age: 86400\r\n",
+    "policy_mode": "enforce",
+    "policy_max_age": 86400,
+    "policy_mx": [
+      "smtp.google.com",
+      "aspmx.l.google.com",
+      "*.aspmx.l.google.com"
+    ],
+    "policy_fetched": true,
+    "policy_error": null,
+    "hosting_cname": "www3.l.google.com"
+  },
+  "tlsrpt_analysis": {
+    "status": "success",
+    "message": "TLS-RPT configured - receiving TLS delivery reports",
+    "record": "v=TLSRPTv1;rua=mailto:sts-reports@google.com",
+    "rua": "mailto:sts-reports@google.com"
+  },
+  "bimi_analysis": {
+    "status": "warning",
+    "message": "No BIMI record found",
+    "record": null,
+    "logo_url": null,
+    "vmc_url": null,
+    "logo_valid": null,
+    "logo_format": null,
+    "logo_error": null,
+    "vmc_valid": null,
+    "vmc_issuer": null,
+    "vmc_subject": null,
+    "vmc_error": null
+  },
+  "dane_analysis": {
+    "status": "info",
+    "message": "DANE not available \u2014 Google Workspace does not support inbound DANE/TLSA on its MX infrastructure",
+    "has_dane": false,
+    "mx_hosts_checked": 1,
+    "mx_hosts_with_dane": 0,
+    "tlsa_records": [],
+    "requires_dnssec": true,
+    "issues": [],
+    "mx_provider": {
+      "provider_key": "google",
+      "provider_name": "Google Workspace",
+      "dane_inbound": false,
+      "dane_outbound": false,
+      "reason": "Google uses shared, multi-tenant MX infrastructure (aspmx.l.google.com) with certificate rotation. Google does not publish TLSA records for its MX hosts and does not allow customers to do so. Google also does not validate DANE/TLSA when sending outbound mail.",
+      "alternative": "MTA-STS"
+    },
+    "dane_deployable": false
+  },
+  "caa_analysis": {
+    "status": "success",
+    "message": "CAA configured - only pki.goog can issue certificates",
+    "records": [
+      "0 issue \"pki.goog\""
+    ],
+    "issuers": [
+      "pki.goog"
+    ],
+    "has_wildcard": false,
+    "has_iodef": false,
+    "mpic_note": "Since September 2025, all public CAs must verify domain control from multiple geographic locations (Multi-Perspective Issuance Corroboration, CA/B Forum Ballot SC-067). CAA records are now checked from multiple network perspectives before certificate issuance."
+  },
+  "dnssec_analysis": {
+    "status": "warning",
+    "message": "DNSSEC not configured - DNS responses are unsigned",
+    "has_dnskey": false,
+    "has_ds": false,
+    "dnskey_records": [],
+    "ds_records": [],
+    "algorithm": null,
+    "algorithm_name": null,
+    "chain_of_trust": "none",
+    "ad_flag": false,
+    "ad_resolver": null
+  },
+  "ns_delegation_analysis": {
+    "status": "success",
+    "message": "4 nameserver(s) configured",
+    "child_ns": [
+      "ns1.google.com",
+      "ns2.google.com",
+      "ns3.google.com",
+      "ns4.google.com"
+    ],
+    "parent_ns": [],
+    "match": null,
+    "delegation_ok": true,
+    "note": "Parent zone delegation could not be verified"
+  },
+  "registrar_info": {
+    "status": "success",
+    "source": "RDAP",
+    "registrar": "Markmonitor Inc. (Registrant: REDACTED REGISTRANT)"
+  },
+  "resolver_consensus": {
+    "consensus_reached": true,
+    "resolvers_queried": 4,
+    "checks_performed": 4,
+    "discrepancies": [],
+    "per_record_consensus": {
+      "A": {
+        "consensus": true,
+        "resolver_count": 1,
+        "discrepancies": []
+      },
+      "NS": {
+        "consensus": true,
+        "resolver_count": 1,
+        "discrepancies": []
+      },
+      "TXT": {
+        "consensus": true,
+        "resolver_count": 1,
+        "discrepancies": []
+      },
+      "MX": {
+        "consensus": true,
+        "resolver_count": 1,
+        "discrepancies": []
+      }
+    }
+  },
+  "ct_subdomains": {
+    "status": "warning",
+    "source": "DNS Probing (CT logs unavailable)",
+    "source_url": "https://crt.sh",
+    "rfc": "RFC 6962",
+    "domain": "google.com",
+    "subdomains": [
+      {
+        "name": "api.l.google.com",
+        "first_seen": "",
+        "last_seen": "",
+        "cert_count": 0,
+        "is_wildcard": false,
+        "is_current": true,
+        "issuers": [],
+        "source": "cname",
+        "discovered_via": "api.google.com",
+        "_priority": true
+      },
+      {
+        "name": "mobile.l.google.com",
+        "first_seen": "",
+        "last_seen": "",
+        "cert_count": 0,
+        "is_wildcard": false,
+        "is_current": true,
+        "issuers": [],
+        "source": "cname",
+        "discovered_via": "m.google.com",
+        "_priority": true
+      },
+      {
+        "name": "analytics-alv.google.com",
+        "first_seen": "",
+        "last_seen": "",
+        "cert_count": 0,
+        "is_wildcard": false,
+        "is_current": true,
+        "issuers": [],
+        "source": "cname",
+        "discovered_via": "analytics.google.com",
+        "_priority": false
+      },
+      {
+        "name": "blogger.l.google.com",
+        "first_seen": "",
+        "last_seen": "",
+        "cert_count": 0,
+        "is_wildcard": false,
+        "is_current": true,
+        "issuers": [],
+        "source": "cname",
+        "discovered_via": "blog.google.com",
+        "_priority": false
+      },
+      {
+        "name": "gmail.google.com",
+        "first_seen": "",
+        "last_seen": "",
+        "cert_count": 0,
+        "is_wildcard": false,
+        "is_current": true,
+        "issuers": [],
+        "source": "cname",
+        "discovered_via": "email.google.com",
+        "_priority": false
+      },
+      {
+        "name": "images.l.google.com",
+        "first_seen": "",
+        "last_seen": "",
+        "cert_count": 0,
+        "is_wildcard": false,
+        "is_current": true,
+        "issuers": [],
+        "source": "cname",
+        "discovered_via": "images.google.com",
+        "_priority": false
+      },
+      {
+        "name": "large-uploads.l.google.com",
+        "first_seen": "",
+        "last_seen": "",
+        "cert_count": 0,
+        "is_wildcard": false,
+        "is_current": true,
+        "issuers": [],
+        "source": "cname",
+        "discovered_via": "upload.google.com",
+        "_priority": false
+      },
+      {
+        "name": "plus.l.google.com",
+        "first_seen": "",
+        "last_seen": "",
+        "cert_count": 0,
+        "is_wildcard": false,
+        "is_current": true,
+        "issuers": [],
+        "source": "cname",
+        "discovered_via": "notifications.google.com",
+        "_priority": false
+      },
+      {
+        "name": "video.l.google.com",
+        "first_seen": "",
+        "last_seen": "",
+        "cert_count": 0,
+        "is_wildcard": false,
+        "is_current": true,
+        "issuers": [],
+        "source": "cname",
+        "discovered_via": "video.google.com",
+        "_priority": false
+      },
+      {
+        "name": "www2.l.google.com",
+        "first_seen": "",
+        "last_seen": "",
+        "cert_count": 0,
+        "is_wildcard": false,
+        "is_current": true,
+        "issuers": [],
+        "source": "cname",
+        "discovered_via": "print.google.com",
+        "_priority": false
+      },
+      {
+        "name": "www3.l.google.com",
+        "first_seen": "",
+        "last_seen": "",
+        "cert_count": 0,
+        "is_wildcard": false,
+        "is_current": true,
+        "issuers": [],
+        "source": "cname",
+        "discovered_via": "web.google.com",
+        "_priority": false
+      },
+      {
+        "name": "accounts.google.com",
+        "first_seen": "",
+        "last_seen": "",
+        "cert_count": 0,
+        "is_wildcard": false,
+        "is_current": true,
+        "issuers": [],
+        "source": "dns"
+      },
+      {
+        "name": "admin.google.com",
+        "first_seen": "",
+        "last_seen": "",
+        "cert_count": 0,
+        "is_wildcard": false,
+        "is_current": true,
+        "issuers": [],
+        "source": "dns"
+      },
+      {
+        "name": "ads.google.com",
+        "first_seen": "",
+        "last_seen": "",
+        "cert_count": 0,
+        "is_wildcard": false,
+        "is_current": true,
+        "issuers": [],
+        "source": "dns"
+      },
+      {
+        "name": "alerts.google.com",
+        "first_seen": "",
+        "last_seen": "",
+        "cert_count": 0,
+        "is_wildcard": false,
+        "is_current": true,
+        "issuers": [],
+        "source": "dns",
+        "cname_chain": [
+          "www3.l.google.com"
+        ],
+        "cname_target": "www3.l.google.com"
+      },
+      {
+        "name": "analytics.google.com",
+        "first_seen": "",
+        "last_seen": "",
+        "cert_count": 0,
+        "is_wildcard": false,
+        "is_current": true,
+        "issuers": [],
+        "source": "dns",
+        "cname_chain": [
+          "analytics-alv.google.com"
+        ],
+        "cname_target": "analytics-alv.google.com"
+      },
+      {
+        "name": "api.google.com",
+        "first_seen": "",
+        "last_seen": "",
+        "cert_count": 0,
+        "is_wildcard": false,
+        "is_current": true,
+        "issuers": [],
+        "source": "dns",
+        "cname_chain": [
+          "api.l.google.com"
+        ],
+        "cname_target": "api.l.google.com"
+      },
+      {
+        "name": "archive.google.com",
+        "first_seen": "",
+        "last_seen": "",
+        "cert_count": 0,
+        "is_wildcard": false,
+        "is_current": true,
+        "issuers": [],
+        "source": "dns"
+      },
+      {
+        "name": "billing.google.com",
+        "first_seen": "",
+        "last_seen": "",
+        "cert_count": 0,
+        "is_wildcard": false,
+        "is_current": true,
+        "issuers": [],
+        "source": "dns"
+      },
+      {
+        "name": "blog.google.com",
+        "first_seen": "",
+        "last_seen": "",
+        "cert_count": 0,
+        "is_wildcard": false,
+        "is_current": true,
+        "issuers": [],
+        "source": "dns",
+        "cname_chain": [
+          "www.blogger.com",
+          "blogger.l.google.com"
+        ],
+        "cname_target": "blogger.l.google.com"
+      },
+      {
+        "name": "calendar.google.com",
+        "first_seen": "",
+        "last_seen": "",
+        "cert_count": 0,
+        "is_wildcard": false,
+        "is_current": true,
+        "issuers": [],
+        "source": "dns"
+      },
+      {
+        "name": "campaigns.google.com",
+        "first_seen": "",
+        "last_seen": "",
+        "cert_count": 0,
+        "is_wildcard": false,
+        "is_current": true,
+        "issuers": [],
+        "source": "dns"
+      },
+      {
+        "name": "careers.google.com",
+        "first_seen": "",
+        "last_seen": "",
+        "cert_count": 0,
+        "is_wildcard": false,
+        "is_current": true,
+        "issuers": [],
+        "source": "dns"
+      },
+      {
+        "name": "chat.google.com",
+        "first_seen": "",
+        "last_seen": "",
+        "cert_count": 0,
+        "is_wildcard": false,
+        "is_current": true,
+        "issuers": [],
+        "source": "dns"
+      },
+      {
+        "name": "classroom.google.com",
+        "first_seen": "",
+        "last_seen": "",
+        "cert_count": 0,
+        "is_wildcard": false,
+        "is_current": true,
+        "issuers": [],
+        "source": "dns"
+      },
+      {
+        "name": "cloud.google.com",
+        "first_seen": "",
+        "last_seen": "",
+        "cert_count": 0,
+        "is_wildcard": false,
+        "is_current": true,
+        "issuers": [],
+        "source": "dns"
+      },
+      {
+        "name": "corp.google.com",
+        "first_seen": "",
+        "last_seen": "",
+        "cert_count": 0,
+        "is_wildcard": false,
+        "is_current": true,
+        "issuers": [],
+        "source": "dns"
+      },
+      {
+        "name": "directory.google.com",
+        "first_seen": "",
+        "last_seen": "",
+        "cert_count": 0,
+        "is_wildcard": false,
+        "is_current": true,
+        "issuers": [],
+        "source": "dns",
+        "cname_chain": [
+          "www3.l.google.com"
+        ],
+        "cname_target": "www3.l.google.com"
+      },
+      {
+        "name": "dns.google.com",
+        "first_seen": "",
+        "last_seen": "",
+        "cert_count": 0,
+        "is_wildcard": false,
+        "is_current": true,
+        "issuers": [],
+        "source": "dns"
+      },
+      {
+        "name": "docs.google.com",
+        "first_seen": "",
+        "last_seen": "",
+        "cert_count": 0,
+        "is_wildcard": false,
+        "is_current": true,
+        "issuers": [],
+        "source": "dns"
+      },
+      {
+        "name": "download.google.com",
+        "first_seen": "",
+        "last_seen": "",
+        "cert_count": 0,
+        "is_wildcard": false,
+        "is_current": true,
+        "issuers": [],
+        "source": "dns",
+        "cname_chain": [
+          "www2.l.google.com"
+        ],
+        "cname_target": "www2.l.google.com"
+      },
+      {
+        "name": "drive.google.com",
+        "first_seen": "",
+        "last_seen": "",
+        "cert_count": 0,
+        "is_wildcard": false,
+        "is_current": true,
+        "issuers": [],
+        "source": "dns"
+      },
+      {
+        "name": "edu.google.com",
+        "first_seen": "",
+        "last_seen": "",
+        "cert_count": 0,
+        "is_wildcard": false,
+        "is_current": true,
+        "issuers": [],
+        "source": "dns"
+      },
+      {
+        "name": "education.google.com",
+        "first_seen": "",
+        "last_seen": "",
+        "cert_count": 0,
+        "is_wildcard": false,
+        "is_current": true,
+        "issuers": [],
+        "source": "dns"
+      },
+      {
+        "name": "email.google.com",
+        "first_seen": "",
+        "last_seen": "",
+        "cert_count": 0,
+        "is_wildcard": false,
+        "is_current": true,
+        "issuers": [],
+        "source": "dns",
+        "cname_chain": [
+          "gmail.google.com",
+          "www3.l.google.com"
+        ],
+        "cname_target": "www3.l.google.com"
+      },
+      {
+        "name": "events.google.com",
+        "first_seen": "",
+        "last_seen": "",
+        "cert_count": 0,
+        "is_wildcard": false,
+        "is_current": true,
+        "issuers": [],
+        "source": "dns"
+      },
+      {
+        "name": "files.google.com",
+        "first_seen": "",
+        "last_seen": "",
+        "cert_count": 0,
+        "is_wildcard": false,
+        "is_current": true,
+        "issuers": [],
+        "source": "dns",
+        "cname_chain": [
+          "www3.l.google.com"
+        ],
+        "cname_target": "www3.l.google.com"
+      },
+      {
+        "name": "finance.google.com",
+        "first_seen": "",
+        "last_seen": "",
+        "cert_count": 0,
+        "is_wildcard": false,
+        "is_current": true,
+        "issuers": [],
+        "source": "dns",
+        "cname_chain": [
+          "www3.l.google.com"
+        ],
+        "cname_target": "www3.l.google.com"
+      },
+      {
+        "name": "forms.google.com",
+        "first_seen": "",
+        "last_seen": "",
+        "cert_count": 0,
+        "is_wildcard": false,
+        "is_current": true,
+        "issuers": [],
+        "source": "dns"
+      },
+      {
+        "name": "help.google.com",
+        "first_seen": "",
+        "last_seen": "",
+        "cert_count": 0,
+        "is_wildcard": false,
+        "is_current": true,
+        "issuers": [],
+        "source": "dns",
+        "cname_chain": [
+          "www3.l.google.com"
+        ],
+        "cname_target": "www3.l.google.com"
+      },
+      {
+        "name": "id.google.com",
+        "first_seen": "",
+        "last_seen": "",
+        "cert_count": 0,
+        "is_wildcard": false,
+        "is_current": true,
+        "issuers": [],
+        "source": "dns"
+      },
+      {
+        "name": "images.google.com",
+        "first_seen": "",
+        "last_seen": "",
+        "cert_count": 0,
+        "is_wildcard": false,
+        "is_current": true,
+        "issuers": [],
+        "source": "dns",
+        "cname_chain": [
+          "images.l.google.com"
+        ],
+        "cname_target": "images.l.google.com"
+      },
+      {
+        "name": "jobs.google.com",
+        "first_seen": "",
+        "last_seen": "",
+        "cert_count": 0,
+        "is_wildcard": false,
+        "is_current": true,
+        "issuers": [],
+        "source": "dns",
+        "cname_chain": [
+          "www3.l.google.com"
+        ],
+        "cname_target": "www3.l.google.com"
+      },
+      {
+        "name": "learning.google.com",
+        "first_seen": "",
+        "last_seen": "",
+        "cert_count": 0,
+        "is_wildcard": false,
+        "is_current": true,
+        "issuers": [],
+        "source": "dns"
+      },
+      {
+        "name": "m.google.com",
+        "first_seen": "",
+        "last_seen": "",
+        "cert_count": 0,
+        "is_wildcard": false,
+        "is_current": true,
+        "issuers": [],
+        "source": "dns",
+        "cname_chain": [
+          "mobile.l.google.com"
+        ],
+        "cname_target": "mobile.l.google.com"
+      },
+      {
+        "name": "mail.google.com",
+        "first_seen": "",
+        "last_seen": "",
+        "cert_count": 0,
+        "is_wildcard": false,
+        "is_current": true,
+        "issuers": [],
+        "source": "dns"
+      },
+      {
+        "name": "maps.google.com",
+        "first_seen": "",
+        "last_seen": "",
+        "cert_count": 0,
+        "is_wildcard": false,
+        "is_current": true,
+        "issuers": [],
+        "source": "dns"
+      },
+      {
+        "name": "meet.google.com",
+        "first_seen": "",
+        "last_seen": "",
+        "cert_count": 0,
+        "is_wildcard": false,
+        "is_current": true,
+        "issuers": [],
+        "source": "dns"
+      },
+      {
+        "name": "mobile.google.com",
+        "first_seen": "",
+        "last_seen": "",
+        "cert_count": 0,
+        "is_wildcard": false,
+        "is_current": true,
+        "issuers": [],
+        "source": "dns",
+        "cname_chain": [
+          "mobile.l.google.com"
+        ],
+        "cname_target": "mobile.l.google.com"
+      },
+      {
+        "name": "news.google.com",
+        "first_seen": "",
+        "last_seen": "",
+        "cert_count": 0,
+        "is_wildcard": false,
+        "is_current": true,
+        "issuers": [],
+        "source": "dns"
+      },
+      {
+        "name": "notifications.google.com",
+        "first_seen": "",
+        "last_seen": "",
+        "cert_count": 0,
+        "is_wildcard": false,
+        "is_current": true,
+        "issuers": [],
+        "source": "dns",
+        "cname_chain": [
+          "plus.l.google.com"
+        ],
+        "cname_target": "plus.l.google.com"
+      },
+      {
+        "name": "ns1.google.com",
+        "first_seen": "",
+        "last_seen": "",
+        "cert_count": 0,
+        "is_wildcard": false,
+        "is_current": true,
+        "issuers": [],
+        "source": "dns"
+      },
+      {
+        "name": "ns2.google.com",
+        "first_seen": "",
+        "last_seen": "",
+        "cert_count": 0,
+        "is_wildcard": false,
+        "is_current": true,
+        "issuers": [],
+        "source": "dns"
+      },
+      {
+        "name": "ns3.google.com",
+        "first_seen": "",
+        "last_seen": "",
+        "cert_count": 0,
+        "is_wildcard": false,
+        "is_current": true,
+        "issuers": [],
+        "source": "dns"
+      },
+      {
+        "name": "ns4.google.com",
+        "first_seen": "",
+        "last_seen": "",
+        "cert_count": 0,
+        "is_wildcard": false,
+        "is_current": true,
+        "issuers": [],
+        "source": "dns"
+      },
+      {
+        "name": "pay.google.com",
+        "first_seen": "",
+        "last_seen": "",
+        "cert_count": 0,
+        "is_wildcard": false,
+        "is_current": true,
+        "issuers": [],
+        "source": "dns"
+      },
+      {
+        "name": "payments.google.com",
+        "first_seen": "",
+        "last_seen": "",
+        "cert_count": 0,
+        "is_wildcard": false,
+        "is_current": true,
+        "issuers": [],
+        "source": "dns"
+      },
+      {
+        "name": "print.google.com",
+        "first_seen": "",
+        "last_seen": "",
+        "cert_count": 0,
+        "is_wildcard": false,
+        "is_current": true,
+        "issuers": [],
+        "source": "dns",
+        "cname_chain": [
+          "www2.l.google.com"
+        ],
+        "cname_target": "www2.l.google.com"
+      },
+      {
+        "name": "realtime.google.com",
+        "first_seen": "",
+        "last_seen": "",
+        "cert_count": 0,
+        "is_wildcard": false,
+        "is_current": true,
+        "issuers": [],
+        "source": "dns",
+        "cname_chain": [
+          "www3.l.google.com"
+        ],
+        "cname_target": "www3.l.google.com"
+      },
+      {
+        "name": "registry.google.com",
+        "first_seen": "",
+        "last_seen": "",
+        "cert_count": 0,
+        "is_wildcard": false,
+        "is_current": true,
+        "issuers": [],
+        "source": "dns"
+      },
+      {
+        "name": "sandbox.google.com",
+        "first_seen": "",
+        "last_seen": "",
+        "cert_count": 0,
+        "is_wildcard": false,
+        "is_current": true,
+        "issuers": [],
+        "source": "dns"
+      },
+      {
+        "name": "security.google.com",
+        "first_seen": "",
+        "last_seen": "",
+        "cert_count": 0,
+        "is_wildcard": false,
+        "is_current": true,
+        "issuers": [],
+        "source": "dns",
+        "cname_chain": [
+          "www3.l.google.com"
+        ],
+        "cname_target": "www3.l.google.com"
+      },
+      {
+        "name": "shop.google.com",
+        "first_seen": "",
+        "last_seen": "",
+        "cert_count": 0,
+        "is_wildcard": false,
+        "is_current": true,
+        "issuers": [],
+        "source": "dns"
+      },
+      {
+        "name": "smtp.google.com",
+        "first_seen": "",
+        "last_seen": "",
+        "cert_count": 0,
+        "is_wildcard": false,
+        "is_current": true,
+        "issuers": [],
+        "source": "dns"
+      },
+      {
+        "name": "store.google.com",
+        "first_seen": "",
+        "last_seen": "",
+        "cert_count": 0,
+        "is_wildcard": false,
+        "is_current": true,
+        "issuers": [],
+        "source": "dns"
+      },
+      {
+        "name": "support.google.com",
+        "first_seen": "",
+        "last_seen": "",
+        "cert_count": 0,
+        "is_wildcard": false,
+        "is_current": true,
+        "issuers": [],
+        "source": "dns"
+      },
+      {
+        "name": "survey.google.com",
+        "first_seen": "",
+        "last_seen": "",
+        "cert_count": 0,
+        "is_wildcard": false,
+        "is_current": true,
+        "issuers": [],
+        "source": "dns"
+      },
+      {
+        "name": "upload.google.com",
+        "first_seen": "",
+        "last_seen": "",
+        "cert_count": 0,
+        "is_wildcard": false,
+        "is_current": true,
+        "issuers": [],
+        "source": "dns",
+        "cname_chain": [
+          "large-uploads.l.google.com"
+        ],
+        "cname_target": "large-uploads.l.google.com"
+      },
+      {
+        "name": "video.google.com",
+        "first_seen": "",
+        "last_seen": "",
+        "cert_count": 0,
+        "is_wildcard": false,
+        "is_current": true,
+        "issuers": [],
+        "source": "dns",
+        "cname_chain": [
+          "video.l.google.com"
+        ],
+        "cname_target": "video.l.google.com"
+      },
+      {
+        "name": "vpn.google.com",
+        "first_seen": "",
+        "last_seen": "",
+        "cert_count": 0,
+        "is_wildcard": false,
+        "is_current": true,
+        "issuers": [],
+        "source": "dns"
+      },
+      {
+        "name": "wap.google.com",
+        "first_seen": "",
+        "last_seen": "",
+        "cert_count": 0,
+        "is_wildcard": false,
+        "is_current": true,
+        "issuers": [],
+        "source": "dns",
+        "cname_chain": [
+          "www3.l.google.com"
+        ],
+        "cname_target": "www3.l.google.com"
+      },
+      {
+        "name": "web.google.com",
+        "first_seen": "",
+        "last_seen": "",
+        "cert_count": 0,
+        "is_wildcard": false,
+        "is_current": true,
+        "issuers": [],
+        "source": "dns",
+        "cname_chain": [
+          "www3.l.google.com"
+        ],
+        "cname_target": "www3.l.google.com"
+      },
+      {
+        "name": "www.google.com",
+        "first_seen": "",
+        "last_seen": "",
+        "cert_count": 0,
+        "is_wildcard": false,
+        "is_current": true,
+        "issuers": [],
+        "source": "dns"
+      }
+    ],
+    "total_certs": 0,
+    "unique_subdomains": 73,
+    "is_analyzed_subdomain": false,
+    "registered_domain": null,
+    "caveat": "Combines CT log certificates (RFC 6962) with DNS probing of common service names. Does not include internal-only names or uncommon subdomain prefixes.",
+    "message": "CT log service was slow or unavailable \u2014 showing DNS-probed subdomains only",
+    "display_count": 73,
+    "current_count": 73,
+    "expired_count": 0,
+    "was_truncated": false,
+    "provider_summary": {},
+    "providers_found": 0,
+    "cname_count": 22,
+    "cname_discovered_count": 11
+  },
+  "smtp_transport": null,
+  "_data_freshness": {
+    "dns_records": {
+      "source": "live",
+      "note": "Queried from 4 independent resolvers in real time"
+    },
+    "spf": {
+      "source": "live",
+      "note": "Live DNS query"
+    },
+    "dmarc": {
+      "source": "live",
+      "note": "Live DNS query"
+    },
+    "dkim": {
+      "source": "live",
+      "note": "Live DNS query"
+    },
+    "dane": {
+      "source": "live",
+      "note": "Live DNS query per MX host"
+    },
+    "mta_sts": {
+      "source": "live",
+      "note": "Live HTTPS policy fetch"
+    },
+    "tlsrpt": {
+      "source": "live",
+      "note": "Live DNS query"
+    },
+    "bimi": {
+      "source": "live",
+      "note": "Live DNS query + HTTPS validation"
+    },
+    "caa": {
+      "source": "live",
+      "note": "Live DNS query"
+    },
+    "dnssec": {
+      "source": "live",
+      "note": "Live DNSSEC validation"
+    },
+    "resolver_consensus": {
+      "source": "live",
+      "note": "Cross-referenced across 4 resolvers"
+    },
+    "registrar": {
+      "source": "live",
+      "note": "Live RDAP registry lookup",
+      "cache_ttl": null
+    },
+    "ct_subdomains": {
+      "source": "live",
+      "note": "Live Certificate Transparency query",
+      "cache_ttl": null
+    }
+  },
+  "has_null_mx": false,
+  "mail_posture": {
+    "classification": "email_enabled",
+    "label": "Email: Enabled",
+    "color": "info",
+    "icon": "envelope",
+    "summary": "This domain has active mail infrastructure with MX records and authorized senders.",
+    "signals": {
+      "null_mx": {
+        "present": false,
+        "rfc": "RFC 7505",
+        "rfc_url": "https://datatracker.ietf.org/doc/html/rfc7505",
+        "label": "Null MX",
+        "description": "Explicitly refuses inbound mail delivery",
+        "missing_risk": "Without Null MX, SMTP servers may still attempt delivery via A/AAAA fallback (RFC 5321 \u00a75.1)"
+      },
+      "spf_deny_all": {
+        "present": false,
+        "rfc": "RFC 7208",
+        "rfc_url": "https://datatracker.ietf.org/doc/html/rfc7208",
+        "label": "SPF v=spf1 -all",
+        "description": "Declares no servers are authorized to send email",
+        "missing_risk": "Without SPF -all, attackers can send email appearing to come from this domain"
+      },
+      "dmarc_reject": {
+        "present": true,
+        "rfc": "RFC 7489",
+        "rfc_url": "https://datatracker.ietf.org/doc/html/rfc7489",
+        "label": "DMARC p=reject",
+        "description": "Instructs receivers to reject spoofed messages",
+        "missing_risk": "Without DMARC reject, spoofed messages may still reach inboxes even with SPF -all"
+      }
+    },
+    "present_count": 1,
+    "total_signals": 3,
+    "missing_steps": [
+      {
+        "control": "Null MX",
+        "rfc": "RFC 7505",
+        "rfc_url": "https://datatracker.ietf.org/doc/html/rfc7505",
+        "action": "Explicitly refuses inbound mail delivery",
+        "risk": "Without Null MX, SMTP servers may still attempt delivery via A/AAAA fallback (RFC 5321 \u00a75.1)"
+      },
+      {
+        "control": "SPF v=spf1 -all",
+        "rfc": "RFC 7208",
+        "rfc_url": "https://datatracker.ietf.org/doc/html/rfc7208",
+        "action": "Declares no servers are authorized to send email",
+        "risk": "Without SPF -all, attackers can send email appearing to come from this domain"
+      }
+    ],
+    "recommended_records": null,
+    "is_no_mail": false
+  },
+  "is_no_mail_domain": false,
+  "hosting_summary": {
+    "hosting": "Google Cloud DNS",
+    "dns_hosting": "Google Cloud DNS",
+    "email_hosting": "Google Workspace"
+  },
+  "dns_infrastructure": {
+    "status": "success",
+    "assessment": "enterprise",
+    "assessment_label": "Enterprise Security",
+    "message": "Enterprise-grade DNS infrastructure with certificate controls - industry-standard for large organizations",
+    "provider": "Google Cloud DNS",
+    "provider_tier": "enterprise",
+    "provider_features": [
+      "DDoS protection",
+      "Anycast",
+      "Auto-scaling"
+    ],
+    "has_caa": true,
+    "has_dnssec": false,
+    "alt_security_score": 3,
+    "alt_security_items": [
+      "Google Cloud DNS (enterprise DNS with DDoS protection)",
+      "CAA records (certificate issuance control)"
+    ],
+    "explains_no_dnssec": true,
+    "is_government": false
+  },
+  "email_security_mgmt": {
+    "actively_managed": false,
+    "providers": [],
+    "spf_flattening": null,
+    "provider_count": 0
+  },
+  "posture": {
+    "state": "STRONG",
+    "color": "success",
+    "icon": "check-circle",
+    "message": "Email security controls enforced. DNSSEC not configured (common for large operators).",
+    "issues": [],
+    "configured": [
+      "DMARC (email spoofing protection)",
+      "CAA (certificate issuance restricted)",
+      "MTA-STS (policy present)",
+      "TLS-RPT (reporting configured)"
+    ],
+    "absent": [
+      "DNSSEC (DNS response signing)",
+      "BIMI (brand logo in inboxes)"
+    ],
+    "monitoring": [],
+    "deliberate_monitoring": false,
+    "deliberate_monitoring_note": null,
+    "verdicts": {
+      "email": "DMARC policy is reject - spoofed messages will be blocked by receiving servers.",
+      "email_answer": "No",
+      "brand": "Certificate issuance is controlled but brand logo (BIMI) is not configured.",
+      "brand_secure": true,
+      "domain": "Delegation is verified but DNS responses are unsigned and could be spoofed.",
+      "domain_answer": "Partially"
+    }
+  },
+  "_captured_at": "2026-02-09T07:04:04.556427+00:00",
+  "_captured_version": "26.10.81",
+  "_domain": "google.com",
+  "_schema_version": 2,
+  "_tool_version": "26.10.81"
+}
