@@ -653,7 +653,6 @@ def sitemap():
         {'loc': 'https://dnstool.it-help.tech/', 'changefreq': 'weekly', 'priority': '1.0'},
         {'loc': 'https://dnstool.it-help.tech/history', 'changefreq': 'daily', 'priority': '0.6'},
         {'loc': 'https://dnstool.it-help.tech/stats', 'changefreq': 'daily', 'priority': '0.5'},
-        {'loc': 'https://dnstool.it-help.tech/statistics', 'changefreq': 'daily', 'priority': '0.5'},
     ]
     for page in pages:
         xml += '  <url>\n'
