@@ -3942,6 +3942,10 @@ class DNSAnalyzer:
         # Calculate Posture Score
         results['posture'] = self._calculate_posture(results)
         
+        # Generate actionable remediation guidance
+        from remediation_guidance import generate_remediation
+        results['remediation'] = generate_remediation(results)
+        
         return results
     
     def _get_registered_domain(self, domain: str) -> Optional[str]:

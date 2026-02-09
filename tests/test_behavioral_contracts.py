@@ -225,5 +225,164 @@ class TestDeepValidation(unittest.TestCase):
         self.assertTrue(any('SPF lookup_count' in e for e in errors))
 
 
+class TestRemediationGuidanceContract(unittest.TestCase):
+
+    def test_no_fixes_for_fully_secure_domain(self):
+        from remediation_guidance import generate_remediation
+        results = {
+            'spf_analysis': {'status': 'success'},
+            'dmarc_analysis': {'status': 'success', 'policy': 'reject', 'rua': 'mailto:x@example.com'},
+            'dkim_analysis': {'status': 'success', 'selectors': {'google': {}}},
+            'dnssec_analysis': {'status': 'success', 'chain_of_trust': 'complete'},
+            'dane_analysis': {'has_dane': True, 'status': 'success', 'dane_deployable': True},
+            'mta_sts_analysis': {'status': 'success'},
+            'tlsrpt_analysis': {'status': 'success'},
+            'bimi_analysis': {'status': 'success'},
+            'caa_analysis': {'status': 'success'},
+            'is_no_mail_domain': False,
+        }
+        rem = generate_remediation(results)
+        self.assertEqual(rem['fix_count'], 0)
+        self.assertEqual(rem['top_fixes'], [])
+        self.assertEqual(rem['posture_achievable'], 'SECURE')
+
+    def test_critical_fixes_for_no_auth_domain(self):
+        from remediation_guidance import generate_remediation
+        results = {
+            'spf_analysis': {'status': 'error'},
+            'dmarc_analysis': {'status': 'error'},
+            'dkim_analysis': {'status': 'error', 'selectors': {}},
+            'dnssec_analysis': {'status': 'error', 'chain_of_trust': 'none'},
+            'dane_analysis': {'has_dane': False, 'dane_deployable': True},
+            'mta_sts_analysis': {'status': 'error'},
+            'tlsrpt_analysis': {'status': 'error'},
+            'bimi_analysis': {'status': 'error'},
+            'caa_analysis': {'status': 'error'},
+            'is_no_mail_domain': False,
+        }
+        rem = generate_remediation(results)
+        self.assertGreater(rem['fix_count'], 0)
+        self.assertLessEqual(len(rem['top_fixes']), 3)
+        for fix in rem['top_fixes']:
+            self.assertIn('title', fix)
+            self.assertIn('rfc', fix)
+            self.assertIn('rfc_url', fix)
+            self.assertIn('severity', fix)
+            self.assertIn('severity_label', fix)
+        sections = [f['section'] for f in rem['top_fixes']]
+        self.assertIn('spf', sections)
+        self.assertIn('dmarc', sections)
+
+    def test_dmarc_none_generates_escalation_fix(self):
+        from remediation_guidance import generate_remediation
+        results = {
+            'spf_analysis': {'status': 'success'},
+            'dmarc_analysis': {'status': 'warning', 'policy': 'none'},
+            'dkim_analysis': {'status': 'success', 'selectors': {'google': {}}},
+            'dnssec_analysis': {'status': 'success', 'chain_of_trust': 'complete'},
+            'dane_analysis': {'has_dane': True, 'status': 'success', 'dane_deployable': True},
+            'mta_sts_analysis': {'status': 'success'},
+            'tlsrpt_analysis': {'status': 'success'},
+            'bimi_analysis': {'status': 'success'},
+            'caa_analysis': {'status': 'success'},
+            'is_no_mail_domain': False,
+        }
+        rem = generate_remediation(results)
+        dmarc_fixes = [f for f in rem['top_fixes'] if f['section'] == 'dmarc']
+        self.assertTrue(len(dmarc_fixes) > 0, "DMARC p=none should generate escalation fix")
+        self.assertIn('escalat', dmarc_fixes[0]['title'].lower())
+
+    def test_no_mail_domain_skips_dkim(self):
+        from remediation_guidance import generate_remediation
+        results = {
+            'spf_analysis': {'status': 'success', 'no_mail_intent': True},
+            'dmarc_analysis': {'status': 'success', 'policy': 'reject', 'rua': 'mailto:x@example.com'},
+            'dkim_analysis': {'status': 'error', 'selectors': {}},
+            'dnssec_analysis': {'status': 'success', 'chain_of_trust': 'complete'},
+            'dane_analysis': {'has_dane': False, 'dane_deployable': True},
+            'mta_sts_analysis': {'status': 'error'},
+            'tlsrpt_analysis': {'status': 'error'},
+            'bimi_analysis': {'status': 'error'},
+            'caa_analysis': {'status': 'success'},
+            'is_no_mail_domain': True,
+        }
+        rem = generate_remediation(results)
+        self.assertEqual(rem['per_section']['dkim']['status'], 'not_applicable')
+        self.assertEqual(rem['per_section']['mta_sts']['status'], 'not_applicable')
+        self.assertEqual(rem['per_section']['bimi']['status'], 'not_applicable')
+
+    def test_broken_dnssec_is_critical(self):
+        from remediation_guidance import generate_remediation
+        results = {
+            'spf_analysis': {'status': 'success'},
+            'dmarc_analysis': {'status': 'success', 'policy': 'reject', 'rua': 'mailto:x@example.com'},
+            'dkim_analysis': {'status': 'success', 'selectors': {'google': {}}},
+            'dnssec_analysis': {'status': 'error', 'chain_of_trust': 'broken'},
+            'dane_analysis': {'has_dane': False, 'dane_deployable': True},
+            'mta_sts_analysis': {'status': 'success'},
+            'tlsrpt_analysis': {'status': 'success'},
+            'bimi_analysis': {'status': 'success'},
+            'caa_analysis': {'status': 'success'},
+            'is_no_mail_domain': False,
+        }
+        rem = generate_remediation(results)
+        dnssec_fixes = [f for f in rem['top_fixes'] if f['section'] == 'dnssec']
+        self.assertTrue(len(dnssec_fixes) > 0)
+        self.assertEqual(dnssec_fixes[0]['severity_label'], 'Critical')
+
+    def test_remediation_fix_has_rfc_url(self):
+        from remediation_guidance import generate_remediation
+        results = {
+            'spf_analysis': {'status': 'error'},
+            'dmarc_analysis': {'status': 'error'},
+            'dkim_analysis': {'status': 'error', 'selectors': {}},
+            'dnssec_analysis': {'status': 'error', 'chain_of_trust': 'none'},
+            'dane_analysis': {'has_dane': False, 'dane_deployable': True},
+            'mta_sts_analysis': {'status': 'error'},
+            'tlsrpt_analysis': {'status': 'error'},
+            'bimi_analysis': {'status': 'error'},
+            'caa_analysis': {'status': 'error'},
+            'is_no_mail_domain': False,
+        }
+        rem = generate_remediation(results)
+        for fix in rem['top_fixes']:
+            self.assertTrue(fix['rfc_url'].startswith('https://datatracker.ietf.org/'), f"RFC URL must be from IETF: {fix['rfc_url']}")
+
+    def test_top_fixes_ordered_by_severity(self):
+        from remediation_guidance import generate_remediation
+        results = {
+            'spf_analysis': {'status': 'error'},
+            'dmarc_analysis': {'status': 'error'},
+            'dkim_analysis': {'status': 'error', 'selectors': {}},
+            'dnssec_analysis': {'status': 'error', 'chain_of_trust': 'none'},
+            'dane_analysis': {'has_dane': False, 'dane_deployable': True},
+            'mta_sts_analysis': {'status': 'error'},
+            'tlsrpt_analysis': {'status': 'error'},
+            'bimi_analysis': {'status': 'error'},
+            'caa_analysis': {'status': 'error'},
+            'is_no_mail_domain': False,
+        }
+        rem = generate_remediation(results)
+        severities = [f['severity'] for f in rem['top_fixes']]
+        self.assertEqual(severities, sorted(severities))
+
+    def test_bimi_blocked_without_dmarc_enforcement(self):
+        from remediation_guidance import generate_remediation
+        results = {
+            'spf_analysis': {'status': 'success'},
+            'dmarc_analysis': {'status': 'warning', 'policy': 'none'},
+            'dkim_analysis': {'status': 'success', 'selectors': {'google': {}}},
+            'dnssec_analysis': {'status': 'success', 'chain_of_trust': 'complete'},
+            'dane_analysis': {'has_dane': False, 'dane_deployable': True},
+            'mta_sts_analysis': {'status': 'success'},
+            'tlsrpt_analysis': {'status': 'success'},
+            'bimi_analysis': {'status': 'error'},
+            'caa_analysis': {'status': 'success'},
+            'is_no_mail_domain': False,
+        }
+        rem = generate_remediation(results)
+        self.assertEqual(rem['per_section']['bimi']['status'], 'blocked')
+
+
 if __name__ == '__main__':
     unittest.main()

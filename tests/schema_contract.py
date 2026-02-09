@@ -130,6 +130,16 @@ ANALYSIS_SCHEMA = {
             'color': {'type': str, 'required': True},
         },
     },
+    'remediation': {
+        'type': dict,
+        'required': False,
+        'subfields': {
+            'top_fixes': {'type': list, 'required': True},
+            'per_section': {'type': dict, 'required': True},
+            'fix_count': {'type': int, 'required': True},
+            'posture_achievable': {'type': str, 'required': True},
+        },
+    },
     '_schema_version': {'type': int, 'required': False},
     '_tool_version': {'type': str, 'required': False},
 }
@@ -198,6 +208,7 @@ def validate_analysis_results(results: dict) -> list:
     _validate_dane(results, errors)
     _validate_mail_posture(results, errors)
     _validate_hosting_summary(results, errors)
+    _validate_remediation(results, errors)
 
     return errors
 
@@ -258,6 +269,43 @@ def _validate_hosting_summary(results, errors):
             errors.append(f'Missing hosting_summary.{field}')
         elif not isinstance(hs[field], str):
             errors.append(f'Wrong type for hosting_summary.{field}: expected str, got {type(hs[field]).__name__}')
+
+
+VALID_REMEDIATION_SEVERITIES = {'Critical', 'High', 'Medium', 'Low'}
+VALID_REMEDIATION_SECTIONS = {'spf', 'dmarc', 'dkim', 'dnssec', 'dane', 'mta_sts', 'tlsrpt', 'bimi', 'caa'}
+VALID_REMEDIATION_SECTION_STATUSES = {'ok', 'action_needed', 'not_applicable', 'blocked', 'optional'}
+
+
+def _validate_remediation(results, errors):
+    rem = results.get('remediation')
+    if not isinstance(rem, dict):
+        return
+    if 'top_fixes' not in rem:
+        errors.append('Missing remediation.top_fixes')
+        return
+    if not isinstance(rem['top_fixes'], list):
+        errors.append(f'Wrong type for remediation.top_fixes: expected list, got {type(rem["top_fixes"]).__name__}')
+        return
+    for i, fix in enumerate(rem['top_fixes']):
+        if not isinstance(fix, dict):
+            errors.append(f'remediation.top_fixes[{i}] must be a dict')
+            continue
+        for field in ('title', 'section', 'severity', 'severity_label', 'severity_color', 'fix', 'why', 'rfc', 'rfc_url'):
+            if field not in fix:
+                errors.append(f'Missing remediation.top_fixes[{i}].{field}')
+        if fix.get('severity_label') and fix['severity_label'] not in VALID_REMEDIATION_SEVERITIES:
+            errors.append(f'Invalid severity_label in remediation fix: {fix["severity_label"]}')
+        if fix.get('section') and fix['section'] not in VALID_REMEDIATION_SECTIONS:
+            errors.append(f'Invalid section in remediation fix: {fix["section"]}')
+    per_section = rem.get('per_section', {})
+    if isinstance(per_section, dict):
+        for section_key, section_data in per_section.items():
+            if section_key not in VALID_REMEDIATION_SECTIONS:
+                errors.append(f'Invalid remediation per_section key: {section_key}')
+            if isinstance(section_data, dict):
+                status = section_data.get('status')
+                if status and status not in VALID_REMEDIATION_SECTION_STATUSES:
+                    errors.append(f'Invalid remediation per_section status for {section_key}: {status}')
 
 
 VALID_POSTURE_STATES = {'STRONG', 'GOOD', 'MODERATE', 'WEAK', 'CRITICAL'}

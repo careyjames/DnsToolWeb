@@ -323,6 +323,49 @@
         {% endif %}
         {% endif %}
 
+        <!-- Top Fixes Panel - Actionable Remediation Guidance -->
+        {% if results.remediation and results.remediation.top_fixes %}
+        <div class="row mb-3">
+            <div class="col-12">
+                <div class="card border-0 bg-dark bg-opacity-50" style="border-left: 3px solid var(--bs-warning) !important;">
+                    <div class="card-body py-3 px-3">
+                        <div class="d-flex align-items-center mb-2">
+                            <i class="fas fa-wrench text-warning me-2"></i>
+                            <strong class="small text-warning">Top {{ results.remediation.top_fixes|length }} Fix{{ 'es' if results.remediation.top_fixes|length > 1 else '' }}</strong>
+                            {% if results.remediation.fix_count > 3 %}
+                            <span class="badge bg-secondary bg-opacity-50 ms-2 small">{{ results.remediation.fix_count }} total</span>
+                            {% endif %}
+                            {% if results.remediation.posture_achievable %}
+                            <span class="ms-auto small text-muted">Achievable posture: <span class="badge bg-{{ 'success' if results.remediation.posture_achievable in ('SECURE', 'STRONG') else 'warning' }}">{{ results.remediation.posture_achievable }}</span></span>
+                            {% endif %}
+                        </div>
+                        <div class="row g-2">
+                            {% for fix in results.remediation.top_fixes %}
+                            <div class="col-md-4">
+                                <div class="p-2 rounded bg-dark bg-opacity-75 h-100">
+                                    <div class="d-flex align-items-start mb-1">
+                                        <span class="badge bg-{{ fix.severity_color }} me-2" style="min-width: 52px; font-size: 0.65rem;">{{ fix.severity_label }}</span>
+                                        <strong class="small">{{ fix.title }}</strong>
+                                    </div>
+                                    <p class="text-muted mb-1" style="font-size: 0.75rem;">{{ fix.fix }}</p>
+                                    {% if fix.dns_record %}
+                                    <div class="code-block small mt-1 border-warning" style="font-size: 0.7rem;">{{ fix.dns_record }}</div>
+                                    {% endif %}
+                                    <div class="mt-1">
+                                        <a href="{{ fix.rfc_url }}" target="_blank" rel="noopener" class="text-muted rfc-link" style="font-size: 0.65rem;">
+                                            <i class="fas fa-book me-1"></i>{{ fix.rfc }}
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
         <!-- Domain Summary Section -->
         <div class="row mb-4">
             <div class="col-12">
@@ -575,6 +618,17 @@
                                         <span class="provider-badge"><i class="fas fa-compress-arrows-alt"></i> SPF flattened by {{ results.email_security_mgmt.spf_flattening.provider }}{% if results.email_security_mgmt.spf_flattening.vendor != results.email_security_mgmt.spf_flattening.provider %} ({{ results.email_security_mgmt.spf_flattening.vendor }}){% endif %}</span>
                                     </div>
                                 {% endif %}
+                                {% if results.remediation and results.remediation.per_section.spf and results.remediation.per_section.spf.status == 'action_needed' %}
+                                    {% set spf_fix = results.remediation.per_section.spf.fixes[0] %}
+                                    <div class="mt-2 p-2 bg-warning bg-opacity-10 border border-warning border-opacity-25 rounded small">
+                                        <i class="fas fa-wrench text-warning me-1"></i>
+                                        <strong class="text-warning">{{ spf_fix.title }}:</strong>
+                                        <span class="text-muted">{{ spf_fix.why|truncate(120) }}</span>
+                                        {% if spf_fix.dns_record %}
+                                        <div class="code-block small mt-1 border-warning" style="font-size: 0.7rem;">{{ spf_fix.dns_record }}</div>
+                                        {% endif %}
+                                    </div>
+                                {% endif %}
                             </div>
 
                             <!-- DMARC Analysis -->
@@ -657,6 +711,17 @@
                                             </div>
                                         {% endif %}
                                     {% endfor %}
+                                {% endif %}
+                                {% if results.remediation and results.remediation.per_section.dmarc and results.remediation.per_section.dmarc.status == 'action_needed' %}
+                                    {% set dmarc_fix = results.remediation.per_section.dmarc.fixes[0] %}
+                                    <div class="mt-2 p-2 bg-warning bg-opacity-10 border border-warning border-opacity-25 rounded small">
+                                        <i class="fas fa-wrench text-warning me-1"></i>
+                                        <strong class="text-warning">{{ dmarc_fix.title }}:</strong>
+                                        <span class="text-muted">{{ dmarc_fix.why|truncate(120) }}</span>
+                                        {% if dmarc_fix.dns_record %}
+                                        <div class="code-block small mt-1 border-warning" style="font-size: 0.7rem;">{{ dmarc_fix.dns_record }}</div>
+                                        {% endif %}
+                                    </div>
                                 {% endif %}
                             </div>
 
