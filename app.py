@@ -712,7 +712,7 @@ def proxy_bimi_logo():
     """Proxy BIMI logos to avoid CORS issues with external SVGs."""
     import ipaddress
     import socket
-    from urllib.parse import urlparse
+    from urllib.parse import urlparse, urlunparse
 
     import requests
     from flask import Response
@@ -741,8 +741,10 @@ def proxy_bimi_logo():
         if ip.is_private or ip.is_loopback or ip.is_link_local or ip.is_reserved:
             return 'URL points to a disallowed address', 400
 
+    validated_url = urlunparse(parsed)
+
     try:
-        resp = requests.get(logo_url, timeout=5, allow_redirects=False, headers={
+        resp = requests.get(validated_url, timeout=5, allow_redirects=False, headers={
             'User-Agent': 'DNS-Analyzer/1.0 BIMI-Logo-Fetcher'
         }, stream=True)
 
@@ -770,7 +772,8 @@ def proxy_bimi_logo():
                     return 'Redirect points to a disallowed address', 400
 
             resp.close()
-            resp = requests.get(redirect_url, timeout=5, allow_redirects=False, headers={
+            validated_redirect = urlunparse(r_parsed)
+            resp = requests.get(validated_redirect, timeout=5, allow_redirects=False, headers={
                 'User-Agent': 'DNS-Analyzer/1.0 BIMI-Logo-Fetcher'
             }, stream=True)
 
@@ -818,13 +821,16 @@ def proxy_bimi_logo():
 def debug_rdap(domain):
     """Debug endpoint to test RDAP directly."""
     import requests
+    if not re.match(r'^[a-zA-Z0-9]([a-zA-Z0-9\-]*[a-zA-Z0-9])?(\.[a-zA-Z]{2,})+$', domain):
+        return 'Invalid domain name', 400
+
+    safe_domain = domain.lower()
     results = []
-    
-    # Test endpoints
+
     endpoints = [
-        ('CentralNic .tech', f'https://rdap.centralnic.com/tech/domain/{domain}'),
-        ('rdap.org', f'https://rdap.org/domain/{domain}'),
-        ('Verisign .com', f'https://rdap.verisign.com/com/v1/domain/{domain}'),
+        ('CentralNic .tech', f'https://rdap.centralnic.com/tech/domain/{safe_domain}'),
+        ('rdap.org', f'https://rdap.org/domain/{safe_domain}'),
+        ('Verisign .com', f'https://rdap.verisign.com/com/v1/domain/{safe_domain}'),
     ]
     
     headers = {'Accept': 'application/rdap+json', 'User-Agent': 'DNS-Analyzer/1.0'}
