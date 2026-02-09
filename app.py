@@ -11,12 +11,13 @@ from datetime import datetime, date
 from flask import Flask, render_template, request, flash, redirect, url_for, jsonify, send_from_directory, g, Response, stream_with_context
 from flask_sqlalchemy import SQLAlchemy
 from flask_compress import Compress
+from flask_migrate import Migrate
 from sqlalchemy.orm import DeclarativeBase
 from sqlalchemy import JSON, event
 from dns_analyzer import DNSAnalyzer
 
 # App version - format: YY.M.patch (bump last number for small changes)
-APP_VERSION = "26.10.82"
+APP_VERSION = "26.10.83"
 
 
 class TraceIDFilter(logging.Filter):
@@ -416,6 +417,8 @@ app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
 
 # Initialize the app with the extension
 db.init_app(app)
+
+migrate = Migrate(app, db)
 
 # Initialize DNS analyzer
 dns_analyzer = DNSAnalyzer()
@@ -1307,6 +1310,98 @@ def stats():
                          unique_domains=unique_domains,
                          popular_domains=popular_domains,
                          country_stats=country_stats)
+
+@app.route('/compare')
+def compare():
+    """Compare two analyses of the same domain side by side."""
+    domain = request.args.get('domain', '', type=str).strip().lower()
+    id_a = request.args.get('a', type=int)
+    id_b = request.args.get('b', type=int)
+
+    if id_a and id_b:
+        analysis_a = DomainAnalysis.query.get_or_404(id_a)
+        analysis_b = DomainAnalysis.query.get_or_404(id_b)
+
+        if analysis_a.domain != analysis_b.domain:
+            flash('Cannot compare analyses of different domains.', 'warning')
+            return redirect(url_for('history'))
+
+        if analysis_a.created_at and analysis_b.created_at and analysis_a.created_at > analysis_b.created_at:
+            analysis_a, analysis_b = analysis_b, analysis_a
+
+        results_a = normalize_results(dict(analysis_a.full_results)) if analysis_a.full_results else None
+        results_b = normalize_results(dict(analysis_b.full_results)) if analysis_b.full_results else None
+
+        if not results_a or not results_b:
+            flash('One or both analyses have no stored data.', 'warning')
+            return redirect(url_for('history'))
+
+        sections = [
+            ('spf_analysis', 'SPF', 'fa-envelope-open-text'),
+            ('dmarc_analysis', 'DMARC', 'fa-shield-alt'),
+            ('dkim_analysis', 'DKIM', 'fa-key'),
+            ('dnssec_analysis', 'DNSSEC', 'fa-lock'),
+            ('dane_analysis', 'DANE / TLSA', 'fa-certificate'),
+            ('mta_sts_analysis', 'MTA-STS', 'fa-paper-plane'),
+            ('tlsrpt_analysis', 'TLS-RPT', 'fa-file-alt'),
+            ('bimi_analysis', 'BIMI', 'fa-image'),
+            ('caa_analysis', 'CAA', 'fa-certificate'),
+            ('posture', 'Mail Posture', 'fa-mail-bulk'),
+        ]
+
+        diffs = []
+        for key, label, icon in sections:
+            sec_a = results_a.get(key, {})
+            sec_b = results_b.get(key, {})
+            status_a = sec_a.get('status', sec_a.get('state', 'unknown'))
+            status_b = sec_b.get('status', sec_b.get('state', 'unknown'))
+            changed = (status_a != status_b)
+
+            detail_changes = []
+            all_keys = set(list(sec_a.keys()) + list(sec_b.keys()))
+            skip_keys = {'status', 'state', '_schema_version', '_tool_version', '_captured_at'}
+            for k in sorted(all_keys - skip_keys):
+                val_a = sec_a.get(k)
+                val_b = sec_b.get(k)
+                if val_a != val_b:
+                    detail_changes.append({
+                        'field': k.replace('_', ' ').title(),
+                        'old': val_a,
+                        'new': val_b,
+                    })
+
+            diffs.append({
+                'key': key,
+                'label': label,
+                'icon': icon,
+                'status_a': status_a,
+                'status_b': status_b,
+                'changed': changed or len(detail_changes) > 0,
+                'detail_changes': detail_changes,
+            })
+
+        return render_template('compare.html',
+                             analysis_a=analysis_a,
+                             analysis_b=analysis_b,
+                             diffs=diffs,
+                             domain=analysis_a.domain)
+
+    if not domain:
+        flash('Please provide a domain to compare analyses.', 'warning')
+        return redirect(url_for('history'))
+
+    analyses = DomainAnalysis.query.filter(
+        DomainAnalysis.domain == domain,
+        DomainAnalysis.full_results.isnot(None),
+        DomainAnalysis.analysis_success == True
+    ).order_by(DomainAnalysis.created_at.desc()).limit(20).all()
+
+    if len(analyses) < 2:
+        flash(f'Need at least 2 analyses of "{domain}" to compare. Only {len(analyses)} found.', 'info')
+        return redirect(url_for('history', domain=domain))
+
+    return render_template('compare_select.html', domain=domain, analyses=analyses)
+
 
 @app.route('/export/json')
 def export_json():

@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="theme-color" content="#212529">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>Compare Analyses - {{ domain }} - DNS Tool</title>
+    <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='favicon.svg') }}">
+    <link rel="manifest" href="/manifest.json">
+    <link rel="apple-touch-icon" href="{{ url_for('static', filename='icons/icon-192x192.png') }}">
+    <link href="{{ url_for('static', filename='css/bootstrap-dark-theme.min.css') }}" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/custom.min.css') }}?v={{ app_version }}" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/fontawesome-subset.min.css') }}">
+    <style nonce="{{ csp_nonce }}">
+        :root{--bs-body-bg:#212529;--bs-body-color:#dee2e6;--bs-primary:#0d6efd;--bs-secondary:#6c757d;--bs-body-font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text','SF Pro Display',system-ui,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;--bs-font-sans-serif:-apple-system,BlinkMacSystemFont,'SF Pro Text','SF Pro Display',system-ui,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif}
+        *,::after,::before{box-sizing:border-box}
+        body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text",system-ui,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;background-color:var(--bs-body-bg);color:var(--bs-body-color);line-height:1.5;-webkit-font-smoothing:antialiased}
+        .navbar{display:flex;padding:.5rem 1rem;background-color:#212529!important}
+        .navbar-brand{color:#fff;text-decoration:none;font-size:1.25rem;padding:.3125rem 0}
+        .container{width:100%;max-width:1140px;margin:0 auto;padding:0 .75rem}
+        .card{background-color:#2b3035;border:1px solid #495057;border-radius:.375rem}
+        .card-body{padding:1rem}
+        .fas,.fab,.far,.fa{display:inline-block;width:1em;height:1em;min-width:1em;vertical-align:-0.125em}
+        .d-none{display:none}
+        .collapse:not(.show){display:none}
+        @media(min-width:992px){.collapse.navbar-collapse{display:flex!important}}
+        .visually-hidden-focusable{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);border:0}.visually-hidden-focusable:focus{position:fixed;top:0;left:0;width:auto;height:auto;padding:1rem;margin:0;overflow:visible;clip:auto;background:#0d6efd;color:#fff;z-index:9999;font-size:1rem}
+        .selected-row{background-color:rgba(13,110,253,0.15)!important}
+    </style>
+</head>
+<body>
+    <a href="#main-content" class="visually-hidden-focusable">Skip to main content</a>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark" aria-label="Main navigation">
+        <div class="container">
+            <a class="navbar-brand" href="{{ url_for('index') }}">
+                <i class="fas fa-globe me-2"></i>DNS Tool <span class="badge bg-info text-dark ms-1">v{{ app_version }}</span>
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('index') }}">
+                            <i class="fas fa-home me-1"></i>Home
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('history') }}">
+                            <i class="fas fa-history me-1"></i>History
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('stats') }}">
+                            <i class="fas fa-chart-bar me-1"></i>Statistics
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <main id="main-content" class="container my-4">
+        <div class="mb-4">
+            <h1 class="h3 mb-1">
+                <i class="fas fa-columns me-2"></i>Compare Analyses
+            </h1>
+            <p class="text-muted mb-0">Select two analyses of <strong>{{ domain }}</strong> to compare</p>
+        </div>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <div class="card mb-3">
+            <div class="card-body">
+                <p class="mb-2"><i class="fas fa-info-circle text-info me-1"></i> Click two rows to select them for comparison, then press Compare.</p>
+                <form id="compareForm" action="{{ url_for('compare') }}" method="GET">
+                    <input type="hidden" name="a" id="inputA" value="">
+                    <input type="hidden" name="b" id="inputB" value="">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead>
+                                <tr>
+                                    <th style="width:40px;"></th>
+                                    <th>Date</th>
+                                    <th>SPF</th>
+                                    <th>DMARC</th>
+                                    <th>DKIM</th>
+                                    <th>Duration</th>
+                                    <th>Version</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for a in analyses %}
+                                <tr class="compare-row" data-id="{{ a.id }}" style="cursor:pointer;">
+                                    <td><i class="far fa-square compare-check"></i></td>
+                                    <td>
+                                        {{ a.created_at.strftime('%Y-%m-%d %H:%M:%S') }}
+                                    </td>
+                                    <td>
+                                        {% if a.spf_status %}
+                                            <span class="badge bg-{{ 'success' if a.spf_status == 'success' else 'warning' if a.spf_status == 'warning' else 'danger' }}">{{ a.spf_status }}</span>
+                                        {% else %}
+                                            <span class="text-muted">-</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if a.dmarc_status %}
+                                            <span class="badge bg-{{ 'success' if a.dmarc_status == 'success' else 'warning' if a.dmarc_status == 'warning' else 'danger' }}">{{ a.dmarc_status }}</span>
+                                        {% else %}
+                                            <span class="text-muted">-</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if a.dkim_status %}
+                                            <span class="badge bg-{{ 'success' if a.dkim_status == 'success' else 'warning' }}">{{ a.dkim_status }}</span>
+                                        {% else %}
+                                            <span class="text-muted">-</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if a.analysis_duration %}
+                                            {{ "%.2f"|format(a.analysis_duration) }}s
+                                        {% else %}
+                                            -
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if a.full_results and a.full_results.get('_tool_version') %}
+                                            v{{ a.full_results['_tool_version'] }}
+                                        {% else %}
+                                            -
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="mt-3 d-flex justify-content-between align-items-center">
+                        <span class="text-muted" id="selectionHint">Select 2 analyses to compare</span>
+                        <button type="submit" class="btn btn-primary" id="compareBtn" disabled>
+                            <i class="fas fa-columns me-1"></i>Compare
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <footer class="text-center mt-5 mb-4 text-muted small" role="contentinfo">
+            <a href="https://www.it-help.tech" target="_blank" rel="noopener">
+                <img src="{{ url_for('static', filename='images/owl-of-athena.png') }}" alt="IT Help San Diego - Owl of Athena" width="64" height="64" class="mb-2" loading="lazy" style="border-radius:50%;">
+            </a>
+            <p class="mb-0">Made by <a href="https://www.it-help.tech" target="_blank" rel="noopener" class="text-info">IT Help San Diego Inc.</a></p>
+        </footer>
+    </main>
+
+    <script src="{{ url_for('static', filename='js/bootstrap.bundle.min.js') }}" defer></script>
+    <script nonce="{{ csp_nonce }}">
+    document.addEventListener('DOMContentLoaded', function() {
+        var selected = [];
+        var rows = document.querySelectorAll('.compare-row');
+        var inputA = document.getElementById('inputA');
+        var inputB = document.getElementById('inputB');
+        var btn = document.getElementById('compareBtn');
+        var hint = document.getElementById('selectionHint');
+
+        rows.forEach(function(row) {
+            row.addEventListener('click', function() {
+                var id = row.getAttribute('data-id');
+                var idx = selected.indexOf(id);
+                if (idx > -1) {
+                    selected.splice(idx, 1);
+                    row.classList.remove('selected-row');
+                    row.querySelector('.compare-check').className = 'far fa-square compare-check';
+                } else {
+                    if (selected.length >= 2) {
+                        var oldId = selected.shift();
+                        var oldRow = document.querySelector('[data-id="' + oldId + '"]');
+                        if (oldRow) {
+                            oldRow.classList.remove('selected-row');
+                            oldRow.querySelector('.compare-check').className = 'far fa-square compare-check';
+                        }
+                    }
+                    selected.push(id);
+                    row.classList.add('selected-row');
+                    row.querySelector('.compare-check').className = 'fas fa-check-square compare-check text-primary';
+                }
+
+                if (selected.length === 2) {
+                    inputA.value = selected[0];
+                    inputB.value = selected[1];
+                    btn.disabled = false;
+                    hint.textContent = '2 analyses selected';
+                } else {
+                    inputA.value = '';
+                    inputB.value = '';
+                    btn.disabled = true;
+                    hint.textContent = selected.length === 1 ? '1 selected — pick one more' : 'Select 2 analyses to compare';
+                }
+            });
+        });
+    });
+    </script>
+</body>
+</html>

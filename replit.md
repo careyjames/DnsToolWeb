@@ -19,12 +19,17 @@ Preferred communication style: Simple, everyday language.
 - **Data Model**: Stores complete analysis results in a `full_results` JSON column for historical playback and integrity. Includes schema versioning for future compatibility.
 - **Security Hardening**: Implements SSRF protection, CSRF protection, thread-safe caching, and strict IDNA encoding.
 - **Performance**: Utilizes a shared ThreadPoolExecutor, DNS result TTL cache, and CT cache. Includes semaphore-based concurrency control.
-- **Testing**: Employs formal JSON Schema for contract testing, a golden fixture system for regression testing, and dependency injection for deterministic testing.
+- **Testing**: Employs formal JSON Schema for contract testing, a golden fixture system for regression testing, and dependency injection for deterministic testing. CI script at `scripts/run_contract_tests.sh`.
+- **History Export**: Streaming NDJSON export of all analysis history via `/export/json`.
+- **Comparison View**: Side-by-side diff of two analyses of the same domain at `/compare`.
+
+### Database Migrations
+- **Flask-Migrate (Alembic)**: Schema evolution tool. Run `flask db migrate -m "description"` to generate migrations, `flask db upgrade` to apply. Current schema stamped at head — future changes auto-detected.
 
 ### Frontend
 - **Technology**: Server-rendered HTML with Jinja2 templates, Bootstrap dark theme, custom CSS, and client-side JavaScript.
 - **Features**: PWA support (manifest, service worker), comprehensive accessibility features (ARIA landmarks, skip-to-content), and full mobile responsiveness.
-- **Pages**: Index, Results, History, Statistics.
+- **Pages**: Index, Results, History, Statistics, Compare (diff view for two scans of same domain).
 
 ### Design Patterns
 - MVC-style separation.
@@ -39,6 +44,7 @@ Preferred communication style: Simple, everyday language.
 ### Python Packages
 - **Flask**: Web framework.
 - **Flask-SQLAlchemy**: ORM integration.
+- **Flask-Migrate**: Alembic-based database migration management.
 - **dnspython**: DNS query library.
 - **requests**: HTTP client.
 - **idna**: Internationalized domain name encoding.

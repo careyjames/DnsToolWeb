@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="theme-color" content="#212529">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>Compare - {{ domain }} - DNS Tool</title>
+    <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='favicon.svg') }}">
+    <link rel="manifest" href="/manifest.json">
+    <link rel="apple-touch-icon" href="{{ url_for('static', filename='icons/icon-192x192.png') }}">
+    <link href="{{ url_for('static', filename='css/bootstrap-dark-theme.min.css') }}" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/custom.min.css') }}?v={{ app_version }}" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/fontawesome-subset.min.css') }}">
+    <style nonce="{{ csp_nonce }}">
+        :root{--bs-body-bg:#212529;--bs-body-color:#dee2e6;--bs-primary:#0d6efd;--bs-secondary:#6c757d;--bs-body-font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text','SF Pro Display',system-ui,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;--bs-font-sans-serif:-apple-system,BlinkMacSystemFont,'SF Pro Text','SF Pro Display',system-ui,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif}
+        *,::after,::before{box-sizing:border-box}
+        body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text",system-ui,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;background-color:var(--bs-body-bg);color:var(--bs-body-color);line-height:1.5;-webkit-font-smoothing:antialiased}
+        .navbar{display:flex;padding:.5rem 1rem;background-color:#212529!important}
+        .navbar-brand{color:#fff;text-decoration:none;font-size:1.25rem;padding:.3125rem 0}
+        .container{width:100%;max-width:1140px;margin:0 auto;padding:0 .75rem}
+        .card{background-color:#2b3035;border:1px solid #495057;border-radius:.375rem}
+        .card-body{padding:1rem}
+        .badge{display:inline-block;padding:.35em .65em;font-size:.75em;font-weight:700;border-radius:.25rem}
+        .fas,.fab,.far,.fa{display:inline-block;width:1em;height:1em;min-width:1em;vertical-align:-0.125em}
+        .d-none{display:none}
+        .collapse:not(.show){display:none}
+        @media(min-width:992px){.collapse.navbar-collapse{display:flex!important}}
+        .visually-hidden-focusable{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);border:0}.visually-hidden-focusable:focus{position:fixed;top:0;left:0;width:auto;height:auto;padding:1rem;margin:0;overflow:visible;clip:auto;background:#0d6efd;color:#fff;z-index:9999;font-size:1rem}
+        .diff-added{color:#63e6be;background-color:rgba(99,230,190,0.08);border-left:3px solid #63e6be;padding-left:.5rem}
+        .diff-removed{color:#ffa8a8;background-color:rgba(255,168,168,0.08);border-left:3px solid #ffa8a8;padding-left:.5rem}
+        .diff-unchanged{color:#868e96}
+        .status-arrow{font-size:1.2rem;margin:0 .5rem}
+        .compare-header{font-size:.85rem;text-transform:uppercase;letter-spacing:.05em;font-weight:600}
+    </style>
+</head>
+<body>
+    <a href="#main-content" class="visually-hidden-focusable">Skip to main content</a>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark" aria-label="Main navigation">
+        <div class="container">
+            <a class="navbar-brand" href="{{ url_for('index') }}">
+                <i class="fas fa-globe me-2"></i>DNS Tool <span class="badge bg-info text-dark ms-1">v{{ app_version }}</span>
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('index') }}">
+                            <i class="fas fa-home me-1"></i>Home
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('history') }}">
+                            <i class="fas fa-history me-1"></i>History
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('stats') }}">
+                            <i class="fas fa-chart-bar me-1"></i>Statistics
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <main id="main-content" class="container my-4">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h1 class="h3 mb-1">
+                    <i class="fas fa-columns me-2"></i>Comparison: {{ domain }}
+                </h1>
+                <p class="text-muted mb-0">Changes between two analyses</p>
+            </div>
+            <div class="d-flex gap-2">
+                <a href="{{ url_for('compare', domain=domain) }}" class="btn btn-outline-secondary">
+                    <i class="fas fa-exchange-alt me-1"></i>Pick Different
+                </a>
+                <a href="{{ url_for('history', domain=domain) }}" class="btn btn-outline-primary">
+                    <i class="fas fa-history me-1"></i>History
+                </a>
+            </div>
+        </div>
+
+        <div class="row mb-4">
+            <div class="col-md-6 mb-2 mb-md-0">
+                <div class="card h-100">
+                    <div class="card-body py-2">
+                        <div class="compare-header text-muted mb-1">Older Scan (A)</div>
+                        <div class="fw-medium">{{ analysis_a.created_at.strftime('%Y-%m-%d %H:%M:%S') }}</div>
+                        {% if analysis_a.full_results and analysis_a.full_results.get('_tool_version') %}
+                            <small class="text-muted">v{{ analysis_a.full_results['_tool_version'] }}</small>
+                        {% endif %}
+                        {% if analysis_a.analysis_duration %}
+                            <small class="text-muted ms-2">{{ "%.2f"|format(analysis_a.analysis_duration) }}s</small>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card h-100">
+                    <div class="card-body py-2">
+                        <div class="compare-header text-muted mb-1">Newer Scan (B)</div>
+                        <div class="fw-medium">{{ analysis_b.created_at.strftime('%Y-%m-%d %H:%M:%S') }}</div>
+                        {% if analysis_b.full_results and analysis_b.full_results.get('_tool_version') %}
+                            <small class="text-muted">v{{ analysis_b.full_results['_tool_version'] }}</small>
+                        {% endif %}
+                        {% if analysis_b.analysis_duration %}
+                            <small class="text-muted ms-2">{{ "%.2f"|format(analysis_b.analysis_duration) }}s</small>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {% set changes_found = diffs | selectattr('changed') | list | length %}
+        {% if changes_found == 0 %}
+            <div class="card mb-4">
+                <div class="card-body text-center py-4">
+                    <i class="fas fa-equals fa-2x text-success mb-3"></i>
+                    <h4 class="text-success">No Changes Detected</h4>
+                    <p class="text-muted mb-0">Both analyses produced identical security assessments for all sections.</p>
+                </div>
+            </div>
+        {% else %}
+            <div class="mb-3">
+                <span class="badge bg-info">{{ changes_found }} section{{ 's' if changes_found != 1 }} changed</span>
+            </div>
+        {% endif %}
+
+        {% for diff in diffs %}
+        <div class="card mb-3 {% if diff.changed %}border-warning{% endif %}">
+            <div class="card-body py-2">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div class="d-flex align-items-center">
+                        <i class="fas {{ diff.icon }} me-2 {% if diff.changed %}text-warning{% else %}text-muted{% endif %}"></i>
+                        <strong>{{ diff.label }}</strong>
+                    </div>
+                    <div class="d-flex align-items-center">
+                        {% if diff.changed %}
+                            <span class="badge bg-{{ 'success' if diff.status_a == 'success' else 'warning' if diff.status_a == 'warning' else 'info' if diff.status_a == 'info' else 'danger' if diff.status_a == 'danger' else 'secondary' }}">{{ diff.status_a }}</span>
+                            <i class="fas fa-arrow-right status-arrow text-warning"></i>
+                            <span class="badge bg-{{ 'success' if diff.status_b == 'success' else 'warning' if diff.status_b == 'warning' else 'info' if diff.status_b == 'info' else 'danger' if diff.status_b == 'danger' else 'secondary' }}">{{ diff.status_b }}</span>
+                        {% else %}
+                            <span class="badge bg-{{ 'success' if diff.status_a == 'success' else 'warning' if diff.status_a == 'warning' else 'info' if diff.status_a == 'info' else 'danger' if diff.status_a == 'danger' else 'secondary' }}">{{ diff.status_a }}</span>
+                            <i class="fas fa-check ms-2 text-success" title="No change"></i>
+                        {% endif %}
+                    </div>
+                </div>
+
+                {% if diff.detail_changes %}
+                <div class="mt-2 small">
+                    {% for change in diff.detail_changes %}
+                    <div class="mb-1">
+                        <span class="text-muted">{{ change.field }}:</span>
+                        {% if change.old is not none %}
+                            <div class="diff-removed mt-1 small">
+                                <i class="fas fa-minus me-1"></i>
+                                {% if change.old is mapping or change.old is iterable and change.old is not string %}
+                                    <code>{{ change.old | tojson(indent=0) | truncate(200) }}</code>
+                                {% else %}
+                                    {{ change.old | truncate(200) if change.old else '(empty)' }}
+                                {% endif %}
+                            </div>
+                        {% endif %}
+                        {% if change.new is not none %}
+                            <div class="diff-added mt-1 small">
+                                <i class="fas fa-plus me-1"></i>
+                                {% if change.new is mapping or change.new is iterable and change.new is not string %}
+                                    <code>{{ change.new | tojson(indent=0) | truncate(200) }}</code>
+                                {% else %}
+                                    {{ change.new | truncate(200) if change.new else '(empty)' }}
+                                {% endif %}
+                            </div>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+
+        <footer class="text-center mt-5 mb-4 text-muted small" role="contentinfo">
+            <a href="https://www.it-help.tech" target="_blank" rel="noopener">
+                <img src="{{ url_for('static', filename='images/owl-of-athena.png') }}" alt="IT Help San Diego - Owl of Athena" width="64" height="64" class="mb-2" loading="lazy" style="border-radius:50%;">
+            </a>
+            <p class="mb-0">Made by <a href="https://www.it-help.tech" target="_blank" rel="noopener" class="text-info">IT Help San Diego Inc.</a></p>
+        </footer>
+    </main>
+
+    <script src="{{ url_for('static', filename='js/bootstrap.bundle.min.js') }}" defer></script>
+</body>
+</html>
