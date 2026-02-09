@@ -22,6 +22,7 @@ from dns_providers import (CNAME_PROVIDER_MAP, DANE_MX_CAPABILITY,
     DMARC_MONITORING_PROVIDERS, SPF_FLATTENING_PROVIDERS,
     DYNAMIC_SERVICES_PROVIDERS, DYNAMIC_SERVICES_ZONES, HOSTED_DKIM_PROVIDERS)
 from rdap_cache import RDAPCache, _rdap_cache, _RDAP_CACHE_TTL
+from network_telemetry import get_telemetry, TelemetryTimer
 
 try:
     import requests
@@ -256,9 +257,11 @@ class DNSAnalyzer:
         """Populate IANA_RDAP_MAP with TLD to RDAP endpoint mappings."""
         url = "https://data.iana.org/rdap/dns.json"
         try:
-            r = requests.get(url, timeout=5, headers={'User-Agent': self.USER_AGENT})
-            r.raise_for_status()
-            j = r.json()
+            with TelemetryTimer('iana_bootstrap', operation='fetch_rdap_map'):
+                r = requests.get(url, timeout=get_telemetry().get_timeout('iana_bootstrap'),
+                                 headers={'User-Agent': self.USER_AGENT})
+                r.raise_for_status()
+                j = r.json()
             for svc in j.get("services", []):
                 if len(svc) != 2:
                     continue
@@ -281,7 +284,11 @@ class DNSAnalyzer:
         """
         if self._offline_mode:
             return []
-        DOH_TIMEOUT = 5  # seconds
+        telemetry = get_telemetry()
+        if telemetry.should_backoff('doh_google'):
+            logging.debug(f"DoH {record_type} for {domain}: backing off (provider degraded)")
+            return []
+        DOH_TIMEOUT = telemetry.get_timeout('doh')
         url = "https://dns.google/resolve"
         
         params = {
@@ -290,17 +297,17 @@ class DNSAnalyzer:
         }
         
         try:
-            response = requests.get(url, params=params, timeout=DOH_TIMEOUT, headers={
-                'Accept': 'application/dns-json',
-                'User-Agent': self.USER_AGENT
-            })
-            response.raise_for_status()
-            data = response.json()
+            with TelemetryTimer('doh_google', operation=f'{record_type}/{domain}'):
+                response = requests.get(url, params=params, timeout=DOH_TIMEOUT, headers={
+                    'Accept': 'application/dns-json',
+                    'User-Agent': self.USER_AGENT
+                })
+                response.raise_for_status()
+                data = response.json()
             
             # Check for successful response (0 = NOERROR)
             status = data.get('Status', -1)
             if status != 0:
-                # NXDOMAIN=3, SERVFAIL=2, etc - these are "no data" not "service error"
                 logging.debug(f"DoH {record_type} for {domain}: DNS status {status} (no data)")
                 return []
             
@@ -315,13 +322,9 @@ class DNSAnalyzer:
                 if not record_data:
                     continue
                 
-                # Handle different record types
                 if record_type.upper() == 'TXT':
-                    # Remove quotes from TXT records
                     record_data = record_data.strip('"')
                 
-                # For MX records, format is already "priority hostname"
-                # For other records, just use the data as-is
                 if record_data and record_data not in results:
                     results.append(record_data)
             
@@ -2765,6 +2768,11 @@ class DNSAnalyzer:
         if self._offline_mode:
             return {}
         import whodap
+        telemetry = get_telemetry()
+        
+        if telemetry.should_backoff('rdap_whodap'):
+            logging.debug(f"[RDAP] Backing off whodap (provider degraded)")
+            return {}
         
         cached_data = _rdap_cache.get(domain)
         if cached_data is not None:
@@ -2776,13 +2784,12 @@ class DNSAnalyzer:
         
         logging.warning(f"[RDAP] whodap lookup: domain={domain_name}, tld={tld}")
         
-        # Try whodap with retry on rate limit
         for attempt in range(2):
             try:
-                response = whodap.lookup_domain(domain=domain_name, tld=tld)
-                data = response.to_dict()
+                with TelemetryTimer('rdap_whodap', operation=f'lookup/{domain}'):
+                    response = whodap.lookup_domain(domain=domain_name, tld=tld)
+                    data = response.to_dict()
                 logging.warning(f"[RDAP] whodap SUCCESS - got {len(data)} keys")
-                # Cache the result with timestamp
                 data['_cached_at'] = datetime.now().strftime('%Y-%m-%d %H:%M UTC')
                 _rdap_cache.set(domain, data)
                 return data
@@ -2850,15 +2857,16 @@ class DNSAnalyzer:
         endpoint = direct_endpoints.get(tld, 'https://rdap.org/')
         url = f"{endpoint.rstrip('/')}/domain/{domain}"
         
+        rdap_timeout = telemetry.get_timeout('rdap')
         try:
             logging.warning(f"[RDAP] Direct request to: {url}")
-            resp = self._safe_http_get(url, timeout=10, allow_redirects=True)
+            with TelemetryTimer('rdap_direct', operation=f'lookup/{domain}'):
+                resp = self._safe_http_get(url, timeout=rdap_timeout, allow_redirects=True)
             logging.warning(f"[RDAP] Direct request status: {resp.status_code}")
             if resp.status_code < 400:
                 data = resp.json()
                 if "errorCode" not in data:
                     logging.warning(f"[RDAP] Direct request SUCCESS - got {len(data)} keys")
-                    # Cache the result with timestamp
                     data['_cached_at'] = datetime.now().strftime('%Y-%m-%d %H:%M UTC')
                     _rdap_cache.set(domain, data)
                     return data
@@ -3032,10 +3040,12 @@ class DNSAnalyzer:
             logging.warning(f"[WHOIS] No server for TLD: {tld}")
             return None
         
+        whois_timeout = get_telemetry().get_timeout('whois')
         try:
             logging.info(f"[WHOIS] Socket query to {server} for {domain}")
+            _whois_start = time.time()
             sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            sock.settimeout(8)
+            sock.settimeout(whois_timeout)
             sock.connect((server, 43))
             sock.send(f"{domain}\r\n".encode())
             
@@ -3089,11 +3099,25 @@ class DNSAnalyzer:
                 if val and val.lower() not in ["redacted", "data protected", "not disclosed", "withheld"]:
                     registrant = val
             
+            _whois_elapsed = (time.time() - _whois_start) * 1000
+            result_val = None
             if registrar and registrant:
-                return f"{registrar} (Registrant: {registrant})"
-            return registrar or registrant
+                result_val = f"{registrar} (Registrant: {registrant})"
+            else:
+                result_val = registrar or registrant
+            get_telemetry().record_call(
+                f'whois_{server}', success=result_val is not None,
+                latency_ms=_whois_elapsed, operation=f'lookup/{domain}',
+                error=None if result_val else 'no registrar found')
+            return result_val
             
         except Exception as e:
+            _whois_elapsed = (time.time() - _whois_start) * 1000
+            is_timeout = 'timeout' in str(e).lower() or isinstance(e, socket.timeout)
+            get_telemetry().record_call(
+                f'whois_{server}', success=False, latency_ms=_whois_elapsed,
+                error=f"{type(e).__name__}: {str(e)[:100]}", is_timeout=is_timeout,
+                operation=f'lookup/{domain}')
             logging.error(f"[WHOIS] Socket error for {domain}: {e}")
             return None
     
@@ -3996,31 +4020,36 @@ class DNSAnalyzer:
             if self._offline_mode:
                 logging.debug(f"CT query skipped for {domain} (offline mode)")
             else:
-                try:
-                    ct_timeout = min(CT_TIMEOUT, _budget_remaining())
-                    if ct_timeout < 2:
-                        raise requests.exceptions.Timeout("Insufficient time budget for CT query")
-                    
-                    url = f"https://crt.sh/?q=%25.{domain}&output=json"
-                    response = requests.get(url, timeout=ct_timeout, headers={
-                        'User-Agent': self.USER_AGENT
-                    })
-                    
-                    if response.status_code == 200:
-                        data = response.json()
-                        result['total_certs'] = len(data)
-                        ct_success = True
-                        self._set_ct_cache(domain, data)
-                        logging.info(f"CT query for {domain}: {len(data)} certs in {round(time.time() - ct_start, 1)}s")
-                    else:
-                        logging.warning(f"CT log query for {domain} returned status {response.status_code}")
+                ct_telemetry = get_telemetry()
+                if ct_telemetry.should_backoff('ct_crtsh'):
+                    logging.debug(f"CT query skipped for {domain} (crt.sh backing off)")
+                else:
+                    try:
+                        ct_timeout = min(ct_telemetry.get_timeout('ct_logs'), _budget_remaining())
+                        if ct_timeout < 2:
+                            raise requests.exceptions.Timeout("Insufficient time budget for CT query")
                         
-                except requests.exceptions.Timeout:
-                    logging.warning(f"CT log query timed out for {domain} after {round(time.time() - ct_start, 1)}s — falling back to DNS probing")
-                except requests.exceptions.ConnectionError:
-                    logging.warning(f"CT log connection failed for {domain} — falling back to DNS probing")
-                except Exception as e:
-                    logging.warning(f"CT log query error for {domain}: {e} — falling back to DNS probing")
+                        url = f"https://crt.sh/?q=%25.{domain}&output=json"
+                        with TelemetryTimer('ct_crtsh', operation=f'query/{domain}'):
+                            response = requests.get(url, timeout=ct_timeout, headers={
+                                'User-Agent': self.USER_AGENT
+                            })
+                        
+                        if response.status_code == 200:
+                            data = response.json()
+                            result['total_certs'] = len(data)
+                            ct_success = True
+                            self._set_ct_cache(domain, data)
+                            logging.info(f"CT query for {domain}: {len(data)} certs in {round(time.time() - ct_start, 1)}s")
+                        else:
+                            logging.warning(f"CT log query for {domain} returned status {response.status_code}")
+                            
+                    except requests.exceptions.Timeout:
+                        logging.warning(f"CT log query timed out for {domain} after {round(time.time() - ct_start, 1)}s — falling back to DNS probing")
+                    except requests.exceptions.ConnectionError:
+                        logging.warning(f"CT log connection failed for {domain} — falling back to DNS probing")
+                    except Exception as e:
+                        logging.warning(f"CT log query error for {domain}: {e} — falling back to DNS probing")
         
         if ct_success and data:
             CT_ENTRY_CAP = 5000
@@ -4586,10 +4615,11 @@ class DNSAnalyzer:
         
         sock = None
         ssl_sock = None
+        _smtp_start = time.time()
+        smtp_timeout = get_telemetry().get_timeout('smtp_connect')
         
         try:
-            # Connect to SMTP server on port 25 using raw socket (fast 1.5s timeout)
-            sock = socket.create_connection((mx_host, 25), timeout=timeout)
+            sock = socket.create_connection((mx_host, 25), timeout=smtp_timeout)
             result['reachable'] = True
             
             # Read banner with proper multi-line handling (fast 1s timeout)
@@ -4701,6 +4731,12 @@ class DNSAnalyzer:
         except Exception as e:
             result['error'] = str(e)[:50]
         finally:
+            _smtp_elapsed = (time.time() - _smtp_start) * 1000
+            is_timeout = result.get('error', '') == 'Connection timeout'
+            get_telemetry().record_call(
+                'smtp', success=result['reachable'], latency_ms=_smtp_elapsed,
+                error=result.get('error'), is_timeout=is_timeout,
+                operation=f'verify/{mx_host}')
             try:
                 if ssl_sock:
                     ssl_sock.close()

@@ -15,6 +15,7 @@ from flask_migrate import Migrate
 from sqlalchemy.orm import DeclarativeBase
 from sqlalchemy import JSON, event
 from dns_analyzer import DNSAnalyzer
+from rdap_cache import _rdap_cache
 
 # App version - format: YY.M.patch (bump last number for small changes)
 APP_VERSION = "26.10.85"
@@ -1466,6 +1467,16 @@ def api_subdomains(domain):
     
     result = dns_analyzer.discover_subdomains(domain)
     return jsonify(result)
+
+@app.route('/api/health')
+def api_health():
+    """Network provider health dashboard - telemetry for external service reliability."""
+    from network_telemetry import get_telemetry
+    telemetry = get_telemetry()
+    health = telemetry.get_all_health()
+    health['app_version'] = APP_VERSION
+    health['rdap_cache_backend'] = _rdap_cache.backend
+    return jsonify(health)
 
 @app.errorhandler(404)
 def not_found_error(error):

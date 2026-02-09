@@ -61,20 +61,24 @@ class ProviderHealth:
         with self._lock:
             if self.total_calls < 3:
                 return True
-            return self.consecutive_failures < 5 and self.success_rate > 0.3
+            sr = self.successes / self.total_calls if self.total_calls > 0 else 1.0
+            return self.consecutive_failures < 5 and sr > 0.3
 
     def to_dict(self) -> Dict[str, Any]:
         with self._lock:
+            sr = self.successes / self.total_calls if self.total_calls > 0 else 1.0
+            avg_lat = self.total_latency_ms / self.successes if self.successes > 0 else 0.0
+            healthy = True if self.total_calls < 3 else (self.consecutive_failures < 5 and sr > 0.3)
             return {
                 'name': self.name,
                 'total_calls': self.total_calls,
                 'successes': self.successes,
                 'failures': self.failures,
                 'timeouts': self.timeouts,
-                'success_rate': round(self.success_rate, 3) if self.total_calls > 0 else None,
-                'avg_latency_ms': round(self.avg_latency_ms, 1) if self.successes > 0 else None,
+                'success_rate': round(sr, 3) if self.total_calls > 0 else None,
+                'avg_latency_ms': round(avg_lat, 1) if self.successes > 0 else None,
                 'consecutive_failures': self.consecutive_failures,
-                'is_healthy': self.is_healthy,
+                'is_healthy': healthy,
                 'last_success': datetime.fromtimestamp(self.last_success).isoformat() if self.last_success else None,
                 'last_failure': datetime.fromtimestamp(self.last_failure).isoformat() if self.last_failure else None,
                 'last_error': self.last_error,
