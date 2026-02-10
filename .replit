@@ -41,3 +41,5 @@ externalPort = 3000
 [userenv]
 
 [userenv.shared]
+SONAR_ORG = "careyjames"
+SONAR_PROJECT = "careyjames_DnsToolWeb"
