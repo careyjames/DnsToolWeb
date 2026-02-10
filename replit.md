@@ -72,14 +72,17 @@ The application is currently undergoing a rewrite from Python/Flask to Go/Gin fo
 - **Phase 5**: DNS engine — all 11 analyzers ported to Go (~4,960 lines), multi-resolver consensus DNS client, DoH fallback, CT subdomain discovery, posture scoring, concurrent orchestrator
 - **Phase 6**: Security — CSRF middleware (HMAC-signed cookie tokens), rate limiting middleware (8/min/IP sliding window + anti-repeat), SSRF hardened (CGNAT, benchmarking, documentation ranges), API route exemptions
 
+**Completed Phases (final)**:
+- **Phase 7**: Telemetry & RDAP cache — provider health registry (success/failure counts, latency p50/p95, cooldown), RDAP response cache (TTL 24h, 500 entries), enhanced /api/health endpoint with provider stats and cache metrics
+
 **Remaining Phases**:
-- **Phase 7**: Telemetry & RDAP cache — health tracking, backoff, caching
 - **Phase 8**: Test parity — port test suite; Python tests as acceptance tests during transition
 
 **Parallel Operation**: Python app serves production traffic on port 5000. Go server runs on port 5001 for testing.
 
 ## Recent Changes
 
+- **2026-02-10**: Phase 7 complete — telemetry package with provider health registry (per-provider success/failure counts, rolling latency p95, adaptive cooldown with exponential backoff). Generic TTLCache for RDAP results (24h TTL, 500 max entries, hit/miss tracking). Telemetry wired into RDAP and CT log providers. Enhanced /api/health endpoint with provider health summary, cache stats, and overall health state. Analyzer instance created in main.go.
 - **2026-02-10**: Phase 6 complete — CSRF middleware with HMAC-signed cookie tokens (SESSION_SECRET), rate limiting middleware (8 req/min/IP sliding window + 15s anti-repeat per domain), SSRF hardened with CGNAT/benchmark/documentation IP ranges, proxy handler uses consolidated IsPrivateIP, API routes exempted from CSRF, CSRF token injected into all 23 template render calls.
 - **2026-02-10**: Phase 5 complete — all 11 DNS analyzers ported to Go (~4,960 lines). SPF, DMARC, DKIM, MTA-STS, TLS-RPT, CAA, DANE/TLSA, BIMI, DNSSEC, NS delegation, registrar lookup. Multi-resolver consensus DNS client with DoH fallback, CT subdomain discovery, posture scoring, concurrent orchestrator.
 - **2026-02-10**: Phase 4 complete — all 6 Jinja2 templates converted to Go html/template. Created shared partials (_head, _nav, _footer, _flash), 50+ FuncMap helpers for map access (mapGetStr/Map/Slice/Float/Bool), formatting, and conditionals. All handlers updated from c.JSON to c.HTML. Fixed SecurityHeaders middleware to set headers before c.Next(). Fixed unclosed {{if}} block in results.html template.

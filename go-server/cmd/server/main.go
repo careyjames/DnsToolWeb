@@ -8,6 +8,7 @@ import (
         "os"
         "path/filepath"
 
+        "dnstool/internal/analyzer"
         "dnstool/internal/config"
         "dnstool/internal/db"
         "dnstool/internal/handlers"
@@ -57,8 +58,11 @@ func main() {
         staticDir := findStaticDir()
         router.Static("/static", staticDir)
 
+        dnsAnalyzer := analyzer.New()
+        slog.Info("DNS analyzer initialized with telemetry")
+
         homeHandler := handlers.NewHomeHandler(cfg)
-        healthHandler := handlers.NewHealthHandler(database)
+        healthHandler := handlers.NewHealthHandler(database, dnsAnalyzer)
         historyHandler := handlers.NewHistoryHandler(database, cfg)
         analysisHandler := handlers.NewAnalysisHandler(database, cfg)
         statsHandler := handlers.NewStatsHandler(database, cfg)

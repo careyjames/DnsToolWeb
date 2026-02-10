@@ -1,122 +1,127 @@
 package analyzer
 
 import (
-	"context"
-	"log/slog"
-	"sync"
-	"time"
+        "context"
+        "log/slog"
+        "sync"
+        "time"
 
-	"dnstool/internal/dnsclient"
+        "dnstool/internal/dnsclient"
+        "dnstool/internal/telemetry"
 )
 
 type Analyzer struct {
-	DNS        *dnsclient.Client
-	HTTP       *dnsclient.SafeHTTPClient
-	IANARDAPMap map[string][]string
+        DNS        *dnsclient.Client
+        HTTP       *dnsclient.SafeHTTPClient
+        IANARDAPMap map[string][]string
+        Telemetry  *telemetry.Registry
+        RDAPCache  *telemetry.TTLCache[map[string]any]
 
-	ctCacheMu  sync.RWMutex
-	ctCache    map[string]ctCacheEntry
-	ctCacheTTL time.Duration
+        ctCacheMu  sync.RWMutex
+        ctCache    map[string]ctCacheEntry
+        ctCacheTTL time.Duration
 
-	maxConcurrent int
-	semaphore     chan struct{}
+        maxConcurrent int
+        semaphore     chan struct{}
 }
 
 type ctCacheEntry struct {
-	data      []map[string]any
-	timestamp time.Time
+        data      []map[string]any
+        timestamp time.Time
 }
 
 type Option func(*Analyzer)
 
 func WithMaxConcurrent(n int) Option {
-	return func(a *Analyzer) {
-		a.maxConcurrent = n
-		a.semaphore = make(chan struct{}, n)
-	}
+        return func(a *Analyzer) {
+                a.maxConcurrent = n
+                a.semaphore = make(chan struct{}, n)
+        }
 }
 
 func New(opts ...Option) *Analyzer {
-	a := &Analyzer{
-		DNS:           dnsclient.New(),
-		HTTP:          dnsclient.NewSafeHTTPClient(),
-		IANARDAPMap:   make(map[string][]string),
-		ctCache:       make(map[string]ctCacheEntry),
-		ctCacheTTL:    1 * time.Hour,
-		maxConcurrent: 6,
-		semaphore:     make(chan struct{}, 6),
-	}
-	for _, o := range opts {
-		o(a)
-	}
+        a := &Analyzer{
+                DNS:           dnsclient.New(),
+                HTTP:          dnsclient.NewSafeHTTPClient(),
+                IANARDAPMap:   make(map[string][]string),
+                Telemetry:     telemetry.NewRegistry(),
+                RDAPCache:     telemetry.NewTTLCache[map[string]any]("rdap", 500, 24*time.Hour),
+                ctCache:       make(map[string]ctCacheEntry),
+                ctCacheTTL:    1 * time.Hour,
+                maxConcurrent: 6,
+                semaphore:     make(chan struct{}, 6),
+        }
+        for _, o := range opts {
+                o(a)
+        }
 
-	go a.fetchIANARDAPData()
+        go a.fetchIANARDAPData()
 
-	return a
+        return a
 }
 
 func (a *Analyzer) fetchIANARDAPData() {
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
+        ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+        defer cancel()
 
-	resp, err := a.HTTP.Get(ctx, "https://data.iana.org/rdap/dns.json")
-	if err != nil {
-		slog.Error("Failed to fetch IANA RDAP data", "error", err)
-		return
-	}
+        resp, err := a.HTTP.Get(ctx, "https://data.iana.org/rdap/dns.json")
+        if err != nil {
+                slog.Error("Failed to fetch IANA RDAP data", "error", err)
+                return
+        }
 
-	body, err := a.HTTP.ReadBody(resp, 1<<20)
-	if err != nil {
-		slog.Error("Failed to read IANA RDAP response", "error", err)
-		return
-	}
+        body, err := a.HTTP.ReadBody(resp, 1<<20)
+        if err != nil {
+                slog.Error("Failed to read IANA RDAP response", "error", err)
+                return
+        }
 
-	var data struct {
-		Services [][][]string `json:"services"`
-	}
+        var data struct {
+                Services [][][]string `json:"services"`
+        }
 
-	if err := jsonUnmarshal(body, &data); err != nil {
-		slog.Error("Failed to parse IANA RDAP data", "error", err)
-		return
-	}
+        if err := jsonUnmarshal(body, &data); err != nil {
+                slog.Error("Failed to parse IANA RDAP data", "error", err)
+                return
+        }
 
-	for _, svc := range data.Services {
-		if len(svc) != 2 {
-			continue
-		}
-		tlds, endpoints := svc[0], svc[1]
-		if len(tlds) > 0 && len(endpoints) > 0 {
-			for _, tld := range tlds {
-				a.IANARDAPMap[tld] = endpoints
-			}
-		}
-	}
-	slog.Info("Loaded IANA RDAP map", "tld_count", len(a.IANARDAPMap))
+        for _, svc := range data.Services {
+                if len(svc) != 2 {
+                        continue
+                }
+                tlds, endpoints := svc[0], svc[1]
+                if len(tlds) > 0 && len(endpoints) > 0 {
+                        for _, tld := range tlds {
+                                a.IANARDAPMap[tld] = endpoints
+                        }
+                }
+        }
+        slog.Info("Loaded IANA RDAP map", "tld_count", len(a.IANARDAPMap))
 }
 
 func (a *Analyzer) getCTCache(domain string) ([]map[string]any, bool) {
-	a.ctCacheMu.RLock()
-	defer a.ctCacheMu.RUnlock()
-	entry, ok := a.ctCache[domain]
-	if !ok {
-		return nil, false
-	}
-	if time.Since(entry.timestamp) > a.ctCacheTTL {
-		return nil, false
-	}
-	return entry.data, true
+        a.ctCacheMu.RLock()
+        defer a.ctCacheMu.RUnlock()
+        entry, ok := a.ctCache[domain]
+        if !ok {
+                return nil, false
+        }
+        if time.Since(entry.timestamp) > a.ctCacheTTL {
+                return nil, false
+        }
+        return entry.data, true
 }
 
 func (a *Analyzer) setCTCache(domain string, data []map[string]any) {
-	a.ctCacheMu.Lock()
-	defer a.ctCacheMu.Unlock()
-	a.ctCache[domain] = ctCacheEntry{data: data, timestamp: time.Now()}
-	if len(a.ctCache) > 200 {
-		cutoff := time.Now().Add(-a.ctCacheTTL)
-		for k, v := range a.ctCache {
-			if v.timestamp.Before(cutoff) {
-				delete(a.ctCache, k)
-			}
-		}
-	}
+        a.ctCacheMu.Lock()
+        defer a.ctCacheMu.Unlock()
+        a.ctCache[domain] = ctCacheEntry{data: data, timestamp: time.Now()}
+        if len(a.ctCache) > 200 {
+                cutoff := time.Now().Add(-a.ctCacheTTL)
+                for k, v := range a.ctCache {
+                        if v.timestamp.Before(cutoff) {
+                                delete(a.ctCache, k)
+                        }
+                }
+        }
 }
