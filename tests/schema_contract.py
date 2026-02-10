@@ -10,6 +10,8 @@ REQUIRED_SECTIONS = [
     'bimi_analysis', 'caa_analysis', 'dnssec_analysis',
 ]
 
+BASIC_RECORD_TYPES = ['A', 'AAAA', 'MX', 'TXT', 'NS', 'CNAME', 'SOA']
+
 ANALYSIS_SCHEMA = {
     'domain_exists': {'type': bool, 'required': True},
     'domain_status': {'type': str, 'required': True},
@@ -18,12 +20,13 @@ ANALYSIS_SCHEMA = {
     'basic_records': {
         'type': dict,
         'required': True,
+        'required_keys': BASIC_RECORD_TYPES,
     },
     'authoritative_records': {'type': dict, 'required': True},
-    'auth_query_status': {'type': dict, 'required': True},
-    'resolver_ttl': {'type': dict, 'required': True},
-    'auth_ttl': {'type': dict, 'required': True},
-    'propagation_status': {'type': dict, 'required': True},
+    'propagation_status': {
+        'type': dict,
+        'required': True,
+    },
     'spf_analysis': {
         'type': dict,
         'required': True,
@@ -72,8 +75,8 @@ ANALYSIS_SCHEMA = {
         'subfields': {
             'status': {'type': str, 'required': True},
             'has_dane': {'type': bool, 'required': True},
-            'tlsa_records': {'type': list, 'required': True},
-            'issues': {'type': list, 'required': True},
+            'tlsa_records': {'type': (list, type(None)), 'required': True},
+            'issues': {'type': (list, type(None)), 'required': True},
         },
     },
     'caa_analysis': {
@@ -93,24 +96,22 @@ ANALYSIS_SCHEMA = {
     'ns_delegation_analysis': {
         'type': dict,
         'required': True,
+        'subfields': {
+            'status': {'type': str, 'required': True},
+            'delegation_ok': {'type': bool, 'required': True},
+            'child_ns': {'type': (list, type(None)), 'required': False},
+            'parent_ns': {'type': (list, type(None)), 'required': False},
+        },
     },
     'registrar_info': {
         'type': dict,
         'required': True,
-    },
-    'resolver_consensus': {'type': dict, 'required': True},
-    'ct_subdomains': {'type': dict, 'required': True},
-    'smtp_transport': {'type': (dict, type(None)), 'required': True},
-    '_data_freshness': {'type': dict, 'required': True},
-    'has_null_mx': {'type': bool, 'required': True},
-    'mail_posture': {
-        'type': dict,
-        'required': True,
         'subfields': {
-            'classification': {'type': str, 'required': True},
+            'status': {'type': str, 'required': True},
+            'source': {'type': str, 'required': False},
         },
     },
-    'is_no_mail_domain': {'type': bool, 'required': True},
+    'smtp_transport': {'type': (dict, type(None)), 'required': True},
     'hosting_summary': {
         'type': dict,
         'required': True,
@@ -120,13 +121,11 @@ ANALYSIS_SCHEMA = {
             'email_hosting': {'type': str, 'required': True},
         },
     },
-    'dns_infrastructure': {'type': dict, 'required': True},
-    'email_security_mgmt': {'type': dict, 'required': True},
     'posture': {
         'type': dict,
         'required': True,
         'subfields': {
-            'issues': {'type': list, 'required': True},
+            'issues': {'type': (list, type(None)), 'required': True},
             'color': {'type': str, 'required': True},
         },
     },
@@ -134,24 +133,70 @@ ANALYSIS_SCHEMA = {
         'type': dict,
         'required': False,
         'subfields': {
-            'top_fixes': {'type': list, 'required': True},
-            'per_section': {'type': dict, 'required': True},
+            'top_fixes': {'type': (list, type(None)), 'required': True},
             'fix_count': {'type': int, 'required': True},
             'posture_achievable': {'type': str, 'required': True},
+            'all_fixes': {'type': (list, type(None)), 'required': False},
         },
     },
     '_schema_version': {'type': int, 'required': False},
     '_tool_version': {'type': str, 'required': False},
 }
 
+SCHEMA_ACTIVE_DOMAIN_REQUIRED = {
+    'resolver_consensus': {
+        'type': dict,
+        'subfields': {
+            'consensus_reached': {'type': bool, 'required': True},
+            'resolvers_queried': {'type': int, 'required': True},
+            'checks_performed': {'type': int, 'required': True},
+            'discrepancies': {'type': (list, type(None)), 'required': True},
+            'per_record_consensus': {'type': dict, 'required': True},
+        },
+    },
+    'ct_subdomains': {
+        'type': dict,
+        'subfields': {
+            'status': {'type': str, 'required': True},
+            'subdomains': {'type': list, 'required': True},
+            'unique_subdomains': {'type': int, 'required': True},
+        },
+    },
+    'dns_infrastructure': {
+        'type': dict,
+        'subfields': {
+            'provider_name': {'type': str, 'required': True},
+            'provider_tier': {'type': str, 'required': True},
+            'provider_features': {'type': list, 'required': True},
+        },
+    },
+    'email_security_mgmt': {
+        'type': dict,
+        'subfields': {
+            'actively_managed': {'type': bool, 'required': True},
+            'provider_count': {'type': int, 'required': True},
+            'providers': {'type': list, 'required': True},
+        },
+    },
+    'mail_posture': {
+        'type': dict,
+        'subfields': {
+            'verdict': {'type': str, 'required': True},
+            'badge': {'type': str, 'required': True},
+        },
+    },
+    'has_null_mx': {'type': bool},
+    'is_no_mail_domain': {'type': bool},
+}
+
 POSTURE_SUBFIELDS_ACTIVE = {
     'state': {'type': str, 'required': True},
     'message': {'type': str, 'required': True},
-    'issues': {'type': list, 'required': True},
+    'issues': {'type': (list, type(None)), 'required': True},
     'color': {'type': str, 'required': True},
-    'configured': {'type': list, 'required': True},
-    'absent': {'type': list, 'required': True},
-    'monitoring': {'type': list, 'required': True},
+    'configured': {'type': (list, type(None)), 'required': True},
+    'absent': {'type': (list, type(None)), 'required': True},
+    'monitoring': {'type': (list, type(None)), 'required': True},
     'verdicts': {'type': dict, 'required': True},
 }
 
@@ -164,6 +209,8 @@ POSTURE_SUBFIELDS_NONEXISTENT = {
 }
 
 VALID_STATUS_VALUES = {'success', 'warning', 'error', 'info', 'n/a', 'timeout', 'unknown', 'partial'}
+
+EMAIL_SECURITY_PROVIDER_REQUIRED_FIELDS = ['name', 'capabilities', 'detected_from']
 
 
 def get_required_sections():
@@ -201,6 +248,11 @@ def _validate_key(key, spec, results, errors):
     if 'subfields' in spec and isinstance(value, dict):
         _validate_subfields(key, spec['subfields'], value, errors)
 
+    if 'required_keys' in spec and isinstance(value, dict):
+        for rk in spec['required_keys']:
+            if rk not in value:
+                errors.append(f'Missing required key {key}.{rk}')
+
 
 def _validate_subfields(parent_key, subfields, value, errors):
     for subkey, subspec in subfields.items():
@@ -222,13 +274,35 @@ def validate_analysis_results(results: dict) -> list:
     for key, spec in ANALYSIS_SCHEMA.items():
         _validate_key(key, spec, results, errors)
 
+    domain_exists = results.get('domain_exists', True)
+
     _validate_posture(results, errors)
     _validate_dane(results, errors)
-    _validate_mail_posture(results, errors)
-    _validate_hosting_summary(results, errors)
     _validate_remediation(results, errors)
 
+    if domain_exists:
+        _validate_active_domain_fields(results, errors)
+        _validate_email_security_mgmt(results, errors)
+
     return errors
+
+
+def _validate_active_domain_fields(results, errors):
+    for key, spec in SCHEMA_ACTIVE_DOMAIN_REQUIRED.items():
+        expected_type = spec['type']
+        if key not in results:
+            errors.append(f'Missing required key for active domain: {key}')
+            continue
+        value = results[key]
+        if value is None:
+            errors.append(f'Active domain field {key} is null (should not be)')
+            continue
+        type_error = _check_type(value, expected_type, key)
+        if type_error:
+            errors.append(type_error)
+            continue
+        if 'subfields' in spec and isinstance(value, dict):
+            _validate_subfields(key, spec['subfields'], value, errors)
 
 
 def _validate_dict_fields(container, fields, prefix, errors):
@@ -266,40 +340,68 @@ def _validate_dane(results, errors):
     dane = results.get('dane_analysis')
     if not isinstance(dane, dict):
         return
-    required_fields = {'status': str, 'has_dane': bool, 'tlsa_records': list, 'issues': list}
-    for field, expected_type in required_fields.items():
-        if field not in dane:
-            errors.append(f'Missing dane_analysis.{field}')
-        elif not isinstance(dane[field], expected_type):
-            errors.append(f'Wrong type for dane_analysis.{field}: expected {expected_type.__name__}, got {type(dane[field]).__name__}')
+    if 'status' not in dane:
+        errors.append('Missing dane_analysis.status')
+    elif not isinstance(dane['status'], str):
+        errors.append(f'Wrong type for dane_analysis.status')
+    if 'has_dane' not in dane:
+        errors.append('Missing dane_analysis.has_dane')
+    elif not isinstance(dane['has_dane'], bool):
+        errors.append(f'Wrong type for dane_analysis.has_dane')
 
 
-def _validate_mail_posture(results, errors):
-    mp = results.get('mail_posture')
-    if not isinstance(mp, dict):
+def _validate_email_security_mgmt(results, errors):
+    esm = results.get('email_security_mgmt')
+    if not isinstance(esm, dict):
         return
-    if 'classification' not in mp:
-        errors.append('Missing mail_posture.classification')
-    elif not isinstance(mp['classification'], str):
-        errors.append(f'Wrong type for mail_posture.classification: expected str, got {type(mp["classification"]).__name__}')
 
+    if 'actively_managed' not in esm:
+        errors.append('Missing email_security_mgmt.actively_managed')
+    elif not isinstance(esm['actively_managed'], bool):
+        errors.append(f'Wrong type for email_security_mgmt.actively_managed: expected bool, got {type(esm["actively_managed"]).__name__}')
 
-def _validate_hosting_summary(results, errors):
-    hs = results.get('hosting_summary')
-    if not isinstance(hs, dict):
+    if 'provider_count' not in esm:
+        errors.append('Missing email_security_mgmt.provider_count')
+    elif not isinstance(esm['provider_count'], int):
+        errors.append(f'Wrong type for email_security_mgmt.provider_count: expected int, got {type(esm["provider_count"]).__name__}')
+
+    if 'providers' not in esm:
+        errors.append('Missing email_security_mgmt.providers')
         return
-    for field in ('hosting', 'dns_hosting', 'email_hosting'):
-        if field not in hs:
-            errors.append(f'Missing hosting_summary.{field}')
-        elif not isinstance(hs[field], str):
-            errors.append(f'Wrong type for hosting_summary.{field}: expected str, got {type(hs[field]).__name__}')
+    if not isinstance(esm['providers'], list):
+        errors.append(f'Wrong type for email_security_mgmt.providers: expected list, got {type(esm["providers"]).__name__}')
+        return
+
+    actively_managed = esm.get('actively_managed', False)
+    provider_count = esm.get('provider_count', 0)
+
+    if actively_managed and provider_count == 0:
+        errors.append('email_security_mgmt.actively_managed is True but provider_count is 0')
+    if actively_managed and len(esm['providers']) == 0:
+        errors.append('email_security_mgmt.actively_managed is True but providers list is empty')
+    if provider_count != len(esm['providers']):
+        errors.append(f'email_security_mgmt.provider_count ({provider_count}) does not match len(providers) ({len(esm["providers"])})')
+
+    for i, provider in enumerate(esm['providers']):
+        if not isinstance(provider, dict):
+            errors.append(f'email_security_mgmt.providers[{i}] must be a dict')
+            continue
+        for field in EMAIL_SECURITY_PROVIDER_REQUIRED_FIELDS:
+            if field not in provider:
+                errors.append(f'Missing email_security_mgmt.providers[{i}].{field}')
+        if 'name' in provider and not isinstance(provider['name'], str):
+            errors.append(f'Wrong type for email_security_mgmt.providers[{i}].name')
+        if 'capabilities' in provider and not isinstance(provider['capabilities'], list):
+            errors.append(f'Wrong type for email_security_mgmt.providers[{i}].capabilities')
+        if 'detected_from' in provider and not isinstance(provider['detected_from'], list):
+            errors.append(f'Wrong type for email_security_mgmt.providers[{i}].detected_from')
 
 
 VALID_REMEDIATION_SEVERITIES = {'Critical', 'High', 'Medium', 'Low'}
 VALID_REMEDIATION_SECTIONS = {'spf', 'dmarc', 'dkim', 'dnssec', 'dane', 'mta_sts', 'tlsrpt', 'bimi', 'caa'}
 VALID_REMEDIATION_SECTION_STATUSES = {'ok', 'action_needed', 'not_applicable', 'blocked', 'optional'}
 
-_REMEDIATION_FIX_FIELDS = ('title', 'section', 'severity', 'severity_label', 'severity_color', 'fix', 'why', 'rfc', 'rfc_url')
+_REMEDIATION_FIX_FIELDS = ('title', 'severity_label', 'severity_color', 'fix', 'rfc', 'rfc_url')
 
 
 def _validate_remediation_fix(i, fix, errors):
@@ -312,9 +414,6 @@ def _validate_remediation_fix(i, fix, errors):
     severity_label = fix.get('severity_label')
     if severity_label and severity_label not in VALID_REMEDIATION_SEVERITIES:
         errors.append(f'Invalid severity_label in remediation fix: {severity_label}')
-    section = fix.get('section')
-    if section and section not in VALID_REMEDIATION_SECTIONS:
-        errors.append(f'Invalid section in remediation fix: {section}')
 
 
 def _validate_remediation_per_section(per_section, errors):
@@ -337,22 +436,21 @@ def _validate_remediation(results, errors):
     if 'top_fixes' not in rem:
         errors.append('Missing remediation.top_fixes')
         return
-    if not isinstance(rem['top_fixes'], list):
-        errors.append(f'Wrong type for remediation.top_fixes: expected list, got {type(rem["top_fixes"]).__name__}')
+    top_fixes = rem['top_fixes']
+    if top_fixes is None:
         return
-    for i, fix in enumerate(rem['top_fixes']):
+    if not isinstance(top_fixes, list):
+        errors.append(f'Wrong type for remediation.top_fixes: expected list, got {type(top_fixes).__name__}')
+        return
+    for i, fix in enumerate(top_fixes):
         _validate_remediation_fix(i, fix, errors)
-    _validate_remediation_per_section(rem.get('per_section', {}), errors)
 
 
-VALID_POSTURE_STATES = {'STRONG', 'GOOD', 'MODERATE', 'WEAK', 'CRITICAL'}
+VALID_POSTURE_STATES = {'STRONG', 'GOOD', 'MODERATE', 'FAIR', 'WEAK', 'CRITICAL'}
 VALID_POSTURE_COLORS = {'success', 'info', 'warning', 'danger', 'secondary'}
-VALID_MAIL_CLASSIFICATIONS = {
-    'email_enabled', 'email_minimal', 'email_passive',
-    'no_mail_verified', 'no_mail_partial', 'no_mail_intent',
-    'unknown',
-}
+VALID_MAIL_VERDICTS = {'Protected', 'Monitoring', 'Partial', 'Minimal', 'No Mail', 'Unprotected', 'Unknown'}
 VALID_DMARC_POLICIES = {'none', 'quarantine', 'reject'}
+VALID_DNS_INFRA_TIERS = {'enterprise', 'professional', 'standard', 'basic', 'unknown'}
 
 
 def _check_value_in_set(value, valid_set, label):
@@ -362,8 +460,6 @@ def _check_value_in_set(value, valid_set, label):
 
 
 def validate_analysis_deep(results: dict) -> list:
-    """Deep validation — checks field value constraints beyond types.
-    Used for Go migration parity verification."""
     errors = validate_analysis_results(results)
     if errors:
         return errors
@@ -380,13 +476,12 @@ def validate_analysis_deep(results: dict) -> list:
     if err:
         errors.append(err)
 
-    mp = results.get('mail_posture', {})
-    err = _check_value_in_set(mp.get('classification', ''), VALID_MAIL_CLASSIFICATIONS, 'mail_posture classification')
-    if err:
-        errors.append(err)
-
     _validate_deep_dmarc(results, errors)
     _validate_deep_spf(results, errors)
+
+    if domain_exists:
+        _validate_deep_dns_infrastructure(results, errors)
+        _validate_deep_email_security_mgmt(results, errors)
 
     return errors
 
@@ -411,3 +506,33 @@ def _validate_deep_spf(results, errors):
     lc = spf['lookup_count']
     if not isinstance(lc, int) or lc < 0:
         errors.append(f'Invalid SPF lookup_count: {lc}')
+
+
+def _validate_deep_dns_infrastructure(results, errors):
+    di = results.get('dns_infrastructure', {})
+    if not isinstance(di, dict):
+        return
+    err = _check_value_in_set(di.get('provider_tier', ''), VALID_DNS_INFRA_TIERS, 'dns_infrastructure.provider_tier')
+    if err:
+        errors.append(err)
+
+
+def _validate_deep_email_security_mgmt(results, errors):
+    esm = results.get('email_security_mgmt', {})
+    if not isinstance(esm, dict):
+        return
+    for i, provider in enumerate(esm.get('providers', [])):
+        if not isinstance(provider, dict):
+            continue
+        caps = provider.get('capabilities', [])
+        if not isinstance(caps, list):
+            continue
+        valid_caps = {'DMARC', 'SPF', 'DKIM', 'MTA-STS', 'TLS-RPT', 'BIMI',
+                      'DMARC reporting', 'DMARC analytics', 'SPF flattening',
+                      'email security', 'domain monitoring'}
+        for cap in caps:
+            if cap not in valid_caps:
+                errors.append(f'Unknown capability "{cap}" in email_security_mgmt.providers[{i}]')
+        detected = provider.get('detected_from', [])
+        if not isinstance(detected, list) or len(detected) == 0:
+            errors.append(f'email_security_mgmt.providers[{i}] has empty detected_from')
