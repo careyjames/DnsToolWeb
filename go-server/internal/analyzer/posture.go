@@ -42,9 +42,11 @@ func isKnownDKIMProvider(provider interface{}) bool {
 type protocolState struct {
         spfOK           bool
         spfWarning      bool
+        spfMissing      bool
         spfHardFail     bool
         dmarcOK         bool
         dmarcWarning    bool
+        dmarcMissing    bool
         dmarcPolicy     string
         dmarcPct        int
         dmarcHasRua     bool
@@ -84,6 +86,11 @@ func evaluateProtocolStates(results map[string]any) protocolState {
 
         allMech, _ := spf["all_mechanism"].(string)
 
+        spfRecords, _ := spf["valid_records"].([]string)
+        spfMissing := spf["status"] == "warning" && len(spfRecords) == 0
+        dmarcRecords, _ := dmarc["valid_records"].([]string)
+        dmarcMissing := dmarc["status"] == "warning" && len(dmarcRecords) == 0
+
         dmarcPct := 100
         if p, ok := dmarc["pct"].(int); ok {
                 dmarcPct = p
@@ -96,9 +103,11 @@ func evaluateProtocolStates(results map[string]any) protocolState {
         return protocolState{
                 spfOK:           spf["status"] == "success",
                 spfWarning:      spf["status"] == "warning",
+                spfMissing:      spfMissing,
                 spfHardFail:     allMech == "-all",
                 dmarcOK:         dmarc["status"] == "success",
                 dmarcWarning:    dmarc["status"] == "warning",
+                dmarcMissing:    dmarcMissing,
                 dmarcPolicy:     dmarcPolicy,
                 dmarcPct:        dmarcPct,
                 dmarcHasRua:     dmarcHasRua,

@@ -110,7 +110,10 @@ func sortFixes(fixes []fix) {
 }
 
 func appendSPFFixes(fixes []fix, ps protocolState, domain string) []fix {
-        if ps.spfOK || ps.spfWarning {
+        if ps.spfOK {
+                return fixes
+        }
+        if ps.spfWarning && !ps.spfMissing {
                 return fixes
         }
         return append(fixes, fix{
@@ -131,7 +134,7 @@ func appendDMARCFixes(fixes []fix, ps protocolState, results map[string]any, dom
                 return fixes
         }
 
-        if !ps.dmarcOK && !ps.dmarcWarning {
+        if ps.dmarcMissing || (!ps.dmarcOK && !ps.dmarcWarning) {
                 return append(fixes, fix{
                         Title:         "Publish DMARC policy",
                         Description:   "DMARC (Domain-based Message Authentication, Reporting & Conformance) tells receivers how to handle messages that fail SPF/DKIM checks. Without DMARC, failed authentication checks are ignored.",
