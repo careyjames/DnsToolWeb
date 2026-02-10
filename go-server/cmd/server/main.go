@@ -1,96 +1,140 @@
 package main
 
 import (
-	"fmt"
-	"html/template"
-	"log/slog"
-	"os"
-	"path/filepath"
+        "fmt"
+        "html/template"
+        "log/slog"
+        "net/http"
+        "os"
+        "path/filepath"
 
-	"dnstool/internal/config"
-	"dnstool/internal/db"
-	"dnstool/internal/handlers"
-	"dnstool/internal/middleware"
-	tmplFuncs "dnstool/internal/templates"
+        "dnstool/internal/config"
+        "dnstool/internal/db"
+        "dnstool/internal/handlers"
+        "dnstool/internal/middleware"
+        tmplFuncs "dnstool/internal/templates"
 
-	"github.com/gin-gonic/gin"
+        "github.com/gin-gonic/gin"
 )
 
 func main() {
-	slog.SetDefault(slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
-		Level: slog.LevelDebug,
-	})))
+        slog.SetDefault(slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
+                Level: slog.LevelDebug,
+        })))
 
-	cfg, err := config.Load()
-	if err != nil {
-		slog.Error("Failed to load config", "error", err)
-		os.Exit(1)
-	}
+        cfg, err := config.Load()
+        if err != nil {
+                slog.Error("Failed to load config", "error", err)
+                os.Exit(1)
+        }
 
-	database, err := db.Connect(cfg.DatabaseURL)
-	if err != nil {
-		slog.Error("Failed to connect to database", "error", err)
-		os.Exit(1)
-	}
-	defer database.Close()
+        database, err := db.Connect(cfg.DatabaseURL)
+        if err != nil {
+                slog.Error("Failed to connect to database", "error", err)
+                os.Exit(1)
+        }
+        defer database.Close()
 
-	gin.SetMode(gin.ReleaseMode)
-	router := gin.New()
+        gin.SetMode(gin.ReleaseMode)
+        router := gin.New()
 
-	router.Use(middleware.Recovery())
-	router.Use(middleware.RequestContext())
-	router.Use(middleware.SecurityHeaders())
+        router.Use(middleware.Recovery())
+        router.Use(middleware.RequestContext())
+        router.Use(middleware.SecurityHeaders())
 
-	templatesDir := findTemplatesDir()
-	tmpl := template.Must(
-		template.New("").Funcs(tmplFuncs.FuncMap()).ParseGlob(filepath.Join(templatesDir, "*.html")),
-	)
-	router.SetHTMLTemplate(tmpl)
+        templatesDir := findTemplatesDir()
+        tmpl := template.Must(
+                template.New("").Funcs(tmplFuncs.FuncMap()).ParseGlob(filepath.Join(templatesDir, "*.html")),
+        )
+        router.SetHTMLTemplate(tmpl)
 
-	staticDir := findStaticDir()
-	router.Static("/static", staticDir)
+        staticDir := findStaticDir()
+        router.Static("/static", staticDir)
 
-	homeHandler := handlers.NewHomeHandler(cfg)
-	healthHandler := handlers.NewHealthHandler(database)
+        homeHandler := handlers.NewHomeHandler(cfg)
+        healthHandler := handlers.NewHealthHandler(database)
+        historyHandler := handlers.NewHistoryHandler(database, cfg)
+        analysisHandler := handlers.NewAnalysisHandler(database, cfg)
+        statsHandler := handlers.NewStatsHandler(database, cfg)
+        compareHandler := handlers.NewCompareHandler(database, cfg)
+        exportHandler := handlers.NewExportHandler(database)
+        staticHandler := handlers.NewStaticHandler(staticDir)
+        proxyHandler := handlers.NewProxyHandler()
 
-	router.GET("/", homeHandler.Index)
-	router.GET("/go/health", healthHandler.HealthCheck)
+        router.GET("/", homeHandler.Index)
+        router.GET("/go/health", healthHandler.HealthCheck)
 
-	addr := fmt.Sprintf("0.0.0.0:%s", cfg.Port)
-	slog.Info("Starting Go DNS Tool server", "address", addr, "version", cfg.AppVersion)
+        router.GET("/robots.txt", staticHandler.RobotsTxt)
+        router.GET("/sitemap.xml", staticHandler.SitemapXML)
+        router.GET("/llms.txt", staticHandler.LLMsTxt)
+        router.GET("/llms-full.txt", staticHandler.LLMsFullTxt)
+        router.GET("/manifest.json", staticHandler.ManifestJSON)
+        router.GET("/sw.js", staticHandler.ServiceWorker)
 
-	if err := router.Run(addr); err != nil {
-		slog.Error("Server failed to start", "error", err)
-		os.Exit(1)
-	}
+        router.GET("/analyze", analysisHandler.Analyze)
+        router.POST("/analyze", analysisHandler.Analyze)
+
+        router.GET("/history", historyHandler.History)
+
+        router.GET("/analysis/:id", analysisHandler.ViewAnalysis)
+        router.GET("/analysis/:id/view", analysisHandler.ViewAnalysisStatic)
+
+        router.GET("/stats", statsHandler.Stats)
+        router.GET("/statistics", statsHandler.StatisticsRedirect)
+
+        router.GET("/compare", compareHandler.Compare)
+
+        router.GET("/export/json", exportHandler.ExportJSON)
+
+        router.GET("/api/analysis/:id", analysisHandler.APIAnalysis)
+        router.GET("/api/subdomains/*domain", analysisHandler.APISubdomains)
+        router.GET("/api/health", healthHandler.HealthCheck)
+
+        router.GET("/proxy/bimi-logo", proxyHandler.BIMILogo)
+
+        router.NoRoute(func(c *gin.Context) {
+                nonce, _ := c.Get("csp_nonce")
+                c.HTML(http.StatusNotFound, "index.html", gin.H{
+                        "app_version": cfg.AppVersion,
+                        "csp_nonce":   nonce,
+                })
+        })
+
+        addr := fmt.Sprintf("0.0.0.0:%s", cfg.Port)
+        slog.Info("Starting Go DNS Tool server", "address", addr, "version", cfg.AppVersion)
+
+        if err := router.Run(addr); err != nil {
+                slog.Error("Server failed to start", "error", err)
+                os.Exit(1)
+        }
 }
 
 func findTemplatesDir() string {
-	candidates := []string{
-		"go-server/templates",
-		"templates",
-		"../templates",
-	}
-	for _, c := range candidates {
-		if info, err := os.Stat(c); err == nil && info.IsDir() {
-			return c
-		}
-	}
-	slog.Warn("Templates directory not found, using default")
-	return "templates"
+        candidates := []string{
+                "go-server/templates",
+                "templates",
+                "../templates",
+        }
+        for _, c := range candidates {
+                if info, err := os.Stat(c); err == nil && info.IsDir() {
+                        return c
+                }
+        }
+        slog.Warn("Templates directory not found, using default")
+        return "templates"
 }
 
 func findStaticDir() string {
-	candidates := []string{
-		"static",
-		"go-server/static",
-		"../static",
-	}
-	for _, c := range candidates {
-		if info, err := os.Stat(c); err == nil && info.IsDir() {
-			return c
-		}
-	}
-	slog.Warn("Static directory not found, using default")
-	return "static"
+        candidates := []string{
+                "static",
+                "go-server/static",
+                "../static",
+        }
+        for _, c := range candidates {
+                if info, err := os.Stat(c); err == nil && info.IsDir() {
+                        return c
+                }
+        }
+        slog.Warn("Static directory not found, using default")
+        return "static"
 }

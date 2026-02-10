@@ -85,7 +85,7 @@ Preferred communication style: Simple, everyday language.
 
 ## Go Rewrite — Migration Status
 
-### Current Phase: Phase 2 — Database Queries (COMPLETE)
+### Current Phase: Phase 3 — HTTP Routes (COMPLETE)
 
 **Decision**: Rewrite the DNS Tool from Python/Flask to Go for better performance and concurrency.
 
@@ -109,9 +109,18 @@ go-server/
 │   │   ├── models.go           # DomainAnalysis, AnalysisStat structs
 │   │   ├── domain_analyses.sql.go  # DomainAnalysis CRUD queries
 │   │   └── analysis_stats.sql.go   # AnalysisStats queries
-│   ├── handlers/               # HTTP route handlers
+│   ├── handlers/               # HTTP route handlers (all Python routes ported)
+│   │   ├── analysis.go         # /analysis/:id, /analysis/:id/view, /analyze, /api/analysis/:id
+│   │   ├── compare.go          # /compare (diff two analyses)
+│   │   ├── export.go           # /export/json (streaming NDJSON)
+│   │   ├── format.go           # Timestamp formatting helpers
 │   │   ├── health.go           # /go/health endpoint
-│   │   └── home.go             # GET / homepage
+│   │   ├── helpers.go          # Pagination, NormalizeResults, ComputeAllDiffs
+│   │   ├── history.go          # /history (paginated + search)
+│   │   ├── home.go             # GET / homepage
+│   │   ├── proxy.go            # /proxy/bimi-logo (SSRF-protected)
+│   │   ├── static.go           # /robots.txt, /sitemap.xml, /manifest.json, /sw.js, /llms.txt
+│   │   └── stats.go            # /stats, /statistics (redirect)
 │   ├── middleware/middleware.go # RequestContext, SecurityHeaders, Recovery
 │   ├── models/models.go        # Legacy model structs (kept for reference)
 │   └── templates/funcs.go      # Template helper functions (countryFlag, formatDate, etc.)
@@ -134,11 +143,24 @@ go-server/
 - **DomainAnalysis queries**: CRUD, search by domain, list with pagination, count, popular domains, country distribution
 - **AnalysisStats queries**: CRUD, list recent, upsert daily stats, date range queries
 - **6 integration tests** passing against production PostgreSQL database
+- **All HTTP routes ported** (returning JSON; templates in Phase 4):
+  - `/history` — paginated list with domain search
+  - `/analysis/:id/view` — view stored analysis with normalized results
+  - `/stats` — aggregate statistics, popular domains, country distribution
+  - `/statistics` — redirect to `/stats`
+  - `/compare` — side-by-side diff of two analyses with section-level change detection
+  - `/export/json` — streaming NDJSON export of all successful analyses
+  - `/api/analysis/:id` — JSON API for analysis data
+  - `/api/health` — health check endpoint
+  - `/proxy/bimi-logo` — SSRF-protected BIMI logo proxy (HTTPS-only, IP validation, redirect validation, size limits)
+  - `/robots.txt`, `/sitemap.xml`, `/manifest.json`, `/sw.js`, `/llms.txt`, `/llms-full.txt` — static files
+  - `/analyze` — stubbed (returns 501, requires DNS engine from Phase 5)
+  - `/analysis/:id` — stubbed (live re-analysis requires DNS engine)
+  - 404 handler — returns index template
 
 **Parallel Operation**: Python app continues serving production traffic on port 5000. Go server currently runs on port 5001 for testing only.
 
 ### Remaining Phases:
-- **Phase 3**: HTTP routes — all Python routes ported (analyze, history, stats, compare, export, BIMI proxy)
 - **Phase 4**: Template migration — convert 6 Jinja2 templates to Go html/template
 - **Phase 5**: DNS engine — port 5,400-line analyzer to Go with miekg/dns + goroutine concurrency
 - **Phase 6**: Security — SSRF protection, CSRF, rate limiting ported to Go
@@ -147,6 +169,7 @@ go-server/
 
 ## Recent Changes
 
+- **2026-02-10**: Go rewrite Phase 3 complete — all HTTP routes ported from Python/Flask to Go/Gin. History, stats, compare, export, analysis view, BIMI proxy (with SSRF protection), static files, and API endpoints all functional. Routes return JSON (templates migrated in Phase 4). Analyze/live-analysis stubbed pending DNS engine (Phase 5).
 - **2026-02-10**: Go rewrite Phase 2 complete — sqlc integration for type-safe database queries. All DomainAnalysis and AnalysisStats operations ported with 6 integration tests passing. Database struct now exposes `Queries` accessor for handlers.
 - **2026-02-10**: Started Go rewrite — Phase 1 foundation complete. Go project skeleton with Gin web framework, pgx database driver, structured logging, security headers middleware, health endpoint, and template engine. Python app continues serving production traffic.
 - **2026-02-10**: Fixed 2 test failures (CSRF in test mode, trailing-dot domain validation). Test suite now at 229 passing tests.
