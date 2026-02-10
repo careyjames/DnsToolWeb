@@ -405,7 +405,8 @@
             });
         });
         document.querySelectorAll('.history-reanalyze-btn').forEach(function(btn){
-            btn.addEventListener('click',function(){
+            btn.addEventListener('click',function(e){
+                e.preventDefault();
                 const name=getDomain(btn);
                 const overlay=document.getElementById('historyAnalyzeOverlay');
                 const domainEl=document.getElementById('historyAnalyzeDomain');
@@ -413,6 +414,8 @@
                 if(overlay){overlay.classList.remove('d-none');startStatusCycle(overlay);}
                 disableAllActions();
                 btn.innerHTML='<i class="fas fa-spinner fa-spin"></i>';
+                var href=btn.getAttribute('href');
+                requestAnimationFrame(function(){window.location.href=href;});
             });
         });
     });

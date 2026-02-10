@@ -2242,8 +2242,8 @@
                 }
                 
                 reanalyzeBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
                     if (this.classList.contains('disabled')) {
-                        e.preventDefault();
                         return;
                     }
                     
@@ -2252,6 +2252,7 @@
                     
                     this.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Analyzing...';
                     this.classList.add('disabled');
+                    document.body.classList.add('loading');
                     
                     if (overlay) {
                         overlay.classList.remove('d-none');
@@ -2260,8 +2261,10 @@
                         }
                     }
                     
-                    var timestamp = Date.now();
-                    this.href = '/analyze?domain=' + encodeURIComponent(domain) + '&refresh=' + timestamp;
+                    var url = '/analyze?domain=' + encodeURIComponent(domain) + '&refresh=' + Date.now();
+                    requestAnimationFrame(function() {
+                        window.location.href = url;
+                    });
                 });
             }
         });
