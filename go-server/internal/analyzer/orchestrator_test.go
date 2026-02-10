@@ -204,9 +204,7 @@ func TestPostureIssuesTracking(t *testing.T) {
                 "No SPF record",
                 "No DMARC record",
                 "No DKIM found",
-                "No MTA-STS",
                 "No CAA records",
-                "No DNSSEC",
         }
 
         if len(issues) != len(expectedIssues) {

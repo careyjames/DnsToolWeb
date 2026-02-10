@@ -102,7 +102,6 @@ func (a *Analyzer) CalculatePosture(results map[string]any) map[string]any {
 		configured = append(configured, "MTA-STS")
 	} else {
 		absent = append(absent, "MTA-STS")
-		issues = append(issues, "No MTA-STS")
 	}
 
 	if tlsrpt["status"] == "success" {
@@ -135,7 +134,6 @@ func (a *Analyzer) CalculatePosture(results map[string]any) map[string]any {
 		configured = append(configured, "DNSSEC")
 	} else {
 		absent = append(absent, "DNSSEC")
-		issues = append(issues, "No DNSSEC")
 	}
 
 	if score > 100 {
