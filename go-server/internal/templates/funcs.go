@@ -203,6 +203,9 @@ func stringFuncs() template.FuncMap {
                 "urlEncode": func(s string) string {
                         return url.QueryEscape(s)
                 },
+                "bimiProxyURL": func(logoURL string) template.URL {
+                        return template.URL("/proxy/bimi-logo?url=" + url.QueryEscape(logoURL))
+                },
         }
 }
 
