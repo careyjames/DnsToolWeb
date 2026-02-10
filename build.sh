@@ -1,3 +1,9 @@
 #!/bin/sh
-SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-cd "$SCRIPT_DIR/go-server" && go build -o "$SCRIPT_DIR/dns-tool-server" ./cmd/server/
+set -e
+echo "BUILD: pwd is $(pwd)"
+echo "BUILD: listing go-server/"
+ls go-server/go.mod
+cd go-server
+go build -o ../dns-tool-server ./cmd/server/
+echo "BUILD: binary created"
+ls -la ../dns-tool-server
