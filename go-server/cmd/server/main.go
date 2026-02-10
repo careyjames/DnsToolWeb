@@ -39,7 +39,7 @@ func main() {
         gin.SetMode(gin.ReleaseMode)
         router := gin.New()
 
-        router.Use(middleware.Recovery())
+        router.Use(middleware.Recovery(cfg.AppVersion))
         router.Use(middleware.RequestContext())
         router.Use(middleware.SecurityHeaders())
 

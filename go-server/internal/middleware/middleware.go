@@ -86,7 +86,7 @@ func SecurityHeaders() gin.HandlerFunc {
         }
 }
 
-func Recovery() gin.HandlerFunc {
+func Recovery(appVersion string) gin.HandlerFunc {
         return func(c *gin.Context) {
                 defer func() {
                         if err := recover(); err != nil {
@@ -96,7 +96,20 @@ func Recovery() gin.HandlerFunc {
                                         "error", fmt.Sprintf("%v", err),
                                         "path", c.Request.URL.Path,
                                 )
-                                c.AbortWithStatus(http.StatusInternalServerError)
+                                nonce, _ := c.Get("csp_nonce")
+                                csrfToken, _ := c.Get("csrf_token")
+                                type flashMsg struct {
+                                        Category string
+                                        Message  string
+                                }
+                                c.HTML(http.StatusInternalServerError, "index.html", gin.H{
+                                        "AppVersion":    appVersion,
+                                        "CspNonce":      nonce,
+                                        "CsrfToken":     csrfToken,
+                                        "ActivePage":    "home",
+                                        "FlashMessages": []flashMsg{{Category: "danger", Message: "An internal error occurred. Please try again."}},
+                                })
+                                c.Abort()
                         }
                 }()
                 c.Next()
