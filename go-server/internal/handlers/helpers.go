@@ -69,6 +69,17 @@ var normalizeDefaults = map[string]interface{}{
         "_data_freshness":        map[string]interface{}{},
 }
 
+var legacyPostureStates = map[string]string{
+        "Low":      "Low Risk",
+        "Medium":   "Medium Risk",
+        "High":     "High Risk",
+        "Critical": "Critical Risk",
+        "STRONG":   "Informational",
+        "MODERATE": "Medium Risk",
+        "WEAK":     "High Risk",
+        "NONE":     "Critical Risk",
+}
+
 func NormalizeResults(fullResults json.RawMessage) map[string]interface{} {
         if len(fullResults) == 0 {
                 return nil
@@ -82,6 +93,14 @@ func NormalizeResults(fullResults json.RawMessage) map[string]interface{} {
         for key, defaultVal := range normalizeDefaults {
                 if _, exists := results[key]; !exists {
                         results[key] = defaultVal
+                }
+        }
+
+        if posture, ok := results["posture"].(map[string]interface{}); ok {
+                if state, ok := posture["state"].(string); ok {
+                        if normalized, found := legacyPostureStates[state]; found {
+                                posture["state"] = normalized
+                        }
                 }
         }
 

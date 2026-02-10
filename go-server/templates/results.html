@@ -150,8 +150,9 @@
                             <div class="d-flex align-items-center">
                                 <i class="fas fa-{{$postureIcon}} fa-2x text-{{$postureColor}} me-3"></i>
                                 <div>
-                                    <div class="d-flex align-items-center">
-                                        <span class="text-muted small me-2">DNS &amp; Trust Posture:</span>
+                                    <div class="d-flex align-items-center flex-wrap">
+                                        <span class="fw-semibold me-2">DNS Security &amp; Trust Posture</span>
+                                        <span class="text-muted small me-2">Risk Level:</span>
                                         <span class="badge bg-{{$postureColor}} fs-6 px-3 py-2">{{$postureState}}</span>
                                     </div>
                                     <small class="text-muted">{{$postureMsg}}</small>
