@@ -2,8 +2,14 @@ package handlers
 
 import (
         "encoding/json"
+        "io"
+        "log/slog"
         "net/http"
+        "net/http/httputil"
+        "net/url"
         "strconv"
+        "strings"
+        "time"
 
         "dnstool/internal/config"
         "dnstool/internal/db"
@@ -69,25 +75,57 @@ func (h *AnalysisHandler) ViewAnalysisStatic(c *gin.Context) {
         })
 }
 
+func (h *AnalysisHandler) proxyToPython(c *gin.Context) {
+        backendURL, err := url.Parse(h.Config.PythonBackendURL)
+        if err != nil {
+                slog.Error("Invalid Python backend URL", "url", h.Config.PythonBackendURL, "error", err)
+                c.JSON(http.StatusBadGateway, gin.H{"error": "Backend unavailable"})
+                return
+        }
+
+        proxy := &httputil.ReverseProxy{
+                Director: func(req *http.Request) {
+                        req.URL.Scheme = backendURL.Scheme
+                        req.URL.Host = backendURL.Host
+                        req.Host = backendURL.Host
+                        if _, ok := req.Header["User-Agent"]; !ok {
+                                req.Header.Set("User-Agent", "")
+                        }
+                },
+                Transport: &http.Transport{
+                        ResponseHeaderTimeout: 120 * time.Second,
+                },
+                ErrorHandler: func(w http.ResponseWriter, r *http.Request, err error) {
+                        slog.Error("Proxy error", "path", r.URL.Path, "error", err)
+                        w.Header().Set("Content-Type", "application/json")
+                        w.WriteHeader(http.StatusBadGateway)
+                        io.WriteString(w, `{"error":"DNS analysis backend is temporarily unavailable"}`)
+                },
+                ModifyResponse: func(resp *http.Response) error {
+                        resp.Header.Del("Server")
+                        return nil
+                },
+        }
+
+        slog.Info("Proxying request to Python backend", "method", c.Request.Method, "path", c.Request.URL.Path)
+        proxy.ServeHTTP(c.Writer, c.Request)
+}
+
 func (h *AnalysisHandler) ViewAnalysis(c *gin.Context) {
-        c.JSON(http.StatusNotImplemented, gin.H{
-                "error":   "Live DNS analysis is not yet available in the Go server",
-                "message": "This feature requires the DNS engine (Phase 5). Use the Python server for live analysis.",
-        })
+        h.proxyToPython(c)
 }
 
 func (h *AnalysisHandler) Analyze(c *gin.Context) {
-        c.JSON(http.StatusNotImplemented, gin.H{
-                "error":   "DNS analysis is not yet available in the Go server",
-                "message": "This feature requires the DNS engine (Phase 5). Use the Python server for live analysis.",
-        })
+        h.proxyToPython(c)
 }
 
 func (h *AnalysisHandler) APISubdomains(c *gin.Context) {
-        c.JSON(http.StatusNotImplemented, gin.H{
-                "error":   "Subdomain discovery is not yet available in the Go server",
-                "message": "This feature requires the DNS engine (Phase 5). Use the Python server for subdomain discovery.",
-        })
+        domain := strings.TrimPrefix(c.Param("domain"), "/")
+        if domain == "" {
+                c.JSON(http.StatusBadRequest, gin.H{"error": "Domain is required"})
+                return
+        }
+        h.proxyToPython(c)
 }
 
 func (h *AnalysisHandler) APIAnalysis(c *gin.Context) {

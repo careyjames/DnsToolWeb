@@ -154,8 +154,9 @@ go-server/
   - `/api/health` — health check endpoint
   - `/proxy/bimi-logo` — SSRF-protected BIMI logo proxy (HTTPS-only, IP validation, redirect validation, size limits)
   - `/robots.txt`, `/sitemap.xml`, `/manifest.json`, `/sw.js`, `/llms.txt`, `/llms-full.txt` — static files
-  - `/analyze` — stubbed (returns 501, requires DNS engine from Phase 5)
-  - `/analysis/:id` — stubbed (live re-analysis requires DNS engine)
+  - `/analyze` — reverse-proxied to Python backend (DNS engine not yet ported)
+  - `/analysis/:id` — reverse-proxied to Python backend (live re-analysis)
+  - `/api/subdomains/*domain` — reverse-proxied to Python backend
   - 404 handler — returns index template
 
 **Parallel Operation**: Python app continues serving production traffic on port 5000. Go server currently runs on port 5001 for testing only.
@@ -169,7 +170,8 @@ go-server/
 
 ## Recent Changes
 
-- **2026-02-10**: Go rewrite Phase 3 complete — all HTTP routes ported from Python/Flask to Go/Gin. History, stats, compare, export, analysis view, BIMI proxy (with SSRF protection), static files, and API endpoints all functional. Routes return JSON (templates migrated in Phase 4). Analyze/live-analysis stubbed pending DNS engine (Phase 5).
+- **2026-02-10**: Added reverse proxy for DNS-engine-dependent routes (`/analyze`, `/analysis/:id`, `/api/subdomains`) — Go server transparently forwards these to the Python backend so users experience no disruption. Configurable via `PYTHON_BACKEND_URL` env var (defaults to `http://127.0.0.1:5000`).
+- **2026-02-10**: Go rewrite Phase 3 complete — all HTTP routes ported from Python/Flask to Go/Gin. History, stats, compare, export, analysis view, BIMI proxy (with SSRF protection), static files, and API endpoints all functional. Routes return JSON (templates migrated in Phase 4).
 - **2026-02-10**: Go rewrite Phase 2 complete — sqlc integration for type-safe database queries. All DomainAnalysis and AnalysisStats operations ported with 6 integration tests passing. Database struct now exposes `Queries` accessor for handlers.
 - **2026-02-10**: Started Go rewrite — Phase 1 foundation complete. Go project skeleton with Gin web framework, pgx database driver, structured logging, security headers middleware, health endpoint, and template engine. Python app continues serving production traffic.
 - **2026-02-10**: Fixed 2 test failures (CSRF in test mode, trailing-dot domain validation). Test suite now at 229 passing tests.
