@@ -47,16 +47,24 @@
 
         <!-- Print-Only Report Header -->
         <div class="print-report-header">
-            <div class="print-report-brand">
-                <img src="/static/images/owl-of-athena.png" alt="IT Help San Diego" class="print-brand-logo">
-                <span class="print-brand-name">IT Help San Diego Inc.</span>
-            </div>
-            <div class="print-report-title">DNS Intelligence Report</div>
-            <div class="print-report-domain">{{.Domain}}</div>
-            <div class="print-report-meta">
-                {{if .AnalysisTimestamp}}Generated {{.AnalysisTimestamp}}{{end}}
-                {{if gt .AnalysisDuration 0}} · Analysis completed in {{formatFloat 1 .AnalysisDuration}}s{{end}}
-                {{if .ToolVersion}} · v{{.ToolVersion}}{{end}}
+            <div class="print-header-accent"></div>
+            <div class="print-header-main">
+                <div class="print-header-left">
+                    <div class="print-report-brand">
+                        <img src="/static/images/owl-of-athena.png" alt="IT Help San Diego" class="print-brand-logo">
+                        <span class="print-brand-name">IT Help San Diego Inc.</span>
+                    </div>
+                    <div class="print-report-title">Domain Security<br>Intelligence Report</div>
+                </div>
+                <div class="print-header-right">
+                    <div class="print-report-domain">{{.Domain}}</div>
+                    <div class="print-report-meta">
+                        {{if .AnalysisTimestamp}}<span class="print-meta-label">Generated</span> {{.AnalysisTimestamp}}{{end}}
+                        {{if gt .AnalysisDuration 0}}<br><span class="print-meta-label">Duration</span> {{formatFloat 1 .AnalysisDuration}}s{{end}}
+                        {{if .ToolVersion}}<br><span class="print-meta-label">Version</span> v{{.ToolVersion}}{{end}}
+                    </div>
+                    <div class="print-classification">CONFIDENTIAL</div>
+                </div>
             </div>
         </div>
 
@@ -2164,21 +2172,23 @@
 
         <!-- Print Footer -->
         <div class="print-report-footer" role="contentinfo">
-            <div class="print-footer-divider"></div>
+            <div class="print-footer-accent"></div>
             <div class="print-footer-content">
                 <div class="print-footer-left">
                     <strong>IT Help San Diego Inc.</strong>
                     <span>www.it-help.tech</span>
                 </div>
                 <div class="print-footer-center">
-                    Report reflects evaluated DNS security posture at time of generation.
+                    <span class="print-footer-tagline">Elevating Domain Security</span>
+                    <span class="print-footer-note">Report reflects evaluated DNS security posture at time of generation.</span>
                 </div>
                 <div class="print-footer-right">
                     <strong>619-853-5008</strong>
+                    <span>San Diego, CA</span>
                 </div>
             </div>
             <div class="print-footer-disclaimer">
-                This report is confidential and intended for the domain owner. DNS records are public data; analysis and recommendations are proprietary.
+                CONFIDENTIAL — This report is prepared for the domain owner. DNS records are public data; analysis, scoring methodology, and remediation guidance are proprietary to IT Help San Diego Inc.
             </div>
         </div>
     </main>
