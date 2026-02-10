@@ -6,29 +6,8 @@
     {{template "head_css" .}}
     {{template "critical_css" .}}
     <style nonce="{{.CspNonce}}">
-        @media print {
-            .navbar, .btn, button, .no-print { display: none !important; }
-            * { 
-                -webkit-print-color-adjust: exact !important; 
-                print-color-adjust: exact !important; 
-            }
-            .card { break-inside: avoid; }
-            .text-truncate { 
-                overflow: visible !important; 
-                text-overflow: clip !important; 
-                white-space: normal !important;
-            }
-            .col-md-3 { 
-                flex: 0 0 50% !important; 
-                max-width: 50% !important;
-                margin-bottom: 0.5rem !important;
-            }
-            footer { 
-                display: block !important; 
-                visibility: visible !important;
-                margin-top: 2rem !important;
-            }
-        }
+        .print-report-header { display: none; }
+        .print-report-footer { display: none; }
     </style>
 </head>
 <body>
@@ -66,8 +45,23 @@
         {{$data_freshness := mapGetMap "_data_freshness" $results}}
         {{$section_status := mapGetMap "section_status" $results}}
 
-        <!-- Header -->
-        <div class="results-header mb-4">
+        <!-- Print-Only Report Header -->
+        <div class="print-report-header">
+            <div class="print-report-brand">
+                <img src="/static/images/owl-of-athena.png" alt="IT Help San Diego" class="print-brand-logo">
+                <span class="print-brand-name">IT Help San Diego Inc.</span>
+            </div>
+            <div class="print-report-title">DNS Intelligence Report</div>
+            <div class="print-report-domain">{{.Domain}}</div>
+            <div class="print-report-meta">
+                {{if .AnalysisTimestamp}}Generated {{.AnalysisTimestamp}}{{end}}
+                {{if gt .AnalysisDuration 0}} · Analysis completed in {{formatFloat 1 .AnalysisDuration}}s{{end}}
+                {{if .ToolVersion}} · v{{.ToolVersion}}{{end}}
+            </div>
+        </div>
+
+        <!-- Screen Header -->
+        <div class="results-header mb-4 screen-only">
             <div class="results-header-info">
                 <h1 class="h3 mb-1">DNS Intelligence Report</h1>
                 <div class="text-muted">
@@ -2158,8 +2152,8 @@
 
         {{end}}
 
-        <!-- Footer -->
-        <footer class="text-center mt-5 mb-4 text-muted small" role="contentinfo">
+        <!-- Screen Footer -->
+        <footer class="text-center mt-5 mb-4 text-muted small screen-only" role="contentinfo">
             <a href="https://www.it-help.tech" target="_blank" rel="noopener">
                 <img src="/static/images/owl-of-athena.png" alt="IT Help San Diego - Owl of Athena" width="64" height="64" class="mb-2" loading="lazy" style="border-radius:50%;">
             </a>
@@ -2167,6 +2161,26 @@
             <p class="mb-1">Made by <a href="https://www.it-help.tech/blog/dns-security-best-practices/" target="_blank" rel="noopener" class="text-info">IT Help San Diego Inc.</a></p>
             <p class="mb-0">Need help with DNS? Call <a href="tel:619-853-5008" class="text-info">619-853-5008</a></p>
         </footer>
+
+        <!-- Print Footer -->
+        <div class="print-report-footer" role="contentinfo">
+            <div class="print-footer-divider"></div>
+            <div class="print-footer-content">
+                <div class="print-footer-left">
+                    <strong>IT Help San Diego Inc.</strong>
+                    <span>www.it-help.tech</span>
+                </div>
+                <div class="print-footer-center">
+                    Report reflects evaluated DNS security posture at time of generation.
+                </div>
+                <div class="print-footer-right">
+                    <strong>619-853-5008</strong>
+                </div>
+            </div>
+            <div class="print-footer-disclaimer">
+                This report is confidential and intended for the domain owner. DNS records are public data; analysis and recommendations are proprietary.
+            </div>
+        </div>
     </main>
 
     <!-- Loading Overlay -->
