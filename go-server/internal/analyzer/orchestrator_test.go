@@ -1097,3 +1097,147 @@ func TestDKIMNoTestFlagNormal(t *testing.T) {
                 t.Error("expected test_mode=false for normal DKIM record without t=y")
         }
 }
+
+func TestDKIMInconclusiveNotAbsent(t *testing.T) {
+        a := newTestAnalyzer()
+        results := map[string]any{
+                "spf_analysis":     map[string]any{"status": "success"},
+                "dmarc_analysis":   map[string]any{"status": "success", "policy": "reject"},
+                "dkim_analysis":    map[string]any{"status": "info", "primary_provider": "Unknown"},
+                "mta_sts_analysis": map[string]any{},
+                "tlsrpt_analysis":  map[string]any{},
+                "bimi_analysis":    map[string]any{},
+                "dane_analysis":    map[string]any{},
+                "caa_analysis":     map[string]any{},
+                "dnssec_analysis":  map[string]any{},
+        }
+
+        posture := a.CalculatePosture(results)
+
+        monitoring, _ := posture["monitoring"].([]string)
+        foundInconclusive := false
+        for _, m := range monitoring {
+                if strings.Contains(m, "inconclusive") {
+                        foundInconclusive = true
+                }
+        }
+        if !foundInconclusive {
+                t.Errorf("DKIM with unknown provider should be 'inconclusive' in monitoring, got %v", monitoring)
+        }
+
+        absent, _ := posture["absent"].([]string)
+        for _, a := range absent {
+                if strings.Contains(a, "DKIM") {
+                        t.Error("inconclusive DKIM should NOT be in absent list")
+                }
+        }
+
+        issues, _ := posture["critical_issues"].([]string)
+        for _, issue := range issues {
+                if strings.Contains(issue, "No DKIM found") {
+                        t.Error("inconclusive DKIM should NOT generate 'No DKIM found' issue")
+                }
+        }
+
+        recs, _ := posture["recommendations"].([]string)
+        foundRec := false
+        for _, r := range recs {
+                if strings.Contains(r, "not discoverable") && strings.Contains(r, "RFC 6376") {
+                        foundRec = true
+                }
+        }
+        if !foundRec {
+                t.Error("inconclusive DKIM should generate an informational recommendation citing RFC 6376")
+        }
+}
+
+func TestDKIMInconclusiveGradeNotMedium(t *testing.T) {
+        a := newTestAnalyzer()
+        results := map[string]any{
+                "spf_analysis":     map[string]any{"status": "success"},
+                "dmarc_analysis":   map[string]any{"status": "success", "policy": "reject"},
+                "dkim_analysis":    map[string]any{"status": "info", "primary_provider": "Unknown"},
+                "mta_sts_analysis": map[string]any{},
+                "tlsrpt_analysis":  map[string]any{},
+                "bimi_analysis":    map[string]any{},
+                "dane_analysis":    map[string]any{},
+                "caa_analysis":     map[string]any{},
+                "dnssec_analysis":  map[string]any{},
+        }
+
+        posture := a.CalculatePosture(results)
+        state, _ := posture["state"].(string)
+        if state == testRiskMedium {
+                t.Errorf("inconclusive DKIM with SPF+DMARC should NOT be Medium Risk (was equating inconclusive with absent), got %s", state)
+        }
+        if !strings.Contains(state, "Monitoring") {
+                t.Errorf("inconclusive DKIM should include Monitoring suffix, got %s", state)
+        }
+}
+
+func TestDKIMNoMailDomainSkipsRemediation(t *testing.T) {
+        a := newTestAnalyzer()
+        results := map[string]any{
+                "domain":           "nomail.example.com",
+                "spf_analysis":     map[string]any{"status": "success", "all_mechanism": "-all", "no_mail_intent": true},
+                "dmarc_analysis":   map[string]any{"status": "success", "policy": "reject"},
+                "dkim_analysis":    map[string]any{},
+                "mta_sts_analysis": map[string]any{},
+                "tlsrpt_analysis":  map[string]any{},
+                "bimi_analysis":    map[string]any{},
+                "dane_analysis":    map[string]any{},
+                "caa_analysis":     map[string]any{},
+                "dnssec_analysis":  map[string]any{},
+                "has_null_mx":      true,
+        }
+
+        remediation := a.GenerateRemediation(results)
+        allFixes, _ := remediation["all_fixes"].([]map[string]any)
+        for _, f := range allFixes {
+                section, _ := f["section"].(string)
+                if section == "dkim" {
+                        t.Error("no-mail domain should NOT generate any DKIM remediation fix")
+                }
+        }
+
+        posture := a.CalculatePosture(results)
+        issues, _ := posture["critical_issues"].([]string)
+        for _, issue := range issues {
+                if strings.Contains(issue, "DKIM") {
+                        t.Error("no-mail domain should NOT have DKIM in critical issues")
+                }
+        }
+}
+
+func TestDKIMInconclusiveRemediationSeverity(t *testing.T) {
+        a := newTestAnalyzer()
+        results := map[string]any{
+                "domain":           "example.com",
+                "spf_analysis":     map[string]any{"status": "success"},
+                "dmarc_analysis":   map[string]any{"status": "success", "policy": "reject"},
+                "dkim_analysis":    map[string]any{"status": "info", "primary_provider": "Unknown"},
+                "mta_sts_analysis": map[string]any{},
+                "tlsrpt_analysis":  map[string]any{},
+                "bimi_analysis":    map[string]any{},
+                "dane_analysis":    map[string]any{},
+                "caa_analysis":     map[string]any{},
+                "dnssec_analysis":  map[string]any{},
+        }
+
+        remediation := a.GenerateRemediation(results)
+        allFixes, _ := remediation["all_fixes"].([]map[string]any)
+
+        for _, f := range allFixes {
+                section, _ := f["section"].(string)
+                if section == "dkim" {
+                        severity, _ := f["severity"].(string)
+                        if severity == "Critical" || severity == "High" {
+                                t.Errorf("inconclusive DKIM should NOT have %s severity — should be Low since DKIM absence cannot be confirmed (RFC 6376 §3.6.2.1)", severity)
+                        }
+                        title, _ := f["title"].(string)
+                        if strings.Contains(title, "Configure") {
+                                t.Error("inconclusive DKIM should say 'Verify' not 'Configure' — we cannot confirm DKIM is absent")
+                        }
+                }
+        }
+}

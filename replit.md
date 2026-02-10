@@ -62,6 +62,13 @@ The living feature parity manifest is at `go-server/internal/analyzer/manifest.g
 ### Risk Level Labels
 Posture risk levels follow CVSS-aligned semantics: **Informational** (best) → **Low Risk** → **Medium Risk** → **High Risk** → **Critical Risk** (worst). Legacy stored values (bare "Low", "Medium", etc.) are normalized at display time in `NormalizeResults()` in `go-server/internal/handlers/helpers.go`. Remediation severity labels (Critical/High/Medium/Low) are separate from posture states.
 
+### DKIM Assessment Logic
+DKIM selectors are not enumerable via DNS (RFC 6376 §3.6.2.1). The tool checks ~35 common selectors but cannot confirm DKIM absence. The posture system distinguishes three states:
+- **Confirmed found** (`dkimOK`/`dkimProvider`): DKIM selectors discovered with valid keys, or primary provider is known to use DKIM (e.g., Google Workspace, Microsoft 365). Classified as "configured."
+- **Inconclusive** (`dkimPartial`): No selectors found but provider is unknown — DKIM may exist with custom/rotating selectors. Classified as "monitoring" with Low-severity "Verify" remediation, not "absent."
+- **No-mail domain**: Domains with null MX + SPF -all skip DKIM remediation entirely. DKIM signing is not applicable for domains that don't send email.
+- **Confirmed absent**: No selectors found, no known provider, domain sends mail. Classified as "absent" with High-severity "Configure" remediation.
+
 ### SonarCloud Code Quality
 - **Configuration**: `sonar-project.properties` at project root. Excludes `docs/legacy/**`, `go-server/db/schema/**`, and `templates/**`. PL/SQL VARCHAR2 rule (false positive for PostgreSQL) is suppressed for `.sql` files.
 - **SONAR_TOKEN**: Stored as an encrypted Replit secret. Used for API-based quality gate checks.

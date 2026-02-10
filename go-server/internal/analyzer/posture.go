@@ -197,10 +197,22 @@ func classifyDKIM(ps protocolState, acc *postureAccumulator) {
         case ps.dkimProvider:
                 acc.configured = append(acc.configured, "DKIM (provider-verified)")
         case ps.dkimPartial:
-                acc.monitoring = append(acc.monitoring, "DKIM (partial)")
+                if ps.isNoMailDomain {
+                        acc.recommendations = append(acc.recommendations,
+                                "DKIM not applicable for no-mail domains — DKIM signing is only relevant for domains that send email")
+                } else {
+                        acc.monitoring = append(acc.monitoring, "DKIM (inconclusive)")
+                        acc.recommendations = append(acc.recommendations,
+                                "DKIM not discoverable via common selectors — may be configured with custom or rotating selectors (RFC 6376 §3.6.2.1)")
+                }
         default:
-                acc.absent = append(acc.absent, "DKIM")
-                acc.issues = append(acc.issues, "No DKIM found")
+                if ps.isNoMailDomain {
+                        acc.recommendations = append(acc.recommendations,
+                                "DKIM not applicable for no-mail domains — DKIM signing is only relevant for domains that send email")
+                } else {
+                        acc.absent = append(acc.absent, "DKIM")
+                        acc.issues = append(acc.issues, "No DKIM found")
+                }
         }
 }
 
@@ -311,6 +323,7 @@ type gradeInput struct {
         hasSPF                bool
         hasDMARC              bool
         hasDKIM               bool
+        dkimInconclusive      bool
         isNoMail              bool
 }
 
@@ -324,6 +337,7 @@ func determineGrade(ps protocolState, hasSPF, hasDMARC, hasDKIM bool, monitoring
                 hasSPF:                hasSPF,
                 hasDMARC:              hasDMARC,
                 hasDKIM:               hasDKIM,
+                dkimInconclusive:      ps.dkimPartial,
                 isNoMail:              ps.isNoMailDomain,
         }
 
@@ -366,6 +380,10 @@ func classifyMailCorePresent(ps protocolState, gi gradeInput, monitoring, config
 
 func classifyMailPartial(gi gradeInput) (string, string, string, string) {
         if gi.hasSPF && gi.hasDMARC && !gi.hasDKIM {
+                if gi.dkimInconclusive {
+                        return riskLow + " Monitoring", iconExclamationTriangle, "warning",
+                                "SPF and DMARC present. DKIM not discoverable via common selectors but may be configured with custom or rotating selectors."
+                }
                 return riskMedium, iconExclamationTriangle, "warning",
                         "SPF and DMARC present but DKIM not verified. DKIM signing is required for full DMARC alignment."
         }

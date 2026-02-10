@@ -236,6 +236,10 @@ func appendDKIMFixes(fixes []fix, ps protocolState, results map[string]any, doma
                 return fixes
         }
 
+        if ps.isNoMailDomain {
+                return fixes
+        }
+
         dkim := getMapResult(results, "dkim_analysis")
         provider, _ := dkim["primary_provider"].(string)
 
@@ -253,15 +257,29 @@ func appendDKIMFixes(fixes []fix, ps protocolState, results map[string]any, doma
                 })
         }
 
+        if ps.dkimPartial {
+                return append(fixes, fix{
+                        Title:         "Verify DKIM configuration",
+                        Description:   "DKIM selectors were not discoverable via common selector names. This does not confirm DKIM is absent — your provider may use custom or rotating selectors that cannot be enumerated through DNS (RFC 6376 §3.6.2.1). Check your email provider's DKIM settings to confirm signing is enabled.",
+                        DNSRecord:     fmt.Sprintf("selector1._domainkey.%s TXT \"v=DKIM1; k=rsa; p=<public_key>\"", domain),
+                        RFC:           "RFC 6376 §3.6.2.1",
+                        RFCURL:        "https://datatracker.ietf.org/doc/html/rfc6376#section-3.6.2.1",
+                        Severity:      severityLow,
+                        SeverityColor: colorLow,
+                        SeverityOrder: 4,
+                        Section:       "dkim",
+                })
+        }
+
         return append(fixes, fix{
                 Title:         "Configure DKIM signing",
                 Description:   "DKIM (DomainKeys Identified Mail) adds a cryptographic signature to outgoing emails, proving they haven't been tampered with. Enable DKIM in your email provider's settings.",
                 DNSRecord:     fmt.Sprintf("selector1._domainkey.%s TXT \"v=DKIM1; k=rsa; p=<public_key>\"", domain),
                 RFC:           "RFC 6376 §3.6",
                 RFCURL:        "https://datatracker.ietf.org/doc/html/rfc6376#section-3.6",
-                Severity:      severityCritical,
-                SeverityColor: colorCritical,
-                SeverityOrder: 1,
+                Severity:      severityHigh,
+                SeverityColor: colorHigh,
+                SeverityOrder: 2,
                 Section:       "dkim",
         })
 }
