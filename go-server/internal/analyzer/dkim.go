@@ -12,135 +12,205 @@ import (
 
 const domainkeySuffix = "._domainkey"
 
+const (
+	providerMicrosoft365    = "Microsoft 365"
+	providerGoogleWS        = "Google Workspace"
+	providerMailChimp       = "MailChimp"
+	providerSendGrid        = "SendGrid"
+	providerMailjet         = "Mailjet"
+	providerAmazonSES       = "Amazon SES"
+	providerPostmark        = "Postmark"
+	providerSparkPost       = "SparkPost"
+	providerMailgun         = "Mailgun"
+	providerBrevo           = "Brevo (Sendinblue)"
+	providerMimecast        = "Mimecast"
+	providerProofpoint      = "Proofpoint"
+	providerZohoMail        = "Zoho Mail"
+	providerFastmail        = "Fastmail"
+	providerProtonMail      = "ProtonMail"
+	providerCloudflareEmail = "Cloudflare Email"
+	providerBarracuda       = "Barracuda"
+	providerHornetsecurity  = "Hornetsecurity"
+	providerSpamExperts     = "SpamExperts"
+
+	selDefault     = "default._domainkey"
+	selDKIM        = "dkim._domainkey"
+	selMail        = "mail._domainkey"
+	selEmail       = "email._domainkey"
+	selK1          = "k1._domainkey"
+	selK2          = "k2._domainkey"
+	selS1          = "s1._domainkey"
+	selS2          = "s2._domainkey"
+	selSig1        = "sig1._domainkey"
+	selSelector1   = "selector1._domainkey"
+	selSelector2   = "selector2._domainkey"
+	selGoogle      = "google._domainkey"
+	selGoogle2048  = "google2048._domainkey"
+	selMailjet     = "mailjet._domainkey"
+	selMandrill    = "mandrill._domainkey"
+	selAmazonSES   = "amazonses._domainkey"
+	selSendgrid    = "sendgrid._domainkey"
+	selMailchimp   = "mailchimp._domainkey"
+	selPostmark    = "postmark._domainkey"
+	selSparkpost   = "sparkpost._domainkey"
+	selMailgun     = "mailgun._domainkey"
+	selSendinblue  = "sendinblue._domainkey"
+	selMimecast    = "mimecast._domainkey"
+	selProofpoint  = "proofpoint._domainkey"
+	selEverlytic   = "everlytickey1._domainkey"
+	selZendesk1    = "zendesk1._domainkey"
+	selZendesk2    = "zendesk2._domainkey"
+	selCM          = "cm._domainkey"
+	selMX          = "mx._domainkey"
+	selSMTP        = "smtp._domainkey"
+	selMailer      = "mailer._domainkey"
+	selProtonmail  = "protonmail._domainkey"
+	selProtonmail2 = "protonmail2._domainkey"
+	selProtonmail3 = "protonmail3._domainkey"
+	selFM1         = "fm1._domainkey"
+	selFM2         = "fm2._domainkey"
+	selFM3         = "fm3._domainkey"
+)
+
 var (
 	dkimKeyTypeRe = regexp.MustCompile(`(?i)\bk=(\w+)`)
 	dkimPKeyRe    = regexp.MustCompile(`(?i)\bp=([^;\s]*)`)
 )
 
 var defaultDKIMSelectors = []string{
-	"default._domainkey", "dkim._domainkey", "mail._domainkey",
-	"email._domainkey", "k1._domainkey", "k2._domainkey",
-	"s1._domainkey", "s2._domainkey", "sig1._domainkey",
-	"selector1._domainkey", "selector2._domainkey",
-	"google._domainkey", "google2048._domainkey",
-	"mailjet._domainkey", "mandrill._domainkey", "amazonses._domainkey",
-	"sendgrid._domainkey", "mailchimp._domainkey", "postmark._domainkey",
-	"sparkpost._domainkey", "mailgun._domainkey", "sendinblue._domainkey",
-	"mimecast._domainkey", "proofpoint._domainkey", "everlytickey1._domainkey",
-	"zendesk1._domainkey", "zendesk2._domainkey", "cm._domainkey",
-	"mx._domainkey", "smtp._domainkey", "mailer._domainkey",
-	"protonmail._domainkey", "protonmail2._domainkey", "protonmail3._domainkey",
-	"fm1._domainkey", "fm2._domainkey", "fm3._domainkey",
+	selDefault, selDKIM, selMail,
+	selEmail, selK1, selK2,
+	selS1, selS2, selSig1,
+	selSelector1, selSelector2,
+	selGoogle, selGoogle2048,
+	selMailjet, selMandrill, selAmazonSES,
+	selSendgrid, selMailchimp, selPostmark,
+	selSparkpost, selMailgun, selSendinblue,
+	selMimecast, selProofpoint, selEverlytic,
+	selZendesk1, selZendesk2, selCM,
+	selMX, selSMTP, selMailer,
+	selProtonmail, selProtonmail2, selProtonmail3,
+	selFM1, selFM2, selFM3,
 }
 
 var selectorProviderMap = map[string]string{
-	"selector1._domainkey":    "Microsoft 365",
-	"selector2._domainkey":    "Microsoft 365",
-	"google._domainkey":       "Google Workspace",
-	"google2048._domainkey":   "Google Workspace",
-	"k1._domainkey":           "MailChimp",
-	"k2._domainkey":           "MailChimp",
-	"k3._domainkey":           "MailChimp",
-	"mailchimp._domainkey":    "MailChimp",
-	"mandrill._domainkey":     "MailChimp (Mandrill)",
-	"s1._domainkey":           "SendGrid",
-	"s2._domainkey":           "SendGrid",
-	"sendgrid._domainkey":     "SendGrid",
-	"mailjet._domainkey":      "Mailjet",
-	"amazonses._domainkey":    "Amazon SES",
-	"postmark._domainkey":     "Postmark",
-	"sparkpost._domainkey":    "SparkPost",
-	"mailgun._domainkey":      "Mailgun",
-	"sendinblue._domainkey":   "Brevo (Sendinblue)",
-	"mimecast._domainkey":     "Mimecast",
-	"proofpoint._domainkey":   "Proofpoint",
-	"everlytickey1._domainkey": "Everlytic",
-	"zendesk1._domainkey":     "Zendesk",
-	"zendesk2._domainkey":     "Zendesk",
-	"cm._domainkey":           "Campaign Monitor",
+	selSelector1: providerMicrosoft365,
+	selSelector2: providerMicrosoft365,
+	selGoogle:    providerGoogleWS,
+	selGoogle2048: providerGoogleWS,
+	selK1:        providerMailChimp,
+	selK2:        providerMailChimp,
+	"k3._domainkey": providerMailChimp,
+	selMailchimp: providerMailChimp,
+	selMandrill:  "MailChimp (Mandrill)",
+	selS1:        providerSendGrid,
+	selS2:        providerSendGrid,
+	selSendgrid:  providerSendGrid,
+	selMailjet:   providerMailjet,
+	selAmazonSES: providerAmazonSES,
+	selPostmark:  providerPostmark,
+	selSparkpost: providerSparkPost,
+	selMailgun:   providerMailgun,
+	selSendinblue: providerBrevo,
+	selMimecast:  providerMimecast,
+	selProofpoint: providerProofpoint,
+	selEverlytic: "Everlytic",
+	selZendesk1:  "Zendesk",
+	selZendesk2:  "Zendesk",
+	selCM:        "Campaign Monitor",
 }
 
 var mxToDKIMProvider = map[string]string{
-	"google":              "Google Workspace",
-	"googlemail":          "Google Workspace",
-	"gmail":               "Google Workspace",
-	"outlook":             "Microsoft 365",
-	"microsoft":           "Microsoft 365",
-	"protection.outlook":  "Microsoft 365",
-	"o365":                "Microsoft 365",
-	"exchange":            "Microsoft 365",
-	"intermedia":          "Microsoft 365",
-	"pphosted":            "Proofpoint",
-	"gpphosted":           "Proofpoint",
-	"iphmx":               "Proofpoint",
-	"mimecast":            "Mimecast",
-	"barracudanetworks":   "Barracuda",
-	"barracuda":           "Barracuda",
-	"perception-point":    "Perception Point",
-	"sophos":              "Sophos",
-	"fireeyecloud":        "FireEye",
-	"trendmicro":          "Trend Micro",
-	"forcepoint":          "Forcepoint",
-	"messagelabs":         "Symantec",
-	"hornetsecurity":      "Hornetsecurity",
-	"antispamcloud":       "SpamExperts",
-	"spamexperts":         "SpamExperts",
-	"zoho":                "Zoho Mail",
-	"mailgun":             "Mailgun",
-	"sendgrid":            "SendGrid",
-	"amazonses":           "Amazon SES",
-	"fastmail":            "Fastmail",
-	"protonmail":          "ProtonMail",
-	"mx.cloudflare":       "Cloudflare Email",
+	"google":             providerGoogleWS,
+	"googlemail":         providerGoogleWS,
+	"gmail":              providerGoogleWS,
+	"outlook":            providerMicrosoft365,
+	"microsoft":          providerMicrosoft365,
+	"protection.outlook": providerMicrosoft365,
+	"o365":               providerMicrosoft365,
+	"exchange":           providerMicrosoft365,
+	"intermedia":         providerMicrosoft365,
+	"pphosted":           providerProofpoint,
+	"gpphosted":          providerProofpoint,
+	"iphmx":              providerProofpoint,
+	"mimecast":           providerMimecast,
+	"barracudanetworks":  providerBarracuda,
+	"barracuda":          providerBarracuda,
+	"perception-point":   "Perception Point",
+	"sophos":             "Sophos",
+	"fireeyecloud":       "FireEye",
+	"trendmicro":         "Trend Micro",
+	"forcepoint":         "Forcepoint",
+	"messagelabs":        "Symantec",
+	"hornetsecurity":     providerHornetsecurity,
+	"antispamcloud":      providerSpamExperts,
+	"spamexperts":        providerSpamExperts,
+	"zoho":               providerZohoMail,
+	"mailgun":            providerMailgun,
+	"sendgrid":           providerSendGrid,
+	"amazonses":          providerAmazonSES,
+	"fastmail":           providerFastmail,
+	"protonmail":         providerProtonMail,
+	"mx.cloudflare":      providerCloudflareEmail,
 }
 
 var securityGateways = map[string]bool{
-	"Proofpoint": true, "Mimecast": true, "Barracuda": true,
+	providerProofpoint: true, providerMimecast: true, providerBarracuda: true,
 	"Perception Point": true, "Sophos": true, "FireEye": true,
 	"Trend Micro": true, "Forcepoint": true, "Symantec": true,
-	"Hornetsecurity": true, "SpamExperts": true,
+	providerHornetsecurity: true, providerSpamExperts: true,
 }
 
 var primaryProviderSelectors = map[string][]string{
-	"Microsoft 365":    {"selector1._domainkey", "selector2._domainkey"},
-	"Google Workspace": {"google._domainkey", "google2048._domainkey"},
-	"Proofpoint":       {"proofpoint._domainkey"},
-	"Mimecast":         {"mimecast._domainkey"},
-	"Mailgun":          {"mailgun._domainkey"},
-	"SendGrid":         {"s1._domainkey", "s2._domainkey", "sendgrid._domainkey"},
-	"Amazon SES":       {"amazonses._domainkey"},
-	"Zoho Mail":        {"default._domainkey"},
-	"Fastmail":         {"fm1._domainkey", "fm2._domainkey", "fm3._domainkey"},
-	"ProtonMail":       {"protonmail._domainkey", "protonmail2._domainkey", "protonmail3._domainkey"},
-	"Cloudflare Email": {"default._domainkey"},
+	providerMicrosoft365:    {selSelector1, selSelector2},
+	providerGoogleWS:        {selGoogle, selGoogle2048},
+	providerProofpoint:      {selProofpoint},
+	providerMimecast:        {selMimecast},
+	providerMailgun:         {selMailgun},
+	providerSendGrid:        {selS1, selS2, selSendgrid},
+	providerAmazonSES:       {selAmazonSES},
+	providerZohoMail:        {selDefault},
+	providerFastmail:        {selFM1, selFM2, selFM3},
+	providerProtonMail:      {selProtonmail, selProtonmail2, selProtonmail3},
+	providerCloudflareEmail: {selDefault},
 }
 
 var spfMailboxProviders = map[string]string{
-	"spf.protection.outlook": "Microsoft 365",
-	"_spf.google":            "Google Workspace",
-	"spf.intermedia":         "Microsoft 365",
-	"emg.intermedia":         "Microsoft 365",
-	"zoho.com":               "Zoho Mail",
-	"messagingengine.com":    "Fastmail",
-	"protonmail.ch":          "ProtonMail",
-	"mimecast":               "Mimecast",
-	"pphosted":               "Proofpoint",
+	"spf.protection.outlook": providerMicrosoft365,
+	"_spf.google":            providerGoogleWS,
+	"spf.intermedia":         providerMicrosoft365,
+	"emg.intermedia":         providerMicrosoft365,
+	"zoho.com":               providerZohoMail,
+	"messagingengine.com":    providerFastmail,
+	"protonmail.ch":          providerProtonMail,
+	"mimecast":               providerMimecast,
+	"pphosted":               providerProofpoint,
 }
 
 var spfAncillarySenders = map[string]string{
-	"servers.mcsv.net":  "MailChimp",
-	"spf.mandrillapp":   "MailChimp",
-	"sendgrid.net":      "SendGrid",
-	"amazonses.com":     "Amazon SES",
-	"mailgun.org":       "Mailgun",
-	"spf.sparkpostmail": "SparkPost",
+	"servers.mcsv.net":  providerMailChimp,
+	"spf.mandrillapp":   providerMailChimp,
+	"sendgrid.net":      providerSendGrid,
+	"amazonses.com":     providerAmazonSES,
+	"mailgun.org":       providerMailgun,
+	"spf.sparkpostmail": providerSparkPost,
 	"mail.zendesk.com":  "Zendesk",
-	"spf.brevo.com":     "Brevo (Sendinblue)",
-	"spf.sendinblue":    "Brevo (Sendinblue)",
-	"spf.mailjet":       "Mailjet",
-	"spf.postmarkapp":   "Postmark",
-	"spf.mtasv.net":     "Postmark",
+	"spf.brevo.com":     providerBrevo,
+	"spf.sendinblue":    providerBrevo,
+	"spf.mailjet":       providerMailjet,
+	"spf.postmarkapp":   providerPostmark,
+	"spf.mtasv.net":     providerPostmark,
 	"spf.freshdesk":     "Freshdesk",
+}
+
+var ambiguousSelectors = map[string]bool{
+	selSelector1: true,
+	selSelector2: true,
+	selS1:        true,
+	selS2:        true,
+	selDefault:   true,
+	selK1:        true,
+	selK2:        true,
 }
 
 func detectPrimaryMailProvider(mxRecords []string, spfRecord string) map[string]any {
@@ -202,19 +272,8 @@ func classifySelectorProvider(selectorName, primaryProvider string) string {
 		return "Unknown"
 	}
 
-	if primaryProvider == "Unknown" {
-		ambiguous := map[string]bool{
-			"selector1._domainkey": true,
-			"selector2._domainkey": true,
-			"s1._domainkey":       true,
-			"s2._domainkey":       true,
-			"default._domainkey":  true,
-			"k1._domainkey":       true,
-			"k2._domainkey":       true,
-		}
-		if ambiguous[selectorName] {
-			return "Unknown"
-		}
+	if primaryProvider == "Unknown" && ambiguousSelectors[selectorName] {
+		return "Unknown"
 	}
 	return provider
 }
@@ -284,7 +343,7 @@ func analyzeDKIMKey(record string) map[string]any {
 	return keyInfo
 }
 
-func (a *Analyzer) AnalyzeDKIM(ctx context.Context, domain string, mxRecords []string, customSelectors []string) map[string]any {
+func buildSelectorList(customSelectors []string) []string {
 	selectors := make([]string, 0, len(defaultDKIMSelectors)+len(customSelectors))
 	if len(customSelectors) > 0 {
 		for _, cs := range customSelectors {
@@ -306,19 +365,130 @@ func (a *Analyzer) AnalyzeDKIM(ctx context.Context, domain string, mxRecords []s
 			selectors = append(selectors, s)
 		}
 	}
+	return selectors
+}
+
+func findSPFRecord(records []string) string {
+	for _, r := range records {
+		if strings.HasPrefix(strings.ToLower(r), "v=spf1") {
+			return r
+		}
+	}
+	return ""
+}
+
+func attributeSelectors(foundSelectors map[string]map[string]any, primaryProvider string, foundProviders map[string]bool) (bool, string, bool) {
+	primaryHasDKIM := false
+	primaryDKIMNote := ""
+	thirdPartyOnly := false
+
+	var unattributedSelectors []string
+	for selName, selData := range foundSelectors {
+		if selData["provider"].(string) == "Unknown" {
+			unattributedSelectors = append(unattributedSelectors, selName)
+		}
+	}
+
+	if primaryProvider != "Unknown" {
+		expected := primaryProviderSelectors[primaryProvider]
+		if len(expected) > 0 {
+			for _, s := range expected {
+				if _, ok := foundSelectors[s]; ok {
+					primaryHasDKIM = true
+					break
+				}
+			}
+		} else {
+			primaryHasDKIM = foundProviders[primaryProvider]
+		}
+
+		if !primaryHasDKIM && len(unattributedSelectors) > 0 {
+			primaryHasDKIM = true
+			for _, selName := range unattributedSelectors {
+				foundSelectors[selName]["provider"] = primaryProvider
+				foundSelectors[selName]["inferred"] = true
+				foundProviders[primaryProvider] = true
+			}
+			var names []string
+			for _, s := range unattributedSelectors {
+				names = append(names, strings.TrimSuffix(s, domainkeySuffix))
+			}
+			primaryDKIMNote = fmt.Sprintf(
+				"DKIM selector(s) %s inferred as %s (custom selector names — not the standard %s selector).",
+				strings.Join(names, ", "), primaryProvider, primaryProvider,
+			)
+		}
+	}
+
+	if len(foundSelectors) > 0 && primaryProvider != "Unknown" && !primaryHasDKIM {
+		thirdPartyOnly = true
+		var providerNames []string
+		for p := range foundProviders {
+			providerNames = append(providerNames, p)
+		}
+		sort.Strings(providerNames)
+		thirdPartyNames := "third-party services"
+		if len(providerNames) > 0 {
+			thirdPartyNames = strings.Join(providerNames, ", ")
+		}
+		primaryDKIMNote = fmt.Sprintf(
+			"DKIM verified for %s only — no DKIM found for primary mail platform (%s). "+
+				"The primary provider may use custom selectors not discoverable through standard checks.",
+			thirdPartyNames, primaryProvider,
+		)
+	}
+
+	return primaryHasDKIM, primaryDKIMNote, thirdPartyOnly
+}
+
+func buildDKIMVerdict(foundSelectors map[string]map[string]any, keyIssues, keyStrengths []string, primaryProvider string, primaryHasDKIM, thirdPartyOnly bool) (string, string) {
+	if len(foundSelectors) == 0 {
+		return "info", "DKIM not discoverable via common selectors (large providers use rotating selectors)"
+	}
+
+	hasWeakKey := false
+	hasRevoked := false
+	for _, issue := range keyIssues {
+		if strings.Contains(issue, "1024-bit") {
+			hasWeakKey = true
+		}
+		if strings.Contains(issue, "revoked") {
+			hasRevoked = true
+		}
+	}
+
+	uniqueStrengths := uniqueStrings(keyStrengths)
+
+	if hasRevoked {
+		return "warning", fmt.Sprintf("Found %d DKIM selector(s) but some keys are revoked", len(foundSelectors))
+	}
+	if hasWeakKey {
+		return "warning", fmt.Sprintf("Found %d DKIM selector(s) with weak key(s) (1024-bit)", len(foundSelectors))
+	}
+	if thirdPartyOnly {
+		if len(uniqueStrengths) > 0 {
+			return "partial", fmt.Sprintf("Found DKIM for %d selector(s) (%s) but none for primary mail platform (%s)",
+				len(foundSelectors), strings.Join(uniqueStrengths, ", "), primaryProvider)
+		}
+		return "partial", fmt.Sprintf("Found DKIM for %d selector(s) but none for primary mail platform (%s)",
+			len(foundSelectors), primaryProvider)
+	}
+
+	if len(uniqueStrengths) > 0 {
+		return "success", fmt.Sprintf("Found DKIM for %d selector(s) with strong keys (%s)",
+			len(foundSelectors), strings.Join(uniqueStrengths, ", "))
+	}
+	return "success", fmt.Sprintf("Found DKIM records for %d selector(s)", len(foundSelectors))
+}
+
+func (a *Analyzer) AnalyzeDKIM(ctx context.Context, domain string, mxRecords []string, customSelectors []string) map[string]any {
+	selectors := buildSelectorList(customSelectors)
 
 	if len(mxRecords) == 0 {
 		mxRecords = a.DNS.QueryDNS(ctx, "MX", domain)
 	}
 
-	spfRecords := a.DNS.QueryDNS(ctx, "TXT", domain)
-	var spfRecord string
-	for _, r := range spfRecords {
-		if strings.HasPrefix(strings.ToLower(r), "v=spf1") {
-			spfRecord = r
-			break
-		}
-	}
+	spfRecord := findSPFRecord(a.DNS.QueryDNS(ctx, "TXT", domain))
 
 	providerInfo := detectPrimaryMailProvider(mxRecords, spfRecord)
 	primaryProvider := providerInfo["provider"].(string)
@@ -391,109 +561,9 @@ func (a *Analyzer) AnalyzeDKIM(ctx context.Context, domain string, mxRecords []s
 		}
 	}
 
-	primaryHasDKIM := false
-	primaryDKIMNote := ""
+	primaryHasDKIM, primaryDKIMNote, thirdPartyOnly := attributeSelectors(foundSelectors, primaryProvider, foundProviders)
 
-	var unattributedSelectors []string
-	for selName, selData := range foundSelectors {
-		if selData["provider"].(string) == "Unknown" {
-			unattributedSelectors = append(unattributedSelectors, selName)
-		}
-	}
-
-	if primaryProvider != "Unknown" {
-		expected := primaryProviderSelectors[primaryProvider]
-		if len(expected) > 0 {
-			for _, s := range expected {
-				if _, ok := foundSelectors[s]; ok {
-					primaryHasDKIM = true
-					break
-				}
-			}
-		} else {
-			primaryHasDKIM = foundProviders[primaryProvider]
-		}
-
-		if !primaryHasDKIM && len(unattributedSelectors) > 0 {
-			primaryHasDKIM = true
-			for _, selName := range unattributedSelectors {
-				foundSelectors[selName]["provider"] = primaryProvider
-				foundSelectors[selName]["inferred"] = true
-				foundProviders[primaryProvider] = true
-			}
-			var names []string
-			for _, s := range unattributedSelectors {
-				names = append(names, strings.TrimSuffix(s, domainkeySuffix))
-			}
-			primaryDKIMNote = fmt.Sprintf(
-				"DKIM selector(s) %s inferred as %s (custom selector names — not the standard %s selector).",
-				strings.Join(names, ", "), primaryProvider, primaryProvider,
-			)
-		}
-	}
-
-	thirdPartyOnly := false
-	if len(foundSelectors) > 0 && primaryProvider != "Unknown" && !primaryHasDKIM {
-		thirdPartyOnly = true
-		var providerNames []string
-		for p := range foundProviders {
-			providerNames = append(providerNames, p)
-		}
-		sort.Strings(providerNames)
-		thirdPartyNames := "third-party services"
-		if len(providerNames) > 0 {
-			thirdPartyNames = strings.Join(providerNames, ", ")
-		}
-		primaryDKIMNote = fmt.Sprintf(
-			"DKIM verified for %s only — no DKIM found for primary mail platform (%s). "+
-				"The primary provider may use custom selectors not discoverable through standard checks.",
-			thirdPartyNames, primaryProvider,
-		)
-	}
-
-	var status, message string
-	if len(foundSelectors) > 0 {
-		hasWeakKey := false
-		hasRevoked := false
-		for _, issue := range keyIssues {
-			if strings.Contains(issue, "1024-bit") {
-				hasWeakKey = true
-			}
-			if strings.Contains(issue, "revoked") {
-				hasRevoked = true
-			}
-		}
-
-		uniqueStrengths := uniqueStrings(keyStrengths)
-
-		if hasRevoked {
-			status = "warning"
-			message = fmt.Sprintf("Found %d DKIM selector(s) but some keys are revoked", len(foundSelectors))
-		} else if hasWeakKey {
-			status = "warning"
-			message = fmt.Sprintf("Found %d DKIM selector(s) with weak key(s) (1024-bit)", len(foundSelectors))
-		} else if thirdPartyOnly {
-			status = "partial"
-			if len(uniqueStrengths) > 0 {
-				message = fmt.Sprintf("Found DKIM for %d selector(s) (%s) but none for primary mail platform (%s)",
-					len(foundSelectors), strings.Join(uniqueStrengths, ", "), primaryProvider)
-			} else {
-				message = fmt.Sprintf("Found DKIM for %d selector(s) but none for primary mail platform (%s)",
-					len(foundSelectors), primaryProvider)
-			}
-		} else {
-			status = "success"
-			if len(uniqueStrengths) > 0 {
-				message = fmt.Sprintf("Found DKIM for %d selector(s) with strong keys (%s)",
-					len(foundSelectors), strings.Join(uniqueStrengths, ", "))
-			} else {
-				message = fmt.Sprintf("Found DKIM records for %d selector(s)", len(foundSelectors))
-			}
-		}
-	} else {
-		status = "info"
-		message = "DKIM not discoverable via common selectors (large providers use rotating selectors)"
-	}
+	status, message := buildDKIMVerdict(foundSelectors, keyIssues, keyStrengths, primaryProvider, primaryHasDKIM, thirdPartyOnly)
 
 	var sortedProviders []string
 	for p := range foundProviders {

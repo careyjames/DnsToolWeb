@@ -8,18 +8,125 @@ import (
 )
 
 var (
-	dmarcPolicyRe    = regexp.MustCompile(`(?i)\bp=(\w+)`)
-	dmarcSPRe        = regexp.MustCompile(`(?i)\bsp=(\w+)`)
-	dmarcPctRe       = regexp.MustCompile(`(?i)\bpct=(\d+)`)
-	dmarcASPFRe      = regexp.MustCompile(`(?i)\baspf=([rs])`)
-	dmarcADKIMRe     = regexp.MustCompile(`(?i)\badkim=([rs])`)
-	dmarcRUARe       = regexp.MustCompile(`(?i)\brua=([^;\s]+)`)
-	dmarcRUFRe       = regexp.MustCompile(`(?i)\bruf=([^;\s]+)`)
-	dmarcNPRe        = regexp.MustCompile(`(?i)\bnp=(\w+)`)
-	dmarcTRe         = regexp.MustCompile(`(?i)\bt=([yn])`)
-	dmarcPSDRe       = regexp.MustCompile(`(?i)\bpsd=([yn])`)
-	mailtoExtractRe  = regexp.MustCompile(`(?i)mailto:([^,;\s]+)`)
+	dmarcPolicyRe   = regexp.MustCompile(`(?i)\bp=(\w+)`)
+	dmarcSPRe       = regexp.MustCompile(`(?i)\bsp=(\w+)`)
+	dmarcPctRe      = regexp.MustCompile(`(?i)\bpct=(\d+)`)
+	dmarcASPFRe     = regexp.MustCompile(`(?i)\baspf=([rs])`)
+	dmarcADKIMRe    = regexp.MustCompile(`(?i)\badkim=([rs])`)
+	dmarcRUARe      = regexp.MustCompile(`(?i)\brua=([^;\s]+)`)
+	dmarcRUFRe      = regexp.MustCompile(`(?i)\bruf=([^;\s]+)`)
+	dmarcNPRe       = regexp.MustCompile(`(?i)\bnp=(\w+)`)
+	dmarcTRe        = regexp.MustCompile(`(?i)\bt=([yn])`)
+	dmarcPSDRe      = regexp.MustCompile(`(?i)\bpsd=([yn])`)
+	mailtoExtractRe = regexp.MustCompile(`(?i)mailto:([^,;\s]+)`)
 )
+
+type dmarcTags struct {
+	policy          *string
+	subdomainPolicy *string
+	pct             int
+	aspf            string
+	adkim           string
+	rua             *string
+	ruf             *string
+	npPolicy        *string
+	tTesting        *string
+	psdFlag         *string
+}
+
+func parseDMARCTags(record string) dmarcTags {
+	recordLower := strings.ToLower(record)
+	tags := dmarcTags{pct: 100, aspf: "relaxed", adkim: "relaxed"}
+
+	if m := dmarcPolicyRe.FindStringSubmatch(recordLower); m != nil {
+		tags.policy = &m[1]
+	}
+	if m := dmarcSPRe.FindStringSubmatch(recordLower); m != nil {
+		tags.subdomainPolicy = &m[1]
+	}
+	if m := dmarcPctRe.FindStringSubmatch(recordLower); m != nil {
+		fmt.Sscanf(m[1], "%d", &tags.pct)
+	}
+	if m := dmarcASPFRe.FindStringSubmatch(recordLower); m != nil {
+		if m[1] == "s" {
+			tags.aspf = "strict"
+		}
+	}
+	if m := dmarcADKIMRe.FindStringSubmatch(recordLower); m != nil {
+		if m[1] == "s" {
+			tags.adkim = "strict"
+		}
+	}
+	if m := dmarcRUARe.FindStringSubmatch(record); m != nil {
+		tags.rua = &m[1]
+	}
+	if m := dmarcRUFRe.FindStringSubmatch(record); m != nil {
+		tags.ruf = &m[1]
+	}
+	if m := dmarcNPRe.FindStringSubmatch(recordLower); m != nil {
+		tags.npPolicy = &m[1]
+	}
+	if m := dmarcTRe.FindStringSubmatch(recordLower); m != nil {
+		tags.tTesting = &m[1]
+	}
+	if m := dmarcPSDRe.FindStringSubmatch(recordLower); m != nil {
+		tags.psdFlag = &m[1]
+	}
+
+	return tags
+}
+
+func evaluateDMARCPolicy(tags dmarcTags) (string, string, []string) {
+	var issues []string
+
+	if tags.policy == nil {
+		return "info", "DMARC record found but policy unclear", issues
+	}
+
+	var status, message string
+	switch *tags.policy {
+	case "none":
+		status = "warning"
+		message = "DMARC in monitoring mode (p=none) - spoofed mail still delivered, no enforcement"
+		issues = append(issues, "Policy p=none provides no protection - spoofed emails reach inboxes")
+	case "reject":
+		if tags.pct < 100 {
+			status = "warning"
+			message = fmt.Sprintf("DMARC reject but only %d%% enforced - partial protection", tags.pct)
+			issues = append(issues, fmt.Sprintf("Only %d%% of mail subject to policy", tags.pct))
+		} else {
+			status = "success"
+			message = "DMARC policy reject (100%) - excellent protection"
+		}
+	case "quarantine":
+		if tags.pct < 100 {
+			status = "warning"
+			message = fmt.Sprintf("DMARC quarantine but only %d%% enforced - partial protection", tags.pct)
+			issues = append(issues, fmt.Sprintf("Only %d%% of mail subject to policy", tags.pct))
+		} else {
+			status = "success"
+			message = "DMARC policy quarantine (100%) - good protection"
+		}
+	default:
+		status = "info"
+		message = "DMARC record found but policy unclear"
+	}
+
+	if *tags.policy == "reject" || *tags.policy == "quarantine" {
+		if tags.subdomainPolicy != nil && *tags.subdomainPolicy == "none" {
+			issues = append(issues, fmt.Sprintf("Subdomains unprotected (sp=none while p=%s)", *tags.policy))
+		}
+		if tags.npPolicy == nil && tags.subdomainPolicy == nil {
+			issues = append(issues, "No np= tag (DMARCbis) — non-existent subdomains inherit p= policy but adding np=reject provides explicit protection against subdomain spoofing")
+		}
+	}
+
+	if tags.ruf != nil {
+		issues = append(issues, "Forensic reports (ruf) configured - many providers ignore these")
+	}
+
+	return status, message, issues
+}
 
 func (a *Analyzer) AnalyzeDMARC(ctx context.Context, domain string) map[string]any {
 	dmarcRecords := a.DNS.QueryDNS(ctx, "TXT", fmt.Sprintf("_dmarc.%s", domain))
@@ -63,16 +170,9 @@ func (a *Analyzer) AnalyzeDMARC(ctx context.Context, domain string) map[string]a
 		}
 	}
 
-	var issues []string
-	var policy *string
-	var subdomainPolicy *string
-	pct := 100
-	aspf := "relaxed"
-	adkim := "relaxed"
-	var rua, ruf *string
-	var npPolicy, tTesting, psdFlag *string
-
 	var status, message string
+	var issues []string
+	tags := dmarcTags{pct: 100, aspf: "relaxed", adkim: "relaxed"}
 
 	if len(validDMARC) == 0 {
 		status = "error"
@@ -82,109 +182,19 @@ func (a *Analyzer) AnalyzeDMARC(ctx context.Context, domain string) map[string]a
 		message = "Multiple DMARC records found (there should be only one)"
 		issues = append(issues, "Multiple DMARC records")
 	} else {
-		record := validDMARC[0]
-		recordLower := strings.ToLower(record)
-
-		if m := dmarcPolicyRe.FindStringSubmatch(recordLower); m != nil {
-			policy = &m[1]
-		}
-
-		if m := dmarcSPRe.FindStringSubmatch(recordLower); m != nil {
-			subdomainPolicy = &m[1]
-		}
-
-		if m := dmarcPctRe.FindStringSubmatch(recordLower); m != nil {
-			fmt.Sscanf(m[1], "%d", &pct)
-		}
-
-		if m := dmarcASPFRe.FindStringSubmatch(recordLower); m != nil {
-			if m[1] == "s" {
-				aspf = "strict"
-			}
-		}
-
-		if m := dmarcADKIMRe.FindStringSubmatch(recordLower); m != nil {
-			if m[1] == "s" {
-				adkim = "strict"
-			}
-		}
-
-		if m := dmarcRUARe.FindStringSubmatch(record); m != nil {
-			rua = &m[1]
-		}
-
-		if m := dmarcRUFRe.FindStringSubmatch(record); m != nil {
-			ruf = &m[1]
-		}
-
-		if m := dmarcNPRe.FindStringSubmatch(recordLower); m != nil {
-			npPolicy = &m[1]
-		}
-
-		if m := dmarcTRe.FindStringSubmatch(recordLower); m != nil {
-			tTesting = &m[1]
-		}
-
-		if m := dmarcPSDRe.FindStringSubmatch(recordLower); m != nil {
-			psdFlag = &m[1]
-		}
-
-		if policy != nil {
-			switch *policy {
-			case "none":
-				status = "warning"
-				message = "DMARC in monitoring mode (p=none) - spoofed mail still delivered, no enforcement"
-				issues = append(issues, "Policy p=none provides no protection - spoofed emails reach inboxes")
-			case "reject":
-				if pct < 100 {
-					status = "warning"
-					message = fmt.Sprintf("DMARC reject but only %d%% enforced - partial protection", pct)
-					issues = append(issues, fmt.Sprintf("Only %d%% of mail subject to policy", pct))
-				} else {
-					status = "success"
-					message = "DMARC policy reject (100%) - excellent protection"
-				}
-			case "quarantine":
-				if pct < 100 {
-					status = "warning"
-					message = fmt.Sprintf("DMARC quarantine but only %d%% enforced - partial protection", pct)
-					issues = append(issues, fmt.Sprintf("Only %d%% of mail subject to policy", pct))
-				} else {
-					status = "success"
-					message = "DMARC policy quarantine (100%) - good protection"
-				}
-			default:
-				status = "info"
-				message = "DMARC record found but policy unclear"
-			}
-		} else {
-			status = "info"
-			message = "DMARC record found but policy unclear"
-		}
-
-		if policy != nil && (*policy == "reject" || *policy == "quarantine") {
-			if subdomainPolicy != nil && *subdomainPolicy == "none" {
-				issues = append(issues, fmt.Sprintf("Subdomains unprotected (sp=none while p=%s)", *policy))
-			}
-			if npPolicy == nil && subdomainPolicy == nil {
-				issues = append(issues, "No np= tag (DMARCbis) — non-existent subdomains inherit p= policy but adding np=reject provides explicit protection against subdomain spoofing")
-			}
-		}
-
-		if ruf != nil {
-			issues = append(issues, "Forensic reports (ruf) configured - many providers ignore these")
-		}
+		tags = parseDMARCTags(validDMARC[0])
+		status, message, issues = evaluateDMARCPolicy(tags)
 	}
 
 	dmarcbisTags := map[string]string{}
-	if npPolicy != nil {
-		dmarcbisTags["np"] = *npPolicy
+	if tags.npPolicy != nil {
+		dmarcbisTags["np"] = *tags.npPolicy
 	}
-	if tTesting != nil {
-		dmarcbisTags["t"] = *tTesting
+	if tags.tTesting != nil {
+		dmarcbisTags["t"] = *tags.tTesting
 	}
-	if psdFlag != nil {
-		dmarcbisTags["psd"] = *psdFlag
+	if tags.psdFlag != nil {
+		dmarcbisTags["psd"] = *tags.psdFlag
 	}
 
 	result := map[string]any{
@@ -193,16 +203,16 @@ func (a *Analyzer) AnalyzeDMARC(ctx context.Context, domain string) map[string]a
 		"records":          dmarcRecords,
 		"valid_records":    validDMARC,
 		"dmarc_like":       dmarcLike,
-		"policy":           policy,
-		"subdomain_policy": subdomainPolicy,
-		"pct":              pct,
-		"aspf":             aspf,
-		"adkim":            adkim,
-		"rua":              rua,
-		"ruf":              ruf,
-		"np_policy":        npPolicy,
-		"t_testing":        tTesting,
-		"psd_flag":         psdFlag,
+		"policy":           tags.policy,
+		"subdomain_policy": tags.subdomainPolicy,
+		"pct":              tags.pct,
+		"aspf":             tags.aspf,
+		"adkim":            tags.adkim,
+		"rua":              tags.rua,
+		"ruf":              tags.ruf,
+		"np_policy":        tags.npPolicy,
+		"t_testing":        tags.tTesting,
+		"psd_flag":         tags.psdFlag,
 		"dmarcbis_tags":    dmarcbisTags,
 		"issues":           issues,
 	}

@@ -5,6 +5,30 @@ import (
 	"strings"
 )
 
+func identifyCAIssuer(record string) string {
+	lower := strings.ToLower(record)
+	switch {
+	case strings.Contains(lower, "letsencrypt"):
+		return "Let's Encrypt"
+	case strings.Contains(lower, "digicert"):
+		return "DigiCert"
+	case strings.Contains(lower, "sectigo") || strings.Contains(lower, "comodo"):
+		return "Sectigo"
+	case strings.Contains(lower, "globalsign"):
+		return "GlobalSign"
+	case strings.Contains(lower, "amazon"):
+		return "Amazon"
+	case strings.Contains(lower, "google"):
+		return "Google Trust Services"
+	default:
+		parts := strings.Fields(record)
+		if len(parts) >= 3 {
+			return strings.Trim(parts[len(parts)-1], "\"")
+		}
+		return ""
+	}
+}
+
 func (a *Analyzer) AnalyzeCAA(ctx context.Context, domain string) map[string]any {
 	records := a.DNS.QueryDNS(ctx, "CAA", domain)
 
@@ -27,24 +51,9 @@ func (a *Analyzer) AnalyzeCAA(ctx context.Context, domain string) map[string]any
 		lower := strings.ToLower(record)
 
 		if strings.Contains(lower, "issue ") || strings.Contains(lower, "issue\"") {
-			switch {
-			case strings.Contains(lower, "letsencrypt"):
-				issuerSet["Let's Encrypt"] = true
-			case strings.Contains(lower, "digicert"):
-				issuerSet["DigiCert"] = true
-			case strings.Contains(lower, "sectigo") || strings.Contains(lower, "comodo"):
-				issuerSet["Sectigo"] = true
-			case strings.Contains(lower, "globalsign"):
-				issuerSet["GlobalSign"] = true
-			case strings.Contains(lower, "amazon"):
-				issuerSet["Amazon"] = true
-			case strings.Contains(lower, "google"):
-				issuerSet["Google Trust Services"] = true
-			default:
-				parts := strings.Fields(record)
-				if len(parts) >= 3 {
-					issuerSet[strings.Trim(parts[len(parts)-1], "\"")] = true
-				}
+			issuer := identifyCAIssuer(record)
+			if issuer != "" {
+				issuerSet[issuer] = true
 			}
 		}
 

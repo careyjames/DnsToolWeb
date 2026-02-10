@@ -102,6 +102,80 @@ func lookupName(m map[int]string, key int) string {
 	return fmt.Sprintf("Unknown (%d)", key)
 }
 
+func extractMXHosts(mxRecords []string) []string {
+	var mxHosts []string
+	seen := make(map[string]bool)
+	for _, mx := range mxRecords {
+		parts := strings.Fields(strings.TrimSpace(mx))
+		var host string
+		if len(parts) >= 2 {
+			host = strings.TrimRight(parts[len(parts)-1], ".")
+		} else if len(parts) == 1 {
+			host = strings.TrimRight(parts[0], ".")
+		}
+		if host != "" && host != "." && !seen[host] {
+			seen[host] = true
+			mxHosts = append(mxHosts, host)
+		}
+	}
+	return mxHosts
+}
+
+func buildDANEVerdict(allTLSA []map[string]any, hostsWithDANE, mxHosts []string, mxCapability map[string]any) (string, string, []string) {
+	var issues []string
+
+	if len(allTLSA) == 0 {
+		if mxCapability != nil && !mxCapability["dane_inbound"].(bool) {
+			providerName := mxCapability["provider_name"].(string)
+			return "info", fmt.Sprintf("DANE not available — %s does not support inbound DANE/TLSA on its MX infrastructure", providerName), issues
+		}
+		plural := ""
+		if len(mxHosts) > 1 {
+			plural = "s"
+		}
+		return "info", fmt.Sprintf("No DANE/TLSA records found (checked %d MX host%s)", len(mxHosts), plural), issues
+	}
+
+	for _, rec := range allTLSA {
+		usage := rec["usage"].(int)
+		if usage == 0 || usage == 1 {
+			issues = append(issues, fmt.Sprintf("TLSA for %s: usage %d (PKIX-based) — RFC 7672 §3.1 recommends usage 2 or 3 for SMTP", rec["mx_host"], usage))
+		}
+		if rec["matching_type"].(int) == 0 {
+			issues = append(issues, fmt.Sprintf("TLSA for %s: exact match (type 0) — SHA-256 (type 1) is preferred for resilience", rec["mx_host"]))
+		}
+	}
+
+	plural := ""
+	if len(mxHosts) > 1 {
+		plural = "s"
+	}
+
+	if len(hostsWithDANE) == len(mxHosts) {
+		return "success", fmt.Sprintf("DANE configured — TLSA records found for all %d MX host%s", len(mxHosts), plural), issues
+	}
+
+	var missing []string
+	for _, h := range mxHosts {
+		found := false
+		for _, dh := range hostsWithDANE {
+			if h == dh {
+				found = true
+				break
+			}
+		}
+		if !found {
+			missing = append(missing, h)
+		}
+	}
+	if len(missing) > 3 {
+		missing = missing[:3]
+	}
+	issues = append(issues, fmt.Sprintf("Missing DANE for: %s", strings.Join(missing, ", ")))
+
+	return "warning", fmt.Sprintf("DANE partially configured — TLSA records on %d/%d MX hosts", len(hostsWithDANE), len(mxHosts)), issues
+}
+
 func (a *Analyzer) AnalyzeDANE(ctx context.Context, domain string, mxRecords []string) map[string]any {
 	baseResult := map[string]any{
 		"status":             "info",
@@ -121,21 +195,7 @@ func (a *Analyzer) AnalyzeDANE(ctx context.Context, domain string, mxRecords []s
 		return baseResult
 	}
 
-	var mxHosts []string
-	seen := make(map[string]bool)
-	for _, mx := range mxRecords {
-		parts := strings.Fields(strings.TrimSpace(mx))
-		var host string
-		if len(parts) >= 2 {
-			host = strings.TrimRight(parts[len(parts)-1], ".")
-		} else if len(parts) == 1 {
-			host = strings.TrimRight(parts[0], ".")
-		}
-		if host != "" && host != "." && !seen[host] {
-			seen[host] = true
-			mxHosts = append(mxHosts, host)
-		}
-	}
+	mxHosts := extractMXHosts(mxRecords)
 
 	if len(mxHosts) == 0 {
 		baseResult["message"] = "No valid MX hosts — DANE check skipped"
@@ -158,7 +218,6 @@ func (a *Analyzer) AnalyzeDANE(ctx context.Context, domain string, mxRecords []s
 
 	var allTLSA []map[string]any
 	var hostsWithDANE []string
-	var issues []string
 	var mu sync.Mutex
 	var wg sync.WaitGroup
 
@@ -186,63 +245,16 @@ func (a *Analyzer) AnalyzeDANE(ctx context.Context, domain string, mxRecords []s
 	baseResult["mx_hosts_with_dane"] = len(hostsWithDANE)
 	baseResult["tlsa_records"] = allTLSA
 
+	status, message, issues := buildDANEVerdict(allTLSA, hostsWithDANE, mxHosts, mxCapability)
+	baseResult["status"] = status
+	baseResult["message"] = message
 	if len(allTLSA) > 0 {
 		baseResult["has_dane"] = true
-		baseResult["status"] = "success"
-
-		for _, rec := range allTLSA {
-			usage := rec["usage"].(int)
-			if usage == 0 || usage == 1 {
-				issues = append(issues, fmt.Sprintf("TLSA for %s: usage %d (PKIX-based) — RFC 7672 §3.1 recommends usage 2 or 3 for SMTP", rec["mx_host"], usage))
-			}
-			if rec["matching_type"].(int) == 0 {
-				issues = append(issues, fmt.Sprintf("TLSA for %s: exact match (type 0) — SHA-256 (type 1) is preferred for resilience", rec["mx_host"]))
-			}
-		}
-
-		plural := ""
-		if len(mxHosts) > 1 {
-			plural = "s"
-		}
-
-		if len(hostsWithDANE) == len(mxHosts) {
-			baseResult["message"] = fmt.Sprintf("DANE configured — TLSA records found for all %d MX host%s", len(mxHosts), plural)
-		} else {
-			baseResult["message"] = fmt.Sprintf("DANE partially configured — TLSA records on %d/%d MX hosts", len(hostsWithDANE), len(mxHosts))
-			baseResult["status"] = "warning"
-			var missing []string
-			for _, h := range mxHosts {
-				found := false
-				for _, dh := range hostsWithDANE {
-					if h == dh {
-						found = true
-						break
-					}
-				}
-				if !found {
-					missing = append(missing, h)
-				}
-			}
-			if len(missing) > 3 {
-				missing = missing[:3]
-			}
-			issues = append(issues, fmt.Sprintf("Missing DANE for: %s", strings.Join(missing, ", ")))
-		}
-	} else {
-		baseResult["status"] = "info"
-		if mxCapability != nil && !mxCapability["dane_inbound"].(bool) {
-			providerName := mxCapability["provider_name"].(string)
-			baseResult["message"] = fmt.Sprintf("DANE not available — %s does not support inbound DANE/TLSA on its MX infrastructure", providerName)
-			baseResult["dane_deployable"] = false
-		} else {
-			plural := ""
-			if len(mxHosts) > 1 {
-				plural = "s"
-			}
-			baseResult["message"] = fmt.Sprintf("No DANE/TLSA records found (checked %d MX host%s)", len(mxHosts), plural)
-		}
 	}
-
+	if mxCapability != nil && !mxCapability["dane_inbound"].(bool) {
+		baseResult["dane_deployable"] = false
+	}
 	baseResult["issues"] = issues
+
 	return baseResult
 }

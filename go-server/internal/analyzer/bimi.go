@@ -12,6 +12,42 @@ var (
 	bimiVMCRe  = regexp.MustCompile(`(?i)a=([^;\s]+)`)
 )
 
+func buildBIMIMessage(logoURL, vmcURL *string, logoData, vmcData map[string]any) (string, string) {
+	status := "success"
+	var messageParts []string
+
+	if vmcURL != nil && vmcData["valid"] == true {
+		messageParts = append(messageParts, "BIMI with VMC certificate")
+		if issuer, ok := vmcData["issuer"].(string); ok && issuer != "" {
+			messageParts = append(messageParts, fmt.Sprintf("(from %s)", issuer))
+		}
+	} else if vmcURL != nil {
+		messageParts = append(messageParts, "BIMI with VMC")
+		if errStr, ok := vmcData["error"].(string); ok && errStr != "" {
+			status = "warning"
+			messageParts = append(messageParts, fmt.Sprintf("- VMC issue: %s", errStr))
+		}
+	} else if logoURL != nil {
+		messageParts = append(messageParts, "BIMI configured")
+		if logoData["valid"] == true {
+			messageParts = append(messageParts, "- logo validated")
+		}
+		messageParts = append(messageParts, "(VMC recommended for Gmail)")
+	} else {
+		status = "warning"
+		messageParts = append(messageParts, "BIMI record found but missing logo URL")
+	}
+
+	if logoURL != nil && logoData["valid"] != true {
+		if errStr, ok := logoData["error"].(string); ok && errStr != "" {
+			status = "warning"
+			messageParts = append(messageParts, fmt.Sprintf("Logo issue: %s", errStr))
+		}
+	}
+
+	return status, strings.Join(messageParts, " ")
+}
+
 func (a *Analyzer) AnalyzeBIMI(ctx context.Context, domain string) map[string]any {
 	bimiDomain := fmt.Sprintf("default._bimi.%s", domain)
 	records := a.DNS.QueryDNS(ctx, "TXT", bimiDomain)
@@ -71,41 +107,11 @@ func (a *Analyzer) AnalyzeBIMI(ctx context.Context, domain string) map[string]an
 		vmcData = map[string]any{}
 	}
 
-	status := "success"
-	var messageParts []string
-
-	if vmcURL != nil && vmcData["valid"] == true {
-		messageParts = append(messageParts, "BIMI with VMC certificate")
-		if issuer, ok := vmcData["issuer"].(string); ok && issuer != "" {
-			messageParts = append(messageParts, fmt.Sprintf("(from %s)", issuer))
-		}
-	} else if vmcURL != nil {
-		messageParts = append(messageParts, "BIMI with VMC")
-		if errStr, ok := vmcData["error"].(string); ok && errStr != "" {
-			status = "warning"
-			messageParts = append(messageParts, fmt.Sprintf("- VMC issue: %s", errStr))
-		}
-	} else if logoURL != nil {
-		messageParts = append(messageParts, "BIMI configured")
-		if logoData["valid"] == true {
-			messageParts = append(messageParts, "- logo validated")
-		}
-		messageParts = append(messageParts, "(VMC recommended for Gmail)")
-	} else {
-		status = "warning"
-		messageParts = append(messageParts, "BIMI record found but missing logo URL")
-	}
-
-	if logoURL != nil && logoData["valid"] != true {
-		if errStr, ok := logoData["error"].(string); ok && errStr != "" {
-			status = "warning"
-			messageParts = append(messageParts, fmt.Sprintf("Logo issue: %s", errStr))
-		}
-	}
+	status, message := buildBIMIMessage(logoURL, vmcURL, logoData, vmcData)
 
 	return map[string]any{
 		"status":      status,
-		"message":     strings.Join(messageParts, " "),
+		"message":     message,
 		"record":      record,
 		"logo_url":    logoURL,
 		"vmc_url":     vmcURL,
@@ -129,19 +135,7 @@ func (a *Analyzer) validateBIMILogo(ctx context.Context, url string) map[string]
 
 	resp, err := a.HTTP.Get(ctx, url)
 	if err != nil {
-		errStr := err.Error()
-		if strings.Contains(errStr, "tls") || strings.Contains(errStr, "certificate") {
-			result["error"] = "SSL error"
-		} else if strings.Contains(errStr, "connection") || strings.Contains(errStr, "dial") {
-			result["error"] = "Connection failed"
-		} else if strings.Contains(errStr, "timeout") {
-			result["error"] = "Timeout"
-		} else {
-			if len(errStr) > 30 {
-				errStr = errStr[:30]
-			}
-			result["error"] = errStr
-		}
+		result["error"] = classifyHTTPError(err, 30)
 		return result
 	}
 
@@ -190,19 +184,7 @@ func (a *Analyzer) validateBIMIVMC(ctx context.Context, url string) map[string]a
 
 	resp, err := a.HTTP.Get(ctx, url)
 	if err != nil {
-		errStr := err.Error()
-		if strings.Contains(errStr, "tls") || strings.Contains(errStr, "certificate") {
-			result["error"] = "SSL error"
-		} else if strings.Contains(errStr, "connection") || strings.Contains(errStr, "dial") {
-			result["error"] = "Connection failed"
-		} else if strings.Contains(errStr, "timeout") {
-			result["error"] = "Timeout"
-		} else {
-			if len(errStr) > 30 {
-				errStr = errStr[:30]
-			}
-			result["error"] = errStr
-		}
+		result["error"] = classifyHTTPError(err, 30)
 		return result
 	}
 

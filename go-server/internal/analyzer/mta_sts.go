@@ -125,19 +125,11 @@ func (a *Analyzer) fetchMTASTSPolicy(ctx context.Context, policyURL string) map[
 
 	resp, err := a.HTTP.Get(ctx, policyURL)
 	if err != nil {
-		errStr := err.Error()
-		if strings.Contains(errStr, "tls") || strings.Contains(errStr, "certificate") {
-			result["error"] = "SSL certificate error"
-		} else if strings.Contains(errStr, "connection") || strings.Contains(errStr, "dial") {
-			result["error"] = "Connection failed"
-		} else if strings.Contains(errStr, "timeout") {
-			result["error"] = "Timeout"
-		} else {
-			if len(errStr) > 50 {
-				errStr = errStr[:50]
-			}
-			result["error"] = errStr
+		errMsg := classifyHTTPError(err, 50)
+		if strings.Contains(err.Error(), "tls") || strings.Contains(err.Error(), "certificate") {
+			errMsg = "SSL certificate error"
 		}
+		result["error"] = errMsg
 		return result
 	}
 
