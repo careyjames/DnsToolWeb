@@ -250,55 +250,55 @@ func determineGrade(ps protocolState, hasSPF, hasDMARC, hasDKIM bool, monitoring
                 message = buildDescriptiveMessage(ps, configured, absent, monitoring)
 
         case corePresent && dmarcStrict && hasCAA:
-                state = "Low"
+                state = "Low Risk"
                 icon = "shield-alt"
                 color = "success"
                 message = buildDescriptiveMessage(ps, configured, absent, monitoring)
 
         case corePresent && dmarcFullEnforcing:
-                state = "Low"
+                state = "Low Risk"
                 icon = "shield-alt"
                 color = "success"
                 message = buildDescriptiveMessage(ps, configured, absent, monitoring)
 
         case corePresent && dmarcPartialEnforcing:
-                state = "Medium"
+                state = "Medium Risk"
                 icon = "exclamation-triangle"
                 color = "warning"
                 message = fmt.Sprintf("Email authentication configured but DMARC enforcement is partial (pct=%d%%). Only %d%% of failing mail is subject to policy.", ps.dmarcPct, ps.dmarcPct)
 
         case corePresent && ps.dmarcPolicy == "none":
-                state = "Medium"
+                state = "Medium Risk"
                 icon = "exclamation-triangle"
                 color = "warning"
                 message = "Email authentication configured but DMARC is in monitoring mode (p=none). Enforcement recommended after reviewing reports."
 
         case hasSPF && hasDMARC && !hasDKIM:
-                state = "Medium"
+                state = "Medium Risk"
                 icon = "exclamation-triangle"
                 color = "warning"
                 message = "SPF and DMARC present but DKIM not verified. DKIM signing is required for full DMARC alignment."
 
         case hasSPF && !hasDMARC:
-                state = "High"
+                state = "High Risk"
                 icon = "exclamation-triangle"
                 color = "warning"
                 message = "SPF configured but no DMARC policy. Without DMARC, SPF alone cannot prevent email spoofing."
 
         case !hasSPF && !hasDMARC && !hasDKIM:
-                state = "Critical"
+                state = "Critical Risk"
                 icon = "times-circle"
                 color = "danger"
                 message = "No email authentication configured. This domain is fully vulnerable to email spoofing."
 
         default:
-                state = "High"
+                state = "High Risk"
                 icon = "exclamation-triangle"
                 color = "warning"
                 message = "Partial email authentication. Critical security controls are missing."
         }
 
-        if len(monitoring) > 0 && state != "Critical" && state != "High" {
+        if len(monitoring) > 0 && state != "Critical Risk" && state != "High Risk" {
                 if !strings.Contains(state, "Monitoring") {
                         state += " Monitoring"
                 }

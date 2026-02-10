@@ -348,7 +348,7 @@
                             {{end}}
                             {{$postureAchievable := mapGetStr "posture_achievable" $remediation}}
                             {{if $postureAchievable}}
-                            <span class="ms-auto small text-muted">Achievable posture: <span class="badge bg-{{if or (eq $postureAchievable "Informational") (eq $postureAchievable "Low")}}success{{else}}warning{{end}}">{{$postureAchievable}}</span></span>
+                            <span class="ms-auto small text-muted">Achievable posture: <span class="badge bg-{{if or (eq $postureAchievable "Informational") (eq $postureAchievable "Low Risk")}}success{{else}}warning{{end}}">{{$postureAchievable}}</span></span>
                             {{end}}
                         </div>
                         <div class="row g-2">

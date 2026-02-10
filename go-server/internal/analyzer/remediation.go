@@ -340,14 +340,14 @@ func computeAchievablePosture(ps protocolState, fixes []fix) string {
                 if len(fixes) <= 3 {
                         return "Informational"
                 }
-                return "Low"
+                return "Low Risk"
         }
 
         if hasCritical {
-                return "Low"
+                return "Low Risk"
         }
 
-        return "Low"
+        return "Low Risk"
 }
 
 func buildMailPosture(results map[string]any) map[string]any {
