@@ -55,5 +55,8 @@ The app version is defined in `go-server/internal/config/config.go` (the `AppVer
 - **`.replit` file**: Cannot be directly edited by the agent. The workflow command references gunicorn but the actual server is the Go binary (via the main.py trampoline).
 - **Deployment**: The `.replit` deployment section has its own build command (`CGO_ENABLED=0 go build -o dns-tool-server ./go-server/cmd/server/`) and run command (`./dns-tool-server`) which handle production builds automatically.
 
+### Feature Parity Manifest
+The living feature parity manifest is at `go-server/internal/analyzer/manifest.go` with automated tests in `manifest_test.go`. These tests enforce that every required schema key is present in the orchestrator output. When adding or removing analysis features, update the manifest — the tests will fail if the manifest and orchestrator are out of sync. The feature inventory documentation is at `docs/FEATURE_INVENTORY.md`.
+
 ### Risk Level Labels
 Posture risk levels follow CVSS-aligned semantics: **Informational** (best) → **Low Risk** → **Medium Risk** → **High Risk** → **Critical Risk** (worst). Legacy stored values (bare "Low", "Medium", etc.) are normalized at display time in `NormalizeResults()` in `go-server/internal/handlers/helpers.go`. Remediation severity labels (Critical/High/Medium/Low) are separate from posture states.

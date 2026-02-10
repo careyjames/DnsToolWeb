@@ -355,13 +355,32 @@ parsing and validation of a specific DNS protocol.
 
 ---
 
-## Cross-Reference: Legacy Feature Parity Manifest
+## Automated Feature Parity Verification
 
-This inventory was verified against the legacy feature parity manifest
-(`docs/legacy/tests/feature_parity_manifest.py`), which defines 33 schema
-keys that must exist in any implementation. Verification result:
+Feature parity is enforced by an automated Go test suite that runs on every
+build. The living manifest lives at:
 
-**All 33 of 33 manifest schema keys are present in the Go codebase.**
+    go-server/internal/analyzer/manifest.go     — the source of truth
+    go-server/internal/analyzer/manifest_test.go — automated enforcement
+
+The tests verify:
+- Every schema key in the manifest is present in actual orchestrator output
+- No duplicate schema keys exist
+- Every entry has required fields (Feature, Category, SchemaKey, DetectionMethods)
+- Minimum feature counts per category are maintained
+- The manifest never drops below 33 features (the original migration baseline)
+
+**If you add a new feature**, add its entry to `FeatureParityManifest` in
+`manifest.go`. The tests will catch it if you forget.
+
+**If you remove a feature**, remove its entry from the manifest with
+documented rationale. The tests will fail until both the manifest and the
+orchestrator are in sync.
+
+The legacy Python manifest (`docs/legacy/tests/feature_parity_manifest.py`)
+is archived for historical reference. The Go manifest supersedes it.
+
+### Current Status: All 33 of 33 schema keys verified.
 
 | Manifest Schema Key | Go Source | Status |
 |---------------------|-----------|--------|

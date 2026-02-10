@@ -225,7 +225,11 @@ func (a *Analyzer) buildNonExistentResult(domain, status string, statusMessage *
                 "section_status":         map[string]any{},
                 "basic_records":          map[string]any{"A": []string{}, "AAAA": []string{}, "MX": []string{}, "NS": []string{}, "TXT": []string{}, "CNAME": []string{}, "SOA": []string{}},
                 "authoritative_records":  map[string]any{},
+                "auth_query_status":      nil,
+                "resolver_ttl":           nil,
+                "auth_ttl":               nil,
                 "propagation_status":     map[string]any{},
+                "resolver_consensus":     map[string]any{},
                 "spf_analysis":           map[string]any{"status": "n/a", "message": msgDomainNotExist},
                 "dmarc_analysis":         map[string]any{"status": "n/a", "message": msgDomainNotExist},
                 "dkim_analysis":          map[string]any{"status": "n/a"},
@@ -239,8 +243,14 @@ func (a *Analyzer) buildNonExistentResult(domain, status string, statusMessage *
                 "registrar_info":         map[string]any{"status": "n/a", "registrar": nil},
                 "smtp_transport":         nil,
                 "ct_subdomains":          map[string]any{"status": "success", "subdomains": []any{}, "unique_subdomains": 0, "total_certs": 0},
+                "has_null_mx":            false,
+                "is_no_mail_domain":      false,
                 "hosting_summary":        map[string]any{"hosting": "N/A", "dns_hosting": "N/A", "email_hosting": "N/A"},
+                "dns_infrastructure":     map[string]any{"provider": "N/A", "tier": "N/A"},
+                "email_security_mgmt":    map[string]any{},
                 "posture":                map[string]any{"score": 0, "grade": "N/A", "state": "N/A", "label": "Non-existent Domain", "message": msgDomainNotExist, "icon": "times-circle", "issues": []string{msgDomainNotExist}, "monitoring": []string{}, "configured": []string{}, "absent": []string{}, "color": "secondary", "deliberate_monitoring": false, "deliberate_monitoring_note": ""},
+                "remediation":            map[string]any{"top_fixes": []map[string]any{}, "posture_achievable": "N/A"},
+                "mail_posture":           map[string]any{"classification": "unknown"},
         }
 }
 
