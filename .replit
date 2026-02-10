@@ -6,8 +6,8 @@ packages = ["cacert", "chromium", "openssl", "postgresql", "whois", "sqlc"]
 
 [deployment]
 deploymentTarget = "autoscale"
-run = ["sh", "-c", "/home/runner/workspace/dns-tool-server"]
-build = ["sh", "-c", "cd go-server && go build -o ../dns-tool-server ./cmd/server/"]
+run = ["sh", "-c", "/tmp/dns-tool-server"]
+build = ["sh", "-c", "cd go-server && go build -o /tmp/dns-tool-server ./cmd/server/"]
 
 [workflows]
 runButton = "Project"
