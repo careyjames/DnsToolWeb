@@ -293,7 +293,24 @@ parsing and validation of a specific DNS protocol.
 - Partial results handling (timeouts, failures)
 - Copy-to-clipboard for DNS records
 - Section collapse/expand
-- Print-optimized layout
+- Executive print/PDF report (see §6.1.1)
+
+#### 6.1.1 Print/PDF Report
+Professional, client-facing print layout designed for executive audiences.
+- **TLP classification**: TLP:CLEAR badge per FIRST.org Traffic Light Protocol (DNS records are public data)
+- **Domain banner**: Full-width navy banner with domain name as the visual focal point (22pt monospace, centered)
+- **Branded header**: Gradient accent bar (navy→teal→amber), company logo, report title, generation metadata
+- **Section headers**: Major sections (Email Security, Brand Security, Domain Security, Traffic & Routing) use colored solid backgrounds (navy/teal alternating) with white text for visual rhythm
+- **Posture cards**: Colored left-border accents (green/amber/red/teal) indicating risk severity
+- **Code blocks**: Teal left-accent bar for DNS record display
+- **Tables**: Navy header rows with white text, zebra-striped body rows
+- **Badges**: Solid colors mapped to distinct grayscale values for B&W laser printer safety (green=#166534, teal=#0e7490, amber=#d97706, red=#991b1b)
+- **Alerts**: Left-border accent style with semantic coloring
+- **RFC links**: Teal pill badges
+- **Page breaks**: Controlled pagination between major sections
+- **Footer**: Matching gradient accent bar, three-column layout (company, tagline, contact), TLP disclaimer
+- **B&W safe**: All colors chosen for distinct grayscale mapping — report remains fully legible on monochrome laser printers
+- **Source**: `static/css/custom.css` (@media print), `go-server/templates/results.html` (print-only markup)
 
 ### 6.2 Analysis History
 - Paginated history with search
