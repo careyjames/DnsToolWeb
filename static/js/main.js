@@ -147,6 +147,22 @@ document.addEventListener('DOMContentLoaded', function() {
             bsAlert.close();
         }, 5000);
     });
+
+    document.querySelectorAll('.alert-dismissible .btn-close').forEach(function(btn) {
+        btn.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            var alertEl = btn.closest('.alert');
+            if (alertEl) {
+                try {
+                    var bsAlert = bootstrap.Alert.getOrCreateInstance(alertEl);
+                    bsAlert.close();
+                } catch (_) {
+                    alertEl.remove();
+                }
+            }
+        });
+    });
     
     document.querySelectorAll('a[href^="#"]').forEach(function(anchor) {
         anchor.addEventListener('click', function(e) {
