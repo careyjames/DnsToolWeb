@@ -1772,6 +1772,47 @@ main.container {
     }
 
     /* ================================================
+       CHROME PRINT GRID FIX — Force Bootstrap columns
+       Chrome print uses ~800px viewport, causing col-md-*
+       to stack. These rules force multi-column layout in
+       all print engines.
+       ================================================ */
+    .row > .col-md-4 {
+        flex: 0 0 33.333% !important;
+        max-width: 33.333% !important;
+        width: 33.333% !important;
+    }
+
+    .row > .col-md-6 {
+        flex: 0 0 50% !important;
+        max-width: 50% !important;
+        width: 50% !important;
+    }
+
+    .row > .col-md-8 {
+        flex: 0 0 66.666% !important;
+        max-width: 66.666% !important;
+        width: 66.666% !important;
+    }
+
+    .row > .col-md-3 {
+        flex: 0 0 25% !important;
+        max-width: 25% !important;
+        width: 25% !important;
+    }
+
+    .mta-sts-tlsrpt-row > .col-md-6 {
+        flex: 0 0 100% !important;
+        max-width: 100% !important;
+        width: 100% !important;
+    }
+
+    .row {
+        display: flex !important;
+        flex-wrap: wrap !important;
+    }
+
+    /* ================================================
        DOMAIN SUMMARY GRID
        ================================================ */
     .domain-summary-row .col-md-3,
