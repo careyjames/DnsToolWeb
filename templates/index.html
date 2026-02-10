@@ -666,8 +666,8 @@
         document.addEventListener('DOMContentLoaded', function() {
             const analyzeBtn = document.getElementById('analyzeBtn');
             if (analyzeBtn && analyzeBtn.dataset.waitSeconds) {
-                var waitSeconds = Number.parseInt(analyzeBtn.dataset.waitSeconds, 10);
-                var originalHTML = analyzeBtn.innerHTML;
+                let waitSeconds = Number.parseInt(analyzeBtn.dataset.waitSeconds, 10);
+                const originalHTML = analyzeBtn.innerHTML;
                 
                 if (waitSeconds > 0) {
                     analyzeBtn.disabled = true;

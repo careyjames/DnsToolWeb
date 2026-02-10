@@ -1936,7 +1936,7 @@
                             {{end}}
                             {{$cnameDiscCount := mapGetFloat "cname_discovered_count" $ct}}
                             {{if gt $cnameDiscCount 0}}
-                            <span class="badge border" style="font-size:0.7rem; color: #c084fc; background: rgba(168,85,247,0.15); border-color: rgba(168,85,247,0.35) !important;"><i class="fas fa-project-diagram me-1"></i>{{formatFloat 0 $cnameDiscCount}} discovered via CNAME</span>
+                            <span class="badge border" style="font-size:0.7rem; color: #d4a0ff; background: rgba(168,85,247,0.15); border-color: rgba(168,85,247,0.35) !important;"><i class="fas fa-project-diagram me-1"></i>{{formatFloat 0 $cnameDiscCount}} discovered via CNAME</span>
                             {{end}}
                             {{$providersFound := mapGetFloat "providers_found" $ct}}
                             {{if gt $providersFound 0}}
@@ -2006,7 +2006,7 @@
                                         {{if eq $source "dns"}}
                                         <span class="badge bg-info-subtle text-info border border-info-subtle" style="font-size:0.6rem;" title="Found via DNS A/AAAA record lookup of common service names">DNS</span>
                                         {{else if eq $source "cname"}}
-                                        <span class="badge" style="font-size:0.6rem; color: #c084fc !important; background: rgba(168,85,247,0.15) !important; border-color: rgba(168,85,247,0.35) !important;" title="Discovered via CNAME chain">CNAME</span>
+                                        <span class="badge" style="font-size:0.6rem; color: #d4a0ff !important; background: rgba(168,85,247,0.15) !important; border-color: rgba(168,85,247,0.35) !important;" title="Discovered via CNAME chain">CNAME</span>
                                         {{else}}
                                         <span class="badge bg-dark bg-opacity-25 text-muted" style="font-size:0.6rem;" title="Found in Certificate Transparency logs (RFC 6962)">CT Log</span>
                                         {{end}}
@@ -2202,19 +2202,19 @@
             document.querySelectorAll('.bimi-logo-img').forEach(function(img) {
                 img.addEventListener('error', function() {
                     this.style.display = 'none';
-                    var fallback = this.nextElementSibling;
+                    const fallback = this.nextElementSibling;
                     if (fallback) fallback.style.display = 'block';
                 });
             });
-            var tooltipTriggerList = Array.from(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+            const tooltipTriggerList = Array.from(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
             tooltipTriggerList.map(function(el) {
                 return new bootstrap.Tooltip(el);
             });
             
-            var reanalyzeBtn = document.getElementById('reanalyzeBtn');
+            const reanalyzeBtn = document.getElementById('reanalyzeBtn');
             if (reanalyzeBtn) {
-                var waitSeconds = Number.parseInt(reanalyzeBtn.dataset.waitSeconds) || 0;
-                var countdownInterval = null;
+                const waitSeconds = Number.parseInt(reanalyzeBtn.dataset.waitSeconds) || 0;
+                let countdownInterval = null;
                 
                 function startCountdown(seconds) {
                     reanalyzeBtn.classList.add('disabled');
@@ -2225,8 +2225,7 @@
                         if (seconds <= 0) {
                             clearInterval(countdownInterval);
                             reanalyzeBtn.innerHTML = '<i class="fas fa-sync-alt me-2"></i>Re-analyze';
-                            reanalyzeBtn.classList.remove('disabled');
-                            reanalyzeBtn.classList.remove('btn-secondary');
+                            reanalyzeBtn.classList.remove('disabled', 'btn-secondary');
                             reanalyzeBtn.classList.add('btn-primary');
                         } else {
                             reanalyzeBtn.innerHTML = '<i class="fas fa-clock me-2"></i>Ready in ' + seconds + 's';
@@ -2247,8 +2246,8 @@
                         return;
                     }
                     
-                    var domain = this.dataset.domain;
-                    var overlay = document.getElementById('loadingOverlay');
+                    const domain = this.dataset.domain;
+                    const overlay = document.getElementById('loadingOverlay');
                     
                     this.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Analyzing...';
                     this.classList.add('disabled');
@@ -2261,9 +2260,9 @@
                         }
                     }
                     
-                    var url = '/analyze?domain=' + encodeURIComponent(domain) + '&refresh=' + Date.now();
+                    const url = '/analyze?domain=' + encodeURIComponent(domain) + '&refresh=' + Date.now();
                     requestAnimationFrame(function() {
-                        window.location.href = url;
+                        globalThis.location.href = url;
                     });
                 });
             }

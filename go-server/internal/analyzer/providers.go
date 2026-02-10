@@ -1,287 +1,377 @@
 package analyzer
 
 type managementProviderInfo struct {
-	Name         string
-	Vendor       string
-	Capabilities []string
+        Name         string
+        Vendor       string
+        Capabilities []string
 }
 
 type spfFlatteningInfo struct {
-	Name   string
-	Vendor string
+        Name   string
+        Vendor string
 }
 
 type hostedDKIMInfo struct {
-	Name   string
-	Vendor string
+        Name   string
+        Vendor string
 }
 
 type dynamicServiceInfo struct {
-	Name   string
-	Vendor string
+        Name   string
+        Vendor string
 }
 
 type cnameProviderInfo struct {
-	Name     string
-	Category string
+        Name     string
+        Category string
 }
 
+const (
+        capDMARCReporting   = "DMARC reporting"
+        capDMARCAnalytics   = "DMARC analytics"
+        capDMARCEnforcement = "DMARC enforcement"
+        capSPFManagement    = "SPF management"
+        capTLSRPTReporting  = "TLS-RPT reporting"
+        capMTASTSHosting    = "MTA-STS hosting"
+        capBrandProtection  = "brand protection"
+        capEmailFraudDef    = "email fraud defense"
+        capEmailSecurity    = "email security"
+        capDeliverability   = "deliverability testing"
+        capAIAnalysis       = "AI-assisted analysis"
+
+        catEcommerce     = "E-commerce"
+        catWebsite       = "Website"
+        catMarketing     = "Marketing"
+        catEmail         = "Email"
+        catSupport       = "Support"
+        catCRM           = "CRM"
+        catCDN           = "CDN"
+        catCloud         = "Cloud"
+        catPaaS          = "PaaS"
+        catSecurity      = "Security"
+        catCollaboration = "Collaboration"
+        catIdentity      = "Identity"
+        catMonitoring    = "Monitoring"
+        catAnalytics     = "Analytics"
+        catPayments      = "Payments"
+        catHosting       = "Hosting"
+        catHR            = "HR"
+        catLiveChat      = "Live Chat"
+        catStorage       = "Storage"
+        catDocuments     = "Documents"
+        catLandingPages  = "Landing Pages"
+        catRecruiting    = "Recruiting"
+        catScheduling    = "Scheduling"
+        catForms         = "Forms"
+        catLearning      = "Learning"
+        catCommunity     = "Community"
+        catStatusPage    = "Status Page"
+        catDocumentation = "Documentation"
+        catDesign        = "Design"
+        catEvents        = "Events"
+        catVideo         = "Video"
+        catITSM          = "ITSM"
+        catDevOps        = "DevOps"
+
+        nameOnDMARC       = "OnDMARC"
+        nameDMARCReport   = "DMARC Report"
+        nameDMARCLY       = "DMARCLY"
+        nameDmarcian      = "Dmarcian"
+        nameSendmarc      = "Sendmarc"
+        nameProofpoint    = "Proofpoint"
+        nameValimailEnf   = "Valimail Enforce"
+        nameProofpointEFD = "Proofpoint EFD"
+        namePowerDMARC    = "PowerDMARC"
+        nameMailhardener  = "Mailhardener"
+        nameFraudmarc     = "Fraudmarc"
+        nameEasyDMARC     = "EasyDMARC"
+        nameDMARCAdvisor  = "DMARC Advisor"
+        nameAgari         = "Agari"
+        nameRedSift       = "Red Sift"
+
+        vendorRedSift    = "Red Sift"
+        vendorValimail   = "Valimail"
+        vendorDmarcian   = "Dmarcian"
+        vendorSendmarc   = "Sendmarc"
+        vendorProofpoint = "Proofpoint"
+        vendorDMARCLY    = "DMARCLY"
+        vendorPowerDMARC = "PowerDMARC"
+        vendorFraudmarc  = "Fraudmarc"
+        vendorEasyDMARC  = "EasyDMARC"
+        vendorDMARCAdv   = "DMARC Advisor"
+        vendorMailharden = "Mailhardener"
+        vendorDMARCRpt   = "DMARC Report"
+        vendorFortra     = "Fortra"
+        vendorMimecast   = "Mimecast"
+        vendorActiveCamp = "ActiveCampaign"
+
+        nameAkamai     = "Akamai"
+        nameSalesforce = "Salesforce"
+        nameHubSpot    = "HubSpot"
+        nameHeroku     = "Heroku"
+
+        domainOndmarc      = "ondmarc.com"
+        domainRedsift      = "redsift.cloud"
+        domainDmarcian     = "dmarcian.com"
+        domainSendmarc     = "sendmarc.com"
+)
+
 var dmarcMonitoringProviders = map[string]managementProviderInfo{
-	"ondmarc.com":                   {Name: "OnDMARC", Vendor: "Red Sift", Capabilities: []string{"DMARC reporting", "TLS-RPT reporting", "SPF management", "MTA-STS hosting"}},
-	"valimail.com":                  {Name: "Valimail Enforce", Vendor: "Valimail", Capabilities: []string{"DMARC reporting", "DMARC enforcement", "SPF management"}},
-	"dmarcian.com":                  {Name: "Dmarcian", Vendor: "Dmarcian", Capabilities: []string{"DMARC reporting", "DMARC analytics"}},
-	"easydmarc.com":                 {Name: "EasyDMARC", Vendor: "EasyDMARC", Capabilities: []string{"DMARC reporting", "DMARC analytics", "SPF management"}},
-	"powerdmarc.com":                {Name: "PowerDMARC", Vendor: "PowerDMARC", Capabilities: []string{"DMARC reporting", "DMARC enforcement", "SPF management"}},
-	"agari.com":                     {Name: "Agari", Vendor: "Fortra (HelpSystems)", Capabilities: []string{"DMARC reporting", "brand protection"}},
-	"dmarc-analyzer.com":            {Name: "DMARC Analyzer", Vendor: "Mimecast", Capabilities: []string{"DMARC reporting", "DMARC analytics"}},
-	"postmarkapp.com":               {Name: "Postmark DMARC", Vendor: "ActiveCampaign", Capabilities: []string{"DMARC reporting"}},
-	"uriports.com":                  {Name: "URIports", Vendor: "URIports", Capabilities: []string{"DMARC reporting", "TLS-RPT reporting"}},
-	"fraudmarc.com":                 {Name: "Fraudmarc", Vendor: "Fraudmarc", Capabilities: []string{"DMARC reporting", "SPF management"}},
-	"mxtoolbox.com":                 {Name: "MxToolbox", Vendor: "MxToolbox", Capabilities: []string{"DMARC reporting"}},
-	"sendmarc.com":                  {Name: "Sendmarc", Vendor: "Sendmarc", Capabilities: []string{"DMARC reporting", "DMARC enforcement"}},
-	"proofpoint.com":                {Name: "Proofpoint EFD", Vendor: "Proofpoint", Capabilities: []string{"DMARC reporting", "email fraud defense"}},
-	"redsift.com":                   {Name: "Red Sift", Vendor: "Red Sift", Capabilities: []string{"DMARC reporting"}},
-	"mailhardener.com":              {Name: "Mailhardener", Vendor: "Mailhardener", Capabilities: []string{"DMARC reporting", "MTA-STS hosting"}},
-	"dmarc.postmarkapp.com":         {Name: "Postmark DMARC", Vendor: "ActiveCampaign", Capabilities: []string{"DMARC reporting"}},
-	"emailsecuritycheck.net":        {Name: "DMARC Report", Vendor: "DMARC Report", Capabilities: []string{"DMARC reporting"}},
-	"app.dmarcdigests.com":          {Name: "DMARC Digests", Vendor: "DMARC Digests", Capabilities: []string{"DMARC reporting"}},
-	"dmarc.report":                  {Name: "DMARC Report", Vendor: "DMARC Report", Capabilities: []string{"DMARC reporting"}},
-	"ag.dmarcly.com":                {Name: "DMARCLY", Vendor: "DMARCLY", Capabilities: []string{"DMARC reporting", "DMARC analytics"}},
-	"dmarcly.com":                   {Name: "DMARCLY", Vendor: "DMARCLY", Capabilities: []string{"DMARC reporting", "DMARC analytics"}},
-	"dmarc-reports.cloudflare.net":  {Name: "Cloudflare DMARC", Vendor: "Cloudflare", Capabilities: []string{"DMARC reporting", "DMARC analytics"}},
-	"cloudflare.net":                {Name: "Cloudflare DMARC", Vendor: "Cloudflare", Capabilities: []string{"DMARC reporting", "DMARC analytics"}},
-	"glockapps.com":                 {Name: "GlockApps", Vendor: "GlockApps", Capabilities: []string{"DMARC reporting", "deliverability testing"}},
-	"dmarcadvisor.com":              {Name: "DMARC Advisor", Vendor: "DMARC Advisor", Capabilities: []string{"DMARC reporting", "DMARC analytics"}},
-	"dmarcmanager.app":              {Name: "DMARC Advisor", Vendor: "DMARC Advisor", Capabilities: []string{"DMARC reporting", "DMARC analytics"}},
-	"dmarcduty.com":                 {Name: "DynamicSPF", Vendor: "Dmarcduty", Capabilities: []string{"DMARC reporting", "SPF management"}},
-	"dmarcreport.com":               {Name: "DMARC Report", Vendor: "DMARC Report", Capabilities: []string{"DMARC reporting", "AI-assisted analysis"}},
-	"ironscales.com":                {Name: "IRONSCALES", Vendor: "IRONSCALES", Capabilities: []string{"DMARC reporting", "email security"}},
-	"redsift.cloud":                 {Name: "OnDMARC", Vendor: "Red Sift", Capabilities: []string{"DMARC reporting", "TLS-RPT reporting", "SPF management", "MTA-STS hosting"}},
+        domainOndmarc:                   {Name: nameOnDMARC, Vendor: vendorRedSift, Capabilities: []string{capDMARCReporting, capTLSRPTReporting, capSPFManagement, capMTASTSHosting}},
+        "valimail.com":                  {Name: nameValimailEnf, Vendor: vendorValimail, Capabilities: []string{capDMARCReporting, capDMARCEnforcement, capSPFManagement}},
+        domainDmarcian:                  {Name: nameDmarcian, Vendor: vendorDmarcian, Capabilities: []string{capDMARCReporting, capDMARCAnalytics}},
+        "easydmarc.com":                 {Name: nameEasyDMARC, Vendor: vendorEasyDMARC, Capabilities: []string{capDMARCReporting, capDMARCAnalytics, capSPFManagement}},
+        "powerdmarc.com":                {Name: namePowerDMARC, Vendor: vendorPowerDMARC, Capabilities: []string{capDMARCReporting, capDMARCEnforcement, capSPFManagement}},
+        "agari.com":                     {Name: nameAgari, Vendor: "Fortra (HelpSystems)", Capabilities: []string{capDMARCReporting, capBrandProtection}},
+        "dmarc-analyzer.com":            {Name: "DMARC Analyzer", Vendor: vendorMimecast, Capabilities: []string{capDMARCReporting, capDMARCAnalytics}},
+        "postmarkapp.com":               {Name: "Postmark DMARC", Vendor: vendorActiveCamp, Capabilities: []string{capDMARCReporting}},
+        "uriports.com":                  {Name: "URIports", Vendor: "URIports", Capabilities: []string{capDMARCReporting, capTLSRPTReporting}},
+        "fraudmarc.com":                 {Name: nameFraudmarc, Vendor: vendorFraudmarc, Capabilities: []string{capDMARCReporting, capSPFManagement}},
+        "mxtoolbox.com":                 {Name: "MxToolbox", Vendor: "MxToolbox", Capabilities: []string{capDMARCReporting}},
+        domainSendmarc:                  {Name: nameSendmarc, Vendor: vendorSendmarc, Capabilities: []string{capDMARCReporting, capDMARCEnforcement}},
+        "proofpoint.com":                {Name: nameProofpointEFD, Vendor: vendorProofpoint, Capabilities: []string{capDMARCReporting, capEmailFraudDef}},
+        "redsift.com":                   {Name: nameRedSift, Vendor: vendorRedSift, Capabilities: []string{capDMARCReporting}},
+        "mailhardener.com":              {Name: nameMailhardener, Vendor: vendorMailharden, Capabilities: []string{capDMARCReporting, capMTASTSHosting}},
+        "dmarc.postmarkapp.com":         {Name: "Postmark DMARC", Vendor: vendorActiveCamp, Capabilities: []string{capDMARCReporting}},
+        "emailsecuritycheck.net":        {Name: nameDMARCReport, Vendor: vendorDMARCRpt, Capabilities: []string{capDMARCReporting}},
+        "app.dmarcdigests.com":          {Name: "DMARC Digests", Vendor: "DMARC Digests", Capabilities: []string{capDMARCReporting}},
+        "dmarc.report":                  {Name: nameDMARCReport, Vendor: vendorDMARCRpt, Capabilities: []string{capDMARCReporting}},
+        "ag.dmarcly.com":                {Name: nameDMARCLY, Vendor: vendorDMARCLY, Capabilities: []string{capDMARCReporting, capDMARCAnalytics}},
+        "dmarcly.com":                   {Name: nameDMARCLY, Vendor: vendorDMARCLY, Capabilities: []string{capDMARCReporting, capDMARCAnalytics}},
+        "dmarc-reports.cloudflare.net":  {Name: "Cloudflare DMARC", Vendor: nameCloudflare, Capabilities: []string{capDMARCReporting, capDMARCAnalytics}},
+        "cloudflare.net":                {Name: "Cloudflare DMARC", Vendor: nameCloudflare, Capabilities: []string{capDMARCReporting, capDMARCAnalytics}},
+        "glockapps.com":                 {Name: "GlockApps", Vendor: "GlockApps", Capabilities: []string{capDMARCReporting, capDeliverability}},
+        "dmarcadvisor.com":              {Name: nameDMARCAdvisor, Vendor: vendorDMARCAdv, Capabilities: []string{capDMARCReporting, capDMARCAnalytics}},
+        "dmarcmanager.app":              {Name: nameDMARCAdvisor, Vendor: vendorDMARCAdv, Capabilities: []string{capDMARCReporting, capDMARCAnalytics}},
+        "dmarcduty.com":                 {Name: "DynamicSPF", Vendor: "Dmarcduty", Capabilities: []string{capDMARCReporting, capSPFManagement}},
+        "dmarcreport.com":               {Name: nameDMARCReport, Vendor: vendorDMARCRpt, Capabilities: []string{capDMARCReporting, capAIAnalysis}},
+        "ironscales.com":                {Name: "IRONSCALES", Vendor: "IRONSCALES", Capabilities: []string{capDMARCReporting, capEmailSecurity}},
+        domainRedsift:                   {Name: nameOnDMARC, Vendor: vendorRedSift, Capabilities: []string{capDMARCReporting, capTLSRPTReporting, capSPFManagement, capMTASTSHosting}},
 }
 
 var spfFlatteningProviders = map[string]spfFlatteningInfo{
-	"ondmarc.com":       {Name: "OnDMARC", Vendor: "Red Sift"},
-	"smart.ondmarc.com": {Name: "OnDMARC", Vendor: "Red Sift"},
-	"redsift.cloud":     {Name: "OnDMARC", Vendor: "Red Sift"},
-	"vali.email":        {Name: "Valimail Enforce", Vendor: "Valimail"},
-	"valimail.com":      {Name: "Valimail Enforce", Vendor: "Valimail"},
-	"autospf.com":       {Name: "AutoSPF", Vendor: "AutoSPF"},
-	"sendmarc.com":      {Name: "Sendmarc", Vendor: "Sendmarc"},
-	"fraudmarc.com":     {Name: "Fraudmarc", Vendor: "Fraudmarc"},
-	"dmarcian.com":      {Name: "Dmarcian", Vendor: "Dmarcian"},
-	"easydmarc.pro":     {Name: "EasySPF", Vendor: "EasyDMARC"},
-	"easydmarc.com":     {Name: "EasySPF", Vendor: "EasyDMARC"},
-	"powerspf.com":      {Name: "PowerSPF", Vendor: "PowerDMARC"},
-	"powerdmarc.com":    {Name: "PowerSPF", Vendor: "PowerDMARC"},
-	"dmarcly.com":       {Name: "DMARCLY", Vendor: "DMARCLY"},
-	"dmarcduty.com":     {Name: "DynamicSPF", Vendor: "Dmarcduty"},
-	"spf.has.gpphosted.com": {Name: "Proofpoint EFD (Gov)", Vendor: "Proofpoint"},
-	"spf.has.pphosted.com":  {Name: "Proofpoint EFD", Vendor: "Proofpoint"},
+        domainOndmarc:       {Name: nameOnDMARC, Vendor: vendorRedSift},
+        "smart.ondmarc.com": {Name: nameOnDMARC, Vendor: vendorRedSift},
+        domainRedsift:       {Name: nameOnDMARC, Vendor: vendorRedSift},
+        "vali.email":        {Name: nameValimailEnf, Vendor: vendorValimail},
+        "valimail.com":      {Name: nameValimailEnf, Vendor: vendorValimail},
+        "autospf.com":       {Name: "AutoSPF", Vendor: "AutoSPF"},
+        domainSendmarc:      {Name: nameSendmarc, Vendor: vendorSendmarc},
+        "fraudmarc.com":     {Name: nameFraudmarc, Vendor: vendorFraudmarc},
+        domainDmarcian:      {Name: nameDmarcian, Vendor: vendorDmarcian},
+        "easydmarc.pro":     {Name: "EasySPF", Vendor: vendorEasyDMARC},
+        "easydmarc.com":     {Name: "EasySPF", Vendor: vendorEasyDMARC},
+        "powerspf.com":      {Name: "PowerSPF", Vendor: vendorPowerDMARC},
+        "powerdmarc.com":    {Name: "PowerSPF", Vendor: vendorPowerDMARC},
+        "dmarcly.com":       {Name: nameDMARCLY, Vendor: vendorDMARCLY},
+        "dmarcduty.com":     {Name: "DynamicSPF", Vendor: "Dmarcduty"},
+        "spf.has.gpphosted.com": {Name: "Proofpoint EFD (Gov)", Vendor: vendorProofpoint},
+        "spf.has.pphosted.com":  {Name: nameProofpointEFD, Vendor: vendorProofpoint},
 }
 
 var hostedDKIMProviders = map[string]hostedDKIMInfo{
-	"gpphosted.com":             {Name: "Proofpoint EFD (Gov)", Vendor: "Proofpoint"},
-	"pphosted.com":              {Name: "Proofpoint EFD", Vendor: "Proofpoint"},
-	"proofpoint.com":            {Name: "Proofpoint EFD", Vendor: "Proofpoint"},
-	"dkim.mimecast.com":         {Name: "Mimecast DMARC Analyzer", Vendor: "Mimecast"},
-	"mimecast.com":              {Name: "Mimecast DMARC Analyzer", Vendor: "Mimecast"},
-	"agari.com":                 {Name: "Agari", Vendor: "Fortra"},
-	"emailsecurity.fortra.com":  {Name: "Agari", Vendor: "Fortra"},
-	"sendmarc.com":              {Name: "Sendmarc", Vendor: "Sendmarc"},
-	"dmarcian.com":              {Name: "Dmarcian", Vendor: "Dmarcian"},
+        "gpphosted.com":             {Name: "Proofpoint EFD (Gov)", Vendor: vendorProofpoint},
+        "pphosted.com":              {Name: nameProofpointEFD, Vendor: vendorProofpoint},
+        "proofpoint.com":            {Name: nameProofpointEFD, Vendor: vendorProofpoint},
+        "dkim.mimecast.com":         {Name: "Mimecast DMARC Analyzer", Vendor: vendorMimecast},
+        "mimecast.com":              {Name: "Mimecast DMARC Analyzer", Vendor: vendorMimecast},
+        "agari.com":                 {Name: nameAgari, Vendor: vendorFortra},
+        "emailsecurity.fortra.com":  {Name: nameAgari, Vendor: vendorFortra},
+        domainSendmarc:              {Name: nameSendmarc, Vendor: vendorSendmarc},
+        domainDmarcian:              {Name: nameDmarcian, Vendor: vendorDmarcian},
 }
 
 var dynamicServicesProviders = map[string]dynamicServiceInfo{
-	"ondmarc.com":      {Name: "OnDMARC", Vendor: "Red Sift"},
-	"redsift.cloud":    {Name: "OnDMARC", Vendor: "Red Sift"},
-	"mailhardener.com": {Name: "Mailhardener", Vendor: "Mailhardener"},
-	"vali.email":       {Name: "Valimail Enforce", Vendor: "Valimail"},
+        domainOndmarc:      {Name: nameOnDMARC, Vendor: vendorRedSift},
+        domainRedsift:      {Name: nameOnDMARC, Vendor: vendorRedSift},
+        "mailhardener.com": {Name: nameMailhardener, Vendor: vendorMailharden},
+        "vali.email":       {Name: nameValimailEnf, Vendor: vendorValimail},
 }
 
 var dynamicServicesZones = map[string]string{
-	"_dmarc":     "Dynamic DMARC",
-	"_domainkey": "Dynamic DKIM",
-	"_mta-sts":   "Dynamic MTA-STS",
-	"_smtp._tls": "Dynamic TLS-RPT",
+        "_dmarc":     "Dynamic DMARC",
+        "_domainkey": "Dynamic DKIM",
+        "_mta-sts":   "Dynamic MTA-STS",
+        "_smtp._tls": "Dynamic TLS-RPT",
 }
 
 var cnameProviderMap = map[string]cnameProviderInfo{
-	"shopify.com":               {Name: "Shopify", Category: "E-commerce"},
-	"myshopify.com":             {Name: "Shopify", Category: "E-commerce"},
-	"bigcommerce.com":           {Name: "BigCommerce", Category: "E-commerce"},
-	"squarespace.com":           {Name: "Squarespace", Category: "Website"},
-	"wixdns.net":                {Name: "Wix", Category: "Website"},
-	"wix.com":                   {Name: "Wix", Category: "Website"},
-	"wordpress.com":             {Name: "WordPress.com", Category: "Website"},
-	"wpengine.com":              {Name: "WP Engine", Category: "Website"},
-	"pantheonsite.io":           {Name: "Pantheon", Category: "Website"},
-	"netlify.app":               {Name: "Netlify", Category: "Website"},
-	"netlify.com":               {Name: "Netlify", Category: "Website"},
-	"vercel.app":                {Name: "Vercel", Category: "Website"},
-	"vercel-dns.com":            {Name: "Vercel", Category: "Website"},
-	"webflow.io":                {Name: "Webflow", Category: "Website"},
-	"ghost.io":                  {Name: "Ghost", Category: "Website"},
-	"cargo.site":                {Name: "Cargo", Category: "Website"},
-	"strikingly.com":            {Name: "Strikingly", Category: "Website"},
-	"hubspot.net":               {Name: "HubSpot", Category: "Marketing"},
-	"hubspot.com":               {Name: "HubSpot", Category: "Marketing"},
-	"hs-sites.com":              {Name: "HubSpot", Category: "Marketing"},
-	"marketo.com":               {Name: "Marketo (Adobe)", Category: "Marketing"},
-	"mktoweb.com":               {Name: "Marketo (Adobe)", Category: "Marketing"},
-	"pardot.com":                {Name: "Pardot (Salesforce)", Category: "Marketing"},
-	"mailchimp.com":             {Name: "Mailchimp", Category: "Marketing"},
-	"mailgun.org":               {Name: "Mailgun", Category: "Email"},
-	"sendgrid.net":              {Name: "SendGrid (Twilio)", Category: "Email"},
-	"postmarkapp.com":           {Name: "Postmark", Category: "Email"},
-	"mandrillapp.com":           {Name: "Mandrill (Mailchimp)", Category: "Email"},
-	"zendesk.com":               {Name: "Zendesk", Category: "Support"},
-	"zendeskhost.com":           {Name: "Zendesk", Category: "Support"},
-	"freshdesk.com":             {Name: "Freshdesk", Category: "Support"},
-	"freshservice.com":          {Name: "Freshservice", Category: "Support"},
-	"intercom.io":               {Name: "Intercom", Category: "Support"},
-	"helpscout.com":             {Name: "Help Scout", Category: "Support"},
-	"helpscout.net":             {Name: "Help Scout", Category: "Support"},
-	"salesforce.com":            {Name: "Salesforce", Category: "CRM"},
-	"force.com":                 {Name: "Salesforce", Category: "CRM"},
-	"salesforceliveagent.com":   {Name: "Salesforce", Category: "CRM"},
-	"zoho.com":                  {Name: "Zoho", Category: "CRM"},
-	"zoho.eu":                   {Name: "Zoho", Category: "CRM"},
-	"pipedrive.com":             {Name: "Pipedrive", Category: "CRM"},
-	"cloudfront.net":            {Name: "AWS CloudFront", Category: "CDN"},
-	"amazonaws.com":             {Name: "AWS", Category: "Cloud"},
-	"awsglobalaccelerator.com":  {Name: "AWS Global Accelerator", Category: "Cloud"},
-	"elasticbeanstalk.com":      {Name: "AWS Elastic Beanstalk", Category: "Cloud"},
-	"s3.amazonaws.com":          {Name: "AWS S3", Category: "Cloud"},
-	"azurewebsites.net":         {Name: "Azure App Service", Category: "Cloud"},
-	"azure-api.net":             {Name: "Azure API Management", Category: "Cloud"},
-	"azurefd.net":               {Name: "Azure Front Door", Category: "CDN"},
-	"azureedge.net":             {Name: "Azure CDN", Category: "CDN"},
-	"trafficmanager.net":        {Name: "Azure Traffic Manager", Category: "Cloud"},
-	"cloudapp.azure.com":        {Name: "Azure", Category: "Cloud"},
-	"blob.core.windows.net":     {Name: "Azure Blob Storage", Category: "Cloud"},
-	"windows.net":               {Name: "Azure", Category: "Cloud"},
-	"googleapis.com":            {Name: "Google Cloud", Category: "Cloud"},
-	"appspot.com":               {Name: "Google App Engine", Category: "Cloud"},
-	"googleplex.com":            {Name: "Google", Category: "Cloud"},
-	"run.app":                   {Name: "Google Cloud Run", Category: "Cloud"},
-	"web.app":                   {Name: "Firebase Hosting", Category: "Cloud"},
-	"firebaseapp.com":           {Name: "Firebase", Category: "Cloud"},
-	"cdn.cloudflare.net":        {Name: "Cloudflare", Category: "CDN"},
-	"cloudflare.net":            {Name: "Cloudflare", Category: "CDN"},
-	"cdn77.org":                 {Name: "CDN77", Category: "CDN"},
-	"fastly.net":                {Name: "Fastly", Category: "CDN"},
-	"edgekey.net":               {Name: "Akamai", Category: "CDN"},
-	"akamaiedge.net":            {Name: "Akamai", Category: "CDN"},
-	"akadns.net":                {Name: "Akamai", Category: "CDN"},
-	"akamaized.net":             {Name: "Akamai", Category: "CDN"},
-	"edgesuite.net":             {Name: "Akamai", Category: "CDN"},
-	"stackpathdns.com":          {Name: "StackPath", Category: "CDN"},
-	"stackpathcdn.com":          {Name: "StackPath", Category: "CDN"},
-	"sucuri.net":                {Name: "Sucuri", Category: "Security"},
-	"incapdns.net":              {Name: "Imperva (Incapsula)", Category: "Security"},
-	"impervadns.net":            {Name: "Imperva", Category: "Security"},
-	"heroku.com":                {Name: "Heroku", Category: "PaaS"},
-	"herokuapp.com":             {Name: "Heroku", Category: "PaaS"},
-	"herokudns.com":             {Name: "Heroku", Category: "PaaS"},
-	"render.com":                {Name: "Render", Category: "PaaS"},
-	"onrender.com":              {Name: "Render", Category: "PaaS"},
-	"fly.dev":                   {Name: "Fly.io", Category: "PaaS"},
-	"digitaloceanspaces.com":    {Name: "DigitalOcean Spaces", Category: "Cloud"},
-	"ondigitalocean.app":        {Name: "DigitalOcean App Platform", Category: "Cloud"},
-	"github.io":                 {Name: "GitHub Pages", Category: "Website"},
-	"githubusercontents.com":    {Name: "GitHub", Category: "DevOps"},
-	"gitlab.io":                 {Name: "GitLab Pages", Category: "Website"},
-	"bitbucket.io":              {Name: "Bitbucket", Category: "DevOps"},
-	"atlassian.net":             {Name: "Atlassian", Category: "Collaboration"},
-	"statuspage.io":             {Name: "Statuspage (Atlassian)", Category: "Status Page"},
-	"status.io":                 {Name: "Status.io", Category: "Status Page"},
-	"readthedocs.io":            {Name: "Read the Docs", Category: "Documentation"},
-	"gitbook.io":                {Name: "GitBook", Category: "Documentation"},
-	"readme.io":                 {Name: "ReadMe", Category: "Documentation"},
-	"outlook.com":               {Name: "Microsoft 365", Category: "Email"},
-	"protection.outlook.com":    {Name: "Microsoft 365 (Exchange Online)", Category: "Email"},
-	"mx.microsoft":              {Name: "Microsoft 365 (DANE)", Category: "Email"},
-	"office365.com":             {Name: "Microsoft 365", Category: "Email"},
-	"sharepoint.com":            {Name: "SharePoint Online", Category: "Collaboration"},
-	"lync.com":                  {Name: "Skype for Business", Category: "Collaboration"},
-	"microsoftonline.com":       {Name: "Microsoft Entra ID", Category: "Identity"},
-	"msappproxy.net":            {Name: "Azure AD App Proxy", Category: "Identity"},
-	"aspmx.l.google.com":        {Name: "Google Workspace", Category: "Email"},
-	"googlemail.com":            {Name: "Google Workspace", Category: "Email"},
-	"ghs.googlehosted.com":      {Name: "Google Sites", Category: "Website"},
-	"googlehosted.com":          {Name: "Google", Category: "Cloud"},
-	"stripe.com":                {Name: "Stripe", Category: "Payments"},
-	"chargebee.com":             {Name: "Chargebee", Category: "Payments"},
-	"recurly.com":               {Name: "Recurly", Category: "Payments"},
-	"braintreegateway.com":      {Name: "Braintree (PayPal)", Category: "Payments"},
-	"squareup.com":              {Name: "Square", Category: "Payments"},
-	"typeform.com":              {Name: "Typeform", Category: "Forms"},
-	"wufoo.com":                 {Name: "Wufoo", Category: "Forms"},
-	"surveygizmo.com":           {Name: "Alchemer", Category: "Forms"},
-	"unbounce.com":              {Name: "Unbounce", Category: "Landing Pages"},
-	"instapage.com":             {Name: "Instapage", Category: "Landing Pages"},
-	"leadpages.net":             {Name: "Leadpages", Category: "Landing Pages"},
-	"canva.com":                 {Name: "Canva", Category: "Design"},
-	"calendly.com":              {Name: "Calendly", Category: "Scheduling"},
-	"acuityscheduling.com":      {Name: "Acuity Scheduling", Category: "Scheduling"},
-	"eventbrite.com":            {Name: "Eventbrite", Category: "Events"},
-	"zoom.us":                   {Name: "Zoom", Category: "Video"},
-	"webex.com":                 {Name: "Webex (Cisco)", Category: "Video"},
-	"auth0.com":                 {Name: "Auth0 (Okta)", Category: "Identity"},
-	"okta.com":                  {Name: "Okta", Category: "Identity"},
-	"onelogin.com":              {Name: "OneLogin", Category: "Identity"},
-	"duosecurity.com":           {Name: "Duo (Cisco)", Category: "Identity"},
-	"greenhouse.io":             {Name: "Greenhouse", Category: "Recruiting"},
-	"lever.co":                  {Name: "Lever", Category: "Recruiting"},
-	"workday.com":               {Name: "Workday", Category: "HR"},
-	"bamboohr.com":              {Name: "BambooHR", Category: "HR"},
-	"namely.com":                {Name: "Namely", Category: "HR"},
-	"gusto.com":                 {Name: "Gusto", Category: "HR"},
-	"slack.com":                 {Name: "Slack", Category: "Collaboration"},
-	"notion.so":                 {Name: "Notion", Category: "Collaboration"},
-	"monday.com":                {Name: "monday.com", Category: "Collaboration"},
-	"asana.com":                 {Name: "Asana", Category: "Collaboration"},
-	"pagerduty.com":             {Name: "PagerDuty", Category: "Monitoring"},
-	"datadoghq.com":             {Name: "Datadog", Category: "Monitoring"},
-	"datadoghq.eu":              {Name: "Datadog", Category: "Monitoring"},
-	"sentry.io":                 {Name: "Sentry", Category: "Monitoring"},
-	"newrelic.com":              {Name: "New Relic", Category: "Monitoring"},
-	"sumologic.com":             {Name: "Sumo Logic", Category: "Monitoring"},
-	"grafana.net":               {Name: "Grafana Cloud", Category: "Monitoring"},
-	"docusign.com":              {Name: "DocuSign", Category: "Documents"},
-	"docusign.net":              {Name: "DocuSign", Category: "Documents"},
-	"hellosign.com":             {Name: "HelloSign (Dropbox)", Category: "Documents"},
-	"box.com":                   {Name: "Box", Category: "Storage"},
-	"dropbox.com":               {Name: "Dropbox", Category: "Storage"},
-	"egnyte.com":                {Name: "Egnyte", Category: "Storage"},
-	"teachable.com":             {Name: "Teachable", Category: "Learning"},
-	"thinkific.com":             {Name: "Thinkific", Category: "Learning"},
-	"kajabi.com":                {Name: "Kajabi", Category: "Learning"},
-	"discourse.org":             {Name: "Discourse", Category: "Community"},
-	"discourse.cloud":           {Name: "Discourse", Category: "Community"},
-	"mattermost.com":            {Name: "Mattermost", Category: "Collaboration"},
-	"tawk.to":                   {Name: "tawk.to", Category: "Live Chat"},
-	"crisp.chat":                {Name: "Crisp", Category: "Live Chat"},
-	"drift.com":                 {Name: "Drift", Category: "Live Chat"},
-	"livechatinc.com":           {Name: "LiveChat", Category: "Live Chat"},
-	"segment.com":               {Name: "Segment (Twilio)", Category: "Analytics"},
-	"segment.io":                {Name: "Segment (Twilio)", Category: "Analytics"},
-	"amplitude.com":             {Name: "Amplitude", Category: "Analytics"},
-	"mixpanel.com":              {Name: "Mixpanel", Category: "Analytics"},
-	"hotjar.com":                {Name: "Hotjar", Category: "Analytics"},
-	"optimizely.com":            {Name: "Optimizely", Category: "Analytics"},
-	"crazyegg.com":              {Name: "Crazy Egg", Category: "Analytics"},
-	"wpenginepowered.com":       {Name: "WP Engine", Category: "Website"},
-	"flywheel.io":               {Name: "Flywheel", Category: "Website"},
-	"kinsta.cloud":              {Name: "Kinsta", Category: "Website"},
-	"cloudwaysapps.com":         {Name: "Cloudways", Category: "Website"},
-	"siteground.net":            {Name: "SiteGround", Category: "Hosting"},
-	"bluehost.com":              {Name: "Bluehost", Category: "Hosting"},
-	"godaddysites.com":          {Name: "GoDaddy", Category: "Hosting"},
-	"secureserver.net":          {Name: "GoDaddy", Category: "Hosting"},
-	"hostgator.com":             {Name: "HostGator", Category: "Hosting"},
-	"dreamhost.com":             {Name: "DreamHost", Category: "Hosting"},
-	"wpcomstaging.com":          {Name: "WordPress.com", Category: "Website"},
-	"service-now.com":           {Name: "ServiceNow", Category: "ITSM"},
-	"servicenow.com":            {Name: "ServiceNow", Category: "ITSM"},
+        "shopify.com":               {Name: "Shopify", Category: catEcommerce},
+        "myshopify.com":             {Name: "Shopify", Category: catEcommerce},
+        "bigcommerce.com":           {Name: "BigCommerce", Category: catEcommerce},
+        "squarespace.com":           {Name: "Squarespace", Category: catWebsite},
+        "wixdns.net":                {Name: "Wix", Category: catWebsite},
+        "wix.com":                   {Name: "Wix", Category: catWebsite},
+        "wordpress.com":             {Name: "WordPress.com", Category: catWebsite},
+        "wpengine.com":              {Name: "WP Engine", Category: catWebsite},
+        "pantheonsite.io":           {Name: "Pantheon", Category: catWebsite},
+        "netlify.app":               {Name: "Netlify", Category: catWebsite},
+        "netlify.com":               {Name: "Netlify", Category: catWebsite},
+        "vercel.app":                {Name: "Vercel", Category: catWebsite},
+        "vercel-dns.com":            {Name: "Vercel", Category: catWebsite},
+        "webflow.io":                {Name: "Webflow", Category: catWebsite},
+        "ghost.io":                  {Name: "Ghost", Category: catWebsite},
+        "cargo.site":                {Name: "Cargo", Category: catWebsite},
+        "strikingly.com":            {Name: "Strikingly", Category: catWebsite},
+        "hubspot.net":               {Name: nameHubSpot, Category: catMarketing},
+        "hubspot.com":               {Name: nameHubSpot, Category: catMarketing},
+        "hs-sites.com":              {Name: nameHubSpot, Category: catMarketing},
+        "marketo.com":               {Name: "Marketo (Adobe)", Category: catMarketing},
+        "mktoweb.com":               {Name: "Marketo (Adobe)", Category: catMarketing},
+        "pardot.com":                {Name: "Pardot (Salesforce)", Category: catMarketing},
+        "mailchimp.com":             {Name: "Mailchimp", Category: catMarketing},
+        "mailgun.org":               {Name: "Mailgun", Category: catEmail},
+        "sendgrid.net":              {Name: "SendGrid (Twilio)", Category: catEmail},
+        "postmarkapp.com":           {Name: "Postmark", Category: catEmail},
+        "mandrillapp.com":           {Name: "Mandrill (Mailchimp)", Category: catEmail},
+        "zendesk.com":               {Name: "Zendesk", Category: catSupport},
+        "zendeskhost.com":           {Name: "Zendesk", Category: catSupport},
+        "freshdesk.com":             {Name: "Freshdesk", Category: catSupport},
+        "freshservice.com":          {Name: "Freshservice", Category: catSupport},
+        "intercom.io":               {Name: "Intercom", Category: catSupport},
+        "helpscout.com":             {Name: "Help Scout", Category: catSupport},
+        "helpscout.net":             {Name: "Help Scout", Category: catSupport},
+        "salesforce.com":            {Name: nameSalesforce, Category: catCRM},
+        "force.com":                 {Name: nameSalesforce, Category: catCRM},
+        "salesforceliveagent.com":   {Name: nameSalesforce, Category: catCRM},
+        "zoho.com":                  {Name: "Zoho", Category: catCRM},
+        "zoho.eu":                   {Name: "Zoho", Category: catCRM},
+        "pipedrive.com":             {Name: "Pipedrive", Category: catCRM},
+        "cloudfront.net":            {Name: "AWS CloudFront", Category: catCDN},
+        "amazonaws.com":             {Name: "AWS", Category: catCloud},
+        "awsglobalaccelerator.com":  {Name: "AWS Global Accelerator", Category: catCloud},
+        "elasticbeanstalk.com":      {Name: "AWS Elastic Beanstalk", Category: catCloud},
+        "s3.amazonaws.com":          {Name: "AWS S3", Category: catCloud},
+        "azurewebsites.net":         {Name: "Azure App Service", Category: catCloud},
+        "azure-api.net":             {Name: "Azure API Management", Category: catCloud},
+        "azurefd.net":               {Name: "Azure Front Door", Category: catCDN},
+        "azureedge.net":             {Name: "Azure CDN", Category: catCDN},
+        "trafficmanager.net":        {Name: "Azure Traffic Manager", Category: catCloud},
+        "cloudapp.azure.com":        {Name: "Azure", Category: catCloud},
+        "blob.core.windows.net":     {Name: "Azure Blob Storage", Category: catCloud},
+        "windows.net":               {Name: "Azure", Category: catCloud},
+        "googleapis.com":            {Name: "Google Cloud", Category: catCloud},
+        "appspot.com":               {Name: "Google App Engine", Category: catCloud},
+        "googleplex.com":            {Name: "Google", Category: catCloud},
+        "run.app":                   {Name: "Google Cloud Run", Category: catCloud},
+        "web.app":                   {Name: "Firebase Hosting", Category: catCloud},
+        "firebaseapp.com":           {Name: "Firebase", Category: catCloud},
+        "cdn.cloudflare.net":        {Name: nameCloudflare, Category: catCDN},
+        "cloudflare.net":            {Name: nameCloudflare, Category: catCDN},
+        "cdn77.org":                 {Name: "CDN77", Category: catCDN},
+        "fastly.net":                {Name: "Fastly", Category: catCDN},
+        "edgekey.net":               {Name: nameAkamai, Category: catCDN},
+        "akamaiedge.net":            {Name: nameAkamai, Category: catCDN},
+        "akadns.net":                {Name: nameAkamai, Category: catCDN},
+        "akamaized.net":             {Name: nameAkamai, Category: catCDN},
+        "edgesuite.net":             {Name: nameAkamai, Category: catCDN},
+        "stackpathdns.com":          {Name: "StackPath", Category: catCDN},
+        "stackpathcdn.com":          {Name: "StackPath", Category: catCDN},
+        "sucuri.net":                {Name: "Sucuri", Category: catSecurity},
+        "incapdns.net":              {Name: "Imperva (Incapsula)", Category: catSecurity},
+        "impervadns.net":            {Name: "Imperva", Category: catSecurity},
+        "heroku.com":                {Name: nameHeroku, Category: catPaaS},
+        "herokuapp.com":             {Name: nameHeroku, Category: catPaaS},
+        "herokudns.com":             {Name: nameHeroku, Category: catPaaS},
+        "render.com":                {Name: "Render", Category: catPaaS},
+        "onrender.com":              {Name: "Render", Category: catPaaS},
+        "fly.dev":                   {Name: "Fly.io", Category: catPaaS},
+        "digitaloceanspaces.com":    {Name: "DigitalOcean Spaces", Category: catCloud},
+        "ondigitalocean.app":        {Name: "DigitalOcean App Platform", Category: catCloud},
+        "github.io":                 {Name: "GitHub Pages", Category: catWebsite},
+        "githubusercontents.com":    {Name: "GitHub", Category: catDevOps},
+        "gitlab.io":                 {Name: "GitLab Pages", Category: catWebsite},
+        "bitbucket.io":              {Name: "Bitbucket", Category: catDevOps},
+        "atlassian.net":             {Name: "Atlassian", Category: catCollaboration},
+        "statuspage.io":             {Name: "Statuspage (Atlassian)", Category: catStatusPage},
+        "status.io":                 {Name: "Status.io", Category: catStatusPage},
+        "readthedocs.io":            {Name: "Read the Docs", Category: catDocumentation},
+        "gitbook.io":                {Name: "GitBook", Category: catDocumentation},
+        "readme.io":                 {Name: "ReadMe", Category: catDocumentation},
+        "outlook.com":               {Name: "Microsoft 365", Category: catEmail},
+        "protection.outlook.com":    {Name: "Microsoft 365 (Exchange Online)", Category: catEmail},
+        "mx.microsoft":              {Name: "Microsoft 365 (DANE)", Category: catEmail},
+        "office365.com":             {Name: "Microsoft 365", Category: catEmail},
+        "sharepoint.com":            {Name: "SharePoint Online", Category: catCollaboration},
+        "lync.com":                  {Name: "Skype for Business", Category: catCollaboration},
+        "microsoftonline.com":       {Name: "Microsoft Entra ID", Category: catIdentity},
+        "msappproxy.net":            {Name: "Azure AD App Proxy", Category: catIdentity},
+        "aspmx.l.google.com":        {Name: "Google Workspace", Category: catEmail},
+        "googlemail.com":            {Name: "Google Workspace", Category: catEmail},
+        "ghs.googlehosted.com":      {Name: "Google Sites", Category: catWebsite},
+        "googlehosted.com":          {Name: "Google", Category: catCloud},
+        "stripe.com":                {Name: "Stripe", Category: catPayments},
+        "chargebee.com":             {Name: "Chargebee", Category: catPayments},
+        "recurly.com":               {Name: "Recurly", Category: catPayments},
+        "braintreegateway.com":      {Name: "Braintree (PayPal)", Category: catPayments},
+        "squareup.com":              {Name: "Square", Category: catPayments},
+        "typeform.com":              {Name: "Typeform", Category: catForms},
+        "wufoo.com":                 {Name: "Wufoo", Category: catForms},
+        "surveygizmo.com":           {Name: "Alchemer", Category: catForms},
+        "unbounce.com":              {Name: "Unbounce", Category: catLandingPages},
+        "instapage.com":             {Name: "Instapage", Category: catLandingPages},
+        "leadpages.net":             {Name: "Leadpages", Category: catLandingPages},
+        "canva.com":                 {Name: "Canva", Category: catDesign},
+        "calendly.com":              {Name: "Calendly", Category: catScheduling},
+        "acuityscheduling.com":      {Name: "Acuity Scheduling", Category: catScheduling},
+        "eventbrite.com":            {Name: "Eventbrite", Category: catEvents},
+        "zoom.us":                   {Name: "Zoom", Category: catVideo},
+        "webex.com":                 {Name: "Webex (Cisco)", Category: catVideo},
+        "auth0.com":                 {Name: "Auth0 (Okta)", Category: catIdentity},
+        "okta.com":                  {Name: "Okta", Category: catIdentity},
+        "onelogin.com":              {Name: "OneLogin", Category: catIdentity},
+        "duosecurity.com":           {Name: "Duo (Cisco)", Category: catIdentity},
+        "greenhouse.io":             {Name: "Greenhouse", Category: catRecruiting},
+        "lever.co":                  {Name: "Lever", Category: catRecruiting},
+        "workday.com":               {Name: "Workday", Category: catHR},
+        "bamboohr.com":              {Name: "BambooHR", Category: catHR},
+        "namely.com":                {Name: "Namely", Category: catHR},
+        "gusto.com":                 {Name: "Gusto", Category: catHR},
+        "slack.com":                 {Name: "Slack", Category: catCollaboration},
+        "notion.so":                 {Name: "Notion", Category: catCollaboration},
+        "monday.com":                {Name: "monday.com", Category: catCollaboration},
+        "asana.com":                 {Name: "Asana", Category: catCollaboration},
+        "pagerduty.com":             {Name: "PagerDuty", Category: catMonitoring},
+        "datadoghq.com":             {Name: "Datadog", Category: catMonitoring},
+        "datadoghq.eu":              {Name: "Datadog", Category: catMonitoring},
+        "sentry.io":                 {Name: "Sentry", Category: catMonitoring},
+        "newrelic.com":              {Name: "New Relic", Category: catMonitoring},
+        "sumologic.com":             {Name: "Sumo Logic", Category: catMonitoring},
+        "grafana.net":               {Name: "Grafana Cloud", Category: catMonitoring},
+        "docusign.com":              {Name: "DocuSign", Category: catDocuments},
+        "docusign.net":              {Name: "DocuSign", Category: catDocuments},
+        "hellosign.com":             {Name: "HelloSign (Dropbox)", Category: catDocuments},
+        "box.com":                   {Name: "Box", Category: catStorage},
+        "dropbox.com":               {Name: "Dropbox", Category: catStorage},
+        "egnyte.com":                {Name: "Egnyte", Category: catStorage},
+        "teachable.com":             {Name: "Teachable", Category: catLearning},
+        "thinkific.com":             {Name: "Thinkific", Category: catLearning},
+        "kajabi.com":                {Name: "Kajabi", Category: catLearning},
+        "discourse.org":             {Name: "Discourse", Category: catCommunity},
+        "discourse.cloud":           {Name: "Discourse", Category: catCommunity},
+        "mattermost.com":            {Name: "Mattermost", Category: catCollaboration},
+        "tawk.to":                   {Name: "tawk.to", Category: catLiveChat},
+        "crisp.chat":                {Name: "Crisp", Category: catLiveChat},
+        "drift.com":                 {Name: "Drift", Category: catLiveChat},
+        "livechatinc.com":           {Name: "LiveChat", Category: catLiveChat},
+        "segment.com":               {Name: "Segment (Twilio)", Category: catAnalytics},
+        "segment.io":                {Name: "Segment (Twilio)", Category: catAnalytics},
+        "amplitude.com":             {Name: "Amplitude", Category: catAnalytics},
+        "mixpanel.com":              {Name: "Mixpanel", Category: catAnalytics},
+        "hotjar.com":                {Name: "Hotjar", Category: catAnalytics},
+        "optimizely.com":            {Name: "Optimizely", Category: catAnalytics},
+        "crazyegg.com":              {Name: "Crazy Egg", Category: catAnalytics},
+        "wpenginepowered.com":       {Name: "WP Engine", Category: catWebsite},
+        "flywheel.io":               {Name: "Flywheel", Category: catWebsite},
+        "kinsta.cloud":              {Name: "Kinsta", Category: catWebsite},
+        "cloudwaysapps.com":         {Name: "Cloudways", Category: catWebsite},
+        "siteground.net":            {Name: "SiteGround", Category: catHosting},
+        "bluehost.com":              {Name: "Bluehost", Category: catHosting},
+        "godaddysites.com":          {Name: "GoDaddy", Category: catHosting},
+        "secureserver.net":          {Name: "GoDaddy", Category: catHosting},
+        "hostgator.com":             {Name: "HostGator", Category: catHosting},
+        "dreamhost.com":             {Name: "DreamHost", Category: catHosting},
+        "wpcomstaging.com":          {Name: "WordPress.com", Category: catWebsite},
+        "service-now.com":           {Name: "ServiceNow", Category: catITSM},
+        "servicenow.com":            {Name: "ServiceNow", Category: catITSM},
 }

@@ -44,7 +44,7 @@ function isValidDomain(domain) {
     }
     const tld = labels[labels.length - 1];
     if (/^\d+$/.test(tld)) return false;
-    const hasNonAscii = /[^\x20-\x7F]/.test(d);
+    const hasNonAscii = /[^\u0020-\u007F]/.test(d);
     if (!hasNonAscii) {
         for (const label of labels) {
             if (!/^[a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?$/.test(label)) return false;
@@ -62,6 +62,25 @@ function handleCopyResult(btn, success) {
     btn.innerHTML = success ? '<i class="fas fa-check"></i>' : '<i class="fas fa-times"></i>';
     if (success) btn.classList.add('copied');
     setTimeout(function() { resetCopyBtn(btn); }, 1500);
+}
+
+function createCopyHandler(codeBlock, btn) {
+    return function(e) {
+        e.stopPropagation();
+        let copyText = '';
+        codeBlock.childNodes.forEach(function(node) {
+            if (node !== btn && !node.classList?.contains('copy-btn')) {
+                copyText += node.textContent;
+            }
+        });
+        copyText = copyText.trim();
+
+        navigator.clipboard.writeText(copyText).then(
+            function() { handleCopyResult(btn, true); }
+        ).catch(
+            function() { handleCopyResult(btn, false); }
+        );
+    };
 }
 
 document.addEventListener('DOMContentLoaded', function() {
@@ -124,7 +143,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     document.querySelectorAll('.alert-dismissible:not(.alert-persistent)').forEach(function(alert) {
         setTimeout(function() {
-            var bsAlert = bootstrap.Alert.getOrCreateInstance(alert);
+            const bsAlert = bootstrap.Alert.getOrCreateInstance(alert);
             bsAlert.close();
         }, 5000);
     });
@@ -132,7 +151,7 @@ document.addEventListener('DOMContentLoaded', function() {
     document.querySelectorAll('a[href^="#"]').forEach(function(anchor) {
         anchor.addEventListener('click', function(e) {
             e.preventDefault();
-            const target = document.querySelector(this.getAttribute('href'));
+            const target = document.querySelector(this.href.substring(this.href.indexOf('#')));
             if (target) {
                 target.scrollIntoView({
                     behavior: 'smooth',
@@ -146,30 +165,14 @@ document.addEventListener('DOMContentLoaded', function() {
         codeBlock.style.cursor = 'pointer';
         codeBlock.title = 'Click to copy';
 
-        var btn = document.createElement('button');
+        const btn = document.createElement('button');
         btn.type = 'button';
         btn.className = 'copy-btn';
         btn.setAttribute('aria-label', 'Copy to clipboard');
         btn.innerHTML = '<i class="fas fa-copy"></i>';
         codeBlock.appendChild(btn);
 
-        function doCopy(e) {
-            e.stopPropagation();
-            var copyText = '';
-            codeBlock.childNodes.forEach(function(node) {
-                if (node !== btn && !node.classList?.contains('copy-btn')) {
-                    copyText += node.textContent;
-                }
-            });
-            copyText = copyText.trim();
-
-            navigator.clipboard.writeText(copyText).then(
-                function() { handleCopyResult(btn, true); }
-            ).catch(
-                function() { handleCopyResult(btn, false); }
-            );
-        }
-
+        const doCopy = createCopyHandler(codeBlock, btn);
         btn.addEventListener('click', doCopy);
         codeBlock.addEventListener('click', doCopy);
     });

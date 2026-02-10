@@ -8,7 +8,7 @@ const STATIC_ASSETS = [
   '/static/favicon.svg'
 ];
 
-self.addEventListener('install', function(event) {
+globalThis.addEventListener('install', function(event) {
   event.waitUntil(
     caches.open(CACHE_NAME).then(function(cache) {
       return cache.addAll(STATIC_ASSETS);
@@ -17,7 +17,7 @@ self.addEventListener('install', function(event) {
   globalThis.skipWaiting();
 });
 
-self.addEventListener('activate', function(event) {
+globalThis.addEventListener('activate', function(event) {
   event.waitUntil(
     caches.keys().then(function(names) {
       return Promise.all(
@@ -29,7 +29,7 @@ self.addEventListener('activate', function(event) {
   event.waitUntil(clients.claim());
 });
 
-self.addEventListener('fetch', function(event) {
+globalThis.addEventListener('fetch', function(event) {
   const url = new URL(event.request.url);
   if (url.pathname.startsWith('/static/')) {
     event.respondWith(

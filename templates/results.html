@@ -2020,17 +2020,15 @@
                     if (fallback) fallback.style.display = 'block';
                 });
             });
-            // Initialize tooltips
-            var tooltipTriggerList = Array.from(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+            const tooltipTriggerList = Array.from(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
             tooltipTriggerList.map(function(el) {
                 return new bootstrap.Tooltip(el);
             });
             
-            // Re-analyze button handler
-            var reanalyzeBtn = document.getElementById('reanalyzeBtn');
+            const reanalyzeBtn = document.getElementById('reanalyzeBtn');
             if (reanalyzeBtn) {
-                var waitSeconds = Number.parseInt(reanalyzeBtn.dataset.waitSeconds) || 0;
-                var countdownInterval = null;
+                const waitSeconds = Number.parseInt(reanalyzeBtn.dataset.waitSeconds) || 0;
+                let countdownInterval = null;
                 
                 function startCountdown(seconds) {
                     reanalyzeBtn.disabled = true;
@@ -2053,7 +2051,6 @@
                     updateButton();
                 }
                 
-                // Start countdown if wait_seconds is present
                 if (waitSeconds > 0) {
                     startCountdown(waitSeconds);
                 }
@@ -2062,10 +2059,9 @@
                     e.preventDefault();
                     if (this.disabled) return;
                     
-                    var domain = this.dataset.domain;
-                    var overlay = document.getElementById('loadingOverlay');
+                    const domain = this.dataset.domain;
+                    const overlay = document.getElementById('loadingOverlay');
                     
-                    // Update button state immediately
                     this.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Analyzing...';
                     this.disabled = true;
                     
@@ -2076,11 +2072,8 @@
                         }
                     }
                     
-                    // Add cache-busting parameter to force fresh analysis
-                    var timestamp = Date.now();
-                    var url = '/analyze?domain=' + encodeURIComponent(domain) + '&refresh=' + timestamp;
+                    const url = '/analyze?domain=' + encodeURIComponent(domain) + '&refresh=' + Date.now();
                     
-                    // Small delay to ensure overlay renders before navigation
                     setTimeout(function() {
                         globalThis.location.href = url;
                     }, 100);

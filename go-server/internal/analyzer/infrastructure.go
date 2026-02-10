@@ -7,6 +7,29 @@ import (
         "time"
 )
 
+const (
+        featDDoSProtection       = "DDoS protection"
+        featAnycast              = "Anycast"
+        nameAmazonRoute53        = "Amazon Route 53"
+        featBrandProtection      = "Brand protection"
+        featEnterpriseManagement = "Enterprise management"
+        featEnterpriseSecurity   = "Enterprise security"
+        featGlobalAnycast        = "Global Anycast"
+        featSelfManagedInfra     = "Self-managed infrastructure"
+        featProtectedInfra       = "Protected infrastructure"
+        featGovSecurityStandards = "Government security standards"
+        detMTASTS                = "MTA-STS"
+
+        nameCloudflare    = "Cloudflare"
+        nameDigitalOcean  = "DigitalOcean"
+        nameGoDaddy       = "GoDaddy"
+        nameLinode         = "Linode"
+        nameNamecheap      = "Namecheap"
+
+        tierEnterprise = "enterprise"
+        tierManaged    = "managed"
+)
+
 type providerInfo struct {
         Name     string
         Tier     string
@@ -14,45 +37,124 @@ type providerInfo struct {
 }
 
 var enterpriseProviders = map[string]providerInfo{
-        "cloudflare":       {Name: "Cloudflare", Tier: "enterprise", Features: []string{"DDoS protection", "Anycast", "Auto-DNSSEC available"}},
-        "awsdns":           {Name: "Amazon Route 53", Tier: "enterprise", Features: []string{"DDoS protection", "Anycast", "Health checks"}},
-        "route53":          {Name: "Amazon Route 53", Tier: "enterprise", Features: []string{"DDoS protection", "Anycast", "Health checks"}},
-        "ultradns":         {Name: "Vercara UltraDNS", Tier: "enterprise", Features: []string{"DDoS protection", "Anycast", "DNSSEC support"}},
-        "akam":             {Name: "Akamai Edge DNS", Tier: "enterprise", Features: []string{"DDoS protection", "Anycast", "Global distribution"}},
-        "dynect":           {Name: "Oracle Dyn", Tier: "enterprise", Features: []string{"DDoS protection", "Anycast", "Traffic management"}},
-        "nsone":            {Name: "NS1 (IBM)", Tier: "enterprise", Features: []string{"DDoS protection", "Anycast", "Intelligent DNS"}},
-        "azure-dns":        {Name: "Azure DNS", Tier: "enterprise", Features: []string{"DDoS protection", "Anycast", "Azure integration"}},
-        "google":           {Name: "Google Cloud DNS", Tier: "enterprise", Features: []string{"DDoS protection", "Anycast", "Auto-scaling"}},
-        "verisign":         {Name: "Verisign DNS", Tier: "enterprise", Features: []string{"DDoS protection", "Anycast", "Critical infrastructure"}},
-        "csc.com":          {Name: "CSC Global DNS", Tier: "enterprise", Features: []string{"Enterprise management", "Brand protection", "Global infrastructure"}},
-        "cscdns":           {Name: "CSC Global DNS", Tier: "enterprise", Features: []string{"Enterprise management", "Brand protection", "Global infrastructure"}},
-        "markmonitor":      {Name: "MarkMonitor DNS", Tier: "enterprise", Features: []string{"Brand protection", "Enterprise management", "Anti-fraud"}},
+        "cloudflare":       {Name: nameCloudflare, Tier: tierEnterprise, Features: []string{featDDoSProtection, featAnycast, "Auto-DNSSEC available"}},
+        "awsdns":           {Name: nameAmazonRoute53, Tier: tierEnterprise, Features: []string{featDDoSProtection, featAnycast, "Health checks"}},
+        "route53":          {Name: nameAmazonRoute53, Tier: tierEnterprise, Features: []string{featDDoSProtection, featAnycast, "Health checks"}},
+        "ultradns":         {Name: "Vercara UltraDNS", Tier: tierEnterprise, Features: []string{featDDoSProtection, featAnycast, "DNSSEC support"}},
+        "akam":             {Name: "Akamai Edge DNS", Tier: tierEnterprise, Features: []string{featDDoSProtection, featAnycast, "Global distribution"}},
+        "dynect":           {Name: "Oracle Dyn", Tier: tierEnterprise, Features: []string{featDDoSProtection, featAnycast, "Traffic management"}},
+        "nsone":            {Name: "NS1 (IBM)", Tier: tierEnterprise, Features: []string{featDDoSProtection, featAnycast, "Intelligent DNS"}},
+        "azure-dns":        {Name: "Azure DNS", Tier: tierEnterprise, Features: []string{featDDoSProtection, featAnycast, "Azure integration"}},
+        "google":           {Name: "Google Cloud DNS", Tier: tierEnterprise, Features: []string{featDDoSProtection, featAnycast, "Auto-scaling"}},
+        "verisign":         {Name: "Verisign DNS", Tier: tierEnterprise, Features: []string{featDDoSProtection, featAnycast, "Critical infrastructure"}},
+        "csc.com":          {Name: "CSC Global DNS", Tier: tierEnterprise, Features: []string{featEnterpriseManagement, featBrandProtection, "Global infrastructure"}},
+        "cscdns":           {Name: "CSC Global DNS", Tier: tierEnterprise, Features: []string{featEnterpriseManagement, featBrandProtection, "Global infrastructure"}},
+        "markmonitor":      {Name: "MarkMonitor DNS", Tier: tierEnterprise, Features: []string{featBrandProtection, featEnterpriseManagement, "Anti-fraud"}},
 }
 
 var selfHostedEnterprise = map[string]providerInfo{
-        "ns.apple.com":      {Name: "Apple (Self-Hosted)", Tier: "enterprise", Features: []string{"Self-managed infrastructure", "Global Anycast", "Enterprise security"}},
-        "microsoft.com":     {Name: "Microsoft (Self-Hosted)", Tier: "enterprise", Features: []string{"Self-managed infrastructure", "Global Anycast", "Enterprise security"}},
-        "facebook.com":      {Name: "Meta (Self-Hosted)", Tier: "enterprise", Features: []string{"Self-managed infrastructure", "Global Anycast", "Enterprise security"}},
-        "amazon.com":        {Name: "Amazon (Self-Hosted)", Tier: "enterprise", Features: []string{"Self-managed infrastructure", "Global Anycast", "Enterprise security"}},
+        "ns.apple.com":      {Name: "Apple (Self-Hosted)", Tier: tierEnterprise, Features: []string{featSelfManagedInfra, featGlobalAnycast, featEnterpriseSecurity}},
+        "microsoft.com":     {Name: "Microsoft (Self-Hosted)", Tier: tierEnterprise, Features: []string{featSelfManagedInfra, featGlobalAnycast, featEnterpriseSecurity}},
+        "facebook.com":      {Name: "Meta (Self-Hosted)", Tier: tierEnterprise, Features: []string{featSelfManagedInfra, featGlobalAnycast, featEnterpriseSecurity}},
+        "amazon.com":        {Name: "Amazon (Self-Hosted)", Tier: tierEnterprise, Features: []string{featSelfManagedInfra, featGlobalAnycast, featEnterpriseSecurity}},
 }
 
 var governmentDomains = map[string]providerInfo{
-        ".gov":    {Name: "U.S. Government", Tier: "enterprise", Features: []string{"Government security standards", "FISMA compliance", "Protected infrastructure"}},
-        ".mil":    {Name: "U.S. Military", Tier: "enterprise", Features: []string{"Military security standards", "DoD compliance", "Protected infrastructure"}},
-        ".gov.uk": {Name: "UK Government", Tier: "enterprise", Features: []string{"Government security standards", "NCSC compliance", "Protected infrastructure"}},
-        ".gov.au": {Name: "Australian Government", Tier: "enterprise", Features: []string{"Government security standards", "ASD compliance", "Protected infrastructure"}},
-        ".gc.ca":  {Name: "Canadian Government", Tier: "enterprise", Features: []string{"Government security standards", "GC compliance", "Protected infrastructure"}},
+        ".gov":    {Name: "U.S. Government", Tier: tierEnterprise, Features: []string{featGovSecurityStandards, "FISMA compliance", featProtectedInfra}},
+        ".mil":    {Name: "U.S. Military", Tier: tierEnterprise, Features: []string{"Military security standards", "DoD compliance", featProtectedInfra}},
+        ".gov.uk": {Name: "UK Government", Tier: tierEnterprise, Features: []string{featGovSecurityStandards, "NCSC compliance", featProtectedInfra}},
+        ".gov.au": {Name: "Australian Government", Tier: tierEnterprise, Features: []string{featGovSecurityStandards, "ASD compliance", featProtectedInfra}},
+        ".gc.ca":  {Name: "Canadian Government", Tier: tierEnterprise, Features: []string{featGovSecurityStandards, "GC compliance", featProtectedInfra}},
 }
 
 var managedProviders = map[string]providerInfo{
-        "digitalocean":      {Name: "DigitalOcean", Tier: "managed"},
-        "linode":            {Name: "Linode", Tier: "managed"},
-        "vultr":             {Name: "Vultr", Tier: "managed"},
-        "porkbun":           {Name: "Porkbun", Tier: "managed"},
-        "namecheap":         {Name: "Namecheap", Tier: "managed"},
-        "registrar-servers": {Name: "Namecheap", Tier: "managed"},
-        "godaddy":           {Name: "GoDaddy", Tier: "managed"},
-        "domaincontrol":     {Name: "GoDaddy", Tier: "managed"},
+        "digitalocean":      {Name: nameDigitalOcean, Tier: tierManaged},
+        "linode":            {Name: nameLinode, Tier: tierManaged},
+        "vultr":             {Name: "Vultr", Tier: tierManaged},
+        "porkbun":           {Name: "Porkbun", Tier: tierManaged},
+        "namecheap":         {Name: nameNamecheap, Tier: tierManaged},
+        "registrar-servers": {Name: nameNamecheap, Tier: tierManaged},
+        "godaddy":           {Name: nameGoDaddy, Tier: tierManaged},
+        "domaincontrol":     {Name: nameGoDaddy, Tier: tierManaged},
+}
+
+type infraMatch struct {
+        provider *providerInfo
+        tier     string
+}
+
+func matchEnterpriseProvider(nsList []string) *infraMatch {
+        bestKey := ""
+        bestCount := 0
+        for key := range enterpriseProviders {
+                count := 0
+                for _, ns := range nsList {
+                        if strings.Contains(ns, key) {
+                                count++
+                        }
+                }
+                if count > bestCount {
+                        bestCount = count
+                        bestKey = key
+                }
+        }
+        if bestKey == "" {
+                return nil
+        }
+        info := enterpriseProviders[bestKey]
+        return &infraMatch{provider: &info, tier: tierEnterprise}
+}
+
+func matchSelfHostedProvider(nsStr string) *infraMatch {
+        for key, info := range selfHostedEnterprise {
+                if strings.Contains(nsStr, key) {
+                        return &infraMatch{provider: &info, tier: tierEnterprise}
+                }
+        }
+        return nil
+}
+
+func matchManagedProvider(nsStr string) *infraMatch {
+        for key, info := range managedProviders {
+                if strings.Contains(nsStr, key) {
+                        return &infraMatch{provider: &info, tier: tierManaged}
+                }
+        }
+        return nil
+}
+
+func matchGovernmentDomain(domain string) (*infraMatch, bool) {
+        for suffix, info := range governmentDomains {
+                if strings.HasSuffix(domain, suffix) {
+                        return &infraMatch{provider: &info, tier: tierEnterprise}, true
+                }
+        }
+        return nil, false
+}
+
+func collectAltSecurityItems(results map[string]any) []string {
+        var items []string
+        caaAnalysis, _ := results["caa_analysis"].(map[string]any)
+        dnssecAnalysis, _ := results["dnssec_analysis"].(map[string]any)
+
+        if caaAnalysis != nil && caaAnalysis["status"] == "success" {
+                items = append(items, "CAA records configured")
+        }
+        if dnssecAnalysis != nil && dnssecAnalysis["status"] == "success" {
+                items = append(items, "DNSSEC validated")
+        }
+        return items
+}
+
+func assessTier(tier string) string {
+        switch tier {
+        case tierEnterprise:
+                return "Enterprise-grade DNS infrastructure"
+        case tierManaged:
+                return "Managed DNS hosting"
+        default:
+                return "Standard DNS"
+        }
 }
 
 func (a *Analyzer) AnalyzeDNSInfrastructure(domain string, results map[string]any) map[string]any {
@@ -64,98 +166,36 @@ func (a *Analyzer) AnalyzeDNSInfrastructure(domain string, results map[string]an
                 nsList[i] = strings.ToLower(ns)
         }
 
-        var matched *providerInfo
+        im := matchEnterpriseProvider(nsList)
+        if im == nil {
+                im = matchSelfHostedProvider(nsStr)
+        }
+        if im == nil {
+                im = matchManagedProvider(nsStr)
+        }
+
+        govMatch, isGovernment := matchGovernmentDomain(domain)
+        if im == nil && govMatch != nil {
+                im = govMatch
+        }
+
         providerTier := "standard"
         var providerFeatures []string
-
-        bestKey := ""
-        bestCount := 0
-        for key, info := range enterpriseProviders {
-                count := 0
-                for _, ns := range nsList {
-                        if strings.Contains(ns, key) {
-                                count++
-                        }
-                }
-                if count > bestCount {
-                        bestCount = count
-                        bestKey = key
-                        _ = info
-                }
-        }
-        if bestKey != "" {
-                info := enterpriseProviders[bestKey]
-                matched = &info
-                providerTier = "enterprise"
-                providerFeatures = info.Features
-        }
-
-        if matched == nil {
-                for key, info := range selfHostedEnterprise {
-                        if strings.Contains(nsStr, key) {
-                                matched = &info
-                                providerTier = "enterprise"
-                                providerFeatures = info.Features
-                                break
-                        }
-                }
-        }
-
-        if matched == nil {
-                for key, info := range managedProviders {
-                        if strings.Contains(nsStr, key) {
-                                matched = &info
-                                providerTier = "managed"
-                                providerFeatures = info.Features
-                                break
-                        }
-                }
-        }
-
-        isGovernment := false
-        for suffix, info := range governmentDomains {
-                if strings.HasSuffix(domain, suffix) {
-                        isGovernment = true
-                        if matched == nil {
-                                matched = &info
-                                providerTier = "enterprise"
-                                providerFeatures = info.Features
-                        }
-                        break
-                }
-        }
-
-        var altSecurityItems []string
-        caaAnalysis, _ := results["caa_analysis"].(map[string]any)
-        dnssecAnalysis, _ := results["dnssec_analysis"].(map[string]any)
-
-        if caaAnalysis != nil && caaAnalysis["status"] == "success" {
-                altSecurityItems = append(altSecurityItems, "CAA records configured")
-        }
-        if dnssecAnalysis != nil && dnssecAnalysis["status"] == "success" {
-                altSecurityItems = append(altSecurityItems, "DNSSEC validated")
-        }
-
-        var assessment string
-        switch providerTier {
-        case "enterprise":
-                assessment = "Enterprise-grade DNS infrastructure"
-        case "managed":
-                assessment = "Managed DNS hosting"
-        default:
-                assessment = "Standard DNS"
+        if im != nil {
+                providerTier = im.tier
+                providerFeatures = im.provider.Features
         }
 
         result := map[string]any{
                 "provider_tier":      providerTier,
                 "provider_features":  providerFeatures,
                 "is_government":      isGovernment,
-                "alt_security_items": altSecurityItems,
-                "assessment":         assessment,
+                "alt_security_items": collectAltSecurityItems(results),
+                "assessment":         assessTier(providerTier),
         }
 
-        if matched != nil {
-                result["provider_name"] = matched.Name
+        if im != nil {
+                result["provider_name"] = im.provider.Name
         }
 
         return result
@@ -190,20 +230,20 @@ func (a *Analyzer) GetHostingInfo(domain string, results map[string]any) map[str
 }
 
 var hostingProviders = map[string]string{
-        "cloudflare": "Cloudflare", "amazon": "AWS", "azure": "Azure",
-        "google": "Google Cloud", "digitalocean": "DigitalOcean",
-        "linode": "Linode", "vultr": "Vultr", "hetzner": "Hetzner",
+        "cloudflare": nameCloudflare, "amazon": "AWS", "azure": "Azure",
+        "google": "Google Cloud", "digitalocean": nameDigitalOcean,
+        "linode": nameLinode, "vultr": "Vultr", "hetzner": "Hetzner",
         "ovh": "OVH", "netlify": "Netlify", "vercel": "Vercel",
         "heroku": "Heroku", "github": "GitHub Pages",
         "squarespace": "Squarespace", "wix": "Wix", "shopify": "Shopify",
 }
 
 var dnsHostingProviders = map[string]string{
-        "cloudflare": "Cloudflare", "awsdns": "Amazon Route 53",
+        "cloudflare": nameCloudflare, "awsdns": nameAmazonRoute53,
         "azure-dns": "Azure DNS", "google": "Google Cloud DNS",
         "ultradns": "Vercara UltraDNS", "nsone": "NS1",
-        "digitalocean": "DigitalOcean", "linode": "Linode",
-        "domaincontrol": "GoDaddy", "registrar-servers": "Namecheap",
+        "digitalocean": nameDigitalOcean, "linode": nameLinode,
+        "domaincontrol": nameGoDaddy, "registrar-servers": nameNamecheap,
 }
 
 var emailHostingProviders = map[string]string{
@@ -417,12 +457,12 @@ func detectMTASTSManagement(providers map[string]map[string]any, mtasts map[stri
 
         for name, prov := range providers {
                 caps, _ := prov["capabilities"].([]string)
-                if containsStr(caps, "MTA-STS hosting") {
+                if containsStr(caps, detMTASTS+" hosting") {
                         df, _ := prov["detected_from"].([]string)
-                        if !containsStr(df, "MTA-STS") {
-                                providers[name]["detected_from"] = append(df, "MTA-STS")
+                        if !containsStr(df, detMTASTS) {
+                                providers[name]["detected_from"] = append(df, detMTASTS)
                                 sources, _ := prov["sources"].([]string)
-                                providers[name]["sources"] = append(sources, "MTA-STS policy hosting")
+                                providers[name]["sources"] = append(sources, detMTASTS+" policy hosting")
                         }
                         return
                 }
@@ -433,7 +473,7 @@ func detectMTASTSManagement(providers map[string]map[string]any, mtasts map[stri
         }
 
         for pattern, info := range dmarcMonitoringProviders {
-                if !containsStr(info.Capabilities, "MTA-STS hosting") {
+                if !containsStr(info.Capabilities, detMTASTS+" hosting") {
                         continue
                 }
                 if !strings.Contains(hostingCNAME, pattern) {
@@ -444,7 +484,7 @@ func detectMTASTSManagement(providers map[string]map[string]any, mtasts map[stri
                         Vendor:       info.Vendor,
                         Capabilities: info.Capabilities,
                 }
-                addOrMergeProvider(providers, mpi, "MTA-STS", fmt.Sprintf("MTA-STS hosting (CNAME: %s)", hostingCNAME))
+                addOrMergeProvider(providers, mpi, detMTASTS, fmt.Sprintf(detMTASTS+" hosting (CNAME: %s)", hostingCNAME))
                 return
         }
 }
@@ -483,6 +523,54 @@ func (a *Analyzer) detectHostedDKIMProviders(providers map[string]map[string]any
         }
 }
 
+type dsDetection struct {
+        info         dynamicServiceInfo
+        capabilities []string
+}
+
+func zoneCapability(zoneKey string) string {
+        if cap := dynamicServicesZones[zoneKey]; cap != "" {
+                return cap
+        }
+        return zoneKey + " management"
+}
+
+func matchDynamicServiceNS(nsLower string) (dynamicServiceInfo, bool) {
+        for nsPattern, dsInfo := range dynamicServicesProviders {
+                if strings.HasSuffix(nsLower, nsPattern) {
+                        return dsInfo, true
+                }
+        }
+        return dynamicServiceInfo{}, false
+}
+
+func addDSDetection(detections map[string]*dsDetection, dsInfo dynamicServiceInfo, cap string) {
+        if det, ok := detections[dsInfo.Name]; ok {
+                if !containsStr(det.capabilities, cap) {
+                        det.capabilities = append(det.capabilities, cap)
+                }
+        } else {
+                detections[dsInfo.Name] = &dsDetection{
+                        info:         dsInfo,
+                        capabilities: []string{cap},
+                }
+        }
+}
+
+func (a *Analyzer) scanDynamicServiceZones(ctx context.Context, zones map[string]string) map[string]*dsDetection {
+        detections := make(map[string]*dsDetection)
+        for zoneKey, zoneFQDN := range zones {
+                nsRecords := a.DNS.QueryDNS(ctx, "NS", zoneFQDN)
+                for _, ns := range nsRecords {
+                        nsLower := strings.ToLower(strings.TrimRight(ns, "."))
+                        if dsInfo, found := matchDynamicServiceNS(nsLower); found {
+                                addDSDetection(detections, dsInfo, zoneCapability(zoneKey))
+                        }
+                }
+        }
+        return detections
+}
+
 func (a *Analyzer) detectDynamicServices(providers map[string]map[string]any, domain string) {
         if domain == "" {
                 return
@@ -498,38 +586,7 @@ func (a *Analyzer) detectDynamicServices(providers map[string]map[string]any, do
         ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
         defer cancel()
 
-        type dsDetection struct {
-                info         dynamicServiceInfo
-                capabilities []string
-        }
-        detections := make(map[string]*dsDetection)
-
-        for zoneKey, zoneFQDN := range zones {
-                nsRecords := a.DNS.QueryDNS(ctx, "NS", zoneFQDN)
-                for _, ns := range nsRecords {
-                        nsLower := strings.ToLower(strings.TrimRight(ns, "."))
-                        for nsPattern, dsInfo := range dynamicServicesProviders {
-                                if !strings.HasSuffix(nsLower, nsPattern) {
-                                        continue
-                                }
-                                cap := dynamicServicesZones[zoneKey]
-                                if cap == "" {
-                                        cap = zoneKey + " management"
-                                }
-                                if det, ok := detections[dsInfo.Name]; ok {
-                                        if !containsStr(det.capabilities, cap) {
-                                                det.capabilities = append(det.capabilities, cap)
-                                        }
-                                } else {
-                                        detections[dsInfo.Name] = &dsDetection{
-                                                info:         dsInfo,
-                                                capabilities: []string{cap},
-                                        }
-                                }
-                                break
-                        }
-                }
-        }
+        detections := a.scanDynamicServiceZones(ctx, zones)
 
         for _, det := range detections {
                 capLabels := strings.Join(det.capabilities, ", ")

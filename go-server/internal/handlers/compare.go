@@ -13,6 +13,11 @@ import (
         "github.com/gin-gonic/gin"
 )
 
+const (
+        templateCompare       = "compare.html"
+        templateCompareSelect = "compare_select.html"
+)
+
 type CompareHandler struct {
         DB     *db.Database
         Config *config.Config
@@ -73,7 +78,7 @@ func (h *CompareHandler) Compare(c *gin.Context) {
 
         analysisA, err := h.DB.Queries.GetAnalysisByID(ctx, int32(idA))
         if err != nil {
-                c.HTML(http.StatusNotFound, "compare.html", gin.H{
+                c.HTML(http.StatusNotFound, templateCompare, gin.H{
                         "AppVersion":     h.Config.AppVersion,
                         "CspNonce":       nonce,
                         "CsrfToken":     csrfToken,
@@ -85,7 +90,7 @@ func (h *CompareHandler) Compare(c *gin.Context) {
 
         analysisB, err := h.DB.Queries.GetAnalysisByID(ctx, int32(idB))
         if err != nil {
-                c.HTML(http.StatusNotFound, "compare.html", gin.H{
+                c.HTML(http.StatusNotFound, templateCompare, gin.H{
                         "AppVersion":     h.Config.AppVersion,
                         "CspNonce":       nonce,
                         "CsrfToken":     csrfToken,
@@ -96,7 +101,7 @@ func (h *CompareHandler) Compare(c *gin.Context) {
         }
 
         if analysisA.Domain != analysisB.Domain {
-                c.HTML(http.StatusBadRequest, "compare_select.html", gin.H{
+                c.HTML(http.StatusBadRequest, templateCompareSelect, gin.H{
                         "AppVersion":     h.Config.AppVersion,
                         "CspNonce":       nonce,
                         "CsrfToken":     csrfToken,
@@ -117,7 +122,7 @@ func (h *CompareHandler) Compare(c *gin.Context) {
         resultsB := NormalizeResults(analysisB.FullResults)
 
         if resultsA == nil || resultsB == nil {
-                c.HTML(http.StatusBadRequest, "compare_select.html", gin.H{
+                c.HTML(http.StatusBadRequest, templateCompareSelect, gin.H{
                         "AppVersion":     h.Config.AppVersion,
                         "CspNonce":       nonce,
                         "CsrfToken":     csrfToken,
@@ -159,7 +164,7 @@ func (h *CompareHandler) Compare(c *gin.Context) {
                 diffItems = append(diffItems, item)
         }
 
-        c.HTML(http.StatusOK, "compare.html", gin.H{
+        c.HTML(http.StatusOK, templateCompare, gin.H{
                 "AppVersion":   h.Config.AppVersion,
                 "CspNonce":     nonce,
                 "CsrfToken":   csrfToken,
@@ -177,7 +182,7 @@ func (h *CompareHandler) selectDomain(c *gin.Context, domain string) {
         csrfToken, _ := c.Get("csrf_token")
 
         if domain == "" {
-                c.HTML(http.StatusOK, "compare_select.html", gin.H{
+                c.HTML(http.StatusOK, templateCompareSelect, gin.H{
                         "AppVersion":     h.Config.AppVersion,
                         "CspNonce":       nonce,
                         "CsrfToken":     csrfToken,
@@ -194,7 +199,7 @@ func (h *CompareHandler) selectDomain(c *gin.Context, domain string) {
                 Limit:  20,
         })
         if err != nil {
-                c.HTML(http.StatusInternalServerError, "compare_select.html", gin.H{
+                c.HTML(http.StatusInternalServerError, templateCompareSelect, gin.H{
                         "AppVersion":     h.Config.AppVersion,
                         "CspNonce":       nonce,
                         "CsrfToken":     csrfToken,
@@ -206,7 +211,7 @@ func (h *CompareHandler) selectDomain(c *gin.Context, domain string) {
         }
 
         if len(analyses) < 2 {
-                c.HTML(http.StatusOK, "compare_select.html", gin.H{
+                c.HTML(http.StatusOK, templateCompareSelect, gin.H{
                         "AppVersion":     h.Config.AppVersion,
                         "CspNonce":       nonce,
                         "CsrfToken":     csrfToken,
@@ -261,7 +266,7 @@ func (h *CompareHandler) selectDomain(c *gin.Context, domain string) {
                 })
         }
 
-        c.HTML(http.StatusOK, "compare_select.html", gin.H{
+        c.HTML(http.StatusOK, templateCompareSelect, gin.H{
                 "AppVersion": h.Config.AppVersion,
                 "CspNonce":   nonce,
                 "CsrfToken":  csrfToken,

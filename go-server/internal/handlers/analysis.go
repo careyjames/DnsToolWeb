@@ -19,6 +19,10 @@ import (
         "github.com/gin-gonic/gin"
 )
 
+const (
+        templateIndex = "index.html"
+)
+
 type AnalysisHandler struct {
         DB       *db.Database
         Config   *config.Config
@@ -35,7 +39,7 @@ func (h *AnalysisHandler) ViewAnalysisStatic(c *gin.Context) {
         idStr := c.Param("id")
         analysisID, err := strconv.ParseInt(idStr, 10, 32)
         if err != nil {
-                c.HTML(http.StatusBadRequest, "index.html", gin.H{
+                c.HTML(http.StatusBadRequest, templateIndex, gin.H{
                         "AppVersion":    h.Config.AppVersion,
                         "CspNonce":      nonce,
                         "CsrfToken":    csrfToken,
@@ -48,7 +52,7 @@ func (h *AnalysisHandler) ViewAnalysisStatic(c *gin.Context) {
         ctx := c.Request.Context()
         analysis, err := h.DB.Queries.GetAnalysisByID(ctx, int32(analysisID))
         if err != nil {
-                c.HTML(http.StatusNotFound, "index.html", gin.H{
+                c.HTML(http.StatusNotFound, templateIndex, gin.H{
                         "AppVersion":    h.Config.AppVersion,
                         "CspNonce":      nonce,
                         "CsrfToken":    csrfToken,
@@ -59,7 +63,7 @@ func (h *AnalysisHandler) ViewAnalysisStatic(c *gin.Context) {
         }
 
         if len(analysis.FullResults) == 0 || string(analysis.FullResults) == "null" {
-                c.HTML(http.StatusGone, "index.html", gin.H{
+                c.HTML(http.StatusGone, templateIndex, gin.H{
                         "AppVersion":    h.Config.AppVersion,
                         "CspNonce":      nonce,
                         "CsrfToken":    csrfToken,
@@ -71,7 +75,7 @@ func (h *AnalysisHandler) ViewAnalysisStatic(c *gin.Context) {
 
         results := NormalizeResults(analysis.FullResults)
         if results == nil {
-                c.HTML(http.StatusInternalServerError, "index.html", gin.H{
+                c.HTML(http.StatusInternalServerError, templateIndex, gin.H{
                         "AppVersion":    h.Config.AppVersion,
                         "CspNonce":      nonce,
                         "CsrfToken":    csrfToken,
@@ -139,7 +143,7 @@ func (h *AnalysisHandler) Analyze(c *gin.Context) {
         }
 
         if domain == "" {
-                c.HTML(http.StatusOK, "index.html", gin.H{
+                c.HTML(http.StatusOK, templateIndex, gin.H{
                         "AppVersion":    h.Config.AppVersion,
                         "CspNonce":      nonce,
                         "CsrfToken":    csrfToken,
@@ -150,7 +154,7 @@ func (h *AnalysisHandler) Analyze(c *gin.Context) {
         }
 
         if !dnsclient.ValidateDomain(domain) {
-                c.HTML(http.StatusOK, "index.html", gin.H{
+                c.HTML(http.StatusOK, templateIndex, gin.H{
                         "AppVersion":    h.Config.AppVersion,
                         "CspNonce":      nonce,
                         "CsrfToken":    csrfToken,
@@ -179,7 +183,7 @@ func (h *AnalysisHandler) Analyze(c *gin.Context) {
 
         if success, ok := results["analysis_success"].(bool); ok && !success {
                 if errMsg, ok := results["error"].(string); ok {
-                        c.HTML(http.StatusOK, "index.html", gin.H{
+                        c.HTML(http.StatusOK, templateIndex, gin.H{
                                 "AppVersion":    h.Config.AppVersion,
                                 "CspNonce":      nonce,
                                 "CsrfToken":    csrfToken,

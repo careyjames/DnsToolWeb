@@ -12,6 +12,10 @@ import (
         "github.com/gin-gonic/gin"
 )
 
+const (
+        templateHistory = "history.html"
+)
+
 type HistoryHandler struct {
         DB     *db.Database
         Config *config.Config
@@ -99,7 +103,7 @@ func (h *HistoryHandler) History(c *gin.Context) {
                 searchPattern := "%" + searchDomain + "%"
                 count, countErr := h.DB.Queries.CountSearchSuccessfulAnalyses(ctx, searchPattern)
                 if countErr != nil {
-                        c.HTML(http.StatusInternalServerError, "history.html", gin.H{
+                        c.HTML(http.StatusInternalServerError, templateHistory, gin.H{
                                 "AppVersion": h.Config.AppVersion,
                                 "CspNonce":   nonce,
                                 "CsrfToken":  csrfToken,
@@ -112,7 +116,7 @@ func (h *HistoryHandler) History(c *gin.Context) {
         } else {
                 count, countErr := h.DB.Queries.CountSuccessfulAnalyses(ctx)
                 if countErr != nil {
-                        c.HTML(http.StatusInternalServerError, "history.html", gin.H{
+                        c.HTML(http.StatusInternalServerError, templateHistory, gin.H{
                                 "AppVersion": h.Config.AppVersion,
                                 "CspNonce":   nonce,
                                 "CsrfToken":  csrfToken,
@@ -136,7 +140,7 @@ func (h *HistoryHandler) History(c *gin.Context) {
                         Offset: pagination.Offset(),
                 })
                 if queryErr != nil {
-                        c.HTML(http.StatusInternalServerError, "history.html", gin.H{
+                        c.HTML(http.StatusInternalServerError, templateHistory, gin.H{
                                 "AppVersion": h.Config.AppVersion,
                                 "CspNonce":   nonce,
                                 "CsrfToken":  csrfToken,
@@ -154,7 +158,7 @@ func (h *HistoryHandler) History(c *gin.Context) {
                         Offset: pagination.Offset(),
                 })
                 if queryErr != nil {
-                        c.HTML(http.StatusInternalServerError, "history.html", gin.H{
+                        c.HTML(http.StatusInternalServerError, templateHistory, gin.H{
                                 "AppVersion": h.Config.AppVersion,
                                 "CspNonce":   nonce,
                                 "CsrfToken":  csrfToken,
@@ -170,7 +174,7 @@ func (h *HistoryHandler) History(c *gin.Context) {
 
         pd := BuildPagination(page, pagination.TotalPages, total)
 
-        c.HTML(http.StatusOK, "history.html", gin.H{
+        c.HTML(http.StatusOK, templateHistory, gin.H{
                 "AppVersion":   h.Config.AppVersion,
                 "CspNonce":     nonce,
                 "CsrfToken":   csrfToken,

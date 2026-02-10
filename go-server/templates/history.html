@@ -66,7 +66,7 @@
         .pagination{display:flex;padding-left:0;list-style:none;gap:.25rem}
         .page-item.active .page-link{background-color:#0d6efd;border-color:#0d6efd;color:#fff}
         .page-item.disabled .page-link{color:#6c757d;pointer-events:none}
-        .page-link{padding:.375rem .75rem;color:#0d6efd;text-decoration:none;background-color:#2b3035;border:1px solid #495057;border-radius:.375rem}
+        .page-link{padding:.375rem .75rem;color:#6ea8fe;text-decoration:none;background-color:#2b3035;border:1px solid #495057;border-radius:.375rem}
         .h3{font-size:1.75rem;font-weight:500}
         @media(min-width:768px){.d-md-none{display:none!important}.d-none.d-md-block{display:block!important}}
         @media(max-width:767.98px){.d-md-none{display:block}.d-none.d-md-block{display:none!important}}
@@ -414,8 +414,8 @@
                 if(overlay){overlay.classList.remove('d-none');startStatusCycle(overlay);}
                 disableAllActions();
                 btn.innerHTML='<i class="fas fa-spinner fa-spin"></i>';
-                var href=btn.getAttribute('href');
-                requestAnimationFrame(function(){window.location.href=href;});
+                const href=btn.href;
+                requestAnimationFrame(function(){globalThis.location.href=href;});
             });
         });
     });

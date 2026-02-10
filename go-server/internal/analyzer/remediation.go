@@ -15,6 +15,9 @@ const (
         colorHigh     = "warning"
         colorMedium   = "info"
         colorLow      = "secondary"
+
+        rfcDMARC    = "RFC 7489 §6.3"
+        rfcDMARCURL = "https://datatracker.ietf.org/doc/html/rfc7489#section-6.3"
 )
 
 type fix struct {
@@ -133,8 +136,8 @@ func appendDMARCFixes(fixes []fix, ps protocolState, results map[string]any, dom
                         Title:         "Publish DMARC policy",
                         Description:   "DMARC (Domain-based Message Authentication, Reporting & Conformance) tells receivers how to handle messages that fail SPF/DKIM checks. Without DMARC, failed authentication checks are ignored.",
                         DNSRecord:     fmt.Sprintf("_dmarc.%s TXT \"v=DMARC1; p=none; rua=mailto:dmarc-reports@%s\"", domain, domain),
-                        RFC:           "RFC 7489 §6.3",
-                        RFCURL:        "https://datatracker.ietf.org/doc/html/rfc7489#section-6.3",
+                        RFC:           rfcDMARC,
+                        RFCURL:        rfcDMARCURL,
                         Severity:      severityCritical,
                         SeverityColor: colorCritical,
                         SeverityOrder: 1,
@@ -147,8 +150,8 @@ func appendDMARCFixes(fixes []fix, ps protocolState, results map[string]any, dom
                         Title:         "Escalate DMARC from monitoring to enforcement",
                         Description:   "Change your DMARC policy from p=none to p=quarantine (then p=reject). Review your DMARC aggregate reports first to ensure legitimate senders pass authentication.",
                         DNSRecord:     fmt.Sprintf("_dmarc.%s TXT \"v=DMARC1; p=quarantine; rua=mailto:dmarc-reports@%s\"", domain, domain),
-                        RFC:           "RFC 7489 §6.3",
-                        RFCURL:        "https://datatracker.ietf.org/doc/html/rfc7489#section-6.3",
+                        RFC:           rfcDMARC,
+                        RFCURL:        rfcDMARCURL,
                         Severity:      severityHigh,
                         SeverityColor: colorHigh,
                         SeverityOrder: 2,
@@ -161,8 +164,8 @@ func appendDMARCFixes(fixes []fix, ps protocolState, results map[string]any, dom
                         Title:         "Upgrade DMARC to reject policy",
                         Description:   "Your DMARC policy is quarantine — spoofed messages are flagged. Upgrading to p=reject blocks them entirely. Review aggregate reports to confirm legitimate senders are aligned.",
                         DNSRecord:     fmt.Sprintf("_dmarc.%s TXT \"v=DMARC1; p=reject; rua=mailto:dmarc-reports@%s\"", domain, domain),
-                        RFC:           "RFC 7489 §6.3",
-                        RFCURL:        "https://datatracker.ietf.org/doc/html/rfc7489#section-6.3",
+                        RFC:           rfcDMARC,
+                        RFCURL:        rfcDMARCURL,
                         Severity:      severityLow,
                         SeverityColor: colorLow,
                         SeverityOrder: 4,
@@ -340,199 +343,66 @@ func computeAchievablePosture(ps protocolState, fixes []fix) string {
                 if len(fixes) <= 3 {
                         return "Secure"
                 }
-                return "Low Risk"
+                return riskLow
         }
 
         if hasCritical {
-                return "Low Risk"
+                return riskLow
         }
 
-        return "Low Risk"
+        return riskLow
+}
+
+type mailFlags struct {
+        hasSPF      bool
+        hasDMARC    bool
+        hasDKIM     bool
+        hasNullMX   bool
+        hasMX       bool
+        spfDenyAll  bool
+        dmarcReject bool
+        dmarcPolicy string
+}
+
+type mailClassification struct {
+        classification string
+        label          string
+        color          string
+        icon           string
+        summary        string
+        isNoMail       bool
+        recommended    []string
 }
 
 func buildMailPosture(results map[string]any) map[string]any {
         ps := evaluateProtocolStates(results)
         mp := make(map[string]any)
 
-        hasSPF := ps.spfOK || ps.spfWarning
-        hasDMARC := ps.dmarcOK || ps.dmarcWarning
-        hasDKIM := ps.dkimOK || ps.dkimProvider
+        mf := extractMailFlags(results, ps)
 
-        if hasSPF && hasDMARC && (ps.dmarcPolicy == "reject") && hasDKIM {
-                mp["verdict"] = "Protected"
-                mp["badge"] = "success"
-        } else if hasSPF && hasDMARC && ps.dmarcPolicy == "quarantine" && hasDKIM {
-                mp["verdict"] = "Mostly Protected"
-                mp["badge"] = "success"
-        } else if hasSPF && hasDMARC && hasDKIM {
-                mp["verdict"] = "Monitoring"
-                mp["badge"] = "info"
-        } else if hasSPF || hasDMARC {
-                mp["verdict"] = "Partially"
-                mp["badge"] = "warning"
-        } else {
-                mp["verdict"] = "Vulnerable"
-                mp["badge"] = "danger"
-        }
+        verdict, badge := computeMailVerdict(mf)
+        mp["verdict"] = verdict
+        mp["badge"] = badge
 
-        hasNullMX := getBool(results, "has_null_mx")
-
-        spf := getMapResult(results, "spf_analysis")
-        spfNoMailIntent := getBool(spf, "no_mail_intent")
-        spfAllMech, _ := spf["all_mechanism"].(string)
-        spfDenyAll := spfNoMailIntent || spfAllMech == "-all"
-
-        dmarcReject := ps.dmarcPolicy == "reject"
-
-        basic := getMapResult(results, "basic_records")
-        mxRecords := getSlice(basic, "MX")
-        hasMX := len(mxRecords) > 0 && !hasNullMX
-
-        nullMXSignal := map[string]any{
-                "present":      hasNullMX,
-                "rfc":          "RFC 7505",
-                "label":        "Null MX",
-                "description":  "A null MX record (0 .) explicitly declares that a domain does not accept email.",
-                "missing_risk": "Without a null MX record, senders may still attempt delivery to this domain.",
-        }
-        spfDenySignal := map[string]any{
-                "present":      spfDenyAll,
-                "rfc":          "RFC 7208",
-                "label":        "SPF -all",
-                "description":  "An SPF record with '-all' rejects all mail, signaling the domain sends no email.",
-                "missing_risk": "Without SPF -all, mail servers may accept forged messages from this domain.",
-        }
-        dmarcRejectSignal := map[string]any{
-                "present":      dmarcReject,
-                "rfc":          "RFC 7489",
-                "label":        "DMARC reject",
-                "description":  "A DMARC policy of p=reject instructs receivers to discard unauthenticated mail.",
-                "missing_risk": "Without DMARC reject, spoofed messages may still be delivered.",
-        }
-
-        signals := map[string]any{
-                "null_mx":      nullMXSignal,
-                "spf_deny_all": spfDenySignal,
-                "dmarc_reject": dmarcRejectSignal,
-        }
-
-        presentCount := 0
-        if hasNullMX {
-                presentCount++
-        }
-        if spfDenyAll {
-                presentCount++
-        }
-        if dmarcReject {
-                presentCount++
-        }
-
-        var missingSteps []map[string]any
-        if !hasNullMX {
-                missingSteps = append(missingSteps, map[string]any{
-                        "control": "Null MX",
-                        "rfc":     "RFC 7505",
-                        "rfc_url": "https://datatracker.ietf.org/doc/html/rfc7505",
-                        "action":  "Publish a null MX record: 0 .",
-                        "risk":    "Without null MX, senders may still attempt delivery.",
-                })
-        }
-        if !spfDenyAll {
-                missingSteps = append(missingSteps, map[string]any{
-                        "control": "SPF -all",
-                        "rfc":     "RFC 7208",
-                        "rfc_url": "https://datatracker.ietf.org/doc/html/rfc7208",
-                        "action":  "Publish SPF with -all to reject all senders.",
-                        "risk":    "Without SPF -all, mail servers may accept forged messages.",
-                })
-        }
-        if !dmarcReject {
-                missingSteps = append(missingSteps, map[string]any{
-                        "control": "DMARC reject",
-                        "rfc":     "RFC 7489",
-                        "rfc_url": "https://datatracker.ietf.org/doc/html/rfc7489",
-                        "action":  "Publish DMARC with p=reject to discard unauthenticated mail.",
-                        "risk":    "Without DMARC reject, spoofed messages may still be delivered.",
-                })
-        }
-
-        domain := extractDomain(results)
-
-        var classification, label, clColor, clIcon, summary string
-        var recommendedRecords []string
-        isNoMail := false
-
-        enforce := ps.dmarcPolicy == "reject" || ps.dmarcPolicy == "quarantine"
-
-        if presentCount == 3 {
-                classification = "no_mail_verified"
-                label = "No-Mail: Verified"
-                clColor = "success"
-                clIcon = "shield-alt"
-                summary = "This domain has verified no-mail controls: null MX, SPF -all, and DMARC reject are all present."
-                isNoMail = true
-        } else if presentCount >= 1 && !hasMX {
-                classification = "no_mail_partial"
-                label = "No-Mail: Partial"
-                clColor = "warning"
-                clIcon = "exclamation-triangle"
-                summary = fmt.Sprintf("This domain appears to not send mail but only %d of 3 no-mail signals are present.", presentCount)
-                isNoMail = true
-                if !hasNullMX {
-                        recommendedRecords = append(recommendedRecords, fmt.Sprintf("%s MX 0 .", domain))
-                }
-                if !spfDenyAll {
-                        recommendedRecords = append(recommendedRecords, fmt.Sprintf("%s TXT \"v=spf1 -all\"", domain))
-                }
-                if !dmarcReject {
-                        recommendedRecords = append(recommendedRecords, fmt.Sprintf("_dmarc.%s TXT \"v=DMARC1; p=reject;\"", domain))
-                }
-        } else if hasSPF && hasDMARC && hasDKIM && enforce {
-                classification = "email_enforced"
-                label = "Email: Enforced"
-                clColor = "success"
-                clIcon = "shield-alt"
-                summary = "Email authentication is fully enforced with SPF, DKIM, and DMARC policy enforcement."
-        } else if hasSPF && hasDMARC && hasDKIM && ps.dmarcPolicy == "none" {
-                classification = "email_monitoring"
-                label = "Email: Monitoring"
-                clColor = "info"
-                clIcon = "info-circle"
-                summary = "Email authentication is configured with DMARC in monitoring mode (p=none). Enforcement recommended after reviewing reports."
-        } else if hasSPF || hasDMARC {
-                classification = "email_enabled"
-                label = "Email: Enabled"
-                clColor = "warning"
-                clIcon = "check-circle"
-                summary = "Some email authentication is configured but full protection is not yet in place."
-        } else {
-                classification = "email_ambiguous"
-                label = "Email: Ambiguous"
-                clColor = "secondary"
-                clIcon = "question-circle"
-                summary = "No email authentication detected. It is unclear whether this domain sends email."
-                if !hasMX {
-                        recommendedRecords = append(recommendedRecords, fmt.Sprintf("%s MX 0 .", domain))
-                        recommendedRecords = append(recommendedRecords, fmt.Sprintf("%s TXT \"v=spf1 -all\"", domain))
-                        recommendedRecords = append(recommendedRecords, fmt.Sprintf("_dmarc.%s TXT \"v=DMARC1; p=reject;\"", domain))
-                }
-        }
-
-        mp["classification"] = classification
-        mp["label"] = label
-        mp["color"] = clColor
-        mp["icon"] = clIcon
-        mp["summary"] = summary
+        signals, presentCount := buildNoMailSignals(mf)
         mp["signals"] = signals
         mp["present_count"] = presentCount
         mp["total_signals"] = 3
-        mp["missing_steps"] = missingSteps
-        if len(recommendedRecords) > 0 {
-                mp["recommended_records"] = recommendedRecords
+        mp["missing_steps"] = buildMissingSteps(mf)
+
+        domain := extractDomain(results)
+        cls := classifyMailPosture(mf, presentCount, domain, ps)
+        mp["classification"] = cls.classification
+        mp["label"] = cls.label
+        mp["color"] = cls.color
+        mp["icon"] = cls.icon
+        mp["summary"] = cls.summary
+        mp["is_no_mail"] = cls.isNoMail
+        if len(cls.recommended) > 0 {
+                mp["recommended_records"] = cls.recommended
         } else {
                 mp["recommended_records"] = nil
         }
-        mp["is_no_mail"] = isNoMail
 
         dnsInfra := getMapResult(results, "dns_infrastructure")
         if tier, ok := dnsInfra["provider_tier"].(string); ok && tier == "enterprise" {
@@ -540,6 +410,190 @@ func buildMailPosture(results map[string]any) map[string]any {
         }
 
         return mp
+}
+
+func extractMailFlags(results map[string]any, ps protocolState) mailFlags {
+        spf := getMapResult(results, "spf_analysis")
+        spfNoMailIntent := getBool(spf, "no_mail_intent")
+        spfAllMech, _ := spf["all_mechanism"].(string)
+
+        basic := getMapResult(results, "basic_records")
+        mxRecords := getSlice(basic, "MX")
+        hasNullMX := getBool(results, "has_null_mx")
+
+        return mailFlags{
+                hasSPF:      ps.spfOK || ps.spfWarning,
+                hasDMARC:    ps.dmarcOK || ps.dmarcWarning,
+                hasDKIM:     ps.dkimOK || ps.dkimProvider,
+                hasNullMX:   hasNullMX,
+                hasMX:       len(mxRecords) > 0 && !hasNullMX,
+                spfDenyAll:  spfNoMailIntent || spfAllMech == "-all",
+                dmarcReject: ps.dmarcPolicy == "reject",
+                dmarcPolicy: ps.dmarcPolicy,
+        }
+}
+
+func computeMailVerdict(mf mailFlags) (string, string) {
+        switch {
+        case mf.hasSPF && mf.hasDMARC && mf.dmarcPolicy == "reject" && mf.hasDKIM:
+                return "Protected", "success"
+        case mf.hasSPF && mf.hasDMARC && mf.dmarcPolicy == "quarantine" && mf.hasDKIM:
+                return "Mostly Protected", "success"
+        case mf.hasSPF && mf.hasDMARC && mf.hasDKIM:
+                return "Monitoring", "info"
+        case mf.hasSPF || mf.hasDMARC:
+                return "Partially", "warning"
+        default:
+                return "Vulnerable", "danger"
+        }
+}
+
+type noMailSignalDef struct {
+        key         string
+        present     bool
+        rfc         string
+        label       string
+        description string
+        missingRisk string
+}
+
+func buildNoMailSignals(mf mailFlags) (map[string]any, int) {
+        defs := []noMailSignalDef{
+                {"null_mx", mf.hasNullMX, "RFC 7505", "Null MX",
+                        "A null MX record (0 .) explicitly declares that a domain does not accept email.",
+                        "Without a null MX record, senders may still attempt delivery to this domain."},
+                {"spf_deny_all", mf.spfDenyAll, "RFC 7208", "SPF -all",
+                        "An SPF record with '-all' rejects all mail, signaling the domain sends no email.",
+                        "Without SPF -all, mail servers may accept forged messages from this domain."},
+                {"dmarc_reject", mf.dmarcReject, "RFC 7489", "DMARC reject",
+                        "A DMARC policy of p=reject instructs receivers to discard unauthenticated mail.",
+                        "Without DMARC reject, spoofed messages may still be delivered."},
+        }
+
+        signals := make(map[string]any, len(defs))
+        presentCount := 0
+        for _, d := range defs {
+                signals[d.key] = map[string]any{
+                        "present": d.present, "rfc": d.rfc, "label": d.label,
+                        "description": d.description, "missing_risk": d.missingRisk,
+                }
+                if d.present {
+                        presentCount++
+                }
+        }
+        return signals, presentCount
+}
+
+type missingStepDef struct {
+        missing bool
+        control string
+        rfc     string
+        rfcURL  string
+        action  string
+        risk    string
+}
+
+func buildMissingSteps(mf mailFlags) []map[string]any {
+        defs := []missingStepDef{
+                {!mf.hasNullMX, "Null MX", "RFC 7505",
+                        "https://datatracker.ietf.org/doc/html/rfc7505",
+                        "Publish a null MX record: 0 .",
+                        "Without null MX, senders may still attempt delivery."},
+                {!mf.spfDenyAll, "SPF -all", "RFC 7208",
+                        "https://datatracker.ietf.org/doc/html/rfc7208",
+                        "Publish SPF with -all to reject all senders.",
+                        "Without SPF -all, mail servers may accept forged messages."},
+                {!mf.dmarcReject, "DMARC reject", "RFC 7489",
+                        "https://datatracker.ietf.org/doc/html/rfc7489",
+                        "Publish DMARC with p=reject to discard unauthenticated mail.",
+                        "Without DMARC reject, spoofed messages may still be delivered."},
+        }
+
+        var steps []map[string]any
+        for _, d := range defs {
+                if !d.missing {
+                        continue
+                }
+                steps = append(steps, map[string]any{
+                        "control": d.control, "rfc": d.rfc, "rfc_url": d.rfcURL,
+                        "action": d.action, "risk": d.risk,
+                })
+        }
+        return steps
+}
+
+func classifyMailPosture(mf mailFlags, presentCount int, domain string, ps protocolState) mailClassification {
+        if presentCount == 3 {
+                return mailClassification{
+                        classification: "no_mail_verified", label: "No-Mail: Verified",
+                        color: "success", icon: "shield-alt",
+                        summary:  "This domain has verified no-mail controls: null MX, SPF -all, and DMARC reject are all present.",
+                        isNoMail: true,
+                }
+        }
+
+        if presentCount >= 1 && !mf.hasMX {
+                return mailClassification{
+                        classification: "no_mail_partial", label: "No-Mail: Partial",
+                        color: "warning", icon: "exclamation-triangle",
+                        summary:     fmt.Sprintf("This domain appears to not send mail but only %d of 3 no-mail signals are present.", presentCount),
+                        isNoMail:    true,
+                        recommended: buildNoMailRecommendedRecords(mf, domain),
+                }
+        }
+
+        enforce := ps.dmarcPolicy == "reject" || ps.dmarcPolicy == "quarantine"
+        if mf.hasSPF && mf.hasDMARC && mf.hasDKIM && enforce {
+                return mailClassification{
+                        classification: "email_enforced", label: "Email: Enforced",
+                        color: "success", icon: "shield-alt",
+                        summary: "Email authentication is fully enforced with SPF, DKIM, and DMARC policy enforcement.",
+                }
+        }
+
+        if mf.hasSPF && mf.hasDMARC && mf.hasDKIM && ps.dmarcPolicy == "none" {
+                return mailClassification{
+                        classification: "email_monitoring", label: "Email: Monitoring",
+                        color: "info", icon: "info-circle",
+                        summary: "Email authentication is configured with DMARC in monitoring mode (p=none). Enforcement recommended after reviewing reports.",
+                }
+        }
+
+        if mf.hasSPF || mf.hasDMARC {
+                return mailClassification{
+                        classification: "email_enabled", label: "Email: Enabled",
+                        color: "warning", icon: "check-circle",
+                        summary: "Some email authentication is configured but full protection is not yet in place.",
+                }
+        }
+
+        cls := mailClassification{
+                classification: "email_ambiguous", label: "Email: Ambiguous",
+                color: "secondary", icon: "question-circle",
+                summary: "No email authentication detected. It is unclear whether this domain sends email.",
+        }
+        if !mf.hasMX {
+                cls.recommended = []string{
+                        fmt.Sprintf("%s MX 0 .", domain),
+                        fmt.Sprintf("%s TXT \"v=spf1 -all\"", domain),
+                        fmt.Sprintf("_dmarc.%s TXT \"v=DMARC1; p=reject;\"", domain),
+                }
+        }
+        return cls
+}
+
+func buildNoMailRecommendedRecords(mf mailFlags, domain string) []string {
+        var recs []string
+        if !mf.hasNullMX {
+                recs = append(recs, fmt.Sprintf("%s MX 0 .", domain))
+        }
+        if !mf.spfDenyAll {
+                recs = append(recs, fmt.Sprintf("%s TXT \"v=spf1 -all\"", domain))
+        }
+        if !mf.dmarcReject {
+                recs = append(recs, fmt.Sprintf("_dmarc.%s TXT \"v=DMARC1; p=reject;\"", domain))
+        }
+        return recs
 }
 
 func getVerdict(results map[string]any, key string) string {

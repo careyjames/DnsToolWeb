@@ -169,25 +169,25 @@
     <script src="{{ url_for('static', filename='js/bootstrap.bundle.min.js') }}" defer></script>
     <script nonce="{{ csp_nonce }}">
     document.addEventListener('DOMContentLoaded', function() {
-        var selected = [];
-        var rows = document.querySelectorAll('.compare-row');
-        var inputA = document.getElementById('inputA');
-        var inputB = document.getElementById('inputB');
-        var btn = document.getElementById('compareBtn');
-        var hint = document.getElementById('selectionHint');
+        const selected = [];
+        const rows = document.querySelectorAll('.compare-row');
+        const inputA = document.getElementById('inputA');
+        const inputB = document.getElementById('inputB');
+        const btn = document.getElementById('compareBtn');
+        const hint = document.getElementById('selectionHint');
 
         rows.forEach(function(row) {
             row.addEventListener('click', function() {
-                var id = row.dataset.id;
-                var idx = selected.indexOf(id);
+                const id = row.dataset.id;
+                const idx = selected.indexOf(id);
                 if (idx > -1) {
                     selected.splice(idx, 1);
                     row.classList.remove('selected-row');
                     row.querySelector('.compare-check').className = 'far fa-square compare-check';
                 } else {
                     if (selected.length >= 2) {
-                        var oldId = selected.shift();
-                        var oldRow = document.querySelector('[data-id="' + oldId + '"]');
+                        const oldId = selected.shift();
+                        const oldRow = document.querySelector('[data-id="' + oldId + '"]');
                         if (oldRow) {
                             oldRow.classList.remove('selected-row');
                             oldRow.querySelector('.compare-check').className = 'far fa-square compare-check';

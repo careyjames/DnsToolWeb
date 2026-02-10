@@ -32,6 +32,8 @@ const (
         providerBarracuda       = "Barracuda"
         providerHornetsecurity  = "Hornetsecurity"
         providerSpamExperts     = "SpamExperts"
+        providerZendesk         = "Zendesk"
+        providerUnknown         = "Unknown"
 
         selDefault     = "default._domainkey"
         selDKIM        = "dkim._domainkey"
@@ -116,8 +118,8 @@ var selectorProviderMap = map[string]string{
         selMimecast:  providerMimecast,
         selProofpoint: providerProofpoint,
         selEverlytic: "Everlytic",
-        selZendesk1:  "Zendesk",
-        selZendesk2:  "Zendesk",
+        selZendesk1:  providerZendesk,
+        selZendesk2:  providerZendesk,
         selCM:        "Campaign Monitor",
 }
 
@@ -195,7 +197,7 @@ var spfAncillarySenders = map[string]string{
         "amazonses.com":     providerAmazonSES,
         "mailgun.org":       providerMailgun,
         "spf.sparkpostmail": providerSparkPost,
-        "mail.zendesk.com":  "Zendesk",
+        "mail.zendesk.com":  providerZendesk,
         "spf.brevo.com":     providerBrevo,
         "spf.sendinblue":    providerBrevo,
         "spf.mailjet":       providerMailjet,
@@ -214,67 +216,66 @@ var ambiguousSelectors = map[string]bool{
         selK2:        true,
 }
 
+func matchProviderFromRecords(records string, providerMap map[string]string) string {
+        lower := strings.ToLower(records)
+        for key, provider := range providerMap {
+                if strings.Contains(lower, key) {
+                        return provider
+                }
+        }
+        return ""
+}
+
+func detectMXProvider(mxRecords []string) string {
+        if len(mxRecords) == 0 {
+                return ""
+        }
+        return matchProviderFromRecords(strings.Join(mxRecords, " "), mxToDKIMProvider)
+}
+
+func detectSPFProvider(spfRecord string) string {
+        if spfRecord == "" {
+                return ""
+        }
+        if p := matchProviderFromRecords(spfRecord, spfMailboxProviders); p != "" {
+                return p
+        }
+        return matchProviderFromRecords(spfRecord, spfAncillarySenders)
+}
+
+func resolveProviderWithGateway(mxProvider, spfProvider string) (string, interface{}) {
+        if mxProvider != "" && securityGateways[mxProvider] && spfProvider != "" && spfProvider != mxProvider {
+                return spfProvider, mxProvider
+        }
+        if mxProvider != "" {
+                return mxProvider, nil
+        }
+        if spfProvider != "" {
+                return spfProvider, nil
+        }
+        return providerUnknown, nil
+}
+
 func detectPrimaryMailProvider(mxRecords []string, spfRecord string) map[string]any {
-        result := map[string]any{"provider": "Unknown", "gateway": nil}
-
         if len(mxRecords) == 0 && spfRecord == "" {
-                return result
+                return map[string]any{"provider": providerUnknown, "gateway": nil}
         }
 
-        var mxProvider string
-        if len(mxRecords) > 0 {
-                mxStr := strings.ToLower(strings.Join(mxRecords, " "))
-                for key, provider := range mxToDKIMProvider {
-                        if strings.Contains(mxStr, key) {
-                                mxProvider = provider
-                                break
-                        }
-                }
-        }
+        mxProvider := detectMXProvider(mxRecords)
+        spfProvider := detectSPFProvider(spfRecord)
+        provider, gateway := resolveProviderWithGateway(mxProvider, spfProvider)
 
-        var spfProvider string
-        if spfRecord != "" {
-                spfLower := strings.ToLower(spfRecord)
-                for key, provider := range spfMailboxProviders {
-                        if strings.Contains(spfLower, key) {
-                                spfProvider = provider
-                                break
-                        }
-                }
-                if spfProvider == "" {
-                        for key, provider := range spfAncillarySenders {
-                                if strings.Contains(spfLower, key) {
-                                        spfProvider = provider
-                                        break
-                                }
-                        }
-                }
-        }
-
-        if mxProvider != "" && securityGateways[mxProvider] {
-                if spfProvider != "" && spfProvider != mxProvider {
-                        result["provider"] = spfProvider
-                        result["gateway"] = mxProvider
-                } else {
-                        result["provider"] = mxProvider
-                }
-        } else if mxProvider != "" {
-                result["provider"] = mxProvider
-        } else if spfProvider != "" {
-                result["provider"] = spfProvider
-        }
-
-        return result
+        return map[string]any{"provider": provider, "gateway": gateway}
 }
 
 func classifySelectorProvider(selectorName, primaryProvider string) string {
         provider, ok := selectorProviderMap[selectorName]
         if !ok {
-                return "Unknown"
+                return providerUnknown
         }
 
-        if primaryProvider == "Unknown" && ambiguousSelectors[selectorName] {
-                return "Unknown"
+        if primaryProvider == providerUnknown && ambiguousSelectors[selectorName] {
+                return providerUnknown
         }
         return provider
 }
@@ -301,6 +302,39 @@ func checkDKIMSelector(ctx context.Context, dns interface {
         return "", nil
 }
 
+func estimateKeyBits(keyBytes int) int {
+        switch {
+        case keyBytes <= 140:
+                return 1024
+        case keyBytes <= 300:
+                return 2048
+        case keyBytes <= 600:
+                return 4096
+        default:
+                return keyBytes * 8 / 10
+        }
+}
+
+func analyzePublicKey(record string) (keyBits interface{}, revoked bool, issues []string) {
+        m := dkimPKeyRe.FindStringSubmatch(record)
+        if m == nil {
+                return nil, false, nil
+        }
+        publicKey := strings.TrimSpace(m[1])
+        if publicKey == "" {
+                return nil, true, []string{"Key revoked (p= empty)"}
+        }
+        decoded, err := base64.StdEncoding.DecodeString(publicKey + "==")
+        if err != nil {
+                return nil, false, nil
+        }
+        bits := estimateKeyBits(len(decoded))
+        if bits == 1024 {
+                return bits, false, []string{"1024-bit key (weak, upgrade to 2048)"}
+        }
+        return bits, false, nil
+}
+
 func analyzeDKIMKey(record string) map[string]any {
         keyInfo := map[string]any{
                 "key_type":  "rsa",
@@ -315,42 +349,24 @@ func analyzeDKIMKey(record string) map[string]any {
         }
 
         lower := strings.ToLower(record)
-        if dkimTestFlagRe.MatchString(lower) {
-                keyInfo["test_mode"] = true
-        }
+        testMode := dkimTestFlagRe.MatchString(lower)
+        keyInfo["test_mode"] = testMode
+
+        keyBits, revoked, pkIssues := analyzePublicKey(record)
+        keyInfo["key_bits"] = keyBits
+        keyInfo["revoked"] = revoked
 
         var issues []string
-        if m := dkimPKeyRe.FindStringSubmatch(record); m != nil {
-                publicKey := strings.TrimSpace(m[1])
-                if publicKey == "" {
-                        keyInfo["revoked"] = true
-                        issues = append(issues, "Key revoked (p= empty)")
-                } else {
-                        decoded, err := base64.StdEncoding.DecodeString(publicKey + "==")
-                        if err == nil {
-                                keyBytes := len(decoded)
-                                if keyBytes <= 140 {
-                                        keyInfo["key_bits"] = 1024
-                                        issues = append(issues, "1024-bit key (weak, upgrade to 2048)")
-                                } else if keyBytes <= 300 {
-                                        keyInfo["key_bits"] = 2048
-                                } else if keyBytes <= 600 {
-                                        keyInfo["key_bits"] = 4096
-                                } else {
-                                        keyInfo["key_bits"] = keyBytes * 8 / 10
-                                }
-                        }
-                }
-        }
+        issues = append(issues, pkIssues...)
 
-        if keyInfo["test_mode"].(bool) {
+        if testMode {
                 issues = append(issues, "DKIM key in test mode (t=y per RFC 6376 §3.6.1) — verifiers should treat failures as unsigned, remove t=y for production")
         }
 
-        keyInfo["issues"] = issues
         if issues == nil {
-                keyInfo["issues"] = []string{}
+                issues = []string{}
         }
+        keyInfo["issues"] = issues
         return keyInfo
 }
 
@@ -388,68 +404,80 @@ func findSPFRecord(records []string) string {
         return ""
 }
 
-func attributeSelectors(foundSelectors map[string]map[string]any, primaryProvider string, foundProviders map[string]bool) (bool, string, bool) {
-        primaryHasDKIM := false
-        primaryDKIMNote := ""
-        thirdPartyOnly := false
-
-        var unattributedSelectors []string
+func collectUnattributed(foundSelectors map[string]map[string]any) []string {
+        var unattributed []string
         for selName, selData := range foundSelectors {
-                if selData["provider"].(string) == "Unknown" {
-                        unattributedSelectors = append(unattributedSelectors, selName)
+                if selData["provider"].(string) == providerUnknown {
+                        unattributed = append(unattributed, selName)
                 }
         }
+        return unattributed
+}
 
-        if primaryProvider != "Unknown" {
-                expected := primaryProviderSelectors[primaryProvider]
-                if len(expected) > 0 {
-                        for _, s := range expected {
-                                if _, ok := foundSelectors[s]; ok {
-                                        primaryHasDKIM = true
-                                        break
-                                }
+func checkPrimaryHasDKIM(foundSelectors map[string]map[string]any, primaryProvider string, foundProviders map[string]bool) bool {
+        expected := primaryProviderSelectors[primaryProvider]
+        if len(expected) > 0 {
+                for _, s := range expected {
+                        if _, ok := foundSelectors[s]; ok {
+                                return true
                         }
-                } else {
-                        primaryHasDKIM = foundProviders[primaryProvider]
                 }
+                return false
+        }
+        return foundProviders[primaryProvider]
+}
 
-                if !primaryHasDKIM && len(unattributedSelectors) > 0 {
-                        primaryHasDKIM = true
-                        for _, selName := range unattributedSelectors {
-                                foundSelectors[selName]["provider"] = primaryProvider
-                                foundSelectors[selName]["inferred"] = true
-                                foundProviders[primaryProvider] = true
-                        }
-                        var names []string
-                        for _, s := range unattributedSelectors {
-                                names = append(names, strings.TrimSuffix(s, domainkeySuffix))
-                        }
-                        primaryDKIMNote = fmt.Sprintf(
-                                "DKIM selector(s) %s inferred as %s (custom selector names — not the standard %s selector).",
-                                strings.Join(names, ", "), primaryProvider, primaryProvider,
-                        )
-                }
+func inferUnattributedSelectors(foundSelectors map[string]map[string]any, unattributed []string, primaryProvider string, foundProviders map[string]bool) string {
+        for _, selName := range unattributed {
+                foundSelectors[selName]["provider"] = primaryProvider
+                foundSelectors[selName]["inferred"] = true
+                foundProviders[primaryProvider] = true
+        }
+        var names []string
+        for _, s := range unattributed {
+                names = append(names, strings.TrimSuffix(s, domainkeySuffix))
+        }
+        return fmt.Sprintf(
+                "DKIM selector(s) %s inferred as %s (custom selector names — not the standard %s selector).",
+                strings.Join(names, ", "), primaryProvider, primaryProvider,
+        )
+}
+
+func buildThirdPartyNote(foundProviders map[string]bool, primaryProvider string) string {
+        var providerNames []string
+        for p := range foundProviders {
+                providerNames = append(providerNames, p)
+        }
+        sort.Strings(providerNames)
+        thirdPartyNames := "third-party services"
+        if len(providerNames) > 0 {
+                thirdPartyNames = strings.Join(providerNames, ", ")
+        }
+        return fmt.Sprintf(
+                "DKIM verified for %s only — no DKIM found for primary mail platform (%s). "+
+                        "The primary provider may use custom selectors not discoverable through standard checks.",
+                thirdPartyNames, primaryProvider,
+        )
+}
+
+func attributeSelectors(foundSelectors map[string]map[string]any, primaryProvider string, foundProviders map[string]bool) (bool, string, bool) {
+        if primaryProvider == providerUnknown {
+                return false, "", false
         }
 
-        if len(foundSelectors) > 0 && primaryProvider != "Unknown" && !primaryHasDKIM {
-                thirdPartyOnly = true
-                var providerNames []string
-                for p := range foundProviders {
-                        providerNames = append(providerNames, p)
-                }
-                sort.Strings(providerNames)
-                thirdPartyNames := "third-party services"
-                if len(providerNames) > 0 {
-                        thirdPartyNames = strings.Join(providerNames, ", ")
-                }
-                primaryDKIMNote = fmt.Sprintf(
-                        "DKIM verified for %s only — no DKIM found for primary mail platform (%s). "+
-                                "The primary provider may use custom selectors not discoverable through standard checks.",
-                        thirdPartyNames, primaryProvider,
-                )
+        unattributed := collectUnattributed(foundSelectors)
+        primaryHasDKIM := checkPrimaryHasDKIM(foundSelectors, primaryProvider, foundProviders)
+
+        if !primaryHasDKIM && len(unattributed) > 0 {
+                note := inferUnattributedSelectors(foundSelectors, unattributed, primaryProvider, foundProviders)
+                return true, note, false
         }
 
-        return primaryHasDKIM, primaryDKIMNote, thirdPartyOnly
+        if len(foundSelectors) > 0 && !primaryHasDKIM {
+                return false, buildThirdPartyNote(foundProviders, primaryProvider), true
+        }
+
+        return primaryHasDKIM, "", false
 }
 
 func buildDKIMVerdict(foundSelectors map[string]map[string]any, keyIssues, keyStrengths []string, primaryProvider string, primaryHasDKIM, thirdPartyOnly bool) (string, string) {
@@ -492,6 +520,80 @@ func buildDKIMVerdict(foundSelectors map[string]map[string]any, keyIssues, keySt
         return "success", fmt.Sprintf("Found DKIM records for %d selector(s)", len(foundSelectors))
 }
 
+func isCustomSelector(selectorName string, customSelectors []string) bool {
+        for _, cs := range customSelectors {
+                csNorm := cs
+                if !strings.HasSuffix(csNorm, domainkeySuffix) {
+                        csNorm = csNorm + domainkeySuffix
+                }
+                if csNorm == selectorName {
+                        return true
+                }
+        }
+        return false
+}
+
+func analyzeRecordKeys(records []string) ([]map[string]any, []string, []string) {
+        var keyInfoList []map[string]any
+        var issues []string
+        var strengths []string
+        for _, rec := range records {
+                ka := analyzeDKIMKey(rec)
+                keyInfoList = append(keyInfoList, ka)
+                issues = append(issues, ka["issues"].([]string)...)
+                if bits, ok := ka["key_bits"]; ok && bits != nil {
+                        if b, ok := bits.(int); ok && b >= 2048 {
+                                strengths = append(strengths, fmt.Sprintf("%d-bit", b))
+                        }
+                }
+        }
+        return keyInfoList, issues, strengths
+}
+
+type dkimScanResult struct {
+        selectorName string
+        selectorInfo map[string]any
+        keyIssues    []string
+        keyStrengths []string
+}
+
+func processDKIMSelector(ctx context.Context, dns interface {
+        QueryDNS(ctx context.Context, recordType, domain string) []string
+}, sel, domain, primaryProvider string, customSelectors []string) *dkimScanResult {
+        selectorName, records := checkDKIMSelector(ctx, dns, sel, domain)
+        if selectorName == "" {
+                return nil
+        }
+
+        provider := classifySelectorProvider(selectorName, primaryProvider)
+        keyInfoList, localIssues, localStrengths := analyzeRecordKeys(records)
+
+        selectorInfo := map[string]any{
+                "records":   records,
+                "key_info":  keyInfoList,
+                "provider":  provider,
+                "user_hint": isCustomSelector(selectorName, customSelectors),
+        }
+
+        return &dkimScanResult{
+                selectorName: selectorName,
+                selectorInfo: selectorInfo,
+                keyIssues:    localIssues,
+                keyStrengths: localStrengths,
+        }
+}
+
+func collectFoundProviders(foundSelectors map[string]map[string]any) map[string]bool {
+        providers := make(map[string]bool)
+        for _, selData := range foundSelectors {
+                p := selData["provider"].(string)
+                if p != providerUnknown {
+                        providers[p] = true
+                }
+        }
+        return providers
+}
+
 func (a *Analyzer) AnalyzeDKIM(ctx context.Context, domain string, mxRecords []string, customSelectors []string) map[string]any {
         selectors := buildSelectorList(customSelectors)
 
@@ -515,65 +617,21 @@ func (a *Analyzer) AnalyzeDKIM(ctx context.Context, domain string, mxRecords []s
                 wg.Add(1)
                 go func(s string) {
                         defer wg.Done()
-                        selectorName, records := checkDKIMSelector(ctx, a.DNS, s, domain)
-                        if selectorName == "" {
+                        result := processDKIMSelector(ctx, a.DNS, s, domain, primaryProvider, customSelectors)
+                        if result == nil {
                                 return
                         }
-
-                        provider := classifySelectorProvider(selectorName, primaryProvider)
-                        selectorInfo := map[string]any{
-                                "records":   records,
-                                "key_info":  []map[string]any{},
-                                "provider":  provider,
-                                "user_hint": false,
-                        }
-
-                        for _, cs := range customSelectors {
-                                csNorm := cs
-                                if !strings.HasSuffix(csNorm, domainkeySuffix) {
-                                        csNorm = csNorm + domainkeySuffix
-                                }
-                                if csNorm == selectorName {
-                                        selectorInfo["user_hint"] = true
-                                }
-                        }
-
-                        var localKeyIssues []string
-                        var localKeyStrengths []string
-                        var keyInfoList []map[string]any
-                        for _, rec := range records {
-                                ka := analyzeDKIMKey(rec)
-                                keyInfoList = append(keyInfoList, ka)
-                                for _, issue := range ka["issues"].([]string) {
-                                        localKeyIssues = append(localKeyIssues, issue)
-                                }
-                                if bits, ok := ka["key_bits"]; ok && bits != nil {
-                                        if b, ok := bits.(int); ok && b >= 2048 {
-                                                localKeyStrengths = append(localKeyStrengths, fmt.Sprintf("%d-bit", b))
-                                        }
-                                }
-                        }
-                        selectorInfo["key_info"] = keyInfoList
-
                         mu.Lock()
-                        foundSelectors[selectorName] = selectorInfo
-                        keyIssues = append(keyIssues, localKeyIssues...)
-                        keyStrengths = append(keyStrengths, localKeyStrengths...)
+                        foundSelectors[result.selectorName] = result.selectorInfo
+                        keyIssues = append(keyIssues, result.keyIssues...)
+                        keyStrengths = append(keyStrengths, result.keyStrengths...)
                         mu.Unlock()
                 }(sel)
         }
         wg.Wait()
 
-        foundProviders := make(map[string]bool)
-        for _, selData := range foundSelectors {
-                p := selData["provider"].(string)
-                if p != "Unknown" {
-                        foundProviders[p] = true
-                }
-        }
-
+        foundProviders := collectFoundProviders(foundSelectors)
         primaryHasDKIM, primaryDKIMNote, thirdPartyOnly := attributeSelectors(foundSelectors, primaryProvider, foundProviders)
-
         status, message := buildDKIMVerdict(foundSelectors, keyIssues, keyStrengths, primaryProvider, primaryHasDKIM, thirdPartyOnly)
 
         var sortedProviders []string

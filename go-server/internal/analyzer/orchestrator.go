@@ -9,6 +9,10 @@ import (
         "time"
 )
 
+const (
+        msgDomainNotExist = "Domain does not exist or is not delegated"
+)
+
 func (a *Analyzer) AnalyzeDomain(ctx context.Context, domain string, customDKIMSelectors []string) map[string]any {
         select {
         case a.semaphore <- struct{}{}:
@@ -214,7 +218,6 @@ func (a *Analyzer) AnalyzeDomain(ctx context.Context, domain string, customDKIMS
 }
 
 func (a *Analyzer) buildNonExistentResult(domain, status string, statusMessage *string) map[string]any {
-        naMsg := "Domain does not exist or is not delegated"
         return map[string]any{
                 "domain_exists":          false,
                 "domain_status":          status,
@@ -223,8 +226,8 @@ func (a *Analyzer) buildNonExistentResult(domain, status string, statusMessage *
                 "basic_records":          map[string]any{"A": []string{}, "AAAA": []string{}, "MX": []string{}, "NS": []string{}, "TXT": []string{}, "CNAME": []string{}, "SOA": []string{}},
                 "authoritative_records":  map[string]any{},
                 "propagation_status":     map[string]any{},
-                "spf_analysis":           map[string]any{"status": "n/a", "message": naMsg},
-                "dmarc_analysis":         map[string]any{"status": "n/a", "message": naMsg},
+                "spf_analysis":           map[string]any{"status": "n/a", "message": msgDomainNotExist},
+                "dmarc_analysis":         map[string]any{"status": "n/a", "message": msgDomainNotExist},
                 "dkim_analysis":          map[string]any{"status": "n/a"},
                 "mta_sts_analysis":       map[string]any{"status": "n/a"},
                 "tlsrpt_analysis":        map[string]any{"status": "n/a"},
@@ -232,12 +235,12 @@ func (a *Analyzer) buildNonExistentResult(domain, status string, statusMessage *
                 "dane_analysis":          map[string]any{"status": "n/a", "has_dane": false, "tlsa_records": []any{}, "issues": []string{}},
                 "caa_analysis":           map[string]any{"status": "n/a"},
                 "dnssec_analysis":        map[string]any{"status": "n/a"},
-                "ns_delegation_analysis": map[string]any{"status": "error", "delegation_ok": false, "message": naMsg},
+                "ns_delegation_analysis": map[string]any{"status": "error", "delegation_ok": false, "message": msgDomainNotExist},
                 "registrar_info":         map[string]any{"status": "n/a", "registrar": nil},
                 "smtp_transport":         nil,
                 "ct_subdomains":          map[string]any{"status": "success", "subdomains": []any{}, "unique_subdomains": 0, "total_certs": 0},
                 "hosting_summary":        map[string]any{"hosting": "N/A", "dns_hosting": "N/A", "email_hosting": "N/A"},
-                "posture":                map[string]any{"score": 0, "grade": "N/A", "state": "N/A", "label": "Non-existent Domain", "message": "Domain does not exist or is not delegated", "icon": "times-circle", "issues": []string{"Domain does not exist or is not delegated"}, "monitoring": []string{}, "configured": []string{}, "absent": []string{}, "color": "secondary", "deliberate_monitoring": false, "deliberate_monitoring_note": ""},
+                "posture":                map[string]any{"score": 0, "grade": "N/A", "state": "N/A", "label": "Non-existent Domain", "message": msgDomainNotExist, "icon": "times-circle", "issues": []string{msgDomainNotExist}, "monitoring": []string{}, "configured": []string{}, "absent": []string{}, "color": "secondary", "deliberate_monitoring": false, "deliberate_monitoring_note": ""},
         }
 }
 

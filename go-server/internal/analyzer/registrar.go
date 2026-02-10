@@ -267,37 +267,39 @@ func findRegistrarEntity(entities []any) string {
                 if !ok {
                         continue
                 }
-                roles, ok := entity["roles"].([]any)
-                if !ok {
-                        continue
-                }
-                for _, r := range roles {
-                        if strings.ToLower(fmt.Sprint(r)) == "registrar" {
-                                if vcard, ok := entity["vcardArray"].([]any); ok && len(vcard) == 2 {
-                                        if items, ok := vcard[1].([]any); ok {
-                                                for _, item := range items {
-                                                        if arr, ok := item.([]any); ok && len(arr) >= 4 {
-                                                                if fmt.Sprint(arr[0]) == "fn" {
-                                                                        return fmt.Sprint(arr[3])
-                                                                }
-                                                        }
-                                                }
-                                        }
-                                }
-                                if name, ok := entity["name"].(string); ok && name != "" && !isDigits(name) {
-                                        return name
-                                }
-                                if handle, ok := entity["handle"].(string); ok && handle != "" && !isDigits(handle) {
-                                        return handle
-                                }
-                        }
-                }
-
-                if subEntities, ok := entity["entities"].([]any); ok {
-                        if result := findRegistrarEntity(subEntities); result != "" {
+                if !entityHasRole(entity, "registrar") {
+                        if result := findRegistrarInSubEntities(entity); result != "" {
                                 return result
                         }
+                        continue
                 }
+                if name := extractFNFromVCard(entity); name != "" {
+                        return name
+                }
+                if name := extractEntityName(entity); name != "" {
+                        return name
+                }
+                if result := findRegistrarInSubEntities(entity); result != "" {
+                        return result
+                }
+        }
+        return ""
+}
+
+func findRegistrarInSubEntities(entity map[string]any) string {
+        subEntities, ok := entity["entities"].([]any)
+        if !ok {
+                return ""
+        }
+        return findRegistrarEntity(subEntities)
+}
+
+func extractEntityName(entity map[string]any) string {
+        if name, ok := entity["name"].(string); ok && name != "" && !isDigits(name) {
+                return name
+        }
+        if handle, ok := entity["handle"].(string); ok && handle != "" && !isDigits(handle) {
+                return handle
         }
         return ""
 }
@@ -310,42 +312,70 @@ func extractRegistrantFromRDAP(data map[string]any) string {
         return findRegistrantEntity(entities)
 }
 
+var redactedValues = map[string]bool{
+        "redacted": true, "data protected": true,
+        "not disclosed": true, "withheld": true,
+}
+
 func findRegistrantEntity(entities []any) string {
-        redacted := map[string]bool{
-                "redacted": true, "data protected": true,
-                "not disclosed": true, "withheld": true,
-        }
         for _, e := range entities {
                 entity, ok := e.(map[string]any)
                 if !ok {
                         continue
                 }
-                roles, ok := entity["roles"].([]any)
-                if !ok {
-                        continue
-                }
-                for _, r := range roles {
-                        if strings.ToLower(fmt.Sprint(r)) == "registrant" {
-                                if vcard, ok := entity["vcardArray"].([]any); ok && len(vcard) == 2 {
-                                        if items, ok := vcard[1].([]any); ok {
-                                                for _, item := range items {
-                                                        if arr, ok := item.([]any); ok && len(arr) >= 4 {
-                                                                if fmt.Sprint(arr[0]) == "fn" {
-                                                                        val := fmt.Sprint(arr[3])
-                                                                        if !redacted[strings.ToLower(val)] {
-                                                                                return val
-                                                                        }
-                                                                }
-                                                        }
-                                                }
-                                        }
-                                }
-                        }
-                }
-                if subEntities, ok := entity["entities"].([]any); ok {
-                        if result := findRegistrantEntity(subEntities); result != "" {
+                if !entityHasRole(entity, "registrant") {
+                        if result := findRegistrantInSubEntities(entity); result != "" {
                                 return result
                         }
+                        continue
+                }
+                if name := extractFNFromVCard(entity); name != "" && !redactedValues[strings.ToLower(name)] {
+                        return name
+                }
+                if result := findRegistrantInSubEntities(entity); result != "" {
+                        return result
+                }
+        }
+        return ""
+}
+
+func findRegistrantInSubEntities(entity map[string]any) string {
+        subEntities, ok := entity["entities"].([]any)
+        if !ok {
+                return ""
+        }
+        return findRegistrantEntity(subEntities)
+}
+
+func entityHasRole(entity map[string]any, role string) bool {
+        roles, ok := entity["roles"].([]any)
+        if !ok {
+                return false
+        }
+        for _, r := range roles {
+                if strings.ToLower(fmt.Sprint(r)) == role {
+                        return true
+                }
+        }
+        return false
+}
+
+func extractFNFromVCard(entity map[string]any) string {
+        vcard, ok := entity["vcardArray"].([]any)
+        if !ok || len(vcard) != 2 {
+                return ""
+        }
+        items, ok := vcard[1].([]any)
+        if !ok {
+                return ""
+        }
+        for _, item := range items {
+                arr, ok := item.([]any)
+                if !ok || len(arr) < 4 {
+                        continue
+                }
+                if fmt.Sprint(arr[0]) == "fn" {
+                        return fmt.Sprint(arr[3])
                 }
         }
         return ""
@@ -386,36 +416,55 @@ func (a *Analyzer) whoisLookup(ctx context.Context, domain string) (string, bool
         }
 
         output := string(response)
-        outputLower := strings.ToLower(output)
 
-        for _, indicator := range whoisRestrictedIndicators {
-                if strings.Contains(outputLower, indicator) {
-                        return "", true, tld
-                }
-        }
-
-        if len(strings.TrimSpace(output)) < 50 {
+        if isWhoisRestricted(output) {
                 return "", true, tld
         }
 
-        var registrar, registrant string
-        if m := registrarRe.FindStringSubmatch(output); m != nil {
-                val := strings.TrimSpace(m[1])
-                if val != "" && !strings.HasPrefix(strings.ToLower(val), "http") && strings.ToLower(val) != "not available" {
-                        registrar = val
-                }
-        }
-        if m := registrantRe.FindStringSubmatch(output); m != nil {
-                val := strings.TrimSpace(m[1])
-                redacted := map[string]bool{
-                        "redacted": true, "data protected": true,
-                        "not disclosed": true, "withheld": true,
-                }
-                if val != "" && !redacted[strings.ToLower(val)] {
-                        registrant = val
-                }
-        }
+        registrar := parseWhoisRegistrar(output)
+        registrant := parseWhoisRegistrant(output)
 
+        return formatWhoisResult(registrar, registrant)
+}
+
+func isWhoisRestricted(output string) bool {
+        if len(strings.TrimSpace(output)) < 50 {
+                return true
+        }
+        outputLower := strings.ToLower(output)
+        for _, indicator := range whoisRestrictedIndicators {
+                if strings.Contains(outputLower, indicator) {
+                        return true
+                }
+        }
+        return false
+}
+
+func parseWhoisRegistrar(output string) string {
+        m := registrarRe.FindStringSubmatch(output)
+        if m == nil {
+                return ""
+        }
+        val := strings.TrimSpace(m[1])
+        if val == "" || strings.HasPrefix(strings.ToLower(val), "http") || strings.ToLower(val) == "not available" {
+                return ""
+        }
+        return val
+}
+
+func parseWhoisRegistrant(output string) string {
+        m := registrantRe.FindStringSubmatch(output)
+        if m == nil {
+                return ""
+        }
+        val := strings.TrimSpace(m[1])
+        if val == "" || redactedValues[strings.ToLower(val)] {
+                return ""
+        }
+        return val
+}
+
+func formatWhoisResult(registrar, registrant string) (string, bool, string) {
         if registrar != "" && registrant != "" {
                 return fmt.Sprintf("%s (Registrant: %s)", registrar, registrant), false, ""
         }
