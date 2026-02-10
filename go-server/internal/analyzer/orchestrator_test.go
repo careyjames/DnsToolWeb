@@ -5,6 +5,13 @@ import (
         "testing"
 )
 
+const (
+        testRiskLow    = "Low Risk"
+        testRiskMedium = "Medium Risk"
+        testDomainFake = "fake.example"
+        testHelloWorld = "Hello World"
+)
+
 func newTestAnalyzer() *Analyzer {
         return &Analyzer{
                 maxConcurrent: 6,
@@ -16,7 +23,7 @@ func newTestAnalyzer() *Analyzer {
 func TestNonExistentDomainStructure(t *testing.T) {
         a := newTestAnalyzer()
         msg := "Domain is not delegated"
-        result := a.buildNonExistentResult("fake.example", "undelegated", &msg)
+        result := a.buildNonExistentResult(testDomainFake, "undelegated", &msg)
 
         if result["domain_exists"] != false {
                 t.Errorf("expected domain_exists=false, got %v", result["domain_exists"])
@@ -66,7 +73,7 @@ func TestNonExistentDomainStructure(t *testing.T) {
 
 func TestNonExistentDomainAllSectionsNA(t *testing.T) {
         a := newTestAnalyzer()
-        result := a.buildNonExistentResult("fake.example", "undelegated", nil)
+        result := a.buildNonExistentResult(testDomainFake, "undelegated", nil)
 
         naSections := []string{
                 "spf_analysis", "dmarc_analysis", "dkim_analysis",
@@ -88,7 +95,7 @@ func TestNonExistentDomainAllSectionsNA(t *testing.T) {
 
 func TestNonExistentDomainPosture(t *testing.T) {
         a := newTestAnalyzer()
-        result := a.buildNonExistentResult("fake.example", "undelegated", nil)
+        result := a.buildNonExistentResult(testDomainFake, "undelegated", nil)
 
         posture, ok := result["posture"].(map[string]any)
         if !ok {
@@ -229,7 +236,7 @@ func TestPostureProviderAwareDKIM(t *testing.T) {
 
         posture := a.CalculatePosture(results)
         state, _ := posture["state"].(string)
-        if !strings.HasPrefix(state, "Low Risk") {
+        if !strings.HasPrefix(state, testRiskLow) {
                 t.Errorf("expected Low Risk for provider-aware DKIM, got %v", state)
         }
 
@@ -314,7 +321,7 @@ func TestPostureTruthBasedGrades(t *testing.T) {
                                 "caa_analysis":     map[string]any{"status": "success"},
                                 "dnssec_analysis":  map[string]any{},
                         },
-                        expectedGrade: "Low Risk",
+                        expectedGrade: testRiskLow,
                         expectedColor: "success",
                         messageContains: "not configured",
                 },
@@ -331,7 +338,7 @@ func TestPostureTruthBasedGrades(t *testing.T) {
                                 "caa_analysis":     map[string]any{},
                                 "dnssec_analysis":  map[string]any{},
                         },
-                        expectedGrade: "Low Risk",
+                        expectedGrade: testRiskLow,
                         expectedColor: "success",
                         messageContains: "quarantine",
                 },
@@ -348,7 +355,7 @@ func TestPostureTruthBasedGrades(t *testing.T) {
                                 "caa_analysis":     map[string]any{},
                                 "dnssec_analysis":  map[string]any{},
                         },
-                        expectedGrade: "Medium Risk",
+                        expectedGrade: testRiskMedium,
                         expectedColor: "warning",
                         messageContains: "monitoring mode",
                 },
@@ -365,7 +372,7 @@ func TestPostureTruthBasedGrades(t *testing.T) {
                                 "caa_analysis":     map[string]any{},
                                 "dnssec_analysis":  map[string]any{},
                         },
-                        expectedGrade: "Medium Risk",
+                        expectedGrade: testRiskMedium,
                         expectedColor: "warning",
                         messageContains: "DKIM not verified",
                 },
@@ -592,9 +599,9 @@ func TestStrContainsAny(t *testing.T) {
                 substrs  []string
                 expected bool
         }{
-                {"Hello World", []string{"hello"}, true},
-                {"Hello World", []string{"WORLD"}, true},
-                {"Hello World", []string{"foo", "bar"}, false},
+                {testHelloWorld, []string{"hello"}, true},
+                {testHelloWorld, []string{"WORLD"}, true},
+                {testHelloWorld, []string{"foo", "bar"}, false},
                 {"cloudflare.com", []string{"cloud", "azure"}, true},
                 {"", []string{"anything"}, false},
                 {"something", []string{}, false},
@@ -691,16 +698,16 @@ func TestGetSlice(t *testing.T) {
 func TestGetBool(t *testing.T) {
         m := map[string]any{"flag": true, "off": false, "str": "true"}
 
-        if got := getBool(m, "flag"); got != true {
+        if getBool(m, "flag") != true {
                 t.Error("getBool flag expected true")
         }
-        if got := getBool(m, "off"); got != false {
+        if getBool(m, "off") != false {
                 t.Error("getBool off expected false")
         }
-        if got := getBool(m, "str"); got != false {
+        if getBool(m, "str") != false {
                 t.Error("getBool str expected false")
         }
-        if got := getBool(m, "missing"); got != false {
+        if getBool(m, "missing") != false {
                 t.Error("getBool missing expected false")
         }
 }
@@ -712,10 +719,10 @@ func TestGetMap(t *testing.T) {
         if got := getMap(m, "sub"); got == nil || got["nested"] != true {
                 t.Error("getMap sub unexpected")
         }
-        if got := getMap(m, "str"); got != nil {
+        if getMap(m, "str") != nil {
                 t.Error("getMap str expected nil")
         }
-        if got := getMap(m, "missing"); got != nil {
+        if getMap(m, "missing") != nil {
                 t.Error("getMap missing expected nil")
         }
 }
@@ -753,7 +760,7 @@ func TestPostureIssuesSeveritySeparation(t *testing.T) {
         }
 
         state, _ := posture["state"].(string)
-        if !strings.HasPrefix(state, "Low Risk") {
+        if !strings.HasPrefix(state, testRiskLow) {
                 t.Errorf("expected Low Risk posture with core email auth, got %v", state)
         }
 }
@@ -774,10 +781,10 @@ func TestPosturePartialDMARCPctDowngrade(t *testing.T) {
 
         posture := a.CalculatePosture(results)
         state, _ := posture["state"].(string)
-        if state == "Low Risk" {
+        if state == testRiskLow {
                 t.Error("DMARC pct=50 with p=reject should NOT grade Low Risk — partial enforcement per RFC 7489 §6.3")
         }
-        if state != "Medium Risk" {
+        if state != testRiskMedium {
                 t.Errorf("expected Medium Risk for partial DMARC enforcement, got %v", state)
         }
         msg, _ := posture["message"].(string)

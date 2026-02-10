@@ -8,6 +8,112 @@ import (
         "time"
 )
 
+const (
+        msgExpectedSuccesses = "expected %d successes, got %d"
+        msgExpectedFailures  = "expected %d failures, got %d"
+)
+
+func assertSuccessCount(t *testing.T, stats telemetry.ProviderStats, expected int64) {
+        t.Helper()
+        if stats.SuccessCount != expected {
+                t.Errorf(msgExpectedSuccesses, expected, stats.SuccessCount)
+        }
+}
+
+func assertFailureCount(t *testing.T, stats telemetry.ProviderStats, expected int64) {
+        t.Helper()
+        if stats.FailureCount != expected {
+                t.Errorf(msgExpectedFailures, expected, stats.FailureCount)
+        }
+}
+
+func assertConsecFailures(t *testing.T, stats telemetry.ProviderStats, expected int) {
+        t.Helper()
+        if stats.ConsecFailures != expected {
+                t.Errorf("expected %d consecutive failures, got %d", expected, stats.ConsecFailures)
+        }
+}
+
+func assertLastError(t *testing.T, stats telemetry.ProviderStats, expected string) {
+        t.Helper()
+        if stats.LastError != expected {
+                t.Errorf("expected last error %q, got %q", expected, stats.LastError)
+        }
+}
+
+func assertHealthState(t *testing.T, stats telemetry.ProviderStats, expected telemetry.HealthState) {
+        t.Helper()
+        if stats.State != expected {
+                t.Errorf("expected health state %q, got %q", expected, stats.State)
+        }
+}
+
+func assertInCooldown(t *testing.T, stats telemetry.ProviderStats, expected bool) {
+        t.Helper()
+        if stats.InCooldown != expected {
+                t.Errorf("expected in_cooldown=%v, got %v", expected, stats.InCooldown)
+        }
+}
+
+func assertProviderCount(t *testing.T, allStats []telemetry.ProviderStats, expected int) {
+        t.Helper()
+        if len(allStats) != expected {
+                t.Errorf("expected %d providers, got %d", expected, len(allStats))
+        }
+}
+
+func recordFailures(reg *telemetry.Registry, provider string, count int) {
+        for i := 0; i < count; i++ {
+                reg.RecordFailure(provider, "error")
+        }
+}
+
+func recordSuccesses(reg *telemetry.Registry, provider string, latencies []time.Duration) {
+        for _, lat := range latencies {
+                reg.RecordSuccess(provider, lat)
+        }
+}
+
+func findProviderStats(t *testing.T, allStats []telemetry.ProviderStats, provider string, expectedSuccesses int) {
+        t.Helper()
+        for _, stats := range allStats {
+                if stats.Name == provider && stats.SuccessCount == int64(expectedSuccesses) {
+                        return
+                }
+        }
+        t.Errorf("provider %q with %d successes not found in all stats", provider, expectedSuccesses)
+}
+
+func assertCooldownRange(t *testing.T, stats telemetry.ProviderStats, minDur, maxDur time.Duration) {
+        t.Helper()
+        if !stats.InCooldown {
+                t.Errorf("expected InCooldown=true in stats, got false")
+                return
+        }
+        if stats.CooldownUntil == nil {
+                t.Errorf("expected CooldownUntil to be set, got nil")
+                return
+        }
+        cooldownDuration := stats.CooldownUntil.Sub(time.Now())
+        if cooldownDuration < minDur || cooldownDuration > maxDur {
+                t.Logf("cooldown duration %v is not in expected range [%v, %v]", cooldownDuration, minDur, maxDur)
+        }
+}
+
+func runConcurrentOps(reg *telemetry.Registry, provider string, numGoroutines, opsPerGo int, opFn func(goroutineID, op int)) {
+        var wg sync.WaitGroup
+        wg.Add(numGoroutines)
+        for g := 0; g < numGoroutines; g++ {
+                go func(goroutineID int) {
+                        defer wg.Done()
+                        for op := 0; op < opsPerGo; op++ {
+                                opFn(goroutineID, op)
+                        }
+                }(g)
+        }
+        wg.Wait()
+}
+
 func TestRecordSuccess(t *testing.T) {
         tests := []struct {
                 name               string
@@ -46,22 +152,11 @@ func TestRecordSuccess(t *testing.T) {
         for _, tt := range tests {
                 t.Run(tt.name, func(t *testing.T) {
                         reg := telemetry.NewRegistry()
-
-                        for _, lat := range tt.latencies {
-                                reg.RecordSuccess(tt.provider, lat)
-                        }
-
+                        recordSuccesses(reg, tt.provider, tt.latencies)
                         stats := reg.GetStats(tt.provider)
-
-                        if stats.SuccessCount != tt.expectedSuccesses {
-                                t.Errorf("expected %d successes, got %d", tt.expectedSuccesses, stats.SuccessCount)
-                        }
-                        if stats.FailureCount != tt.expectedFailures {
-                                t.Errorf("expected %d failures, got %d", tt.expectedFailures, stats.FailureCount)
-                        }
-                        if stats.ConsecFailures != tt.expectedConsecFail {
-                                t.Errorf("expected %d consecutive failures, got %d", tt.expectedConsecFail, stats.ConsecFailures)
-                        }
+                        assertSuccessCount(t, stats, tt.expectedSuccesses)
+                        assertFailureCount(t, stats, tt.expectedFailures)
+                        assertConsecFailures(t, stats, tt.expectedConsecFail)
                 })
         }
 }
@@ -108,43 +203,32 @@ func TestRecordFailure(t *testing.T) {
         for _, tt := range tests {
                 t.Run(tt.name, func(t *testing.T) {
                         reg := telemetry.NewRegistry()
-
                         for _, errMsg := range tt.failures {
                                 reg.RecordFailure(tt.provider, errMsg)
                         }
-
                         stats := reg.GetStats(tt.provider)
-
-                        if stats.FailureCount != tt.expectedFailures {
-                                t.Errorf("expected %d failures, got %d", tt.expectedFailures, stats.FailureCount)
-                        }
-                        if stats.SuccessCount != tt.expectedSuccesses {
-                                t.Errorf("expected %d successes, got %d", tt.expectedSuccesses, stats.SuccessCount)
-                        }
-                        if stats.ConsecFailures != tt.expectedConsecFail {
-                                t.Errorf("expected %d consecutive failures, got %d", tt.expectedConsecFail, stats.ConsecFailures)
-                        }
-                        if stats.LastError != tt.expectedLastError {
-                                t.Errorf("expected last error %q, got %q", tt.expectedLastError, stats.LastError)
-                        }
+                        assertFailureCount(t, stats, tt.expectedFailures)
+                        assertSuccessCount(t, stats, tt.expectedSuccesses)
+                        assertConsecFailures(t, stats, tt.expectedConsecFail)
+                        assertLastError(t, stats, tt.expectedLastError)
                 })
         }
 }
 
 func TestCooldown(t *testing.T) {
         tests := []struct {
-                name                   string
-                provider               string
-                failureCount           int
-                expectCooldown         bool
-                expectedCooldownMin    time.Duration
-                expectedCooldownMax    time.Duration
+                name                string
+                provider            string
+                failureCount        int
+                expectCooldown      bool
+                expectedCooldownMin time.Duration
+                expectedCooldownMax time.Duration
         }{
                 {
-                        name:           "cooldown_after_3_failures",
-                        provider:       "google",
-                        failureCount:   3,
-                        expectCooldown: true,
+                        name:                "cooldown_after_3_failures",
+                        provider:            "google",
+                        failureCount:        3,
+                        expectCooldown:      true,
                         expectedCooldownMin: 5 * time.Second,
                         expectedCooldownMax: 10 * time.Second,
                 },
@@ -155,18 +239,18 @@ func TestCooldown(t *testing.T) {
                         expectCooldown: false,
                 },
                 {
-                        name:           "exponential_backoff_at_4_failures",
-                        provider:       "quad9",
-                        failureCount:   4,
-                        expectCooldown: true,
+                        name:                "exponential_backoff_at_4_failures",
+                        provider:            "quad9",
+                        failureCount:        4,
+                        expectCooldown:      true,
                         expectedCooldownMin: 10 * time.Second,
                         expectedCooldownMax: 20 * time.Second,
                 },
                 {
-                        name:           "exponential_backoff_at_5_failures",
-                        provider:       "opendns",
-                        failureCount:   5,
-                        expectCooldown: true,
+                        name:                "exponential_backoff_at_5_failures",
+                        provider:            "opendns",
+                        failureCount:        5,
+                        expectCooldown:      true,
                         expectedCooldownMin: 20 * time.Second,
                         expectedCooldownMax: 40 * time.Second,
                 },
@@ -175,30 +259,18 @@ func TestCooldown(t *testing.T) {
         for _, tt := range tests {
                 t.Run(tt.name, func(t *testing.T) {
                         reg := telemetry.NewRegistry()
-
-                        for i := 0; i < tt.failureCount; i++ {
-                                reg.RecordFailure(tt.provider, "error")
-                        }
+                        recordFailures(reg, tt.provider, tt.failureCount)
 
                         inCooldown := reg.InCooldown(tt.provider)
                         if inCooldown != tt.expectCooldown {
                                 t.Errorf("expected in_cooldown=%v, got %v", tt.expectCooldown, inCooldown)
                         }
 
-                        if tt.expectCooldown {
-                                stats := reg.GetStats(tt.provider)
-                                if !stats.InCooldown {
-                                        t.Errorf("expected InCooldown=true in stats, got false")
-                                }
-                                if stats.CooldownUntil == nil {
-                                        t.Errorf("expected CooldownUntil to be set, got nil")
-                                } else {
-                                        cooldownDuration := stats.CooldownUntil.Sub(time.Now())
-                                        if cooldownDuration < tt.expectedCooldownMin || cooldownDuration > tt.expectedCooldownMax {
-                                                t.Logf("cooldown duration %v is not in expected range [%v, %v]", cooldownDuration, tt.expectedCooldownMin, tt.expectedCooldownMax)
-                                        }
-                                }
+                        if !tt.expectCooldown {
+                                return
                         }
+                        stats := reg.GetStats(tt.provider)
+                        assertCooldownRange(t, stats, tt.expectedCooldownMin, tt.expectedCooldownMax)
                 })
         }
 }
@@ -221,17 +293,15 @@ func TestCooldownCap(t *testing.T) {
         for _, tt := range tests {
                 t.Run(tt.name, func(t *testing.T) {
                         reg := telemetry.NewRegistry()
-
-                        for i := 0; i < tt.failureCount; i++ {
-                                reg.RecordFailure(tt.provider, "error")
-                        }
+                        recordFailures(reg, tt.provider, tt.failureCount)
 
                         stats := reg.GetStats(tt.provider)
-                        if stats.CooldownUntil != nil {
-                                cooldownDuration := stats.CooldownUntil.Sub(time.Now())
-                                if cooldownDuration > tt.maxCooldown {
-                                        t.Errorf("expected cooldown <= %v, got %v", tt.maxCooldown, cooldownDuration)
-                                }
+                        if stats.CooldownUntil == nil {
+                                return
+                        }
+                        cooldownDuration := stats.CooldownUntil.Sub(time.Now())
+                        if cooldownDuration > tt.maxCooldown {
+                                t.Errorf("expected cooldown <= %v, got %v", tt.maxCooldown, cooldownDuration)
                         }
                 })
         }
@@ -239,17 +309,17 @@ func TestCooldownCap(t *testing.T) {
 
 func TestCooldownReset(t *testing.T) {
         tests := []struct {
-                name                    string
-                provider                string
-                failuresBeforeSuccess   int
-                latencyAfterSuccess     time.Duration
-                expectedConsecFailures  int
-                expectedInCooldown      bool
+                name                   string
+                provider               string
+                failuresBeforeSuccess  int
+                latencyAfterSuccess    time.Duration
+                expectedConsecFailures int
+                expectedInCooldown     bool
         }{
                 {
                         name:                   "success_resets_cooldown",
                         provider:               "google",
-                        failuresBeforeSuccess: 3,
+                        failuresBeforeSuccess:  3,
                         latencyAfterSuccess:    100 * time.Millisecond,
                         expectedConsecFailures: 0,
                         expectedInCooldown:     false,
@@ -257,7 +327,7 @@ func TestCooldownReset(t *testing.T) {
                 {
                         name:                   "success_after_5_failures",
                         provider:               "cloudflare",
-                        failuresBeforeSuccess: 5,
+                        failuresBeforeSuccess:  5,
                         latencyAfterSuccess:    50 * time.Millisecond,
                         expectedConsecFailures: 0,
                         expectedInCooldown:     false,
@@ -267,29 +337,20 @@ func TestCooldownReset(t *testing.T) {
         for _, tt := range tests {
                 t.Run(tt.name, func(t *testing.T) {
                         reg := telemetry.NewRegistry()
-
-                        for i := 0; i < tt.failuresBeforeSuccess; i++ {
-                                reg.RecordFailure(tt.provider, "error")
-                        }
-
+                        recordFailures(reg, tt.provider, tt.failuresBeforeSuccess)
                         reg.RecordSuccess(tt.provider, tt.latencyAfterSuccess)
-
                         stats := reg.GetStats(tt.provider)
-                        if stats.ConsecFailures != tt.expectedConsecFailures {
-                                t.Errorf("expected consecutive failures=%d, got %d", tt.expectedConsecFailures, stats.ConsecFailures)
-                        }
-                        if stats.InCooldown != tt.expectedInCooldown {
-                                t.Errorf("expected in_cooldown=%v, got %v", tt.expectedInCooldown, stats.InCooldown)
-                        }
+                        assertConsecFailures(t, stats, tt.expectedConsecFailures)
+                        assertInCooldown(t, stats, tt.expectedInCooldown)
                 })
         }
 }
 
 func TestHealthStates(t *testing.T) {
         tests := []struct {
-                name               string
-                provider           string
-                failureCount       int
+                name                string
+                provider            string
+                failureCount        int
                 expectedHealthState telemetry.HealthState
         }{
                 {
@@ -333,16 +394,18 @@ func TestHealthStates(t *testing.T) {
         for _, tt := range tests {
                 t.Run(tt.name, func(t *testing.T) {
                         reg := telemetry.NewRegistry()
-
-                        for i := 0; i < tt.failureCount; i++ {
-                                reg.RecordFailure(tt.provider, "error")
-                        }
-
+                        recordFailures(reg, tt.provider, tt.failureCount)
                         stats := reg.GetStats(tt.provider)
-                        if stats.State != tt.expectedHealthState {
-                                t.Errorf("expected health state %q, got %q", tt.expectedHealthState, stats.State)
-                        }
+                        assertHealthState(t, stats, tt.expectedHealthState)
                 })
+        }
+}
+
+func applyOperation(reg *telemetry.Registry, provider, op string) {
+        if op == "fail" {
+                reg.RecordFailure(provider, "error")
+        } else {
+                reg.RecordSuccess(provider, 100*time.Millisecond)
         }
 }
 
@@ -376,14 +439,8 @@ func TestHealthStateTransitions(t *testing.T) {
         for _, tt := range tests {
                 t.Run(tt.name, func(t *testing.T) {
                         reg := telemetry.NewRegistry()
-
                         for i, op := range tt.operations {
-                                if op == "fail" {
-                                        reg.RecordFailure(tt.provider, "error")
-                                } else {
-                                        reg.RecordSuccess(tt.provider, 100*time.Millisecond)
-                                }
-
+                                applyOperation(reg, tt.provider, op)
                                 stats := reg.GetStats(tt.provider)
                                 if stats.State != tt.expectedStates[i] {
                                         t.Errorf("after operation %d, expected state %q, got %q", i, tt.expectedStates[i], stats.State)
@@ -393,27 +450,47 @@ func TestHealthStateTransitions(t *testing.T) {
         }
 }
 
+func assertLatencyNonZero(t *testing.T, stats telemetry.ProviderStats, count int) {
+        t.Helper()
+        if stats.AvgLatencyMs == 0 && count > 0 {
+                t.Errorf("expected average latency > 0, got 0")
+        }
+        if stats.P95LatencyMs == 0 && count > 0 {
+                t.Errorf("expected p95 latency > 0, got 0")
+        }
+}
+
+func assertP95Range(t *testing.T, stats telemetry.ProviderStats, minVal, maxVal float64) {
+        t.Helper()
+        if minVal <= 0 || maxVal <= 0 {
+                return
+        }
+        if stats.P95LatencyMs < minVal || stats.P95LatencyMs > maxVal {
+                t.Logf("p95 latency %f outside expected range [%f, %f]", stats.P95LatencyMs, minVal, maxVal)
+        }
+}
+
 func TestLatencyTracking(t *testing.T) {
         tests := []struct {
-                name            string
-                provider        string
-                latencies       []time.Duration
-                expectedP95Min  float64
-                expectedP95Max  float64
+                name           string
+                provider       string
+                latencies      []time.Duration
+                expectedP95Min float64
+                expectedP95Max float64
         }{
                 {
-                        name:            "single_latency",
-                        provider:        "google",
-                        latencies:       []time.Duration{100 * time.Millisecond},
-                        expectedP95Min:  99.0,
-                        expectedP95Max:  101.0,
+                        name:           "single_latency",
+                        provider:       "google",
+                        latencies:      []time.Duration{100 * time.Millisecond},
+                        expectedP95Min: 99.0,
+                        expectedP95Max: 101.0,
                 },
                 {
-                        name:            "multiple_latencies",
-                        provider:        "cloudflare",
-                        latencies:       []time.Duration{10 * time.Millisecond, 20 * time.Millisecond, 30 * time.Millisecond, 40 * time.Millisecond, 50 * time.Millisecond},
-                        expectedP95Min:  40.0,
-                        expectedP95Max:  50.0,
+                        name:           "multiple_latencies",
+                        provider:       "cloudflare",
+                        latencies:      []time.Duration{10 * time.Millisecond, 20 * time.Millisecond, 30 * time.Millisecond, 40 * time.Millisecond, 50 * time.Millisecond},
+                        expectedP95Min: 40.0,
+                        expectedP95Max: 50.0,
                 },
                 {
                         name:      "many_latencies",
@@ -425,26 +502,10 @@ func TestLatencyTracking(t *testing.T) {
         for _, tt := range tests {
                 t.Run(tt.name, func(t *testing.T) {
                         reg := telemetry.NewRegistry()
-
-                        for _, lat := range tt.latencies {
-                                reg.RecordSuccess(tt.provider, lat)
-                        }
-
+                        recordSuccesses(reg, tt.provider, tt.latencies)
                         stats := reg.GetStats(tt.provider)
-
-                        if stats.AvgLatencyMs == 0 && len(tt.latencies) > 0 {
-                                t.Errorf("expected average latency > 0, got 0")
-                        }
-
-                        if stats.P95LatencyMs == 0 && len(tt.latencies) > 0 {
-                                t.Errorf("expected p95 latency > 0, got 0")
-                        }
-
-                        if tt.expectedP95Min > 0 && tt.expectedP95Max > 0 {
-                                if stats.P95LatencyMs < tt.expectedP95Min || stats.P95LatencyMs > tt.expectedP95Max {
-                                        t.Logf("p95 latency %f outside expected range [%f, %f]", stats.P95LatencyMs, tt.expectedP95Min, tt.expectedP95Max)
-                                }
-                        }
+                        assertLatencyNonZero(t, stats, len(tt.latencies))
+                        assertP95Range(t, stats, tt.expectedP95Min, tt.expectedP95Max)
                 })
         }
 }
@@ -485,30 +546,15 @@ func TestAllStats(t *testing.T) {
         for _, tt := range tests {
                 t.Run(tt.name, func(t *testing.T) {
                         reg := telemetry.NewRegistry()
-
                         for provider, count := range tt.providers {
                                 for i := 0; i < count; i++ {
                                         reg.RecordSuccess(provider, 100*time.Millisecond)
                                 }
                         }
-
                         allStats := reg.AllStats()
-
-                        if len(allStats) != tt.expectedProviders {
-                                t.Errorf("expected %d providers, got %d", tt.expectedProviders, len(allStats))
-                        }
-
+                        assertProviderCount(t, allStats, tt.expectedProviders)
                         for provider, expectedCount := range tt.providers {
-                                found := false
-                                for _, stats := range allStats {
-                                        if stats.Name == provider && stats.SuccessCount == int64(expectedCount) {
-                                                found = true
-                                                break
-                                        }
-                                }
-                                if !found {
-                                        t.Errorf("provider %q with %d successes not found in all stats", provider, expectedCount)
-                                }
+                                findProviderStats(t, allStats, provider, expectedCount)
                         }
                 })
         }
@@ -534,22 +580,42 @@ func TestAllStatsIndependence(t *testing.T) {
         for _, tt := range tests {
                 t.Run(tt.name, func(t *testing.T) {
                         reg := telemetry.NewRegistry()
-
                         for provider, failCount := range tt.failures {
-                                for i := 0; i < failCount; i++ {
-                                        reg.RecordFailure(provider, "error")
-                                }
+                                recordFailures(reg, provider, failCount)
                         }
 
                         allStats := reg.AllStats()
-
                         for _, stats := range allStats {
                                 expectedFails := tt.failures[stats.Name]
-                                if stats.FailureCount != int64(expectedFails) {
-                                        t.Errorf("provider %q: expected %d failures, got %d", stats.Name, expectedFails, stats.FailureCount)
-                                }
+                                assertFailureCount(t, stats, int64(expectedFails))
                         }
                 })
+        }
+}
+
+func concurrentSuccessOp(reg *telemetry.Registry, provider string, successCount *int64) func(int, int) {
+        return func(_, _ int) {
+                reg.RecordSuccess(provider, 100*time.Millisecond)
+                atomic.AddInt64(successCount, 1)
+        }
+}
+
+func concurrentFailureOp(reg *telemetry.Registry, provider string, failureCount *int64) func(int, int) {
+        return func(_, _ int) {
+                reg.RecordFailure(provider, "error")
+                atomic.AddInt64(failureCount, 1)
+        }
+}
+
+func concurrentMixedOp(reg *telemetry.Registry, provider string, successCount, failureCount *int64) func(int, int) {
+        return func(goroutineID, op int) {
+                if (goroutineID+op)%2 == 0 {
+                        reg.RecordSuccess(provider, 100*time.Millisecond)
+                        atomic.AddInt64(successCount, 1)
+                } else {
+                        reg.RecordFailure(provider, "error")
+                        atomic.AddInt64(failureCount, 1)
+                }
         }
 }
 
@@ -592,53 +658,42 @@ func TestConcurrency(t *testing.T) {
                 t.Run(tt.name, func(t *testing.T) {
                         reg := telemetry.NewRegistry()
                         provider := "test_provider"
-                        var wg sync.WaitGroup
                         var successCount, failureCount int64
 
-                        wg.Add(tt.numGoroutines)
-                        for g := 0; g < tt.numGoroutines; g++ {
-                                go func(goroutineID int) {
-                                        defer wg.Done()
-                                        for op := 0; op < tt.operationsPerGo; op++ {
-                                                switch tt.operationType {
-                                                case "success":
-                                                        reg.RecordSuccess(provider, 100*time.Millisecond)
-                                                        atomic.AddInt64(&successCount, 1)
-                                                case "failure":
-                                                        reg.RecordFailure(provider, "error")
-                                                        atomic.AddInt64(&failureCount, 1)
-                                                case "mixed":
-                                                        if (goroutineID+op)%2 == 0 {
-                                                                reg.RecordSuccess(provider, 100*time.Millisecond)
-                                                                atomic.AddInt64(&successCount, 1)
-                                                        } else {
-                                                                reg.RecordFailure(provider, "error")
-                                                                atomic.AddInt64(&failureCount, 1)
-                                                        }
-                                                }
-                                        }
-                                }(g)
+                        var opFn func(int, int)
+                        switch tt.operationType {
+                        case "success":
+                                opFn = concurrentSuccessOp(reg, provider, &successCount)
+                        case "failure":
+                                opFn = concurrentFailureOp(reg, provider, &failureCount)
+                        case "mixed":
+                                opFn = concurrentMixedOp(reg, provider, &successCount, &failureCount)
                         }
 
-                        wg.Wait()
-
+                        runConcurrentOps(reg, provider, tt.numGoroutines, tt.operationsPerGo, opFn)
                         stats := reg.GetStats(provider)
-
-                        if stats.SuccessCount != tt.expectedSuccesses {
-                                t.Errorf("expected %d successes, got %d", tt.expectedSuccesses, stats.SuccessCount)
-                        }
-                        if stats.FailureCount != tt.expectedFailures {
-                                t.Errorf("expected %d failures, got %d", tt.expectedFailures, stats.FailureCount)
-                        }
+                        assertSuccessCount(t, stats, tt.expectedSuccesses)
+                        assertFailureCount(t, stats, tt.expectedFailures)
                 })
+        }
+}
+
+func concurrentMultiProviderOp(reg *telemetry.Registry, providers []string, numProviders int) func(int, int) {
+        return func(goroutineID, op int) {
+                provider := providers[(goroutineID+op)%numProviders]
+                if (goroutineID+op)%3 == 0 {
+                        reg.RecordSuccess(provider, 100*time.Millisecond)
+                } else {
+                        reg.RecordFailure(provider, "error")
+                }
         }
 }
 
 func TestConcurrentMultipleProviders(t *testing.T) {
         tests := []struct {
-                name          string
-                numProviders  int
-                numGoroutines int
+                name            string
+                numProviders    int
+                numGoroutines   int
                 operationsPerGo int
         }{
                 {
@@ -652,35 +707,17 @@ func TestConcurrentMultipleProviders(t *testing.T) {
         for _, tt := range tests {
                 t.Run(tt.name, func(t *testing.T) {
                         reg := telemetry.NewRegistry()
-                        var wg sync.WaitGroup
 
                         providers := make([]string, tt.numProviders)
                         for i := 0; i < tt.numProviders; i++ {
                                 providers[i] = "provider_" + string(rune('0'+i))
                         }
 
-                        wg.Add(tt.numGoroutines)
-                        for g := 0; g < tt.numGoroutines; g++ {
-                                go func(goroutineID int) {
-                                        defer wg.Done()
-                                        for op := 0; op < tt.operationsPerGo; op++ {
-                                                provider := providers[(goroutineID+op)%tt.numProviders]
-                                                if (goroutineID+op)%3 == 0 {
-                                                        reg.RecordSuccess(provider, 100*time.Millisecond)
-                                                } else {
-                                                        reg.RecordFailure(provider, "error")
-                                                }
-                                        }
-                                }(g)
-                        }
-
-                        wg.Wait()
+                        opFn := concurrentMultiProviderOp(reg, providers, tt.numProviders)
+                        runConcurrentOps(reg, "", tt.numGoroutines, tt.operationsPerGo, opFn)
 
                         allStats := reg.AllStats()
-                        if len(allStats) != tt.numProviders {
-                                t.Errorf("expected %d providers, got %d", tt.numProviders, len(allStats))
-                        }
-
+                        assertProviderCount(t, allStats, tt.numProviders)
                         for _, stats := range allStats {
                                 if stats.TotalRequests == 0 {
                                         t.Errorf("provider %q has no requests", stats.Name)
@@ -692,9 +729,9 @@ func TestConcurrentMultipleProviders(t *testing.T) {
 
 func TestConcurrentGetStats(t *testing.T) {
         tests := []struct {
-                name              string
-                numGoroutines     int
-                operationsPerGo   int
+                name            string
+                numGoroutines   int
+                operationsPerGo int
         }{
                 {
                         name:            "concurrent_get_stats",
@@ -712,27 +749,18 @@ func TestConcurrentGetStats(t *testing.T) {
                                 reg.RecordSuccess(provider, 100*time.Millisecond)
                         }
 
-                        var wg sync.WaitGroup
-                        wg.Add(tt.numGoroutines)
-
-                        for g := 0; g < tt.numGoroutines; g++ {
-                                go func() {
-                                        defer wg.Done()
-                                        for op := 0; op < tt.operationsPerGo; op++ {
-                                                stats := reg.GetStats(provider)
-                                                if stats.SuccessCount != 50 {
-                                                        t.Errorf("expected 50 successes, got %d", stats.SuccessCount)
-                                                }
-                                        }
-                                }()
+                        opFn := func(_, _ int) {
+                                stats := reg.GetStats(provider)
+                                if stats.SuccessCount != 50 {
+                                        t.Errorf("expected 50 successes, got %d", stats.SuccessCount)
+                                }
                         }
-
-                        wg.Wait()
+                        runConcurrentOps(reg, provider, tt.numGoroutines, tt.operationsPerGo, opFn)
                 })
         }
 }
 
-func generateLatencies(count int, baseMs int) []time.Duration {
+func generateLatencies(count, baseMs int) []time.Duration {
         latencies := make([]time.Duration, count)
         for i := 0; i < count; i++ {
                 latencies[i] = time.Duration((baseMs + i%50)) * time.Millisecond

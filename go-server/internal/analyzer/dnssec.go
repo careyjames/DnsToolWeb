@@ -35,11 +35,22 @@ func parseAlgorithm(dsRecords []string) (*int, *string) {
         return algorithm, &n
 }
 
-func buildDNSSECResult(hasDNSKEY, hasDS, adFlag bool, dnskeyRecords, dsRecords []string, algorithm *int, algorithmName *string, adResolver *string) map[string]any {
-        if hasDNSKEY && hasDS {
+type dnssecParams struct {
+        hasDNSKEY     bool
+        hasDS         bool
+        adFlag        bool
+        dnskeyRecords []string
+        dsRecords     []string
+        algorithm     *int
+        algorithmName *string
+        adResolver    *string
+}
+
+func buildDNSSECResult(p dnssecParams) map[string]any {
+        if p.hasDNSKEY && p.hasDS {
                 var message string
-                if adFlag {
-                        message = fmt.Sprintf("DNSSEC fully configured and validated — AD (Authenticated Data) flag set by resolver %s confirming cryptographic chain of trust from root to zone (RFC 4035 §3.2.3)", derefStr(adResolver))
+                if p.adFlag {
+                        message = fmt.Sprintf("DNSSEC fully configured and validated — AD (Authenticated Data) flag set by resolver %s confirming cryptographic chain of trust from root to zone (RFC 4035 §3.2.3)", derefStr(p.adResolver))
                 } else {
                         message = "DNSSEC configured (DNSKEY + DS records present) but AD flag not set — resolver did not confirm chain of trust validation (RFC 4035 §3.2.3). This may indicate a broken chain or a non-validating resolver path."
                 }
@@ -48,29 +59,29 @@ func buildDNSSECResult(hasDNSKEY, hasDS, adFlag bool, dnskeyRecords, dsRecords [
                         "message":        message,
                         "has_dnskey":     true,
                         "has_ds":         true,
-                        "dnskey_records": dnskeyRecords,
-                        "ds_records":     dsRecords,
-                        "algorithm":      derefInt(algorithm),
-                        "algorithm_name": derefStr(algorithmName),
+                        "dnskey_records": p.dnskeyRecords,
+                        "ds_records":     p.dsRecords,
+                        "algorithm":      derefInt(p.algorithm),
+                        "algorithm_name": derefStr(p.algorithmName),
                         "chain_of_trust": "complete",
-                        "ad_flag":        adFlag,
-                        "ad_resolver":    derefStr(adResolver),
+                        "ad_flag":        p.adFlag,
+                        "ad_resolver":    derefStr(p.adResolver),
                 }
         }
 
-        if hasDNSKEY && !hasDS {
+        if p.hasDNSKEY && !p.hasDS {
                 return map[string]any{
                         "status":         "warning",
                         "message":        "DNSSEC partially configured - DNSKEY exists but DS record missing at registrar",
                         "has_dnskey":     true,
                         "has_ds":         false,
-                        "dnskey_records": dnskeyRecords,
+                        "dnskey_records": p.dnskeyRecords,
                         "ds_records":     []string{},
                         "algorithm":      nil,
                         "algorithm_name": nil,
                         "chain_of_trust": "broken",
                         "ad_flag":        false,
-                        "ad_resolver":    derefStr(adResolver),
+                        "ad_resolver":    derefStr(p.adResolver),
                 }
         }
 
@@ -89,63 +100,52 @@ func buildDNSSECResult(hasDNSKEY, hasDS, adFlag bool, dnskeyRecords, dsRecords [
         }
 }
 
-func (a *Analyzer) AnalyzeDNSSEC(ctx context.Context, domain string) map[string]any {
-        hasDNSKEY := false
-        hasDS := false
-        var dnskeyRecords []string
-        var dsRecords []string
-
-        dnskeyResult := a.DNS.QueryDNS(ctx, "DNSKEY", domain)
-        if len(dnskeyResult) > 0 {
-                hasDNSKEY = true
-                for i, rec := range dnskeyResult {
-                        if i >= 3 {
-                                break
-                        }
-                        if len(rec) > 100 {
-                                dnskeyRecords = append(dnskeyRecords, rec[:100]+"...")
-                        } else {
-                                dnskeyRecords = append(dnskeyRecords, rec)
-                        }
+func collectDNSKEYRecords(results []string) (bool, []string) {
+        if len(results) == 0 {
+                return false, nil
+        }
+        var records []string
+        for i, rec := range results {
+                if i >= 3 {
+                        break
+                }
+                if len(rec) > 100 {
+                        records = append(records, rec[:100]+"...")
+                } else {
+                        records = append(records, rec)
                 }
         }
+        return true, records
+}
 
-        dsResult := a.DNS.QueryDNS(ctx, "DS", domain)
-        if len(dsResult) > 0 {
-                hasDS = true
-                for i, rec := range dsResult {
-                        if i >= 3 {
-                                break
-                        }
-                        dsRecords = append(dsRecords, rec)
-                }
+func collectDSRecords(results []string) (bool, []string) {
+        if len(results) == 0 {
+                return false, nil
         }
-
-        adResult := a.DNS.CheckDNSSECADFlag(ctx, domain)
-        adFlag := adResult.ADFlag
-        adResolver := adResult.ResolverUsed
-
-        algorithm, algorithmName := parseAlgorithm(dsRecords)
-
-        if !adFlag || hasDNSKEY || hasDS {
-                return buildDNSSECResult(hasDNSKEY, hasDS, adFlag, dnskeyRecords, dsRecords, algorithm, algorithmName, adResolver)
-        }
-
-        parentZone := dnsclient.FindParentZone(a.DNS, ctx, domain)
-        parentAlgo, parentAlgoName := parseAlgorithm(func() []string {
-                if parentZone == "" {
-                        return nil
+        var records []string
+        for i, rec := range results {
+                if i >= 3 {
+                        break
                 }
-                return a.DNS.QueryDNS(ctx, "DS", parentZone)
-        }())
+                records = append(records, rec)
+        }
+        return true, records
+}
 
+func parentDSRecords(a *Analyzer, ctx context.Context, parentZone string) []string {
+        if parentZone == "" {
+                return nil
+        }
+        return a.DNS.QueryDNS(ctx, "DS", parentZone)
+}
+
+func buildInheritedDNSSECResult(parentZone string, adResolver *string, parentAlgo *int, parentAlgoName *string) map[string]any {
         var message string
         if parentZone != "" {
                 message = fmt.Sprintf("DNSSEC inherited from parent zone (%s) - DNS responses are authenticated", parentZone)
         } else {
                 message = "DNSSEC validated by resolver - DNS responses are authenticated"
         }
-
         return map[string]any{
                 "status":         "success",
                 "message":        message,
@@ -161,4 +161,33 @@ func (a *Analyzer) AnalyzeDNSSEC(ctx context.Context, domain string) map[string]
                 "is_subdomain":   true,
                 "parent_zone":    parentZone,
         }
+}
+
+func (a *Analyzer) AnalyzeDNSSEC(ctx context.Context, domain string) map[string]any {
+        hasDNSKEY, dnskeyRecords := collectDNSKEYRecords(a.DNS.QueryDNS(ctx, "DNSKEY", domain))
+        hasDS, dsRecords := collectDSRecords(a.DNS.QueryDNS(ctx, "DS", domain))
+
+        adResult := a.DNS.CheckDNSSECADFlag(ctx, domain)
+        adFlag := adResult.ADFlag
+        adResolver := adResult.ResolverUsed
+
+        algorithm, algorithmName := parseAlgorithm(dsRecords)
+
+        if !adFlag || hasDNSKEY || hasDS {
+                return buildDNSSECResult(dnssecParams{
+                        hasDNSKEY:     hasDNSKEY,
+                        hasDS:         hasDS,
+                        adFlag:        adFlag,
+                        dnskeyRecords: dnskeyRecords,
+                        dsRecords:     dsRecords,
+                        algorithm:     algorithm,
+                        algorithmName: algorithmName,
+                        adResolver:    adResolver,
+                })
+        }
+
+        parentZone := dnsclient.FindParentZone(a.DNS, ctx, domain)
+        parentAlgo, parentAlgoName := parseAlgorithm(parentDSRecords(a, ctx, parentZone))
+
+        return buildInheritedDNSSECResult(parentZone, adResolver, parentAlgo, parentAlgoName)
 }

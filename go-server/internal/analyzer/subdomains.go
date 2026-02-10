@@ -11,6 +11,14 @@ import (
         "time"
 )
 
+type ctEntry struct {
+        NameValue  string `json:"name_value"`
+        CommonName string `json:"common_name"`
+        NotBefore  string `json:"not_before"`
+        NotAfter   string `json:"not_after"`
+        IssuerName string `json:"issuer_name"`
+}
+
 func (a *Analyzer) DiscoverSubdomains(ctx context.Context, domain string) map[string]any {
         result := map[string]any{
                 "status":            "success",
@@ -63,13 +71,7 @@ func (a *Analyzer) DiscoverSubdomains(ctx context.Context, domain string) map[st
 
         a.Telemetry.RecordSuccess(ctProvider, time.Since(start))
 
-        var ctEntries []struct {
-                NameValue  string `json:"name_value"`
-                CommonName string `json:"common_name"`
-                NotBefore  string `json:"not_before"`
-                NotAfter   string `json:"not_after"`
-                IssuerName string `json:"issuer_name"`
-        }
+        var ctEntries []ctEntry
 
         if err := json.Unmarshal(body, &ctEntries); err != nil {
                 result["status"] = "warning"
@@ -79,46 +81,7 @@ func (a *Analyzer) DiscoverSubdomains(ctx context.Context, domain string) map[st
 
         result["total_certs"] = len(ctEntries)
 
-        subdomainSet := make(map[string]map[string]any)
-        for _, entry := range ctEntries {
-                names := strings.Split(entry.NameValue, "\n")
-                for _, name := range names {
-                        name = strings.TrimSpace(strings.ToLower(name))
-                        if name == "" || name == domain {
-                                continue
-                        }
-                        if !strings.HasSuffix(name, "."+domain) {
-                                continue
-                        }
-                        if strings.HasPrefix(name, "*.") {
-                                name = name[2:]
-                        }
-                        if name == domain {
-                                continue
-                        }
-
-                        if _, exists := subdomainSet[name]; !exists {
-                                subdomainSet[name] = map[string]any{
-                                        "subdomain":  name,
-                                        "not_before": entry.NotBefore,
-                                        "not_after":  entry.NotAfter,
-                                        "issuer":     entry.IssuerName,
-                                        "cert_count": 1,
-                                }
-                        } else {
-                                subdomainSet[name]["cert_count"] = subdomainSet[name]["cert_count"].(int) + 1
-                        }
-                }
-        }
-
-        var subdomains []map[string]any
-        for _, sd := range subdomainSet {
-                subdomains = append(subdomains, sd)
-        }
-
-        sort.Slice(subdomains, func(i, j int) bool {
-                return subdomains[i]["subdomain"].(string) < subdomains[j]["subdomain"].(string)
-        })
+        subdomains := deduplicateCTEntries(ctEntries, domain)
 
         if len(subdomains) > 0 {
                 a.enrichSubdomains(ctx, domain, subdomains)
@@ -161,4 +124,63 @@ func (a *Analyzer) enrichSubdomains(ctx context.Context, baseDomain string, subd
                 }(i)
         }
         wg.Wait()
+}
+
+func deduplicateCTEntries(ctEntries []ctEntry, domain string) []map[string]any {
+        subdomainSet := make(map[string]map[string]any)
+        for _, entry := range ctEntries {
+                processOneEntry(entry, domain, subdomainSet)
+        }
+
+        var subdomains []map[string]any
+        for _, sd := range subdomainSet {
+                subdomains = append(subdomains, sd)
+        }
+
+        sort.Slice(subdomains, func(i, j int) bool {
+                return subdomains[i]["subdomain"].(string) < subdomains[j]["subdomain"].(string)
+        })
+        return subdomains
+}
+
+func processOneEntry(entry ctEntry, domain string, subdomainSet map[string]map[string]any) {
+        names := strings.Split(entry.NameValue, "\n")
+        for _, name := range names {
+                name = normalizeCTName(name, domain)
+                if name == "" {
+                        continue
+                }
+                addOrIncrementSubdomain(subdomainSet, name, entry)
+        }
+}
+
+func normalizeCTName(name, domain string) string {
+        name = strings.TrimSpace(strings.ToLower(name))
+        if name == "" || name == domain {
+                return ""
+        }
+        if !strings.HasSuffix(name, "."+domain) {
+                return ""
+        }
+        if strings.HasPrefix(name, "*.") {
+                name = name[2:]
+        }
+        if name == domain {
+                return ""
+        }
+        return name
+}
+
+func addOrIncrementSubdomain(subdomainSet map[string]map[string]any, name string, entry ctEntry) {
+        if _, exists := subdomainSet[name]; !exists {
+                subdomainSet[name] = map[string]any{
+                        "subdomain":  name,
+                        "not_before": entry.NotBefore,
+                        "not_after":  entry.NotAfter,
+                        "issuer":     entry.IssuerName,
+                        "cert_count": 1,
+                }
+        } else {
+                subdomainSet[name]["cert_count"] = subdomainSet[name]["cert_count"].(int) + 1
+        }
 }

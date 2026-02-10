@@ -423,7 +423,7 @@ main.container {
     font-weight: 600;
     letter-spacing: 0.02em;
     color: #fffaf0;
-    background: linear-gradient(135deg, rgba(196, 167, 108, 0.50), rgba(196, 167, 108, 0.35));
+    background: linear-gradient(135deg, #695c42, #4d4635);
     border: 1px solid rgba(196, 167, 108, 0.5);
     border-radius: 0.35rem;
 }

@@ -150,17 +150,8 @@ func buildRestrictedResult(restricted bool, restrictedTLD string) map[string]any
 }
 
 func (a *Analyzer) getRegistrarInfoUncached(ctx context.Context, domain string) map[string]any {
-        rdapResult := a.rdapLookup(ctx, domain)
-        if rdapResult != nil {
-                registrar := extractRegistrarFromRDAP(rdapResult)
-                if registrar != "" && !isDigits(registrar) {
-                        registrant := extractRegistrantFromRDAP(rdapResult)
-                        regStr := registrar
-                        if registrant != "" {
-                                regStr += fmt.Sprintf(" (Registrant: %s)", registrant)
-                        }
-                        return map[string]any{"status": "success", "source": "RDAP", "registrar": regStr}
-                }
+        if result := a.tryRDAPLookup(ctx, domain); result != nil {
+                return result
         }
 
         whoisResult, restricted, restrictedTLD := a.whoisLookup(ctx, domain)
@@ -168,15 +159,48 @@ func (a *Analyzer) getRegistrarInfoUncached(ctx context.Context, domain string) 
                 return map[string]any{"status": "success", "source": "WHOIS", "registrar": whoisResult}
         }
 
-        parentZone := dnsclient.FindParentZone(a.DNS, ctx, domain)
-        if parentZone != "" && parentZone != domain {
-                parentResult := a.GetRegistrarInfo(ctx, parentZone)
-                if parentResult["status"] == "success" {
-                        parentResult["subdomain_of"] = parentZone
-                        return parentResult
-                }
+        if result := a.tryParentZoneLookup(ctx, domain); result != nil {
+                return result
         }
 
+        return a.tryNSInference(ctx, domain, restricted, restrictedTLD)
+}
+
+func (a *Analyzer) tryRDAPLookup(ctx context.Context, domain string) map[string]any {
+        rdapResult := a.rdapLookup(ctx, domain)
+        if rdapResult == nil {
+                return nil
+        }
+        registrar := extractRegistrarFromRDAP(rdapResult)
+        if registrar == "" || isDigits(registrar) {
+                return nil
+        }
+        regStr := formatRegistrarWithRegistrant(registrar, extractRegistrantFromRDAP(rdapResult))
+        return map[string]any{"status": "success", "source": "RDAP", "registrar": regStr}
+}
+
+func formatRegistrarWithRegistrant(registrar, registrant string) string {
+        if registrant != "" {
+                return registrar + fmt.Sprintf(" (Registrant: %s)", registrant)
+        }
+        return registrar
+}
+
+func (a *Analyzer) tryParentZoneLookup(ctx context.Context, domain string) map[string]any {
+        parentZone := dnsclient.FindParentZone(a.DNS, ctx, domain)
+        if parentZone == "" || parentZone == domain {
+                return nil
+        }
+        parentResult := a.GetRegistrarInfo(ctx, parentZone)
+        if parentResult["status"] == "success" {
+                parentResult["subdomain_of"] = parentZone
+                return parentResult
+        }
+        return nil
+}
+
+func (a *Analyzer) tryNSInference(ctx context.Context, domain string, restricted bool, restrictedTLD string) map[string]any {
+        parentZone := dnsclient.FindParentZone(a.DNS, ctx, domain)
         lookupDomain := domain
         if parentZone != "" && parentZone != domain {
                 lookupDomain = parentZone

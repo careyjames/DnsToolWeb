@@ -29,6 +29,13 @@ const (
         nameHubSpot        = "HubSpot"
         nameSalesforce     = "Salesforce"
         nameNoIP           = "No-IP"
+
+        domainOndmarc      = "ondmarc.com"
+        domainRedsift      = "redsift.cloud"
+        domainDmarcian     = "dmarcian.com"
+        domainValimail     = "valimail.com"
+        domainEasydmarc    = "easydmarc.com"
+        domainNsupdate     = "nsupdate.info"
 )
 
 type ProviderInfo struct {
@@ -230,10 +237,10 @@ var DANEMXCapability = map[string]DANECapability{
 
 var DMARCMonitoringProviders = map[string]MonitoringProvider{
         "agari.com":        {Name: "Agari", Capabilities: []string{capDMARCReporting, capDMARCEnforcement}},
-        "dmarcian.com":     {Name: "dmarcian", Capabilities: []string{capDMARCReporting, capDMARCAnalytics}},
-        "ondmarc.com":      {Name: nameRedSiftOnDMARC, Capabilities: []string{capDMARCReporting, capDMARCEnforcement}},
-        "redsift.cloud":    {Name: nameRedSiftOnDMARC, Capabilities: []string{capDMARCReporting, capDMARCEnforcement}},
-        "valimail.com":     {Name: "Valimail", Capabilities: []string{capDMARCReporting, capDMARCEnforcement, capSPFManagement}},
+        domainDmarcian:     {Name: "dmarcian", Capabilities: []string{capDMARCReporting, capDMARCAnalytics}},
+        domainOndmarc:      {Name: nameRedSiftOnDMARC, Capabilities: []string{capDMARCReporting, capDMARCEnforcement}},
+        domainRedsift:      {Name: nameRedSiftOnDMARC, Capabilities: []string{capDMARCReporting, capDMARCEnforcement}},
+        domainValimail:     {Name: "Valimail", Capabilities: []string{capDMARCReporting, capDMARCEnforcement, capSPFManagement}},
         "postmarkapp.com":  {Name: "Postmark", Capabilities: []string{capDMARCReporting}},
         "250ok.com":        {Name: "250ok (Validity)", Capabilities: []string{capDMARCReporting}},
         "proofpoint.com":   {Name: "Proofpoint", Capabilities: []string{capDMARCReporting, capDMARCEnforcement}},
@@ -249,11 +256,11 @@ var DMARCMonitoringProviders = map[string]MonitoringProvider{
 
 var SPFFlatteningProviders = []SPFFlatteningProvider{
         {Name: "AutoSPF", Patterns: []string{"_spf.autospf.com", "autospf.com"}},
-        {Name: "dmarcian SPF Surveyor", Patterns: []string{"dmarcian.com"}},
-        {Name: "EasyDMARC EasySPF", Patterns: []string{"easyspf.com", "easydmarc.com"}},
+        {Name: "dmarcian SPF Surveyor", Patterns: []string{domainDmarcian}},
+        {Name: "EasyDMARC EasySPF", Patterns: []string{"easyspf.com", domainEasydmarc}},
         {Name: "Mailhardener SPF Optimizer", Patterns: []string{"mailhardener.com"}},
-        {Name: nameRedSiftOnDMARC, Patterns: []string{"redsift.cloud", "ondmarc.com"}},
-        {Name: "Valimail SPF", Patterns: []string{"valimail.com", "_spf.valimail.com"}},
+        {Name: nameRedSiftOnDMARC, Patterns: []string{domainRedsift, domainOndmarc}},
+        {Name: "Valimail SPF", Patterns: []string{domainValimail, "_spf.valimail.com"}},
 }
 
 var DynamicServicesProviders = map[string]DynamicServiceProvider{
@@ -266,7 +273,7 @@ var DynamicServicesProviders = map[string]DynamicServiceProvider{
         "afraid.org":        {Name: "FreeDNS", Category: catDynamicDNS},
         "duckdns.org":       {Name: "DuckDNS", Category: catDynamicDNS},
         "dynu.com":          {Name: "Dynu", Category: catDynamicDNS},
-        "nsupdate.info":     {Name: "nsupdate.info", Category: catDynamicDNS},
+        domainNsupdate:      {Name: "nsupdate.info", Category: catDynamicDNS},
 }
 
 var DynamicServicesZones = []string{
@@ -274,15 +281,15 @@ var DynamicServicesZones = []string{
         "no-ip.com", "no-ip.org", "no-ip.biz", "noip.com",
         "ddns.net", "hopto.org", "zapto.org", "sytes.net",
         "ddns.me", "freedns.afraid.org",
-        "duckdns.org", "dynu.com", "nsupdate.info",
+        "duckdns.org", "dynu.com", domainNsupdate,
         "changeip.com",
 }
 
 var HostedDKIMProviders = []HostedDKIMProvider{
-        {Name: "dmarcian", Patterns: []string{"dmarcian.com"}},
-        {Name: "Valimail", Patterns: []string{"valimail.com"}},
-        {Name: nameRedSiftOnDMARC, Patterns: []string{"redsift.cloud", "ondmarc.com"}},
+        {Name: "dmarcian", Patterns: []string{domainDmarcian}},
+        {Name: "Valimail", Patterns: []string{domainValimail}},
+        {Name: nameRedSiftOnDMARC, Patterns: []string{domainRedsift, domainOndmarc}},
         {Name: "Agari", Patterns: []string{"agari.com"}},
-        {Name: "EasyDMARC", Patterns: []string{"easydmarc.com"}},
+        {Name: "EasyDMARC", Patterns: []string{domainEasydmarc}},
         {Name: "Sendmarc", Patterns: []string{"sendmarc.com"}},
 }

@@ -76,60 +76,129 @@ func parseDMARCTags(record string) dmarcTags {
         return tags
 }
 
-func evaluateDMARCPolicy(tags dmarcTags) (string, string, []string) {
+func classifyDMARCPolicyVerdict(policy string, pct int) (string, string, []string) {
+        var status, message string
         var issues []string
 
-        if tags.policy == nil {
-                return "info", "DMARC record found but policy unclear", issues
-        }
-
-        var status, message string
-        switch *tags.policy {
+        switch policy {
         case "none":
                 status = "warning"
                 message = "DMARC in monitoring mode (p=none) - spoofed mail still delivered, no enforcement"
                 issues = append(issues, "Policy p=none provides no protection - spoofed emails reach inboxes")
         case "reject":
-                if tags.pct < 100 {
-                        status = "warning"
-                        message = fmt.Sprintf("DMARC reject but only %d%% enforced - partial protection", tags.pct)
-                        issues = append(issues, fmt.Sprintf("Only %d%% of mail subject to policy", tags.pct))
-                } else {
-                        status = "success"
-                        message = "DMARC policy reject (100%) - excellent protection"
-                }
+                status, message, issues = classifyEnforcementLevel("reject", pct, "excellent")
         case "quarantine":
-                if tags.pct < 100 {
-                        status = "warning"
-                        message = fmt.Sprintf("DMARC quarantine but only %d%% enforced - partial protection", tags.pct)
-                        issues = append(issues, fmt.Sprintf("Only %d%% of mail subject to policy", tags.pct))
-                } else {
-                        status = "success"
-                        message = "DMARC policy quarantine (100%) - good protection"
-                }
+                status, message, issues = classifyEnforcementLevel("quarantine", pct, "good")
         default:
                 status = "info"
                 message = "DMARC record found but policy unclear"
         }
 
-        if *tags.policy == "reject" || *tags.policy == "quarantine" {
-                if tags.subdomainPolicy != nil && *tags.subdomainPolicy == "none" {
-                        issues = append(issues, fmt.Sprintf("Subdomains unprotected (sp=none while p=%s)", *tags.policy))
-                }
-                if tags.npPolicy == nil && tags.subdomainPolicy == nil {
-                        issues = append(issues, "No np= tag (DMARCbis) — non-existent subdomains inherit p= policy but adding np=reject provides explicit protection against subdomain spoofing")
-                }
-        }
+        return status, message, issues
+}
 
+func classifyEnforcementLevel(policy string, pct int, quality string) (string, string, []string) {
+        if pct < 100 {
+                return "warning",
+                        fmt.Sprintf("DMARC %s but only %d%% enforced - partial protection", policy, pct),
+                        []string{fmt.Sprintf("Only %d%% of mail subject to policy", pct)}
+        }
+        return "success", fmt.Sprintf("DMARC policy %s (100%%) - %s protection", policy, quality), nil
+}
+
+func checkDMARCSubdomainIssues(tags dmarcTags) []string {
+        if tags.policy == nil {
+                return nil
+        }
+        if *tags.policy != "reject" && *tags.policy != "quarantine" {
+                return nil
+        }
+        var issues []string
+        if tags.subdomainPolicy != nil && *tags.subdomainPolicy == "none" {
+                issues = append(issues, fmt.Sprintf("Subdomains unprotected (sp=none while p=%s)", *tags.policy))
+        }
+        if tags.npPolicy == nil && tags.subdomainPolicy == nil {
+                issues = append(issues, "No np= tag (DMARCbis) — non-existent subdomains inherit p= policy but adding np=reject provides explicit protection against subdomain spoofing")
+        }
+        return issues
+}
+
+func checkDMARCReportingIssues(tags dmarcTags) []string {
+        var issues []string
         if tags.rua == nil {
                 issues = append(issues, "No aggregate reporting (rua) configured — you won't receive reports about authentication results and potential abuse")
         }
-
         if tags.ruf != nil {
                 issues = append(issues, "Forensic reports (ruf) configured - many providers ignore these")
         }
+        return issues
+}
+
+func evaluateDMARCPolicy(tags dmarcTags) (string, string, []string) {
+        if tags.policy == nil {
+                return "info", "DMARC record found but policy unclear", nil
+        }
+
+        status, message, issues := classifyDMARCPolicyVerdict(*tags.policy, tags.pct)
+        issues = append(issues, checkDMARCSubdomainIssues(tags)...)
+        issues = append(issues, checkDMARCReportingIssues(tags)...)
 
         return status, message, issues
+}
+
+func classifyDMARCRecords(records []string) (validDMARC, dmarcLike []string) {
+        for _, record := range records {
+                if record == "" {
+                        continue
+                }
+                lower := strings.ToLower(strings.TrimSpace(record))
+                if lower == "v=dmarc1" || strings.HasPrefix(lower, "v=dmarc1;") || strings.HasPrefix(lower, "v=dmarc1 ") {
+                        validDMARC = append(validDMARC, record)
+                } else if strings.Contains(lower, "dmarc") {
+                        dmarcLike = append(dmarcLike, record)
+                }
+        }
+        return
+}
+
+func evaluateDMARCRecordSet(validDMARC []string) (string, string, []string, dmarcTags) {
+        tags := dmarcTags{pct: 100, aspf: "relaxed", adkim: "relaxed"}
+
+        if len(validDMARC) == 0 {
+                return "error", "No valid DMARC record found", nil, tags
+        }
+        if len(validDMARC) > 1 {
+                return "error",
+                        "Multiple DMARC records found — receivers must treat this as no DMARC (RFC 7489 §6.6.3)",
+                        []string{"Multiple DMARC records cause PermError — only one record permitted per RFC 7489"},
+                        tags
+        }
+
+        tags = parseDMARCTags(validDMARC[0])
+        status, message, issues := evaluateDMARCPolicy(tags)
+        return status, message, issues, tags
+}
+
+func buildDMARCbisTags(tags dmarcTags) map[string]string {
+        dmarcbisTags := map[string]string{}
+        if tags.npPolicy != nil {
+                dmarcbisTags["np"] = *tags.npPolicy
+        }
+        if tags.tTesting != nil {
+                dmarcbisTags["t"] = *tags.tTesting
+        }
+        if tags.psdFlag != nil {
+                dmarcbisTags["psd"] = *tags.psdFlag
+        }
+        return dmarcbisTags
+}
+
+func ensureStringSlices(result map[string]any, keys ...string) {
+        for _, key := range keys {
+                if result[key] == nil {
+                        result[key] = []string{}
+                }
+        }
 }
 
 func (a *Analyzer) AnalyzeDMARC(ctx context.Context, domain string) map[string]any {
@@ -159,47 +228,8 @@ func (a *Analyzer) AnalyzeDMARC(ctx context.Context, domain string) map[string]a
                 return baseResult
         }
 
-        var validDMARC []string
-        var dmarcLike []string
-
-        for _, record := range dmarcRecords {
-                if record == "" {
-                        continue
-                }
-                lower := strings.ToLower(strings.TrimSpace(record))
-                if lower == "v=dmarc1" || strings.HasPrefix(lower, "v=dmarc1;") || strings.HasPrefix(lower, "v=dmarc1 ") {
-                        validDMARC = append(validDMARC, record)
-                } else if strings.Contains(lower, "dmarc") {
-                        dmarcLike = append(dmarcLike, record)
-                }
-        }
-
-        var status, message string
-        var issues []string
-        tags := dmarcTags{pct: 100, aspf: "relaxed", adkim: "relaxed"}
-
-        if len(validDMARC) == 0 {
-                status = "error"
-                message = "No valid DMARC record found"
-        } else if len(validDMARC) > 1 {
-                status = "error"
-                message = "Multiple DMARC records found — receivers must treat this as no DMARC (RFC 7489 §6.6.3)"
-                issues = append(issues, "Multiple DMARC records cause PermError — only one record permitted per RFC 7489")
-        } else {
-                tags = parseDMARCTags(validDMARC[0])
-                status, message, issues = evaluateDMARCPolicy(tags)
-        }
-
-        dmarcbisTags := map[string]string{}
-        if tags.npPolicy != nil {
-                dmarcbisTags["np"] = *tags.npPolicy
-        }
-        if tags.tTesting != nil {
-                dmarcbisTags["t"] = *tags.tTesting
-        }
-        if tags.psdFlag != nil {
-                dmarcbisTags["psd"] = *tags.psdFlag
-        }
+        validDMARC, dmarcLike := classifyDMARCRecords(dmarcRecords)
+        status, message, issues, tags := evaluateDMARCRecordSet(validDMARC)
 
         result := map[string]any{
                 "status":           status,
@@ -217,19 +247,11 @@ func (a *Analyzer) AnalyzeDMARC(ctx context.Context, domain string) map[string]a
                 "np_policy":        derefStr(tags.npPolicy),
                 "t_testing":        derefStr(tags.tTesting),
                 "psd_flag":         derefStr(tags.psdFlag),
-                "dmarcbis_tags":    dmarcbisTags,
+                "dmarcbis_tags":    buildDMARCbisTags(tags),
                 "issues":           issues,
         }
 
-        if result["valid_records"] == nil {
-                result["valid_records"] = []string{}
-        }
-        if result["dmarc_like"] == nil {
-                result["dmarc_like"] = []string{}
-        }
-        if result["issues"] == nil {
-                result["issues"] = []string{}
-        }
+        ensureStringSlices(result, "valid_records", "dmarc_like", "issues")
 
         return result
 }

@@ -17,92 +17,106 @@ var (
         spfAllRe      = regexp.MustCompile(`(?i)([+\-~?]?)all\b`)
 )
 
-func parseSPFMechanisms(spfRecord string) (int, []string, []string, *string, *string, []string, bool) {
-        spfLower := strings.ToLower(spfRecord)
-        lookupCount := 0
-        var lookupMechanisms []string
-        var includes []string
-        var permissiveness *string
-        var allMechanism *string
-        var issues []string
-        noMailIntent := false
+type spfMechanismResult struct {
+        lookupCount      int
+        lookupMechanisms []string
+        includes         []string
+        issues           []string
+}
+
+func countSPFLookupMechanisms(spfLower string) spfMechanismResult {
+        var r spfMechanismResult
 
         includeMatches := spfIncludeRe.FindAllStringSubmatch(spfLower, -1)
         for _, m := range includeMatches {
-                includes = append(includes, m[1])
-                lookupMechanisms = append(lookupMechanisms, fmt.Sprintf("include:%s", m[1]))
+                r.includes = append(r.includes, m[1])
+                r.lookupMechanisms = append(r.lookupMechanisms, fmt.Sprintf("include:%s", m[1]))
         }
-        lookupCount += len(includeMatches)
+        r.lookupCount += len(includeMatches)
 
         aMatches := spfAMechRe.FindAllString(spfLower, -1)
-        lookupCount += len(aMatches)
+        r.lookupCount += len(aMatches)
         if len(aMatches) > 0 {
-                lookupMechanisms = append(lookupMechanisms, "a mechanism")
+                r.lookupMechanisms = append(r.lookupMechanisms, "a mechanism")
         }
 
         mxMatches := spfMXMechRe.FindAllString(spfLower, -1)
-        lookupCount += len(mxMatches)
+        r.lookupCount += len(mxMatches)
         if len(mxMatches) > 0 {
-                lookupMechanisms = append(lookupMechanisms, "mx mechanism")
+                r.lookupMechanisms = append(r.lookupMechanisms, "mx mechanism")
         }
 
         ptrMatches := spfPTRMechRe.FindAllString(spfLower, -1)
-        lookupCount += len(ptrMatches)
+        r.lookupCount += len(ptrMatches)
         if len(ptrMatches) > 0 {
-                lookupMechanisms = append(lookupMechanisms, "ptr mechanism (deprecated)")
-                issues = append(issues, "PTR mechanism used (deprecated, slow)")
+                r.lookupMechanisms = append(r.lookupMechanisms, "ptr mechanism (deprecated)")
+                r.issues = append(r.issues, "PTR mechanism used (deprecated, slow)")
         }
 
         existsMatches := spfExistsRe.FindAllString(spfLower, -1)
-        lookupCount += len(existsMatches)
+        r.lookupCount += len(existsMatches)
         if len(existsMatches) > 0 {
-                lookupMechanisms = append(lookupMechanisms, "exists mechanism")
+                r.lookupMechanisms = append(r.lookupMechanisms, "exists mechanism")
         }
 
         redirectMatch := spfRedirectRe.FindStringSubmatch(spfLower)
         if redirectMatch != nil {
-                lookupCount++
-                lookupMechanisms = append(lookupMechanisms, fmt.Sprintf("redirect:%s", redirectMatch[1]))
+                r.lookupCount++
+                r.lookupMechanisms = append(r.lookupMechanisms, fmt.Sprintf("redirect:%s", redirectMatch[1]))
         }
 
+        return r
+}
+
+func classifyAllQualifier(spfLower string) (*string, *string, []string) {
         allMatch := spfAllRe.FindStringSubmatch(spfLower)
-        if allMatch != nil {
-                qualifier := allMatch[1]
-                if qualifier == "" {
-                        qualifier = "+"
-                }
-                am := qualifier + "all"
-                allMechanism = &am
-
-                switch qualifier {
-                case "+", "":
-                        p := "DANGEROUS"
-                        permissiveness = &p
-                        issues = append(issues, "+all allows anyone to send as your domain")
-                case "?":
-                        p := "NEUTRAL"
-                        permissiveness = &p
-                        issues = append(issues, "?all provides no protection")
-                case "~":
-                        p := "SOFT"
-                        permissiveness = &p
-                case "-":
-                        p := "STRICT"
-                        permissiveness = &p
-                }
+        if allMatch == nil {
+                return nil, nil, nil
         }
 
-        hasSenders := len(includeMatches) > 0 || len(aMatches) > 0 || len(mxMatches) > 0
+        qualifier := allMatch[1]
+        if qualifier == "" {
+                qualifier = "+"
+        }
+        am := qualifier + "all"
+
+        var issues []string
+        var p string
+        switch qualifier {
+        case "+", "":
+                p = "DANGEROUS"
+                issues = append(issues, "+all allows anyone to send as your domain")
+        case "?":
+                p = "NEUTRAL"
+                issues = append(issues, "?all provides no protection")
+        case "~":
+                p = "SOFT"
+        case "-":
+                p = "STRICT"
+        }
+
+        return &p, &am, issues
+}
+
+func parseSPFMechanisms(spfRecord string) (int, []string, []string, *string, *string, []string, bool) {
+        spfLower := strings.ToLower(spfRecord)
+
+        r := countSPFLookupMechanisms(spfLower)
+        permissiveness, allMechanism, allIssues := classifyAllQualifier(spfLower)
+        issues := append(r.issues, allIssues...)
+
+        hasSenders := len(r.includes) > 0 || len(spfAMechRe.FindAllString(spfLower, -1)) > 0 || len(spfMXMechRe.FindAllString(spfLower, -1)) > 0
         if permissiveness != nil && *permissiveness == "STRICT" && hasSenders {
                 issues = append(issues, "RFC 7489 §10.1: -all may cause rejection before DMARC evaluation, preventing DKIM from being checked")
         }
 
+        noMailIntent := false
         normalized := strings.Join(strings.Fields(strings.TrimSpace(spfLower)), " ")
         if normalized == "v=spf1 -all" || normalized == "\"v=spf1 -all\"" {
                 noMailIntent = true
         }
 
-        return lookupCount, lookupMechanisms, includes, permissiveness, allMechanism, issues, noMailIntent
+        return r.lookupCount, r.lookupMechanisms, r.includes, permissiveness, allMechanism, issues, noMailIntent
 }
 
 func buildSPFVerdict(lookupCount int, permissiveness *string, noMailIntent bool, validSPF, spfLike []string) (string, string) {
@@ -141,6 +155,46 @@ func buildSPFVerdict(lookupCount int, permissiveness *string, noMailIntent bool,
         return "success", fmt.Sprintf("SPF valid, %d/10 lookups", lookupCount)
 }
 
+func classifySPFRecords(records []string) (validSPF, spfLike []string) {
+        for _, record := range records {
+                if record == "" {
+                        continue
+                }
+                lower := strings.ToLower(strings.TrimSpace(record))
+                if lower == "v=spf1" || strings.HasPrefix(lower, "v=spf1 ") {
+                        validSPF = append(validSPF, record)
+                } else if strings.Contains(lower, "spf") {
+                        spfLike = append(spfLike, record)
+                }
+        }
+        return
+}
+
+func evaluateSPFRecordSet(validSPF []string) (int, []string, []string, *string, *string, []string, bool) {
+        var issues []string
+        lookupCount := 0
+        var lookupMechanisms []string
+        var permissiveness *string
+        var allMechanism *string
+        var includes []string
+        noMailIntent := false
+
+        if len(validSPF) > 1 {
+                issues = append(issues, "Multiple SPF records (hard fail)")
+        }
+
+        if len(validSPF) == 1 {
+                lookupCount, lookupMechanisms, includes, permissiveness, allMechanism, issues, noMailIntent = parseSPFMechanisms(validSPF[0])
+                if lookupCount > 10 {
+                        issues = append(issues, fmt.Sprintf("Exceeds 10 DNS lookup limit (%d lookups)", lookupCount))
+                } else if lookupCount == 10 {
+                        issues = append(issues, "At lookup limit (10/10)")
+                }
+        }
+
+        return lookupCount, lookupMechanisms, includes, permissiveness, allMechanism, issues, noMailIntent
+}
+
 func (a *Analyzer) AnalyzeSPF(ctx context.Context, domain string) map[string]any {
         txtRecords := a.DNS.QueryDNS(ctx, "TXT", domain)
 
@@ -163,46 +217,9 @@ func (a *Analyzer) AnalyzeSPF(ctx context.Context, domain string) map[string]any
                 return baseResult
         }
 
-        var validSPF []string
-        var spfLike []string
-
-        for _, record := range txtRecords {
-                if record == "" {
-                        continue
-                }
-                lower := strings.ToLower(strings.TrimSpace(record))
-                if lower == "v=spf1" || strings.HasPrefix(lower, "v=spf1 ") {
-                        validSPF = append(validSPF, record)
-                } else if strings.Contains(lower, "spf") {
-                        spfLike = append(spfLike, record)
-                }
-        }
-
-        var issues []string
-        lookupCount := 0
-        var lookupMechanisms []string
-        var permissiveness *string
-        var allMechanism *string
-        var includes []string
-        noMailIntent := false
-
-        var status, message string
-
-        if len(validSPF) > 1 {
-                issues = append(issues, "Multiple SPF records (hard fail)")
-        }
-
-        if len(validSPF) == 1 {
-                lookupCount, lookupMechanisms, includes, permissiveness, allMechanism, issues, noMailIntent = parseSPFMechanisms(validSPF[0])
-
-                if lookupCount > 10 {
-                        issues = append(issues, fmt.Sprintf("Exceeds 10 DNS lookup limit (%d lookups)", lookupCount))
-                } else if lookupCount == 10 {
-                        issues = append(issues, "At lookup limit (10/10)")
-                }
-        }
-
-        status, message = buildSPFVerdict(lookupCount, permissiveness, noMailIntent, validSPF, spfLike)
+        validSPF, spfLike := classifySPFRecords(txtRecords)
+        lookupCount, lookupMechanisms, includes, permissiveness, allMechanism, issues, noMailIntent := evaluateSPFRecordSet(validSPF)
+        status, message := buildSPFVerdict(lookupCount, permissiveness, noMailIntent, validSPF, spfLike)
 
         result := map[string]any{
                 "status":            status,
@@ -219,21 +236,7 @@ func (a *Analyzer) AnalyzeSPF(ctx context.Context, domain string) map[string]any
                 "no_mail_intent":    noMailIntent,
         }
 
-        if result["valid_records"] == nil {
-                result["valid_records"] = []string{}
-        }
-        if result["spf_like"] == nil {
-                result["spf_like"] = []string{}
-        }
-        if result["lookup_mechanisms"] == nil {
-                result["lookup_mechanisms"] = []string{}
-        }
-        if result["issues"] == nil {
-                result["issues"] = []string{}
-        }
-        if result["includes"] == nil {
-                result["includes"] = []string{}
-        }
+        ensureStringSlices(result, "valid_records", "spf_like", "lookup_mechanisms", "issues", "includes")
 
         return result
 }

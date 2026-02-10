@@ -1,194 +1,244 @@
 package analyzer
 
 import (
-        "context"
-        "fmt"
-        "regexp"
-        "strings"
+	"context"
+	"fmt"
+	"regexp"
+	"strings"
 )
 
 var mtaStsIDRe = regexp.MustCompile(`(?i)id=([^;\s]+)`)
 
+func filterSTSRecords(records []string) []string {
+	var valid []string
+	for _, r := range records {
+		if strings.HasPrefix(strings.ToLower(r), "v=stsv1") {
+			valid = append(valid, r)
+		}
+	}
+	return valid
+}
+
+func extractSTSID(record string) *string {
+	if m := mtaStsIDRe.FindStringSubmatch(record); m != nil {
+		return &m[1]
+	}
+	return nil
+}
+
+func (a *Analyzer) lookupMTASTSCNAME(ctx context.Context, domain string) *string {
+	mtaStsHost := fmt.Sprintf("mta-sts.%s", domain)
+	cnameRecords := a.DNS.QueryDNS(ctx, "CNAME", mtaStsHost)
+	if len(cnameRecords) > 0 {
+		cname := strings.TrimRight(cnameRecords[0], ".")
+		return &cname
+	}
+	return nil
+}
+
+func extractPolicyMode(policyData map[string]any) *string {
+	if !policyData["fetched"].(bool) {
+		return nil
+	}
+	if m, ok := policyData["mode"].(string); ok && m != "" {
+		return &m
+	}
+	return nil
+}
+
+func determineMTASTSStatus(policyData map[string]any, mode *string) (string, string, []string) {
+	var policyIssues []string
+	hasVersion, _ := policyData["has_version"].(bool)
+
+	if !policyData["fetched"].(bool) || mode == nil {
+		return determineMTASTSFallbackStatus(policyData)
+	}
+
+	if !hasVersion {
+		policyIssues = append(policyIssues, "Policy file missing required 'version: STSv1' field (RFC 8461 §3.2)")
+	}
+
+	status, message := determineMTASTSModeStatus(*mode, policyData)
+
+	if !hasVersion && status == "success" {
+		status = "warning"
+		message += " (missing version field in policy)"
+	}
+
+	return status, message, policyIssues
+}
+
+func determineMTASTSFallbackStatus(policyData map[string]any) (string, string, []string) {
+	if policyData["error"] != nil {
+		return "warning", "MTA-STS DNS record found but policy file inaccessible", nil
+	}
+	return "success", "MTA-STS record found", nil
+}
+
+func determineMTASTSModeStatus(mode string, policyData map[string]any) (string, string) {
+	switch mode {
+	case "enforce":
+		mxList := policyData["mx"].([]string)
+		if len(mxList) > 0 {
+			return "success", fmt.Sprintf("MTA-STS enforced - TLS required for %d mail server(s)", len(mxList))
+		}
+		return "success", "MTA-STS enforced - TLS required for mail delivery"
+	case "testing":
+		return "warning", "MTA-STS in testing mode - TLS failures reported but not enforced"
+	case "none":
+		return "warning", "MTA-STS policy disabled (mode=none)"
+	default:
+		return "success", "MTA-STS policy found"
+	}
+}
+
 func (a *Analyzer) AnalyzeMTASTS(ctx context.Context, domain string) map[string]any {
-        mtaStsDomain := fmt.Sprintf("_mta-sts.%s", domain)
-        records := a.DNS.QueryDNS(ctx, "TXT", mtaStsDomain)
+	mtaStsDomain := fmt.Sprintf("_mta-sts.%s", domain)
+	records := a.DNS.QueryDNS(ctx, "TXT", mtaStsDomain)
 
-        baseResult := map[string]any{
-                "status":         "warning",
-                "message":        "No MTA-STS record found",
-                "record":         nil,
-                "dns_id":         nil,
-                "mode":           nil,
-                "policy":         nil,
-                "policy_mode":    nil,
-                "policy_max_age": nil,
-                "policy_mx":      []string{},
-                "policy_fetched": false,
-                "policy_error":   nil,
-                "hosting_cname":  nil,
-        }
+	baseResult := map[string]any{
+		"status":         "warning",
+		"message":        "No MTA-STS record found",
+		"record":         nil,
+		"dns_id":         nil,
+		"mode":           nil,
+		"policy":         nil,
+		"policy_mode":    nil,
+		"policy_max_age": nil,
+		"policy_mx":      []string{},
+		"policy_fetched": false,
+		"policy_error":   nil,
+		"hosting_cname":  nil,
+	}
 
-        if len(records) == 0 {
-                return baseResult
-        }
+	if len(records) == 0 {
+		return baseResult
+	}
 
-        var validRecords []string
-        for _, r := range records {
-                if strings.HasPrefix(strings.ToLower(r), "v=stsv1") {
-                        validRecords = append(validRecords, r)
-                }
-        }
+	validRecords := filterSTSRecords(records)
+	if len(validRecords) == 0 {
+		baseResult["message"] = "No valid MTA-STS record found"
+		return baseResult
+	}
 
-        if len(validRecords) == 0 {
-                baseResult["message"] = "No valid MTA-STS record found"
-                return baseResult
-        }
+	record := validRecords[0]
+	dnsID := extractSTSID(record)
+	hostingCNAME := a.lookupMTASTSCNAME(ctx, domain)
 
-        record := validRecords[0]
-        var dnsID *string
-        if m := mtaStsIDRe.FindStringSubmatch(record); m != nil {
-                dnsID = &m[1]
-        }
+	policyURL := fmt.Sprintf("https://mta-sts.%s/.well-known/mta-sts.txt", domain)
+	policyData := a.fetchMTASTSPolicy(ctx, policyURL)
 
-        var hostingCNAME *string
-        mtaStsHost := fmt.Sprintf("mta-sts.%s", domain)
-        cnameRecords := a.DNS.QueryDNS(ctx, "CNAME", mtaStsHost)
-        if len(cnameRecords) > 0 {
-                cname := strings.TrimRight(cnameRecords[0], ".")
-                hostingCNAME = &cname
-        }
+	mode := extractPolicyMode(policyData)
+	status, message, policyIssues := determineMTASTSStatus(policyData, mode)
 
-        policyURL := fmt.Sprintf("https://mta-sts.%s/.well-known/mta-sts.txt", domain)
-        policyData := a.fetchMTASTSPolicy(ctx, policyURL)
+	return map[string]any{
+		"status":         status,
+		"message":        message,
+		"record":         record,
+		"dns_id":         derefStr(dnsID),
+		"mode":           derefStr(mode),
+		"policy":         policyData["raw"],
+		"policy_mode":    policyData["mode"],
+		"policy_max_age": policyData["max_age"],
+		"policy_mx":      policyData["mx"],
+		"policy_fetched": policyData["fetched"],
+		"policy_error":   policyData["error"],
+		"hosting_cname":  derefStr(hostingCNAME),
+		"policy_issues":  policyIssues,
+	}
+}
 
-        var mode *string
-        if policyData["fetched"].(bool) {
-                if m, ok := policyData["mode"].(string); ok && m != "" {
-                        mode = &m
-                }
-        }
+type mtaSTSPolicyFields struct {
+	mode       string
+	maxAge     int
+	mx         []string
+	hasVersion bool
+	version    string
+}
 
-        var policyIssues []string
-        hasVersion, _ := policyData["has_version"].(bool)
+func parseMTASTSPolicyLines(policyText string) mtaSTSPolicyFields {
+	var fields mtaSTSPolicyFields
+	for _, line := range strings.Split(policyText, "\n") {
+		line = strings.TrimSpace(line)
+		lower := strings.ToLower(line)
+		parseMTASTSPolicyLine(lower, line, &fields)
+	}
+	return fields
+}
 
-        var status, message string
-        if policyData["fetched"].(bool) && mode != nil {
-                if !hasVersion {
-                        policyIssues = append(policyIssues, "Policy file missing required 'version: STSv1' field (RFC 8461 §3.2)")
-                }
-
-                switch *mode {
-                case "enforce":
-                        status = "success"
-                        mxList := policyData["mx"].([]string)
-                        if len(mxList) > 0 {
-                                message = fmt.Sprintf("MTA-STS enforced - TLS required for %d mail server(s)", len(mxList))
-                        } else {
-                                message = "MTA-STS enforced - TLS required for mail delivery"
-                        }
-                case "testing":
-                        status = "warning"
-                        message = "MTA-STS in testing mode - TLS failures reported but not enforced"
-                case "none":
-                        status = "warning"
-                        message = "MTA-STS policy disabled (mode=none)"
-                default:
-                        status = "success"
-                        message = "MTA-STS policy found"
-                }
-
-                if !hasVersion && status == "success" {
-                        status = "warning"
-                        message += " (missing version field in policy)"
-                }
-        } else if policyData["error"] != nil {
-                status = "warning"
-                message = "MTA-STS DNS record found but policy file inaccessible"
-        } else {
-                status = "success"
-                message = "MTA-STS record found"
-        }
-
-        return map[string]any{
-                "status":         status,
-                "message":        message,
-                "record":         record,
-                "dns_id":         derefStr(dnsID),
-                "mode":           derefStr(mode),
-                "policy":         policyData["raw"],
-                "policy_mode":    policyData["mode"],
-                "policy_max_age": policyData["max_age"],
-                "policy_mx":      policyData["mx"],
-                "policy_fetched": policyData["fetched"],
-                "policy_error":   policyData["error"],
-                "hosting_cname":  derefStr(hostingCNAME),
-                "policy_issues":  policyIssues,
-        }
+func parseMTASTSPolicyLine(lower, line string, fields *mtaSTSPolicyFields) {
+	switch {
+	case strings.HasPrefix(lower, "version:"):
+		ver := strings.TrimSpace(line[8:])
+		if strings.EqualFold(ver, "STSv1") {
+			fields.hasVersion = true
+		}
+		fields.version = ver
+	case strings.HasPrefix(lower, "mode:"):
+		fields.mode = strings.TrimSpace(strings.ToLower(line[5:]))
+	case strings.HasPrefix(lower, "max_age:"):
+		var maxAge int
+		fmt.Sscanf(strings.TrimSpace(line[8:]), "%d", &maxAge)
+		if maxAge > 0 {
+			fields.maxAge = maxAge
+		}
+	case strings.HasPrefix(lower, "mx:"):
+		mx := strings.TrimSpace(line[3:])
+		if mx != "" {
+			fields.mx = append(fields.mx, mx)
+		}
+	}
 }
 
 func (a *Analyzer) fetchMTASTSPolicy(ctx context.Context, policyURL string) map[string]any {
-        result := map[string]any{
-                "fetched": false,
-                "raw":     nil,
-                "mode":    nil,
-                "max_age": nil,
-                "mx":      []string{},
-                "error":   nil,
-        }
+	result := map[string]any{
+		"fetched": false,
+		"raw":     nil,
+		"mode":    nil,
+		"max_age": nil,
+		"mx":      []string{},
+		"error":   nil,
+	}
 
-        resp, err := a.HTTP.Get(ctx, policyURL)
-        if err != nil {
-                errMsg := classifyHTTPError(err, 50)
-                if strings.Contains(err.Error(), "tls") || strings.Contains(err.Error(), "certificate") {
-                        errMsg = "SSL certificate error"
-                }
-                result["error"] = errMsg
-                return result
-        }
+	resp, err := a.HTTP.Get(ctx, policyURL)
+	if err != nil {
+		errMsg := classifyHTTPError(err, 50)
+		if strings.Contains(err.Error(), "tls") || strings.Contains(err.Error(), "certificate") {
+			errMsg = "SSL certificate error"
+		}
+		result["error"] = errMsg
+		return result
+	}
 
-        body, err := a.HTTP.ReadBody(resp, 1<<20)
-        if err != nil {
-                result["error"] = "Failed to read response"
-                return result
-        }
+	body, err := a.HTTP.ReadBody(resp, 1<<20)
+	if err != nil {
+		result["error"] = "Failed to read response"
+		return result
+	}
 
-        if resp.StatusCode != 200 {
-                result["error"] = fmt.Sprintf("HTTP %d", resp.StatusCode)
-                return result
-        }
+	if resp.StatusCode != 200 {
+		result["error"] = fmt.Sprintf("HTTP %d", resp.StatusCode)
+		return result
+	}
 
-        policyText := string(body)
-        result["fetched"] = true
-        result["raw"] = policyText
+	policyText := string(body)
+	result["fetched"] = true
+	result["raw"] = policyText
 
-        var mxPatterns []string
-        hasVersion := false
-        for _, line := range strings.Split(policyText, "\n") {
-                line = strings.TrimSpace(line)
-                lower := strings.ToLower(line)
-                if strings.HasPrefix(lower, "version:") {
-                        ver := strings.TrimSpace(line[8:])
-                        if strings.EqualFold(ver, "STSv1") {
-                                hasVersion = true
-                        }
-                        result["policy_version"] = ver
-                } else if strings.HasPrefix(lower, "mode:") {
-                        result["mode"] = strings.TrimSpace(strings.ToLower(line[5:]))
-                } else if strings.HasPrefix(lower, "max_age:") {
-                        var maxAge int
-                        fmt.Sscanf(strings.TrimSpace(line[8:]), "%d", &maxAge)
-                        if maxAge > 0 {
-                                result["max_age"] = maxAge
-                        }
-                } else if strings.HasPrefix(lower, "mx:") {
-                        mx := strings.TrimSpace(line[3:])
-                        if mx != "" {
-                                mxPatterns = append(mxPatterns, mx)
-                        }
-                }
-        }
-        result["mx"] = mxPatterns
-        result["has_version"] = hasVersion
+	fields := parseMTASTSPolicyLines(policyText)
+	if fields.mode != "" {
+		result["mode"] = fields.mode
+	}
+	if fields.maxAge > 0 {
+		result["max_age"] = fields.maxAge
+	}
+	if len(fields.mx) > 0 {
+		result["mx"] = fields.mx
+	}
+	if fields.version != "" {
+		result["policy_version"] = fields.version
+	}
+	result["has_version"] = fields.hasVersion
 
-        return result
+	return result
 }

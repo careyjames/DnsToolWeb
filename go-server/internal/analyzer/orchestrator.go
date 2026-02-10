@@ -13,6 +13,11 @@ const (
         msgDomainNotExist = "Domain does not exist or is not delegated"
 )
 
+type namedResult struct {
+        key    string
+        result any
+}
+
 func (a *Analyzer) AnalyzeDomain(ctx context.Context, domain string, customDKIMSelectors []string) map[string]any {
         select {
         case a.semaphore <- struct{}{}:
@@ -29,40 +34,94 @@ func (a *Analyzer) AnalyzeDomain(ctx context.Context, domain string, customDKIMS
         ctx, cancel := context.WithTimeout(ctx, 60*time.Second)
         defer cancel()
 
-        domainExists := true
-        domainStatus := "active"
-        var domainStatusMessage *string
-
-        quickCheckFound := false
-        for _, rtype := range []string{"A", "TXT", "MX"} {
-                result := a.DNS.QueryDNS(ctx, rtype, domain)
-                if len(result) > 0 {
-                        quickCheckFound = true
-                        break
-                }
-        }
-
-        if !quickCheckFound {
-                nsRecords := a.DNS.QueryDNS(ctx, "NS", domain)
-                if len(nsRecords) == 0 {
-                        domainExists = false
-                        domainStatus = "undelegated"
-                        msg := "Domain is not delegated or has no DNS records. This may be an unused subdomain or unregistered domain."
-                        domainStatusMessage = &msg
-                }
-        }
-
-        if !domainExists {
+        exists, domainStatus, domainStatusMessage := a.checkDomainExists(ctx, domain)
+        if !exists {
                 return a.buildNonExistentResult(domain, domainStatus, domainStatusMessage)
         }
 
         analysisStart := time.Now()
+        resultsMap := a.runParallelAnalyses(ctx, domain, customDKIMSelectors)
 
-        type namedResult struct {
-                key    string
-                result any
+        parallelElapsed := time.Since(analysisStart).Seconds()
+        slog.Info("Parallel lookups completed", "domain", domain, "elapsed_s", fmt.Sprintf("%.2f", parallelElapsed), "tasks", len(resultsMap))
+
+        basic := getMapResult(resultsMap, "basic")
+        auth := getMapResult(resultsMap, "auth")
+
+        resolverTTL := extractAndRemove(basic, "_ttl")
+        authTTL := extractAndRemove(auth, "_ttl")
+        authQueryStatus := extractAndRemove(auth, "_query_status")
+
+        mxForDANE, _ := basic["MX"].([]string)
+        resultsMap["dane"] = a.AnalyzeDANE(ctx, domain, mxForDANE)
+
+        enrichBasicRecords(basic, resultsMap)
+        propagationStatus := buildPropagationStatus(basic, auth)
+        sectionStatus := buildSectionStatus(resultsMap)
+        spfAnalysis := getMapResult(resultsMap, "spf")
+
+        results := map[string]any{
+                "domain_exists":          true,
+                "domain_status":          domainStatus,
+                "domain_status_message":  derefStr(domainStatusMessage),
+                "section_status":         sectionStatus,
+                "basic_records":          basic,
+                "authoritative_records":  auth,
+                "auth_query_status":      authQueryStatus,
+                "resolver_ttl":           resolverTTL,
+                "auth_ttl":               authTTL,
+                "propagation_status":     propagationStatus,
+                "spf_analysis":           getOrDefault(resultsMap, "spf", map[string]any{"status": "error"}),
+                "dmarc_analysis":         getOrDefault(resultsMap, "dmarc", map[string]any{"status": "error"}),
+                "dkim_analysis":          getOrDefault(resultsMap, "dkim", map[string]any{"status": "error"}),
+                "mta_sts_analysis":       getOrDefault(resultsMap, "mta_sts", map[string]any{"status": "warning"}),
+                "tlsrpt_analysis":        getOrDefault(resultsMap, "tlsrpt", map[string]any{"status": "warning"}),
+                "bimi_analysis":          getOrDefault(resultsMap, "bimi", map[string]any{"status": "warning"}),
+                "dane_analysis":          getOrDefault(resultsMap, "dane", map[string]any{"status": "info", "has_dane": false, "tlsa_records": []any{}, "issues": []string{}}),
+                "caa_analysis":           getOrDefault(resultsMap, "caa", map[string]any{"status": "warning"}),
+                "dnssec_analysis":        getOrDefault(resultsMap, "dnssec", map[string]any{"status": "warning"}),
+                "ns_delegation_analysis": getOrDefault(resultsMap, "ns_delegation", map[string]any{"status": "warning"}),
+                "registrar_info":         getOrDefault(resultsMap, "registrar", map[string]any{"status": "error", "registrar": nil}),
+                "resolver_consensus":     getOrDefault(resultsMap, "resolver_consensus", map[string]any{}),
+                "ct_subdomains":          getOrDefault(resultsMap, "ct_subdomains", map[string]any{"status": "error", "subdomains": []any{}, "unique_subdomains": 0}),
+                "smtp_transport":         nil,
+                "has_null_mx":            detectNullMX(basic),
+                "is_no_mail_domain":      spfAnalysis["no_mail_intent"] == true,
         }
 
+        results["hosting_summary"] = a.GetHostingInfo(domain, results)
+        results["dns_infrastructure"] = a.AnalyzeDNSInfrastructure(domain, results)
+        results["email_security_mgmt"] = a.DetectEmailSecurityManagement(
+                spfAnalysis,
+                getMapResult(resultsMap, "dmarc"),
+                getMapResult(resultsMap, "tlsrpt"),
+                getMapResult(resultsMap, "mta_sts"),
+                domain,
+                getMapResult(resultsMap, "dkim"),
+        )
+        results["posture"] = a.CalculatePosture(results)
+        results["remediation"] = a.GenerateRemediation(results)
+        results["mail_posture"] = buildMailPosture(results)
+
+        return results
+}
+
+func (a *Analyzer) checkDomainExists(ctx context.Context, domain string) (bool, string, *string) {
+        for _, rtype := range []string{"A", "TXT", "MX"} {
+                if len(a.DNS.QueryDNS(ctx, rtype, domain)) > 0 {
+                        return true, "active", nil
+                }
+        }
+
+        if len(a.DNS.QueryDNS(ctx, "NS", domain)) > 0 {
+                return true, "active", nil
+        }
+
+        msg := "Domain is not delegated or has no DNS records. This may be an unused subdomain or unregistered domain."
+        return false, "undelegated", &msg
+}
+
+func (a *Analyzer) runParallelAnalyses(ctx context.Context, domain string, customDKIMSelectors []string) map[string]any {
         resultsCh := make(chan namedResult, 20)
         var wg sync.WaitGroup
 
@@ -100,21 +159,10 @@ func (a *Analyzer) AnalyzeDomain(ctx context.Context, domain string, customDKIMS
         for nr := range resultsCh {
                 resultsMap[nr.key] = nr.result
         }
+        return resultsMap
+}
 
-        parallelElapsed := time.Since(analysisStart).Seconds()
-        slog.Info("Parallel lookups completed", "domain", domain, "elapsed_s", fmt.Sprintf("%.2f", parallelElapsed), "tasks", len(resultsMap))
-
-        basic := getMapResult(resultsMap, "basic")
-        auth := getMapResult(resultsMap, "auth")
-
-        resolverTTL := extractAndRemove(basic, "_ttl")
-        authTTL := extractAndRemove(auth, "_ttl")
-        authQueryStatus := extractAndRemove(auth, "_query_status")
-
-        mxForDANE, _ := basic["MX"].([]string)
-        daneResult := a.AnalyzeDANE(ctx, domain, mxForDANE)
-        resultsMap["dane"] = daneResult
-
+func enrichBasicRecords(basic map[string]any, resultsMap map[string]any) {
         dmarcData := getMapResult(resultsMap, "dmarc")
         mtaStsData := getMapResult(resultsMap, "mta_sts")
         tlsrptData := getMapResult(resultsMap, "tlsrpt")
@@ -130,91 +178,43 @@ func (a *Analyzer) AnalyzeDomain(ctx context.Context, domain string, customDKIMS
         if rec, ok := tlsrptData["record"].(string); ok && rec != "" {
                 basic["TLS-RPT"] = []string{rec}
         }
+}
 
-        propagationStatus := buildPropagationStatus(basic, auth)
-
+func buildSectionStatus(resultsMap map[string]any) map[string]any {
         sectionStatus := make(map[string]any)
         for key, result := range resultsMap {
-                if rm, ok := result.(map[string]any); ok {
-                        status, _ := rm["status"].(string)
-                        switch status {
-                        case "timeout":
-                                sectionStatus[key] = map[string]any{"status": "timeout", "message": "Query timed out"}
-                        case "error":
-                                msg, _ := rm["message"].(string)
-                                if msg == "" {
-                                        msg = "Lookup failed"
-                                }
-                                sectionStatus[key] = map[string]any{"status": "error", "message": msg}
-                        default:
-                                sectionStatus[key] = map[string]any{"status": "ok"}
+                rm, ok := result.(map[string]any)
+                if !ok {
+                        sectionStatus[key] = map[string]any{"status": "ok"}
+                        continue
+                }
+                status, _ := rm["status"].(string)
+                switch status {
+                case "timeout":
+                        sectionStatus[key] = map[string]any{"status": "timeout", "message": "Query timed out"}
+                case "error":
+                        msg, _ := rm["message"].(string)
+                        if msg == "" {
+                                msg = "Lookup failed"
                         }
-                } else {
+                        sectionStatus[key] = map[string]any{"status": "error", "message": msg}
+                default:
                         sectionStatus[key] = map[string]any{"status": "ok"}
                 }
         }
+        return sectionStatus
+}
 
+func detectNullMX(basic map[string]any) bool {
         mxRecords, _ := basic["MX"].([]string)
-        hasNullMX := false
         for _, r := range mxRecords {
                 stripped := strings.TrimSpace(strings.TrimRight(r, "."))
                 normalized := strings.ReplaceAll(stripped, " ", "")
                 if normalized == "0." || normalized == "0" || stripped == "0 ." {
-                        hasNullMX = true
-                        break
+                        return true
                 }
         }
-
-        spfAnalysis := getMapResult(resultsMap, "spf")
-        isNoMailDomain := false
-        if spfAnalysis["no_mail_intent"] == true {
-                isNoMailDomain = true
-        }
-
-        results := map[string]any{
-                "domain_exists":          true,
-                "domain_status":          domainStatus,
-                "domain_status_message":  derefStr(domainStatusMessage),
-                "section_status":         sectionStatus,
-                "basic_records":          basic,
-                "authoritative_records":  auth,
-                "auth_query_status":      authQueryStatus,
-                "resolver_ttl":           resolverTTL,
-                "auth_ttl":               authTTL,
-                "propagation_status":     propagationStatus,
-                "spf_analysis":           getOrDefault(resultsMap, "spf", map[string]any{"status": "error"}),
-                "dmarc_analysis":         getOrDefault(resultsMap, "dmarc", map[string]any{"status": "error"}),
-                "dkim_analysis":          getOrDefault(resultsMap, "dkim", map[string]any{"status": "error"}),
-                "mta_sts_analysis":       getOrDefault(resultsMap, "mta_sts", map[string]any{"status": "warning"}),
-                "tlsrpt_analysis":        getOrDefault(resultsMap, "tlsrpt", map[string]any{"status": "warning"}),
-                "bimi_analysis":          getOrDefault(resultsMap, "bimi", map[string]any{"status": "warning"}),
-                "dane_analysis":          getOrDefault(resultsMap, "dane", map[string]any{"status": "info", "has_dane": false, "tlsa_records": []any{}, "issues": []string{}}),
-                "caa_analysis":           getOrDefault(resultsMap, "caa", map[string]any{"status": "warning"}),
-                "dnssec_analysis":        getOrDefault(resultsMap, "dnssec", map[string]any{"status": "warning"}),
-                "ns_delegation_analysis": getOrDefault(resultsMap, "ns_delegation", map[string]any{"status": "warning"}),
-                "registrar_info":         getOrDefault(resultsMap, "registrar", map[string]any{"status": "error", "registrar": nil}),
-                "resolver_consensus":     getOrDefault(resultsMap, "resolver_consensus", map[string]any{}),
-                "ct_subdomains":          getOrDefault(resultsMap, "ct_subdomains", map[string]any{"status": "error", "subdomains": []any{}, "unique_subdomains": 0}),
-                "smtp_transport":         nil,
-                "has_null_mx":            hasNullMX,
-                "is_no_mail_domain":      isNoMailDomain,
-        }
-
-        results["hosting_summary"] = a.GetHostingInfo(domain, results)
-        results["dns_infrastructure"] = a.AnalyzeDNSInfrastructure(domain, results)
-        results["email_security_mgmt"] = a.DetectEmailSecurityManagement(
-                spfAnalysis,
-                getMapResult(resultsMap, "dmarc"),
-                getMapResult(resultsMap, "tlsrpt"),
-                getMapResult(resultsMap, "mta_sts"),
-                domain,
-                getMapResult(resultsMap, "dkim"),
-        )
-        results["posture"] = a.CalculatePosture(results)
-        results["remediation"] = a.GenerateRemediation(results)
-        results["mail_posture"] = buildMailPosture(results)
-
-        return results
+        return false
 }
 
 func (a *Analyzer) buildNonExistentResult(domain, status string, statusMessage *string) map[string]any {
