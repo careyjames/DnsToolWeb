@@ -87,7 +87,7 @@ func NormalizeResults(fullResults json.RawMessage) map[string]interface{} {
         }
 
         var results map[string]interface{}
-        if err := json.Unmarshal(fullResults, &results); err != nil {
+        if json.Unmarshal(fullResults, &results) != nil {
                 return nil
         }
 

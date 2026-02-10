@@ -1037,7 +1037,7 @@ func TestRemediationSPFSoftfailUpgrade(t *testing.T) {
                 results["caa_analysis"] = map[string]any{"status": "success"}
                 results["dnssec_analysis"] = map[string]any{"status": "success"}
 
-                if fix := findSPFHardfailFix(t, extractAllFixes(t, a.GenerateRemediation(results))); fix != nil {
+                if findSPFHardfailFix(t, extractAllFixes(t, a.GenerateRemediation(results))) != nil {
                         t.Error("SPF softfail with DMARC reject + DKIM should NOT generate hardfail upgrade fix")
                 }
         })

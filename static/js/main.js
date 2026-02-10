@@ -155,7 +155,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 try {
                     const bsAlert = bootstrap.Alert.getOrCreateInstance(alertEl);
                     bsAlert.close();
-                } catch (_) {
+                } catch (e) {
+                    console.warn('Bootstrap alert fallback:', e.message);
                     alertEl.classList.remove('show');
                     alertEl.addEventListener('transitionend', function() { alertEl.remove(); });
                     setTimeout(function() { alertEl.remove(); }, 300);

@@ -644,7 +644,7 @@ func (c *Client) dohQueryWithTTL(ctx context.Context, domain, recordType string)
 
 func parseDohResponse(body []byte, recordType string) RecordWithTTL {
         var data dohResponse
-        if err := json.Unmarshal(body, &data); err != nil {
+        if json.Unmarshal(body, &data) != nil {
                 return RecordWithTTL{}
         }
 
