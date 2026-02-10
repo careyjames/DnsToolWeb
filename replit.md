@@ -60,28 +60,26 @@ The application is currently undergoing a rewrite from Python/Flask to Go/Gin fo
 
 ## Go Rewrite — Migration Status
 
-### Current Phase: Phase 4 — Template Migration (COMPLETE)
+### All Phases COMPLETE — Go Server Ready for Production
 
 **Completed Phases**:
 - **Phase 1**: Foundation — Go project skeleton with Gin, pgx, slog, security middleware, health endpoint
 - **Phase 2**: Database — sqlc integration for type-safe queries, 6 integration tests passing
-- **Phase 3**: HTTP Routes — All routes ported, reverse proxy for DNS-engine-dependent routes
-- **Phase 4**: Template Migration — All 6 Jinja2 templates converted to Go html/template (3,851 lines total), 4 shared partials, 50+ FuncMap helpers, all handlers render HTML
-
-**Completed Phases (continued)**:
+- **Phase 3**: HTTP Routes — All routes ported
+- **Phase 4**: Template Migration — All 6 Jinja2 templates converted to Go html/template (3,851 lines total), 4 shared partials, 50+ FuncMap helpers
 - **Phase 5**: DNS engine — all 11 analyzers ported to Go (~4,960 lines), multi-resolver consensus DNS client, DoH fallback, CT subdomain discovery, posture scoring, concurrent orchestrator
-- **Phase 6**: Security — CSRF middleware (HMAC-signed cookie tokens), rate limiting middleware (8/min/IP sliding window + anti-repeat), SSRF hardened (CGNAT, benchmarking, documentation ranges), API route exemptions
+- **Phase 6**: Security — CSRF middleware (HMAC-signed cookie tokens), rate limiting (8/min/IP sliding window + anti-repeat), SSRF hardened (CGNAT, benchmark, documentation ranges), API route exemptions
+- **Phase 7**: Telemetry & RDAP cache — provider health registry (success/failure counts, latency p50/p95, cooldown), RDAP response cache (TTL 24h per RFC 9224, 500 entries), enhanced /api/health endpoint
+- **Phase 8**: Test parity — 92 Go tests across 6 packages (analyzer, db, dnsclient, handlers, middleware, telemetry)
+- **Phase 9**: Native analysis wiring — /analyze handler uses Go DNS engine directly (no Python proxy), geo IP lookup, DB persistence, results rendering. E2E browser tested with google.com, apple.com, usa.gov, cloudflare.com.
 
-**Completed Phases (final)**:
-- **Phase 7**: Telemetry & RDAP cache — provider health registry (success/failure counts, latency p50/p95, cooldown), RDAP response cache (TTL 24h, 500 entries), enhanced /api/health endpoint with provider stats and cache metrics
+**RDAP Cache TTL**: 24 hours, per RFC 9224 Section 8 recommendation and standard industry practice (Go openrdap reference implementation default). IANA bootstrap registry data changes infrequently; 24h is the minimum recommended cache duration.
 
-**Completed Phases (final continued)**:
-- **Phase 8**: Test parity — 92 Go tests across 6 packages (analyzer, db, dnsclient, handlers, middleware, telemetry). Schema/behavioral contracts, posture scoring, infrastructure detection, CSRF, rate limiting, SSRF filtering, provider health, TTL cache, handler integration, security headers.
-
-**Parallel Operation**: Python app serves production traffic on port 5000. Go server runs on port 5001 for testing.
+**Parallel Operation**: Python app serves production traffic on port 5000. Go server runs on port 5001 for testing/cutover.
 
 ## Recent Changes
 
+- **2026-02-10**: Phase 9 complete — Native Go analysis wiring. /analyze handler uses Go DNS engine directly (no Python proxy for domain analysis). Added saveAnalysis helper, lookupCountry geo IP function, result extraction helpers. ViewAnalysis delegates to ViewAnalysisStatic. E2E browser tested: google.com (STRONG), apple.com (STRONG Monitoring), usa.gov, cloudflare.com all analyzed correctly with posture grades, remediation guidance, and full section data.
 - **2026-02-10**: Phase 8 complete — 92 Go tests across 6 packages. Analyzer tests: schema contracts, posture scoring (grade boundaries, issue tracking, score capping), non-existent domain handling, government/enterprise/managed provider detection, behavioral verdict logic (email spoofing), utility functions. Middleware tests: CSRF (token generation, signing, validation, API exemptions), rate limiter (sliding window, anti-repeat, case insensitivity), security headers (CSP with nonce, HSTS, X-Frame-Options). dnsclient tests: SSRF IP filtering (private, loopback, CGNAT, documentation, benchmark ranges). Telemetry tests: provider health registry (success/failure, cooldown, backoff, health states), TTLCache (set/get, expiration, eviction, concurrent access). Handler tests: health endpoint, sitemap, static files.
 - **2026-02-10**: Phase 7 complete — telemetry package with provider health registry (per-provider success/failure counts, rolling latency p95, adaptive cooldown with exponential backoff). Generic TTLCache for RDAP results (24h TTL, 500 max entries, hit/miss tracking). Telemetry wired into RDAP and CT log providers. Enhanced /api/health endpoint with provider health summary, cache stats, and overall health state. Analyzer instance created in main.go.
 - **2026-02-10**: Phase 6 complete — CSRF middleware with HMAC-signed cookie tokens (SESSION_SECRET), rate limiting middleware (8 req/min/IP sliding window + 15s anti-repeat per domain), SSRF hardened with CGNAT/benchmark/documentation IP ranges, proxy handler uses consolidated IsPrivateIP, API routes exempted from CSRF, CSRF token injected into all 23 template render calls.
