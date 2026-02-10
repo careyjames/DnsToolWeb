@@ -1,0 +1,354 @@
+# DNS Tool — Feature Inventory
+
+**Version:** 26.12.6
+**Last Updated:** February 10, 2026
+**Implementation:** Go/Gin (`go-server/`)
+
+---
+
+## Purpose
+
+This document is the authoritative inventory of every analysis feature,
+detection capability, and platform function in the DNS Tool. It exists to
+protect institutional knowledge—if a feature is listed here, it must be
+present in the codebase. Any removal requires a deliberate decision
+documented with rationale.
+
+---
+
+## 1. Core DNS Security Analysis
+
+These are the primary analysis modules. Each performs RFC-compliant
+parsing and validation of a specific DNS protocol.
+
+| # | Feature | RFC | Source File | Schema Key |
+|---|---------|-----|-------------|------------|
+| 1 | **SPF Analysis** | RFC 7208 | `spf.go` | `spf_analysis` |
+| 2 | **DMARC Analysis** | RFC 7489 | `dmarc.go` | `dmarc_analysis` |
+| 3 | **DKIM Analysis** | RFC 6376 | `dkim.go` | `dkim_analysis` |
+| 4 | **MTA-STS Analysis** | RFC 8461 | `mta_sts.go` | `mta_sts_analysis` |
+| 5 | **TLS-RPT Analysis** | RFC 8460 | `tlsrpt.go` | `tlsrpt_analysis` |
+| 6 | **BIMI Analysis** | RFC 9495 | `bimi.go` | `bimi_analysis` |
+| 7 | **DANE/TLSA Analysis** | RFC 7671 | `dane.go` | `dane_analysis` |
+| 8 | **DNSSEC Analysis** | RFC 4035 | `dnssec.go` | `dnssec_analysis` |
+| 9 | **CAA Analysis** | RFC 8659 | `caa.go` | `caa_analysis` |
+| 10 | **NS Delegation Analysis** | RFC 1034 | `ns_delegation.go` | `ns_delegation_analysis` |
+
+### 1.1 SPF Analysis (`spf.go`)
+- TXT record lookup and SPF record identification
+- Mechanism parsing: `include`, `a`, `mx`, `ptr`, `exists`, `redirect`, `ip4`, `ip6`
+- DNS lookup counting (10-lookup limit per RFC 7208)
+- Include chain resolution
+- Permissiveness evaluation (`+all`, `~all`, `-all`, `?all`)
+- No-mail intent detection (`v=spf1 -all`)
+- Multiple SPF record detection (invalid per RFC)
+- SPF-like but invalid record detection
+
+### 1.2 DMARC Analysis (`dmarc.go`)
+- `_dmarc` TXT record lookup
+- Policy parsing (`p=none/quarantine/reject`)
+- Subdomain policy extraction (`sp=`)
+- Non-existent domain policy (`np=`)
+- Percentage enforcement (`pct=`)
+- Alignment modes (`aspf=`, `adkim=` — relaxed/strict)
+- Reporting address extraction (`rua=`, `ruf=`)
+- Testing mode detection (`t=y`)
+- DMARC-like but invalid record detection
+- Multiple DMARC record detection
+
+### 1.3 DKIM Analysis (`dkim.go`)
+- Common selector probing (30+ selectors)
+- Provider-specific selector detection
+- Key record parsing (`v`, `k`, `p`, `t` flags)
+- Key type identification (RSA, Ed25519)
+- Key bit length extraction and strength assessment
+- Test mode detection (`t=y`)
+- Revoked key detection (empty `p=`)
+- Provider-aware DKIM credit (known hosted providers)
+- Primary mail provider detection from MX/SPF
+- Gateway provider detection
+
+### 1.4 MTA-STS Analysis (`mta_sts.go`)
+- `_mta-sts` TXT record lookup
+- DNS record ID extraction
+- Policy file HTTPS fetch (`/.well-known/mta-sts.txt`)
+- STSv1 version validation
+- Mode parsing (`enforce`, `testing`, `none`)
+- Max age validation
+- MX list extraction from policy
+- Hosting CNAME detection
+
+### 1.5 TLS-RPT Analysis (`tlsrpt.go`)
+- `_smtp._tls` TXT record lookup
+- TLSRPTv1 version validation
+- Reporting address extraction (`rua=` — mailto and https)
+
+### 1.6 BIMI Analysis (`bimi.go`)
+- `default._bimi` TXT record lookup
+- Logo URL extraction and format validation
+- VMC (Verified Mark Certificate) URL extraction
+- Logo accessibility check
+- VMC certificate parsing (issuer, subject)
+- SVG format verification
+
+### 1.7 DANE/TLSA Analysis (`dane.go`)
+- `_25._tcp.<mx>` TLSA record lookup per MX host
+- Certificate usage parsing (PKIX-TA, PKIX-EE, DANE-TA, DANE-EE)
+- Selector type validation (full certificate vs. public key)
+- Matching type validation (exact, SHA-256, SHA-512)
+- MX provider DANE capability detection (known provider database)
+- DNSSEC requirement verification
+- Inbound vs. outbound DANE assessment
+- Per-host TLSA result aggregation
+
+### 1.8 DNSSEC Analysis (`dnssec.go`)
+- DNSKEY record lookup
+- DS record lookup (parent zone)
+- AD (Authenticated Data) flag validation
+- Chain of trust verification
+- Key algorithm identification
+- DNSSEC-signed zone detection
+
+### 1.9 CAA Analysis (`caa.go`)
+- CAA record lookup
+- `issue` tag parsing (authorized CAs)
+- `issuewild` tag parsing (wildcard certificate CAs, separate per RFC 8659 §4.3)
+- `iodef` notification endpoint parsing
+- Unrestricted CA detection (no CAA records)
+
+### 1.10 NS Delegation Analysis (`ns_delegation.go`)
+- Child zone NS record query
+- Parent zone NS delegation query
+- Delegation consistency comparison
+- Extra/missing NS detection
+- Lame delegation detection
+- Undelegated domain handling
+
+---
+
+## 2. Infrastructure Analysis
+
+| # | Feature | Source File | Schema Key |
+|---|---------|-------------|------------|
+| 11 | **Basic DNS Records** | `records.go` | `basic_records` |
+| 12 | **Authoritative Records** | `records.go` | `authoritative_records` |
+| 13 | **Resolver Consensus** | `records.go` | `resolver_consensus` |
+| 14 | **Propagation Status** | `records.go` | `propagation_status` |
+| 15 | **Registrar/RDAP Lookup** | `registrar.go` | `registrar_info` |
+| 16 | **CT Subdomain Discovery** | `subdomains.go` | `ct_subdomains` |
+| 17 | **DNS Infrastructure Detection** | `infrastructure.go` | `dns_infrastructure` |
+| 18 | **Hosting Summary** | `infrastructure.go` | `hosting_summary` |
+| 19 | **Domain Existence Detection** | `orchestrator.go` | `domain_exists` |
+| 20 | **Domain Status** | `orchestrator.go` | `domain_status` |
+
+### 2.1 Basic DNS Records (`records.go`)
+- Multi-type DNS query: A, AAAA, MX, TXT, NS, CNAME, CAA, SOA, SRV
+- TTL extraction per record type
+- Record count per type
+
+### 2.2 Authoritative Records (`records.go`)
+- Authoritative nameserver discovery
+- Direct authoritative query (bypassing resolvers)
+- TCP fallback for truncated responses
+- Ground-truth record comparison
+
+### 2.3 Resolver Consensus (`records.go`)
+- Cloudflare DNS (1.1.1.1) query
+- Google Public DNS (8.8.8.8) query
+- Quad9 (9.9.9.9) query
+- OpenDNS/Cisco Umbrella (208.67.222.222) query
+- Cross-resolver result comparison
+- Consensus agreement detection
+
+### 2.4 Propagation Status (`records.go`)
+- Per-record-type comparison (resolver vs. authoritative)
+- Propagation sync detection
+- Stale record identification
+
+### 2.5 Registrar/RDAP Lookup (`registrar.go`)
+- IANA RDAP bootstrap (1,196 TLDs loaded)
+- RDAP HTTP query with caching (24h TTL per RFC 9224)
+- Registrar name extraction
+- Registrant organization extraction
+- Domain creation/expiration date extraction
+- NS-based registrar inference (fallback)
+- WHOIS server identification
+
+### 2.6 CT Subdomain Discovery (`subdomains.go`)
+- crt.sh API query (Certificate Transparency logs, RFC 6962)
+- Certificate parsing and deduplication
+- Current vs. expired certificate classification
+- CNAME resolution for discovered subdomains
+- Provider summary from CNAME targets
+- 25-second timeout with graceful degradation
+- Result caching (1 hour TTL)
+
+### 2.7 DNS Infrastructure Detection (`infrastructure.go`)
+- NS hostname matching against known provider database
+- Provider tier classification (enterprise / professional / standard / basic)
+- Feature detection (DNSSEC support, DDoS protection, anycast, geo-routing)
+- Government domain detection (.gov, .mil)
+- 200+ CNAME-to-provider mappings
+
+### 2.8 Hosting Summary (`infrastructure.go`)
+- Web hosting provider detection (A/AAAA IP mapping)
+- DNS hosting provider detection (NS records)
+- Email hosting provider detection (MX records)
+- IP-to-country lookup (ip-api.com)
+
+### 2.9 Domain Existence & Status (`orchestrator.go`)
+- NXDOMAIN detection
+- SERVFAIL detection
+- Undelegated domain handling
+- Human-readable status messages
+
+---
+
+## 3. Assessment & Scoring
+
+| # | Feature | Source File | Schema Key |
+|---|---------|-------------|------------|
+| 21 | **Security Posture Assessment** | `posture.go` | `posture` |
+| 22 | **Mail Posture Classification** | `posture.go` | `mail_posture` |
+| 23 | **Remediation Engine** | `remediation.go` | `remediation` |
+
+### 3.1 Security Posture Assessment (`posture.go`)
+- CVSS-aligned risk levels: Informational → Low → Medium → High → Critical
+- Protocol state evaluation (SPF + DMARC + DKIM + CAA presence)
+- DMARC policy strength assessment (none / quarantine / reject)
+- Partial `pct` enforcement detection
+- Missing reporting (`rua`) warning
+- Provider-aware DKIM credit (known hosted providers)
+- Deliberate monitoring detection (`p=none` with `rua`)
+- No-mail domain recognition
+- Per-category posture breakdown
+
+### 3.2 Mail Posture Classification (`posture.go`)
+- Mail intent classification: `email_enabled`, `no_mail_verified`, `no_mail_partial`, `likely_no_mail`
+- MX record presence/absence analysis
+- Null MX detection (RFC 7505)
+- SPF `-all` / `v=spf1 -all` detection
+- Signal aggregation (MX, SPF, DMARC, DKIM, MTA-STS presence)
+
+### 3.3 Remediation Engine (`remediation.go`)
+- Per-section status evaluation
+- Severity classification: Critical / High / Medium / Low
+- DNS record examples (copy-paste ready)
+- RFC section references with citations
+- Top 3 priority fixes sorted by severity
+- Achievable posture projection ("if you fix these, you reach X")
+- Category-specific guidance
+
+---
+
+## 4. Detection & Intelligence
+
+| # | Feature | Source File | Schema Key |
+|---|---------|-------------|------------|
+| 24 | **Email Security Management Detection** | `infrastructure.go` | `email_security_mgmt` |
+| 25 | **Null MX Detection** | `posture.go` | `has_null_mx` |
+| 26 | **No-Mail Domain Detection** | `posture.go` | `is_no_mail_domain` |
+
+### 4.1 Email Security Management Detection (`infrastructure.go`)
+- DMARC `rua` URI provider matching (30+ monitoring providers)
+- DMARC `ruf` URI provider matching
+- TLS-RPT `rua` URI provider matching
+- SPF include flattening provider detection (15+ providers)
+- Hosted DKIM CNAME chain detection
+- MTA-STS CNAME hosting detection
+- Dynamic services NS delegation detection (_dmarc, _domainkey, _mta-sts, _smtp._tls subzones)
+- CNAME provider mapping (200+ mappings)
+
+---
+
+## 5. Data & Metadata
+
+| # | Feature | Source File | Schema Key |
+|---|---------|-------------|------------|
+| 27 | **Data Freshness Tracking** | `orchestrator.go` | `_data_freshness` |
+| 28 | **Section Status Summary** | `orchestrator.go` | `section_status` |
+| 29 | **Authoritative Query Status** | `records.go` | `auth_query_status` |
+| 30 | **Resolver TTL** | `records.go` | `resolver_ttl` |
+| 31 | **Authoritative TTL** | `records.go` | `auth_ttl` |
+| 32 | **SMTP Transport Analysis** | `orchestrator.go` | `smtp_transport` (placeholder — reserved for future implementation) |
+
+---
+
+## 6. Platform Features
+
+| # | Feature | Handler | Template |
+|---|---------|---------|----------|
+| 33 | **Domain Analysis** | `analysis.go` | `results.html` |
+| 34 | **Analysis History** | `history.go` | `history.html` |
+| 35 | **Domain Comparison** | `compare.go` | `compare.html` |
+| 36 | **Statistics Dashboard** | `stats.go` | `stats.html` |
+| 37 | **JSON Export** | `export.go` | — |
+| 38 | **BIMI Logo Proxy** | `proxy.go` | — |
+| 39 | **Health Check** | `health.go` | — |
+| 40 | **PWA / Service Worker** | `static.go` | `sw.js` |
+
+### 6.1 Domain Analysis
+- Single-domain comprehensive audit
+- Re-analyze capability
+- Partial results handling (timeouts, failures)
+- Copy-to-clipboard for DNS records
+- Section collapse/expand
+- Print-optimized layout
+
+### 6.2 Analysis History
+- Paginated history with search
+- Per-analysis email security badge summary (SPF/DMARC/DKIM status)
+- View, re-analyze, compare actions per entry
+- Duration tracking
+
+### 6.3 Domain Comparison
+- Side-by-side comparison of two analysis results
+- Historical result selection
+- Posture score comparison
+
+### 6.4 Statistics Dashboard
+- Aggregate analysis statistics
+- Protocol adoption rates
+- Common provider distributions
+
+### 6.5 JSON Export
+- Full analysis results as downloadable JSON
+- Structured for programmatic consumption
+
+---
+
+## 7. Security & Infrastructure
+
+| # | Feature | Source |
+|---|---------|-------|
+| 41 | **CSRF Protection** | `middleware/csrf.go` — HMAC-signed cookie tokens |
+| 42 | **Rate Limiting** | `middleware/rate_limit.go` — 8 req/min per IP |
+| 43 | **SSRF Hardening** | `dnsclient/` — private IP blocking |
+| 44 | **Multi-Resolver DNS Client** | `dnsclient/` — TCP with DoH fallback |
+| 45 | **Provider Health Telemetry** | `telemetry/` — resolver latency tracking |
+| 46 | **RDAP Response Caching** | `telemetry/` — 24h TTL per RFC 9224 |
+| 47 | **Concurrent Orchestrator** | `orchestrator.go` — goroutine-based parallel analysis |
+| 48 | **60s Master Deadline** | `orchestrator.go` — context-based timeout |
+
+---
+
+## 8. Provider Databases
+
+| Database | Location | Count |
+|----------|----------|-------|
+| CNAME Provider Map | `providers.go` | 178 mappings |
+| DANE MX Capability | `providers.go` | Known DANE-capable mail providers |
+| DMARC Monitoring Providers | `providers.go` | 173 provider patterns |
+| SPF Flattening Providers | `providers.go` | 15+ providers |
+| Hosted DKIM Providers | `providers.go` | Known hosted DKIM services |
+| Dynamic Services Zones | `providers.go` | DNS delegation subzone patterns |
+| DNS Infrastructure Providers | `infrastructure.go` | Enterprise/professional/standard tiers |
+| DKIM Selector Database | `dkim.go` | 29 default selectors |
+| IANA RDAP Bootstrap | Runtime loaded | 1,196 TLDs |
+
+---
+
+## Total Feature Count: 48
+
+**Analysis Modules:** 10 | **Infrastructure:** 10 | **Assessment:** 3 |
+**Detection:** 3 | **Metadata:** 6 | **Platform:** 8 | **Security:** 8
