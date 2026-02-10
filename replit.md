@@ -11,28 +11,18 @@ Preferred communication style: Simple, everyday language.
 ## System Architecture
 
 ### Core System
-The application is currently undergoing a rewrite from Python/Flask to Go/Gin for improved performance and concurrency. The architecture follows an MVC-style separation.
+The application has been fully rewritten from Python/Flask to Go/Gin for improved performance and concurrency. Python codebase remains in repo for reference only. The architecture follows an MVC-style separation.
 
-### Backend (Python - current production)
-- **Frameworks**: Flask, SQLAlchemy (ORM), PostgreSQL.
-- **DNS Analysis Engine**: Utilizes `dnspython` for extensive record queries, email security analysis, and DNS evidence diffing, employing multiple external resolvers for consensus.
-- **Subdomain Discovery**: Combines Certificate Transparency logs, DNS probing, and CNAME chain traversal, prioritizing security-relevant subdomains.
-- **Registrar Lookup**: Employs a three-tier fallback (RDAP, WHOIS, NS-based inference).
-- **Data Model**: Stores complete analysis results in a `full_results` JSON column with schema versioning.
-- **Security**: Implements SSRF protection, CSRF protection, thread-safe caching, and strict IDNA encoding.
-- **Performance**: Uses ThreadPoolExecutor, DNS result TTL cache, CT cache, and semaphore-based concurrency control.
-- **Network Telemetry**: Tracks per-provider health, implements adaptive exponential backoff, and provides an `/api/health` dashboard.
-- **Remediation Guidance**: Maps analysis verdicts to prioritized, RFC-cited fix recommendations (e.g., "Top 3 Fixes") and context-aware per-section guidance.
-- **Testing**: Employs JSON Schema for contract testing, a golden fixture system for regression testing, and dependency injection, with an `offline_mode` for deterministic tests.
-- **Features**: Includes streaming NDJSON export of analysis history and a side-by-side comparison view of two analyses.
-
-### Backend (Go - in progress)
+### Backend (Go - production)
 - **Web Framework**: Gin.
 - **Database**: `pgx` v5 for PostgreSQL with `sqlc` for type-safe query generation.
-- **DNS**: `miekg/dns` (planned).
+- **DNS**: `miekg/dns` for all DNS queries.
 - **Templates**: Go `html/template`.
-- **Project Structure**: Organized with `cmd`, `internal` (config, db, dbq, handlers, middleware, models, templates), `db/queries`, `templates` directories.
-- **Current Status**: All HTTP routes ported, SQLC integration for type-safe database queries, template migration is complete. DNS engine, security features, telemetry, and test parity are remaining phases.
+- **Module**: `go.mod` at project root (module name: `dnstool`). Go source lives in `go-server/` with imports as `dnstool/go-server/internal/...`.
+- **Project Structure**: `go-server/cmd/server/` (entry point), `go-server/internal/` (config, db, dbq, handlers, middleware, models, templates, analyzer, dnsclient, telemetry, providers), `go-server/db/queries/`, `go-server/templates/`.
+- **Build**: `go build -o dns-tool-server ./go-server/cmd/server/` from project root.
+- **Deployment**: Autoscale deployment. Build command: `go build -o dns-tool-server ./go-server/cmd/server/`. Run command: `./dns-tool-server`. Binary listens on 0.0.0.0:5000.
+- **Development**: Workflow uses gunicorn wrapper (`.pythonlibs/bin/gunicorn`) that exec's the pre-built Go binary.
 
 ### Frontend
 - **Technology**: Server-rendered HTML with Jinja2 templates (Python) / Go `html/template` (Go), Bootstrap dark theme, custom CSS, and client-side JavaScript.
@@ -77,10 +67,12 @@ The application is currently undergoing a rewrite from Python/Flask to Go/Gin fo
 
 **Python Dependency**: Fully eliminated. The Go server no longer proxies any requests to Python. All routes — analysis, subdomains API, history, stats, compare, export — are handled natively in Go. Python codebase remains in repo for reference but is not required to run the Go server.
 
-**Cutover Complete**: Go server now serves production traffic on port 5000. The workflow's gunicorn command is intercepted by `.pythonlibs/bin/gunicorn` (a bash wrapper that `exec`s the Go binary). A backup of the original gunicorn exists at `.pythonlibs/bin/gunicorn.real`. The wrapper auto-builds the Go binary if needed and falls back to Python gunicorn if the Go build fails. `main.py` is kept as a no-op import for compatibility.
+**Cutover Complete**: Go server serves all traffic on port 5000. Development workflow uses gunicorn wrapper (`.pythonlibs/bin/gunicorn`) that exec's the Go binary. Deployment uses direct `go build` + `./dns-tool-server`. `main.py` kept as no-op for workflow compatibility.
 
 ## Recent Changes
 
+- **2026-02-10**: Module restructure for clean deployment. Moved `go.mod`/`go.sum` to project root. Updated all 43 import paths from `dnstool/internal/` to `dnstool/go-server/internal/`. Deployment now uses simple `go build -o dns-tool-server ./go-server/cmd/server/` + `./dns-tool-server`. All 92 tests pass.
+- **2026-02-10**: SonarQube code quality refactoring. Reduced cognitive complexity across 14 Go files: templates/funcs.go (119 to <15), handlers/health.go (23 to <15), analyzer/dkim.go (107 to <15), 8 analyzer files refactored. Extracted 55+ constants for DKIM selectors/providers, 19 constants for provider categories. Created shared classifyHTTPError utility.
 - **2026-02-10**: Production cutover complete. Go server now handles all traffic on port 5000 via gunicorn wrapper. Workflow remains stable (RUNNING state). Full analysis verified with all 9 DNS categories (SPF, DKIM, DMARC, DANE, DNSSEC, MTA-STS, TLS-RPT, BIMI, CAA).
 - **2026-02-10**: Version bumped to 26.12.0. Security dependency update: downgraded quic-go (v0.54.0 removed), gin adjusted to v1.10.1. All 92 Go tests pass. Ready for cutover evaluation.
 - **2026-02-10**: Python proxy fully removed. APISubdomains now uses native Go DiscoverSubdomains. proxyToPython function and PythonBackendURL config deleted. BasicRecords/AuthoritativeRecords now properly stored in DB. RDAP cache TTL text corrected from "6 hours" to "24 hours" (RFC 9224). Version bumped to 26.11.0.
