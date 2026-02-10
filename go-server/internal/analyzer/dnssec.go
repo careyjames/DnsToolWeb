@@ -39,9 +39,9 @@ func buildDNSSECResult(hasDNSKEY, hasDS, adFlag bool, dnskeyRecords, dsRecords [
         if hasDNSKEY && hasDS {
                 var message string
                 if adFlag {
-                        message = "DNSSEC fully configured and validated - AD flag confirmed by resolver"
+                        message = fmt.Sprintf("DNSSEC fully configured and validated — AD (Authenticated Data) flag set by resolver %s confirming cryptographic chain of trust from root to zone (RFC 4035 §3.2.3)", derefStr(adResolver))
                 } else {
-                        message = "DNSSEC configured (DNSKEY + DS present) but AD flag not set by resolver"
+                        message = "DNSSEC configured (DNSKEY + DS records present) but AD flag not set — resolver did not confirm chain of trust validation (RFC 4035 §3.2.3). This may indicate a broken chain or a non-validating resolver path."
                 }
                 return map[string]any{
                         "status":         "success",

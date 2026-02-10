@@ -121,6 +121,10 @@ func evaluateDMARCPolicy(tags dmarcTags) (string, string, []string) {
                 }
         }
 
+        if tags.rua == nil {
+                issues = append(issues, "No aggregate reporting (rua) configured — you won't receive reports about authentication results and potential abuse")
+        }
+
         if tags.ruf != nil {
                 issues = append(issues, "Forensic reports (ruf) configured - many providers ignore these")
         }
@@ -162,8 +166,8 @@ func (a *Analyzer) AnalyzeDMARC(ctx context.Context, domain string) map[string]a
                 if record == "" {
                         continue
                 }
-                lower := strings.ToLower(record)
-                if strings.Contains(lower, "v=dmarc1") {
+                lower := strings.ToLower(strings.TrimSpace(record))
+                if lower == "v=dmarc1" || strings.HasPrefix(lower, "v=dmarc1;") || strings.HasPrefix(lower, "v=dmarc1 ") {
                         validDMARC = append(validDMARC, record)
                 } else if strings.Contains(lower, "dmarc") {
                         dmarcLike = append(dmarcLike, record)
@@ -178,9 +182,9 @@ func (a *Analyzer) AnalyzeDMARC(ctx context.Context, domain string) map[string]a
                 status = "error"
                 message = "No valid DMARC record found"
         } else if len(validDMARC) > 1 {
-                status = "warning"
-                message = "Multiple DMARC records found (there should be only one)"
-                issues = append(issues, "Multiple DMARC records")
+                status = "error"
+                message = "Multiple DMARC records found — receivers must treat this as no DMARC (RFC 7489 §6.6.3)"
+                issues = append(issues, "Multiple DMARC records cause PermError — only one record permitted per RFC 7489")
         } else {
                 tags = parseDMARCTags(validDMARC[0])
                 status, message, issues = evaluateDMARCPolicy(tags)

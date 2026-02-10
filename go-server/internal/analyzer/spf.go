@@ -117,7 +117,7 @@ func buildSPFVerdict(lookupCount int, permissiveness *string, noMailIntent bool,
         }
 
         if lookupCount > 10 {
-                return "warning", fmt.Sprintf("SPF exceeds lookup limit (%d/10 lookups)", lookupCount)
+                return "error", fmt.Sprintf("SPF exceeds 10 DNS lookup limit (%d/10) — PermError per RFC 7208 §4.6.4", lookupCount)
         }
         if lookupCount == 10 {
                 return "warning", "SPF at lookup limit (10/10 lookups) - no room for growth"
@@ -170,8 +170,8 @@ func (a *Analyzer) AnalyzeSPF(ctx context.Context, domain string) map[string]any
                 if record == "" {
                         continue
                 }
-                lower := strings.ToLower(record)
-                if strings.Contains(lower, "v=spf1") {
+                lower := strings.ToLower(strings.TrimSpace(record))
+                if lower == "v=spf1" || strings.HasPrefix(lower, "v=spf1 ") {
                         validSPF = append(validSPF, record)
                 } else if strings.Contains(lower, "spf") {
                         spfLike = append(spfLike, record)

@@ -68,8 +68,15 @@ func (a *Analyzer) AnalyzeMTASTS(ctx context.Context, domain string) map[string]
                 }
         }
 
+        var policyIssues []string
+        hasVersion, _ := policyData["has_version"].(bool)
+
         var status, message string
         if policyData["fetched"].(bool) && mode != nil {
+                if !hasVersion {
+                        policyIssues = append(policyIssues, "Policy file missing required 'version: STSv1' field (RFC 8461 §3.2)")
+                }
+
                 switch *mode {
                 case "enforce":
                         status = "success"
@@ -88,6 +95,11 @@ func (a *Analyzer) AnalyzeMTASTS(ctx context.Context, domain string) map[string]
                 default:
                         status = "success"
                         message = "MTA-STS policy found"
+                }
+
+                if !hasVersion && status == "success" {
+                        status = "warning"
+                        message += " (missing version field in policy)"
                 }
         } else if policyData["error"] != nil {
                 status = "warning"
@@ -110,6 +122,7 @@ func (a *Analyzer) AnalyzeMTASTS(ctx context.Context, domain string) map[string]
                 "policy_fetched": policyData["fetched"],
                 "policy_error":   policyData["error"],
                 "hosting_cname":  derefStr(hostingCNAME),
+                "policy_issues":  policyIssues,
         }
 }
 
@@ -149,10 +162,17 @@ func (a *Analyzer) fetchMTASTSPolicy(ctx context.Context, policyURL string) map[
         result["raw"] = policyText
 
         var mxPatterns []string
+        hasVersion := false
         for _, line := range strings.Split(policyText, "\n") {
                 line = strings.TrimSpace(line)
                 lower := strings.ToLower(line)
-                if strings.HasPrefix(lower, "mode:") {
+                if strings.HasPrefix(lower, "version:") {
+                        ver := strings.TrimSpace(line[8:])
+                        if strings.EqualFold(ver, "STSv1") {
+                                hasVersion = true
+                        }
+                        result["policy_version"] = ver
+                } else if strings.HasPrefix(lower, "mode:") {
                         result["mode"] = strings.TrimSpace(strings.ToLower(line[5:]))
                 } else if strings.HasPrefix(lower, "max_age:") {
                         var maxAge int
@@ -168,6 +188,7 @@ func (a *Analyzer) fetchMTASTSPolicy(ctx context.Context, policyURL string) map[
                 }
         }
         result["mx"] = mxPatterns
+        result["has_version"] = hasVersion
 
         return result
 }

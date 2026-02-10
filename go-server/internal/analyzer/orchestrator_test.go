@@ -719,3 +719,94 @@ func TestGetMap(t *testing.T) {
                 t.Error("getMap missing expected nil")
         }
 }
+
+func TestPosturePartialDMARCPctDowngrade(t *testing.T) {
+        a := newTestAnalyzer()
+        results := map[string]any{
+                "spf_analysis":     map[string]any{"status": "success"},
+                "dmarc_analysis":   map[string]any{"status": "warning", "policy": "reject", "pct": 50},
+                "dkim_analysis":    map[string]any{"status": "success"},
+                "mta_sts_analysis": map[string]any{},
+                "tlsrpt_analysis":  map[string]any{},
+                "bimi_analysis":    map[string]any{},
+                "dane_analysis":    map[string]any{},
+                "caa_analysis":     map[string]any{"status": "success"},
+                "dnssec_analysis":  map[string]any{},
+        }
+
+        posture := a.CalculatePosture(results)
+        state, _ := posture["state"].(string)
+        if state == "STRONG" {
+                t.Error("DMARC pct=50 with p=reject should NOT grade STRONG — partial enforcement per RFC 7489 §6.3")
+        }
+        if state != "GOOD" {
+                t.Errorf("expected GOOD for partial DMARC enforcement, got %v", state)
+        }
+        msg, _ := posture["message"].(string)
+        if !strings.Contains(msg, "partial") && !strings.Contains(msg, "pct=50") {
+                t.Errorf("message should mention partial enforcement, got %q", msg)
+        }
+}
+
+func TestPostureMissingDMARCRuaWarning(t *testing.T) {
+        a := newTestAnalyzer()
+        results := map[string]any{
+                "spf_analysis":     map[string]any{"status": "success"},
+                "dmarc_analysis":   map[string]any{"status": "success", "policy": "reject"},
+                "dkim_analysis":    map[string]any{"status": "success"},
+                "mta_sts_analysis": map[string]any{},
+                "tlsrpt_analysis":  map[string]any{},
+                "bimi_analysis":    map[string]any{},
+                "dane_analysis":    map[string]any{},
+                "caa_analysis":     map[string]any{"status": "success"},
+                "dnssec_analysis":  map[string]any{},
+        }
+
+        posture := a.CalculatePosture(results)
+        issues, _ := posture["issues"].([]string)
+        found := false
+        for _, issue := range issues {
+                if strings.Contains(issue, "rua") || strings.Contains(issue, "aggregate reporting") {
+                        found = true
+                        break
+                }
+        }
+        if !found {
+                t.Error("expected rua missing warning in issues when DMARC has no rua configured")
+        }
+}
+
+func TestDKIMTestFlagDetection(t *testing.T) {
+        record := "v=DKIM1; k=rsa; t=y; p=MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQC3QFG6HUNa2TY3OwWBqo7zAmHE7GpRODsR3sFjYMmCTD8rIiPHCnWH8dRszc3E0nPA7JhZSY7oPqQVKrI7UbIU"
+        keyInfo := analyzeDKIMKey(record)
+        if keyInfo == nil {
+                t.Fatal("analyzeDKIMKey returned nil")
+        }
+        testMode, _ := keyInfo["test_mode"].(bool)
+        if !testMode {
+                t.Error("expected test_mode=true for DKIM record with t=y flag per RFC 6376 §3.6.1")
+        }
+        issues, _ := keyInfo["issues"].([]string)
+        foundIssue := false
+        for _, issue := range issues {
+                if strings.Contains(issue, "test mode") {
+                        foundIssue = true
+                        break
+                }
+        }
+        if !foundIssue {
+                t.Error("expected test mode issue in key analysis")
+        }
+}
+
+func TestDKIMNoTestFlagNormal(t *testing.T) {
+        record := "v=DKIM1; k=rsa; p=MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA"
+        keyInfo := analyzeDKIMKey(record)
+        if keyInfo == nil {
+                t.Fatal("analyzeDKIMKey returned nil")
+        }
+        testMode, _ := keyInfo["test_mode"].(bool)
+        if testMode {
+                t.Error("expected test_mode=false for normal DKIM record without t=y")
+        }
+}
