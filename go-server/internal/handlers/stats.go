@@ -4,8 +4,8 @@ import (
         "net/http"
         "strings"
 
-        "dnstool/internal/config"
-        "dnstool/internal/db"
+        "dnstool/go-server/internal/config"
+        "dnstool/go-server/internal/db"
 
         "github.com/gin-gonic/gin"
 )

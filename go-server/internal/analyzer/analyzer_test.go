@@ -3,7 +3,7 @@ package analyzer_test
 import (
 	"testing"
 
-	"dnstool/internal/analyzer"
+	"dnstool/go-server/internal/analyzer"
 )
 
 var requiredSections = []string{

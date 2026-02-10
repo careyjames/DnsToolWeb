@@ -5,9 +5,9 @@ import (
         "runtime"
         "time"
 
-        "dnstool/internal/analyzer"
-        "dnstool/internal/db"
-        "dnstool/internal/telemetry"
+        "dnstool/go-server/internal/analyzer"
+        "dnstool/go-server/internal/db"
+        "dnstool/go-server/internal/telemetry"
 
         "github.com/gin-gonic/gin"
 )

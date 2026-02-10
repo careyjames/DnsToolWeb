@@ -6,7 +6,7 @@ import (
 	"log/slog"
 	"time"
 
-	"dnstool/internal/dbq"
+	"dnstool/go-server/internal/dbq"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 )

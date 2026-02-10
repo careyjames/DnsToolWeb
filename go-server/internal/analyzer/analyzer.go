@@ -6,8 +6,8 @@ import (
         "sync"
         "time"
 
-        "dnstool/internal/dnsclient"
-        "dnstool/internal/telemetry"
+        "dnstool/go-server/internal/dnsclient"
+        "dnstool/go-server/internal/telemetry"
 )
 
 type Analyzer struct {

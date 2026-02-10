@@ -6,8 +6,8 @@ import (
 	"net/http"
 	"time"
 
-	"dnstool/internal/db"
-	"dnstool/internal/dbq"
+	"dnstool/go-server/internal/db"
+	"dnstool/go-server/internal/dbq"
 
 	"github.com/gin-gonic/gin"
 )

@@ -3,7 +3,7 @@ package dnsclient_test
 import (
 	"testing"
 
-	"dnstool/internal/dnsclient"
+	"dnstool/go-server/internal/dnsclient"
 )
 
 func TestIsPrivateIP(t *testing.T) {

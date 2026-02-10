@@ -6,7 +6,7 @@ import (
 	"sort"
 	"strings"
 
-	"dnstool/internal/dnsclient"
+	"dnstool/go-server/internal/dnsclient"
 )
 
 func (a *Analyzer) AnalyzeNSDelegation(ctx context.Context, domain string) map[string]any {

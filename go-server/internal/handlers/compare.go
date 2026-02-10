@@ -6,9 +6,9 @@ import (
         "net/http"
         "strconv"
 
-        "dnstool/internal/config"
-        "dnstool/internal/db"
-        "dnstool/internal/dbq"
+        "dnstool/go-server/internal/config"
+        "dnstool/go-server/internal/db"
+        "dnstool/go-server/internal/dbq"
 
         "github.com/gin-gonic/gin"
 )

@@ -8,7 +8,7 @@ import (
 	"strings"
 	"sync"
 
-	"dnstool/internal/providers"
+	"dnstool/go-server/internal/providers"
 )
 
 var daneUsageNames = map[int]string{

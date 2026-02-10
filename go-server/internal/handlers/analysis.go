@@ -10,11 +10,11 @@ import (
         "strings"
         "time"
 
-        "dnstool/internal/analyzer"
-        "dnstool/internal/config"
-        "dnstool/internal/db"
-        "dnstool/internal/dbq"
-        "dnstool/internal/dnsclient"
+        "dnstool/go-server/internal/analyzer"
+        "dnstool/go-server/internal/config"
+        "dnstool/go-server/internal/db"
+        "dnstool/go-server/internal/dbq"
+        "dnstool/go-server/internal/dnsclient"
 
         "github.com/gin-gonic/gin"
 )

@@ -3,7 +3,7 @@ package handlers
 import (
         "net/http"
 
-        "dnstool/internal/config"
+        "dnstool/go-server/internal/config"
 
         "github.com/gin-gonic/gin"
 )

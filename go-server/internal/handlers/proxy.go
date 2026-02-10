@@ -9,7 +9,7 @@ import (
         "strings"
         "time"
 
-        "dnstool/internal/dnsclient"
+        "dnstool/go-server/internal/dnsclient"
 
         "github.com/gin-gonic/gin"
 )

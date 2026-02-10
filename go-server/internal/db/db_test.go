@@ -6,8 +6,8 @@ import (
 	"testing"
 	"time"
 
-	"dnstool/internal/db"
-	"dnstool/internal/dbq"
+	"dnstool/go-server/internal/db"
+	"dnstool/go-server/internal/dbq"
 )
 
 func getTestDB(t *testing.T) *db.Database {

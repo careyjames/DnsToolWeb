@@ -6,7 +6,7 @@ import (
 	"strconv"
 	"strings"
 
-	"dnstool/internal/dnsclient"
+	"dnstool/go-server/internal/dnsclient"
 )
 
 var algorithmNames = map[int]string{

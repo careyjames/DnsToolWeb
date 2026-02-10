@@ -8,12 +8,12 @@ import (
         "os"
         "path/filepath"
 
-        "dnstool/internal/analyzer"
-        "dnstool/internal/config"
-        "dnstool/internal/db"
-        "dnstool/internal/handlers"
-        "dnstool/internal/middleware"
-        tmplFuncs "dnstool/internal/templates"
+        "dnstool/go-server/internal/analyzer"
+        "dnstool/go-server/internal/config"
+        "dnstool/go-server/internal/db"
+        "dnstool/go-server/internal/handlers"
+        "dnstool/go-server/internal/middleware"
+        tmplFuncs "dnstool/go-server/internal/templates"
 
         "github.com/gin-gonic/gin"
 )

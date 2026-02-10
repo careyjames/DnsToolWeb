@@ -8,7 +8,7 @@ import (
 	"strings"
 	"testing"
 
-	"dnstool/internal/middleware"
+	"dnstool/go-server/internal/middleware"
 
 	"github.com/gin-gonic/gin"
 )

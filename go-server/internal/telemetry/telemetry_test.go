@@ -1,7 +1,7 @@
 package telemetry_test
 
 import (
-        "dnstool/internal/telemetry"
+        "dnstool/go-server/internal/telemetry"
         "sync"
         "sync/atomic"
         "testing"
