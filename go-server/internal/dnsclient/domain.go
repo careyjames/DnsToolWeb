@@ -1,0 +1,100 @@
+package dnsclient
+
+import (
+	"context"
+	"regexp"
+	"strings"
+
+	"golang.org/x/net/idna"
+)
+
+var (
+	labelRegex = regexp.MustCompile(`^[a-zA-Z0-9-]+$`)
+	tldRegex   = regexp.MustCompile(`^[a-zA-Z]{2,}$`)
+)
+
+func DomainToASCII(domain string) (string, error) {
+	domain = strings.TrimSpace(domain)
+	domain = strings.TrimRight(domain, ".")
+
+	p := idna.New(idna.MapForLookup(), idna.Transitional(false))
+	ascii, err := p.ToASCII(domain)
+	if err != nil {
+		if regexp.MustCompile(`^[a-zA-Z0-9.-]+$`).MatchString(domain) {
+			labels := strings.Split(domain, ".")
+			for _, label := range labels {
+				if label == "" || len(label) > 63 || strings.HasPrefix(label, "-") || strings.HasSuffix(label, "-") {
+					return "", err
+				}
+			}
+			return domain, nil
+		}
+		return "", err
+	}
+	return ascii, nil
+}
+
+func ValidateDomain(domain string) bool {
+	if domain == "" || len(domain) > 253 {
+		return false
+	}
+
+	domain = strings.TrimSpace(domain)
+	domain = strings.TrimRight(domain, ".")
+	if domain == "" {
+		return false
+	}
+
+	ascii, err := DomainToASCII(domain)
+	if err != nil {
+		return false
+	}
+
+	if strings.Contains(ascii, "..") || strings.HasPrefix(ascii, ".") || strings.HasPrefix(ascii, "-") {
+		return false
+	}
+
+	labels := strings.Split(ascii, ".")
+	if len(labels) < 2 {
+		return false
+	}
+
+	for _, label := range labels {
+		if label == "" || len(label) > 63 {
+			return false
+		}
+		if strings.HasPrefix(label, "-") || strings.HasSuffix(label, "-") {
+			return false
+		}
+		if !labelRegex.MatchString(label) {
+			return false
+		}
+	}
+
+	tld := labels[len(labels)-1]
+	if !tldRegex.MatchString(tld) && !strings.HasPrefix(tld, "xn--") {
+		return false
+	}
+
+	return true
+}
+
+func GetTLD(domain string) string {
+	parts := strings.Split(domain, ".")
+	if len(parts) == 0 {
+		return ""
+	}
+	return strings.ToLower(parts[len(parts)-1])
+}
+
+func FindParentZone(c *Client, ctx context.Context, domain string) string {
+	parts := strings.Split(domain, ".")
+	for i := 1; i < len(parts)-1; i++ {
+		candidate := strings.Join(parts[i:], ".")
+		results := c.QueryDNS(ctx, "NS", candidate)
+		if len(results) > 0 {
+			return candidate
+		}
+	}
+	return ""
+}
