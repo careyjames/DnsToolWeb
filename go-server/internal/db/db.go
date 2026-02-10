@@ -6,11 +6,14 @@ import (
 	"log/slog"
 	"time"
 
+	"dnstool/internal/dbq"
+
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 type Database struct {
-	Pool *pgxpool.Pool
+	Pool    *pgxpool.Pool
+	Queries *dbq.Queries
 }
 
 func Connect(databaseURL string) (*Database, error) {
@@ -39,7 +42,10 @@ func Connect(databaseURL string) (*Database, error) {
 	}
 
 	slog.Info("Database connected successfully")
-	return &Database{Pool: pool}, nil
+	return &Database{
+		Pool:    pool,
+		Queries: dbq.New(pool),
+	}, nil
 }
 
 func (d *Database) Close() {
