@@ -102,6 +102,10 @@ func NormalizeResults(fullResults json.RawMessage) map[string]interface{} {
                         if normalized, found := legacyPostureStates[state]; found {
                                 posture["state"] = normalized
                         }
+                        if posture["state"] == "Secure" {
+                                posture["color"] = "success"
+                                posture["icon"] = "shield-alt"
+                        }
                 }
         }
 

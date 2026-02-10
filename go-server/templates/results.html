@@ -150,12 +150,12 @@
                             <div class="d-flex align-items-center">
                                 <i class="fas fa-{{$postureIcon}} fa-2x text-{{$postureColor}} me-3"></i>
                                 <div>
-                                    <div class="d-flex align-items-center flex-wrap">
-                                        <span class="fw-semibold me-2">DNS Security &amp; Trust Posture</span>
-                                        <span class="fw-semibold me-2" style="font-size: 0.95rem;">Risk Level:</span>
+                                    <span class="fw-semibold">DNS Security &amp; Trust Posture</span>
+                                    <div class="d-flex align-items-center mt-1">
+                                        <span class="fw-semibold me-2">Risk Level:</span>
                                         <span class="badge bg-{{$postureColor}} fs-6 px-3 py-2">{{$postureState}}</span>
                                     </div>
-                                    <small class="text-muted">{{$postureMsg}}</small>
+                                    <small class="text-muted d-block mt-1">{{$postureMsg}}</small>
                                     {{if mapGetBool "deliberate_monitoring" $posture}}
                                     <small class="text-info d-block mt-1"><i class="fas fa-flask me-1"></i>{{mapGetStr "deliberate_monitoring_note" $posture}}</small>
                                     {{end}}
