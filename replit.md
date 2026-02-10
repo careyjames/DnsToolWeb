@@ -21,7 +21,7 @@ The application has been fully rewritten from Python/Flask to Go/Gin for improve
 - **Module**: `go.mod` at project root (module name: `dnstool`). Go source lives in `go-server/` with imports as `dnstool/go-server/internal/...`.
 - **Project Structure**: `go-server/cmd/server/` (entry point), `go-server/internal/` (config, db, dbq, handlers, middleware, models, templates, analyzer, dnsclient, telemetry, providers), `go-server/db/queries/`, `go-server/templates/`.
 - **Build**: `go build -o dns-tool-server ./go-server/cmd/server/` from project root.
-- **Deployment**: Autoscale deployment. Build command: `go build -o dns-tool-server ./go-server/cmd/server/`. Run command: `./dns-tool-server`. Binary listens on 0.0.0.0:5000.
+- **Deployment**: Autoscale deployment. Build command: `CGO_ENABLED=0 go build -o dns-tool-server ./go-server/cmd/server/`. Run command: `./dns-tool-server`. Binary listens on 0.0.0.0:5000. Note: `CGO_ENABLED=0` is required because the deployment runtime lacks gcc; all dependencies (pgx, gin, miekg/dns) are pure Go and work without CGO.
 - **Development**: Workflow uses gunicorn wrapper (`.pythonlibs/bin/gunicorn`) that exec's the pre-built Go binary.
 
 ### Frontend
