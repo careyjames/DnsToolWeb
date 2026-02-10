@@ -1,6 +1,7 @@
 package analyzer
 
 import (
+        "strings"
         "testing"
 )
 
@@ -123,8 +124,8 @@ func TestPostureFullProtection(t *testing.T) {
         if score < 90 {
                 t.Errorf("expected score >= 90 for full protection, got %d", score)
         }
-        if posture["grade"] != "A+" {
-                t.Errorf("expected grade A+, got %v", posture["grade"])
+        if posture["state"] != "STRONG" {
+                t.Errorf("expected state STRONG, got %v", posture["state"])
         }
         if posture["color"] != "success" {
                 t.Errorf("expected color success, got %v", posture["color"])
@@ -150,8 +151,8 @@ func TestPostureMinimalSPFOnly(t *testing.T) {
         if score != 15 {
                 t.Errorf("expected score=15, got %d", score)
         }
-        if posture["grade"] != "F" {
-                t.Errorf("expected grade F, got %v", posture["grade"])
+        if posture["state"] != "CRITICAL" {
+                t.Errorf("expected state CRITICAL, got %v", posture["state"])
         }
 }
 
@@ -241,8 +242,8 @@ func TestPostureGradeBoundaries(t *testing.T) {
                                 "caa_analysis":     map[string]any{"status": "success"},
                                 "dnssec_analysis":  map[string]any{"status": "success"},
                         },
-                        expectedGrade: "A+",
-                        expectedLabel: "Excellent",
+                        expectedGrade: "STRONG",
+                        expectedLabel: "Excellent security posture",
                         expectedColor: "success",
                         minScore:      90,
                         maxScore:      100,
@@ -260,8 +261,8 @@ func TestPostureGradeBoundaries(t *testing.T) {
                                 "caa_analysis":     map[string]any{"status": "success"},
                                 "dnssec_analysis":  map[string]any{},
                         },
-                        expectedGrade: "A",
-                        expectedLabel: "Very Good",
+                        expectedGrade: "STRONG",
+                        expectedLabel: "Very good security posture",
                         expectedColor: "success",
                         minScore:      80,
                         maxScore:      89,
@@ -279,8 +280,8 @@ func TestPostureGradeBoundaries(t *testing.T) {
                                 "caa_analysis":     map[string]any{},
                                 "dnssec_analysis":  map[string]any{},
                         },
-                        expectedGrade: "B",
-                        expectedLabel: "Good",
+                        expectedGrade: "GOOD",
+                        expectedLabel: "Good security posture",
                         expectedColor: "info",
                         minScore:      70,
                         maxScore:      79,
@@ -298,8 +299,8 @@ func TestPostureGradeBoundaries(t *testing.T) {
                                 "caa_analysis":     map[string]any{},
                                 "dnssec_analysis":  map[string]any{"status": "success"},
                         },
-                        expectedGrade: "C",
-                        expectedLabel: "Fair",
+                        expectedGrade: "FAIR",
+                        expectedLabel: "Fair security posture",
                         expectedColor: "warning",
                         minScore:      55,
                         maxScore:      69,
@@ -317,8 +318,8 @@ func TestPostureGradeBoundaries(t *testing.T) {
                                 "caa_analysis":     map[string]any{},
                                 "dnssec_analysis":  map[string]any{},
                         },
-                        expectedGrade: "D",
-                        expectedLabel: "Needs Improvement",
+                        expectedGrade: "WEAK",
+                        expectedLabel: "Needs improvement",
                         expectedColor: "warning",
                         minScore:      40,
                         maxScore:      54,
@@ -336,7 +337,7 @@ func TestPostureGradeBoundaries(t *testing.T) {
                                 "caa_analysis":     map[string]any{},
                                 "dnssec_analysis":  map[string]any{},
                         },
-                        expectedGrade: "F",
+                        expectedGrade: "CRITICAL",
                         expectedLabel: "Critical",
                         expectedColor: "danger",
                         minScore:      0,
@@ -352,11 +353,13 @@ func TestPostureGradeBoundaries(t *testing.T) {
                         if score < tt.minScore || score > tt.maxScore {
                                 t.Errorf("score %d not in range [%d, %d]", score, tt.minScore, tt.maxScore)
                         }
-                        if posture["grade"] != tt.expectedGrade {
-                                t.Errorf("expected grade %s, got %v", tt.expectedGrade, posture["grade"])
+                        state, _ := posture["state"].(string)
+                        if !strings.HasPrefix(state, tt.expectedGrade) {
+                                t.Errorf("expected state starting with %s, got %v", tt.expectedGrade, state)
                         }
-                        if posture["label"] != tt.expectedLabel {
-                                t.Errorf("expected label %s, got %v", tt.expectedLabel, posture["label"])
+                        label, _ := posture["message"].(string)
+                        if !strings.Contains(label, tt.expectedLabel) {
+                                t.Errorf("expected message containing %s, got %v", tt.expectedLabel, label)
                         }
                         if posture["color"] != tt.expectedColor {
                                 t.Errorf("expected color %s, got %v", tt.expectedColor, posture["color"])

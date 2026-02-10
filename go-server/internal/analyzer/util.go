@@ -94,6 +94,20 @@ func getMap(m map[string]any, key string) map[string]any {
         return nil
 }
 
+func derefStr(p *string) any {
+        if p == nil {
+                return nil
+        }
+        return *p
+}
+
+func derefInt(p *int) any {
+        if p == nil {
+                return nil
+        }
+        return *p
+}
+
 func classifyHTTPError(err error, truncateLen int) string {
         errStr := err.Error()
         if strings.Contains(errStr, "tls") || strings.Contains(errStr, "certificate") {
