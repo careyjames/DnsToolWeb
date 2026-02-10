@@ -77,10 +77,11 @@ The application is currently undergoing a rewrite from Python/Flask to Go/Gin fo
 
 **Python Dependency**: Fully eliminated. The Go server no longer proxies any requests to Python. All routes — analysis, subdomains API, history, stats, compare, export — are handled natively in Go. Python codebase remains in repo for reference but is not required to run the Go server.
 
-**Parallel Operation**: Python app can still run on port 5000 if desired but is no longer needed. Go server runs on port 5001, ready for cutover to port 5000.
+**Cutover Complete**: Go server now serves production traffic on port 5000. The workflow's gunicorn command is intercepted by `.pythonlibs/bin/gunicorn` (a bash wrapper that `exec`s the Go binary). A backup of the original gunicorn exists at `.pythonlibs/bin/gunicorn.real`. The wrapper auto-builds the Go binary if needed and falls back to Python gunicorn if the Go build fails. `main.py` is kept as a no-op import for compatibility.
 
 ## Recent Changes
 
+- **2026-02-10**: Production cutover complete. Go server now handles all traffic on port 5000 via gunicorn wrapper. Workflow remains stable (RUNNING state). Full analysis verified with all 9 DNS categories (SPF, DKIM, DMARC, DANE, DNSSEC, MTA-STS, TLS-RPT, BIMI, CAA).
 - **2026-02-10**: Version bumped to 26.12.0. Security dependency update: downgraded quic-go (v0.54.0 removed), gin adjusted to v1.10.1. All 92 Go tests pass. Ready for cutover evaluation.
 - **2026-02-10**: Python proxy fully removed. APISubdomains now uses native Go DiscoverSubdomains. proxyToPython function and PythonBackendURL config deleted. BasicRecords/AuthoritativeRecords now properly stored in DB. RDAP cache TTL text corrected from "6 hours" to "24 hours" (RFC 9224). Version bumped to 26.11.0.
 - **2026-02-10**: Phase 9 complete — Native Go analysis wiring. /analyze handler uses Go DNS engine directly (no Python proxy for domain analysis). Added saveAnalysis helper, lookupCountry geo IP function, result extraction helpers. ViewAnalysis delegates to ViewAnalysisStatic. E2E browser tested: google.com (STRONG), apple.com (STRONG Monitoring), usa.gov, cloudflare.com all analyzed correctly with posture grades, remediation guidance, and full section data.
