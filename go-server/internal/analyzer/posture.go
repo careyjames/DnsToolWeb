@@ -2,6 +2,28 @@ package analyzer
 
 import "fmt"
 
+var knownDKIMProviders = map[string]bool{
+	"Google Workspace":  true,
+	"Microsoft 365":     true,
+	"Amazon SES":        true,
+	"Proofpoint":        true,
+	"Mimecast":          true,
+	"Barracuda":         true,
+	"Zoho Mail":         true,
+	"Fastmail":          true,
+	"ProtonMail":        true,
+	"Cloudflare Email":  true,
+	"Hornetsecurity":    true,
+}
+
+func isKnownDKIMProvider(provider interface{}) bool {
+	s, ok := provider.(string)
+	if !ok || s == "" || s == "Unknown" {
+		return false
+	}
+	return knownDKIMProviders[s]
+}
+
 func (a *Analyzer) CalculatePosture(results map[string]any) map[string]any {
 	score := 0
 	var issues []string
@@ -21,10 +43,10 @@ func (a *Analyzer) CalculatePosture(results map[string]any) map[string]any {
 
 	switch spf["status"] {
 	case "success":
-		score += 15
+		score += 20
 		configured = append(configured, "SPF")
 	case "warning":
-		score += 8
+		score += 10
 		issues = append(issues, "SPF needs attention")
 	default:
 		absent = append(absent, "SPF")
@@ -34,11 +56,12 @@ func (a *Analyzer) CalculatePosture(results map[string]any) map[string]any {
 	dmarcPolicy, _ := dmarc["policy"].(string)
 	switch dmarc["status"] {
 	case "success":
-		score += 20
+		score += 25
 		if dmarcPolicy == "reject" {
 			score += 5
 			configured = append(configured, "DMARC (reject)")
 		} else if dmarcPolicy == "quarantine" {
+			score += 3
 			configured = append(configured, "DMARC (quarantine)")
 		} else {
 			configured = append(configured, "DMARC")
@@ -56,21 +79,26 @@ func (a *Analyzer) CalculatePosture(results map[string]any) map[string]any {
 
 	switch dkim["status"] {
 	case "success":
-		score += 15
+		score += 20
 		configured = append(configured, "DKIM")
 	case "warning", "partial":
-		score += 8
+		score += 10
 		issues = append(issues, "DKIM issues detected")
 	case "info":
-		score += 3
-		monitoring = append(monitoring, "DKIM (partial)")
+		if isKnownDKIMProvider(dkim["primary_provider"]) {
+			score += 15
+			configured = append(configured, "DKIM (provider-verified)")
+		} else {
+			score += 5
+			monitoring = append(monitoring, "DKIM (partial)")
+		}
 	default:
 		absent = append(absent, "DKIM")
 		issues = append(issues, "No DKIM found")
 	}
 
 	if mtaSts["status"] == "success" {
-		score += 10
+		score += 8
 		configured = append(configured, "MTA-STS")
 	} else {
 		absent = append(absent, "MTA-STS")
@@ -78,24 +106,24 @@ func (a *Analyzer) CalculatePosture(results map[string]any) map[string]any {
 	}
 
 	if tlsrpt["status"] == "success" {
-		score += 5
+		score += 4
 		configured = append(configured, "TLS-RPT")
 	} else {
 		absent = append(absent, "TLS-RPT")
 	}
 
 	if bimi["status"] == "success" {
-		score += 5
+		score += 3
 		configured = append(configured, "BIMI")
 	}
 
 	if dane["has_dane"] == true {
-		score += 10
+		score += 5
 		configured = append(configured, "DANE")
 	}
 
 	if caa["status"] == "success" {
-		score += 10
+		score += 8
 		configured = append(configured, "CAA")
 	} else {
 		absent = append(absent, "CAA")
@@ -103,7 +131,7 @@ func (a *Analyzer) CalculatePosture(results map[string]any) map[string]any {
 	}
 
 	if dnssec["status"] == "success" {
-		score += 10
+		score += 5
 		configured = append(configured, "DNSSEC")
 	} else {
 		absent = append(absent, "DNSSEC")
@@ -116,27 +144,27 @@ func (a *Analyzer) CalculatePosture(results map[string]any) map[string]any {
 
 	var state, icon, color, message string
 	switch {
-	case score >= 90:
+	case score >= 85:
 		state = "STRONG"
 		icon = "shield-alt"
 		color = "success"
 		message = fmt.Sprintf("Excellent security posture (%d/100)", score)
-	case score >= 80:
+	case score >= 70:
 		state = "STRONG"
 		icon = "shield-alt"
 		color = "success"
 		message = fmt.Sprintf("Very good security posture (%d/100)", score)
-	case score >= 70:
+	case score >= 55:
 		state = "GOOD"
 		icon = "check-circle"
 		color = "info"
 		message = fmt.Sprintf("Good security posture (%d/100)", score)
-	case score >= 55:
+	case score >= 40:
 		state = "FAIR"
 		icon = "exclamation-triangle"
 		color = "warning"
 		message = fmt.Sprintf("Fair security posture (%d/100) — improvements recommended", score)
-	case score >= 40:
+	case score >= 25:
 		state = "WEAK"
 		icon = "exclamation-triangle"
 		color = "warning"

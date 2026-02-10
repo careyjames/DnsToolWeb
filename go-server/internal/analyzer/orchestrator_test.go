@@ -148,8 +148,8 @@ func TestPostureMinimalSPFOnly(t *testing.T) {
 
         posture := a.CalculatePosture(results)
         score, _ := posture["score"].(int)
-        if score != 15 {
-                t.Errorf("expected score=15, got %d", score)
+        if score != 20 {
+                t.Errorf("expected score=20, got %d", score)
         }
         if posture["state"] != "CRITICAL" {
                 t.Errorf("expected state CRITICAL, got %v", posture["state"])
@@ -219,6 +219,73 @@ func TestPostureIssuesTracking(t *testing.T) {
         }
 }
 
+func TestPostureProviderAwareDKIM(t *testing.T) {
+        a := newTestAnalyzer()
+        results := map[string]any{
+                "spf_analysis":     map[string]any{"status": "success"},
+                "dmarc_analysis":   map[string]any{"status": "success", "policy": "reject"},
+                "dkim_analysis":    map[string]any{"status": "info", "primary_provider": "Google Workspace"},
+                "mta_sts_analysis": map[string]any{"status": "success"},
+                "tlsrpt_analysis":  map[string]any{"status": "success"},
+                "bimi_analysis":    map[string]any{},
+                "dane_analysis":    map[string]any{},
+                "caa_analysis":     map[string]any{"status": "success"},
+                "dnssec_analysis":  map[string]any{},
+        }
+
+        posture := a.CalculatePosture(results)
+        score, _ := posture["score"].(int)
+        if score < 75 {
+                t.Errorf("provider-aware DKIM should score >= 75, got %d", score)
+        }
+        state, _ := posture["state"].(string)
+        if !strings.HasPrefix(state, "STRONG") {
+                t.Errorf("expected STRONG for provider-aware DKIM, got %v", state)
+        }
+
+        configured, _ := posture["configured"].([]string)
+        found := false
+        for _, c := range configured {
+                if strings.Contains(c, "provider-verified") {
+                        found = true
+                        break
+                }
+        }
+        if !found {
+                t.Error("expected 'provider-verified' in configured list")
+        }
+
+        monitoring, _ := posture["monitoring"].([]string)
+        if len(monitoring) > 0 {
+                t.Errorf("known provider DKIM should not be in monitoring, got %v", monitoring)
+        }
+}
+
+func TestPostureUnknownProviderDKIM(t *testing.T) {
+        a := newTestAnalyzer()
+        results := map[string]any{
+                "spf_analysis":     map[string]any{"status": "success"},
+                "dmarc_analysis":   map[string]any{"status": "success", "policy": "reject"},
+                "dkim_analysis":    map[string]any{"status": "info", "primary_provider": "Unknown"},
+                "mta_sts_analysis": map[string]any{},
+                "tlsrpt_analysis":  map[string]any{},
+                "bimi_analysis":    map[string]any{},
+                "dane_analysis":    map[string]any{},
+                "caa_analysis":     map[string]any{},
+                "dnssec_analysis":  map[string]any{},
+        }
+
+        posture := a.CalculatePosture(results)
+        score, _ := posture["score"].(int)
+        if score != 55 {
+                t.Errorf("unknown provider DKIM info should score 55, got %d", score)
+        }
+        monitoring, _ := posture["monitoring"].([]string)
+        if len(monitoring) == 0 {
+                t.Error("unknown provider DKIM should be in monitoring")
+        }
+}
+
 func TestPostureGradeBoundaries(t *testing.T) {
         tests := []struct {
                 name          string
@@ -230,7 +297,7 @@ func TestPostureGradeBoundaries(t *testing.T) {
                 maxScore      int
         }{
                 {
-                        name: "A+ (>=90)",
+                        name: "Excellent (>=85)",
                         results: map[string]any{
                                 "spf_analysis":     map[string]any{"status": "success"},
                                 "dmarc_analysis":   map[string]any{"status": "success", "policy": "reject"},
@@ -245,17 +312,17 @@ func TestPostureGradeBoundaries(t *testing.T) {
                         expectedGrade: "STRONG",
                         expectedLabel: "Excellent security posture",
                         expectedColor: "success",
-                        minScore:      90,
+                        minScore:      85,
                         maxScore:      100,
                 },
                 {
-                        name: "A (80-89)",
+                        name: "Very good (70-84)",
                         results: map[string]any{
                                 "spf_analysis":     map[string]any{"status": "success"},
                                 "dmarc_analysis":   map[string]any{"status": "success", "policy": "reject"},
                                 "dkim_analysis":    map[string]any{"status": "success"},
-                                "mta_sts_analysis": map[string]any{"status": "success"},
-                                "tlsrpt_analysis":  map[string]any{"status": "success"},
+                                "mta_sts_analysis": map[string]any{},
+                                "tlsrpt_analysis":  map[string]any{},
                                 "bimi_analysis":    map[string]any{},
                                 "dane_analysis":    map[string]any{},
                                 "caa_analysis":     map[string]any{"status": "success"},
@@ -264,17 +331,17 @@ func TestPostureGradeBoundaries(t *testing.T) {
                         expectedGrade: "STRONG",
                         expectedLabel: "Very good security posture",
                         expectedColor: "success",
-                        minScore:      80,
-                        maxScore:      89,
+                        minScore:      70,
+                        maxScore:      84,
                 },
                 {
-                        name: "B (70-79)",
+                        name: "Good (55-69)",
                         results: map[string]any{
                                 "spf_analysis":     map[string]any{"status": "success"},
-                                "dmarc_analysis":   map[string]any{"status": "success", "policy": "reject"},
+                                "dmarc_analysis":   map[string]any{"status": "success", "policy": "quarantine"},
                                 "dkim_analysis":    map[string]any{"status": "success"},
-                                "mta_sts_analysis": map[string]any{"status": "success"},
-                                "tlsrpt_analysis":  map[string]any{"status": "success"},
+                                "mta_sts_analysis": map[string]any{},
+                                "tlsrpt_analysis":  map[string]any{},
                                 "bimi_analysis":    map[string]any{},
                                 "dane_analysis":    map[string]any{},
                                 "caa_analysis":     map[string]any{},
@@ -283,34 +350,34 @@ func TestPostureGradeBoundaries(t *testing.T) {
                         expectedGrade: "GOOD",
                         expectedLabel: "Good security posture",
                         expectedColor: "info",
-                        minScore:      70,
-                        maxScore:      79,
+                        minScore:      55,
+                        maxScore:      69,
                 },
                 {
-                        name: "C (55-69)",
+                        name: "Fair (40-54)",
                         results: map[string]any{
-                                "spf_analysis":     map[string]any{"status": "success"},
+                                "spf_analysis":     map[string]any{"status": "warning"},
                                 "dmarc_analysis":   map[string]any{"status": "success"},
-                                "dkim_analysis":    map[string]any{"status": "success"},
+                                "dkim_analysis":    map[string]any{"status": "warning"},
                                 "mta_sts_analysis": map[string]any{},
                                 "tlsrpt_analysis":  map[string]any{},
                                 "bimi_analysis":    map[string]any{},
                                 "dane_analysis":    map[string]any{},
                                 "caa_analysis":     map[string]any{},
-                                "dnssec_analysis":  map[string]any{"status": "success"},
+                                "dnssec_analysis":  map[string]any{},
                         },
                         expectedGrade: "FAIR",
                         expectedLabel: "Fair security posture",
                         expectedColor: "warning",
-                        minScore:      55,
-                        maxScore:      69,
+                        minScore:      40,
+                        maxScore:      54,
                 },
                 {
-                        name: "D (40-54)",
+                        name: "Weak (25-39)",
                         results: map[string]any{
                                 "spf_analysis":     map[string]any{"status": "success"},
-                                "dmarc_analysis":   map[string]any{"status": "success"},
-                                "dkim_analysis":    map[string]any{"status": "warning"},
+                                "dmarc_analysis":   map[string]any{"status": "warning", "policy": "none"},
+                                "dkim_analysis":    map[string]any{},
                                 "mta_sts_analysis": map[string]any{},
                                 "tlsrpt_analysis":  map[string]any{},
                                 "bimi_analysis":    map[string]any{},
@@ -321,11 +388,11 @@ func TestPostureGradeBoundaries(t *testing.T) {
                         expectedGrade: "WEAK",
                         expectedLabel: "Needs improvement",
                         expectedColor: "warning",
-                        minScore:      40,
-                        maxScore:      54,
+                        minScore:      25,
+                        maxScore:      39,
                 },
                 {
-                        name: "F (<40)",
+                        name: "Critical (<25)",
                         results: map[string]any{
                                 "spf_analysis":     map[string]any{"status": "success"},
                                 "dmarc_analysis":   map[string]any{},
@@ -341,7 +408,7 @@ func TestPostureGradeBoundaries(t *testing.T) {
                         expectedLabel: "Critical",
                         expectedColor: "danger",
                         minScore:      0,
-                        maxScore:      39,
+                        maxScore:      24,
                 },
         }
 
