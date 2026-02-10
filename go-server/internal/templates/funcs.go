@@ -414,10 +414,44 @@ func sliceFuncs() template.FuncMap {
         }
 }
 
+func isNumeric(v interface{}) bool {
+        switch v.(type) {
+        case int, int8, int16, int32, int64,
+                uint, uint8, uint16, uint32, uint64,
+                float32, float64:
+                return true
+        default:
+                return false
+        }
+}
+
+func safeEqual(a, b interface{}) bool {
+        if isNumeric(a) && isNumeric(b) {
+                return toFloat64(a) == toFloat64(b)
+        }
+        if a == nil || b == nil {
+                return a == b
+        }
+        return fmt.Sprintf("%v", a) == fmt.Sprintf("%v", b)
+}
+
+func safeEq(arg1 interface{}, args ...interface{}) bool {
+        for _, arg2 := range args {
+                if safeEqual(arg1, arg2) {
+                        return true
+                }
+        }
+        return false
+}
+
+func safeNe(a, b interface{}) bool { return !safeEqual(a, b) }
+
 func gtCmp(a, b interface{}) bool  { return toFloat64(a) > toFloat64(b) }
 func gteCmp(a, b interface{}) bool { return toFloat64(a) >= toFloat64(b) }
 func ltCmp(a, b interface{}) bool  { return toFloat64(a) < toFloat64(b) }
 func lteCmp(a, b interface{}) bool { return toFloat64(a) <= toFloat64(b) }
+func geCmp(a, b interface{}) bool  { return toFloat64(a) >= toFloat64(b) }
+func leCmp(a, b interface{}) bool  { return toFloat64(a) <= toFloat64(b) }
 func isNil(v interface{}) bool     { return v == nil }
 func notNil(v interface{}) bool    { return v != nil }
 
@@ -446,10 +480,14 @@ func coalesce(vals ...interface{}) interface{} {
 
 func comparisonFuncs() template.FuncMap {
         return template.FuncMap{
+                "eq":       safeEq,
+                "ne":       safeNe,
                 "gt":       gtCmp,
                 "gte":      gteCmp,
                 "lt":       ltCmp,
                 "lte":      lteCmp,
+                "ge":       geCmp,
+                "le":       leCmp,
                 "isNil":    isNil,
                 "notNil":   notNil,
                 "default":  defaultVal,
