@@ -88,10 +88,10 @@
                 {{end}}
             </div>
             <div class="results-header-actions">
-                <button type="button" id="reanalyzeBtn" class="btn btn-primary" data-domain="{{.Domain}}"
+                <a href="/analyze?domain={{.AsciiDomain}}" id="reanalyzeBtn" class="btn btn-primary" data-domain="{{.AsciiDomain}}"
                     {{if gt .WaitSeconds 0}}data-wait-seconds="{{.WaitSeconds}}" data-wait-reason="{{.WaitReason}}"{{end}}>
                     <i class="fas fa-sync-alt me-2"></i>Re-analyze
-                </button>
+                </a>
                 <a href="/" class="btn btn-outline-primary">
                     <i class="fas fa-search me-2"></i>New Domain
                 </a>
@@ -2216,7 +2216,7 @@
                 var countdownInterval = null;
                 
                 function startCountdown(seconds) {
-                    reanalyzeBtn.disabled = true;
+                    reanalyzeBtn.classList.add('disabled');
                     reanalyzeBtn.classList.remove('btn-primary');
                     reanalyzeBtn.classList.add('btn-secondary');
                     
@@ -2224,7 +2224,7 @@
                         if (seconds <= 0) {
                             clearInterval(countdownInterval);
                             reanalyzeBtn.innerHTML = '<i class="fas fa-sync-alt me-2"></i>Re-analyze';
-                            reanalyzeBtn.disabled = false;
+                            reanalyzeBtn.classList.remove('disabled');
                             reanalyzeBtn.classList.remove('btn-secondary');
                             reanalyzeBtn.classList.add('btn-primary');
                         } else {
@@ -2241,14 +2241,16 @@
                 }
                 
                 reanalyzeBtn.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    if (this.disabled) return;
+                    if (this.classList.contains('disabled')) {
+                        e.preventDefault();
+                        return;
+                    }
                     
                     var domain = this.dataset.domain;
                     var overlay = document.getElementById('loadingOverlay');
                     
                     this.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Analyzing...';
-                    this.disabled = true;
+                    this.classList.add('disabled');
                     
                     if (overlay) {
                         overlay.classList.remove('d-none');
@@ -2258,11 +2260,7 @@
                     }
                     
                     var timestamp = Date.now();
-                    var url = '/analyze?domain=' + encodeURIComponent(domain) + '&refresh=' + timestamp;
-                    
-                    setTimeout(function() {
-                        globalThis.location.href = url;
-                    }, 100);
+                    this.href = '/analyze?domain=' + encodeURIComponent(domain) + '&refresh=' + timestamp;
                 });
             }
         });
