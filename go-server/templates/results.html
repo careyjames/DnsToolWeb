@@ -606,7 +606,7 @@
                         {{$emailVerdict := mapGetStr "email" $verdicts}}
                         {{$emailAnswer := mapGetStr "email_answer" $verdicts}}
                         {{if $emailVerdict}}
-                            <div class="alert alert-{{if eq $emailAnswer "No"}}success{{else if or (contains $emailAnswer "Mostly") (contains $emailAnswer "Partially")}}warning{{else}}danger{{end}} py-2 mb-3 small">
+                            <div class="alert alert-{{if mapGetBool "email_secure" $verdicts}}success{{else if eq $emailAnswer "No"}}success{{else if or (contains $emailAnswer "Mostly") (contains $emailAnswer "Partially")}}warning{{else}}danger{{end}} py-2 mb-3 small">
                                 <i class="fas fa-gavel me-2"></i><strong>Verdict:</strong> {{$emailVerdict}}
                             </div>
                         {{end}}

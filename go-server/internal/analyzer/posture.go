@@ -337,40 +337,55 @@ func buildVerdicts(ps protocolState, hasSPF, hasDMARC, hasDKIM bool) map[string]
                                 }() + "."
                 }
                 verdicts["email_secure"] = ps.dmarcPolicy == "reject"
+                if ps.dmarcPolicy == "reject" {
+                        verdicts["email_answer"] = "No"
+                } else {
+                        verdicts["email_answer"] = "Mostly No"
+                }
         } else if hasSPF && hasDMARC && ps.dmarcPolicy == "none" {
                 verdicts["email"] = "Partial email authentication configured — some spoofed messages may be delivered. DMARC is in monitoring mode (p=none)."
                 verdicts["email_secure"] = false
+                verdicts["email_answer"] = "Partially"
         } else if hasSPF && !hasDMARC {
                 verdicts["email"] = "SPF is configured but without DMARC, receiving servers may still accept spoofed messages."
                 verdicts["email_secure"] = false
+                verdicts["email_answer"] = "Yes"
         } else if !hasSPF && !hasDMARC {
                 verdicts["email"] = "No email authentication — this domain can be impersonated by anyone."
                 verdicts["email_secure"] = false
+                verdicts["email_answer"] = "Yes"
         } else {
                 verdicts["email"] = "Partial email authentication configured — some spoofed messages may be delivered."
                 verdicts["email_secure"] = false
+                verdicts["email_answer"] = "Partially"
         }
 
         if ps.bimiOK && ps.caaOK {
                 verdicts["brand"] = "Attackers cannot easily spoof your logo or obtain fraudulent TLS certificates."
                 verdicts["brand_secure"] = true
+                verdicts["brand_answer"] = "No"
         } else if ps.caaOK {
                 verdicts["brand"] = "Certificate issuance restricted via CAA. BIMI not configured for brand logo protection."
                 verdicts["brand_secure"] = false
+                verdicts["brand_answer"] = "Partially"
         } else if ps.bimiOK {
                 verdicts["brand"] = "BIMI brand logo configured. CAA not configured — any CA can issue certificates."
                 verdicts["brand_secure"] = false
+                verdicts["brand_answer"] = "Partially"
         } else {
                 verdicts["brand"] = "No brand protection configured. Any CA can issue certificates and no brand logo verification in place."
                 verdicts["brand_secure"] = false
+                verdicts["brand_answer"] = "Yes"
         }
 
         if ps.dnssecOK {
                 verdicts["dns"] = "DNS responses are cryptographically signed and verified via DNSSEC."
                 verdicts["dns_secure"] = true
+                verdicts["domain_answer"] = "No"
         } else {
                 verdicts["dns"] = "DNS responses are unsigned and could be spoofed. DNSSEC provides cryptographic verification."
                 verdicts["dns_secure"] = false
+                verdicts["domain_answer"] = "Yes"
         }
 
         return verdicts
