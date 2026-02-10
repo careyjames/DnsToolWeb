@@ -8,6 +8,6 @@
 {{end}}
 
 {{define "scripts"}}
-<script src="/static/js/bootstrap.bundle.min.js" defer></script>
-<script src="{{staticVersionURL "js/main.js" .AppVersion}}" defer></script>
+<script nonce="{{.CspNonce}}" src="/static/js/bootstrap.bundle.min.js" defer></script>
+<script nonce="{{.CspNonce}}" src="{{staticVersionURL "js/main.js" .AppVersion}}" defer></script>
 {{end}}
