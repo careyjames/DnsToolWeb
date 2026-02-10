@@ -291,10 +291,18 @@
                 <div class="card border-0 bg-dark bg-opacity-50">
                     <div class="card-body py-2 px-3">
                         <div class="row g-2 align-items-start small">
-                            {{if $postureIssuesF}}
+                            {{$criticalIssues := mapGetSlice "critical_issues" $posture}}
+                            {{$postureRecs := mapGetSlice "recommendations" $posture}}
+                            {{if $criticalIssues}}
                             <div class="col-6 col-lg-3">
                                 <span class="text-danger fw-bold"><i class="fas fa-times-circle me-1"></i>Action Required</span>
-                                <div class="text-danger-emphasis">{{range $i, $issue := $postureIssuesF}}{{if $i}}, {{end}}{{$issue}}{{end}}</div>
+                                <div class="text-danger-emphasis">{{range $i, $issue := $criticalIssues}}{{if $i}}, {{end}}{{$issue}}{{end}}</div>
+                            </div>
+                            {{end}}
+                            {{if $postureRecs}}
+                            <div class="col-6 col-lg-3">
+                                <span class="text-warning fw-bold"><i class="fas fa-lightbulb me-1"></i>Recommended</span>
+                                <div class="text-warning-emphasis">{{range $i, $rec := $postureRecs}}{{if $i}}, {{end}}{{$rec}}{{end}}</div>
                             </div>
                             {{end}}
                             {{if $postureMonitoringF}}

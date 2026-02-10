@@ -99,6 +99,7 @@ func (a *Analyzer) CalculatePosture(results map[string]any) map[string]any {
         ps := evaluateProtocolStates(results)
 
         var issues []string
+        var recommendations []string
         var monitoring []string
         var configured []string
         var absent []string
@@ -140,7 +141,7 @@ func (a *Analyzer) CalculatePosture(results map[string]any) map[string]any {
         }
 
         if hasDMARC && !ps.dmarcHasRua {
-                issues = append(issues, "No DMARC aggregate reporting (rua) configured — unable to monitor authentication results")
+                recommendations = append(recommendations, "No DMARC aggregate reporting (rua) configured — unable to monitor authentication results")
         }
 
         if ps.dkimOK {
@@ -178,7 +179,7 @@ func (a *Analyzer) CalculatePosture(results map[string]any) map[string]any {
                 configured = append(configured, "CAA")
         } else {
                 absent = append(absent, "CAA")
-                issues = append(issues, "No CAA records")
+                recommendations = append(recommendations, "No CAA records")
         }
 
         if ps.dnssecOK {
@@ -200,6 +201,8 @@ func (a *Analyzer) CalculatePosture(results map[string]any) map[string]any {
 
         verdicts := buildVerdicts(ps, hasSPF, hasDMARC, hasDKIM)
 
+        allIssues := append(issues, recommendations...)
+
         return map[string]any{
                 "score":                      score,
                 "grade":                      state,
@@ -208,7 +211,9 @@ func (a *Analyzer) CalculatePosture(results map[string]any) map[string]any {
                 "icon":                       icon,
                 "color":                      color,
                 "message":                    message,
-                "issues":                     issues,
+                "issues":                     allIssues,
+                "critical_issues":            issues,
+                "recommendations":            recommendations,
                 "monitoring":                 monitoring,
                 "configured":                 configured,
                 "absent":                     absent,

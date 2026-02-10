@@ -720,6 +720,44 @@ func TestGetMap(t *testing.T) {
         }
 }
 
+func TestPostureIssuesSeveritySeparation(t *testing.T) {
+        a := newTestAnalyzer()
+        results := map[string]any{
+                "spf_analysis":     map[string]any{"status": "success"},
+                "dmarc_analysis":   map[string]any{"status": "success", "policy": "reject"},
+                "dkim_analysis":    map[string]any{"status": "success"},
+                "mta_sts_analysis": map[string]any{},
+                "tlsrpt_analysis":  map[string]any{},
+                "bimi_analysis":    map[string]any{},
+                "dane_analysis":    map[string]any{},
+                "caa_analysis":     map[string]any{},
+                "dnssec_analysis":  map[string]any{},
+        }
+
+        posture := a.CalculatePosture(results)
+
+        criticalIssues, _ := posture["critical_issues"].([]string)
+        if len(criticalIssues) > 0 {
+                t.Errorf("STRONG domain should have no critical issues, got %v", criticalIssues)
+        }
+
+        recs, _ := posture["recommendations"].([]string)
+        foundCAA := false
+        for _, r := range recs {
+                if strings.Contains(r, "CAA") {
+                        foundCAA = true
+                }
+        }
+        if !foundCAA {
+                t.Error("missing CAA should appear in recommendations, not critical issues")
+        }
+
+        state, _ := posture["state"].(string)
+        if !strings.HasPrefix(state, "STRONG") {
+                t.Errorf("expected STRONG posture with core email auth, got %v", state)
+        }
+}
+
 func TestPosturePartialDMARCPctDowngrade(t *testing.T) {
         a := newTestAnalyzer()
         results := map[string]any{
