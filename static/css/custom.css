@@ -1347,6 +1347,8 @@ main.container {
         border-bottom: 1.5pt solid #1e3a5f !important;
         padding: 7pt 12pt !important;
         page-break-after: avoid;
+        page-break-inside: avoid;
+        break-after: avoid;
     }
 
     .card-header h5,
@@ -1474,7 +1476,7 @@ main.container {
 
     .badge.bg-warning,
     .badge.bg-warning-subtle {
-        background-color: #d97706 !important;
+        background-color: #92400e !important;
         color: #ffffff !important;
         border: none !important;
     }
@@ -1853,12 +1855,6 @@ main.container {
 
     .row.g-4 {
         page-break-inside: auto;
-    }
-
-    .card-header {
-        page-break-after: avoid;
-        page-break-inside: avoid;
-        break-after: avoid;
     }
 
     .card-header + .card-body {

@@ -59,6 +59,20 @@ func buildCompareAnalysis(a dbq.DomainAnalysis) CompareAnalysis {
         return ca
 }
 
+func renderCompareError(c *gin.Context, h *CompareHandler, nonce, csrfToken interface{}, tmpl string, statusCode int, message string, domain string) {
+        data := gin.H{
+                "AppVersion":    h.Config.AppVersion,
+                "CspNonce":      nonce,
+                "CsrfToken":     csrfToken,
+                "ActivePage":    "compare",
+                "FlashMessages": []FlashMessage{{Category: "danger", Message: message}},
+        }
+        if domain != "" {
+                data["Domain"] = domain
+        }
+        c.HTML(statusCode, tmpl, data)
+}
+
 func (h *CompareHandler) Compare(c *gin.Context) {
         domain := c.Query("domain")
         idAStr := c.Query("a")
@@ -78,37 +92,18 @@ func (h *CompareHandler) Compare(c *gin.Context) {
 
         analysisA, err := h.DB.Queries.GetAnalysisByID(ctx, int32(idA))
         if err != nil {
-                c.HTML(http.StatusNotFound, templateCompare, gin.H{
-                        "AppVersion":     h.Config.AppVersion,
-                        "CspNonce":       nonce,
-                        "CsrfToken":     csrfToken,
-                        "ActivePage":     "compare",
-                        "FlashMessages":  []FlashMessage{{Category: "danger", Message: "Analysis A not found"}},
-                })
+                renderCompareError(c, h, nonce, csrfToken, templateCompare, http.StatusNotFound, "Analysis A not found", "")
                 return
         }
 
         analysisB, err := h.DB.Queries.GetAnalysisByID(ctx, int32(idB))
         if err != nil {
-                c.HTML(http.StatusNotFound, templateCompare, gin.H{
-                        "AppVersion":     h.Config.AppVersion,
-                        "CspNonce":       nonce,
-                        "CsrfToken":     csrfToken,
-                        "ActivePage":     "compare",
-                        "FlashMessages":  []FlashMessage{{Category: "danger", Message: "Analysis B not found"}},
-                })
+                renderCompareError(c, h, nonce, csrfToken, templateCompare, http.StatusNotFound, "Analysis B not found", "")
                 return
         }
 
         if analysisA.Domain != analysisB.Domain {
-                c.HTML(http.StatusBadRequest, templateCompareSelect, gin.H{
-                        "AppVersion":     h.Config.AppVersion,
-                        "CspNonce":       nonce,
-                        "CsrfToken":     csrfToken,
-                        "ActivePage":     "compare",
-                        "Domain":         analysisA.Domain,
-                        "FlashMessages":  []FlashMessage{{Category: "danger", Message: "Cannot compare analyses of different domains"}},
-                })
+                renderCompareError(c, h, nonce, csrfToken, templateCompareSelect, http.StatusBadRequest, "Cannot compare analyses of different domains", analysisA.Domain)
                 return
         }
 
@@ -122,14 +117,7 @@ func (h *CompareHandler) Compare(c *gin.Context) {
         resultsB := NormalizeResults(analysisB.FullResults)
 
         if resultsA == nil || resultsB == nil {
-                c.HTML(http.StatusBadRequest, templateCompareSelect, gin.H{
-                        "AppVersion":     h.Config.AppVersion,
-                        "CspNonce":       nonce,
-                        "CsrfToken":     csrfToken,
-                        "ActivePage":     "compare",
-                        "Domain":         analysisA.Domain,
-                        "FlashMessages":  []FlashMessage{{Category: "danger", Message: "One or both analyses have no stored data"}},
-                })
+                renderCompareError(c, h, nonce, csrfToken, templateCompareSelect, http.StatusBadRequest, "One or both analyses have no stored data", analysisA.Domain)
                 return
         }
 

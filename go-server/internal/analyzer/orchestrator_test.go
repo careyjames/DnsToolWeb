@@ -8,6 +8,7 @@ import (
 const (
         testRiskLow      = "Low Risk"
         testRiskMedium   = "Medium Risk"
+        testRiskCritical = "Critical Risk"
         testDomainFake   = "fake.example"
         testDomainExample = "example.com"
         testHelloWorld   = "Hello World"
@@ -407,7 +408,7 @@ func TestPostureTruthBasedGrades(t *testing.T) {
                                 "caa_analysis":     map[string]any{},
                                 "dnssec_analysis":  map[string]any{},
                         },
-                        expectedGrade: "Critical Risk",
+                        expectedGrade: testRiskCritical,
                         expectedColor: "danger",
                         messageContains: "fully vulnerable",
                 },
@@ -927,7 +928,7 @@ func TestPostureMissingSPFScoreZero(t *testing.T) {
                 t.Errorf("domain with all missing records should score 0, got %d", score)
         }
         state, _ := posture["state"].(string)
-        if state != "Critical Risk" {
+        if state != testRiskCritical {
                 t.Errorf("domain with no email auth should be Critical Risk, got %s", state)
         }
 }
@@ -975,7 +976,7 @@ func TestPostureNoMailDomainPartial(t *testing.T) {
 
         posture := a.CalculatePosture(results)
         state, _ := posture["state"].(string)
-        if state == "Critical Risk" {
+        if state == testRiskCritical {
                 t.Error("no-mail domain with SPF -all should not be Critical Risk — it has partial no-mail protection")
         }
 }
