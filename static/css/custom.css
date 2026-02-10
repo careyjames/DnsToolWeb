@@ -1079,21 +1079,21 @@ main.container {
        ================================================ */
     .print-report-header {
         display: block !important;
-        margin-bottom: 18pt;
+        margin-bottom: 20pt;
     }
 
     .print-header-accent {
         height: 5pt;
         background: linear-gradient(90deg, #1e3a5f 0%, #0e7490 60%, #d97706 100%) !important;
         border-radius: 2pt;
-        margin-bottom: 12pt;
+        margin-bottom: 14pt;
     }
 
     .print-header-toprow {
         display: flex;
         justify-content: space-between;
         align-items: flex-start;
-        margin-bottom: 10pt;
+        margin-bottom: 14pt;
     }
 
     .print-header-left {
@@ -1172,9 +1172,10 @@ main.container {
     /* --- Domain Banner — The focal point of the report --- */
     .print-domain-banner {
         background-color: #1e3a5f !important;
-        padding: 12pt 16pt;
+        padding: 14pt 16pt 16pt;
         border-radius: 4pt;
         text-align: center;
+        margin-bottom: 6pt;
     }
 
     .print-domain-label {
@@ -1200,7 +1201,7 @@ main.container {
        ================================================ */
     .print-report-footer {
         display: block !important;
-        margin-top: 20pt;
+        margin-top: 28pt;
         page-break-inside: avoid;
     }
 
@@ -1333,7 +1334,7 @@ main.container {
         border-radius: 4pt !important;
         box-shadow: none !important;
         break-inside: avoid;
-        margin-bottom: 10pt;
+        margin-bottom: 12pt;
     }
 
     .card-header {
@@ -1416,6 +1417,7 @@ main.container {
         background-color: #f8fafc !important;
         border: 1.5pt solid #1e3a5f !important;
         border-radius: 4pt !important;
+        margin-bottom: 14pt !important;
     }
 
     .card.bg-dark.bg-opacity-25 .card-body {
@@ -1423,7 +1425,7 @@ main.container {
     }
 
     .card.bg-dark.bg-opacity-25 .row.g-3 > div {
-        padding: 8pt 6pt !important;
+        padding: 10pt 8pt !important;
         border-right: 0.5pt solid #e5e7eb !important;
     }
 
@@ -1521,7 +1523,9 @@ main.container {
         font-family: 'SF Mono', 'Cascadia Code', 'Fira Code', Consolas, monospace !important;
         font-size: 7.5pt !important;
         line-height: 1.6 !important;
-        padding: 6pt 10pt !important;
+        padding: 7pt 10pt !important;
+        margin-top: 6pt !important;
+        margin-bottom: 6pt !important;
         page-break-inside: avoid;
         word-break: break-all;
     }
@@ -1539,7 +1543,8 @@ main.container {
         border: none !important;
         border-left: 3.5pt solid #6b7280 !important;
         border-radius: 0 4pt 4pt 0 !important;
-        padding: 8pt 12pt !important;
+        padding: 9pt 12pt !important;
+        margin-bottom: 10pt !important;
     }
 
     .alert-success {
@@ -1738,7 +1743,14 @@ main.container {
     .card.border-warning.bg-warning .card-body,
     .card.border-danger.bg-danger .card-body,
     .card.border-info.bg-info .card-body {
-        padding: 12pt !important;
+        padding: 12pt 14pt !important;
+    }
+
+    .card.border-success.bg-success,
+    .card.border-warning.bg-warning,
+    .card.border-danger.bg-danger,
+    .card.border-info.bg-info {
+        margin-bottom: 14pt !important;
     }
 
     /* ================================================
@@ -1807,6 +1819,16 @@ main.container {
     .card-header {
         page-break-after: avoid;
         page-break-inside: avoid;
+        break-after: avoid;
+    }
+
+    .card-header + .card-body {
+        break-before: avoid;
+    }
+
+    h5, h6, .h5, .h6 {
+        page-break-after: avoid;
+        break-after: avoid;
     }
 
     .collapse {
@@ -1844,10 +1866,10 @@ main.container {
     /* ================================================
        SPACING ADJUSTMENTS
        ================================================ */
-    .mb-4 { margin-bottom: 10pt !important; }
+    .mb-4 { margin-bottom: 12pt !important; }
     .mb-3 { margin-bottom: 8pt !important; }
-    .mt-4 { margin-top: 10pt !important; }
-    .mt-5 { margin-top: 12pt !important; }
+    .mt-4 { margin-top: 12pt !important; }
+    .mt-5 { margin-top: 14pt !important; }
     .py-3 { padding-top: 8pt !important; padding-bottom: 8pt !important; }
     .px-3 { padding-left: 10pt !important; padding-right: 10pt !important; }
 
