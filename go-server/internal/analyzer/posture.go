@@ -136,7 +136,11 @@ func classifySPF(ps protocolState, acc *postureAccumulator) {
                         acc.configured = append(acc.configured, "SPF (-all)")
                 } else {
                         acc.configured = append(acc.configured, "SPF (~all)")
-                        acc.recommendations = append(acc.recommendations, "SPF uses ~all (softfail) — consider -all (hardfail) for stricter enforcement per RFC 7208 §5")
+                        dmarcEnforcing := ps.dmarcOK && (ps.dmarcPolicy == "reject" || ps.dmarcPolicy == "quarantine")
+                        hasDKIM := ps.dkimOK || ps.dkimProvider
+                        if !dmarcEnforcing || !hasDKIM {
+                                acc.recommendations = append(acc.recommendations, "SPF uses ~all (softfail) — consider -all (hardfail) for stricter enforcement per RFC 7208 §5")
+                        }
                 }
                 return
         }

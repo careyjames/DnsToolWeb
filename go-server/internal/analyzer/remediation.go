@@ -38,7 +38,7 @@ func (a *Analyzer) GenerateRemediation(results map[string]any) map[string]any {
 
         var fixes []fix
 
-        fixes = appendSPFFixes(fixes, ps, domain)
+        fixes = appendSPFFixes(fixes, ps, results, domain)
         fixes = appendDMARCFixes(fixes, ps, results, domain)
         fixes = appendDKIMFixes(fixes, ps, results, domain)
         fixes = appendCAAFixes(fixes, ps, domain)
@@ -109,22 +109,61 @@ func sortFixes(fixes []fix) {
         }
 }
 
-func appendSPFFixes(fixes []fix, ps protocolState, domain string) []fix {
-        if ps.spfOK {
-                if !ps.spfHardFail {
-                        return append(fixes, fix{
-                                Title:         "Upgrade SPF to hard fail (-all)",
-                                Description:   "Your SPF record uses ~all (softfail), which asks receivers to accept but flag unauthorized senders. Upgrading to -all (hardfail) instructs receivers to reject unauthorized senders outright. Verify all legitimate sending sources are included before switching.",
-                                DNSRecord:     fmt.Sprintf("%s TXT \"v=spf1 include:_spf.google.com -all\"", domain),
-                                RFC:           "RFC 7208 §5",
-                                RFCURL:        "https://datatracker.ietf.org/doc/html/rfc7208#section-5",
-                                Severity:      severityLow,
-                                SeverityColor: colorLow,
-                                SeverityOrder: 4,
-                                Section:       "spf",
-                        })
+func buildSPFRecordExample(domain string, includes []string, qualifier string) string {
+        var parts []string
+        parts = append(parts, "v=spf1")
+        for _, inc := range includes {
+                parts = append(parts, fmt.Sprintf("include:%s", inc))
+        }
+        if len(includes) == 0 {
+                parts = append(parts, "include:_spf.google.com")
+        }
+        parts = append(parts, qualifier)
+        return fmt.Sprintf("%s TXT \"%s\"", domain, strings.Join(parts, " "))
+}
+
+func extractSPFIncludes(results map[string]any) []string {
+        spf := getMapResult(results, "spf_analysis")
+        if inc, ok := spf["includes"].([]any); ok && len(inc) > 0 {
+                out := make([]string, 0, len(inc))
+                for _, v := range inc {
+                        if s, ok := v.(string); ok && s != "" {
+                                out = append(out, s)
+                        }
                 }
-                return fixes
+                if len(out) > 0 {
+                        return out
+                }
+        }
+        if inc, ok := spf["includes"].([]string); ok && len(inc) > 0 {
+                return inc
+        }
+        return nil
+}
+
+func appendSPFFixes(fixes []fix, ps protocolState, results map[string]any, domain string) []fix {
+        includes := extractSPFIncludes(results)
+
+        if ps.spfOK {
+                if ps.spfHardFail {
+                        return fixes
+                }
+                dmarcEnforcing := ps.dmarcOK && (ps.dmarcPolicy == "reject" || ps.dmarcPolicy == "quarantine")
+                hasDKIM := ps.dkimOK || ps.dkimProvider
+                if dmarcEnforcing && hasDKIM {
+                        return fixes
+                }
+                return append(fixes, fix{
+                        Title:       "Upgrade SPF to hard fail (-all)",
+                        Description: "Your SPF record uses ~all (softfail), which asks receivers to accept but flag unauthorized senders. Upgrading to -all (hardfail) instructs receivers to reject unauthorized senders outright. Verify all legitimate sending sources are included before switching. Note: if you later enable DMARC enforcement (p=reject or p=quarantine) with DKIM, ~all becomes acceptable because DMARC evaluates both SPF and DKIM alignment before making decisions (RFC 7489 §10.1).",
+                        DNSRecord:   buildSPFRecordExample(domain, includes, "-all"),
+                        RFC:         "RFC 7208 §5",
+                        RFCURL:      "https://datatracker.ietf.org/doc/html/rfc7208#section-5",
+                        Severity:    severityLow,
+                        SeverityColor: colorLow,
+                        SeverityOrder: 4,
+                        Section:     "spf",
+                })
         }
         if ps.spfWarning && !ps.spfMissing {
                 return fixes
@@ -132,7 +171,7 @@ func appendSPFFixes(fixes []fix, ps protocolState, domain string) []fix {
         return append(fixes, fix{
                 Title:         "Publish SPF record",
                 Description:   "SPF (Sender Policy Framework) tells receiving mail servers which IP addresses are authorized to send email for your domain. Without SPF, any server can claim to send as your domain.",
-                DNSRecord:     fmt.Sprintf("%s TXT \"v=spf1 include:_spf.google.com ~all\"", domain),
+                DNSRecord:     buildSPFRecordExample(domain, includes, "~all"),
                 RFC:           "RFC 7208 §4",
                 RFCURL:        "https://datatracker.ietf.org/doc/html/rfc7208#section-4",
                 Severity:      severityCritical,
