@@ -41,4 +41,3 @@ externalPort = 3000
 [userenv]
 
 [userenv.shared]
-GUNICORN_CMD_ARGS = "--timeout 60"
