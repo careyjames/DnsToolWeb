@@ -77,7 +77,7 @@ func (h *CompareHandler) Compare(c *gin.Context) {
                         "AppVersion":     h.Config.AppVersion,
                         "CspNonce":       nonce,
                         "CsrfToken":     csrfToken,
-                        "ActivePage":     "",
+                        "ActivePage":     "compare",
                         "FlashMessages":  []FlashMessage{{Category: "danger", Message: "Analysis A not found"}},
                 })
                 return
@@ -89,7 +89,7 @@ func (h *CompareHandler) Compare(c *gin.Context) {
                         "AppVersion":     h.Config.AppVersion,
                         "CspNonce":       nonce,
                         "CsrfToken":     csrfToken,
-                        "ActivePage":     "",
+                        "ActivePage":     "compare",
                         "FlashMessages":  []FlashMessage{{Category: "danger", Message: "Analysis B not found"}},
                 })
                 return
@@ -100,7 +100,7 @@ func (h *CompareHandler) Compare(c *gin.Context) {
                         "AppVersion":     h.Config.AppVersion,
                         "CspNonce":       nonce,
                         "CsrfToken":     csrfToken,
-                        "ActivePage":     "",
+                        "ActivePage":     "compare",
                         "Domain":         analysisA.Domain,
                         "FlashMessages":  []FlashMessage{{Category: "danger", Message: "Cannot compare analyses of different domains"}},
                 })
@@ -121,7 +121,7 @@ func (h *CompareHandler) Compare(c *gin.Context) {
                         "AppVersion":     h.Config.AppVersion,
                         "CspNonce":       nonce,
                         "CsrfToken":     csrfToken,
-                        "ActivePage":     "",
+                        "ActivePage":     "compare",
                         "Domain":         analysisA.Domain,
                         "FlashMessages":  []FlashMessage{{Category: "danger", Message: "One or both analyses have no stored data"}},
                 })
@@ -163,7 +163,7 @@ func (h *CompareHandler) Compare(c *gin.Context) {
                 "AppVersion":   h.Config.AppVersion,
                 "CspNonce":     nonce,
                 "CsrfToken":   csrfToken,
-                "ActivePage":   "",
+                "ActivePage":   "compare",
                 "Domain":       analysisA.Domain,
                 "AnalysisA":    buildCompareAnalysis(analysisA),
                 "AnalysisB":    buildCompareAnalysis(analysisB),
@@ -181,7 +181,7 @@ func (h *CompareHandler) selectDomain(c *gin.Context, domain string) {
                         "AppVersion":     h.Config.AppVersion,
                         "CspNonce":       nonce,
                         "CsrfToken":     csrfToken,
-                        "ActivePage":     "",
+                        "ActivePage":     "compare",
                         "Domain":         "",
                         "FlashMessages":  []FlashMessage{{Category: "warning", Message: "Please provide a domain to compare analyses."}},
                 })
@@ -198,7 +198,7 @@ func (h *CompareHandler) selectDomain(c *gin.Context, domain string) {
                         "AppVersion":     h.Config.AppVersion,
                         "CspNonce":       nonce,
                         "CsrfToken":     csrfToken,
-                        "ActivePage":     "",
+                        "ActivePage":     "compare",
                         "Domain":         domain,
                         "FlashMessages":  []FlashMessage{{Category: "danger", Message: "Failed to fetch analyses"}},
                 })
@@ -210,7 +210,7 @@ func (h *CompareHandler) selectDomain(c *gin.Context, domain string) {
                         "AppVersion":     h.Config.AppVersion,
                         "CspNonce":       nonce,
                         "CsrfToken":     csrfToken,
-                        "ActivePage":     "",
+                        "ActivePage":     "compare",
                         "Domain":         domain,
                         "FlashMessages":  []FlashMessage{{Category: "warning", Message: "Need at least 2 analyses to compare"}},
                 })

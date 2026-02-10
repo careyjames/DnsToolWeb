@@ -1,6 +1,8 @@
 # Default: allow all crawlers
 User-agent: *
 Allow: /
+Disallow: /api/
+Disallow: /analysis/
 Disallow: /export/
 
 # AI/LLM Search Bots - explicitly allowed

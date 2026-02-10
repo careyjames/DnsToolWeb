@@ -2,7 +2,7 @@
 <html lang="en" data-bs-theme="dark">
 <head>
     {{template "head" .}}
-    <title>DNS Tool - Domain Security Audit & Email Authentication Checker | SPF DKIM DMARC DANE DNSSEC</title>
+    <title>DNS Tool - Domain Security Audit & Email Authentication Checker | SPF DKIM DMARC DANE/TLSA DNSSEC</title>
     <meta name="description" content="Free domain security audit tool. Check SPF, DKIM, DMARC, DANE/TLSA, DNSSEC, BIMI, MTA-STS, TLS-RPT, and CAA records instantly. Detect email security management providers, SMTP transport encryption, and enterprise DNS infrastructure. DANE/TLSA certificate pinning analysis, DMARCbis readiness checks, and MPIC-aware CAA validation. Executive-ready posture reports trusted by government agencies and enterprises worldwide.">
     <meta name="keywords" content="DNS lookup, SPF checker, DKIM validator, DMARC lookup, DNSSEC validation, DANE checker, TLSA record lookup, DANE TLSA email security, domain security audit, email authentication, email spoofing protection, cybersecurity posture report, DNS intelligence, BIMI checker, MTA-STS checker, TLS-RPT checker, CAA record check, DMARCbis, MPIC, domain reputation, email security assessment, email security management, DMARC monitoring, SPF flattening, SMTP transport encryption">
     
@@ -114,7 +114,7 @@
                 "name": "How is this different from other DNS lookup tools?",
                 "acceptedAnswer": {
                     "@type": "Answer",
-                    "text": "Most DNS tools show raw records — and most skip advanced protocols entirely. DNS Tool provides a complete security intelligence report including multi-resolver consensus verification, email authentication scoring, DKIM key strength analysis, DANE/TLSA certificate pinning analysis for mail transport (a protocol most tools ignore), DMARCbis readiness checks, enterprise DNS provider detection, email security management provider identification (DMARC monitoring, SPF flattening, TLS-RPT reporting), SMTP transport encryption checks, BIMI brand verification, MPIC-aware CAA validation, and a clear SECURE / PARTIAL / INSECURE verdict designed for both technical and executive audiences."
+                    "text": "Most DNS tools show raw records — and most skip advanced protocols entirely. DNS Tool provides a complete security intelligence report including multi-resolver consensus verification, email authentication scoring, DKIM key strength analysis, DANE/TLSA certificate pinning analysis for mail transport (a protocol most tools ignore), DMARCbis readiness checks, enterprise DNS provider detection, email security management provider identification (DMARC monitoring, SPF flattening, TLS-RPT reporting), SMTP transport encryption checks, BIMI brand verification, MPIC-aware CAA validation, Certificate Transparency subdomain discovery, historical comparison, JSON export, and a clear six-tier security verdict (SECURE / STRONG / GOOD / FAIR / WEAK / CRITICAL) with per-section remediation designed for both technical and executive audiences."
                 }
             },
             {
@@ -210,7 +210,7 @@
                     <span class="text-info">DNS intelligence reports</span> with <span class="text-info">email authentication checks</span>, <span class="text-info">DNSSEC validation</span>, and <span class="text-info">executive-ready posture&nbsp;scoring</span>
                 </p>
                 <p class="hero-protocols mb-4">
-                    SPF &middot; DKIM &middot; DMARC &middot; DNSSEC &middot; BIMI &middot; MTA-STS &middot; TLS-RPT &middot; CAA
+                    SPF &middot; DKIM &middot; DMARC &middot; DANE/TLSA &middot; DNSSEC &middot; BIMI &middot; MTA-STS &middot; TLS-RPT &middot; CAA
                 </p>
             </div>
 
@@ -321,7 +321,7 @@
                             <i class="fas fa-building"></i>
                         </div>
                         <h3 class="feature-card-title">Domain Intelligence</h3>
-                        <p class="feature-card-text">Domain registration via RDAP, enterprise infrastructure detection, email security management provider identification, and DNS provider analysis</p>
+                        <p class="feature-card-text">Domain registration via RDAP, enterprise infrastructure detection, email security management provider identification, Certificate Transparency subdomain discovery, and DNS provider analysis</p>
                     </div>
                 </div>
                 <div class="col-md-6 col-lg-3">
@@ -330,7 +330,7 @@
                             <i class="fas fa-lock"></i>
                         </div>
                         <h3 class="feature-card-title">Security Posture</h3>
-                        <p class="feature-card-text">DNSSEC validation, DANE/TLSA verification, BIMI, CAA with MPIC awareness, DMARCbis readiness, and graduated security posture scoring</p>
+                        <p class="feature-card-text">DNSSEC validation, DANE/TLSA verification, BIMI, CAA with MPIC awareness, DMARCbis readiness, graduated security posture scoring, and per-section remediation with RFC-cited fixes</p>
                     </div>
                 </div>
             </div>
@@ -345,7 +345,7 @@
                     <div class="persona-card">
                         <div class="persona-card-icon"><i class="fas fa-briefcase text-primary"></i></div>
                         <h3 class="persona-card-title text-primary">Executives & Board Members</h3>
-                        <p class="persona-card-text">Clear SECURE / PARTIAL / INSECURE verdicts that communicate cybersecurity posture at a glance. See whether email security is actively managed by professional providers or left unmonitored.</p>
+                        <p class="persona-card-text">Clear SECURE / STRONG / GOOD / FAIR / WEAK / CRITICAL verdicts that communicate cybersecurity posture at a glance. See whether email security is actively managed by professional providers or left unmonitored.</p>
                     </div>
                 </div>
                 <div class="col-md-6 col-lg-3">
@@ -445,7 +445,7 @@
                         </h3>
                         <div id="faq6" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
                             <div class="accordion-body text-muted small">
-                                Most DNS tools show raw records — and most skip advanced protocols entirely. DNS Tool goes further with a complete security intelligence report: multi-resolver consensus verification across Cloudflare, Google, Quad9, and OpenDNS; email authentication scoring; DKIM key strength analysis; <strong>DANE/TLSA certificate pinning analysis</strong> for mail transport (a protocol most tools ignore); <strong>DMARCbis readiness checks</strong> for upcoming DMARC standard changes; enterprise DNS provider detection; email security management provider identification (DMARC monitoring, SPF flattening, TLS-RPT reporting); SMTP transport encryption checks; BIMI brand verification; <strong>MPIC-aware CAA validation</strong>; and a clear SECURE / PARTIAL / INSECURE verdict designed for both technical and executive audiences. Every query fetches fresh data — we never show cached results.
+                                Most DNS tools show raw records — and most skip advanced protocols entirely. DNS Tool goes further with a complete security intelligence report: multi-resolver consensus verification across Cloudflare, Google, Quad9, and OpenDNS; email authentication scoring; DKIM key strength analysis; <strong>DANE/TLSA certificate pinning analysis</strong> for mail transport (a protocol most tools ignore); <strong>DMARCbis readiness checks</strong> for upcoming DMARC standard changes; enterprise DNS provider detection; email security management provider identification (DMARC monitoring, SPF flattening, TLS-RPT reporting); SMTP transport encryption checks; BIMI brand verification; <strong>MPIC-aware CAA validation</strong>; and a clear six-tier security verdict (SECURE / STRONG / GOOD / FAIR / WEAK / CRITICAL) with per-section remediation designed for both technical and executive audiences. Compare analyses over time, export results as JSON, and discover subdomains via Certificate Transparency logs. Every query fetches fresh data — we never show cached results.
                             </div>
                         </div>
                     </div>
