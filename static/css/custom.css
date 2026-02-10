@@ -1089,12 +1089,11 @@ main.container {
         margin-bottom: 12pt;
     }
 
-    .print-header-main {
+    .print-header-toprow {
         display: flex;
         justify-content: space-between;
         align-items: flex-start;
-        padding-bottom: 12pt;
-        border-bottom: 1pt solid #d1d5db;
+        margin-bottom: 10pt;
     }
 
     .print-header-left {
@@ -1110,18 +1109,18 @@ main.container {
     .print-report-brand {
         display: flex;
         align-items: center;
-        margin-bottom: 6pt;
+        margin-bottom: 4pt;
     }
 
     .print-brand-logo {
-        width: 26pt;
-        height: 26pt;
+        width: 24pt;
+        height: 24pt;
         border-radius: 50%;
-        margin-right: 8pt;
+        margin-right: 7pt;
     }
 
     .print-brand-name {
-        font-size: 9pt;
+        font-size: 8.5pt;
         font-weight: 700;
         color: #1e3a5f;
         letter-spacing: 0.08em;
@@ -1129,24 +1128,16 @@ main.container {
     }
 
     .print-report-title {
-        font-size: 20pt;
+        font-size: 15pt;
         font-weight: 800;
         color: #1a1a2e;
-        letter-spacing: -0.3pt;
-        line-height: 1.15;
+        letter-spacing: -0.2pt;
+        line-height: 1.2;
         margin-top: 2pt;
     }
 
-    .print-report-domain {
-        font-size: 14pt;
-        font-weight: 700;
-        color: #1e3a5f;
-        margin-bottom: 4pt;
-        font-family: 'SF Mono', 'Cascadia Code', 'Fira Code', Consolas, monospace !important;
-    }
-
     .print-report-meta {
-        font-size: 8pt;
+        font-size: 7.5pt;
         color: #6b7280;
         line-height: 1.7;
     }
@@ -1155,21 +1146,53 @@ main.container {
         font-weight: 600;
         color: #4b5563;
         text-transform: uppercase;
-        font-size: 7pt;
+        font-size: 6.5pt;
         letter-spacing: 0.05em;
     }
 
-    .print-classification {
+    .print-tlp-badge {
         display: inline-block;
         margin-top: 6pt;
         padding: 2pt 10pt;
+        font-size: 7.5pt;
+        font-weight: 800;
+        letter-spacing: 0.1em;
+        color: #ffffff;
+        background-color: #1a1a2e !important;
+        border-radius: 2pt;
+    }
+
+    .print-tlp-note {
+        font-size: 6pt;
+        color: #9ca3af;
+        margin-top: 2pt;
+        letter-spacing: 0.03em;
+    }
+
+    /* --- Domain Banner — The focal point of the report --- */
+    .print-domain-banner {
+        background-color: #1e3a5f !important;
+        padding: 12pt 16pt;
+        border-radius: 4pt;
+        text-align: center;
+    }
+
+    .print-domain-label {
         font-size: 7pt;
         font-weight: 700;
         letter-spacing: 0.12em;
         text-transform: uppercase;
-        color: #991b1b;
-        border: 1.5pt solid #991b1b;
-        border-radius: 2pt;
+        color: #94a3b8 !important;
+        margin-bottom: 3pt;
+    }
+
+    .print-domain-name {
+        font-size: 22pt;
+        font-weight: 800;
+        color: #ffffff !important;
+        font-family: 'SF Mono', 'Cascadia Code', 'Fira Code', Consolas, monospace !important;
+        letter-spacing: 0.5pt;
+        line-height: 1.2;
     }
 
     /* ================================================
