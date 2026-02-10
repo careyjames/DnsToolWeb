@@ -155,7 +155,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 try {
                     const bsAlert = bootstrap.Alert.getOrCreateInstance(alertEl);
                     bsAlert.close();
-                } catch (err) {
+                } catch (_) {
                     alertEl.classList.remove('show');
                     alertEl.addEventListener('transitionend', function() { alertEl.remove(); });
                     setTimeout(function() { alertEl.remove(); }, 300);

@@ -996,59 +996,69 @@ func extractAllFixes(t *testing.T, remediation map[string]any) []map[string]any 
         return allFixes
 }
 
+func buildSPFSoftfailResults(spf, dmarc map[string]any) map[string]any {
+        return map[string]any{
+                "domain":           testDomainExample,
+                "spf_analysis":     spf,
+                "dmarc_analysis":   dmarc,
+                "dkim_analysis":    map[string]any{},
+                "mta_sts_analysis": map[string]any{},
+                "tlsrpt_analysis":  map[string]any{},
+                "bimi_analysis":    map[string]any{},
+                "dane_analysis":    map[string]any{},
+                "caa_analysis":     map[string]any{},
+                "dnssec_analysis":  map[string]any{},
+        }
+}
+
+func findSPFHardfailFix(t *testing.T, fixes []map[string]any) map[string]any {
+        t.Helper()
+        for _, f := range fixes {
+                if isSPFHardfailFix(f) {
+                        return f
+                }
+        }
+        return nil
+}
+
 func TestRemediationSPFSoftfailUpgrade(t *testing.T) {
         a := newTestAnalyzer()
 
         t.Run("enforced_dmarc_suppresses_hardfail", func(t *testing.T) {
-                results := map[string]any{
-                        "domain":           testDomainExample,
-                        "spf_analysis":     map[string]any{"status": "success", "all_mechanism": "~all"},
-                        "dmarc_analysis":   map[string]any{"status": "success", "policy": "reject"},
-                        "dkim_analysis":    map[string]any{"status": "success"},
-                        "mta_sts_analysis": map[string]any{"status": "success"},
-                        "tlsrpt_analysis":  map[string]any{"status": "success"},
-                        "bimi_analysis":    map[string]any{"status": "success"},
-                        "dane_analysis":    map[string]any{"has_dane": true},
-                        "caa_analysis":     map[string]any{"status": "success"},
-                        "dnssec_analysis":  map[string]any{"status": "success"},
-                }
-                for _, f := range extractAllFixes(t, a.GenerateRemediation(results)) {
-                        if isSPFHardfailFix(f) {
-                                t.Error("SPF softfail with DMARC reject + DKIM should NOT generate hardfail upgrade fix")
-                        }
+                results := buildSPFSoftfailResults(
+                        map[string]any{"status": "success", "all_mechanism": "~all"},
+                        map[string]any{"status": "success", "policy": "reject"},
+                )
+                results["dkim_analysis"] = map[string]any{"status": "success"}
+                results["mta_sts_analysis"] = map[string]any{"status": "success"}
+                results["tlsrpt_analysis"] = map[string]any{"status": "success"}
+                results["bimi_analysis"] = map[string]any{"status": "success"}
+                results["dane_analysis"] = map[string]any{"has_dane": true}
+                results["caa_analysis"] = map[string]any{"status": "success"}
+                results["dnssec_analysis"] = map[string]any{"status": "success"}
+
+                if fix := findSPFHardfailFix(t, extractAllFixes(t, a.GenerateRemediation(results))); fix != nil {
+                        t.Error("SPF softfail with DMARC reject + DKIM should NOT generate hardfail upgrade fix")
                 }
         })
 
         t.Run("unenforced_dmarc_generates_hardfail", func(t *testing.T) {
-                results := map[string]any{
-                        "domain":           testDomainExample,
-                        "spf_analysis":     map[string]any{"status": "success", "all_mechanism": "~all", "includes": []string{"_spf.google.com"}},
-                        "dmarc_analysis":   map[string]any{"status": "warning", "policy": "none"},
-                        "dkim_analysis":    map[string]any{},
-                        "mta_sts_analysis": map[string]any{},
-                        "tlsrpt_analysis":  map[string]any{},
-                        "bimi_analysis":    map[string]any{},
-                        "dane_analysis":    map[string]any{},
-                        "caa_analysis":     map[string]any{},
-                        "dnssec_analysis":  map[string]any{},
+                results := buildSPFSoftfailResults(
+                        map[string]any{"status": "success", "all_mechanism": "~all", "includes": []string{"_spf.google.com"}},
+                        map[string]any{"status": "warning", "policy": "none"},
+                )
+
+                fix := findSPFHardfailFix(t, extractAllFixes(t, a.GenerateRemediation(results)))
+                if fix == nil {
+                        t.Fatal("SPF softfail without DMARC enforcement should generate hardfail upgrade fix")
                 }
-                found := false
-                for _, f := range extractAllFixes(t, a.GenerateRemediation(results)) {
-                        if !isSPFHardfailFix(f) {
-                                continue
-                        }
-                        found = true
-                        sev, _ := f["severity_label"].(string)
-                        if sev != "Low" {
-                                t.Errorf("SPF softfail-to-hardfail upgrade should be Low severity, got %s", sev)
-                        }
-                        rec, _ := f["dns_record"].(string)
-                        if !strings.Contains(rec, "_spf.google.com") {
-                                t.Errorf("SPF fix should use actual includes from domain, got: %s", rec)
-                        }
+                sev, _ := fix["severity_label"].(string)
+                if sev != "Low" {
+                        t.Errorf("SPF softfail-to-hardfail upgrade should be Low severity, got %s", sev)
                 }
-                if !found {
-                        t.Error("SPF softfail without DMARC enforcement should generate hardfail upgrade fix")
+                rec, _ := fix["dns_record"].(string)
+                if !strings.Contains(rec, "_spf.google.com") {
+                        t.Errorf("SPF fix should use actual includes from domain, got: %s", rec)
                 }
         })
 }

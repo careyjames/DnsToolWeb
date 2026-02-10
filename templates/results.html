@@ -1759,7 +1759,7 @@
                             <span class="badge bg-primary-subtle text-primary border border-primary-subtle"><i class="fas fa-link me-1"></i>{{ ct.cname_count }} CNAME{{ 's' if ct.cname_count != 1 else '' }}</span>
                             {% endif %}
                             {% if ct.get('cname_discovered_count', 0) > 0 %}
-                            <span class="badge border" style="font-size:0.7rem; color: #c084fc; background: rgba(168,85,247,0.15); border-color: rgba(168,85,247,0.35) !important;"><i class="fas fa-project-diagram me-1"></i>{{ ct.cname_discovered_count }} discovered via CNAME</span>
+                            <span class="badge border" style="font-size:0.7rem; color: #d4a5ff; background: rgba(168,85,247,0.15); border-color: rgba(168,85,247,0.35) !important;"><i class="fas fa-project-diagram me-1"></i>{{ ct.cname_discovered_count }} discovered via CNAME</span>
                             {% endif %}
                             {% if ct.get('providers_found', 0) > 0 %}
                             <span class="badge bg-warning-subtle text-warning border border-warning-subtle"><i class="fas fa-building me-1"></i>{{ ct.providers_found }} provider{{ 's' if ct.providers_found != 1 else '' }} identified</span>
@@ -1827,7 +1827,7 @@
                                         {% if sub.get('source') == 'dns' %}
                                         <span class="badge bg-info-subtle text-info border border-info-subtle" style="font-size:0.6rem;" title="Found via DNS A/AAAA record lookup of common service names">DNS</span>
                                         {% elif sub.get('source') == 'cname' %}
-                                        <span class="badge bg-purple-subtle text-purple border border-purple-subtle" style="font-size:0.6rem; --bs-purple: #c084fc; color: #c084fc !important; background: rgba(168,85,247,0.15) !important; border-color: rgba(168,85,247,0.35) !important;" title="Discovered as intermediate hop in CNAME chain from {{ sub.get('discovered_via', 'another subdomain') }}">CNAME</span>
+                                        <span class="badge bg-purple-subtle text-purple border border-purple-subtle" style="font-size:0.6rem; --bs-purple: #d4a5ff; color: #d4a5ff !important; background: rgba(168,85,247,0.15) !important; border-color: rgba(168,85,247,0.35) !important;" title="Discovered as intermediate hop in CNAME chain from {{ sub.get('discovered_via', 'another subdomain') }}">CNAME</span>
                                         {% else %}
                                         <span class="badge bg-dark bg-opacity-25 text-muted" style="font-size:0.6rem;" title="Found in Certificate Transparency logs (RFC 6962)">CT Log</span>
                                         {% endif %}
