@@ -42,6 +42,12 @@ func main() {
         router.Use(middleware.RequestContext())
         router.Use(middleware.SecurityHeaders())
 
+        csrf := middleware.NewCSRFMiddleware(cfg.SessionSecret)
+        router.Use(csrf.Handler())
+
+        rateLimiter := middleware.NewInMemoryRateLimiter()
+        slog.Info("Rate limiter initialized", "backend", "in-memory", "max_requests", middleware.RateLimitMaxRequests, "window_seconds", middleware.RateLimitWindow)
+
         templatesDir := findTemplatesDir()
         tmpl := template.Must(
                 template.New("").Funcs(tmplFuncs.FuncMap()).ParseGlob(filepath.Join(templatesDir, "*.html")),
@@ -72,7 +78,7 @@ func main() {
         router.GET("/sw.js", staticHandler.ServiceWorker)
 
         router.GET("/analyze", analysisHandler.Analyze)
-        router.POST("/analyze", analysisHandler.Analyze)
+        router.POST("/analyze", middleware.AnalyzeRateLimit(rateLimiter), analysisHandler.Analyze)
 
         router.GET("/history", historyHandler.History)
 
@@ -94,9 +100,11 @@ func main() {
 
         router.NoRoute(func(c *gin.Context) {
                 nonce, _ := c.Get("csp_nonce")
+                csrfToken, _ := c.Get("csrf_token")
                 c.HTML(http.StatusNotFound, "index.html", gin.H{
                         "AppVersion": cfg.AppVersion,
                         "CspNonce":   nonce,
+                        "CsrfToken":  csrfToken,
                         "ActivePage": "home",
                 })
         })
