@@ -616,7 +616,7 @@
                             <div class="col-md-4 mb-3 mb-md-0">
                                 <h6 class="d-flex align-items-center mb-1">
                                     <i class="fas fa-envelope me-2"></i>SPF Record
-                                    <a href="https://datatracker.ietf.org/doc/html/rfc7208" target="_blank" rel="noopener" class="ms-2 text-muted rfc-link" data-bs-toggle="tooltip" data-bs-html="true" title="<strong>Sender Policy Framework</strong><br>Specifies which mail servers can send email for your domain." aria-label="Learn about SPF - RFC 7208"><i class="fas fa-info-circle"></i><span class="rfc-label">RFC 7208</span></a>
+                                    <a href="https://datatracker.ietf.org/doc/html/rfc7208#section-4" target="_blank" rel="noopener" class="ms-2 text-muted rfc-link" data-bs-toggle="tooltip" data-bs-html="true" title="<strong>Sender Policy Framework</strong><br>Specifies which mail servers can send email for your domain. §4 defines SPF record syntax." aria-label="Learn about SPF - RFC 7208 §4"><i class="fas fa-info-circle"></i><span class="rfc-label">RFC 7208 §4</span></a>
                                 </h6>
                                 {{$spfStatus := mapGetStr "status" $spf}}
                                 <div class="mb-2">
@@ -732,7 +732,7 @@
                             <div class="col-md-4 mb-3 mb-md-0">
                                 <h6 class="d-flex align-items-center mb-1">
                                     <i class="fas fa-lock me-2"></i>DMARC Policy
-                                    <a href="https://datatracker.ietf.org/doc/html/rfc7489" target="_blank" rel="noopener" class="ms-2 text-muted rfc-link" data-bs-toggle="tooltip" data-bs-html="true" title="<strong>Domain-based Message Authentication</strong><br>Tells receivers how to handle SPF/DKIM failures and where to send reports." aria-label="Learn about DMARC - RFC 7489"><i class="fas fa-info-circle"></i><span class="rfc-label">RFC 7489</span></a>
+                                    <a href="https://datatracker.ietf.org/doc/html/rfc7489#section-6.3" target="_blank" rel="noopener" class="ms-2 text-muted rfc-link" data-bs-toggle="tooltip" data-bs-html="true" title="<strong>Domain-based Message Authentication</strong><br>Tells receivers how to handle SPF/DKIM failures and where to send reports. §6.3 covers policy enforcement." aria-label="Learn about DMARC - RFC 7489 §6.3"><i class="fas fa-info-circle"></i><span class="rfc-label">RFC 7489 §6.3</span></a>
                                 </h6>
                                 {{$dmarcStatus := mapGetStr "status" $dmarc}}
                                 {{$dmarcPolicy := mapGetStr "policy" $dmarc}}
@@ -856,7 +856,7 @@
                             <div class="col-md-4">
                                 <h6 class="d-flex align-items-center mb-1">
                                     <i class="fas fa-key me-2"></i>DKIM Records
-                                    <a href="https://datatracker.ietf.org/doc/html/rfc6376" target="_blank" rel="noopener" class="ms-2 text-muted rfc-link" data-bs-toggle="tooltip" data-bs-html="true" title="<strong>DomainKeys Identified Mail</strong><br>Cryptographic signatures that verify email hasn't been altered in transit." aria-label="Learn about DKIM - RFC 6376"><i class="fas fa-info-circle"></i><span class="rfc-label">RFC 6376</span></a>
+                                    <a href="https://datatracker.ietf.org/doc/html/rfc6376#section-3.6" target="_blank" rel="noopener" class="ms-2 text-muted rfc-link" data-bs-toggle="tooltip" data-bs-html="true" title="<strong>DomainKeys Identified Mail</strong><br>Cryptographic signatures that verify email hasn't been altered in transit. §3.6 covers key records." aria-label="Learn about DKIM - RFC 6376 §3.6"><i class="fas fa-info-circle"></i><span class="rfc-label">RFC 6376 §3.6</span></a>
                                 </h6>
                                 {{$dkimStatus := mapGetStr "status" $dkim}}
                                 <div class="mb-2">
@@ -936,7 +936,7 @@
                             <div class="col-md-6 mb-3 mb-md-0">
                                 <h6 class="d-flex align-items-center">
                                     <i class="fas fa-shield-alt me-2"></i>MTA-STS
-                                    <a href="https://datatracker.ietf.org/doc/html/rfc8461" target="_blank" rel="noopener" class="ms-2 text-muted rfc-link" data-bs-toggle="tooltip" data-bs-html="true" title="<strong>SMTP MTA Strict Transport Security</strong><br>Forces TLS encryption between mail servers to prevent downgrade attacks." aria-label="Learn about MTA-STS - RFC 8461"><i class="fas fa-info-circle"></i><span class="rfc-label">RFC 8461</span></a>
+                                    <a href="https://datatracker.ietf.org/doc/html/rfc8461#section-3" target="_blank" rel="noopener" class="ms-2 text-muted rfc-link" data-bs-toggle="tooltip" data-bs-html="true" title="<strong>SMTP MTA Strict Transport Security</strong><br>Forces TLS encryption between mail servers to prevent downgrade attacks. §3 covers the DNS record." aria-label="Learn about MTA-STS - RFC 8461 §3"><i class="fas fa-info-circle"></i><span class="rfc-label">RFC 8461 §3</span></a>
                                     {{$mtaStsStatus := mapGetStr "status" $mta_sts}}
                                     <span class="badge bg-{{if eq $mtaStsStatus "success"}}success{{else if eq $mtaStsStatus "error"}}danger{{else}}warning{{end}} ms-2">
                                         {{title $mtaStsStatus}}
@@ -999,7 +999,7 @@
                             <div class="col-md-6">
                                 <h6 class="d-flex align-items-center">
                                     <i class="fas fa-file-alt me-2"></i>TLS-RPT
-                                    <a href="https://datatracker.ietf.org/doc/html/rfc8460" target="_blank" rel="noopener" class="ms-2 text-muted rfc-link" data-bs-toggle="tooltip" data-bs-html="true" title="<strong>TLS Reporting</strong><br>Sends reports about TLS connection failures to help diagnose delivery issues." aria-label="Learn about TLS-RPT - RFC 8460"><i class="fas fa-info-circle"></i><span class="rfc-label">RFC 8460</span></a>
+                                    <a href="https://datatracker.ietf.org/doc/html/rfc8460#section-3" target="_blank" rel="noopener" class="ms-2 text-muted rfc-link" data-bs-toggle="tooltip" data-bs-html="true" title="<strong>TLS Reporting</strong><br>Sends reports about TLS connection failures to help diagnose delivery issues. §3 covers the reporting record." aria-label="Learn about TLS-RPT - RFC 8460 §3"><i class="fas fa-info-circle"></i><span class="rfc-label">RFC 8460 §3</span></a>
                                     {{$tlsrptStatus := mapGetStr "status" $tlsrpt}}
                                     <span class="badge bg-{{if eq $tlsrptStatus "success"}}success{{else if eq $tlsrptStatus "error"}}danger{{else}}warning{{end}} ms-2">
                                         {{title $tlsrptStatus}}
@@ -1190,7 +1190,7 @@
                                 {{$caaStatus := mapGetStr "status" $caa}}
                                 <h6 class="d-flex align-items-center">
                                     <i class="fas fa-lock me-2"></i>CAA
-                                    <a href="https://datatracker.ietf.org/doc/html/rfc8659" target="_blank" rel="noopener" class="ms-2 text-muted rfc-link" data-bs-toggle="tooltip" data-bs-html="true" title="<strong>Certificate Authority Authorization</strong><br>Controls which CAs can issue SSL certificates for your domain." aria-label="Learn about CAA - RFC 8659"><i class="fas fa-info-circle"></i><span class="rfc-label">RFC 8659</span></a>
+                                    <a href="https://datatracker.ietf.org/doc/html/rfc8659#section-4" target="_blank" rel="noopener" class="ms-2 text-muted rfc-link" data-bs-toggle="tooltip" data-bs-html="true" title="<strong>Certificate Authority Authorization</strong><br>Controls which CAs can issue SSL certificates for your domain. §4 covers record processing." aria-label="Learn about CAA - RFC 8659 §4"><i class="fas fa-info-circle"></i><span class="rfc-label">RFC 8659 §4</span></a>
                                     <span class="badge bg-{{if eq $caaStatus "success"}}success{{else}}warning{{end}} ms-2">
                                         {{title $caaStatus}}
                                     </span>
@@ -1232,8 +1232,8 @@
                                 {{$daneDeployable := mapGetStr "dane_deployable" $dane}}
                                 <h6 class="d-flex align-items-center">
                                     <i class="fas fa-certificate me-2"></i>DANE / TLSA
-                                    <a href="https://datatracker.ietf.org/doc/html/rfc7672" target="_blank" rel="noopener" class="ms-2 text-muted rfc-link" data-bs-toggle="tooltip" data-bs-html="true" title="<strong>DANE for SMTP</strong><br>Publishes TLS certificate information in DNS (TLSA records), enabling mail servers to verify certificates without relying solely on certificate authorities. Requires DNSSEC." aria-label="Learn about DANE - RFC 7672"><i class="fas fa-info-circle"></i><span class="rfc-label">RFC 7672</span></a>
-                                    <a href="https://datatracker.ietf.org/doc/html/rfc6698" target="_blank" rel="noopener" class="ms-1 text-muted rfc-link" data-bs-toggle="tooltip" data-bs-html="true" title="<strong>DANE Protocol</strong><br>DNS-based Authentication of Named Entities — binds TLS certificates to DNS names via TLSA records." aria-label="Learn about DANE - RFC 6698"><span class="rfc-label">RFC 6698</span></a>
+                                    <a href="https://datatracker.ietf.org/doc/html/rfc7672#section-3" target="_blank" rel="noopener" class="ms-2 text-muted rfc-link" data-bs-toggle="tooltip" data-bs-html="true" title="<strong>DANE for SMTP</strong><br>Publishes TLS certificate information in DNS (TLSA records), enabling mail servers to verify certificates without relying solely on certificate authorities. §3 covers SMTP with DANE." aria-label="Learn about DANE - RFC 7672 §3"><i class="fas fa-info-circle"></i><span class="rfc-label">RFC 7672 §3</span></a>
+                                    <a href="https://datatracker.ietf.org/doc/html/rfc6698#section-2" target="_blank" rel="noopener" class="ms-1 text-muted rfc-link" data-bs-toggle="tooltip" data-bs-html="true" title="<strong>DANE Protocol</strong><br>DNS-based Authentication of Named Entities — binds TLS certificates to DNS names via TLSA records. §2 covers the TLSA RR." aria-label="Learn about DANE - RFC 6698 §2"><span class="rfc-label">RFC 6698 §2</span></a>
                                     <span class="badge bg-{{if eq $daneStatus "success"}}success{{else if eq $daneStatus "warning"}}warning{{else}}secondary{{end}} ms-2">
                                         {{if $hasDane}}
                                             {{mapGetStr "mx_hosts_with_dane" $dane}}/{{mapGetStr "mx_hosts_checked" $dane}} MX
@@ -1404,7 +1404,7 @@
                                 {{$chainOfTrust := mapGetStr "chain_of_trust" $dnssec}}
                                 <h6 class="d-flex align-items-center flex-wrap">
                                     <i class="fas fa-key me-2"></i>DNSSEC
-                                    <a href="https://datatracker.ietf.org/doc/html/rfc4033" target="_blank" rel="noopener" class="ms-2 text-muted rfc-link" data-bs-toggle="tooltip" data-bs-html="true" title="<strong>DNS Security Extensions</strong><br>Cryptographic signatures that prove DNS responses are authentic and untampered." aria-label="Learn about DNSSEC - RFC 4033-4035"><i class="fas fa-info-circle"></i><span class="rfc-label">RFC 4033</span></a>
+                                    <a href="https://datatracker.ietf.org/doc/html/rfc4033#section-2" target="_blank" rel="noopener" class="ms-2 text-muted rfc-link" data-bs-toggle="tooltip" data-bs-html="true" title="<strong>DNS Security Extensions</strong><br>Cryptographic signatures that prove DNS responses are authentic and untampered. §2 covers DNSSEC concepts." aria-label="Learn about DNSSEC - RFC 4033 §2"><i class="fas fa-info-circle"></i><span class="rfc-label">RFC 4033 §2</span></a>
                                     <span class="badge bg-{{if eq $dnssecStatus "success"}}success{{else}}warning{{end}} ms-2">
                                         {{if and (eq $dnssecStatus "success") (eq $chainOfTrust "inherited")}}Inherited{{else if eq $dnssecStatus "success"}}Signed{{else}}Unsigned{{end}}
                                     </span>
@@ -1815,19 +1815,19 @@
                                 <div class="dns-diff-type-header">
                                     <span class="badge bg-secondary me-2">{{$record_type}}</span>
                                     {{if eq $record_type "DMARC"}}<small class="text-muted me-1">_dmarc.{{$.Domain}}</small>
-                                        <a href="https://datatracker.ietf.org/doc/html/rfc7489" target="_blank" rel="noopener" class="badge bg-dark bg-opacity-25 text-muted text-decoration-none fw-normal" style="font-size: 0.6rem;" title="Domain-based Message Authentication, Reporting, and Conformance">RFC 7489</a>
+                                        <a href="https://datatracker.ietf.org/doc/html/rfc7489#section-6.3" target="_blank" rel="noopener" class="badge bg-dark bg-opacity-25 text-muted text-decoration-none fw-normal" style="font-size: 0.6rem;" title="Domain-based Message Authentication, Reporting, and Conformance — §6.3 Policy">RFC 7489 §6.3</a>
                                     {{else if eq $record_type "MTA-STS"}}<small class="text-muted me-1">_mta-sts.{{$.Domain}}</small>
-                                        <a href="https://datatracker.ietf.org/doc/html/rfc8461" target="_blank" rel="noopener" class="badge bg-dark bg-opacity-25 text-muted text-decoration-none fw-normal" style="font-size: 0.6rem;" title="SMTP MTA Strict Transport Security">RFC 8461</a>
+                                        <a href="https://datatracker.ietf.org/doc/html/rfc8461#section-3" target="_blank" rel="noopener" class="badge bg-dark bg-opacity-25 text-muted text-decoration-none fw-normal" style="font-size: 0.6rem;" title="SMTP MTA Strict Transport Security — §3 DNS Record">RFC 8461 §3</a>
                                     {{else if eq $record_type "TLS-RPT"}}<small class="text-muted me-1">_smtp._tls.{{$.Domain}}</small>
-                                        <a href="https://datatracker.ietf.org/doc/html/rfc8460" target="_blank" rel="noopener" class="badge bg-dark bg-opacity-25 text-muted text-decoration-none fw-normal" style="font-size: 0.6rem;" title="SMTP TLS Reporting">RFC 8460</a>
+                                        <a href="https://datatracker.ietf.org/doc/html/rfc8460#section-3" target="_blank" rel="noopener" class="badge bg-dark bg-opacity-25 text-muted text-decoration-none fw-normal" style="font-size: 0.6rem;" title="SMTP TLS Reporting — §3 DNS Record">RFC 8460 §3</a>
                                     {{else if eq $record_type "CAA"}}
-                                        <a href="https://datatracker.ietf.org/doc/html/rfc8659" target="_blank" rel="noopener" class="badge bg-dark bg-opacity-25 text-muted text-decoration-none fw-normal" style="font-size: 0.6rem;" title="DNS Certification Authority Authorization">RFC 8659</a>
+                                        <a href="https://datatracker.ietf.org/doc/html/rfc8659#section-4" target="_blank" rel="noopener" class="badge bg-dark bg-opacity-25 text-muted text-decoration-none fw-normal" style="font-size: 0.6rem;" title="DNS Certification Authority Authorization — §4 Processing">RFC 8659 §4</a>
                                     {{else if eq $record_type "SOA"}}
                                         <a href="https://datatracker.ietf.org/doc/html/rfc1035#section-3.3.13" target="_blank" rel="noopener" class="badge bg-dark bg-opacity-25 text-muted text-decoration-none fw-normal" style="font-size: 0.6rem;" title="Start of Authority record">RFC 1035</a>
                                     {{else if eq $record_type "MX"}}
                                         <a href="https://datatracker.ietf.org/doc/html/rfc5321#section-5" target="_blank" rel="noopener" class="badge bg-dark bg-opacity-25 text-muted text-decoration-none fw-normal" style="font-size: 0.6rem;" title="Mail Exchange record">RFC 5321</a>
                                     {{else if eq $record_type "TXT"}}
-                                        <a href="https://datatracker.ietf.org/doc/html/rfc7208" target="_blank" rel="noopener" class="badge bg-dark bg-opacity-25 text-muted text-decoration-none fw-normal" style="font-size: 0.6rem;" title="Sender Policy Framework">RFC 7208</a>
+                                        <a href="https://datatracker.ietf.org/doc/html/rfc7208#section-4" target="_blank" rel="noopener" class="badge bg-dark bg-opacity-25 text-muted text-decoration-none fw-normal" style="font-size: 0.6rem;" title="Sender Policy Framework — §4 Record Syntax">RFC 7208 §4</a>
                                     {{else if eq $record_type "NS"}}
                                         <a href="https://datatracker.ietf.org/doc/html/rfc1035#section-3.3.11" target="_blank" rel="noopener" class="badge bg-dark bg-opacity-25 text-muted text-decoration-none fw-normal" style="font-size: 0.6rem;" title="Name Server record">RFC 1035</a>
                                     {{end}}

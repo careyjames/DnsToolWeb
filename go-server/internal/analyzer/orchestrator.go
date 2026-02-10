@@ -204,6 +204,8 @@ func (a *Analyzer) AnalyzeDomain(ctx context.Context, domain string, customDKIMS
                 getMapResult(resultsMap, "dkim"),
         )
         results["posture"] = a.CalculatePosture(results)
+        results["remediation"] = a.GenerateRemediation(results)
+        results["mail_posture"] = buildMailPosture(results)
 
         return results
 }
