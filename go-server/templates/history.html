@@ -176,20 +176,20 @@
                                     </td>
                                     <td>
                                         <div class="d-flex gap-1">
-                                            {{if $a.SpfStatus}}
-                                                <span class="badge {{statusBadgeClass $a.SpfStatus}}" title="SPF">
-                                                    SPF
-                                                </span>
+                                            {{if eq $a.SpfStatus "success"}}
+                                                <span class="badge bg-success" title="SPF configured">SPF</span>
+                                            {{else if or (eq $a.SpfStatus "warning") (eq $a.SpfStatus "error")}}
+                                                <span class="badge bg-danger" title="SPF missing or misconfigured"><i class="fas fa-times me-1"></i>SPF</span>
                                             {{end}}
-                                            {{if $a.DmarcStatus}}
-                                                <span class="badge {{statusBadgeClass $a.DmarcStatus}}" title="DMARC">
-                                                    DMARC
-                                                </span>
+                                            {{if eq $a.DmarcStatus "success"}}
+                                                <span class="badge bg-success" title="DMARC configured">DMARC</span>
+                                            {{else if or (eq $a.DmarcStatus "warning") (eq $a.DmarcStatus "error")}}
+                                                <span class="badge bg-danger" title="DMARC missing or misconfigured"><i class="fas fa-times me-1"></i>DMARC</span>
                                             {{end}}
-                                            {{if $a.DkimStatus}}
-                                                <span class="badge {{statusBadgeClass $a.DkimStatus}}" title="DKIM">
-                                                    DKIM
-                                                </span>
+                                            {{if or (eq $a.DkimStatus "success") (eq $a.DkimStatus "partial")}}
+                                                <span class="badge bg-success" title="DKIM found">DKIM</span>
+                                            {{else if eq $a.DkimStatus "info"}}
+                                                <span class="badge bg-secondary" title="DKIM not discoverable">DKIM</span>
                                             {{end}}
                                         </div>
                                     </td>
@@ -261,14 +261,20 @@
                             {{else}}
                                 <span class="badge bg-danger" style="font-size:0.65rem;"><i class="fas fa-times me-1"></i>Failed</span>
                             {{end}}
-                            {{if $a.SpfStatus}}
-                                <span class="badge {{statusBadgeClass $a.SpfStatus}}" style="font-size:0.65rem;">SPF</span>
+                            {{if eq $a.SpfStatus "success"}}
+                                <span class="badge bg-success" style="font-size:0.65rem;">SPF</span>
+                            {{else if or (eq $a.SpfStatus "warning") (eq $a.SpfStatus "error")}}
+                                <span class="badge bg-danger" style="font-size:0.65rem;"><i class="fas fa-times me-1"></i>SPF</span>
                             {{end}}
-                            {{if $a.DmarcStatus}}
-                                <span class="badge {{statusBadgeClass $a.DmarcStatus}}" style="font-size:0.65rem;">DMARC</span>
+                            {{if eq $a.DmarcStatus "success"}}
+                                <span class="badge bg-success" style="font-size:0.65rem;">DMARC</span>
+                            {{else if or (eq $a.DmarcStatus "warning") (eq $a.DmarcStatus "error")}}
+                                <span class="badge bg-danger" style="font-size:0.65rem;"><i class="fas fa-times me-1"></i>DMARC</span>
                             {{end}}
-                            {{if $a.DkimStatus}}
-                                <span class="badge {{statusBadgeClass $a.DkimStatus}}" style="font-size:0.65rem;">DKIM</span>
+                            {{if or (eq $a.DkimStatus "success") (eq $a.DkimStatus "partial")}}
+                                <span class="badge bg-success" style="font-size:0.65rem;">DKIM</span>
+                            {{else if eq $a.DkimStatus "info"}}
+                                <span class="badge bg-secondary" style="font-size:0.65rem;">DKIM</span>
                             {{end}}
                             <span class="text-muted ms-auto" style="font-size:0.7rem;">
                                 {{$a.CreatedDate}} {{$a.CreatedTime}}

@@ -49,22 +49,28 @@
                                         {{$a.CreatedAt}}
                                     </td>
                                     <td>
-                                        {{if $a.SpfStatus}}
-                                            <span class="badge {{statusBadgeClass $a.SpfStatus}}">{{$a.SpfStatus}}</span>
+                                        {{if eq $a.SpfStatus "success"}}
+                                            <span class="badge bg-success">SPF</span>
+                                        {{else if or (eq $a.SpfStatus "warning") (eq $a.SpfStatus "error")}}
+                                            <span class="badge bg-danger"><i class="fas fa-times me-1"></i>SPF</span>
                                         {{else}}
                                             <span class="text-muted">-</span>
                                         {{end}}
                                     </td>
                                     <td>
-                                        {{if $a.DmarcStatus}}
-                                            <span class="badge {{statusBadgeClass $a.DmarcStatus}}">{{$a.DmarcStatus}}</span>
+                                        {{if eq $a.DmarcStatus "success"}}
+                                            <span class="badge bg-success">DMARC</span>
+                                        {{else if or (eq $a.DmarcStatus "warning") (eq $a.DmarcStatus "error")}}
+                                            <span class="badge bg-danger"><i class="fas fa-times me-1"></i>DMARC</span>
                                         {{else}}
                                             <span class="text-muted">-</span>
                                         {{end}}
                                     </td>
                                     <td>
-                                        {{if $a.DkimStatus}}
-                                            <span class="badge {{statusBadgeClass $a.DkimStatus}}">{{$a.DkimStatus}}</span>
+                                        {{if or (eq $a.DkimStatus "success") (eq $a.DkimStatus "partial")}}
+                                            <span class="badge bg-success">DKIM</span>
+                                        {{else if eq $a.DkimStatus "info"}}
+                                            <span class="badge bg-secondary">DKIM</span>
                                         {{else}}
                                             <span class="text-muted">-</span>
                                         {{end}}
