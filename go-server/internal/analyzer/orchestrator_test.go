@@ -124,11 +124,11 @@ func TestPostureFullProtection(t *testing.T) {
         if score < 90 {
                 t.Errorf("expected score >= 90 for full protection, got %d", score)
         }
-        if posture["state"] != "SECURE" {
-                t.Errorf("expected state SECURE, got %v", posture["state"])
+        if posture["state"] != "Informational" {
+                t.Errorf("expected state Informational, got %v", posture["state"])
         }
-        if posture["color"] != "success" {
-                t.Errorf("expected color success, got %v", posture["color"])
+        if posture["color"] != "info" {
+                t.Errorf("expected color info, got %v", posture["color"])
         }
 }
 
@@ -147,8 +147,8 @@ func TestPostureMinimalSPFOnly(t *testing.T) {
         }
 
         posture := a.CalculatePosture(results)
-        if posture["state"] != "WEAK" {
-                t.Errorf("expected state WEAK (SPF only, no DMARC), got %v", posture["state"])
+        if posture["state"] != "High" {
+                t.Errorf("expected state High (SPF only, no DMARC), got %v", posture["state"])
         }
 }
 
@@ -229,8 +229,8 @@ func TestPostureProviderAwareDKIM(t *testing.T) {
 
         posture := a.CalculatePosture(results)
         state, _ := posture["state"].(string)
-        if !strings.HasPrefix(state, "STRONG") {
-                t.Errorf("expected STRONG for provider-aware DKIM, got %v", state)
+        if !strings.HasPrefix(state, "Low") {
+                t.Errorf("expected Low for provider-aware DKIM, got %v", state)
         }
 
         configured, _ := posture["configured"].([]string)
@@ -285,7 +285,7 @@ func TestPostureTruthBasedGrades(t *testing.T) {
                 messageContains string
         }{
                 {
-                        name: "SECURE — full protection with reject + CAA + DNSSEC",
+                        name: "Informational — full protection with reject + CAA + DNSSEC",
                         results: map[string]any{
                                 "spf_analysis":     map[string]any{"status": "success"},
                                 "dmarc_analysis":   map[string]any{"status": "success", "policy": "reject"},
@@ -297,12 +297,12 @@ func TestPostureTruthBasedGrades(t *testing.T) {
                                 "caa_analysis":     map[string]any{"status": "success"},
                                 "dnssec_analysis":  map[string]any{"status": "success"},
                         },
-                        expectedGrade: "SECURE",
-                        expectedColor: "success",
+                        expectedGrade: "Informational",
+                        expectedColor: "info",
                         messageContains: "DMARC enforcement",
                 },
                 {
-                        name: "STRONG — core with reject + CAA, optional missing",
+                        name: "Low — core with reject + CAA, optional missing",
                         results: map[string]any{
                                 "spf_analysis":     map[string]any{"status": "success"},
                                 "dmarc_analysis":   map[string]any{"status": "success", "policy": "reject"},
@@ -314,12 +314,12 @@ func TestPostureTruthBasedGrades(t *testing.T) {
                                 "caa_analysis":     map[string]any{"status": "success"},
                                 "dnssec_analysis":  map[string]any{},
                         },
-                        expectedGrade: "STRONG",
+                        expectedGrade: "Low",
                         expectedColor: "success",
                         messageContains: "not configured",
                 },
                 {
-                        name: "STRONG — quarantine with core configured",
+                        name: "Low — quarantine with core configured",
                         results: map[string]any{
                                 "spf_analysis":     map[string]any{"status": "success"},
                                 "dmarc_analysis":   map[string]any{"status": "success", "policy": "quarantine"},
@@ -331,12 +331,12 @@ func TestPostureTruthBasedGrades(t *testing.T) {
                                 "caa_analysis":     map[string]any{},
                                 "dnssec_analysis":  map[string]any{},
                         },
-                        expectedGrade: "STRONG",
+                        expectedGrade: "Low",
                         expectedColor: "success",
                         messageContains: "quarantine",
                 },
                 {
-                        name: "GOOD — core present but DMARC p=none",
+                        name: "Medium — core present but DMARC p=none",
                         results: map[string]any{
                                 "spf_analysis":     map[string]any{"status": "success"},
                                 "dmarc_analysis":   map[string]any{"status": "warning", "policy": "none"},
@@ -348,12 +348,12 @@ func TestPostureTruthBasedGrades(t *testing.T) {
                                 "caa_analysis":     map[string]any{},
                                 "dnssec_analysis":  map[string]any{},
                         },
-                        expectedGrade: "GOOD",
-                        expectedColor: "info",
+                        expectedGrade: "Medium",
+                        expectedColor: "warning",
                         messageContains: "monitoring mode",
                 },
                 {
-                        name: "FAIR — SPF + DMARC but no DKIM",
+                        name: "Medium — SPF + DMARC but no DKIM",
                         results: map[string]any{
                                 "spf_analysis":     map[string]any{"status": "success"},
                                 "dmarc_analysis":   map[string]any{"status": "success", "policy": "reject"},
@@ -365,12 +365,12 @@ func TestPostureTruthBasedGrades(t *testing.T) {
                                 "caa_analysis":     map[string]any{},
                                 "dnssec_analysis":  map[string]any{},
                         },
-                        expectedGrade: "FAIR",
+                        expectedGrade: "Medium",
                         expectedColor: "warning",
                         messageContains: "DKIM not verified",
                 },
                 {
-                        name: "WEAK — SPF only, no DMARC",
+                        name: "High — SPF only, no DMARC",
                         results: map[string]any{
                                 "spf_analysis":     map[string]any{"status": "success"},
                                 "dmarc_analysis":   map[string]any{},
@@ -382,12 +382,12 @@ func TestPostureTruthBasedGrades(t *testing.T) {
                                 "caa_analysis":     map[string]any{},
                                 "dnssec_analysis":  map[string]any{},
                         },
-                        expectedGrade: "WEAK",
+                        expectedGrade: "High",
                         expectedColor: "warning",
                         messageContains: "DMARC",
                 },
                 {
-                        name: "CRITICAL — nothing configured",
+                        name: "Critical — nothing configured",
                         results: map[string]any{
                                 "spf_analysis":     map[string]any{},
                                 "dmarc_analysis":   map[string]any{},
@@ -399,7 +399,7 @@ func TestPostureTruthBasedGrades(t *testing.T) {
                                 "caa_analysis":     map[string]any{},
                                 "dnssec_analysis":  map[string]any{},
                         },
-                        expectedGrade: "CRITICAL",
+                        expectedGrade: "Critical",
                         expectedColor: "danger",
                         messageContains: "fully vulnerable",
                 },
@@ -490,8 +490,8 @@ func TestRemediationFullySecure(t *testing.T) {
         if len(topFixes) != 0 {
                 t.Errorf("fully secure domain should have 0 fixes, got %d", len(topFixes))
         }
-        if remediation["posture_achievable"] != "SECURE" {
-                t.Errorf("expected achievable SECURE, got %v", remediation["posture_achievable"])
+        if remediation["posture_achievable"] != "Informational" {
+                t.Errorf("expected achievable Informational, got %v", remediation["posture_achievable"])
         }
 }
 
@@ -738,7 +738,7 @@ func TestPostureIssuesSeveritySeparation(t *testing.T) {
 
         criticalIssues, _ := posture["critical_issues"].([]string)
         if len(criticalIssues) > 0 {
-                t.Errorf("STRONG domain should have no critical issues, got %v", criticalIssues)
+                t.Errorf("Low domain should have no critical issues, got %v", criticalIssues)
         }
 
         recs, _ := posture["recommendations"].([]string)
@@ -753,8 +753,8 @@ func TestPostureIssuesSeveritySeparation(t *testing.T) {
         }
 
         state, _ := posture["state"].(string)
-        if !strings.HasPrefix(state, "STRONG") {
-                t.Errorf("expected STRONG posture with core email auth, got %v", state)
+        if !strings.HasPrefix(state, "Low") {
+                t.Errorf("expected Low posture with core email auth, got %v", state)
         }
 }
 
@@ -774,11 +774,11 @@ func TestPosturePartialDMARCPctDowngrade(t *testing.T) {
 
         posture := a.CalculatePosture(results)
         state, _ := posture["state"].(string)
-        if state == "STRONG" {
-                t.Error("DMARC pct=50 with p=reject should NOT grade STRONG — partial enforcement per RFC 7489 §6.3")
+        if state == "Low" {
+                t.Error("DMARC pct=50 with p=reject should NOT grade Low — partial enforcement per RFC 7489 §6.3")
         }
-        if state != "GOOD" {
-                t.Errorf("expected GOOD for partial DMARC enforcement, got %v", state)
+        if state != "Medium" {
+                t.Errorf("expected Medium for partial DMARC enforcement, got %v", state)
         }
         msg, _ := posture["message"].(string)
         if !strings.Contains(msg, "partial") && !strings.Contains(msg, "pct=50") {
