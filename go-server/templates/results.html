@@ -1,0 +1,2264 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="dark">
+<head>
+    {{template "head" .}}
+    <title>{{.Domain}} - DNS Tool</title>
+    {{template "head_css" .}}
+    {{template "critical_css" .}}
+    <style nonce="{{.CspNonce}}">
+        @media print {
+            .navbar, .btn, button, .no-print { display: none !important; }
+            * { 
+                -webkit-print-color-adjust: exact !important; 
+                print-color-adjust: exact !important; 
+            }
+            .card { break-inside: avoid; }
+            .text-truncate { 
+                overflow: visible !important; 
+                text-overflow: clip !important; 
+                white-space: normal !important;
+            }
+            .col-md-3 { 
+                flex: 0 0 50% !important; 
+                max-width: 50% !important;
+                margin-bottom: 0.5rem !important;
+            }
+            footer { 
+                display: block !important; 
+                visibility: visible !important;
+                margin-top: 2rem !important;
+            }
+        }
+    </style>
+</head>
+<body>
+    {{template "nav" .}}
+
+    <main id="main-content" class="container my-4">
+        {{template "flash_messages" .}}
+
+        {{$results := .Results}}
+        {{$spf := mapGetMap "spf_analysis" $results}}
+        {{$dmarc := mapGetMap "dmarc_analysis" $results}}
+        {{$dkim := mapGetMap "dkim_analysis" $results}}
+        {{$bimi := mapGetMap "bimi_analysis" $results}}
+        {{$dnssec := mapGetMap "dnssec_analysis" $results}}
+        {{$caa := mapGetMap "caa_analysis" $results}}
+        {{$dane := mapGetMap "dane_analysis" $results}}
+        {{$mta_sts := mapGetMap "mta_sts_analysis" $results}}
+        {{$tlsrpt := mapGetMap "tlsrpt_analysis" $results}}
+        {{$posture := mapGetMap "posture" $results}}
+        {{$remediation := mapGetMap "remediation" $results}}
+        {{$hosting := mapGetMap "hosting_summary" $results}}
+        {{$registrar := mapGetMap "registrar_info" $results}}
+        {{$basic := mapGetMap "basic_records" $results}}
+        {{$ns := mapGetMap "ns_delegation_analysis" $results}}
+        {{$dns_infra := mapGetMap "dns_infrastructure" $results}}
+        {{$esm := mapGetMap "email_security_mgmt" $results}}
+        {{$mp := mapGetMap "mail_posture" $results}}
+        {{$resolver_consensus := mapGetMap "resolver_consensus" $results}}
+        {{$ct := mapGetMap "ct_subdomains" $results}}
+        {{$auth_records := mapGetMap "authoritative_records" $results}}
+        {{$propagation := mapGetMap "propagation_status" $results}}
+        {{$resolver_ttl := mapGetMap "resolver_ttl" $results}}
+        {{$auth_ttl := mapGetMap "auth_ttl" $results}}
+        {{$auth_query_status := mapGetMap "auth_query_status" $results}}
+        {{$data_freshness := mapGetMap "_data_freshness" $results}}
+        {{$section_status := mapGetMap "section_status" $results}}
+
+        <!-- Header -->
+        <div class="results-header mb-4">
+            <div class="results-header-info">
+                <h1 class="h3 mb-1">DNS Intelligence Report</h1>
+                <div class="text-muted">
+                    <strong>{{.Domain}}</strong>
+                    {{if ne .AsciiDomain .Domain}}
+                        <span class="badge bg-secondary ms-2">ASCII: {{.AsciiDomain}}</span>
+                    {{end}}
+                </div>
+                {{if or .AnalysisTimestamp (gt .AnalysisDuration 0)}}
+                <div class="small text-muted results-meta" style="opacity: 0.7;">
+                    {{if .AnalysisTimestamp}}<i class="fas fa-clock me-1"></i><span>{{.AnalysisTimestamp}}</span>{{end}}
+                    {{if and .AnalysisTimestamp (gt .AnalysisDuration 0)}}<span class="mx-1">·</span>{{end}}
+                    {{if gt .AnalysisDuration 0}}<i class="fas fa-stopwatch me-1"></i><span>{{formatFloat 1 .AnalysisDuration}}s</span>{{end}}
+                    {{if .ToolVersion}}
+                        <span class="mx-1">·</span><i class="fas fa-tag me-1"></i><span>v{{.ToolVersion}}</span>
+                    {{end}}
+                </div>
+                {{end}}
+            </div>
+            <div class="results-header-actions">
+                <button type="button" id="reanalyzeBtn" class="btn btn-primary" data-domain="{{.Domain}}"
+                    {{if gt .WaitSeconds 0}}data-wait-seconds="{{.WaitSeconds}}" data-wait-reason="{{.WaitReason}}"{{end}}>
+                    <i class="fas fa-sync-alt me-2"></i>Re-analyze
+                </button>
+                <a href="/" class="btn btn-outline-primary">
+                    <i class="fas fa-search me-2"></i>New Domain
+                </a>
+            </div>
+        </div>
+        
+        <!-- Non-existent Domain Banner -->
+        {{if not .DomainExists}}
+        <div class="card border-info mb-4">
+            <div class="card-body text-center py-5">
+                <div class="mb-4">
+                    <i class="fas fa-question-circle fa-4x text-info opacity-75"></i>
+                </div>
+                <h2 class="h3 mb-3">
+                    <span class="badge bg-info-subtle text-info border border-info px-4 py-2">
+                        <i class="fas fa-globe-americas me-2"></i>Non-existent / Undelegated Domain
+                    </span>
+                </h2>
+                <p class="lead text-muted mb-4">{{default "This domain does not exist in DNS." (mapGetStr "domain_status_message" $results)}}</p>
+                <div class="row justify-content-center">
+                    <div class="col-lg-8">
+                        <div class="alert alert-info border-info mb-0 text-light" style="background-color: rgba(13, 202, 240, 0.15);">
+                            <h6 class="alert-heading mb-2 text-info"><i class="fas fa-info-circle me-2"></i>What This Means</h6>
+                            <ul class="text-start mb-0 small">
+                                <li>No authoritative DNS data is available for this domain</li>
+                                <li>Security posture cannot be evaluated without DNS records</li>
+                                <li>The domain may never have been registered, or has expired</li>
+                                <li>If this is your domain, check your registrar to ensure it's active</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                <div class="mt-4">
+                    <a href="/" class="btn btn-primary btn-lg">
+                        <i class="fas fa-search me-2"></i>Try Another Domain
+                    </a>
+                </div>
+            </div>
+        </div>
+        {{else}}
+        
+        
+        <!-- Global Posture Score -->
+        {{if $posture}}
+        {{$postureColor := mapGetStr "color" $posture}}
+        {{$postureIcon := mapGetStr "icon" $posture}}
+        {{$postureState := mapGetStr "state" $posture}}
+        {{$postureMsg := mapGetStr "message" $posture}}
+        {{$postureIssues := mapGetSlice "issues" $posture}}
+        {{$postureMonitoring := mapGetSlice "monitoring" $posture}}
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card border-{{$postureColor}} bg-{{$postureColor}} bg-opacity-10">
+                    <div class="card-body py-3">
+                        <div class="d-flex align-items-center justify-content-between flex-wrap">
+                            <div class="d-flex align-items-center">
+                                <i class="fas fa-{{$postureIcon}} fa-2x text-{{$postureColor}} me-3"></i>
+                                <div>
+                                    <div class="d-flex align-items-center">
+                                        <span class="text-muted small me-2">DNS &amp; Trust Posture:</span>
+                                        <span class="badge bg-{{$postureColor}} fs-6 px-3 py-2">{{$postureState}}</span>
+                                    </div>
+                                    <small class="text-muted">{{$postureMsg}}</small>
+                                    {{if mapGetBool "deliberate_monitoring" $posture}}
+                                    <small class="text-info d-block mt-1"><i class="fas fa-flask me-1"></i>{{mapGetStr "deliberate_monitoring_note" $posture}}</small>
+                                    {{end}}
+                                </div>
+                            </div>
+                            {{if or $postureIssues $postureMonitoring}}
+                            <div class="mt-2 mt-md-0">
+                                {{if $postureIssues}}
+                                    <small class="text-danger d-block"><i class="fas fa-times-circle me-1"></i>{{len $postureIssues}} issue{{if gt (len $postureIssues) 1}}s{{end}}</small>
+                                {{end}}
+                                {{if $postureMonitoring}}
+                                    <small class="text-info d-block"><i class="fas fa-eye me-1"></i>{{len $postureMonitoring}} monitoring</small>
+                                {{end}}
+                            </div>
+                            {{end}}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        
+        <!-- Partial Failure Banner - Shows if any sections timed out or failed -->
+        {{if $section_status}}
+        {{$failed_sections := list}}
+        {{range $key, $val := $section_status}}
+            {{$info := toMap $val}}
+            {{if $info}}
+            {{$st := mapGetStr "status" $info}}
+            {{if or (eq $st "timeout") (eq $st "error")}}
+            {{/* We handle this inline below */}}
+            {{end}}
+            {{end}}
+        {{end}}
+        {{/* Render failed sections inline since Go templates can't append to slices */}}
+        {{$hasFailed := false}}
+        {{range $key, $val := $section_status}}
+            {{$info := toMap $val}}
+            {{if $info}}
+            {{$st := mapGetStr "status" $info}}
+            {{if or (eq $st "timeout") (eq $st "error")}}
+            {{$hasFailed = true}}
+            {{end}}
+            {{end}}
+        {{end}}
+        {{if $hasFailed}}
+        <div class="alert alert-warning alert-dismissible fade show py-2 mb-3" role="alert">
+            <i class="fas fa-exclamation-triangle me-2"></i>
+            <strong>Partial Results:</strong> 
+            Some lookups experienced issues: 
+            {{range $key, $val := $section_status}}
+                {{$info := toMap $val}}
+                {{if $info}}
+                {{$st := mapGetStr "status" $info}}
+                {{if or (eq $st "timeout") (eq $st "error")}}
+                <span class="badge bg-{{if eq $st "timeout"}}secondary{{else}}danger{{end}} me-1">
+                    {{title (replace "_" " " $key)}} ({{$st}})
+                </span>
+                {{end}}
+                {{end}}
+            {{end}}
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="alert" aria-label="Close alert"></button>
+        </div>
+        {{end}}
+        {{end}}
+        
+        <!-- Executive Scorecard - At-a-Glance Security Status -->
+        {{if $posture}}
+        {{$spfStatus := mapGetStr "status" $spf}}
+        {{$dmarcStatus := mapGetStr "status" $dmarc}}
+        {{$dmarcPolicy := mapGetStr "policy" $dmarc}}
+        {{$dnssecStatus := mapGetStr "status" $dnssec}}
+        <div class="row mb-3">
+            <div class="col-12">
+                <div class="card bg-dark bg-opacity-25" style="border: 1px solid rgba(255,255,255,0.1);">
+                    <div class="card-body py-3 px-3">
+                        <div class="row g-3 text-center">
+                            <div class="col-6 col-md-3">
+                                <div class="small text-muted text-uppercase mb-1">Email Spoofing</div>
+                                {{if and (eq $spfStatus "success") (eq $dmarcStatus "success") (or (eq $dmarcPolicy "reject") (eq $dmarcPolicy "quarantine"))}}
+                                <span class="badge bg-success px-3 py-2">Protected</span>
+                                {{else if and (eq $spfStatus "success") (eq $dmarcStatus "success") (eq $dmarcPolicy "none")}}
+                                <span class="badge bg-info px-3 py-2">Monitoring</span>
+                                {{else if or (eq $spfStatus "success") (eq $dmarcStatus "success")}}
+                                <span class="badge bg-warning text-dark px-3 py-2">Partial</span>
+                                {{else}}
+                                <span class="badge bg-danger px-3 py-2">Vulnerable</span>
+                                {{end}}
+                            </div>
+                            <div class="col-6 col-md-3">
+                                <div class="small text-muted text-uppercase mb-1">Brand Impersonation</div>
+                                {{if and $bimi (eq (mapGetStr "status" $bimi) "success") (mapGetBool "vmc_valid" $bimi)}}
+                                <span class="badge bg-success px-3 py-2">Protected</span>
+                                {{else if and $bimi (eq (mapGetStr "status" $bimi) "success")}}
+                                <span class="badge bg-info px-3 py-2">Basic</span>
+                                {{else}}
+                                <span class="badge bg-secondary px-3 py-2">Not Setup</span>
+                                {{end}}
+                            </div>
+                            <div class="col-6 col-md-3">
+                                <div class="small text-muted text-uppercase mb-1">DNS Tampering</div>
+                                {{if eq $dnssecStatus "success"}}
+                                <span class="badge bg-success px-3 py-2">Protected</span>
+                                {{else if and $dns_infra (eq (mapGetStr "provider_tier" $dns_infra) "enterprise")}}
+                                <span class="badge bg-info px-3 py-2">Enterprise</span>
+                                {{else}}
+                                <span class="badge bg-warning text-dark px-3 py-2">Unsigned</span>
+                                {{end}}
+                            </div>
+                            <div class="col-6 col-md-3">
+                                <div class="small text-muted text-uppercase mb-1">Certificate Control</div>
+                                {{if and $caa (eq (mapGetStr "status" $caa) "success")}}
+                                <span class="badge bg-success px-3 py-2">Configured</span>
+                                {{else}}
+                                <span class="badge bg-secondary px-3 py-2">Open</span>
+                                {{end}}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {{end}}
+        
+        <!-- Findings Summary Block - Clean 2-Column Layout -->
+        {{if $posture}}
+        {{$postureIssuesF := mapGetSlice "issues" $posture}}
+        {{$postureMonitoringF := mapGetSlice "monitoring" $posture}}
+        {{$postureConfigured := mapGetSlice "configured" $posture}}
+        {{$postureAbsent := mapGetSlice "absent" $posture}}
+        {{if or $postureIssuesF $postureMonitoringF $postureConfigured $postureAbsent}}
+        <div class="row mb-3">
+            <div class="col-12">
+                <div class="card border-0 bg-dark bg-opacity-50">
+                    <div class="card-body py-2 px-3">
+                        <div class="row g-2 align-items-start small">
+                            {{if $postureIssuesF}}
+                            <div class="col-6 col-lg-3">
+                                <span class="text-danger fw-bold"><i class="fas fa-times-circle me-1"></i>Action Required</span>
+                                <div class="text-danger-emphasis">{{range $i, $issue := $postureIssuesF}}{{if $i}}, {{end}}{{$issue}}{{end}}</div>
+                            </div>
+                            {{end}}
+                            {{if $postureMonitoringF}}
+                            <div class="col-6 col-lg-3">
+                                <span class="text-warning fw-bold"><i class="fas fa-eye me-1"></i>Monitoring</span>
+                                <div class="text-warning-emphasis">{{range $i, $item := $postureMonitoringF}}{{if $i}}, {{end}}{{$item}}{{end}}</div>
+                            </div>
+                            {{end}}
+                            {{if $postureConfigured}}
+                            <div class="col-6 col-lg-3">
+                                <span class="text-success fw-bold"><i class="fas fa-check-circle me-1"></i>Configured</span>
+                                <div class="text-success-emphasis">{{range $i, $item := $postureConfigured}}{{if $i}}, {{end}}{{$item}}{{end}}</div>
+                            </div>
+                            {{end}}
+                            {{if $postureAbsent}}
+                            <div class="col-6 col-lg-3">
+                                <span class="text-muted fw-bold"><i class="fas fa-minus-circle me-1"></i>Not Configured</span>
+                                <div class="text-muted">{{range $i, $item := $postureAbsent}}{{if $i}}, {{end}}{{$item}}{{end}}</div>
+                            </div>
+                            {{end}}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {{end}}
+        {{end}}
+
+        <!-- Top Fixes Panel - Actionable Remediation Guidance -->
+        {{if $remediation}}
+        {{$topFixes := mapGetSlice "top_fixes" $remediation}}
+        {{$allFixes := mapGetSlice "all_fixes" $remediation}}
+        {{if $topFixes}}
+        <div class="row mb-3">
+            <div class="col-12">
+                <div class="card border-0 bg-dark bg-opacity-50" style="border-left: 3px solid var(--bs-warning) !important;">
+                    <div class="card-body py-3 px-3">
+                        <div class="d-flex align-items-center mb-2">
+                            <i class="fas fa-wrench text-warning me-2"></i>
+                            <strong class="small text-warning">Top {{len $topFixes}} Fix{{if gt (len $topFixes) 1}}es{{end}}</strong>
+                            {{if gt (mapGetFloat "fix_count" $remediation) 3}}
+                            <span class="badge bg-secondary bg-opacity-50 ms-2 small">{{formatFloat 0 (mapGetFloat "fix_count" $remediation)}} total</span>
+                            {{end}}
+                            {{$postureAchievable := mapGetStr "posture_achievable" $remediation}}
+                            {{if $postureAchievable}}
+                            <span class="ms-auto small text-muted">Achievable posture: <span class="badge bg-{{if or (eq $postureAchievable "SECURE") (eq $postureAchievable "STRONG")}}success{{else}}warning{{end}}">{{$postureAchievable}}</span></span>
+                            {{end}}
+                        </div>
+                        <div class="row g-2">
+                            {{range $fix := $topFixes}}
+                            {{$fixMap := toMap $fix}}
+                            {{if $fixMap}}
+                            <div class="col-md-4">
+                                <div class="p-2 rounded bg-dark bg-opacity-75 h-100">
+                                    <div class="d-flex align-items-start mb-1">
+                                        <span class="badge bg-{{mapGetStr "severity_color" $fixMap}} me-2" style="min-width: 52px; font-size: 0.65rem;">{{mapGetStr "severity_label" $fixMap}}</span>
+                                        <strong class="small">{{mapGetStr "title" $fixMap}}</strong>
+                                    </div>
+                                    <p class="text-muted mb-1" style="font-size: 0.75rem;">{{mapGetStr "fix" $fixMap}}</p>
+                                    {{if mapGetStr "dns_record" $fixMap}}
+                                    <div class="code-block small mt-1 border-warning" style="font-size: 0.7rem;">{{mapGetStr "dns_record" $fixMap}}</div>
+                                    {{end}}
+                                    <div class="mt-1">
+                                        <a href="{{mapGetStr "rfc_url" $fixMap}}" target="_blank" rel="noopener" class="text-muted rfc-link" style="font-size: 0.65rem;">
+                                            <i class="fas fa-book me-1"></i>{{mapGetStr "rfc" $fixMap}}
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                            {{end}}
+                            {{end}}
+                        </div>
+                        {{if and $allFixes (gt (len $allFixes) 3)}}
+                        <div class="mt-2 text-center">
+                            <button class="btn btn-sm btn-outline-warning border-opacity-50" type="button" data-bs-toggle="collapse" data-bs-target="#allFixesCollapse" aria-expanded="false" aria-controls="allFixesCollapse" style="font-size: 0.75rem;">
+                                <i class="fas fa-chevron-down me-1"></i>Show {{sub (len $allFixes) 3}} more fix{{if gt (sub (len $allFixes) 3) 1}}es{{end}}
+                            </button>
+                        </div>
+                        <div class="collapse mt-2" id="allFixesCollapse">
+                            <div class="row g-2">
+                                {{range $fix := sliceFrom 3 $allFixes}}
+                                {{$fixMap := toMap $fix}}
+                                {{if $fixMap}}
+                                <div class="col-md-4">
+                                    <div class="p-2 rounded bg-dark bg-opacity-75 h-100">
+                                        <div class="d-flex align-items-start mb-1">
+                                            <span class="badge bg-{{mapGetStr "severity_color" $fixMap}} me-2" style="min-width: 52px; font-size: 0.65rem;">{{mapGetStr "severity_label" $fixMap}}</span>
+                                            <strong class="small">{{mapGetStr "title" $fixMap}}</strong>
+                                        </div>
+                                        <p class="text-muted mb-1" style="font-size: 0.75rem;">{{mapGetStr "fix" $fixMap}}</p>
+                                        {{if mapGetStr "dns_record" $fixMap}}
+                                        <div class="code-block small mt-1 border-warning" style="font-size: 0.7rem;">{{mapGetStr "dns_record" $fixMap}}</div>
+                                        {{end}}
+                                        <div class="mt-1">
+                                            <a href="{{mapGetStr "rfc_url" $fixMap}}" target="_blank" rel="noopener" class="text-muted rfc-link" style="font-size: 0.65rem;">
+                                                <i class="fas fa-book me-1"></i>{{mapGetStr "rfc" $fixMap}}
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                                {{end}}
+                                {{end}}
+                            </div>
+                        </div>
+                        {{end}}
+                    </div>
+                </div>
+            </div>
+        </div>
+        {{end}}
+        {{end}}
+
+        <!-- Domain Summary Section -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card border-primary border-opacity-25 bg-primary bg-opacity-10">
+                    <div class="card-body py-3">
+                        <div class="row align-items-center domain-summary-row">
+                            <div class="col-6 col-md-3 domain-summary-col mb-2 mb-md-0">
+                                {{$regFreshness := mapGetMap "registrar" $data_freshness}}
+                                <small class="text-uppercase text-muted fw-bold d-block" style="font-size: 0.7rem;">Registrar <span class="text-info">({{if mapGetBool "ns_inferred" $registrar}}NS INFERENCE{{else if eq (mapGetStr "status" $registrar) "restricted"}}RESTRICTED{{else if mapGetStr "source" $registrar}}{{upper (mapGetStr "source" $registrar)}}{{else}}RDAP{{end}})</span>{{if and $regFreshness (eq (mapGetStr "source" $regFreshness) "cached")}} <span class="badge bg-secondary bg-opacity-50 border border-secondary border-opacity-25" style="font-size: 0.55rem; vertical-align: middle;" data-bs-toggle="tooltip" title="{{mapGetStr "note" $regFreshness}}">CACHED</span>{{else}} <span class="badge bg-success bg-opacity-25 border border-success border-opacity-25" style="font-size: 0.55rem; vertical-align: middle;" data-bs-toggle="tooltip" title="Live RDAP registry lookup">LIVE</span>{{end}}</small>
+                                {{$regName := mapGetStr "registrar" $registrar}}
+                                <div class="text-truncate" title="{{if $regName}}{{$regName}}{{else}}{{default "Unknown" (mapGetStr "message" $registrar)}}{{end}}">
+                                    <i class="fas fa-id-card text-primary me-2"></i>
+                                    {{if $regName}}
+                                    <strong>{{$regName}}</strong>
+                                    {{else if eq (mapGetStr "status" $registrar) "restricted"}}
+                                    <strong class="text-warning">Registry Restricted</strong>
+                                    {{else}}
+                                    <strong>Unknown</strong>
+                                    {{end}}
+                                </div>
+                                <small class="text-muted d-block" style="font-size: 0.65rem;">{{if mapGetBool "ns_inferred" $registrar}}Inferred from NS records{{else if mapGetBool "registry_restricted" $registrar}}.{{mapGetStr "registry_restricted_tld" $registrar}} restricts public WHOIS{{else if mapGetStr "subdomain_of" $registrar}}Registrar for {{mapGetStr "subdomain_of" $registrar}}{{else}}Where you pay to own domain{{end}}</small>
+                            </div>
+                            <div class="col-6 col-md-3 domain-summary-col mb-2 mb-md-0">
+                                <small class="text-uppercase text-muted fw-bold d-block" style="font-size: 0.7rem;">Email Service Provider</small>
+                                <div class="text-truncate">
+                                    {{$mpClass := mapGetStr "classification" $mp}}
+                                    {{$mpIcon := "envelope"}}
+                                    {{if or (eq $mpClass "no_mail_verified") (eq $mpClass "no_mail_partial")}}{{$mpIcon = "ban"}}{{else if eq $mpClass "email_ambiguous"}}{{$mpIcon = "question-circle"}}{{end}}
+                                    <i class="fas fa-{{$mpIcon}} text-primary me-2"></i>
+                                    <strong>{{if and $hosting (mapGetStr "email_hosting" $hosting)}}{{mapGetStr "email_hosting" $hosting}}{{else}}Unknown{{end}}</strong>
+                                </div>
+                                <small class="text-muted d-block" style="font-size: 0.65rem;">{{if mapGetStr "label" $mp}}{{mapGetStr "label" $mp}}{{else if mapGetBool "is_no_mail_domain" $results}}Domain declares no email{{else}}Where email is hosted (MX){{end}}</small>
+                            </div>
+                            <div class="col-6 col-md-3 domain-summary-col mb-2 mb-md-0">
+                                <small class="text-uppercase text-muted fw-bold d-block" style="font-size: 0.7rem;">Web Hosting</small>
+                                <div class="text-truncate">
+                                    <i class="fas fa-server text-primary me-2"></i>
+                                    <strong>{{if $hosting}}{{default "Unknown" (mapGetStr "hosting" $hosting)}}{{else}}Unknown{{end}}</strong>
+                                </div>
+                                <small class="text-muted d-block" style="font-size: 0.65rem;">Where website is hosted</small>
+                            </div>
+                            <div class="col-6 col-md-3 domain-summary-col">
+                                <small class="text-uppercase text-muted fw-bold d-block" style="font-size: 0.7rem;">DNS Hosting</small>
+                                <div>
+                                    <i class="fas fa-network-wired text-primary me-2"></i>
+                                    <strong>{{if $hosting}}{{default "Standard" (mapGetStr "dns_hosting" $hosting)}}{{else}}Standard{{end}}</strong>
+                                    {{if and $dns_infra (eq (mapGetStr "provider_tier" $dns_infra) "enterprise")}}
+                                    {{if mapGetBool "is_government" $dns_infra}}
+                                    <span class="badge bg-info ms-1" style="font-size: 0.55rem;" title="Government security standards apply">Gov</span>
+                                    {{end}}
+                                    <span class="badge bg-success ms-1" style="font-size: 0.55rem;" title="Enterprise-grade DNS infrastructure">Enterprise</span>
+                                    {{end}}
+                                </div>
+                                <small class="text-muted d-block" style="font-size: 0.65rem;">Where DNS records are edited</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row section-email-security">
+            <!-- Email Security Section -->
+            <div class="col-12 mb-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0 d-flex align-items-center justify-content-between flex-wrap">
+                            <span><i class="fas fa-shield-alt me-2"></i>Email Security</span>
+                            <small class="text-muted">Can this domain be impersonated by email?
+                                {{if $posture}}
+                                {{$verdicts := mapGetMap "verdicts" $posture}}
+                                {{$emailAnswer := mapGetStr "email_answer" $verdicts}}
+                                {{if $emailAnswer}}
+                                    <span class="badge bg-{{if eq $emailAnswer "No"}}success{{else if or (contains $emailAnswer "Mostly") (contains $emailAnswer "Partially")}}warning{{else}}danger{{end}} ms-1">{{$emailAnswer}}</span>
+                                {{end}}
+                                {{end}}
+                            </small>
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <!-- Mail Posture -->
+                        {{if mapGetStr "classification" $mp}}
+                            {{$mpClassification := mapGetStr "classification" $mp}}
+                            {{if eq $mpClassification "no_mail_verified"}}
+                            <div class="alert alert-success py-2 mb-3 small border-success border-opacity-50">
+                                <div class="d-flex align-items-center mb-1">
+                                    <i class="fas fa-shield-alt me-2"></i><strong>{{mapGetStr "label" $mp}}</strong>
+                                    <span class="badge bg-success ms-2">{{mapGetStr "present_count" $mp}}/{{mapGetStr "total_signals" $mp}} controls</span>
+                                </div>
+                                <div class="mb-2">{{mapGetStr "summary" $mp}}</div>
+                                <div class="d-flex flex-wrap gap-1">
+                                    {{$signals := mapGetMap "signals" $mp}}
+                                    {{if $signals}}
+                                    {{range $key, $val := $signals}}
+                                    {{$sig := toMap $val}}
+                                    {{if and $sig (mapGetBool "present" $sig)}}
+                                    <span class="badge bg-success bg-opacity-75">
+                                        <i class="fas fa-check me-1"></i>{{mapGetStr "label" $sig}}
+                                        <a href="{{mapGetStr "rfc_url" $sig}}" target="_blank" rel="noopener" class="text-white-50 text-decoration-none ms-1">({{mapGetStr "rfc" $sig}})</a>
+                                    </span>
+                                    {{end}}
+                                    {{end}}
+                                    {{end}}
+                                </div>
+                            </div>
+                            {{else if eq $mpClassification "no_mail_partial"}}
+                            <div class="alert alert-warning py-2 mb-3 small border-warning border-opacity-50">
+                                <div class="d-flex align-items-center mb-1">
+                                    <i class="fas fa-exclamation-triangle me-2"></i><strong>{{mapGetStr "label" $mp}}</strong>
+                                    <span class="badge bg-warning text-dark ms-2">{{mapGetStr "present_count" $mp}}/{{mapGetStr "total_signals" $mp}} controls</span>
+                                </div>
+                                <div class="mb-2">{{mapGetStr "summary" $mp}}</div>
+                                <div class="d-flex flex-wrap gap-1 mb-2">
+                                    {{$signals := mapGetMap "signals" $mp}}
+                                    {{if $signals}}
+                                    {{range $key, $val := $signals}}
+                                    {{$sig := toMap $val}}
+                                    {{if $sig}}
+                                    {{if mapGetBool "present" $sig}}
+                                    <span class="badge bg-success bg-opacity-75">
+                                        <i class="fas fa-check me-1"></i>{{mapGetStr "label" $sig}}
+                                        <a href="{{mapGetStr "rfc_url" $sig}}" target="_blank" rel="noopener" class="text-white-50 text-decoration-none ms-1">({{mapGetStr "rfc" $sig}})</a>
+                                    </span>
+                                    {{else}}
+                                    <span class="badge bg-danger bg-opacity-75">
+                                        <i class="fas fa-times me-1"></i>{{mapGetStr "label" $sig}}
+                                        <a href="{{mapGetStr "rfc_url" $sig}}" target="_blank" rel="noopener" class="text-white-50 text-decoration-none ms-1">({{mapGetStr "rfc" $sig}})</a>
+                                    </span>
+                                    {{end}}
+                                    {{end}}
+                                    {{end}}
+                                    {{end}}
+                                </div>
+                                {{$missingSteps := mapGetSlice "missing_steps" $mp}}
+                                {{if $missingSteps}}
+                                <div class="mt-2 pt-2 border-top border-warning border-opacity-25">
+                                    <strong class="d-block mb-1"><i class="fas fa-clipboard-list me-1"></i>Missing steps to complete no-mail hardening:</strong>
+                                    {{range $step := $missingSteps}}
+                                    {{$stepMap := toMap $step}}
+                                    {{if $stepMap}}
+                                    <div class="ms-2 mb-1">
+                                        <i class="fas fa-arrow-right text-warning me-1"></i>
+                                        <strong>{{mapGetStr "control" $stepMap}}</strong> &mdash; {{mapGetStr "action" $stepMap}}
+                                        <a href="{{mapGetStr "rfc_url" $stepMap}}" target="_blank" rel="noopener" class="text-muted text-decoration-none ms-1">({{mapGetStr "rfc" $stepMap}})</a>
+                                        <div class="text-muted ms-3" style="font-size: 0.75rem;"><i class="fas fa-exclamation-circle me-1"></i>{{mapGetStr "risk" $stepMap}}</div>
+                                    </div>
+                                    {{end}}
+                                    {{end}}
+                                </div>
+                                {{end}}
+                                {{$recRecs := mapGetSlice "recommended_records" $mp}}
+                                {{if $recRecs}}
+                                <div class="mt-2 pt-2 border-top border-warning border-opacity-25">
+                                    <strong class="d-block mb-1"><i class="fas fa-code me-1"></i>Recommended DNS records:</strong>
+                                    {{range $rec := $recRecs}}
+                                    <div class="code-block small mb-1">{{$rec}}</div>
+                                    {{end}}
+                                </div>
+                                {{end}}
+                            </div>
+                            {{else if eq $mpClassification "email_ambiguous"}}
+                            <div class="alert alert-secondary py-2 mb-3 small border-secondary border-opacity-50">
+                                <div class="d-flex align-items-center mb-1">
+                                    <i class="fas fa-question-circle me-2"></i><strong>{{mapGetStr "label" $mp}}</strong>
+                                </div>
+                                <div class="mb-2">{{mapGetStr "summary" $mp}}</div>
+                                {{$missingSteps := mapGetSlice "missing_steps" $mp}}
+                                {{if $missingSteps}}
+                                <div class="mt-2 pt-2 border-top border-secondary border-opacity-25">
+                                    <strong class="d-block mb-1"><i class="fas fa-lightbulb me-1"></i>If this domain should not send email, add these DNS records:</strong>
+                                    {{range $step := $missingSteps}}
+                                    {{$stepMap := toMap $step}}
+                                    {{if $stepMap}}
+                                    <div class="ms-2 mb-1">
+                                        <i class="fas fa-arrow-right text-secondary me-1"></i>
+                                        <strong>{{mapGetStr "control" $stepMap}}</strong> &mdash; {{mapGetStr "action" $stepMap}}
+                                        <a href="{{mapGetStr "rfc_url" $stepMap}}" target="_blank" rel="noopener" class="text-muted text-decoration-none ms-1">({{mapGetStr "rfc" $stepMap}})</a>
+                                    </div>
+                                    {{end}}
+                                    {{end}}
+                                </div>
+                                {{end}}
+                                {{$recRecs := mapGetSlice "recommended_records" $mp}}
+                                {{if $recRecs}}
+                                <div class="mt-2 pt-2 border-top border-secondary border-opacity-25">
+                                    <strong class="d-block mb-1"><i class="fas fa-code me-1"></i>Recommended DNS records:</strong>
+                                    {{range $rec := $recRecs}}
+                                    <div class="code-block small mb-1">{{$rec}}</div>
+                                    {{end}}
+                                </div>
+                                {{end}}
+                            </div>
+                            {{end}}
+                        {{end}}
+                        {{if $posture}}
+                        {{$verdicts := mapGetMap "verdicts" $posture}}
+                        {{$emailVerdict := mapGetStr "email" $verdicts}}
+                        {{$emailAnswer := mapGetStr "email_answer" $verdicts}}
+                        {{if $emailVerdict}}
+                            <div class="alert alert-{{if eq $emailAnswer "No"}}success{{else if or (contains $emailAnswer "Mostly") (contains $emailAnswer "Partially")}}warning{{else}}danger{{end}} py-2 mb-3 small">
+                                <i class="fas fa-gavel me-2"></i><strong>Verdict:</strong> {{$emailVerdict}}
+                            </div>
+                        {{end}}
+                        {{end}}
+                        <div class="row">
+                            <!-- SPF Analysis -->
+                            <div class="col-md-4 mb-3 mb-md-0">
+                                <h6 class="d-flex align-items-center mb-1">
+                                    <i class="fas fa-envelope me-2"></i>SPF Record
+                                    <a href="https://datatracker.ietf.org/doc/html/rfc7208" target="_blank" rel="noopener" class="ms-2 text-muted rfc-link" data-bs-toggle="tooltip" data-bs-html="true" title="<strong>Sender Policy Framework</strong><br>Specifies which mail servers can send email for your domain." aria-label="Learn about SPF - RFC 7208"><i class="fas fa-info-circle"></i><span class="rfc-label">RFC 7208</span></a>
+                                </h6>
+                                {{$spfStatus := mapGetStr "status" $spf}}
+                                <div class="mb-2">
+                                    <span class="badge bg-{{if eq $spfStatus "success"}}success{{else if eq $spfStatus "error"}}danger{{else}}warning{{end}}">
+                                        {{title $spfStatus}}
+                                    </span>
+                                    {{$spfPerm := mapGetStr "permissiveness" $spf}}
+                                    {{if $spfPerm}}
+                                        <span class="badge bg-{{if eq $spfPerm "DANGEROUS"}}danger{{else if or (eq $spfPerm "STRICT") (eq $spfPerm "SOFT")}}success{{else}}warning{{end}} ms-1">{{mapGetStr "all_mechanism" $spf}}</span>
+                                    {{end}}
+                                    {{$lookupCount := mapGetFloat "lookup_count" $spf}}
+                                    {{if gt $lookupCount 0}}
+                                        <span class="badge bg-{{if gt $lookupCount 10}}danger{{else if gte $lookupCount 8}}warning{{else}}secondary{{end}} ms-1" data-bs-toggle="tooltip" title="DNS lookup limit is 10">{{formatFloat 0 $lookupCount}}/10 lookups</span>
+                                    {{end}}
+                                </div>
+                                <p class="text-muted mb-2 small">{{mapGetStr "message" $spf}}</p>
+                                {{$spfRecords := mapGetSlice "valid_records" $spf}}
+                                {{if $spfRecords}}
+                                    {{range $record := $spfRecords}}
+                                        <div class="code-block small">{{$record}}</div>
+                                    {{end}}
+                                {{end}}
+                                {{$spfIssues := mapGetSlice "issues" $spf}}
+                                {{if $spfIssues}}
+                                    <div class="mt-2 small">
+                                        {{range $issue := $spfIssues}}
+                                            <div class="text-warning"><i class="fas fa-exclamation-triangle me-1"></i>{{$issue}}</div>
+                                        {{end}}
+                                    </div>
+                                {{end}}
+                                {{$dmarcPolicy := mapGetStr "policy" $dmarc}}
+                                {{$dmarcStatus := mapGetStr "status" $dmarc}}
+                                {{if eq $spfPerm "SOFT"}}
+                                    <div class="mt-2 p-2 bg-info bg-opacity-10 border border-info border-opacity-25 rounded small">
+                                        <i class="fas fa-info-circle text-info me-1"></i>
+                                        <strong class="text-info">~all is the industry standard.</strong>
+                                        <span class="text-muted">Google, Apple, and most providers default to soft fail. CISA (BOD 18-01) and RFC 7489 §10.1 confirm that DMARC policy — not SPF alone — is the primary enforcement control. Using ~all ensures DKIM can always be evaluated before a DMARC decision is made.
+                                        {{if eq $dmarcPolicy "reject"}}
+                                            <strong class="text-success">This domain uses ~all + DMARC reject: the strongest compatible security stance, aligned with CISA and RFC guidance.</strong>
+                                        {{else if eq $dmarcPolicy "quarantine"}}
+                                            <strong class="text-warning">This domain uses ~all + DMARC quarantine — good protection. Moving to p=reject would achieve the strongest stance.</strong>
+                                        {{else if eq $dmarcPolicy "none"}}
+                                            <strong class="text-danger">This domain has DMARC p=none (monitoring only). Enforcing quarantine or reject is recommended to gain real protection.</strong>
+                                        {{else if eq $dmarcStatus "error"}}
+                                            <strong class="text-danger">No DMARC record found. Without DMARC, SPF alone cannot prevent domain spoofing. Adding a DMARC policy is strongly recommended.</strong>
+                                        {{end}}</span>
+                                    </div>
+                                {{else if and (eq $spfPerm "STRICT") (not (mapGetBool "no_mail_intent" $spf))}}
+                                    <div class="mt-2 p-2 bg-warning bg-opacity-10 border border-warning border-opacity-25 rounded small">
+                                        <i class="fas fa-exclamation-triangle text-warning me-1"></i>
+                                        <strong class="text-warning">SPF hard fail (-all): compliance-strong, but can short-circuit DMARC.</strong>
+                                        <span class="text-muted">RFC 7489 §10.1 notes that -all can cause some receivers to reject mail during the SMTP transaction — before DKIM is checked and before DMARC can evaluate the result. A message that would pass DMARC via DKIM alignment may be rejected prematurely. For most domains, ~all + DMARC p=reject is the strongest compatible posture — it ensures every authentication method (SPF, DKIM, DMARC) is fully evaluated before a decision is made.
+                                        {{if and .Domain (hasSuffix ".gov" .Domain)}}
+                                            <br><strong class="text-info"><i class="fas fa-landmark me-1"></i>Federal compliance context:</strong> <span class="text-info">CISA BOD 18-01 requires valid SPF records for federal civilian agency domains. The directive doesn't explicitly specify -all vs ~all, but -all is widespread federal practice as defense-in-depth. This domain's use of -all follows that convention.</span>
+                                        {{end}}
+                                        {{if eq $dmarcPolicy "reject"}}
+                                            <br><strong class="text-warning">DMARC is set to reject — enforcement is strong. However, some receivers may still reject messages on SPF hard fail before DKIM alignment is checked. {{if not (and .Domain (hasSuffix ".gov" .Domain))}}Switching to ~all + p=reject would provide the same enforcement with full DMARC compatibility.{{end}}</strong>
+                                        {{else if eq $dmarcPolicy "quarantine"}}
+                                            <br><strong class="text-warning">DMARC enforcement is partial (quarantine). -all may preempt DKIM/DMARC evaluation at some receivers. Consider p=reject for full enforcement; ~all is more DMARC-compatible.</strong>
+                                        {{else if eq $dmarcPolicy "none"}}
+                                            <br><strong class="text-danger">DMARC is monitoring only (p=none). -all provides some SPF-level protection, but DMARC isn't enforcing. Adding p=reject and considering ~all for compatibility would be far more effective.</strong>
+                                        {{else if eq $dmarcStatus "error"}}
+                                            <br><strong class="text-danger">No DMARC record found. -all provides strict SPF, but without DMARC, alignment is never evaluated. Adding DMARC with p=reject is strongly recommended.</strong>
+                                        {{end}}</span>
+                                    </div>
+                                {{end}}
+                                {{$spfLike := mapGetSlice "spf_like" $spf}}
+                                {{if $spfLike}}
+                                    <div class="mt-2 p-2 bg-warning bg-opacity-10 border border-warning rounded">
+                                        <small class="text-warning d-block fw-bold">
+                                            <i class="fas fa-exclamation-triangle me-1"></i>
+                                            Legacy SPF-like records detected
+                                        </small>
+                                        <small class="text-muted d-block">These deprecated records (e.g. spf2.0/pra) should be ignored per RFC 7208, but some non-compliant receivers may still process them. Consider removing.</small>
+                                        {{range $record := $spfLike}}
+                                            <div class="code-block small mt-1 border-warning text-warning">{{$record}}</div>
+                                        {{end}}
+                                    </div>
+                                {{end}}
+                                {{if $esm}}
+                                {{$spfFlattening := mapGetMap "spf_flattening" $esm}}
+                                {{if $spfFlattening}}
+                                    <div class="mt-2 small">
+                                        <span class="provider-badge"><i class="fas fa-compress-arrows-alt"></i> SPF flattened by {{mapGetStr "provider" $spfFlattening}}{{if ne (mapGetStr "vendor" $spfFlattening) (mapGetStr "provider" $spfFlattening)}} ({{mapGetStr "vendor" $spfFlattening}}){{end}}</span>
+                                    </div>
+                                {{end}}
+                                {{end}}
+                                {{if $remediation}}
+                                {{$perSection := mapGetMap "per_section" $remediation}}
+                                {{if $perSection}}
+                                {{$spfRem := mapGetMap "spf" $perSection}}
+                                {{if and $spfRem (eq (mapGetStr "status" $spfRem) "action_needed")}}
+                                    {{$spfFixes := mapGetSlice "fixes" $spfRem}}
+                                    {{if $spfFixes}}
+                                    {{$spfFix := toMap (sliceIndex 0 $spfFixes)}}
+                                    {{if $spfFix}}
+                                    <div class="mt-2 p-2 bg-warning bg-opacity-10 border border-warning border-opacity-25 rounded small">
+                                        <i class="fas fa-wrench text-warning me-1"></i>
+                                        <strong class="text-warning">{{mapGetStr "title" $spfFix}}:</strong>
+                                        <span class="text-muted">{{truncate 120 (mapGetStr "why" $spfFix)}}</span>
+                                        {{if mapGetStr "dns_record" $spfFix}}
+                                        <div class="code-block small mt-1 border-warning" style="font-size: 0.7rem;">{{mapGetStr "dns_record" $spfFix}}</div>
+                                        {{end}}
+                                    </div>
+                                    {{end}}
+                                    {{end}}
+                                {{end}}
+                                {{end}}
+                                {{end}}
+                            </div>
+
+                            <!-- DMARC Analysis -->
+                            <div class="col-md-4 mb-3 mb-md-0">
+                                <h6 class="d-flex align-items-center mb-1">
+                                    <i class="fas fa-lock me-2"></i>DMARC Policy
+                                    <a href="https://datatracker.ietf.org/doc/html/rfc7489" target="_blank" rel="noopener" class="ms-2 text-muted rfc-link" data-bs-toggle="tooltip" data-bs-html="true" title="<strong>Domain-based Message Authentication</strong><br>Tells receivers how to handle SPF/DKIM failures and where to send reports." aria-label="Learn about DMARC - RFC 7489"><i class="fas fa-info-circle"></i><span class="rfc-label">RFC 7489</span></a>
+                                </h6>
+                                {{$dmarcStatus := mapGetStr "status" $dmarc}}
+                                {{$dmarcPolicy := mapGetStr "policy" $dmarc}}
+                                <div class="mb-2">
+                                    <span class="badge bg-{{if eq $dmarcStatus "success"}}success{{else if eq $dmarcStatus "error"}}danger{{else}}warning{{end}}">
+                                        {{if mapGetBool "no_mail_recommendation" $dmarc}}
+                                            Recommended
+                                        {{else}}
+                                            {{title $dmarcStatus}}
+                                        {{end}}
+                                    </span>
+                                    {{if $dmarcPolicy}}
+                                        <span class="badge bg-{{if eq $dmarcPolicy "reject"}}success{{else if eq $dmarcPolicy "quarantine"}}warning{{else}}secondary{{end}} ms-1">p={{$dmarcPolicy}}</span>
+                                    {{end}}
+                                    {{$dmarcPct := mapGetFloat "pct" $dmarc}}
+                                    {{if and (gt $dmarcPct 0) (lt $dmarcPct 100)}}
+                                        <span class="badge bg-warning ms-1">{{formatFloat 0 $dmarcPct}}% enforced</span>
+                                    {{end}}
+                                </div>
+                                <p class="text-muted mb-2 small">{{mapGetStr "message" $dmarc}}</p>
+                                {{if and (mapGetBool "no_mail_recommendation" $dmarc) (mapGetStr "suggested_record" $dmarc)}}
+                                    <div class="alert alert-info py-2 px-3 mb-2">
+                                        <small><i class="fas fa-lightbulb me-1"></i>Add this TXT record at <code>_dmarc.{{.Domain}}</code>:</small>
+                                        <div class="code-block small mt-1 bg-dark text-success border-success">{{mapGetStr "suggested_record" $dmarc}}</div>
+                                    </div>
+                                {{end}}
+                                {{$dmarcRecords := mapGetSlice "valid_records" $dmarc}}
+                                {{if $dmarcRecords}}
+                                    {{range $record := $dmarcRecords}}
+                                        <div class="code-block small">{{$record}}</div>
+                                    {{end}}
+                                {{end}}
+                                {{if and $dmarcPolicy (eq $dmarcStatus "success")}}
+                                    <div class="mt-2 small">
+                                        <span class="text-muted">Alignment:</span>
+                                        <span class="badge bg-secondary">SPF {{default "relaxed" (mapGetStr "aspf" $dmarc)}}</span>
+                                        <span class="badge bg-secondary">DKIM {{default "relaxed" (mapGetStr "adkim" $dmarc)}}</span>
+                                        {{$subdomainPolicy := mapGetStr "subdomain_policy" $dmarc}}
+                                        {{if $subdomainPolicy}}
+                                            <span class="badge bg-{{if eq $subdomainPolicy "reject"}}success{{else if eq $subdomainPolicy "quarantine"}}warning{{else}}secondary{{end}}">sp={{$subdomainPolicy}}</span>
+                                        {{end}}
+                                    </div>
+                                {{end}}
+                                {{$dmarcbisTags := mapGetSlice "dmarcbis_tags" $dmarc}}
+                                {{if $dmarcbisTags}}
+                                    <div class="mt-2 small">
+                                        <span class="text-muted">DMARCbis Tags:</span>
+                                        {{$npPolicy := mapGetStr "np_policy" $dmarc}}
+                                        {{if $npPolicy}}
+                                            <span class="badge bg-{{if eq $npPolicy "reject"}}success{{else if eq $npPolicy "quarantine"}}warning{{else}}secondary{{end}} ms-1" data-bs-toggle="tooltip" title="Non-existent subdomain policy (draft-ietf-dmarc-dmarcbis) — controls policy for subdomains that don't have their own DMARC record">np={{$npPolicy}}</span>
+                                        {{end}}
+                                        {{$tTesting := mapGetStr "t_testing" $dmarc}}
+                                        {{if $tTesting}}
+                                            <span class="badge bg-{{if eq $tTesting "y"}}warning{{else}}success{{end}} ms-1" data-bs-toggle="tooltip" title="Testing mode (DMARCbis) — replaces pct= tag. t=y means testing/monitoring, t=n means full enforcement">t={{$tTesting}}</span>
+                                        {{end}}
+                                        {{$psdFlag := mapGetStr "psd_flag" $dmarc}}
+                                        {{if $psdFlag}}
+                                            <span class="badge bg-info ms-1" data-bs-toggle="tooltip" title="Public Suffix Domain flag (DMARCbis) — allows public suffix operators (.gov, .edu) to set policy for all domains under them">psd={{$psdFlag}}</span>
+                                        {{end}}
+                                        <a href="https://datatracker.ietf.org/doc/draft-ietf-dmarc-dmarcbis/" target="_blank" rel="noopener" class="ms-1 text-muted rfc-link small"><span class="rfc-label">DMARCbis</span></a>
+                                    </div>
+                                {{end}}
+                                {{$dmarcIssues := mapGetSlice "issues" $dmarc}}
+                                {{if $dmarcIssues}}
+                                    <div class="mt-2 small">
+                                        {{range $issue := $dmarcIssues}}
+                                            <div class="text-warning"><i class="fas fa-exclamation-triangle me-1"></i>{{$issue}}</div>
+                                        {{end}}
+                                    </div>
+                                {{end}}
+                                {{if and $posture (mapGetBool "deliberate_monitoring" $posture)}}
+                                    <div class="mt-2 p-2 bg-info bg-opacity-10 border border-info border-opacity-25 rounded small">
+                                        <i class="fas fa-flask text-info me-1"></i>
+                                        <strong class="text-info">Advanced cryptographic posture detected.</strong>
+                                        <span class="text-muted">{{mapGetStr "deliberate_monitoring_note" $posture}}</span>
+                                    </div>
+                                {{end}}
+                                {{if $esm}}
+                                {{$esmProviders := mapGetSlice "providers" $esm}}
+                                {{if $esmProviders}}
+                                    {{range $provider := $esmProviders}}
+                                        {{$prov := toMap $provider}}
+                                        {{if $prov}}
+                                        {{$detectedFrom := mapGetSlice "detected_from" $prov}}
+                                        {{range $src := $detectedFrom}}
+                                            {{if contains (toStr $src) "DMARC"}}
+                                            <div class="mt-2 small">
+                                                <span class="provider-badge"><i class="fas fa-shield-alt"></i> Reported to {{mapGetStr "name" $prov}}{{if ne (mapGetStr "vendor" $prov) (mapGetStr "name" $prov)}} ({{mapGetStr "vendor" $prov}}){{end}}</span>
+                                            </div>
+                                            {{end}}
+                                        {{end}}
+                                        {{end}}
+                                    {{end}}
+                                {{end}}
+                                {{end}}
+                                {{if $remediation}}
+                                {{$perSection := mapGetMap "per_section" $remediation}}
+                                {{if $perSection}}
+                                {{$dmarcRem := mapGetMap "dmarc" $perSection}}
+                                {{if and $dmarcRem (eq (mapGetStr "status" $dmarcRem) "action_needed")}}
+                                    {{$dmarcFixes := mapGetSlice "fixes" $dmarcRem}}
+                                    {{if $dmarcFixes}}
+                                    {{$dmarcFix := toMap (sliceIndex 0 $dmarcFixes)}}
+                                    {{if $dmarcFix}}
+                                    <div class="mt-2 p-2 bg-warning bg-opacity-10 border border-warning border-opacity-25 rounded small">
+                                        <i class="fas fa-wrench text-warning me-1"></i>
+                                        <strong class="text-warning">{{mapGetStr "title" $dmarcFix}}:</strong>
+                                        <span class="text-muted">{{truncate 120 (mapGetStr "why" $dmarcFix)}}</span>
+                                        {{if mapGetStr "dns_record" $dmarcFix}}
+                                        <div class="code-block small mt-1 border-warning" style="font-size: 0.7rem;">{{mapGetStr "dns_record" $dmarcFix}}</div>
+                                        {{end}}
+                                    </div>
+                                    {{end}}
+                                    {{end}}
+                                {{end}}
+                                {{end}}
+                                {{end}}
+                            </div>
+
+                            <!-- DKIM Analysis -->
+                            <div class="col-md-4">
+                                <h6 class="d-flex align-items-center mb-1">
+                                    <i class="fas fa-key me-2"></i>DKIM Records
+                                    <a href="https://datatracker.ietf.org/doc/html/rfc6376" target="_blank" rel="noopener" class="ms-2 text-muted rfc-link" data-bs-toggle="tooltip" data-bs-html="true" title="<strong>DomainKeys Identified Mail</strong><br>Cryptographic signatures that verify email hasn't been altered in transit." aria-label="Learn about DKIM - RFC 6376"><i class="fas fa-info-circle"></i><span class="rfc-label">RFC 6376</span></a>
+                                </h6>
+                                {{$dkimStatus := mapGetStr "status" $dkim}}
+                                <div class="mb-2">
+                                    <span class="badge bg-{{if eq $dkimStatus "success"}}success{{else if or (eq $dkimStatus "warning") (eq $dkimStatus "partial")}}warning{{else}}secondary{{end}}">
+                                        {{if eq $dkimStatus "success"}}Found{{else if eq $dkimStatus "partial"}}Third-Party Only{{else if eq $dkimStatus "warning"}}Weak Keys{{else}}Not Discoverable{{end}}
+                                    </span>
+                                    {{$keyStrengths := mapGetSlice "key_strengths" $dkim}}
+                                    {{if $keyStrengths}}
+                                        <span class="badge bg-success ms-1">{{range $i, $ks := $keyStrengths}}{{if $i}}, {{end}}{{$ks}}{{end}}</span>
+                                    {{end}}
+                                </div>
+                                <p class="text-muted mb-2 small">{{mapGetStr "message" $dkim}}</p>
+                                {{if and (mapGetStr "security_gateway" $dkim) (mapGetBool "primary_has_dkim" $dkim)}}
+                                    <div class="alert alert-info py-2 px-3 small mb-2">
+                                        <i class="fas fa-shield-alt me-1"></i>
+                                        Mail routed through <strong>{{mapGetStr "security_gateway" $dkim}}</strong> (security gateway) — DKIM signed by <strong>{{mapGetStr "primary_provider" $dkim}}</strong> (sending platform). This is a standard enterprise architecture.
+                                    </div>
+                                {{else if and (mapGetBool "third_party_only" $dkim) (mapGetStr "primary_dkim_note" $dkim)}}
+                                    <div class="alert alert-warning py-2 px-3 small mb-2">
+                                        <i class="fas fa-exclamation-triangle me-1"></i>
+                                        {{mapGetStr "primary_dkim_note" $dkim}}
+                                    </div>
+                                {{end}}
+                                {{$keyIssues := mapGetSlice "key_issues" $dkim}}
+                                {{if $keyIssues}}
+                                    <div class="mb-2 small">
+                                        {{range $issue := $keyIssues}}
+                                            <div class="text-warning"><i class="fas fa-exclamation-triangle me-1"></i>{{$issue}}</div>
+                                        {{end}}
+                                    </div>
+                                {{end}}
+                                {{$selectors := mapGetMap "selectors" $dkim}}
+                                {{if $selectors}}
+                                    {{range $selector, $sval := $selectors}}
+                                        {{$sdata := toMap $sval}}
+                                        {{if $sdata}}
+                                        <div class="mb-2">
+                                            {{$sProvider := mapGetStr "provider" $sdata}}
+                                            {{$primaryProvider := mapGetStr "primary_provider" $dkim}}
+                                            <small class="d-block {{if or (not (mapGetBool "third_party_only" $dkim)) (eq $sProvider $primaryProvider)}}text-success{{else}}text-warning{{end}}">
+                                                <i class="fas fa-check-circle me-1"></i>{{$selector}}
+                                                {{if mapGetBool "user_hint" $sdata}}
+                                                    <span class="badge bg-primary bg-opacity-75 ms-1" title="Found via user-provided selector hint"><i class="fas fa-user me-1"></i>user hint</span>
+                                                {{end}}
+                                                {{if and $sProvider (ne $sProvider "Unknown")}}
+                                                    <span class="badge bg-{{if eq $sProvider $primaryProvider}}info{{else}}secondary{{end}} ms-1">{{$sProvider}}{{if mapGetBool "inferred" $sdata}} (inferred){{end}}</span>
+                                                {{end}}
+                                                {{$keyInfos := mapGetSlice "key_info" $sdata}}
+                                                {{if $keyInfos}}
+                                                    {{range $ki := $keyInfos}}
+                                                        {{$kiMap := toMap $ki}}
+                                                        {{if $kiMap}}
+                                                        {{$keyBits := mapGetFloat "key_bits" $kiMap}}
+                                                        {{if gt $keyBits 0}}
+                                                            <span class="badge bg-{{if lt $keyBits 2048}}warning{{else}}success{{end}} ms-1">{{formatFloat 0 $keyBits}}-bit</span>
+                                                        {{end}}
+                                                        {{end}}
+                                                    {{end}}
+                                                {{end}}
+                                            </small>
+                                            {{$sRecords := mapGetSlice "records" $sdata}}
+                                            {{if $sRecords}}
+                                                {{range $record := $sRecords}}
+                                                    <div class="code-block small mt-1" style="word-break: break-all;">{{$record}}</div>
+                                                {{end}}
+                                            {{end}}
+                                        </div>
+                                        {{end}}
+                                    {{end}}
+                                {{end}}
+                            </div>
+                        </div>
+                        
+                        <!-- Second Row: MTA-STS and TLS-RPT -->
+                        <div class="row mt-4 pt-3 border-top mta-sts-tlsrpt-row">
+                            <!-- MTA-STS Analysis -->
+                            <div class="col-md-6 mb-3 mb-md-0">
+                                <h6 class="d-flex align-items-center">
+                                    <i class="fas fa-shield-alt me-2"></i>MTA-STS
+                                    <a href="https://datatracker.ietf.org/doc/html/rfc8461" target="_blank" rel="noopener" class="ms-2 text-muted rfc-link" data-bs-toggle="tooltip" data-bs-html="true" title="<strong>SMTP MTA Strict Transport Security</strong><br>Forces TLS encryption between mail servers to prevent downgrade attacks." aria-label="Learn about MTA-STS - RFC 8461"><i class="fas fa-info-circle"></i><span class="rfc-label">RFC 8461</span></a>
+                                    {{$mtaStsStatus := mapGetStr "status" $mta_sts}}
+                                    <span class="badge bg-{{if eq $mtaStsStatus "success"}}success{{else if eq $mtaStsStatus "error"}}danger{{else}}warning{{end}} ms-2">
+                                        {{title $mtaStsStatus}}
+                                    </span>
+                                    {{$mtaStsMode := mapGetStr "mode" $mta_sts}}
+                                    {{if $mtaStsMode}}
+                                        <span class="badge bg-{{if eq $mtaStsMode "enforce"}}success{{else}}warning{{end}} ms-1">{{upper $mtaStsMode}}</span>
+                                    {{end}}
+                                    {{if mapGetBool "policy_fetched" $mta_sts}}
+                                        <span class="badge bg-info ms-1" title="Policy file fetched and validated"><i class="fas fa-check-circle"></i> Policy Verified</span>
+                                    {{end}}
+                                </h6>
+                                <p class="text-muted mb-2 small">{{mapGetStr "message" $mta_sts}}</p>
+                                {{if mapGetStr "record" $mta_sts}}
+                                    <div class="code-block small">{{mapGetStr "record" $mta_sts}}</div>
+                                {{end}}
+                                {{if mapGetBool "policy_fetched" $mta_sts}}
+                                    <div class="mt-2 small">
+                                        <strong>Policy Details:</strong>
+                                        <ul class="mb-0 ps-3">
+                                            {{if mapGetStr "policy_mode" $mta_sts}}
+                                                <li>Mode: <code>{{mapGetStr "policy_mode" $mta_sts}}</code></li>
+                                            {{end}}
+                                            {{$policyMaxAge := mapGetFloat "policy_max_age" $mta_sts}}
+                                            {{if gt $policyMaxAge 0}}
+                                                <li>Max Age: {{intDiv $policyMaxAge 86400}} days ({{formatFloat 0 $policyMaxAge}} seconds)</li>
+                                            {{end}}
+                                            {{$policyMx := mapGetSlice "policy_mx" $mta_sts}}
+                                            {{if $policyMx}}
+                                                <li>MX Patterns: {{range $i, $mx := $policyMx}}{{if $i}}, {{end}}{{$mx}}{{end}}</li>
+                                            {{end}}
+                                        </ul>
+                                    </div>
+                                {{else if mapGetStr "policy_error" $mta_sts}}
+                                    <div class="mt-2 small text-warning">
+                                        <i class="fas fa-exclamation-triangle me-1"></i>Policy file: {{mapGetStr "policy_error" $mta_sts}}
+                                    </div>
+                                {{end}}
+                                {{if $esm}}
+                                {{$esmProviders := mapGetSlice "providers" $esm}}
+                                {{if $esmProviders}}
+                                    {{range $provider := $esmProviders}}
+                                        {{$prov := toMap $provider}}
+                                        {{if $prov}}
+                                        {{$detectedFrom := mapGetSlice "detected_from" $prov}}
+                                        {{range $src := $detectedFrom}}
+                                            {{if contains (toStr $src) "MTA-STS"}}
+                                            <div class="mt-2 small">
+                                                <span class="provider-badge"><i class="fas fa-shield-alt"></i> Hosted by {{mapGetStr "name" $prov}}{{if ne (mapGetStr "vendor" $prov) (mapGetStr "name" $prov)}} ({{mapGetStr "vendor" $prov}}){{end}}</span>
+                                            </div>
+                                            {{end}}
+                                        {{end}}
+                                        {{end}}
+                                    {{end}}
+                                {{end}}
+                                {{end}}
+                            </div>
+
+                            <!-- TLS-RPT Analysis -->
+                            <div class="col-md-6">
+                                <h6 class="d-flex align-items-center">
+                                    <i class="fas fa-file-alt me-2"></i>TLS-RPT
+                                    <a href="https://datatracker.ietf.org/doc/html/rfc8460" target="_blank" rel="noopener" class="ms-2 text-muted rfc-link" data-bs-toggle="tooltip" data-bs-html="true" title="<strong>TLS Reporting</strong><br>Sends reports about TLS connection failures to help diagnose delivery issues." aria-label="Learn about TLS-RPT - RFC 8460"><i class="fas fa-info-circle"></i><span class="rfc-label">RFC 8460</span></a>
+                                    {{$tlsrptStatus := mapGetStr "status" $tlsrpt}}
+                                    <span class="badge bg-{{if eq $tlsrptStatus "success"}}success{{else if eq $tlsrptStatus "error"}}danger{{else}}warning{{end}} ms-2">
+                                        {{title $tlsrptStatus}}
+                                    </span>
+                                </h6>
+                                <p class="text-muted mb-2 small">{{mapGetStr "message" $tlsrpt}}</p>
+                                {{if mapGetStr "record" $tlsrpt}}
+                                    <div class="code-block small">{{mapGetStr "record" $tlsrpt}}</div>
+                                {{end}}
+                                {{if $esm}}
+                                {{$esmProviders := mapGetSlice "providers" $esm}}
+                                {{if $esmProviders}}
+                                    {{range $provider := $esmProviders}}
+                                        {{$prov := toMap $provider}}
+                                        {{if $prov}}
+                                        {{$detectedFrom := mapGetSlice "detected_from" $prov}}
+                                        {{range $src := $detectedFrom}}
+                                            {{if contains (toStr $src) "TLS-RPT"}}
+                                            <div class="mt-2 small">
+                                                <span class="provider-badge"><i class="fas fa-shield-alt"></i> Reported to {{mapGetStr "name" $prov}}{{if ne (mapGetStr "vendor" $prov) (mapGetStr "name" $prov)}} ({{mapGetStr "vendor" $prov}}){{end}}</span>
+                                            </div>
+                                            {{end}}
+                                        {{end}}
+                                        {{end}}
+                                    {{end}}
+                                {{end}}
+                                {{end}}
+                            </div>
+                        </div>
+
+                        {{if and $esm (mapGetBool "actively_managed" $esm)}}
+                        <!-- Email Security Management Stack -->
+                        <div class="row mt-4 pt-3 border-top">
+                            <div class="col-12">
+                                <h6 class="d-flex align-items-center mb-3">
+                                    <i class="fas fa-cogs me-2"></i>Email Security Management
+                                    <span class="badge bg-success ms-2"><i class="fas fa-check-circle me-1"></i>Actively Managed</span>
+                                </h6>
+                                <div class="alert alert-info py-2 mb-3 small">
+                                    <i class="fas fa-search me-2"></i><strong>Intelligence:</strong> This domain uses dedicated email security management — indicating continuous monitoring and professional oversight, not a &quot;set and forget&quot; configuration. Most tools ignore reporting destinations; we extract the operational security partner network directly from DNS.
+                                </div>
+                                <div class="row">
+                                    {{$esmProviders := mapGetSlice "providers" $esm}}
+                                    {{range $provider := $esmProviders}}
+                                    {{$prov := toMap $provider}}
+                                    {{if $prov}}
+                                    <div class="col-md-6 mb-3">
+                                        <div class="border border-secondary rounded p-3 h-100" style="background: rgba(255,255,255,0.03);">
+                                            <div class="d-flex align-items-center mb-2">
+                                                <strong class="me-2">{{mapGetStr "name" $prov}}</strong>
+                                                {{if ne (mapGetStr "vendor" $prov) (mapGetStr "name" $prov)}}
+                                                    <span class="text-muted small">by {{mapGetStr "vendor" $prov}}</span>
+                                                {{end}}
+                                            </div>
+                                            <div class="mb-2">
+                                                {{$detectedFrom := mapGetSlice "detected_from" $prov}}
+                                                {{range $source := $detectedFrom}}
+                                                    <span class="badge bg-secondary bg-opacity-50 me-1 mb-1">{{$source}}</span>
+                                                {{end}}
+                                            </div>
+                                            <div class="small text-muted">
+                                                {{$sources := mapGetSlice "sources" $prov}}
+                                                {{range $source := $sources}}
+                                                    <div><i class="fas fa-angle-right me-1"></i>{{$source}}</div>
+                                                {{end}}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    {{end}}
+                                    {{end}}
+                                </div>
+                                {{$spfFlattening := mapGetMap "spf_flattening" $esm}}
+                                {{if $spfFlattening}}
+                                <div class="small text-muted mt-1">
+                                    <i class="fas fa-compress-arrows-alt me-1"></i><strong>SPF flattening detected:</strong> Dynamic SPF management via {{mapGetStr "provider" $spfFlattening}} — keeps include count within the 10-lookup limit automatically.
+                                </div>
+                                {{end}}
+                            </div>
+                        </div>
+                        {{end}}
+                        
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Brand Security Section -->
+        <div class="row section-brand-security">
+            <div class="col-12 mb-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0 d-flex align-items-center justify-content-between flex-wrap">
+                            <span><i class="fas fa-certificate me-2"></i>Brand Security</span>
+                            <small class="text-muted">Can this brand be convincingly faked?
+                                {{if $posture}}
+                                {{$verdicts := mapGetMap "verdicts" $posture}}
+                                {{if mapGetBool "brand_secure" $verdicts}}
+                                    <span class="badge bg-success ms-1">No</span>
+                                {{else if mapGetStr "brand" $verdicts}}
+                                    <span class="badge bg-warning ms-1">Partially</span>
+                                {{end}}
+                                {{end}}
+                            </small>
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        {{if $posture}}
+                        {{$verdicts := mapGetMap "verdicts" $posture}}
+                        {{$brandVerdict := mapGetStr "brand" $verdicts}}
+                        {{if $brandVerdict}}
+                            <div class="alert alert-{{if mapGetBool "brand_secure" $verdicts}}success{{else}}warning{{end}} py-2 mb-3 small">
+                                <i class="fas fa-gavel me-2"></i><strong>Verdict:</strong> {{$brandVerdict}}
+                            </div>
+                        {{end}}
+                        {{end}}
+                        <div class="row">
+                            <!-- BIMI Analysis -->
+                            <div class="col-md-6 mb-3 mb-md-0">
+                                {{$bimiStatus := mapGetStr "status" $bimi}}
+                                <h6 class="d-flex align-items-center">
+                                    <i class="fas fa-image me-2"></i>BIMI
+                                    <a href="https://bimigroup.org/implementation-guide/" target="_blank" rel="noopener" class="ms-2 text-muted rfc-link" data-bs-toggle="tooltip" data-bs-html="true" title="<strong>Brand Indicators for Message Identification</strong><br>Displays your brand logo next to emails in recipients' inboxes." aria-label="Learn about BIMI - BIMI Group Specification"><i class="fas fa-info-circle"></i><span class="rfc-label">BIMI Spec</span></a>
+                                    <span class="badge bg-{{if eq $bimiStatus "success"}}success{{else if eq $bimiStatus "error"}}danger{{else}}warning{{end}} ms-2">
+                                        {{title $bimiStatus}}
+                                    </span>
+                                    {{$vmcUrl := mapGetStr "vmc_url" $bimi}}
+                                    {{if $vmcUrl}}
+                                        {{if mapGetBool "vmc_valid" $bimi}}
+                                            <span class="badge bg-success ms-1"><i class="fas fa-certificate me-1"></i>VMC</span>
+                                        {{else}}
+                                            <span class="badge bg-warning ms-1">VMC</span>
+                                        {{end}}
+                                    {{else if mapGetStr "logo_url" $bimi}}
+                                        <span class="badge bg-info ms-1">No VMC</span>
+                                    {{end}}
+                                    {{if mapGetBool "logo_valid" $bimi}}
+                                        <span class="badge bg-success ms-1" title="Logo validated"><i class="fas fa-check"></i> {{default "Logo" (mapGetStr "logo_format" $bimi)}}</span>
+                                    {{end}}
+                                </h6>
+                                <p class="text-muted mb-2 small">{{mapGetStr "message" $bimi}}</p>
+                                {{if and (eq $bimiStatus "success") (not $vmcUrl)}}
+                                    <div class="small text-info mb-2">
+                                        <i class="fas fa-info-circle me-1"></i>
+                                        BIMI works without VMC! VMC (Verified Mark Certificate) requires a registered trademark. Small businesses can use BIMI with just a logo - it shows in Apple Mail and some providers. Gmail requires VMC.
+                                    </div>
+                                {{else if mapGetBool "vmc_valid" $bimi}}
+                                    <div class="small text-success mb-2">
+                                        <i class="fas fa-check-circle me-1"></i>
+                                        VMC certificate accessible{{if mapGetStr "vmc_issuer" $bimi}} (from {{mapGetStr "vmc_issuer" $bimi}}){{end}} - logo displays in Gmail, Apple Mail, and all major providers.
+                                    </div>
+                                {{else if $vmcUrl}}
+                                    <div class="small text-warning mb-2">
+                                        <i class="fas fa-exclamation-triangle me-1"></i>
+                                        VMC certificate found{{if mapGetStr "vmc_error" $bimi}} - {{mapGetStr "vmc_error" $bimi}}{{end}}
+                                    </div>
+                                {{end}}
+                                {{if mapGetStr "record" $bimi}}
+                                    <div class="code-block small">{{mapGetStr "record" $bimi}}</div>
+                                {{end}}
+                                {{$logoUrl := mapGetStr "logo_url" $bimi}}
+                                {{if $logoUrl}}
+                                    <div class="mt-3 d-flex align-items-center">
+                                        <div class="me-3 p-2 bg-white rounded" style="flex-shrink: 0; width: 56px; height: 56px; display: flex; align-items: center; justify-content: center;">
+                                            <img src="/proxy/bimi-logo?url={{urlEncode $logoUrl}}" 
+                                                 alt="BIMI Logo" 
+                                                 class="bimi-logo-img"
+                                                 style="width: 48px; height: 48px; object-fit: contain;">
+                                            <i class="fas fa-image fa-2x text-muted bimi-logo-fallback" style="display: none;"></i>
+                                        </div>
+                                        <div class="small">
+                                            {{if mapGetBool "logo_valid" $bimi}}
+                                                <span class="text-success"><i class="fas fa-check-circle me-1"></i>Logo validated ({{default "SVG" (mapGetStr "logo_format" $bimi)}})</span>
+                                            {{else if mapGetStr "logo_error" $bimi}}
+                                                <span class="text-warning"><i class="fas fa-exclamation-triangle me-1"></i>{{mapGetStr "logo_error" $bimi}}</span>
+                                            {{else}}
+                                                <span class="text-success"><i class="fas fa-check-circle me-1"></i>Logo found</span>
+                                            {{end}}
+                                            <a href="{{$logoUrl}}" target="_blank" class="d-block text-info text-truncate" style="max-width: 200px;" title="{{$logoUrl}}">
+                                                <i class="fas fa-external-link-alt me-1"></i>View full logo
+                                            </a>
+                                        </div>
+                                    </div>
+                                {{end}}
+                            </div>
+
+                            <!-- CAA Analysis -->
+                            <div class="col-md-6">
+                                {{$caaStatus := mapGetStr "status" $caa}}
+                                <h6 class="d-flex align-items-center">
+                                    <i class="fas fa-lock me-2"></i>CAA
+                                    <a href="https://datatracker.ietf.org/doc/html/rfc8659" target="_blank" rel="noopener" class="ms-2 text-muted rfc-link" data-bs-toggle="tooltip" data-bs-html="true" title="<strong>Certificate Authority Authorization</strong><br>Controls which CAs can issue SSL certificates for your domain." aria-label="Learn about CAA - RFC 8659"><i class="fas fa-info-circle"></i><span class="rfc-label">RFC 8659</span></a>
+                                    <span class="badge bg-{{if eq $caaStatus "success"}}success{{else}}warning{{end}} ms-2">
+                                        {{title $caaStatus}}
+                                    </span>
+                                    {{if mapGetBool "has_iodef" $caa}}
+                                        <span class="badge bg-info ms-1">IODEF</span>
+                                    {{end}}
+                                </h6>
+                                <p class="text-muted mb-2 small">{{mapGetStr "message" $caa}}</p>
+                                {{$issuers := mapGetSlice "issuers" $caa}}
+                                {{if $issuers}}
+                                    <div class="mb-2">
+                                        <small class="text-muted">Authorized CAs:</small>
+                                        {{range $issuer := $issuers}}
+                                            <span class="badge bg-primary ms-1">{{$issuer}}</span>
+                                        {{end}}
+                                    </div>
+                                {{end}}
+                                {{$caaRecords := mapGetSlice "records" $caa}}
+                                {{if $caaRecords}}
+                                    {{range $record := $caaRecords}}
+                                        <div class="code-block small mb-1">{{$record}}</div>
+                                    {{end}}
+                                {{end}}
+                                {{$mpicNote := mapGetStr "mpic_note" $caa}}
+                                {{if $mpicNote}}
+                                    <div class="mt-2 small text-muted">
+                                        <i class="fas fa-globe me-1"></i>{{$mpicNote}}
+                                    </div>
+                                {{end}}
+                            </div>
+                        </div>
+
+                        <!-- DANE/TLSA Analysis -->
+                        {{if $dane}}
+                        <div class="row mt-3">
+                            <div class="col-12">
+                                {{$daneStatus := mapGetStr "status" $dane}}
+                                {{$hasDane := mapGetBool "has_dane" $dane}}
+                                {{$daneDeployable := mapGetStr "dane_deployable" $dane}}
+                                <h6 class="d-flex align-items-center">
+                                    <i class="fas fa-certificate me-2"></i>DANE / TLSA
+                                    <a href="https://datatracker.ietf.org/doc/html/rfc7672" target="_blank" rel="noopener" class="ms-2 text-muted rfc-link" data-bs-toggle="tooltip" data-bs-html="true" title="<strong>DANE for SMTP</strong><br>Publishes TLS certificate information in DNS (TLSA records), enabling mail servers to verify certificates without relying solely on certificate authorities. Requires DNSSEC." aria-label="Learn about DANE - RFC 7672"><i class="fas fa-info-circle"></i><span class="rfc-label">RFC 7672</span></a>
+                                    <a href="https://datatracker.ietf.org/doc/html/rfc6698" target="_blank" rel="noopener" class="ms-1 text-muted rfc-link" data-bs-toggle="tooltip" data-bs-html="true" title="<strong>DANE Protocol</strong><br>DNS-based Authentication of Named Entities — binds TLS certificates to DNS names via TLSA records." aria-label="Learn about DANE - RFC 6698"><span class="rfc-label">RFC 6698</span></a>
+                                    <span class="badge bg-{{if eq $daneStatus "success"}}success{{else if eq $daneStatus "warning"}}warning{{else}}secondary{{end}} ms-2">
+                                        {{if $hasDane}}
+                                            {{mapGetStr "mx_hosts_with_dane" $dane}}/{{mapGetStr "mx_hosts_checked" $dane}} MX
+                                        {{else if eq $daneDeployable "false"}}
+                                            Not Available
+                                        {{else}}
+                                            Not Configured
+                                        {{end}}
+                                    </span>
+                                </h6>
+                                <p class="text-muted mb-2 small">{{mapGetStr "message" $dane}}</p>
+
+                                {{if and $hasDane (mapGetSlice "tlsa_records" $dane)}}
+                                    <div class="table-responsive">
+                                        <table class="table table-sm table-dark small mb-2">
+                                            <thead>
+                                                <tr>
+                                                    <th>MX Host</th>
+                                                    <th>Usage</th>
+                                                    <th>Selector</th>
+                                                    <th>Match</th>
+                                                    <th>Certificate Data</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {{range $tlsa := mapGetSlice "tlsa_records" $dane}}
+                                                {{$t := toMap $tlsa}}
+                                                {{if $t}}
+                                                <tr>
+                                                    <td><code>{{mapGetStr "mx_host" $t}}</code></td>
+                                                    <td>
+                                                        {{$usage := mapGetFloat "usage" $t}}
+                                                        <span class="badge bg-{{if or (eq $usage 2) (eq $usage 3)}}success{{else}}warning{{end}}">{{formatFloat 0 $usage}}</span>
+                                                        <small class="text-muted ms-1">{{mapGetStr "usage_name" $t}}</small>
+                                                    </td>
+                                                    <td><small>{{mapGetStr "selector_name" $t}}</small></td>
+                                                    <td><small>{{mapGetStr "matching_name" $t}}</small></td>
+                                                    <td><code class="small">{{mapGetStr "certificate_data" $t}}</code></td>
+                                                </tr>
+                                                {{$rec := mapGetStr "recommendation" $t}}
+                                                {{if $rec}}
+                                                <tr>
+                                                    <td colspan="5" class="text-warning small border-0 pt-0"><i class="fas fa-exclamation-triangle me-1"></i>{{$rec}}</td>
+                                                </tr>
+                                                {{end}}
+                                                {{end}}
+                                                {{end}}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                {{end}}
+
+                                {{$daneIssues := mapGetSlice "issues" $dane}}
+                                {{if $daneIssues}}
+                                    {{range $issue := $daneIssues}}
+                                        <div class="text-warning small"><i class="fas fa-exclamation-triangle me-1"></i>{{$issue}}</div>
+                                    {{end}}
+                                {{end}}
+
+                                {{if and $hasDane (ne (mapGetStr "status" $dnssec) "success")}}
+                                    <div class="small text-warning mt-1">
+                                        <i class="fas fa-exclamation-triangle me-1"></i>DANE requires DNSSEC to provide its security guarantees (RFC 7672 §1.3). Without DNSSEC validation, TLSA records could be spoofed. Enable DNSSEC to fully benefit from DANE.
+                                    </div>
+                                {{end}}
+                                {{if not $hasDane}}
+                                    {{$mx_prov := mapGetMap "mx_provider" $dane}}
+                                    {{if and $mx_prov (eq $daneDeployable "false")}}
+                                    <div class="small mt-1 p-2 rounded" style="background: rgba(255,193,7,0.08); border-left: 3px solid #ffc107;">
+                                        {{if mapGetBool "dane_migration_available" $mx_prov}}
+                                        <i class="fas fa-exclamation-circle text-warning me-1"></i><strong>DANE not available on current MX endpoints</strong>
+                                        {{else}}
+                                        <i class="fas fa-exclamation-circle text-warning me-1"></i><strong>DANE not deployable on {{mapGetStr "provider_name" $mx_prov}}</strong>
+                                        {{end}}
+                                        <p class="mb-1 mt-1">{{mapGetStr "reason" $mx_prov}}</p>
+                                        {{$alt := mapGetStr "alternative" $mx_prov}}
+                                        {{if $alt}}
+                                        <p class="mb-0"><i class="fas fa-arrow-right me-1"></i><strong>Recommended alternative:</strong> {{$alt}}{{if and $mta_sts (eq (mapGetStr "status" $mta_sts) "success")}} <span class="text-success">(already configured)</span>{{end}}</p>
+                                        {{end}}
+                                        {{if mapGetBool "dane_outbound" $mx_prov}}
+                                        <p class="mb-0 mt-1 text-muted"><i class="fas fa-info-circle me-1"></i>Note: {{mapGetStr "provider_name" $mx_prov}} does validate DANE/TLSA when <em>sending</em> mail to DANE-enabled recipients (outbound DANE).</p>
+                                        {{end}}
+                                    </div>
+                                    {{else}}
+                                    <div class="small text-muted mt-1">
+                                        <i class="fas fa-info-circle me-1"></i>DANE (<a href="https://datatracker.ietf.org/doc/html/rfc7672" target="_blank" rel="noopener" class="text-info">RFC 7672</a>) binds TLS certificates to DNSSEC-signed DNS records, protecting email transport against man-in-the-middle attacks and rogue CAs. It is the primary transport security standard &mdash; MTA-STS (<a href="https://datatracker.ietf.org/doc/html/rfc8461#section-2" target="_blank" rel="noopener" class="text-info">RFC 8461</a>) was created as the alternative for domains that cannot deploy DNSSEC. Over 1 million domains use DANE globally, including Microsoft Exchange Online, Proton Mail, and Fastmail. Best practice: deploy both for defense in depth.
+                                    </div>
+                                    {{end}}
+                                {{end}}
+
+                                {{$hasMtaSts := and $mta_sts (eq (mapGetStr "status" $mta_sts) "success")}}
+                                {{$hasDnssec := and $dnssec (eq (mapGetStr "status" $dnssec) "success")}}
+                                <div class="small mt-2 p-2 rounded" style="background: rgba(255,255,255,0.03); border-left: 3px solid {{if and $hasDane $hasMtaSts}}#198754{{else if $hasDane}}#198754{{else if $hasMtaSts}}#0dcaf0{{else}}#6c757d{{end}};">
+                                    <strong><i class="fas fa-balance-scale me-1"></i>Email Transport Security</strong>
+                                    <p class="mb-1 mt-1">Two mechanisms protect email in transit. DANE is the primary standard; MTA-STS is the alternative for domains that cannot deploy DNSSEC:</p>
+                                    <ul class="mb-1 ps-3">
+                                        <li><strong>DNSSEC + DANE</strong> (<a href="https://datatracker.ietf.org/doc/html/rfc7672" target="_blank" rel="noopener" class="text-info">RFC 7672</a>) &mdash; Cryptographic chain of trust from DNS root to mail server certificate. Eliminates reliance on certificate authorities. No trust-on-first-use weakness. Requires DNSSEC.</li>
+                                        <li><strong>MTA-STS</strong> (<a href="https://datatracker.ietf.org/doc/html/rfc8461" target="_blank" rel="noopener" class="text-info">RFC 8461</a>) &mdash; HTTPS-based policy requiring TLS for mail delivery. Works without DNSSEC but relies on CA trust and is vulnerable on first use (<a href="https://datatracker.ietf.org/doc/html/rfc8461#section-10" target="_blank" rel="noopener" class="text-info">&sect;10</a>). Created for domains where &ldquo;deploying DNSSEC is undesirable or impractical&rdquo; (<a href="https://datatracker.ietf.org/doc/html/rfc8461#section-2" target="_blank" rel="noopener" class="text-info">&sect;2</a>).</li>
+                                    </ul>
+                                    {{if and $hasDane $hasMtaSts}}
+                                        <span class="text-success"><i class="fas fa-check-circle me-1"></i><strong>This domain deploys both DANE and MTA-STS &mdash; defense in depth.</strong></span> DANE provides cryptographic certificate binding via DNSSEC, while MTA-STS ensures compatibility with senders that don't validate DNSSEC. Per <a href="https://datatracker.ietf.org/doc/html/rfc8461#section-2" target="_blank" rel="noopener" class="text-info">RFC 8461</a>, DANE takes precedence &mdash; MTA-STS must not override a failing DANE validation.
+                                    {{else if and $hasDane (not $hasMtaSts)}}
+                                        <span class="text-success"><i class="fas fa-check-circle me-1"></i><strong>This domain uses DNSSEC + DANE &mdash; the strongest cryptographic transport security.</strong></span> DANE binds TLS certificates to DNSSEC-signed DNS records, creating a verifiable chain of trust from root to mail server (<a href="https://datatracker.ietf.org/doc/html/rfc7672#section-1.3" target="_blank" rel="noopener" class="text-info">RFC 7672 &sect;1.3</a>). MTA-STS could complement this for senders that don't validate DNSSEC, but DANE alone provides the highest level of protection available.
+                                    {{else if and $hasMtaSts (not $hasDane)}}
+                                        {{$mx_prov := mapGetMap "mx_provider" $dane}}
+                                        {{if and $mx_prov (eq $daneDeployable "false")}}
+                                        {{if mapGetBool "dane_migration_available" $mx_prov}}
+                                        <span class="text-success"><i class="fas fa-check-circle me-1"></i><strong>This domain uses MTA-STS &mdash; good, but DANE is also available.</strong></span> {{mapGetStr "provider_name" $mx_prov}} supports inbound DANE on its newer MX endpoints. This domain's current MX records use legacy endpoints without DANE. Migrating MX records would enable DANE alongside MTA-STS for defense in depth. MTA-STS enforces TLS via HTTPS-based policy (<a href="https://datatracker.ietf.org/doc/html/rfc8461" target="_blank" rel="noopener" class="text-info">RFC 8461</a>).
+                                        {{else}}
+                                        <span class="text-success"><i class="fas fa-check-circle me-1"></i><strong>This domain uses MTA-STS &mdash; the best available option for {{mapGetStr "provider_name" $mx_prov}}.</strong></span> Since {{mapGetStr "provider_name" $mx_prov}} does not support inbound DANE, MTA-STS is the strongest transport security this domain can deploy. MTA-STS enforces TLS via HTTPS-based policy, protecting against downgrade attacks (<a href="https://datatracker.ietf.org/doc/html/rfc8461" target="_blank" rel="noopener" class="text-info">RFC 8461</a>).
+                                        {{end}}
+                                        {{else}}
+                                        <span class="text-info"><i class="fas fa-info-circle me-1"></i><strong>This domain uses MTA-STS without DANE.</strong></span> MTA-STS provides transport security through HTTPS-based policy (<a href="https://datatracker.ietf.org/doc/html/rfc8461" target="_blank" rel="noopener" class="text-info">RFC 8461</a>), but relies on CA trust and is vulnerable on first use. Adding DANE (<a href="https://datatracker.ietf.org/doc/html/rfc7672" target="_blank" rel="noopener" class="text-info">RFC 7672</a>) would provide cryptographic certificate pinning independent of certificate authorities{{if not $hasDnssec}} &mdash; this domain would first need to enable DNSSEC{{end}}.
+                                        {{end}}
+                                    {{else}}
+                                        {{$mx_prov := mapGetMap "mx_provider" $dane}}
+                                        {{if and $mx_prov (eq $daneDeployable "false")}}
+                                        {{if mapGetBool "dane_migration_available" $mx_prov}}
+                                        <span class="text-warning"><i class="fas fa-exclamation-circle me-1"></i><strong>This domain has neither DANE nor MTA-STS.</strong></span> {{mapGetStr "provider_name" $mx_prov}} supports inbound DANE on its newer MX endpoints, but this domain uses legacy endpoints. Migrate MX records to enable DANE, or deploy MTA-STS (<a href="https://datatracker.ietf.org/doc/html/rfc8461" target="_blank" rel="noopener" class="text-info">RFC 8461</a>) to enforce TLS and protect against downgrade attacks.
+                                        {{else}}
+                                        <span class="text-warning"><i class="fas fa-exclamation-circle me-1"></i><strong>This domain has neither DANE nor MTA-STS.</strong></span> Since {{mapGetStr "provider_name" $mx_prov}} does not support inbound DANE, deploy MTA-STS (<a href="https://datatracker.ietf.org/doc/html/rfc8461" target="_blank" rel="noopener" class="text-info">RFC 8461</a>) to enforce TLS and protect against downgrade attacks.
+                                        {{end}}
+                                        {{else}}
+                                        <span class="text-muted"><i class="fas fa-info-circle me-1"></i><strong>This domain has neither DANE nor MTA-STS.</strong></span> Mail transport relies on opportunistic TLS without policy enforcement, leaving it vulnerable to downgrade attacks. Deploy DANE (<a href="https://datatracker.ietf.org/doc/html/rfc7672" target="_blank" rel="noopener" class="text-info">RFC 7672</a>) with DNSSEC for the strongest protection, or MTA-STS (<a href="https://datatracker.ietf.org/doc/html/rfc8461" target="_blank" rel="noopener" class="text-info">RFC 8461</a>) if DNSSEC is not feasible.
+                                        {{end}}
+                                    {{end}}
+                                    <p class="mb-0 mt-1 text-muted" style="font-size: 0.8em;"><i class="fas fa-chart-line me-1"></i><strong>Industry trend:</strong> Microsoft Exchange Online enforces inbound DANE with DNSSEC (GA October 2024), and providers like Proton Mail and Fastmail also support DANE. Google Workspace does not support DANE and relies on MTA-STS. Both mechanisms coexist because DANE is backward-compatible &mdash; senders skip the check if the domain isn't DNSSEC-signed (<a href="https://datatracker.ietf.org/doc/html/rfc7672#section-1.3" target="_blank" rel="noopener" class="text-info">RFC 7672 &sect;1.3</a>).</p>
+                                </div>
+                            </div>
+                        </div>
+                        {{end}}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Domain Security Section (DNSSEC + NS Delegation) -->
+        <div class="row section-domain-security">
+            <div class="col-12 mb-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0 d-flex align-items-center justify-content-between flex-wrap">
+                            <span><i class="fas fa-shield-alt me-2"></i>Domain Security</span>
+                            <small class="text-muted">Can DNS itself be tampered with?
+                                {{if $posture}}
+                                {{$verdicts := mapGetMap "verdicts" $posture}}
+                                {{$domainAnswer := mapGetStr "domain_answer" $verdicts}}
+                                {{if $domainAnswer}}
+                                    <span class="badge bg-{{if eq $domainAnswer "No"}}success{{else}}warning{{end}} ms-1">{{$domainAnswer}}</span>
+                                {{end}}
+                                {{end}}
+                            </small>
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        {{if $posture}}
+                        {{$verdicts := mapGetMap "verdicts" $posture}}
+                        {{$domainVerdict := mapGetStr "domain" $verdicts}}
+                        {{if $domainVerdict}}
+                            <div class="alert alert-{{if contains $domainVerdict "authenticated"}}success{{else}}warning{{end}} py-2 mb-3 small">
+                                <i class="fas fa-gavel me-2"></i><strong>Verdict:</strong> {{$domainVerdict}}
+                            </div>
+                        {{end}}
+                        {{end}}
+                        <div class="row">
+                            <!-- DNSSEC Analysis -->
+                            <div class="col-md-6 mb-3 mb-md-0">
+                                {{$dnssecStatus := mapGetStr "status" $dnssec}}
+                                {{$chainOfTrust := mapGetStr "chain_of_trust" $dnssec}}
+                                <h6 class="d-flex align-items-center flex-wrap">
+                                    <i class="fas fa-key me-2"></i>DNSSEC
+                                    <a href="https://datatracker.ietf.org/doc/html/rfc4033" target="_blank" rel="noopener" class="ms-2 text-muted rfc-link" data-bs-toggle="tooltip" data-bs-html="true" title="<strong>DNS Security Extensions</strong><br>Cryptographic signatures that prove DNS responses are authentic and untampered." aria-label="Learn about DNSSEC - RFC 4033-4035"><i class="fas fa-info-circle"></i><span class="rfc-label">RFC 4033</span></a>
+                                    <span class="badge bg-{{if eq $dnssecStatus "success"}}success{{else}}warning{{end}} ms-2">
+                                        {{if and (eq $dnssecStatus "success") (eq $chainOfTrust "inherited")}}Inherited{{else if eq $dnssecStatus "success"}}Signed{{else}}Unsigned{{end}}
+                                    </span>
+                                    {{if mapGetStr "algorithm_name" $dnssec}}
+                                        <span class="badge bg-info ms-1 text-break">{{mapGetStr "algorithm_name" $dnssec}}</span>
+                                    {{end}}
+                                </h6>
+                                <p class="text-muted mb-2 small">{{mapGetStr "message" $dnssec}}</p>
+                                
+                                {{if and (eq $dnssecStatus "success") (eq $chainOfTrust "inherited")}}
+                                    <div class="small text-success mb-2">
+                                        <i class="fas fa-check-circle me-1"></i>
+                                        This subdomain is protected by the parent zone's DNSSEC signing.
+                                        {{if mapGetStr "parent_zone" $dnssec}}
+                                        DNSSEC at <strong>{{mapGetStr "parent_zone" $dnssec}}</strong> covers all records in the zone.
+                                        {{end}}
+                                    </div>
+                                    {{if mapGetBool "ad_flag" $dnssec}}
+                                    <div class="small text-success mb-2">
+                                        <i class="fas fa-shield-alt me-1"></i>
+                                        <strong>AD Flag:</strong> <span class="badge bg-success">Validated</span>
+                                        <span class="text-muted">- Resolver ({{mapGetStr "ad_resolver" $dnssec}}) confirmed cryptographic signatures</span>
+                                    </div>
+                                    {{end}}
+                                {{else if eq $dnssecStatus "success"}}
+                                    <div class="small text-success mb-2">
+                                        <i class="fas fa-check-circle me-1"></i>
+                                        Chain of trust: Root → TLD → Domain. DNS responses are authenticated and tamper-proof.
+                                    </div>
+                                    {{if mapGetBool "ad_flag" $dnssec}}
+                                    <div class="small text-success mb-2">
+                                        <i class="fas fa-shield-alt me-1"></i>
+                                        <strong>AD Flag:</strong> <span class="badge bg-success">Validated</span>
+                                        <span class="text-muted">- Resolver ({{mapGetStr "ad_resolver" $dnssec}}) confirmed cryptographic signatures</span>
+                                    </div>
+                                    {{else}}
+                                    <div class="small text-warning mb-2">
+                                        <i class="fas fa-shield-alt me-1"></i>
+                                        <strong>AD Flag:</strong> <span class="badge bg-warning text-dark">Not Set</span>
+                                        <span class="text-muted">- Records exist but resolver didn't confirm validation</span>
+                                    </div>
+                                    {{end}}
+                                {{else if eq $chainOfTrust "broken"}}
+                                    <div class="small text-warning mb-2">
+                                        <i class="fas fa-exclamation-triangle me-1"></i>
+                                        DNSKEY exists but DS record not published at registrar. Add DS record to complete chain of trust.
+                                    </div>
+                                {{else}}
+                                    {{if and $dns_infra (mapGetBool "explains_no_dnssec" $dns_infra)}}
+                                    <div class="small text-info mb-2">
+                                        <i class="fas fa-shield-alt me-1"></i>
+                                        <strong>Alternative Security:</strong> {{mapGetStr "provider" $dns_infra}} provides enterprise-grade DNS with DDoS protection and monitoring.
+                                    </div>
+                                    {{$altItems := mapGetSlice "alt_security_items" $dns_infra}}
+                                    {{if $altItems}}
+                                    <div class="small text-muted mb-2">
+                                        <i class="fas fa-check me-1"></i>
+                                        {{range $i, $item := $altItems}}{{if $i}}, {{end}}{{$item}}{{end}}
+                                    </div>
+                                    {{end}}
+                                    {{else}}
+                                    <div class="small text-muted mb-2">
+                                        <i class="fas fa-info-circle me-1"></i>
+                                        Domain does not use DNSSEC. Enable in your registrar's DNS settings (look for "DNSSEC" or "DS records" section).
+                                    </div>
+                                    {{end}}
+                                {{end}}
+                                
+                                {{$dsRecords := mapGetSlice "ds_records" $dnssec}}
+                                {{if $dsRecords}}
+                                    <div class="mt-2">
+                                        <small class="text-muted d-block mb-1">DS Record (at registrar):</small>
+                                        {{range $ds := $dsRecords}}
+                                            <div class="code-block small mb-1" style="font-size: 0.7rem;">{{$ds}}</div>
+                                        {{end}}
+                                    </div>
+                                {{end}}
+                            </div>
+
+                            <!-- NS Delegation Analysis -->
+                            <div class="col-md-6">
+                                {{$nsStatus := mapGetStr "status" $ns}}
+                                {{$nsIsSubdomain := mapGetBool "is_subdomain" $ns}}
+                                {{$nsDelegationOk := mapGetBool "delegation_ok" $ns}}
+                                {{$nsMatch := mapGetStr "match" $ns}}
+                                <h6 class="d-flex align-items-center">
+                                    <i class="fas fa-project-diagram me-2"></i>NS Delegation
+                                    <span class="badge bg-{{if eq $nsStatus "success"}}success{{else if eq $nsStatus "warning"}}warning{{else}}secondary{{end}} ms-2">
+                                        {{if $nsIsSubdomain}}Subdomain{{else if $nsDelegationOk}}Verified{{else}}Check Failed{{end}}
+                                    </span>
+                                    {{if eq $nsMatch "true"}}
+                                        <span class="badge bg-success ms-1">Match</span>
+                                    {{else if eq $nsMatch "false"}}
+                                        <span class="badge bg-warning ms-1">Mismatch</span>
+                                    {{end}}
+                                </h6>
+                                <p class="text-muted mb-2 small">{{mapGetStr "message" $ns}}</p>
+                                
+                                {{if $nsIsSubdomain}}
+                                    <div class="small text-info mb-2">
+                                        <i class="fas fa-sitemap me-1"></i>
+                                        DNS records managed within the <strong>{{mapGetStr "parent_zone" $ns}}</strong> zone. No separate NS delegation required.
+                                    </div>
+                                {{else if eq $nsMatch "false"}}
+                                    <div class="small text-warning mb-2">
+                                        <i class="fas fa-exclamation-triangle me-1"></i>
+                                        NS records at domain differ from parent zone delegation. May indicate recent DNS migration still propagating.
+                                    </div>
+                                {{else if eq $nsMatch "true"}}
+                                    <div class="small text-success mb-2">
+                                        <i class="fas fa-check-circle me-1"></i>
+                                        Parent zone delegation matches domain's NS records. No delegation drift detected.
+                                    </div>
+                                {{end}}
+                                
+                                {{$childNs := mapGetSlice "child_ns" $ns}}
+                                {{if $childNs}}
+                                    <div class="mt-2">
+                                        <small class="text-muted d-block mb-1">Nameservers:</small>
+                                        {{range $nsEntry := $childNs}}
+                                            <span class="badge bg-secondary me-1 mb-1">{{$nsEntry}}</span>
+                                        {{end}}
+                                    </div>
+                                {{else if and $nsIsSubdomain (mapGetSlice "parent_ns" $ns)}}
+                                    <div class="mt-2">
+                                        <small class="text-muted d-block mb-1">Parent zone nameservers ({{mapGetStr "parent_zone" $ns}}):</small>
+                                        {{range $nsEntry := mapGetSlice "parent_ns" $ns}}
+                                            <span class="badge bg-secondary me-1 mb-1">{{$nsEntry}}</span>
+                                        {{end}}
+                                    </div>
+                                {{end}}
+                            </div>
+                        </div>
+                        
+                        <!-- Multi-Resolver Consensus -->
+                        {{if $resolver_consensus}}
+                        {{$consensusReached := mapGetBool "consensus_reached" $resolver_consensus}}
+                        <div class="row mt-3">
+                            <div class="col-12">
+                                <div class="d-flex align-items-center small">
+                                    <i class="fas fa-check-double me-2 text-{{if $consensusReached}}success{{else}}warning{{end}}"></i>
+                                    <span class="text-muted">
+                                        <strong>Multi-Resolver Verification:</strong>
+                                        {{if $consensusReached}}
+                                            <span class="text-success">Consensus reached</span> - 
+                                            {{mapGetStr "resolvers_queried" $resolver_consensus}} resolvers (Cloudflare, Google, Quad9, OpenDNS) agree on DNS records
+                                        {{else}}
+                                            <span class="text-warning">Discrepancy detected</span> - 
+                                            Some resolvers returned different results
+                                            {{$discrepancies := mapGetSlice "discrepancies" $resolver_consensus}}
+                                            {{if $discrepancies}}
+                                                <a href="#resolver-discrepancies" class="text-warning">({{len $discrepancies}} difference{{if gt (len $discrepancies) 1}}s{{end}} found)</a>
+                                            {{end}}
+                                        {{end}}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Discrepancy Details -->
+                        {{if not $consensusReached}}
+                        {{$discrepancies := mapGetSlice "discrepancies" $resolver_consensus}}
+                        {{if $discrepancies}}
+                        <div class="row mt-2" id="resolver-discrepancies">
+                            <div class="col-12">
+                                <div class="p-2 bg-warning bg-opacity-10 border border-warning rounded small">
+                                    <strong class="text-warning d-block mb-1"><i class="fas fa-exclamation-triangle me-1"></i>Resolver Differences:</strong>
+                                    {{range $disc := $discrepancies}}
+                                    <div class="mb-1 text-muted">
+                                        <i class="fas fa-angle-right me-1"></i>{{$disc}}
+                                    </div>
+                                    {{end}}
+                                    <small class="text-muted d-block mt-1">This may indicate DNS propagation in progress or geo-based DNS routing.</small>
+                                </div>
+                            </div>
+                        </div>
+                        {{end}}
+                        {{end}}
+                        {{end}}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Traffic & Routing Section -->
+        <div class="row section-traffic-routing">
+            <div class="col-12 mb-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="fas fa-route me-2"></i>Traffic &amp; Routing
+                            <small class="text-muted ms-2">Where traffic flows &amp; how services resolve</small>
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <!-- A Records (IPv4) -->
+                            <div class="col-md-3 mb-3">
+                                <h6 class="d-flex align-items-center">
+                                    <span class="badge bg-primary me-2">A</span>IPv4 Address
+                                </h6>
+                                {{$aRecords := mapGetSlice "A" $basic}}
+                                {{if $aRecords}}
+                                    {{range $record := $aRecords}}
+                                        <div class="code-block small mb-1">{{$record}}</div>
+                                    {{end}}
+                                    <small class="text-muted">Where the domain points for web traffic</small>
+                                {{else}}
+                                    <div class="text-muted small"><i class="fas fa-minus me-1"></i>No A records</div>
+                                    <small class="text-info">Domain may use AAAA (IPv6) only or CNAME</small>
+                                {{end}}
+                            </div>
+
+                            <!-- AAAA Records (IPv6) -->
+                            <div class="col-md-3 mb-3">
+                                <h6 class="d-flex align-items-center">
+                                    <span class="badge bg-info me-2">AAAA</span>IPv6 Address
+                                </h6>
+                                {{$aaaaRecords := mapGetSlice "AAAA" $basic}}
+                                {{if $aaaaRecords}}
+                                    {{range $record := $aaaaRecords}}
+                                        <div class="code-block small mb-1">{{$record}}</div>
+                                    {{end}}
+                                    <small class="text-success"><i class="fas fa-check me-1"></i>IPv6 ready</small>
+                                {{else}}
+                                    <div class="text-muted small"><i class="fas fa-minus me-1"></i>No AAAA records</div>
+                                    <small class="text-muted">IPv6 not configured</small>
+                                {{end}}
+                            </div>
+
+                            <!-- MX Records (Mail) -->
+                            <div class="col-md-3 mb-3">
+                                <h6 class="d-flex align-items-center">
+                                    <span class="badge bg-warning text-dark me-2">MX</span>Mail Servers
+                                </h6>
+                                {{$mxRecords := mapGetSlice "MX" $basic}}
+                                {{if $mxRecords}}
+                                    {{if mapGetBool "has_null_mx" $results}}
+                                        {{range $record := $mxRecords}}
+                                            <div class="code-block small mb-1">{{$record}}</div>
+                                        {{end}}
+                                        <div class="mt-1">
+                                            <span class="badge bg-info bg-opacity-75"><i class="fas fa-ban me-1"></i>Null MX</span>
+                                            <a href="https://datatracker.ietf.org/doc/html/rfc7505" target="_blank" rel="noopener" class="ms-1 text-muted rfc-link" data-bs-toggle="tooltip" data-bs-html="true" title="<strong>Null MX</strong><br>An explicit declaration that this domain does not accept email. Priority 0 with a dot (.) as the mail server." aria-label="Learn about Null MX - RFC 7505"><i class="fas fa-info-circle"></i><span class="rfc-label">RFC 7505</span></a>
+                                        </div>
+                                        <small class="text-info">Domain explicitly does not accept email</small>
+                                    {{else}}
+                                        {{range $record := $mxRecords}}
+                                            <div class="code-block small mb-1">{{$record}}</div>
+                                        {{end}}
+                                        <small class="text-muted">Priority + mail server for email delivery</small>
+                                    {{end}}
+                                {{else}}
+                                    <div class="text-muted small"><i class="fas fa-minus me-1"></i>No MX records</div>
+                                    <small class="text-warning">Domain cannot receive email</small>
+                                {{end}}
+                            </div>
+
+                            <!-- SRV Records (Services) -->
+                            <div class="col-md-3 mb-3">
+                                <h6 class="d-flex align-items-center">
+                                    <span class="badge bg-secondary me-2">SRV</span>Services
+                                </h6>
+                                {{$srvRecords := mapGetSlice "SRV" $basic}}
+                                {{if $srvRecords}}
+                                    {{range $record := $srvRecords}}
+                                        <div class="code-block small mb-1">{{$record}}</div>
+                                    {{end}}
+                                    <small class="text-muted">SIP, XMPP, or other service endpoints</small>
+                                {{else}}
+                                    <div class="text-muted small"><i class="fas fa-minus me-1"></i>No SRV records</div>
+                                    <small class="text-muted">No service-specific routing configured</small>
+                                {{end}}
+                            </div>
+                        </div>
+
+                        <!-- Summary bar -->
+                        <div class="border-top pt-3 mt-2">
+                            <div class="d-flex flex-wrap gap-3 small">
+                                <span>
+                                    <i class="fas fa-globe me-1 text-primary"></i>
+                                    <strong>Web:</strong>
+                                    {{$aRecs := mapGetSlice "A" $basic}}
+                                    {{$aaaaRecs := mapGetSlice "AAAA" $basic}}
+                                    {{if or $aRecs $aaaaRecs}}
+                                        <span class="text-success">Reachable</span>
+                                        ({{if $aRecs}}{{len $aRecs}}{{else}}0{{end}} IPv4, {{if $aaaaRecs}}{{len $aaaaRecs}}{{else}}0{{end}} IPv6)
+                                    {{else}}
+                                        <span class="text-warning">No direct IP</span>
+                                    {{end}}
+                                </span>
+                                <span>
+                                    <i class="fas fa-envelope me-1 text-warning"></i>
+                                    <strong>Mail:</strong>
+                                    {{if mapGetBool "has_null_mx" $results}}
+                                        <span class="text-info">Null MX (no mail)</span>
+                                    {{else if $mxRecords}}
+                                        <span class="text-success">{{len $mxRecords}} server{{if gt (len $mxRecords) 1}}s{{end}}</span>
+                                    {{else}}
+                                        <span class="text-danger">Not configured</span>
+                                    {{end}}
+                                </span>
+                                <span>
+                                    <i class="fas fa-cogs me-1 text-secondary"></i>
+                                    <strong>Services:</strong>
+                                    {{if $srvRecords}}
+                                        <span class="text-success">{{len $srvRecords}} endpoint{{if gt (len $srvRecords) 1}}s{{end}}</span>
+                                    {{else}}
+                                        <span class="text-muted">None</span>
+                                    {{end}}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Propagation Delta Summary -->
+        <div class="row mb-3">
+            <div class="col-12">
+                {{$hasPropagating := false}}
+                {{if $propagation}}
+                {{range $rtype, $val := $propagation}}
+                    {{$pinfo := toMap $val}}
+                    {{if and $pinfo (eq (mapGetStr "status" $pinfo) "propagating")}}
+                    {{$hasPropagating = true}}
+                    {{end}}
+                {{end}}
+                {{end}}
+                {{if $hasPropagating}}
+                <div class="alert alert-warning py-2 mb-0 d-flex align-items-center justify-content-between flex-wrap">
+                    <div>
+                        <i class="fas fa-sync-alt fa-spin me-2"></i>
+                        <strong>Δ Changes Detected:</strong>
+                        {{range $rtype, $val := $propagation}}
+                            {{$pinfo := toMap $val}}
+                            {{if and $pinfo (eq (mapGetStr "status" $pinfo) "propagating")}}
+                            <span class="badge bg-warning text-dark ms-1">{{$rtype}}</span>
+                            {{end}}
+                        {{end}}
+                        <span class="ms-2 small text-muted">Resolver ≠ Authoritative (TTL / CDN rotation / recent change)</span>
+                    </div>
+                    <small class="text-warning-emphasis">
+                        <i class="fas fa-clock me-1"></i>Risk: Low - typically resolves within TTL
+                    </small>
+                </div>
+                {{else}}
+                <div class="alert alert-success py-2 mb-0 d-flex align-items-center">
+                    <i class="fas fa-check-circle me-2"></i>
+                    <strong>Δ No Propagation Issues:</strong>
+                    <span class="ms-2 small">All DNS records are synchronized between resolver and authoritative nameserver.</span>
+                </div>
+                {{end}}
+            </div>
+        </div>
+
+        <!-- Live DNS Diff Feature Callout -->
+        <div class="card bg-dark border-info mb-4">
+            <div class="card-body py-3">
+                <div class="d-flex align-items-center">
+                    <div class="me-3">
+                        <span class="badge bg-info text-dark px-3 py-2" style="font-size: 0.9rem;">
+                            <i class="fas fa-code-compare me-2"></i>Live DNS Diff
+                        </span>
+                    </div>
+                    <div>
+                        <strong class="text-info">Real-time propagation comparison</strong>
+                        <span class="text-muted ms-2">|</span>
+                        <span class="text-light ms-2">See exactly what public resolvers return vs. what your authoritative nameserver has. Spot propagation delays, stale cache, and DNS misconfigurations instantly.</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- DNS Diff Section - True Side-by-Side Comparison -->
+        <div class="col-12 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-code-compare me-2"></i>DNS Evidence Diff
+                        <small class="text-muted ms-2">Side-by-side comparison</small>
+                    </h5>
+                </div>
+                <div class="card-body p-0">
+                    <!-- Diff Header Row -->
+                    <div class="dns-diff-container">
+                        <div class="dns-diff-header">
+                            <div class="dns-diff-col dns-diff-left">
+                                <i class="fas fa-database me-2"></i>Resolver Records
+                                <small class="opacity-75">(Public DNS cache)</small>
+                            </div>
+                            <div class="dns-diff-col dns-diff-right">
+                                <i class="fas fa-microchip me-2"></i>Authoritative Records
+                                <small class="opacity-75">(Source of truth)</small>
+                            </div>
+                        </div>
+                        
+                        {{if $basic}}
+                        {{range $record_type, $val := $basic}}
+                            {{$resolver_records := mapGetSlice $record_type $basic}}
+                            {{$auth_recs := mapGetSlice $record_type $auth_records}}
+                            {{$rLen := 0}}{{if $resolver_records}}{{$rLen = len $resolver_records}}{{end}}
+                            {{$aLen := 0}}{{if $auth_recs}}{{$aLen = len $auth_recs}}{{end}}
+                            {{$max_len := maxInt $rLen $aLen}}
+                            
+                            {{if or (gt $max_len 0) (or (eq $record_type "A") (or (eq $record_type "AAAA") (or (eq $record_type "MX") (or (eq $record_type "NS") (or (eq $record_type "TXT") (or (eq $record_type "CAA") (or (eq $record_type "SOA") (or (eq $record_type "DMARC") (or (eq $record_type "MTA-STS") (eq $record_type "TLS-RPT"))))))))))}}
+                                <!-- Record Type Header -->
+                                <div class="dns-diff-type-header">
+                                    <span class="badge bg-secondary me-2">{{$record_type}}</span>
+                                    {{if eq $record_type "DMARC"}}<small class="text-muted me-1">_dmarc.{{$.Domain}}</small>
+                                        <a href="https://datatracker.ietf.org/doc/html/rfc7489" target="_blank" rel="noopener" class="badge bg-dark bg-opacity-25 text-muted text-decoration-none fw-normal" style="font-size: 0.6rem;" title="Domain-based Message Authentication, Reporting, and Conformance">RFC 7489</a>
+                                    {{else if eq $record_type "MTA-STS"}}<small class="text-muted me-1">_mta-sts.{{$.Domain}}</small>
+                                        <a href="https://datatracker.ietf.org/doc/html/rfc8461" target="_blank" rel="noopener" class="badge bg-dark bg-opacity-25 text-muted text-decoration-none fw-normal" style="font-size: 0.6rem;" title="SMTP MTA Strict Transport Security">RFC 8461</a>
+                                    {{else if eq $record_type "TLS-RPT"}}<small class="text-muted me-1">_smtp._tls.{{$.Domain}}</small>
+                                        <a href="https://datatracker.ietf.org/doc/html/rfc8460" target="_blank" rel="noopener" class="badge bg-dark bg-opacity-25 text-muted text-decoration-none fw-normal" style="font-size: 0.6rem;" title="SMTP TLS Reporting">RFC 8460</a>
+                                    {{else if eq $record_type "CAA"}}
+                                        <a href="https://datatracker.ietf.org/doc/html/rfc8659" target="_blank" rel="noopener" class="badge bg-dark bg-opacity-25 text-muted text-decoration-none fw-normal" style="font-size: 0.6rem;" title="DNS Certification Authority Authorization">RFC 8659</a>
+                                    {{else if eq $record_type "SOA"}}
+                                        <a href="https://datatracker.ietf.org/doc/html/rfc1035#section-3.3.13" target="_blank" rel="noopener" class="badge bg-dark bg-opacity-25 text-muted text-decoration-none fw-normal" style="font-size: 0.6rem;" title="Start of Authority record">RFC 1035</a>
+                                    {{else if eq $record_type "MX"}}
+                                        <a href="https://datatracker.ietf.org/doc/html/rfc5321#section-5" target="_blank" rel="noopener" class="badge bg-dark bg-opacity-25 text-muted text-decoration-none fw-normal" style="font-size: 0.6rem;" title="Mail Exchange record">RFC 5321</a>
+                                    {{else if eq $record_type "TXT"}}
+                                        <a href="https://datatracker.ietf.org/doc/html/rfc7208" target="_blank" rel="noopener" class="badge bg-dark bg-opacity-25 text-muted text-decoration-none fw-normal" style="font-size: 0.6rem;" title="Sender Policy Framework">RFC 7208</a>
+                                    {{else if eq $record_type "NS"}}
+                                        <a href="https://datatracker.ietf.org/doc/html/rfc1035#section-3.3.11" target="_blank" rel="noopener" class="badge bg-dark bg-opacity-25 text-muted text-decoration-none fw-normal" style="font-size: 0.6rem;" title="Name Server record">RFC 1035</a>
+                                    {{end}}
+                                    {{if $propagation}}
+                                    {{$p_info := toMap (mapGet $record_type $propagation)}}
+                                    {{if $p_info}}
+                                        {{$pStatus := mapGetStr "status" $p_info}}
+                                        {{if eq $pStatus "synchronized"}}
+                                            <span class="badge bg-success-subtle text-success border border-success-subtle px-2 py-1" style="font-size: 0.7rem;">
+                                                <i class="fas fa-check-double me-1"></i>Synchronized
+                                            </span>
+                                        {{else if eq $pStatus "propagating"}}
+                                            <span class="badge bg-warning-subtle text-warning border border-warning-subtle px-2 py-1" style="font-size: 0.7rem;">
+                                                <i class="fas fa-clock me-1"></i>Propagating
+                                            </span>
+                                        {{end}}
+                                    {{end}}
+                                    {{end}}
+                                    <span class="ms-auto text-muted small d-flex align-items-center gap-2">
+                                        {{$rLen}} / {{$aLen}} records
+                                    </span>
+                                </div>
+                                
+                                <!-- Record Rows -->
+                                {{if gt $max_len 0}}
+                                    {{range $i := seq 0 (sub $max_len 1)}}
+                                        {{$resolver_val := ""}}
+                                        {{$auth_val := ""}}
+                                        {{if and $resolver_records (lt $i (len $resolver_records))}}{{$resolver_val = toStr (sliceIndex $i $resolver_records)}}{{end}}
+                                        {{if and $auth_recs (lt $i (len $auth_recs))}}{{$auth_val = toStr (sliceIndex $i $auth_recs)}}{{end}}
+                                        {{$is_match := eq $resolver_val $auth_val}}
+                                        
+                                        <div class="dns-diff-row {{if and (not $is_match) (ne $resolver_val "") (ne $auth_val "")}}dns-diff-changed{{else if eq $resolver_val ""}}dns-diff-added{{else if eq $auth_val ""}}dns-diff-removed{{end}}">
+                                            <div class="dns-diff-col dns-diff-left {{if eq $resolver_val ""}}dns-diff-empty{{else if not $is_match}}dns-diff-highlight-old{{end}}">
+                                                {{if ne $resolver_val ""}}
+                                                    <code class="dns-diff-value">{{$resolver_val}}</code>
+                                                {{else}}
+                                                    <span class="dns-diff-placeholder">—</span>
+                                                {{end}}
+                                            </div>
+                                            <div class="dns-diff-col dns-diff-right {{if eq $auth_val ""}}dns-diff-empty{{else if not $is_match}}dns-diff-highlight-new{{end}}">
+                                                {{if ne $auth_val ""}}
+                                                    <code class="dns-diff-value">{{$auth_val}}</code>
+                                                {{else}}
+                                                    <span class="dns-diff-placeholder">—</span>
+                                                {{end}}
+                                            </div>
+                                        </div>
+                                    {{end}}
+                                {{else}}
+                                    <div class="dns-diff-row">
+                                        <div class="dns-diff-col dns-diff-left dns-diff-empty">
+                                            <span class="dns-diff-placeholder">No records</span>
+                                        </div>
+                                        <div class="dns-diff-col dns-diff-right dns-diff-empty">
+                                            <span class="dns-diff-placeholder">No records</span>
+                                        </div>
+                                    </div>
+                                {{end}}
+                            {{end}}
+                        {{end}}
+                        {{end}}
+                    </div>
+                </div>
+            </div>
+        </div>
+        </div>
+
+        <!-- Subdomain Discovery (Certificate Transparency) -->
+        <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex align-items-center">
+                    <h5 class="mb-0 flex-grow-1">
+                        <i class="fas fa-sitemap me-2"></i>Subdomain Discovery
+                        <a href="https://datatracker.ietf.org/doc/html/rfc6962" target="_blank" rel="noopener" class="badge bg-dark bg-opacity-25 text-muted text-decoration-none fw-normal ms-2" style="font-size: 0.6rem;" title="Certificate Transparency">RFC 6962</a>
+                        {{$ctFreshness := mapGetMap "ct_subdomains" $data_freshness}}
+                        {{if and $ctFreshness (eq (mapGetStr "source" $ctFreshness) "cache")}}<span class="badge bg-secondary bg-opacity-50 border border-secondary border-opacity-25 ms-1" style="font-size: 0.55rem;" data-bs-toggle="tooltip" title="CT log data cached for 1 hour — certificate records change infrequently">CACHED</span>{{else}}<span class="badge bg-success bg-opacity-25 border border-success border-opacity-25 ms-1" style="font-size: 0.55rem;" data-bs-toggle="tooltip" title="Live Certificate Transparency query">LIVE</span>{{end}}
+                    </h5>
+                    {{$ctStatus := mapGetStr "status" $ct}}
+                    {{$ctUnique := mapGetFloat "unique_subdomains" $ct}}
+                    {{if and (eq $ctStatus "success") (gt $ctUnique 0)}}
+                    <span class="badge bg-info-subtle text-info border border-info-subtle">{{if mapGetBool "was_truncated" $ct}}{{mapGetStr "display_count" $ct}} of {{end}}{{formatFloat 0 $ctUnique}} subdomain{{if ne $ctUnique 1}}s{{end}}</span>
+                    {{end}}
+                </div>
+                <div class="card-body">
+                    {{$ctSubdomains := mapGetSlice "subdomains" $ct}}
+                    {{if and (eq $ctStatus "success") $ctSubdomains (gt (len $ctSubdomains) 0)}}
+                    <div class="mb-3">
+                        <div class="d-flex flex-wrap align-items-center gap-2 mb-2">
+                            <span class="badge bg-info-subtle text-info border border-info-subtle"><i class="fas fa-certificate me-1"></i>{{mapGetStr "total_certs" $ct}} certificates analyzed</span>
+                            <span class="badge bg-success-subtle text-success border border-success-subtle"><i class="fas fa-check me-1"></i>{{mapGetStr "current_count" $ct}} current</span>
+                            <span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle"><i class="fas fa-history me-1"></i>{{mapGetStr "expired_count" $ct}} expired</span>
+                            {{$cnameCount := mapGetFloat "cname_count" $ct}}
+                            {{if gt $cnameCount 0}}
+                            <span class="badge bg-primary-subtle text-primary border border-primary-subtle"><i class="fas fa-link me-1"></i>{{formatFloat 0 $cnameCount}} CNAME{{if ne $cnameCount 1}}s{{end}}</span>
+                            {{end}}
+                            {{$cnameDiscCount := mapGetFloat "cname_discovered_count" $ct}}
+                            {{if gt $cnameDiscCount 0}}
+                            <span class="badge border" style="font-size:0.7rem; color: #c084fc; background: rgba(168,85,247,0.15); border-color: rgba(168,85,247,0.35) !important;"><i class="fas fa-project-diagram me-1"></i>{{formatFloat 0 $cnameDiscCount}} discovered via CNAME</span>
+                            {{end}}
+                            {{$providersFound := mapGetFloat "providers_found" $ct}}
+                            {{if gt $providersFound 0}}
+                            <span class="badge bg-warning-subtle text-warning border border-warning-subtle"><i class="fas fa-building me-1"></i>{{formatFloat 0 $providersFound}} provider{{if ne $providersFound 1}}s{{end}} identified</span>
+                            {{end}}
+                            <span class="badge bg-dark bg-opacity-25 text-muted fw-normal"><i class="fas fa-database me-1"></i>Source: {{mapGetStr "source" $ct}}</span>
+                        </div>
+                        <small class="text-muted"><i class="fas fa-info-circle me-1"></i>{{mapGetStr "caveat" $ct}}</small>
+                        {{$wildcardCerts := mapGetMap "wildcard_certs" $ct}}
+                        {{if and $wildcardCerts (mapGetBool "present" $wildcardCerts)}}
+                        <div class="alert alert-info bg-info bg-opacity-10 border-info border-opacity-25 py-2 mt-2 mb-0 small">
+                            <i class="fas fa-asterisk me-1"></i>
+                            <strong>Wildcard certificate detected:</strong> <code>{{mapGetStr "pattern" $wildcardCerts}}</code>
+                            {{if mapGetBool "current" $wildcardCerts}}
+                            <span class="badge bg-success-subtle text-success border border-success-subtle ms-1" style="font-size:0.65rem;">Active</span>
+                            {{else}}
+                            <span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle ms-1" style="font-size:0.65rem;">Expired</span>
+                            {{end}}
+                            <div class="mt-1 text-muted">
+                                Subdomains covered by this wildcard won't appear individually in CT logs (RFC 6962). DNS probing and CNAME chain traversal were used to discover additional subdomains below.
+                            </div>
+                        </div>
+                        {{end}}
+                    </div>
+                    {{$providerSummary := mapGetMap "provider_summary" $ct}}
+                    {{if $providerSummary}}
+                    <div class="alert alert-warning bg-warning bg-opacity-10 border-warning border-opacity-25 py-2 mt-2 mb-3 small">
+                        <i class="fas fa-building me-1"></i>
+                        <strong>Third-party services detected via CNAME:</strong>
+                        <div class="d-flex flex-wrap gap-1 mt-2">
+                            {{range $pname, $pval := $providerSummary}}
+                            {{$pdata := toMap $pval}}
+                            {{if $pdata}}
+                            {{$cat := default "Other" (mapGetStr "category" $pdata)}}
+                            <span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle">{{mapGetStr "name" $pdata}} <span class="opacity-75">({{$cat}})</span></span>
+                            {{end}}
+                            {{end}}
+                        </div>
+                    </div>
+                    {{end}}
+                    <div class="table-responsive">
+                        <table class="table table-sm table-hover mb-0">
+                            <thead>
+                                <tr>
+                                    <th class="border-secondary">Subdomain</th>
+                                    <th class="border-secondary text-center">Source</th>
+                                    <th class="border-secondary text-center">Status</th>
+                                    <th class="border-secondary">Provider / CNAME</th>
+                                    <th class="border-secondary text-center">Certificates</th>
+                                    <th class="border-secondary">First Seen</th>
+                                    <th class="border-secondary">Issuer(s)</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {{range $sub := $ctSubdomains}}
+                                {{$s := toMap $sub}}
+                                {{if $s}}
+                                <tr>
+                                    <td class="border-secondary">
+                                        <code class="small">{{mapGetStr "name" $s}}</code>
+                                        {{if mapGetBool "is_wildcard" $s}}
+                                        <span class="badge bg-warning-subtle text-warning border border-warning-subtle" style="font-size:0.6rem;">Wildcard</span>
+                                        {{end}}
+                                    </td>
+                                    <td class="border-secondary text-center">
+                                        {{$source := mapGetStr "source" $s}}
+                                        {{if eq $source "dns"}}
+                                        <span class="badge bg-info-subtle text-info border border-info-subtle" style="font-size:0.6rem;" title="Found via DNS A/AAAA record lookup of common service names">DNS</span>
+                                        {{else if eq $source "cname"}}
+                                        <span class="badge" style="font-size:0.6rem; color: #c084fc !important; background: rgba(168,85,247,0.15) !important; border-color: rgba(168,85,247,0.35) !important;" title="Discovered via CNAME chain">CNAME</span>
+                                        {{else}}
+                                        <span class="badge bg-dark bg-opacity-25 text-muted" style="font-size:0.6rem;" title="Found in Certificate Transparency logs (RFC 6962)">CT Log</span>
+                                        {{end}}
+                                    </td>
+                                    <td class="border-secondary text-center">
+                                        {{if mapGetBool "is_current" $s}}
+                                        <span class="badge bg-success-subtle text-success border border-success-subtle" style="font-size:0.7rem;">Current</span>
+                                        {{else}}
+                                        <span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle" style="font-size:0.7rem;">Expired</span>
+                                        {{end}}
+                                    </td>
+                                    <td class="border-secondary">
+                                        {{$provider := mapGetStr "provider" $s}}
+                                        {{if $provider}}
+                                        <span class="badge bg-warning-subtle text-warning border border-warning-subtle" style="font-size:0.65rem;">
+                                            <i class="fas fa-building me-1"></i>{{$provider}}
+                                        </span>
+                                        <span class="d-block text-muted" style="font-size:0.6rem;">{{mapGetStr "provider_category" $s}}</span>
+                                        {{else if mapGetStr "cname_target" $s}}
+                                        <span class="text-muted small">
+                                            <i class="fas fa-link me-1" style="font-size:0.6rem;"></i><code style="font-size:0.65rem;">{{mapGetStr "cname_target" $s}}</code>
+                                        </span>
+                                        {{else}}
+                                        <span class="small text-muted">—</span>
+                                        {{end}}
+                                    </td>
+                                    <td class="border-secondary text-center"><span class="small text-muted">{{default "—" (mapGetStr "cert_count" $s)}}</span></td>
+                                    <td class="border-secondary"><span class="small text-muted">{{default "—" (mapGetStr "first_seen" $s)}}</span></td>
+                                    <td class="border-secondary"><span class="small text-muted">{{$issuers := mapGetSlice "issuers" $s}}{{if $issuers}}{{range $i, $iss := $issuers}}{{if $i}}, {{end}}{{$iss}}{{end}}{{else}}—{{end}}</span></td>
+                                </tr>
+                                {{end}}
+                                {{end}}
+                            </tbody>
+                        </table>
+                    </div>
+                    {{if mapGetBool "was_truncated" $ct}}
+                    <div class="text-muted small mt-2 mb-0 p-2 rounded" style="background: rgba(255,255,255,0.03);">
+                        <i class="fas fa-filter me-1"></i><strong>Showing {{mapGetStr "display_count" $ct}} of {{formatFloat 0 $ctUnique}} subdomains</strong> &mdash; curated by security relevance.
+                        Three cooperative discovery methods — CT logs (RFC 6962), DNS probing of ~290 common service names, and CNAME chain traversal — feed into a unified view.
+                        Well-known service names (mail, vpn, api, sso, admin, etc.), DNS-resolving hosts, and subdomains with the most certificate activity are prioritized.
+                        {{$expiredCount := mapGetFloat "expired_count" $ct}}
+                        {{if gt $expiredCount 0}}
+                        <span class="ms-1">{{formatFloat 0 $expiredCount}} expired-certificate-only subdomain{{if ne $expiredCount 1}}s{{end}} included where relevant.</span>
+                        {{end}}
+                    </div>
+                    {{end}}
+                    {{else if and (eq $ctStatus "success") (eq $ctUnique 0)}}
+                    {{if and (mapGetBool "is_analyzed_subdomain" $ct) (mapGetStr "registered_domain" $ct)}}
+                    {{$regDomain := mapGetStr "registered_domain" $ct}}
+                    <div class="alert alert-info bg-info bg-opacity-10 border-info border-opacity-25 mb-0 small">
+                        <div class="mb-2">
+                            <i class="fas fa-project-diagram me-1"></i>
+                            <strong>{{.Domain}}</strong> is itself a subdomain of <strong>{{$regDomain}}</strong>.
+                        </div>
+                        <p class="mb-2">
+                            Certificate Transparency logs record certificates by fully qualified domain name
+                            (<a href="https://datatracker.ietf.org/doc/html/rfc8499#section-2" target="_blank" rel="noopener" class="text-info">RFC 8499</a>).
+                            This search queried for names beneath <code>{{.Domain}}</code> in the DNS hierarchy
+                            (<a href="https://datatracker.ietf.org/doc/html/rfc1034#section-3.1" target="_blank" rel="noopener" class="text-info">RFC 1034 §3.1</a>),
+                            which found no issued certificates.
+                        </p>
+                        <p class="mb-2">
+                            To discover sibling subdomains (e.g., <code>mail.{{$regDomain}}</code>, <code>www.{{$regDomain}}</code>),
+                            scan the registered domain instead:
+                        </p>
+                        <a href="/analyze?domain={{$regDomain}}" class="btn btn-sm btn-outline-info">
+                            <i class="fas fa-search me-1"></i>Scan {{$regDomain}}
+                        </a>
+                    </div>
+                    {{else}}
+                    <p class="text-muted mb-0 small">
+                        <i class="fas fa-info-circle me-1"></i>
+                        No subdomains found via Certificate Transparency logs, DNS probing, or CNAME chain traversal for this domain. No TLS certificates have been issued and no common service names resolve for subdomains of <strong>{{.Domain}}</strong>.
+                    </p>
+                    {{end}}
+                    {{else if eq $ctStatus "timeout"}}
+                    <p class="text-muted mb-0 small">
+                        <i class="fas fa-clock me-1"></i>
+                        Certificate Transparency log query timed out. The CT log service (crt.sh) may be experiencing high load. Re-analyze the domain to try again.
+                    </p>
+                    {{else if eq $ctStatus "not_available"}}
+                    <p class="text-muted mb-0 small">
+                        <i class="fas fa-info-circle me-1"></i>
+                        Subdomain discovery data is not available for this older report. Re-analyze the domain to include CT log results.
+                    </p>
+                    {{else}}
+                    <p class="text-muted mb-0 small">
+                        <i class="fas fa-shield-alt me-1"></i>
+                        Passive discovery using <strong>Certificate Transparency Logs</strong> — publicly auditable records of every TLS certificate ever issued.
+                        {{$ctMessage := mapGetStr "message" $ct}}
+                        {{if $ctMessage}}{{$ctMessage}}{{end}}
+                    </p>
+                    {{end}}
+                </div>
+            </div>
+        </div>
+        </div>
+
+        <!-- Back to top -->
+        <div class="text-center mt-4">
+            <a href="/" class="btn btn-primary">
+                <i class="fas fa-search me-2"></i>Analyze Another Domain
+            </a>
+        </div>
+
+        {{end}}
+        
+        <!-- Test Send Recommendation -->
+        {{if .DomainExists}}
+        <div class="card border-secondary mt-4">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="me-3">
+                        <i class="fas fa-paper-plane fa-2x text-secondary opacity-75"></i>
+                    </div>
+                    <div class="flex-grow-1">
+                        <h6 class="mb-1">Confirm Your Email Configuration</h6>
+                        <p class="text-muted mb-0 small">
+                            This tool analyzes DNS records, but to verify actual email delivery, send a test email to 
+                            <a href="https://redsift.com/tools/investigate" target="_blank" rel="noopener" class="text-info">
+                                Red Sift Investigate<i class="fas fa-external-link-alt ms-1 small"></i></a>. 
+                            Their tool shows exactly how your emails arrive, including SPF/DKIM/DMARC pass/fail results in the headers.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {{end}}
+        
+        <!-- Data Freshness & Methodology Disclosure -->
+        <div class="card border-secondary border-opacity-25 mt-4 mb-3">
+            <div class="card-body py-3 px-4">
+                <h6 class="text-muted mb-2" style="font-size: 0.8rem;"><i class="fas fa-flask me-1"></i>DATA FRESHNESS &amp; METHODOLOGY</h6>
+                <p class="text-muted mb-2" style="font-size: 0.75rem; line-height: 1.6;">
+                    All security-critical records (SPF, DMARC, DKIM, DANE/TLSA, DNSSEC, MTA-STS, TLS-RPT, BIMI, CAA) are queried <strong>live</strong> from authoritative nameservers and cross-referenced against 4 independent public DNS resolvers (Cloudflare, Google, Quad9, OpenDNS) at the time of each analysis. No security verdict uses cached data.
+                </p>
+                <p class="text-muted mb-2" style="font-size: 0.75rem; line-height: 1.6;">
+                    <strong>Registrar data</strong> (RDAP) is cached for up to 6 hours because domain ownership and registration details change infrequently. <strong>Certificate Transparency logs</strong> (subdomain discovery via <a href="https://datatracker.ietf.org/doc/html/rfc6962" target="_blank" rel="noopener" class="text-info">RFC 6962</a>) are cached for 1 hour because CT entries are append-only historical records. Sections using cached data are marked with a <span class="badge bg-secondary bg-opacity-50 border border-secondary border-opacity-25" style="font-size: 0.55rem;">CACHED</span> badge; live queries show <span class="badge bg-success bg-opacity-25 border border-success border-opacity-25" style="font-size: 0.55rem;">LIVE</span>.
+                </p>
+                {{if $ct}}
+                {{if mapGetBool "was_truncated" $ct}}
+                <p class="text-muted mb-0" style="font-size: 0.75rem; line-height: 1.6;">
+                    <strong>Subdomain curation:</strong> From {{formatFloat 0 (mapGetFloat "unique_subdomains" $ct)}} discovered subdomains, the {{mapGetStr "display_count" $ct}} shown were selected by security relevance: well-known service names (mail, vpn, api, sso, admin, etc.), DNS-resolving hosts, and subdomains with the most certificate activity are prioritized. CNAME chain resolution and provider identification run on the curated set for accuracy.
+                </p>
+                {{end}}
+                {{end}}
+            </div>
+        </div>
+
+        {{end}}
+
+        <!-- Footer -->
+        <footer class="text-center mt-5 mb-4 text-muted small" role="contentinfo">
+            <a href="https://www.it-help.tech" target="_blank" rel="noopener">
+                <img src="/static/images/owl-of-athena.png" alt="IT Help San Diego - Owl of Athena" width="64" height="64" class="mb-2" loading="lazy" style="border-radius:50%;">
+            </a>
+            <p class="mb-1">Report reflects evaluated DNS security posture at time of generation.</p>
+            <p class="mb-1">Made by <a href="https://www.it-help.tech/blog/dns-security-best-practices/" target="_blank" rel="noopener" class="text-info">IT Help San Diego Inc.</a></p>
+            <p class="mb-0">Need help with DNS? Call <a href="tel:619-853-5008" class="text-info">619-853-5008</a></p>
+        </footer>
+    </main>
+
+    <!-- Loading Overlay -->
+    <div id="loadingOverlay" class="loading-overlay d-none">
+        <div class="loading-content">
+            <div class="loading-spinner">
+                <i class="fas fa-globe fa-spin"></i>
+            </div>
+            <h4 class="mt-4 mb-2">Analyzing Domain</h4>
+            <p class="text-muted mb-0" id="loadingDomain">{{.Domain}}</p>
+            <div class="loading-dots mt-3">
+                <span></span><span></span><span></span>
+            </div>
+            <div class="loading-status mt-3">
+                <span>Initializing DNS resolver...</span>
+                <span>Querying authoritative nameservers...</span>
+                <span>Pulling A/AAAA records via DoH...</span>
+                <span>Fetching MX records for mail routing...</span>
+                <span>Running RDAP lookup for registrar info...</span>
+                <span>Parsing SPF record from TXT...</span>
+                <span>Validating DMARC policy...</span>
+                <span>Checking DKIM selectors...</span>
+                <span>Querying DNSSEC chain of trust...</span>
+                <span>Aggregating multi-resolver consensus...</span>
+            </div>
+        </div>
+    </div>
+
+    {{template "scripts" .}}
+    <script nonce="{{.CspNonce}}">
+    (function() {
+        document.addEventListener('DOMContentLoaded', function() {
+            document.querySelectorAll('.bimi-logo-img').forEach(function(img) {
+                img.addEventListener('error', function() {
+                    this.style.display = 'none';
+                    var fallback = this.nextElementSibling;
+                    if (fallback) fallback.style.display = 'block';
+                });
+            });
+            var tooltipTriggerList = Array.from(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+            tooltipTriggerList.map(function(el) {
+                return new bootstrap.Tooltip(el);
+            });
+            
+            var reanalyzeBtn = document.getElementById('reanalyzeBtn');
+            if (reanalyzeBtn) {
+                var waitSeconds = Number.parseInt(reanalyzeBtn.dataset.waitSeconds) || 0;
+                var countdownInterval = null;
+                
+                function startCountdown(seconds) {
+                    reanalyzeBtn.disabled = true;
+                    reanalyzeBtn.classList.remove('btn-primary');
+                    reanalyzeBtn.classList.add('btn-secondary');
+                    
+                    function updateButton() {
+                        if (seconds <= 0) {
+                            clearInterval(countdownInterval);
+                            reanalyzeBtn.innerHTML = '<i class="fas fa-sync-alt me-2"></i>Re-analyze';
+                            reanalyzeBtn.disabled = false;
+                            reanalyzeBtn.classList.remove('btn-secondary');
+                            reanalyzeBtn.classList.add('btn-primary');
+                        } else {
+                            reanalyzeBtn.innerHTML = '<i class="fas fa-clock me-2"></i>Ready in ' + seconds + 's';
+                            seconds--;
+                            countdownInterval = setTimeout(updateButton, 1000);
+                        }
+                    }
+                    updateButton();
+                }
+                
+                if (waitSeconds > 0) {
+                    startCountdown(waitSeconds);
+                }
+                
+                reanalyzeBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    if (this.disabled) return;
+                    
+                    var domain = this.dataset.domain;
+                    var overlay = document.getElementById('loadingOverlay');
+                    
+                    this.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Analyzing...';
+                    this.disabled = true;
+                    
+                    if (overlay) {
+                        overlay.classList.remove('d-none');
+                        if (typeof startStatusCycle === 'function') {
+                            startStatusCycle(overlay);
+                        }
+                    }
+                    
+                    var timestamp = Date.now();
+                    var url = '/analyze?domain=' + encodeURIComponent(domain) + '&refresh=' + timestamp;
+                    
+                    setTimeout(function() {
+                        globalThis.location.href = url;
+                    }, 100);
+                });
+            }
+        });
+    })();
+    </script>
+</body>
+</html>

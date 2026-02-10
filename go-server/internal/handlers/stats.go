@@ -1,100 +1,125 @@
 package handlers
 
 import (
-        "net/http"
+	"net/http"
+	"strings"
 
-        "dnstool/internal/config"
-        "dnstool/internal/db"
+	"dnstool/internal/config"
+	"dnstool/internal/db"
 
-        "github.com/gin-gonic/gin"
+	"github.com/gin-gonic/gin"
 )
 
 type StatsHandler struct {
-        DB     *db.Database
-        Config *config.Config
+	DB     *db.Database
+	Config *config.Config
 }
 
 func NewStatsHandler(database *db.Database, cfg *config.Config) *StatsHandler {
-        return &StatsHandler{DB: database, Config: cfg}
+	return &StatsHandler{DB: database, Config: cfg}
 }
 
 func (h *StatsHandler) Stats(c *gin.Context) {
-        ctx := c.Request.Context()
+	nonce, _ := c.Get("csp_nonce")
+	ctx := c.Request.Context()
 
-        recentStats, err := h.DB.Queries.ListRecentStats(ctx, 30)
-        if err != nil {
-                c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch stats"})
-                return
-        }
+	recentStats, err := h.DB.Queries.ListRecentStats(ctx, 30)
+	if err != nil {
+		c.HTML(http.StatusInternalServerError, "stats.html", gin.H{
+			"AppVersion":     h.Config.AppVersion,
+			"CspNonce":       nonce,
+			"ActivePage":     "stats",
+			"FlashMessages":  []FlashMessage{{Category: "danger", Message: "Failed to fetch stats"}},
+		})
+		return
+	}
 
-        totalAnalyses, _ := h.DB.Queries.CountAllAnalyses(ctx)
-        successfulAnalyses, _ := h.DB.Queries.CountSuccessfulAnalysesTotal(ctx)
-        uniqueDomains, _ := h.DB.Queries.CountUniqueDomainsTotal(ctx)
+	totalAnalyses, _ := h.DB.Queries.CountAllAnalyses(ctx)
+	successfulAnalyses, _ := h.DB.Queries.CountSuccessfulAnalysesTotal(ctx)
+	uniqueDomains, _ := h.DB.Queries.CountUniqueDomainsTotal(ctx)
 
-        popularDomains, _ := h.DB.Queries.ListPopularDomains(ctx, 10)
-        countryStats, _ := h.DB.Queries.ListCountryDistribution(ctx, 20)
+	popularDomains, _ := h.DB.Queries.ListPopularDomains(ctx, 10)
+	countryStats, _ := h.DB.Queries.ListCountryDistribution(ctx, 20)
 
-        type StatItem struct {
-                Date               string   `json:"date"`
-                TotalAnalyses      *int32   `json:"total_analyses"`
-                SuccessfulAnalyses *int32   `json:"successful_analyses"`
-                FailedAnalyses     *int32   `json:"failed_analyses"`
-                UniqueDomains      *int32   `json:"unique_domains"`
-                AvgAnalysisTime    *float64 `json:"avg_analysis_time"`
-        }
+	maxRecentStats := 7
+	if len(recentStats) < maxRecentStats {
+		maxRecentStats = len(recentStats)
+	}
+	slicedStats := recentStats[:maxRecentStats]
 
-        statItems := make([]StatItem, 0, len(recentStats))
-        for _, s := range recentStats {
-                dateStr := ""
-                if s.Date.Valid {
-                        dateStr = s.Date.Time.Format("2006-01-02")
-                }
-                statItems = append(statItems, StatItem{
-                        Date:               dateStr,
-                        TotalAnalyses:      s.TotalAnalyses,
-                        SuccessfulAnalyses: s.SuccessfulAnalyses,
-                        FailedAnalyses:     s.FailedAnalyses,
-                        UniqueDomains:      s.UniqueDomains,
-                        AvgAnalysisTime:    s.AvgAnalysisTime,
-                })
-        }
+	statItems := make([]DailyStat, 0, len(slicedStats))
+	for _, s := range slicedStats {
+		dateStr := ""
+		if s.Date.Valid {
+			dateStr = s.Date.Time.Format("01/02")
+		}
+		var total, successful, failed, unique int32
+		if s.TotalAnalyses != nil {
+			total = *s.TotalAnalyses
+		}
+		if s.SuccessfulAnalyses != nil {
+			successful = *s.SuccessfulAnalyses
+		}
+		if s.FailedAnalyses != nil {
+			failed = *s.FailedAnalyses
+		}
+		if s.UniqueDomains != nil {
+			unique = *s.UniqueDomains
+		}
+		var avg float64
+		hasAvg := false
+		if s.AvgAnalysisTime != nil {
+			avg = *s.AvgAnalysisTime
+			hasAvg = true
+		}
+		statItems = append(statItems, DailyStat{
+			Date:               dateStr,
+			TotalAnalyses:      total,
+			SuccessfulAnalyses: successful,
+			FailedAnalyses:     failed,
+			UniqueDomains:      unique,
+			AvgAnalysisTime:    avg,
+			HasAvgTime:         hasAvg,
+		})
+	}
 
-        type PopularItem struct {
-                Domain string `json:"domain"`
-                Count  int64  `json:"count"`
-        }
-        popItems := make([]PopularItem, 0, len(popularDomains))
-        for _, d := range popularDomains {
-                popItems = append(popItems, PopularItem{Domain: d.Domain, Count: d.Count})
-        }
+	popItems := make([]PopularDomain, 0, len(popularDomains))
+	for _, d := range popularDomains {
+		popItems = append(popItems, PopularDomain{Domain: d.Domain, Count: d.Count})
+	}
 
-        type CountryItem struct {
-                Code  string `json:"code"`
-                Name  string `json:"name"`
-                Count int64  `json:"count"`
-        }
-        countryItems := make([]CountryItem, 0, len(countryStats))
-        for _, cs := range countryStats {
-                code, name := "", ""
-                if cs.CountryCode != nil {
-                        code = *cs.CountryCode
-                }
-                if cs.CountryName != nil {
-                        name = *cs.CountryName
-                }
-                countryItems = append(countryItems, CountryItem{Code: code, Name: name, Count: cs.Count})
-        }
+	countryItems := make([]CountryStat, 0, len(countryStats))
+	for _, cs := range countryStats {
+		code, name := "", ""
+		if cs.CountryCode != nil {
+			code = *cs.CountryCode
+		}
+		if cs.CountryName != nil {
+			name = *cs.CountryName
+		}
+		flag := ""
+		if len(code) == 2 {
+			upper := strings.ToUpper(code)
+			r1 := rune(0x1F1E6 + int(upper[0]) - int('A'))
+			r2 := rune(0x1F1E6 + int(upper[1]) - int('A'))
+			flag = string([]rune{r1, r2})
+		}
+		countryItems = append(countryItems, CountryStat{Code: code, Name: name, Count: cs.Count, Flag: flag})
+	}
 
-        c.JSON(http.StatusOK, gin.H{
-                "recent_stats":        statItems,
-                "total_analyses":      totalAnalyses,
-                "successful_analyses": successfulAnalyses,
-                "unique_domains":      uniqueDomains,
-                "popular_domains":     popItems,
-                "country_stats":       countryItems,
-        })
+	c.HTML(http.StatusOK, "stats.html", gin.H{
+		"AppVersion":         h.Config.AppVersion,
+		"CspNonce":           nonce,
+		"ActivePage":         "stats",
+		"TotalAnalyses":      totalAnalyses,
+		"SuccessfulAnalyses": successfulAnalyses,
+		"UniqueDomains":      uniqueDomains,
+		"CountryStats":       countryItems,
+		"PopularDomains":     popItems,
+		"RecentStats":        statItems,
+	})
 }
 
 func (h *StatsHandler) StatisticsRedirect(c *gin.Context) {
-        c.Redirect(http.StatusFound, "/stats")
+	c.Redirect(http.StatusFound, "/stats")
 }

@@ -1,114 +1,176 @@
 package handlers
 
 import (
-        "net/http"
-        "strconv"
+	"encoding/json"
+	"net/http"
+	"strconv"
 
-        "dnstool/internal/config"
-        "dnstool/internal/db"
-        "dnstool/internal/dbq"
+	"dnstool/internal/config"
+	"dnstool/internal/db"
+	"dnstool/internal/dbq"
 
-        "github.com/gin-gonic/gin"
+	"github.com/gin-gonic/gin"
 )
 
 type HistoryHandler struct {
-        DB     *db.Database
-        Config *config.Config
+	DB     *db.Database
+	Config *config.Config
 }
 
 func NewHistoryHandler(database *db.Database, cfg *config.Config) *HistoryHandler {
-        return &HistoryHandler{DB: database, Config: cfg}
+	return &HistoryHandler{DB: database, Config: cfg}
+}
+
+type historyAnalysisItem struct {
+	ID               int32
+	Domain           string
+	AsciiDomain      string
+	SpfStatus        string
+	DmarcStatus      string
+	DkimStatus       string
+	AnalysisSuccess  bool
+	AnalysisDuration float64
+	CreatedDate      string
+	CreatedTime      string
+	ToolVersion      string
+}
+
+func buildHistoryItem(a dbq.DomainAnalysis) historyAnalysisItem {
+	spfStatus := ""
+	if a.SpfStatus != nil {
+		spfStatus = *a.SpfStatus
+	}
+	dmarcStatus := ""
+	if a.DmarcStatus != nil {
+		dmarcStatus = *a.DmarcStatus
+	}
+	dkimStatus := ""
+	if a.DkimStatus != nil {
+		dkimStatus = *a.DkimStatus
+	}
+	dur := 0.0
+	if a.AnalysisDuration != nil {
+		dur = *a.AnalysisDuration
+	}
+	createdDate, createdTime := "", ""
+	if a.CreatedAt.Valid {
+		createdDate = a.CreatedAt.Time.Format("2006-01-02")
+		createdTime = a.CreatedAt.Time.Format("15:04:05")
+	}
+	toolVersion := ""
+	if len(a.FullResults) > 0 {
+		var fr map[string]interface{}
+		if json.Unmarshal(a.FullResults, &fr) == nil {
+			if tv, ok := fr["_tool_version"].(string); ok {
+				toolVersion = tv
+			}
+		}
+	}
+	return historyAnalysisItem{
+		ID:               a.ID,
+		Domain:           a.Domain,
+		AsciiDomain:      a.AsciiDomain,
+		SpfStatus:        spfStatus,
+		DmarcStatus:      dmarcStatus,
+		DkimStatus:       dkimStatus,
+		AnalysisSuccess:  true,
+		AnalysisDuration: dur,
+		CreatedDate:      createdDate,
+		CreatedTime:      createdTime,
+		ToolVersion:      toolVersion,
+	}
 }
 
 func (h *HistoryHandler) History(c *gin.Context) {
-        page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
-        if page < 1 {
-                page = 1
-        }
-        searchDomain := c.Query("domain")
-        perPage := 20
+	nonce, _ := c.Get("csp_nonce")
+	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
+	if page < 1 {
+		page = 1
+	}
+	searchDomain := c.Query("domain")
+	perPage := 20
 
-        ctx := c.Request.Context()
+	ctx := c.Request.Context()
 
-        var total int64
+	var total int64
 
-        if searchDomain != "" {
-                searchPattern := "%" + searchDomain + "%"
-                count, countErr := h.DB.Queries.CountSearchSuccessfulAnalyses(ctx, searchPattern)
-                if countErr != nil {
-                        c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to count analyses"})
-                        return
-                }
-                total = count
-        } else {
-                count, countErr := h.DB.Queries.CountSuccessfulAnalyses(ctx)
-                if countErr != nil {
-                        c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to count analyses"})
-                        return
-                }
-                total = count
-        }
+	if searchDomain != "" {
+		searchPattern := "%" + searchDomain + "%"
+		count, countErr := h.DB.Queries.CountSearchSuccessfulAnalyses(ctx, searchPattern)
+		if countErr != nil {
+			c.HTML(http.StatusInternalServerError, "history.html", gin.H{
+				"AppVersion": h.Config.AppVersion,
+				"CspNonce":   nonce,
+				"ActivePage": "history",
+				"FlashMessages": []FlashMessage{{Category: "danger", Message: "Failed to count analyses"}},
+			})
+			return
+		}
+		total = count
+	} else {
+		count, countErr := h.DB.Queries.CountSuccessfulAnalyses(ctx)
+		if countErr != nil {
+			c.HTML(http.StatusInternalServerError, "history.html", gin.H{
+				"AppVersion": h.Config.AppVersion,
+				"CspNonce":   nonce,
+				"ActivePage": "history",
+				"FlashMessages": []FlashMessage{{Category: "danger", Message: "Failed to count analyses"}},
+			})
+			return
+		}
+		total = count
+	}
 
-        pagination := NewPagination(page, perPage, total)
+	pagination := NewPagination(page, perPage, total)
 
-        type AnalysisItem struct {
-                ID               int32   `json:"id"`
-                Domain           string  `json:"domain"`
-                AsciiDomain      string  `json:"ascii_domain"`
-                SpfStatus        *string `json:"spf_status"`
-                DmarcStatus      *string `json:"dmarc_status"`
-                DkimStatus       *string `json:"dkim_status"`
-                AnalysisDuration *float64 `json:"analysis_duration"`
-                CreatedAt        string  `json:"created_at"`
-                CountryCode      *string `json:"country_code"`
-                CountryName      *string `json:"country_name"`
-        }
+	var items []historyAnalysisItem
 
-        var items []AnalysisItem
+	if searchDomain != "" {
+		searchPattern := "%" + searchDomain + "%"
+		analyses, queryErr := h.DB.Queries.SearchSuccessfulAnalyses(ctx, dbq.SearchSuccessfulAnalysesParams{
+			Domain: searchPattern,
+			Limit:  pagination.Limit(),
+			Offset: pagination.Offset(),
+		})
+		if queryErr != nil {
+			c.HTML(http.StatusInternalServerError, "history.html", gin.H{
+				"AppVersion": h.Config.AppVersion,
+				"CspNonce":   nonce,
+				"ActivePage": "history",
+				"FlashMessages": []FlashMessage{{Category: "danger", Message: "Failed to fetch analyses"}},
+			})
+			return
+		}
+		for _, a := range analyses {
+			items = append(items, buildHistoryItem(a))
+		}
+	} else {
+		analyses, queryErr := h.DB.Queries.ListSuccessfulAnalyses(ctx, dbq.ListSuccessfulAnalysesParams{
+			Limit:  pagination.Limit(),
+			Offset: pagination.Offset(),
+		})
+		if queryErr != nil {
+			c.HTML(http.StatusInternalServerError, "history.html", gin.H{
+				"AppVersion": h.Config.AppVersion,
+				"CspNonce":   nonce,
+				"ActivePage": "history",
+				"FlashMessages": []FlashMessage{{Category: "danger", Message: "Failed to fetch analyses"}},
+			})
+			return
+		}
+		for _, a := range analyses {
+			items = append(items, buildHistoryItem(a))
+		}
+	}
 
-        if searchDomain != "" {
-                searchPattern := "%" + searchDomain + "%"
-                analyses, queryErr := h.DB.Queries.SearchSuccessfulAnalyses(ctx, dbq.SearchSuccessfulAnalysesParams{
-                        Domain: searchPattern,
-                        Limit:  pagination.Limit(),
-                        Offset: pagination.Offset(),
-                })
-                if queryErr != nil {
-                        c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch analyses"})
-                        return
-                }
-                for _, a := range analyses {
-                        items = append(items, AnalysisItem{
-                                ID: a.ID, Domain: a.Domain, AsciiDomain: a.AsciiDomain,
-                                SpfStatus: a.SpfStatus, DmarcStatus: a.DmarcStatus, DkimStatus: a.DkimStatus,
-                                AnalysisDuration: a.AnalysisDuration,
-                                CreatedAt:        formatTimestamp(a.CreatedAt),
-                                CountryCode:      a.CountryCode, CountryName: a.CountryName,
-                        })
-                }
-        } else {
-                analyses, queryErr := h.DB.Queries.ListSuccessfulAnalyses(ctx, dbq.ListSuccessfulAnalysesParams{
-                        Limit:  pagination.Limit(),
-                        Offset: pagination.Offset(),
-                })
-                if queryErr != nil {
-                        c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch analyses"})
-                        return
-                }
-                for _, a := range analyses {
-                        items = append(items, AnalysisItem{
-                                ID: a.ID, Domain: a.Domain, AsciiDomain: a.AsciiDomain,
-                                SpfStatus: a.SpfStatus, DmarcStatus: a.DmarcStatus, DkimStatus: a.DkimStatus,
-                                AnalysisDuration: a.AnalysisDuration,
-                                CreatedAt:        formatTimestamp(a.CreatedAt),
-                                CountryCode:      a.CountryCode, CountryName: a.CountryName,
-                        })
-                }
-        }
+	pd := BuildPagination(page, pagination.TotalPages, total)
 
-        c.JSON(http.StatusOK, gin.H{
-                "analyses":      items,
-                "pagination":    pagination,
-                "search_domain": searchDomain,
-        })
+	c.HTML(http.StatusOK, "history.html", gin.H{
+		"AppVersion":   h.Config.AppVersion,
+		"CspNonce":     nonce,
+		"ActivePage":   "history",
+		"Analyses":     items,
+		"Pagination":   pd,
+		"SearchDomain": searchDomain,
+	})
 }

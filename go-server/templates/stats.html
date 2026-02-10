@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="dark">
+<head>
+    {{template "head" .}}
+    <title>Statistics - DNS Tool</title>
+    {{template "critical_css" .}}
+    {{template "head_css" .}}
+</head>
+<body>
+    {{template "nav" .}}
+
+    <main id="main-content" class="container my-4">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h1 class="h3 mb-1">
+                    <i class="fas fa-chart-bar me-2"></i>Analysis Statistics
+                </h1>
+                <p class="text-muted mb-0">Overview of DNS analysis usage and trends</p>
+            </div>
+            <a href="/" class="btn btn-primary">
+                <i class="fas fa-plus me-2"></i>New Analysis
+            </a>
+        </div>
+
+        <div class="row mb-4">
+            <div class="col-md-3 mb-3">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <i class="fas fa-search fa-2x text-primary mb-2"></i>
+                        <h3 class="mb-1">{{.TotalAnalyses}}</h3>
+                        <p class="text-muted mb-0">Total Analyses</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 mb-3">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <i class="fas fa-check-circle fa-2x text-success mb-2"></i>
+                        <h3 class="mb-1">{{.SuccessfulAnalyses}}</h3>
+                        <p class="text-muted mb-0">Successful</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 mb-3">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <i class="fas fa-globe fa-2x text-info mb-2"></i>
+                        <h3 class="mb-1">{{.UniqueDomains}}</h3>
+                        <p class="text-muted mb-0">Unique Domains</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 mb-3">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <i class="fas fa-percentage fa-2x text-warning mb-2"></i>
+                        <h3 class="mb-1">
+                            {{if gt .TotalAnalyses 0}}
+                                {{successRate .SuccessfulAnalyses .TotalAnalyses}}%
+                            {{else}}
+                                0%
+                            {{end}}
+                        </h3>
+                        <p class="text-muted mb-0">Success Rate</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="fas fa-globe-americas me-2"></i>Visitor Countries
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        {{if .CountryStats}}
+                        <div class="row">
+                            {{range $c := .CountryStats}}
+                            <div class="col-md-3 col-sm-4 col-6 mb-2">
+                                <div class="d-flex justify-content-between align-items-center px-2 py-1 rounded" style="background: rgba(255,255,255,0.03);">
+                                    <div class="d-flex align-items-center">
+                                        <span class="me-2" style="font-size: 1.2em;">{{$c.Flag}}</span>
+                                        <span class="small fw-medium">{{$c.Name}}</span>
+                                    </div>
+                                    <span class="badge bg-info rounded-pill">{{$c.Count}}</span>
+                                </div>
+                            </div>
+                            {{end}}
+                        </div>
+                        {{else}}
+                        <div class="text-center text-muted py-3">
+                            <i class="fas fa-globe fa-2x mb-2"></i>
+                            <p class="mb-0">Country data will appear here as visitors analyze domains</p>
+                        </div>
+                        {{end}}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-lg-6 mb-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="fas fa-trophy me-2"></i>Most Analyzed Domains
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        {{if .PopularDomains}}
+                            <div class="list-group list-group-flush">
+                                {{range $d := .PopularDomains}}
+                                <div class="list-group-item d-flex justify-content-between align-items-center bg-transparent border-0 px-0">
+                                    <div class="d-flex align-items-center">
+                                        <i class="fas fa-globe text-primary me-2"></i>
+                                        <span class="fw-medium">{{$d.Domain}}</span>
+                                    </div>
+                                    <span class="badge bg-primary rounded-pill">{{$d.Count}}</span>
+                                </div>
+                                {{end}}
+                            </div>
+                        {{else}}
+                            <div class="text-center text-muted py-3">
+                                <i class="fas fa-chart-bar fa-2x mb-2"></i>
+                                <p class="mb-0">No analysis data available yet</p>
+                            </div>
+                        {{end}}
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-6 mb-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="fas fa-calendar-alt me-2"></i>Recent Daily Activity
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        {{if .RecentStats}}
+                            <div class="table-responsive">
+                                <table class="table table-sm mb-0">
+                                    <thead>
+                                        <tr>
+                                            <th>Date</th>
+                                            <th>Total</th>
+                                            <th>Success</th>
+                                            <th>Unique</th>
+                                            <th>Avg Time</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {{range $s := .RecentStats}}
+                                        <tr>
+                                            <td class="text-muted">
+                                                {{$s.Date}}
+                                            </td>
+                                            <td>{{$s.TotalAnalyses}}</td>
+                                            <td>
+                                                <span class="text-success">{{$s.SuccessfulAnalyses}}</span>
+                                                {{if gt $s.FailedAnalyses 0}}
+                                                    <span class="text-danger">/{{$s.FailedAnalyses}}</span>
+                                                {{end}}
+                                            </td>
+                                            <td>{{$s.UniqueDomains}}</td>
+                                            <td class="text-muted">
+                                                {{if $s.HasAvgTime}}
+                                                    {{formatFloat 2 $s.AvgAnalysisTime}}s
+                                                {{else}}
+                                                    -
+                                                {{end}}
+                                            </td>
+                                        </tr>
+                                        {{end}}
+                                    </tbody>
+                                </table>
+                            </div>
+                        {{else}}
+                            <div class="text-center text-muted py-3">
+                                <i class="fas fa-calendar fa-2x mb-2"></i>
+                                <p class="mb-0">No daily statistics available yet</p>
+                            </div>
+                        {{end}}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {{if gt .TotalAnalyses 0}}
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="fas fa-lightbulb me-2"></i>Insights
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <div class="d-flex align-items-center">
+                                    <div class="flex-shrink-0">
+                                        <i class="fas fa-clock text-info fa-lg"></i>
+                                    </div>
+                                    <div class="flex-grow-1 ms-3">
+                                        <h6 class="mb-1">Performance</h6>
+                                        <p class="text-muted mb-0 small">
+                                            {{if and .RecentStats (index .RecentStats 0).HasAvgTime}}
+                                                Average analysis time is {{formatFloat 2 (index .RecentStats 0).AvgAnalysisTime}} seconds
+                                            {{else}}
+                                                Analysis performance data not available
+                                            {{end}}
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <div class="d-flex align-items-center">
+                                    <div class="flex-shrink-0">
+                                        <i class="fas fa-shield-alt text-success fa-lg"></i>
+                                    </div>
+                                    <div class="flex-grow-1 ms-3">
+                                        <h6 class="mb-1">Reliability</h6>
+                                        <p class="text-muted mb-0 small">
+                                            {{if gt .TotalAnalyses 0}}
+                                                {{successRate .SuccessfulAnalyses .TotalAnalyses}}% success rate across all analyses
+                                            {{else}}
+                                                No reliability data available
+                                            {{end}}
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <div class="d-flex align-items-center">
+                                    <div class="flex-shrink-0">
+                                        <i class="fas fa-users text-warning fa-lg"></i>
+                                    </div>
+                                    <div class="flex-grow-1 ms-3">
+                                        <h6 class="mb-1">Usage</h6>
+                                        <p class="text-muted mb-0 small">
+                                            {{.UniqueDomains}} unique domains analyzed with {{.TotalAnalyses}} total queries
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {{end}}
+
+        {{template "footer" .}}
+    </main>
+
+    {{template "scripts" .}}
+</body>
+</html>

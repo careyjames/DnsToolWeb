@@ -19,7 +19,12 @@ func NewHomeHandler(cfg *config.Config) *HomeHandler {
 func (h *HomeHandler) Index(c *gin.Context) {
 	nonce, _ := c.Get("csp_nonce")
 	c.HTML(http.StatusOK, "index.html", gin.H{
-		"app_version": h.Config.AppVersion,
-		"csp_nonce":   nonce,
+		"AppVersion":  h.Config.AppVersion,
+		"CspNonce":    nonce,
+		"ActivePage":  "home",
+		"CsrfToken":   "",
+		"WaitDomain":  c.Query("wait_domain"),
+		"WaitSeconds": c.Query("wait_seconds"),
+		"WaitReason":  c.DefaultQuery("wait_reason", "anti_repeat"),
 	})
 }

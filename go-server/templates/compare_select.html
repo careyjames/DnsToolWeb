@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="dark">
+<head>
+    {{template "head" .}}
+    <title>Compare Analyses - {{.Domain}} - DNS Tool</title>
+    {{template "critical_css" .}}
+    <style nonce="{{.CspNonce}}">
+        .selected-row{background-color:rgba(13,110,253,0.15)!important}
+    </style>
+    {{template "head_css" .}}
+</head>
+<body>
+    {{template "nav" .}}
+
+    <main id="main-content" class="container my-4">
+        <div class="mb-4">
+            <h1 class="h3 mb-1">
+                <i class="fas fa-code-compare me-2"></i>Compare Analyses
+            </h1>
+            <p class="text-muted mb-0">Select two analyses of <strong>{{.Domain}}</strong> to compare</p>
+        </div>
+
+        {{template "flash_messages" .}}
+
+        <div class="card mb-3">
+            <div class="card-body">
+                <p class="mb-2"><i class="fas fa-info-circle text-info me-1"></i> Click two rows to select them for comparison, then press Compare.</p>
+                <form id="compareForm" action="/compare" method="GET">
+                    <input type="hidden" name="a" id="inputA" value="">
+                    <input type="hidden" name="b" id="inputB" value="">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead>
+                                <tr>
+                                    <th style="width:40px;"></th>
+                                    <th>Date</th>
+                                    <th>SPF</th>
+                                    <th>DMARC</th>
+                                    <th>DKIM</th>
+                                    <th>Duration</th>
+                                    <th>Version</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {{range $a := .Analyses}}
+                                <tr class="compare-row" data-id="{{$a.ID}}" style="cursor:pointer;">
+                                    <td><i class="far fa-square compare-check"></i></td>
+                                    <td>
+                                        {{$a.CreatedAt}}
+                                    </td>
+                                    <td>
+                                        {{if $a.SpfStatus}}
+                                            <span class="badge {{statusBadgeClass $a.SpfStatus}}">{{$a.SpfStatus}}</span>
+                                        {{else}}
+                                            <span class="text-muted">-</span>
+                                        {{end}}
+                                    </td>
+                                    <td>
+                                        {{if $a.DmarcStatus}}
+                                            <span class="badge {{statusBadgeClass $a.DmarcStatus}}">{{$a.DmarcStatus}}</span>
+                                        {{else}}
+                                            <span class="text-muted">-</span>
+                                        {{end}}
+                                    </td>
+                                    <td>
+                                        {{if $a.DkimStatus}}
+                                            <span class="badge {{statusBadgeClass $a.DkimStatus}}">{{$a.DkimStatus}}</span>
+                                        {{else}}
+                                            <span class="text-muted">-</span>
+                                        {{end}}
+                                    </td>
+                                    <td>
+                                        {{if gt $a.AnalysisDuration 0.0}}
+                                            {{formatFloat 2 $a.AnalysisDuration}}s
+                                        {{else}}
+                                            -
+                                        {{end}}
+                                    </td>
+                                    <td>
+                                        {{if $a.ToolVersion}}
+                                            v{{$a.ToolVersion}}
+                                        {{else}}
+                                            -
+                                        {{end}}
+                                    </td>
+                                </tr>
+                                {{end}}
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="mt-3 d-flex justify-content-between align-items-center">
+                        <span class="text-muted" id="selectionHint">Select 2 analyses to compare</span>
+                        <button type="submit" class="btn btn-primary" id="compareBtn" disabled>
+                            <i class="fas fa-code-compare me-1"></i>Compare
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        {{template "footer" .}}
+    </main>
+
+    {{template "scripts" .}}
+    <script nonce="{{.CspNonce}}">
+    document.addEventListener('DOMContentLoaded', function() {
+        var selected = [];
+        var rows = document.querySelectorAll('.compare-row');
+        var inputA = document.getElementById('inputA');
+        var inputB = document.getElementById('inputB');
+        var btn = document.getElementById('compareBtn');
+        var hint = document.getElementById('selectionHint');
+
+        rows.forEach(function(row) {
+            row.addEventListener('click', function() {
+                var id = row.dataset.id;
+                var idx = selected.indexOf(id);
+                if (idx > -1) {
+                    selected.splice(idx, 1);
+                    row.classList.remove('selected-row');
+                    row.querySelector('.compare-check').className = 'far fa-square compare-check';
+                } else {
+                    if (selected.length >= 2) {
+                        var oldId = selected.shift();
+                        var oldRow = document.querySelector('[data-id="' + oldId + '"]');
+                        if (oldRow) {
+                            oldRow.classList.remove('selected-row');
+                            oldRow.querySelector('.compare-check').className = 'far fa-square compare-check';
+                        }
+                    }
+                    selected.push(id);
+                    row.classList.add('selected-row');
+                    row.querySelector('.compare-check').className = 'fas fa-check-square compare-check text-primary';
+                }
+
+                if (selected.length === 2) {
+                    inputA.value = selected[0];
+                    inputB.value = selected[1];
+                    btn.disabled = false;
+                    hint.textContent = '2 analyses selected';
+                } else {
+                    inputA.value = '';
+                    inputB.value = '';
+                    btn.disabled = true;
+                    hint.textContent = selected.length === 1 ? '1 selected — pick one more' : 'Select 2 analyses to compare';
+                }
+            });
+        });
+    });
+    </script>
+</body>
+</html>

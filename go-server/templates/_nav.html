@@ -1,0 +1,32 @@
+{{define "nav"}}
+<a href="#main-content" class="visually-hidden-focusable">Skip to main content</a>
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark" aria-label="Main navigation">
+    <div class="container">
+        <a class="navbar-brand" href="/">
+            <i class="fas fa-globe me-2"></i>DNS Tool <span class="badge bg-info text-dark ms-1">v{{.AppVersion}}</span>
+        </a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav ms-auto">
+                <li class="nav-item">
+                    <a class="nav-link{{if eq .ActivePage "home"}} active{{end}}" href="/">
+                        <i class="fas fa-home me-1"></i>Home
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link{{if eq .ActivePage "history"}} active{{end}}" href="/history">
+                        <i class="fas fa-history me-1"></i>History
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link{{if eq .ActivePage "stats"}} active{{end}}" href="/stats">
+                        <i class="fas fa-chart-bar me-1"></i>Statistics
+                    </a>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
+{{end}}

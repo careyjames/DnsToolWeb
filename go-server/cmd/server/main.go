@@ -95,8 +95,9 @@ func main() {
         router.NoRoute(func(c *gin.Context) {
                 nonce, _ := c.Get("csp_nonce")
                 c.HTML(http.StatusNotFound, "index.html", gin.H{
-                        "app_version": cfg.AppVersion,
-                        "csp_nonce":   nonce,
+                        "AppVersion": cfg.AppVersion,
+                        "CspNonce":   nonce,
+                        "ActivePage": "home",
                 })
         })
 
