@@ -6,10 +6,11 @@ import (
 )
 
 const (
-        testRiskLow    = "Low Risk"
-        testRiskMedium = "Medium Risk"
-        testDomainFake = "fake.example"
-        testHelloWorld = "Hello World"
+        testRiskLow      = "Low Risk"
+        testRiskMedium   = "Medium Risk"
+        testDomainFake   = "fake.example"
+        testDomainExample = "example.com"
+        testHelloWorld   = "Hello World"
 )
 
 func newTestAnalyzer() *Analyzer {
@@ -561,7 +562,7 @@ func TestEnterpriseProviderDetection(t *testing.T) {
                                 "caa_analysis":    map[string]any{},
                                 "dnssec_analysis": map[string]any{},
                         }
-                        infra := a.AnalyzeDNSInfrastructure("example.com", results)
+                        infra := a.AnalyzeDNSInfrastructure(testDomainExample, results)
                         if infra["provider_tier"] != tt.expected {
                                 t.Errorf("expected tier %s for %s, got %v", tt.expected, tt.name, infra["provider_tier"])
                         }
@@ -979,56 +980,61 @@ func TestPostureNoMailDomainPartial(t *testing.T) {
         }
 }
 
-func TestRemediationSPFSoftfailUpgrade(t *testing.T) {
-        a := newTestAnalyzer()
+func isSPFHardfailFix(f map[string]any) bool {
+        title, _ := f["title"].(string)
+        return strings.Contains(title, "hard fail") || strings.Contains(title, "-all")
+}
 
-        resultsEnforced := map[string]any{
-                "domain":           "example.com",
-                "spf_analysis":     map[string]any{"status": "success", "all_mechanism": "~all"},
-                "dmarc_analysis":   map[string]any{"status": "success", "policy": "reject"},
-                "dkim_analysis":    map[string]any{"status": "success"},
-                "mta_sts_analysis": map[string]any{"status": "success"},
-                "tlsrpt_analysis":  map[string]any{"status": "success"},
-                "bimi_analysis":    map[string]any{"status": "success"},
-                "dane_analysis":    map[string]any{"has_dane": true},
-                "caa_analysis":     map[string]any{"status": "success"},
-                "dnssec_analysis":  map[string]any{"status": "success"},
-        }
-
-        remediation := a.GenerateRemediation(resultsEnforced)
+func extractAllFixes(t *testing.T, remediation map[string]any) []map[string]any {
+        t.Helper()
         allFixes, ok := remediation["all_fixes"].([]map[string]any)
         if !ok {
                 t.Fatal("all_fixes is not []map[string]any")
         }
-        for _, f := range allFixes {
-                title, _ := f["title"].(string)
-                if strings.Contains(title, "hard fail") || strings.Contains(title, "-all") {
-                        t.Error("SPF softfail with DMARC reject + DKIM should NOT generate hardfail upgrade fix")
+        return allFixes
+}
+
+func TestRemediationSPFSoftfailUpgrade(t *testing.T) {
+        a := newTestAnalyzer()
+
+        t.Run("enforced_dmarc_suppresses_hardfail", func(t *testing.T) {
+                results := map[string]any{
+                        "domain":           testDomainExample,
+                        "spf_analysis":     map[string]any{"status": "success", "all_mechanism": "~all"},
+                        "dmarc_analysis":   map[string]any{"status": "success", "policy": "reject"},
+                        "dkim_analysis":    map[string]any{"status": "success"},
+                        "mta_sts_analysis": map[string]any{"status": "success"},
+                        "tlsrpt_analysis":  map[string]any{"status": "success"},
+                        "bimi_analysis":    map[string]any{"status": "success"},
+                        "dane_analysis":    map[string]any{"has_dane": true},
+                        "caa_analysis":     map[string]any{"status": "success"},
+                        "dnssec_analysis":  map[string]any{"status": "success"},
                 }
-        }
+                for _, f := range extractAllFixes(t, a.GenerateRemediation(results)) {
+                        if isSPFHardfailFix(f) {
+                                t.Error("SPF softfail with DMARC reject + DKIM should NOT generate hardfail upgrade fix")
+                        }
+                }
+        })
 
-        resultsNoEnforce := map[string]any{
-                "domain":           "example.com",
-                "spf_analysis":     map[string]any{"status": "success", "all_mechanism": "~all", "includes": []string{"_spf.google.com"}},
-                "dmarc_analysis":   map[string]any{"status": "warning", "policy": "none"},
-                "dkim_analysis":    map[string]any{},
-                "mta_sts_analysis": map[string]any{},
-                "tlsrpt_analysis":  map[string]any{},
-                "bimi_analysis":    map[string]any{},
-                "dane_analysis":    map[string]any{},
-                "caa_analysis":     map[string]any{},
-                "dnssec_analysis":  map[string]any{},
-        }
-
-        remNoEnforce := a.GenerateRemediation(resultsNoEnforce)
-        fixesNoEnforce, ok := remNoEnforce["all_fixes"].([]map[string]any)
-        if !ok {
-                t.Fatal("all_fixes is not []map[string]any")
-        }
-        found := false
-        for _, f := range fixesNoEnforce {
-                title, _ := f["title"].(string)
-                if strings.Contains(title, "hard fail") || strings.Contains(title, "-all") {
+        t.Run("unenforced_dmarc_generates_hardfail", func(t *testing.T) {
+                results := map[string]any{
+                        "domain":           testDomainExample,
+                        "spf_analysis":     map[string]any{"status": "success", "all_mechanism": "~all", "includes": []string{"_spf.google.com"}},
+                        "dmarc_analysis":   map[string]any{"status": "warning", "policy": "none"},
+                        "dkim_analysis":    map[string]any{},
+                        "mta_sts_analysis": map[string]any{},
+                        "tlsrpt_analysis":  map[string]any{},
+                        "bimi_analysis":    map[string]any{},
+                        "dane_analysis":    map[string]any{},
+                        "caa_analysis":     map[string]any{},
+                        "dnssec_analysis":  map[string]any{},
+                }
+                found := false
+                for _, f := range extractAllFixes(t, a.GenerateRemediation(results)) {
+                        if !isSPFHardfailFix(f) {
+                                continue
+                        }
                         found = true
                         sev, _ := f["severity_label"].(string)
                         if sev != "Low" {
@@ -1039,10 +1045,10 @@ func TestRemediationSPFSoftfailUpgrade(t *testing.T) {
                                 t.Errorf("SPF fix should use actual includes from domain, got: %s", rec)
                         }
                 }
-        }
-        if !found {
-                t.Error("SPF softfail without DMARC enforcement should generate hardfail upgrade fix")
-        }
+                if !found {
+                        t.Error("SPF softfail without DMARC enforcement should generate hardfail upgrade fix")
+                }
+        })
 }
 
 func TestDKIMTestFlagDetection(t *testing.T) {

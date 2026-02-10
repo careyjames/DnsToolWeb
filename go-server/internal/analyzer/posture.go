@@ -340,20 +340,31 @@ func classifyGrade(ps protocolState, gi gradeInput, monitoring, configured, abse
 }
 
 func classifyMailGrade(ps protocolState, gi gradeInput, monitoring, configured, absent []string) (string, string, string, string) {
-        if gi.corePresent && gi.dmarcStrict && gi.hasCAA && ps.dnssecOK {
+        if gi.corePresent {
+                return classifyMailCorePresent(ps, gi, monitoring, configured, absent)
+        }
+        return classifyMailPartial(gi)
+}
+
+func classifyMailCorePresent(ps protocolState, gi gradeInput, monitoring, configured, absent []string) (string, string, string, string) {
+        if gi.dmarcStrict && gi.hasCAA && ps.dnssecOK {
                 return "Secure", iconShieldAlt, "success", buildDescriptiveMessage(ps, configured, absent, monitoring)
         }
-        if (gi.corePresent && gi.dmarcStrict && gi.hasCAA) || (gi.corePresent && gi.dmarcFullEnforcing) {
+        if (gi.dmarcStrict && gi.hasCAA) || gi.dmarcFullEnforcing {
                 return riskLow, iconShieldAlt, "success", buildDescriptiveMessage(ps, configured, absent, monitoring)
         }
-        if gi.corePresent && gi.dmarcPartialEnforcing {
+        if gi.dmarcPartialEnforcing {
                 return riskMedium, iconExclamationTriangle, "warning",
                         fmt.Sprintf("Email authentication configured but DMARC enforcement is partial (pct=%d%%). Only %d%% of failing mail is subject to policy.", ps.dmarcPct, ps.dmarcPct)
         }
-        if gi.corePresent && ps.dmarcPolicy == "none" {
+        if ps.dmarcPolicy == "none" {
                 return riskMedium, iconExclamationTriangle, "warning",
                         "Email authentication configured but DMARC is in monitoring mode (p=none). Enforcement recommended after reviewing reports."
         }
+        return riskLow, iconShieldAlt, "success", buildDescriptiveMessage(ps, configured, absent, monitoring)
+}
+
+func classifyMailPartial(gi gradeInput) (string, string, string, string) {
         if gi.hasSPF && gi.hasDMARC && !gi.hasDKIM {
                 return riskMedium, iconExclamationTriangle, "warning",
                         "SPF and DMARC present but DKIM not verified. DKIM signing is required for full DMARC alignment."

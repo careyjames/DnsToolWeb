@@ -1801,12 +1801,6 @@ main.container {
         width: 25% !important;
     }
 
-    .mta-sts-tlsrpt-row > .col-md-6 {
-        flex: 0 0 100% !important;
-        max-width: 100% !important;
-        width: 100% !important;
-    }
-
     .row {
         display: flex !important;
         flex-wrap: wrap !important;
