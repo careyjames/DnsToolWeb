@@ -338,7 +338,7 @@ func computeAchievablePosture(ps protocolState, fixes []fix) string {
 
         if !hasCritical && !hasHigh {
                 if len(fixes) <= 3 {
-                        return "Informational"
+                        return "Secure"
                 }
                 return "Low Risk"
         }

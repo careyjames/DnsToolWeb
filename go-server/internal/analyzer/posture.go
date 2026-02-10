@@ -244,9 +244,9 @@ func determineGrade(ps protocolState, hasSPF, hasDMARC, hasDKIM bool, monitoring
 
         switch {
         case corePresent && dmarcStrict && hasCAA && ps.dnssecOK:
-                state = "Informational"
-                icon = "info-circle"
-                color = "info"
+                state = "Secure"
+                icon = "shield-alt"
+                color = "success"
                 message = buildDescriptiveMessage(ps, configured, absent, monitoring)
 
         case corePresent && dmarcStrict && hasCAA:

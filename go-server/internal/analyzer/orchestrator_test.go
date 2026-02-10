@@ -124,11 +124,11 @@ func TestPostureFullProtection(t *testing.T) {
         if score < 90 {
                 t.Errorf("expected score >= 90 for full protection, got %d", score)
         }
-        if posture["state"] != "Informational" {
-                t.Errorf("expected state Informational, got %v", posture["state"])
+        if posture["state"] != "Secure" {
+                t.Errorf("expected state Secure, got %v", posture["state"])
         }
-        if posture["color"] != "info" {
-                t.Errorf("expected color info, got %v", posture["color"])
+        if posture["color"] != "success" {
+                t.Errorf("expected color success, got %v", posture["color"])
         }
 }
 
@@ -297,8 +297,8 @@ func TestPostureTruthBasedGrades(t *testing.T) {
                                 "caa_analysis":     map[string]any{"status": "success"},
                                 "dnssec_analysis":  map[string]any{"status": "success"},
                         },
-                        expectedGrade: "Informational",
-                        expectedColor: "info",
+                        expectedGrade: "Secure",
+                        expectedColor: "success",
                         messageContains: "DMARC enforcement",
                 },
                 {
@@ -490,8 +490,8 @@ func TestRemediationFullySecure(t *testing.T) {
         if len(topFixes) != 0 {
                 t.Errorf("fully secure domain should have 0 fixes, got %d", len(topFixes))
         }
-        if remediation["posture_achievable"] != "Informational" {
-                t.Errorf("expected achievable Informational, got %v", remediation["posture_achievable"])
+        if remediation["posture_achievable"] != "Secure" {
+                t.Errorf("expected achievable Secure, got %v", remediation["posture_achievable"])
         }
 }
 
