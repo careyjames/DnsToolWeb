@@ -6,12 +6,11 @@ import (
 )
 
 type Config struct {
-        DatabaseURL      string
-        SessionSecret    string
-        Port             string
-        AppVersion       string
-        Testing          bool
-        PythonBackendURL string
+        DatabaseURL   string
+        SessionSecret string
+        Port          string
+        AppVersion    string
+        Testing       bool
 }
 
 func Load() (*Config, error) {
@@ -30,17 +29,11 @@ func Load() (*Config, error) {
                 port = "5000"
         }
 
-        pythonBackend := os.Getenv("PYTHON_BACKEND_URL")
-        if pythonBackend == "" {
-                pythonBackend = "http://127.0.0.1:5000"
-        }
-
         return &Config{
-                DatabaseURL:      dbURL,
-                SessionSecret:    sessionSecret,
-                Port:             port,
-                AppVersion:       "26.10.88",
-                Testing:          false,
-                PythonBackendURL: pythonBackend,
+                DatabaseURL:   dbURL,
+                SessionSecret: sessionSecret,
+                Port:          port,
+                AppVersion:    "26.11.0",
+                Testing:       false,
         }, nil
 }

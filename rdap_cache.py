@@ -4,7 +4,7 @@ import logging
 from typing import Dict, Optional
 from threading import Lock
 
-_RDAP_CACHE_TTL = 21600  # 6 hours - registrar/registry data changes infrequently
+_RDAP_CACHE_TTL = 86400  # 24 hours per RFC 9224 Section 8 - registrar/registry data changes infrequently
 
 
 class RDAPCache:

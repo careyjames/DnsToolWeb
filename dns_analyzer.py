@@ -3940,7 +3940,7 @@ class DNSAnalyzer:
             'registrar': {
                 'source': 'cached' if reg_data.get('cached') else 'live',
                 'note': f"RDAP registry data (cached {reg_data.get('cached_at', '')})" if reg_data.get('cached') else 'Live RDAP registry lookup',
-                'cache_ttl': '6 hours' if reg_data.get('cached') else None,
+                'cache_ttl': '24 hours' if reg_data.get('cached') else None,
             },
             'ct_subdomains': {
                 'source': ct_data.get('ct_source', 'live'),
