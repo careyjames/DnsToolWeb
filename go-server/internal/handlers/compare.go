@@ -224,46 +224,7 @@ func (h *CompareHandler) selectDomain(c *gin.Context, domain string) {
 
         items := make([]AnalysisItem, 0, len(analyses))
         for _, a := range analyses {
-                spfStatus := ""
-                if a.SpfStatus != nil {
-                        spfStatus = *a.SpfStatus
-                }
-                dmarcStatus := ""
-                if a.DmarcStatus != nil {
-                        dmarcStatus = *a.DmarcStatus
-                }
-                dkimStatus := ""
-                if a.DkimStatus != nil {
-                        dkimStatus = *a.DkimStatus
-                }
-                dur := 0.0
-                if a.AnalysisDuration != nil {
-                        dur = *a.AnalysisDuration
-                }
-                createdAt := ""
-                if a.CreatedAt.Valid {
-                        createdAt = a.CreatedAt.Time.Format("2006-01-02 15:04:05")
-                }
-                toolVersion := ""
-                if len(a.FullResults) > 0 {
-                        var fr map[string]interface{}
-                        if json.Unmarshal(a.FullResults, &fr) == nil {
-                                if tv, ok := fr["_tool_version"].(string); ok {
-                                        toolVersion = tv
-                                }
-                        }
-                }
-                items = append(items, AnalysisItem{
-                        ID:               a.ID,
-                        Domain:           a.Domain,
-                        AsciiDomain:      a.AsciiDomain,
-                        SpfStatus:        spfStatus,
-                        DmarcStatus:      dmarcStatus,
-                        DkimStatus:       dkimStatus,
-                        AnalysisDuration: dur,
-                        CreatedAt:        createdAt,
-                        ToolVersion:      toolVersion,
-                })
+                items = append(items, buildSelectAnalysisItem(a))
         }
 
         c.HTML(http.StatusOK, templateCompareSelect, gin.H{
@@ -274,4 +235,47 @@ func (h *CompareHandler) selectDomain(c *gin.Context, domain string) {
                 "Domain":     domain,
                 "Analyses":   items,
         })
+}
+
+func buildSelectAnalysisItem(a dbq.DomainAnalysis) AnalysisItem {
+        spfStatus := ""
+        if a.SpfStatus != nil {
+                spfStatus = *a.SpfStatus
+        }
+        dmarcStatus := ""
+        if a.DmarcStatus != nil {
+                dmarcStatus = *a.DmarcStatus
+        }
+        dkimStatus := ""
+        if a.DkimStatus != nil {
+                dkimStatus = *a.DkimStatus
+        }
+        dur := 0.0
+        if a.AnalysisDuration != nil {
+                dur = *a.AnalysisDuration
+        }
+        createdAt := ""
+        if a.CreatedAt.Valid {
+                createdAt = a.CreatedAt.Time.Format("2006-01-02 15:04:05")
+        }
+        toolVersion := ""
+        if len(a.FullResults) > 0 {
+                var fr map[string]interface{}
+                if json.Unmarshal(a.FullResults, &fr) == nil {
+                        if tv, ok := fr["_tool_version"].(string); ok {
+                                toolVersion = tv
+                        }
+                }
+        }
+        return AnalysisItem{
+                ID:               a.ID,
+                Domain:           a.Domain,
+                AsciiDomain:      a.AsciiDomain,
+                SpfStatus:        spfStatus,
+                DmarcStatus:      dmarcStatus,
+                DkimStatus:       dkimStatus,
+                AnalysisDuration: dur,
+                CreatedAt:        createdAt,
+                ToolVersion:      toolVersion,
+        }
 }

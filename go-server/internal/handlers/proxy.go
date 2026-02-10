@@ -1,6 +1,7 @@
 package handlers
 
 import (
+        "fmt"
         "io"
         "log/slog"
         "net"
@@ -76,67 +77,19 @@ func (h *ProxyHandler) BIMILogo(c *gin.Context) {
         }
         defer resp.Body.Close()
 
-        redirectCount := 0
-        for resp.StatusCode >= 301 && resp.StatusCode <= 308 && redirectCount < bimiMaxRedirects {
-                redirectCount++
-                redirectURL := resp.Header.Get("Location")
-                if redirectURL == "" {
-                        c.String(http.StatusBadGateway, "Redirect without Location header")
-                        return
-                }
-
-                rParsed, err := url.Parse(redirectURL)
-                if err != nil {
-                        c.String(http.StatusBadRequest, "Invalid redirect URL")
-                        return
-                }
-                if err := validateParsedURL(rParsed); err != nil {
-                        c.String(http.StatusBadRequest, err.Error())
-                        return
-                }
-                if err := checkSSRF(rParsed.Hostname()); err != nil {
-                        c.String(http.StatusBadRequest, err.Error())
-                        return
-                }
-
-                resp.Body.Close()
-                validatedRedirect := buildSafeURL(rParsed)
-                req, _ = http.NewRequestWithContext(c.Request.Context(), "GET", validatedRedirect, nil)
-                req.Header.Set("User-Agent", "DNS-Analyzer/1.0 BIMI-Logo-Fetcher")
-                resp, err = client.Do(req)
-                if err != nil {
-                        c.String(http.StatusBadGateway, "Failed to follow redirect")
-                        return
-                }
-                defer resp.Body.Close()
-        }
-
-        if resp.StatusCode != 200 {
-                c.String(http.StatusBadGateway, "Failed to fetch logo: %d", resp.StatusCode)
-                return
-        }
-
-        contentType := resp.Header.Get("Content-Type")
-        isImage := strings.Contains(strings.ToLower(contentType), "svg") ||
-                strings.Contains(strings.ToLower(contentType), "image")
-        if !isImage {
-                c.String(http.StatusBadRequest, "Response is not an image")
-                return
-        }
-
-        body, err := io.ReadAll(io.LimitReader(resp.Body, bimiMaxResponseBytes+1))
+        resp, err = h.followRedirects(c, client, resp)
         if err != nil {
-                c.String(http.StatusInternalServerError, "Error reading response")
-                return
-        }
-        if len(body) > bimiMaxResponseBytes {
-                c.String(http.StatusBadRequest, "Response too large")
                 return
         }
 
-        safeCT := strings.TrimSpace(strings.Split(strings.ToLower(contentType), ";")[0])
-        if !bimiAllowedContentTypes[safeCT] {
-                safeCT = "image/svg+xml"
+        body, safeCT, err := validateBIMIResponse(resp)
+        if err != nil {
+                if ve, ok := err.(*bimiFetchError); ok {
+                        c.String(ve.status, ve.msg)
+                } else {
+                        c.String(http.StatusInternalServerError, "Error reading response")
+                }
+                return
         }
 
         c.Header("Cache-Control", "public, max-age=3600")
@@ -178,6 +131,80 @@ func buildSafeURL(parsed *url.URL) string {
                 Fragment: parsed.Fragment,
         }
         return u.String()
+}
+
+type bimiFetchError struct {
+        status int
+        msg    string
+}
+
+func (e *bimiFetchError) Error() string {
+        return e.msg
+}
+
+func (h *ProxyHandler) followRedirects(c *gin.Context, client *http.Client, resp *http.Response) (*http.Response, error) {
+        redirectCount := 0
+        for resp.StatusCode >= 301 && resp.StatusCode <= 308 && redirectCount < bimiMaxRedirects {
+                redirectCount++
+                redirectURL := resp.Header.Get("Location")
+                if redirectURL == "" {
+                        c.String(http.StatusBadGateway, "Redirect without Location header")
+                        return nil, fmt.Errorf("redirect without location")
+                }
+
+                rParsed, err := url.Parse(redirectURL)
+                if err != nil {
+                        c.String(http.StatusBadRequest, "Invalid redirect URL")
+                        return nil, err
+                }
+                if err := validateParsedURL(rParsed); err != nil {
+                        c.String(http.StatusBadRequest, err.Error())
+                        return nil, err
+                }
+                if err := checkSSRF(rParsed.Hostname()); err != nil {
+                        c.String(http.StatusBadRequest, err.Error())
+                        return nil, err
+                }
+
+                resp.Body.Close()
+                validatedRedirect := buildSafeURL(rParsed)
+                req, _ := http.NewRequestWithContext(c.Request.Context(), "GET", validatedRedirect, nil)
+                req.Header.Set("User-Agent", "DNS-Analyzer/1.0 BIMI-Logo-Fetcher")
+                resp, err = client.Do(req)
+                if err != nil {
+                        c.String(http.StatusBadGateway, "Failed to follow redirect")
+                        return nil, err
+                }
+                defer resp.Body.Close()
+        }
+        return resp, nil
+}
+
+func validateBIMIResponse(resp *http.Response) ([]byte, string, error) {
+        if resp.StatusCode != 200 {
+                return nil, "", &bimiFetchError{http.StatusBadGateway, fmt.Sprintf("Failed to fetch logo: %d", resp.StatusCode)}
+        }
+
+        contentType := resp.Header.Get("Content-Type")
+        isImage := strings.Contains(strings.ToLower(contentType), "svg") ||
+                strings.Contains(strings.ToLower(contentType), "image")
+        if !isImage {
+                return nil, "", &bimiFetchError{http.StatusBadRequest, "Response is not an image"}
+        }
+
+        body, err := io.ReadAll(io.LimitReader(resp.Body, bimiMaxResponseBytes+1))
+        if err != nil {
+                return nil, "", err
+        }
+        if len(body) > bimiMaxResponseBytes {
+                return nil, "", &bimiFetchError{http.StatusBadRequest, "Response too large"}
+        }
+
+        safeCT := strings.TrimSpace(strings.Split(strings.ToLower(contentType), ";")[0])
+        if !bimiAllowedContentTypes[safeCT] {
+                safeCT = "image/svg+xml"
+        }
+        return body, safeCT, nil
 }
 
 type validationError struct {

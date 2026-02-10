@@ -189,7 +189,7 @@
                                             {{if or (eq $a.DkimStatus "success") (eq $a.DkimStatus "partial")}}
                                                 <span class="badge bg-success" title="DKIM found">DKIM</span>
                                             {{else if eq $a.DkimStatus "info"}}
-                                                <span class="badge bg-secondary" title="DKIM not discoverable">DKIM</span>
+                                                <span class="badge bg-info" title="DKIM not auto-discoverable (selectors unknown)">DKIM</span>
                                             {{end}}
                                         </div>
                                     </td>
@@ -274,7 +274,7 @@
                             {{if or (eq $a.DkimStatus "success") (eq $a.DkimStatus "partial")}}
                                 <span class="badge bg-success" style="font-size:0.65rem;">DKIM</span>
                             {{else if eq $a.DkimStatus "info"}}
-                                <span class="badge bg-secondary" style="font-size:0.65rem;">DKIM</span>
+                                <span class="badge bg-info" style="font-size:0.65rem;">DKIM</span>
                             {{end}}
                             <span class="text-muted ms-auto" style="font-size:0.7rem;">
                                 {{$a.CreatedDate}} {{$a.CreatedTime}}

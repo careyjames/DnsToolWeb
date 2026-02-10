@@ -162,7 +162,7 @@ func (a *Analyzer) runParallelAnalyses(ctx context.Context, domain string, custo
         return resultsMap
 }
 
-func enrichBasicRecords(basic map[string]any, resultsMap map[string]any) {
+func enrichBasicRecords(basic, resultsMap map[string]any) {
         dmarcData := getMapResult(resultsMap, "dmarc")
         mtaStsData := getMapResult(resultsMap, "mta_sts")
         tlsrptData := getMapResult(resultsMap, "tlsrpt")

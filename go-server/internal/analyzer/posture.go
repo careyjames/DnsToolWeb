@@ -6,9 +6,10 @@ import (
 )
 
 const (
-        riskLow    = "Low Risk"
-        riskMedium = "Medium Risk"
-        riskHigh   = "High Risk"
+        riskLow      = "Low Risk"
+        riskMedium   = "Medium Risk"
+        riskHigh     = "High Risk"
+        riskCritical = "Critical Risk"
 
         iconShieldAlt           = "shield-alt"
         iconExclamationTriangle = "exclamation-triangle"
@@ -331,6 +332,10 @@ func classifyGrade(ps protocolState, gi gradeInput, monitoring, configured, abse
         if gi.isNoMail {
                 return classifyNoMailGrade(ps, gi, configured, absent)
         }
+        return classifyMailGrade(ps, gi, monitoring, configured, absent)
+}
+
+func classifyMailGrade(ps protocolState, gi gradeInput, monitoring, configured, absent []string) (string, string, string, string) {
         if gi.corePresent && gi.dmarcStrict && gi.hasCAA && ps.dnssecOK {
                 return "Secure", iconShieldAlt, "success", buildDescriptiveMessage(ps, configured, absent, monitoring)
         }
@@ -354,7 +359,7 @@ func classifyGrade(ps protocolState, gi gradeInput, monitoring, configured, abse
                         "SPF configured but no DMARC policy. Without DMARC, SPF alone cannot prevent email spoofing."
         }
         if !gi.hasSPF && !gi.hasDMARC && !gi.hasDKIM {
-                return "Critical Risk", "times-circle", "danger",
+                return riskCritical, "times-circle", "danger",
                         "No email authentication configured. This domain is fully vulnerable to email spoofing."
         }
         return riskHigh, iconExclamationTriangle, "warning",
@@ -382,7 +387,7 @@ func classifyNoMailGrade(ps protocolState, gi gradeInput, configured, absent []s
 }
 
 func applyMonitoringSuffix(state string, monitoring []string) string {
-        if len(monitoring) > 0 && state != "Critical Risk" && state != riskHigh {
+        if len(monitoring) > 0 && state != riskCritical && state != riskHigh {
                 if !strings.Contains(state, "Monitoring") {
                         state += " Monitoring"
                 }

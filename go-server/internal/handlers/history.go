@@ -1,6 +1,7 @@
 package handlers
 
 import (
+        "context"
         "encoding/json"
         "net/http"
         "strconv"
@@ -97,79 +98,30 @@ func (h *HistoryHandler) History(c *gin.Context) {
 
         ctx := c.Request.Context()
 
-        var total int64
-
-        if searchDomain != "" {
-                searchPattern := "%" + searchDomain + "%"
-                count, countErr := h.DB.Queries.CountSearchSuccessfulAnalyses(ctx, searchPattern)
-                if countErr != nil {
-                        c.HTML(http.StatusInternalServerError, templateHistory, gin.H{
-                                "AppVersion": h.Config.AppVersion,
-                                "CspNonce":   nonce,
-                                "CsrfToken":  csrfToken,
-                                "ActivePage": "history",
-                                "FlashMessages": []FlashMessage{{Category: "danger", Message: "Failed to count analyses"}},
-                        })
-                        return
-                }
-                total = count
-        } else {
-                count, countErr := h.DB.Queries.CountSuccessfulAnalyses(ctx)
-                if countErr != nil {
-                        c.HTML(http.StatusInternalServerError, templateHistory, gin.H{
-                                "AppVersion": h.Config.AppVersion,
-                                "CspNonce":   nonce,
-                                "CsrfToken":  csrfToken,
-                                "ActivePage": "history",
-                                "FlashMessages": []FlashMessage{{Category: "danger", Message: "Failed to count analyses"}},
-                        })
-                        return
-                }
-                total = count
+        total, err := h.countAnalyses(ctx, searchDomain)
+        if err != nil {
+                c.HTML(http.StatusInternalServerError, templateHistory, gin.H{
+                        "AppVersion":     h.Config.AppVersion,
+                        "CspNonce":       nonce,
+                        "CsrfToken":     csrfToken,
+                        "ActivePage":     "history",
+                        "FlashMessages":  []FlashMessage{{Category: "danger", Message: "Failed to count analyses"}},
+                })
+                return
         }
 
         pagination := NewPagination(page, perPage, total)
 
-        var items []historyAnalysisItem
-
-        if searchDomain != "" {
-                searchPattern := "%" + searchDomain + "%"
-                analyses, queryErr := h.DB.Queries.SearchSuccessfulAnalyses(ctx, dbq.SearchSuccessfulAnalysesParams{
-                        Domain: searchPattern,
-                        Limit:  pagination.Limit(),
-                        Offset: pagination.Offset(),
+        items, err := h.fetchAnalyses(ctx, searchDomain, &pagination)
+        if err != nil {
+                c.HTML(http.StatusInternalServerError, templateHistory, gin.H{
+                        "AppVersion":     h.Config.AppVersion,
+                        "CspNonce":       nonce,
+                        "CsrfToken":     csrfToken,
+                        "ActivePage":     "history",
+                        "FlashMessages":  []FlashMessage{{Category: "danger", Message: "Failed to fetch analyses"}},
                 })
-                if queryErr != nil {
-                        c.HTML(http.StatusInternalServerError, templateHistory, gin.H{
-                                "AppVersion": h.Config.AppVersion,
-                                "CspNonce":   nonce,
-                                "CsrfToken":  csrfToken,
-                                "ActivePage": "history",
-                                "FlashMessages": []FlashMessage{{Category: "danger", Message: "Failed to fetch analyses"}},
-                        })
-                        return
-                }
-                for _, a := range analyses {
-                        items = append(items, buildHistoryItem(a))
-                }
-        } else {
-                analyses, queryErr := h.DB.Queries.ListSuccessfulAnalyses(ctx, dbq.ListSuccessfulAnalysesParams{
-                        Limit:  pagination.Limit(),
-                        Offset: pagination.Offset(),
-                })
-                if queryErr != nil {
-                        c.HTML(http.StatusInternalServerError, templateHistory, gin.H{
-                                "AppVersion": h.Config.AppVersion,
-                                "CspNonce":   nonce,
-                                "CsrfToken":  csrfToken,
-                                "ActivePage": "history",
-                                "FlashMessages": []FlashMessage{{Category: "danger", Message: "Failed to fetch analyses"}},
-                        })
-                        return
-                }
-                for _, a := range analyses {
-                        items = append(items, buildHistoryItem(a))
-                }
+                return
         }
 
         pd := BuildPagination(page, pagination.TotalPages, total)
@@ -183,4 +135,40 @@ func (h *HistoryHandler) History(c *gin.Context) {
                 "Pagination":   pd,
                 "SearchDomain": searchDomain,
         })
+}
+
+func (h *HistoryHandler) countAnalyses(ctx context.Context, searchDomain string) (int64, error) {
+        if searchDomain != "" {
+                searchPattern := "%" + searchDomain + "%"
+                return h.DB.Queries.CountSearchSuccessfulAnalyses(ctx, searchPattern)
+        }
+        return h.DB.Queries.CountSuccessfulAnalyses(ctx)
+}
+
+func (h *HistoryHandler) fetchAnalyses(ctx context.Context, searchDomain string, pagination *PaginationInfo) ([]historyAnalysisItem, error) {
+        var analyses []dbq.DomainAnalysis
+        var err error
+
+        if searchDomain != "" {
+                searchPattern := "%" + searchDomain + "%"
+                analyses, err = h.DB.Queries.SearchSuccessfulAnalyses(ctx, dbq.SearchSuccessfulAnalysesParams{
+                        Domain: searchPattern,
+                        Limit:  pagination.Limit(),
+                        Offset: pagination.Offset(),
+                })
+        } else {
+                analyses, err = h.DB.Queries.ListSuccessfulAnalyses(ctx, dbq.ListSuccessfulAnalysesParams{
+                        Limit:  pagination.Limit(),
+                        Offset: pagination.Offset(),
+                })
+        }
+        if err != nil {
+                return nil, err
+        }
+
+        items := make([]historyAnalysisItem, 0, len(analyses))
+        for _, a := range analyses {
+                items = append(items, buildHistoryItem(a))
+        }
+        return items, nil
 }

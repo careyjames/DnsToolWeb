@@ -1441,7 +1441,7 @@ main.container {
         color: #1e3a5f !important;
         font-size: 7pt !important;
         font-weight: 800 !important;
-        letter-spacing: 0.08em !important;
+        letter-spacing: 0.08em;
     }
 
     /* Findings summary card */
@@ -1462,7 +1462,7 @@ main.container {
         font-weight: 700 !important;
         padding: 2.5pt 7pt !important;
         border-radius: 3pt !important;
-        letter-spacing: 0.02em !important;
+        letter-spacing: 0.02em;
     }
 
     .badge.bg-success,
@@ -1600,7 +1600,7 @@ main.container {
         color: #ffffff !important;
         font-weight: 700 !important;
         font-size: 7.5pt !important;
-        letter-spacing: 0.03em !important;
+        letter-spacing: 0.03em;
         text-transform: uppercase !important;
         border: 1pt solid #1e3a5f !important;
         padding: 5pt 8pt !important;
@@ -1638,7 +1638,7 @@ main.container {
         color: #ffffff !important;
         font-weight: 700 !important;
         font-size: 8pt !important;
-        letter-spacing: 0.03em !important;
+        letter-spacing: 0.03em;
     }
 
     .dns-diff-type-header {
@@ -1784,7 +1784,7 @@ main.container {
         color: #1e3a5f !important;
         font-size: 6pt !important;
         font-weight: 800 !important;
-        letter-spacing: 0.08em !important;
+        letter-spacing: 0.08em;
     }
 
     /* ================================================
@@ -1847,7 +1847,7 @@ main.container {
         background-color: #1e3a5f !important;
         color: #ffffff !important;
         font-size: 7pt !important;
-        letter-spacing: 0.03em !important;
+        letter-spacing: 0.03em;
     }
 
     .subdomain-table td {

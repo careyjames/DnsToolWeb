@@ -348,6 +348,21 @@ func (c *Client) QueryWithConsensus(ctx context.Context, recordType, domain stri
                 }
         }
 
+        consensusRecords, allSame, discrepancies := findConsensus(resolverResults)
+        if !allSame {
+                slog.Warn("DNS discrepancy", "domain", domain, "record_type", recordType, "discrepancies", discrepancies)
+        }
+
+        return ConsensusResult{
+                Records:         consensusRecords,
+                Consensus:       allSame,
+                ResolverCount:   len(resolverResults),
+                Discrepancies:   discrepancies,
+                ResolverResults: resolverResults,
+        }
+}
+
+func findConsensus(resolverResults map[string][]string) (records []string, allSame bool, discrepancies []string) {
         resultSets := make(map[string]int)
         for _, results := range resolverResults {
                 key := strings.Join(results, "|")
@@ -363,16 +378,14 @@ func (c *Client) QueryWithConsensus(ctx context.Context, recordType, domain stri
                 }
         }
 
-        var consensusRecords []string
         if mostCommonKey != "" {
-                consensusRecords = strings.Split(mostCommonKey, "|")
-                if len(consensusRecords) == 1 && consensusRecords[0] == "" {
-                        consensusRecords = nil
+                records = strings.Split(mostCommonKey, "|")
+                if len(records) == 1 && records[0] == "" {
+                        records = nil
                 }
         }
 
-        allSame := len(resultSets) <= 1
-        var discrepancies []string
+        allSame = len(resultSets) <= 1
         if !allSame {
                 for name, results := range resolverResults {
                         key := strings.Join(results, "|")
@@ -380,16 +393,8 @@ func (c *Client) QueryWithConsensus(ctx context.Context, recordType, domain stri
                                 discrepancies = append(discrepancies, fmt.Sprintf("%s returned different results: %v", name, results))
                         }
                 }
-                slog.Warn("DNS discrepancy", "domain", domain, "record_type", recordType, "discrepancies", discrepancies)
         }
-
-        return ConsensusResult{
-                Records:         consensusRecords,
-                Consensus:       allSame,
-                ResolverCount:   len(resolverResults),
-                Discrepancies:   discrepancies,
-                ResolverResults: resolverResults,
-        }
+        return
 }
 
 func (c *Client) ValidateResolverConsensus(ctx context.Context, domain string) map[string]any {
@@ -634,6 +639,10 @@ func (c *Client) dohQueryWithTTL(ctx context.Context, domain, recordType string)
                 return RecordWithTTL{}
         }
 
+        return parseDohResponse(body, recordType)
+}
+
+func parseDohResponse(body []byte, recordType string) RecordWithTTL {
         var data dohResponse
         if err := json.Unmarshal(body, &data); err != nil {
                 return RecordWithTTL{}

@@ -6,6 +6,7 @@ import (
 
         "dnstool/go-server/internal/config"
         "dnstool/go-server/internal/db"
+        "dnstool/go-server/internal/dbq"
 
         "github.com/gin-gonic/gin"
 )
@@ -51,38 +52,7 @@ func (h *StatsHandler) Stats(c *gin.Context) {
 
         statItems := make([]DailyStat, 0, len(slicedStats))
         for _, s := range slicedStats {
-                dateStr := ""
-                if s.Date.Valid {
-                        dateStr = s.Date.Time.Format("01/02")
-                }
-                var total, successful, failed, unique int32
-                if s.TotalAnalyses != nil {
-                        total = *s.TotalAnalyses
-                }
-                if s.SuccessfulAnalyses != nil {
-                        successful = *s.SuccessfulAnalyses
-                }
-                if s.FailedAnalyses != nil {
-                        failed = *s.FailedAnalyses
-                }
-                if s.UniqueDomains != nil {
-                        unique = *s.UniqueDomains
-                }
-                var avg float64
-                hasAvg := false
-                if s.AvgAnalysisTime != nil {
-                        avg = *s.AvgAnalysisTime
-                        hasAvg = true
-                }
-                statItems = append(statItems, DailyStat{
-                        Date:               dateStr,
-                        TotalAnalyses:      total,
-                        SuccessfulAnalyses: successful,
-                        FailedAnalyses:     failed,
-                        UniqueDomains:      unique,
-                        AvgAnalysisTime:    avg,
-                        HasAvgTime:         hasAvg,
-                })
+                statItems = append(statItems, buildDailyStat(s))
         }
 
         popItems := make([]PopularDomain, 0, len(popularDomains))
@@ -92,21 +62,7 @@ func (h *StatsHandler) Stats(c *gin.Context) {
 
         countryItems := make([]CountryStat, 0, len(countryStats))
         for _, cs := range countryStats {
-                code, name := "", ""
-                if cs.CountryCode != nil {
-                        code = *cs.CountryCode
-                }
-                if cs.CountryName != nil {
-                        name = *cs.CountryName
-                }
-                flag := ""
-                if len(code) == 2 {
-                        upper := strings.ToUpper(code)
-                        r1 := rune(0x1F1E6 + int(upper[0]) - int('A'))
-                        r2 := rune(0x1F1E6 + int(upper[1]) - int('A'))
-                        flag = string([]rune{r1, r2})
-                }
-                countryItems = append(countryItems, CountryStat{Code: code, Name: name, Count: cs.Count, Flag: flag})
+                countryItems = append(countryItems, buildCountryStat(cs))
         }
 
         c.HTML(http.StatusOK, "stats.html", gin.H{
@@ -121,6 +77,59 @@ func (h *StatsHandler) Stats(c *gin.Context) {
                 "PopularDomains":     popItems,
                 "RecentStats":        statItems,
         })
+}
+
+func buildDailyStat(s dbq.AnalysisStat) DailyStat {
+        dateStr := ""
+        if s.Date.Valid {
+                dateStr = s.Date.Time.Format("01/02")
+        }
+        var total, successful, failed, unique int32
+        if s.TotalAnalyses != nil {
+                total = *s.TotalAnalyses
+        }
+        if s.SuccessfulAnalyses != nil {
+                successful = *s.SuccessfulAnalyses
+        }
+        if s.FailedAnalyses != nil {
+                failed = *s.FailedAnalyses
+        }
+        if s.UniqueDomains != nil {
+                unique = *s.UniqueDomains
+        }
+        var avg float64
+        hasAvg := false
+        if s.AvgAnalysisTime != nil {
+                avg = *s.AvgAnalysisTime
+                hasAvg = true
+        }
+        return DailyStat{
+                Date:               dateStr,
+                TotalAnalyses:      total,
+                SuccessfulAnalyses: successful,
+                FailedAnalyses:     failed,
+                UniqueDomains:      unique,
+                AvgAnalysisTime:    avg,
+                HasAvgTime:         hasAvg,
+        }
+}
+
+func buildCountryStat(cs dbq.ListCountryDistributionRow) CountryStat {
+        code, name := "", ""
+        if cs.CountryCode != nil {
+                code = *cs.CountryCode
+        }
+        if cs.CountryName != nil {
+                name = *cs.CountryName
+        }
+        flag := ""
+        if len(code) == 2 {
+                upper := strings.ToUpper(code)
+                r1 := rune(0x1F1E6 + int(upper[0]) - int('A'))
+                r2 := rune(0x1F1E6 + int(upper[1]) - int('A'))
+                flag = string([]rune{r1, r2})
+        }
+        return CountryStat{Code: code, Name: name, Count: cs.Count, Flag: flag}
 }
 
 func (h *StatsHandler) StatisticsRedirect(c *gin.Context) {

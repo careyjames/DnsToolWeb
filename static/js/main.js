@@ -149,16 +149,16 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     document.querySelectorAll('.alert-dismissible .btn-close').forEach(function(btn) {
-        btn.addEventListener('click', function(e) {
-            e.preventDefault();
-            e.stopPropagation();
-            var alertEl = btn.closest('.alert');
+        btn.addEventListener('click', function() {
+            const alertEl = btn.closest('.alert');
             if (alertEl) {
                 try {
-                    var bsAlert = bootstrap.Alert.getOrCreateInstance(alertEl);
+                    const bsAlert = bootstrap.Alert.getOrCreateInstance(alertEl);
                     bsAlert.close();
-                } catch (_) {
-                    alertEl.remove();
+                } catch (err) {
+                    alertEl.classList.remove('show');
+                    alertEl.addEventListener('transitionend', function() { alertEl.remove(); });
+                    setTimeout(function() { alertEl.remove(); }, 300);
                 }
             }
         });

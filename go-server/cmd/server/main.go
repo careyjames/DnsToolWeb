@@ -20,6 +20,8 @@ import (
         "github.com/gin-gonic/gin"
 )
 
+const headerCacheControl = "Cache-Control"
+
 func main() {
         slog.SetDefault(slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
                 Level: slog.LevelDebug,
@@ -68,9 +70,9 @@ func main() {
                         strings.HasSuffix(fp, ".png") || strings.HasSuffix(fp, ".ico") ||
                         strings.HasSuffix(fp, ".svg") || strings.HasSuffix(fp, ".jpg") {
                         if strings.Contains(fp, "?v=") || strings.Contains(c.Request.URL.RawQuery, "v=") {
-                                c.Header("Cache-Control", "public, max-age=31536000, immutable")
+                                c.Header(headerCacheControl, "public, max-age=31536000, immutable")
                         } else {
-                                c.Header("Cache-Control", "public, max-age=86400")
+                                c.Header(headerCacheControl, "public, max-age=86400")
                         }
                 }
                 fileServer.ServeHTTP(c.Writer, c.Request)
@@ -81,7 +83,7 @@ func main() {
                         strings.HasSuffix(fp, ".woff2") || strings.HasSuffix(fp, ".woff") ||
                         strings.HasSuffix(fp, ".png") || strings.HasSuffix(fp, ".ico") ||
                         strings.HasSuffix(fp, ".svg") || strings.HasSuffix(fp, ".jpg") {
-                        c.Header("Cache-Control", "public, max-age=86400")
+                        c.Header(headerCacheControl, "public, max-age=86400")
                 }
                 fileServer.ServeHTTP(c.Writer, c.Request)
         })

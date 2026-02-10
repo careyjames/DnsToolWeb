@@ -62,5 +62,11 @@ The living feature parity manifest is at `go-server/internal/analyzer/manifest.g
 ### Risk Level Labels
 Posture risk levels follow CVSS-aligned semantics: **Informational** (best) → **Low Risk** → **Medium Risk** → **High Risk** → **Critical Risk** (worst). Legacy stored values (bare "Low", "Medium", etc.) are normalized at display time in `NormalizeResults()` in `go-server/internal/handlers/helpers.go`. Remediation severity labels (Critical/High/Medium/Low) are separate from posture states.
 
+### SonarCloud Code Quality
+- **Configuration**: `sonar-project.properties` at project root. Excludes `docs/legacy/**`, `go-server/db/schema/**`, and `templates/**`. PL/SQL VARCHAR2 rule (false positive for PostgreSQL) is suppressed for `.sql` files.
+- **SONAR_TOKEN**: Stored as an encrypted Replit secret. Used for API-based quality gate checks.
+- **Cognitive Complexity**: All production functions refactored below SonarCloud's threshold of 15. Helper extraction pattern used throughout handlers, dnsclient, and posture analyzer.
+- **Risk Level Constants**: `riskLow`, `riskMedium`, `riskHigh`, `riskCritical` defined in `go-server/internal/analyzer/posture.go`.
+
 ### Template Comparison Safety
 All six Go template comparison operators (`eq`, `ne`, `gt`, `lt`, `ge`, `le`) are overridden in `go-server/internal/templates/funcs.go` with type-safe versions that use `toFloat64()` for cross-type numeric comparisons. This prevents panics when comparing `float64` values (from `mapGetFloat`) with integer literals in templates. Template authors can safely write `eq $floatVar 0` without worrying about type mismatches. The custom `eq` preserves Go's variadic semantics (`eq arg1 arg2 arg3...` means `arg1==arg2 || arg1==arg3 || ...`).
