@@ -53,15 +53,15 @@ function isValidDomain(domain) {
     return true;
 }
 
-function resetCopyIcon(icon) {
-    icon.className = 'fas fa-copy copy-icon';
-    icon.style.color = '';
+function resetCopyBtn(btn) {
+    btn.innerHTML = '<i class="fas fa-copy"></i>';
+    btn.classList.remove('copied');
 }
 
-function handleCopyResult(icon, success) {
-    icon.className = success ? 'fas fa-check copy-icon' : 'fas fa-times copy-icon';
-    icon.style.color = success ? 'var(--bs-success)' : 'var(--bs-warning)';
-    setTimeout(function() { resetCopyIcon(icon); }, 1500);
+function handleCopyResult(btn, success) {
+    btn.innerHTML = success ? '<i class="fas fa-check"></i>' : '<i class="fas fa-times"></i>';
+    if (success) btn.classList.add('copied');
+    setTimeout(function() { resetCopyBtn(btn); }, 1500);
 }
 
 document.addEventListener('DOMContentLoaded', function() {
@@ -147,25 +147,32 @@ document.addEventListener('DOMContentLoaded', function() {
         codeBlock.style.cursor = 'pointer';
         codeBlock.title = 'Click to copy';
 
-        const icon = document.createElement('i');
-        icon.className = 'fas fa-copy copy-icon';
-        codeBlock.appendChild(icon);
-        
-        codeBlock.addEventListener('click', function() {
-            let copyText = '';
+        var btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'copy-btn';
+        btn.setAttribute('aria-label', 'Copy to clipboard');
+        btn.innerHTML = '<i class="fas fa-copy"></i>';
+        codeBlock.appendChild(btn);
+
+        function doCopy(e) {
+            e.stopPropagation();
+            var copyText = '';
             codeBlock.childNodes.forEach(function(node) {
-                if (!node.classList?.contains('copy-icon')) {
+                if (node !== btn && !node.classList?.contains('copy-btn')) {
                     copyText += node.textContent;
                 }
             });
             copyText = copyText.trim();
 
             navigator.clipboard.writeText(copyText).then(
-                function() { handleCopyResult(icon, true); }
+                function() { handleCopyResult(btn, true); }
             ).catch(
-                function() { handleCopyResult(icon, false); }
+                function() { handleCopyResult(btn, false); }
             );
-        });
+        }
+
+        btn.addEventListener('click', doCopy);
+        codeBlock.addEventListener('click', doCopy);
     });
 });
 
