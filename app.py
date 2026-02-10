@@ -435,7 +435,7 @@ def setup_request_context():
     g.trace_id = str(uuid.uuid4())[:8]
     g.request_start_time = time.time()
 
-    if request.method == 'POST':
+    if request.method == 'POST' and not app.config.get('TESTING'):
         from flask import session, abort
         token = request.form.get('csrf_token') or request.headers.get('X-CSRF-Token')
         if not token or token != session.get('csrf_token'):

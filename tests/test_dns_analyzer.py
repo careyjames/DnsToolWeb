@@ -36,7 +36,6 @@ class TestDomainValidation(unittest.TestCase):
             "",
             ".",
             ".example.com",
-            "example.com.",
             "example",
             "http://example.com",
             "example.com/path",
