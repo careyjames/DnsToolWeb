@@ -139,7 +139,7 @@ parsing and validation of a specific DNS protocol.
 | 17 | **DNS Infrastructure Detection** | `infrastructure.go` | `dns_infrastructure` |
 | 18 | **Hosting Summary** | `infrastructure.go` | `hosting_summary` |
 | 19 | **Domain Existence Detection** | `orchestrator.go` | `domain_exists` |
-| 20 | **Domain Status** | `orchestrator.go` | `domain_status` |
+| 20 | **Domain Status** | `orchestrator.go` | `domain_status`, `domain_status_message` |
 
 ### 2.1 Basic DNS Records (`records.go`)
 - Multi-type DNS query: A, AAAA, MX, TXT, NS, CNAME, CAA, SOA, SRV
@@ -200,7 +200,7 @@ parsing and validation of a specific DNS protocol.
 - NXDOMAIN detection
 - SERVFAIL detection
 - Undelegated domain handling
-- Human-readable status messages
+- Human-readable status messages (`domain_status_message`)
 
 ---
 
@@ -352,3 +352,54 @@ parsing and validation of a specific DNS protocol.
 
 **Analysis Modules:** 10 | **Infrastructure:** 10 | **Assessment:** 3 |
 **Detection:** 3 | **Metadata:** 6 | **Platform:** 8 | **Security:** 8
+
+---
+
+## Cross-Reference: Legacy Feature Parity Manifest
+
+This inventory was verified against the legacy feature parity manifest
+(`docs/legacy/tests/feature_parity_manifest.py`), which defines 33 schema
+keys that must exist in any implementation. Verification result:
+
+**All 33 of 33 manifest schema keys are present in the Go codebase.**
+
+| Manifest Schema Key | Go Source | Status |
+|---------------------|-----------|--------|
+| `spf_analysis` | `analyzer/spf.go` | Implemented |
+| `dmarc_analysis` | `analyzer/dmarc.go` | Implemented |
+| `dkim_analysis` | `analyzer/dkim.go` | Implemented |
+| `mta_sts_analysis` | `analyzer/mta_sts.go` | Implemented |
+| `tlsrpt_analysis` | `analyzer/tlsrpt.go` | Implemented |
+| `bimi_analysis` | `analyzer/bimi.go` | Implemented |
+| `dane_analysis` | `analyzer/dane.go` | Implemented |
+| `dnssec_analysis` | `analyzer/dnssec.go` | Implemented |
+| `caa_analysis` | `analyzer/caa.go` | Implemented |
+| `ns_delegation_analysis` | `analyzer/ns_delegation.go` | Implemented |
+| `basic_records` | `analyzer/records.go` | Implemented |
+| `authoritative_records` | `analyzer/records.go` | Implemented |
+| `resolver_consensus` | `analyzer/records.go` | Implemented |
+| `propagation_status` | `analyzer/records.go` | Implemented |
+| `registrar_info` | `analyzer/registrar.go` | Implemented |
+| `ct_subdomains` | `analyzer/subdomains.go` | Implemented |
+| `dns_infrastructure` | `analyzer/infrastructure.go` | Implemented |
+| `hosting_summary` | `analyzer/infrastructure.go` | Implemented |
+| `email_security_mgmt` | `analyzer/infrastructure.go` | Implemented |
+| `mail_posture` | `analyzer/posture.go` | Implemented |
+| `posture` | `analyzer/posture.go` | Implemented |
+| `remediation` | `analyzer/remediation.go` | Implemented |
+| `_data_freshness` | `handlers/helpers.go` | Implemented |
+| `domain_exists` | `analyzer/orchestrator.go` | Implemented |
+| `domain_status` | `analyzer/orchestrator.go` | Implemented |
+| `domain_status_message` | `analyzer/orchestrator.go` | Implemented |
+| `section_status` | `analyzer/orchestrator.go` | Implemented |
+| `auth_query_status` | `analyzer/records.go` | Implemented |
+| `resolver_ttl` | `analyzer/records.go` | Implemented |
+| `auth_ttl` | `analyzer/records.go` | Implemented |
+| `smtp_transport` | `analyzer/orchestrator.go` | Placeholder (schema key present, logic reserved) |
+| `has_null_mx` | `analyzer/posture.go` | Implemented |
+| `is_no_mail_domain` | `analyzer/posture.go` | Implemented |
+
+The remaining 15 features in this inventory (items 33–48) are platform,
+security, and infrastructure capabilities that exist beyond the analysis
+schema — they are handlers, middleware, and runtime components not tracked
+by the legacy parity manifest.
