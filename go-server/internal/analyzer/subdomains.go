@@ -71,7 +71,7 @@ func (a *Analyzer) DiscoverSubdomains(ctx context.Context, domain string) map[st
 
         a.Telemetry.RecordSuccess(ctProvider, time.Since(start))
 
-        ctEntries := make([]ctEntry, 0)
+        var ctEntries []ctEntry
         if err := json.Unmarshal(body, &ctEntries); err != nil {
                 result["status"] = "warning"
                 result["message"] = "Failed to parse CT response"

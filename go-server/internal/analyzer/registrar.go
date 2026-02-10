@@ -262,7 +262,7 @@ func (a *Analyzer) rdapLookup(ctx context.Context, domain string) map[string]any
                 return nil
         }
 
-        data := make(map[string]any)
+        var data map[string]any
         if err := json.Unmarshal(body, &data); err != nil {
                 a.Telemetry.RecordFailure(providerName, "invalid JSON")
                 return nil

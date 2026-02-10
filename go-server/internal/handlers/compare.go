@@ -59,18 +59,58 @@ func buildCompareAnalysis(a dbq.DomainAnalysis) CompareAnalysis {
         return ca
 }
 
-func renderCompareError(c *gin.Context, h *CompareHandler, nonce, csrfToken interface{}, tmpl string, statusCode int, message string, domain string) {
+type compareErrorParams struct {
+        handler    *CompareHandler
+        nonce      interface{}
+        csrfToken  interface{}
+        tmpl       string
+        statusCode int
+        message    string
+        domain     string
+}
+
+func renderCompareError(c *gin.Context, p compareErrorParams) {
         data := gin.H{
-                "AppVersion":    h.Config.AppVersion,
-                "CspNonce":      nonce,
-                "CsrfToken":     csrfToken,
+                "AppVersion":    p.handler.Config.AppVersion,
+                "CspNonce":      p.nonce,
+                "CsrfToken":     p.csrfToken,
                 "ActivePage":    "compare",
-                "FlashMessages": []FlashMessage{{Category: "danger", Message: message}},
+                "FlashMessages": []FlashMessage{{Category: "danger", Message: p.message}},
         }
-        if domain != "" {
-                data["Domain"] = domain
+        if p.domain != "" {
+                data["Domain"] = p.domain
         }
-        c.HTML(statusCode, tmpl, data)
+        c.HTML(p.statusCode, p.tmpl, data)
+}
+
+func buildDiffItems(diffs []SectionDiff) ([]DiffItem, int) {
+        items := make([]DiffItem, 0, len(diffs))
+        changes := 0
+        for _, d := range diffs {
+                item := DiffItem{
+                        Label:   d.Label,
+                        Icon:    d.Icon,
+                        Changed: d.Changed,
+                        StatusA: d.StatusA,
+                        StatusB: d.StatusB,
+                }
+                if d.Changed {
+                        changes++
+                }
+                for _, dc := range d.DetailChanges {
+                        _, isMapOld := dc.Old.(map[string]interface{})
+                        item.DetailChanges = append(item.DetailChanges, DiffChange{
+                                Field:  dc.Field,
+                                Old:    dc.Old,
+                                New:    dc.New,
+                                OldStr: formatDiffValue(dc.Old),
+                                NewStr: formatDiffValue(dc.New),
+                                IsMap:  isMapOld,
+                        })
+                }
+                items = append(items, item)
+        }
+        return items, changes
 }
 
 func (h *CompareHandler) Compare(c *gin.Context) {
@@ -92,18 +132,18 @@ func (h *CompareHandler) Compare(c *gin.Context) {
 
         analysisA, err := h.DB.Queries.GetAnalysisByID(ctx, int32(idA))
         if err != nil {
-                renderCompareError(c, h, nonce, csrfToken, templateCompare, http.StatusNotFound, "Analysis A not found", "")
+                renderCompareError(c, compareErrorParams{handler: h, nonce: nonce, csrfToken: csrfToken, tmpl: templateCompare, statusCode: http.StatusNotFound, message: "Analysis A not found"})
                 return
         }
 
         analysisB, err := h.DB.Queries.GetAnalysisByID(ctx, int32(idB))
         if err != nil {
-                renderCompareError(c, h, nonce, csrfToken, templateCompare, http.StatusNotFound, "Analysis B not found", "")
+                renderCompareError(c, compareErrorParams{handler: h, nonce: nonce, csrfToken: csrfToken, tmpl: templateCompare, statusCode: http.StatusNotFound, message: "Analysis B not found"})
                 return
         }
 
         if analysisA.Domain != analysisB.Domain {
-                renderCompareError(c, h, nonce, csrfToken, templateCompareSelect, http.StatusBadRequest, "Cannot compare analyses of different domains", analysisA.Domain)
+                renderCompareError(c, compareErrorParams{handler: h, nonce: nonce, csrfToken: csrfToken, tmpl: templateCompareSelect, statusCode: http.StatusBadRequest, message: "Cannot compare analyses of different domains", domain: analysisA.Domain})
                 return
         }
 
@@ -117,40 +157,12 @@ func (h *CompareHandler) Compare(c *gin.Context) {
         resultsB := NormalizeResults(analysisB.FullResults)
 
         if resultsA == nil || resultsB == nil {
-                renderCompareError(c, h, nonce, csrfToken, templateCompareSelect, http.StatusBadRequest, "One or both analyses have no stored data", analysisA.Domain)
+                renderCompareError(c, compareErrorParams{handler: h, nonce: nonce, csrfToken: csrfToken, tmpl: templateCompareSelect, statusCode: http.StatusBadRequest, message: "One or both analyses have no stored data", domain: analysisA.Domain})
                 return
         }
 
         diffs := ComputeAllDiffs(resultsA, resultsB)
-
-        diffItems := make([]DiffItem, 0, len(diffs))
-        changesFound := 0
-        for _, d := range diffs {
-                item := DiffItem{
-                        Label:   d.Label,
-                        Icon:    d.Icon,
-                        Changed: d.Changed,
-                        StatusA: d.StatusA,
-                        StatusB: d.StatusB,
-                }
-                if d.Changed {
-                        changesFound++
-                }
-                for _, dc := range d.DetailChanges {
-                        oldStr := formatDiffValue(dc.Old)
-                        newStr := formatDiffValue(dc.New)
-                        _, isMapOld := dc.Old.(map[string]interface{})
-                        item.DetailChanges = append(item.DetailChanges, DiffChange{
-                                Field:  dc.Field,
-                                Old:    dc.Old,
-                                New:    dc.New,
-                                OldStr: oldStr,
-                                NewStr: newStr,
-                                IsMap:  isMapOld,
-                        })
-                }
-                diffItems = append(diffItems, item)
-        }
+        diffItems, changesFound := buildDiffItems(diffs)
 
         c.HTML(http.StatusOK, templateCompare, gin.H{
                 "AppVersion":   h.Config.AppVersion,

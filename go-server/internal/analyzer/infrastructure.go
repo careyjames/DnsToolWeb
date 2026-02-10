@@ -15,12 +15,14 @@ const (
         featEnterpriseManagement = "Enterprise management"
         featEnterpriseSecurity   = "Enterprise security"
         featGlobalAnycast        = "Global Anycast"
+        featGlobalInfra          = "Global infrastructure"
         featSelfManagedInfra     = "Self-managed infrastructure"
         featProtectedInfra       = "Protected infrastructure"
         featGovSecurityStandards = "Government security standards"
         detMTASTS                = "MTA-STS"
 
         nameCloudflare    = "Cloudflare"
+        nameCSCGlobalDNS  = "CSC Global DNS"
         nameDigitalOcean  = "DigitalOcean"
         nameGoDaddy       = "GoDaddy"
         nameLinode         = "Linode"
@@ -47,9 +49,9 @@ var enterpriseProviders = map[string]providerInfo{
         "azure-dns":        {Name: "Azure DNS", Tier: tierEnterprise, Features: []string{featDDoSProtection, featAnycast, "Azure integration"}},
         "google":           {Name: "Google Cloud DNS", Tier: tierEnterprise, Features: []string{featDDoSProtection, featAnycast, "Auto-scaling"}},
         "verisign":         {Name: "Verisign DNS", Tier: tierEnterprise, Features: []string{featDDoSProtection, featAnycast, "Critical infrastructure"}},
-        "csc.com":          {Name: "CSC Global DNS", Tier: tierEnterprise, Features: []string{featEnterpriseManagement, featBrandProtection, "Global infrastructure"}},
-        "cscdns":           {Name: "CSC Global DNS", Tier: tierEnterprise, Features: []string{featEnterpriseManagement, featBrandProtection, "Global infrastructure"}},
-        "netnames":         {Name: "CSC Global DNS", Tier: tierEnterprise, Features: []string{featEnterpriseManagement, featBrandProtection, "Global infrastructure"}},
+        "csc.com":          {Name: nameCSCGlobalDNS, Tier: tierEnterprise, Features: []string{featEnterpriseManagement, featBrandProtection, featGlobalInfra}},
+        "cscdns":           {Name: nameCSCGlobalDNS, Tier: tierEnterprise, Features: []string{featEnterpriseManagement, featBrandProtection, featGlobalInfra}},
+        "netnames":         {Name: nameCSCGlobalDNS, Tier: tierEnterprise, Features: []string{featEnterpriseManagement, featBrandProtection, featGlobalInfra}},
         "markmonitor":      {Name: "MarkMonitor DNS", Tier: tierEnterprise, Features: []string{featBrandProtection, featEnterpriseManagement, "Anti-fraud"}},
 }
 
@@ -245,8 +247,8 @@ var dnsHostingProviders = map[string]string{
         "ultradns": "Vercara UltraDNS", "nsone": "NS1",
         "digitalocean": nameDigitalOcean, "linode": nameLinode,
         "domaincontrol": nameGoDaddy, "registrar-servers": nameNamecheap,
-        "cscdns": "CSC Global DNS", "csc.com": "CSC Global DNS",
-        "netnames": "CSC Global DNS",
+        "cscdns": nameCSCGlobalDNS, "csc.com": nameCSCGlobalDNS,
+        "netnames": nameCSCGlobalDNS,
         "akam": "Akamai Edge DNS", "dynect": "Oracle Dyn",
         "verisign": "Verisign DNS", "markmonitor": "MarkMonitor DNS",
         "porkbun": "Porkbun", "vultr": "Vultr",
