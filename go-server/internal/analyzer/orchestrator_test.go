@@ -124,8 +124,8 @@ func TestPostureFullProtection(t *testing.T) {
         if score < 90 {
                 t.Errorf("expected score >= 90 for full protection, got %d", score)
         }
-        if posture["state"] != "STRONG" {
-                t.Errorf("expected state STRONG, got %v", posture["state"])
+        if posture["state"] != "SECURE" {
+                t.Errorf("expected state SECURE, got %v", posture["state"])
         }
         if posture["color"] != "success" {
                 t.Errorf("expected color success, got %v", posture["color"])
@@ -285,7 +285,7 @@ func TestPostureTruthBasedGrades(t *testing.T) {
                 messageContains string
         }{
                 {
-                        name: "STRONG — full protection with reject + CAA",
+                        name: "SECURE — full protection with reject + CAA + DNSSEC",
                         results: map[string]any{
                                 "spf_analysis":     map[string]any{"status": "success"},
                                 "dmarc_analysis":   map[string]any{"status": "success", "policy": "reject"},
@@ -297,7 +297,7 @@ func TestPostureTruthBasedGrades(t *testing.T) {
                                 "caa_analysis":     map[string]any{"status": "success"},
                                 "dnssec_analysis":  map[string]any{"status": "success"},
                         },
-                        expectedGrade: "STRONG",
+                        expectedGrade: "SECURE",
                         expectedColor: "success",
                         messageContains: "DMARC enforcement",
                 },

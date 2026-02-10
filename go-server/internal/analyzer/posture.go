@@ -192,9 +192,21 @@ func (a *Analyzer) CalculatePosture(results map[string]any) map[string]any {
 
         deliberateMonitoring := false
         deliberateMonitoringNote := ""
-        if ps.dmarcPolicy == "none" && len(configured) >= 3 {
-                deliberateMonitoring = true
-                deliberateMonitoringNote = "DMARC is in monitoring mode (p=none) — this appears intentional while gathering data before enforcement"
+        if ps.dmarcPolicy == "none" {
+                configuredCount := len(configured)
+                hasReporting := ps.dmarcHasRua
+                hasAdvancedControls := ps.dnssecOK || ps.daneOK || ps.mtaStsOK
+
+                if configuredCount >= 3 && hasReporting {
+                        deliberateMonitoring = true
+                        deliberateMonitoringNote = "DMARC is in monitoring mode (p=none) with aggregate reporting active — this appears to be a deliberate deployment phase before enforcement"
+                } else if configuredCount >= 3 && hasAdvancedControls {
+                        deliberateMonitoring = true
+                        deliberateMonitoringNote = "DMARC is in monitoring mode (p=none) with advanced security controls (DNSSEC/DANE/MTA-STS) deployed — this indicates sophisticated security management with deliberate monitoring"
+                } else if configuredCount >= 3 {
+                        deliberateMonitoring = true
+                        deliberateMonitoringNote = "DMARC is in monitoring mode (p=none) — this appears intentional while gathering data before enforcement"
+                }
         }
 
         score := computeInternalScore(ps)
@@ -231,6 +243,12 @@ func determineGrade(ps protocolState, hasSPF, hasDMARC, hasDKIM bool, monitoring
         hasCAA := ps.caaOK
 
         switch {
+        case corePresent && dmarcStrict && hasCAA && ps.dnssecOK:
+                state = "SECURE"
+                icon = "shield-alt"
+                color = "success"
+                message = buildDescriptiveMessage(ps, configured, absent, monitoring)
+
         case corePresent && dmarcStrict && hasCAA:
                 state = "STRONG"
                 icon = "shield-alt"
