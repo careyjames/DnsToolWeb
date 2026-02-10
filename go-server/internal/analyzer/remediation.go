@@ -16,8 +16,8 @@ const (
         colorMedium   = "info"
         colorLow      = "secondary"
 
-        rfcDMARC    = "RFC 7489 §6.3"
-        rfcDMARCURL = "https://datatracker.ietf.org/doc/html/rfc7489#section-6.3"
+        rfcDMARCPolicy    = "RFC 7489 §6.3"
+        rfcDMARCPolicyURL = "https://datatracker.ietf.org/doc/html/rfc7489#section-6.3"
 )
 
 type fix struct {
@@ -111,6 +111,19 @@ func sortFixes(fixes []fix) {
 
 func appendSPFFixes(fixes []fix, ps protocolState, domain string) []fix {
         if ps.spfOK {
+                if !ps.spfHardFail {
+                        return append(fixes, fix{
+                                Title:         "Upgrade SPF to hard fail (-all)",
+                                Description:   "Your SPF record uses ~all (softfail), which asks receivers to accept but flag unauthorized senders. Upgrading to -all (hardfail) instructs receivers to reject unauthorized senders outright. Verify all legitimate sending sources are included before switching.",
+                                DNSRecord:     fmt.Sprintf("%s TXT \"v=spf1 include:_spf.google.com -all\"", domain),
+                                RFC:           "RFC 7208 §5",
+                                RFCURL:        "https://datatracker.ietf.org/doc/html/rfc7208#section-5",
+                                Severity:      severityLow,
+                                SeverityColor: colorLow,
+                                SeverityOrder: 4,
+                                Section:       "spf",
+                        })
+                }
                 return fixes
         }
         if ps.spfWarning && !ps.spfMissing {
@@ -137,10 +150,10 @@ func appendDMARCFixes(fixes []fix, ps protocolState, results map[string]any, dom
         if ps.dmarcMissing || (!ps.dmarcOK && !ps.dmarcWarning) {
                 return append(fixes, fix{
                         Title:         "Publish DMARC policy",
-                        Description:   "DMARC (Domain-based Message Authentication, Reporting & Conformance) tells receivers how to handle messages that fail SPF/DKIM checks. Without DMARC, failed authentication checks are ignored.",
+                        Description:   "DMARC (Domain-based Message Authentication, Reporting & Conformance) tells receivers how to handle messages that fail SPF/DKIM checks. Without DMARC, failed authentication checks are ignored. Start with p=none and rua reporting to monitor, then escalate to p=quarantine and p=reject.",
                         DNSRecord:     fmt.Sprintf("_dmarc.%s TXT \"v=DMARC1; p=none; rua=mailto:dmarc-reports@%s\"", domain, domain),
-                        RFC:           rfcDMARC,
-                        RFCURL:        rfcDMARCURL,
+                        RFC:           rfcDMARCPolicy,
+                        RFCURL:        rfcDMARCPolicyURL,
                         Severity:      severityCritical,
                         SeverityColor: colorCritical,
                         SeverityOrder: 1,
@@ -153,8 +166,8 @@ func appendDMARCFixes(fixes []fix, ps protocolState, results map[string]any, dom
                         Title:         "Escalate DMARC from monitoring to enforcement",
                         Description:   "Change your DMARC policy from p=none to p=quarantine (then p=reject). Review your DMARC aggregate reports first to ensure legitimate senders pass authentication.",
                         DNSRecord:     fmt.Sprintf("_dmarc.%s TXT \"v=DMARC1; p=quarantine; rua=mailto:dmarc-reports@%s\"", domain, domain),
-                        RFC:           rfcDMARC,
-                        RFCURL:        rfcDMARCURL,
+                        RFC:           rfcDMARCPolicy,
+                        RFCURL:        rfcDMARCPolicyURL,
                         Severity:      severityHigh,
                         SeverityColor: colorHigh,
                         SeverityOrder: 2,
@@ -167,8 +180,8 @@ func appendDMARCFixes(fixes []fix, ps protocolState, results map[string]any, dom
                         Title:         "Upgrade DMARC to reject policy",
                         Description:   "Your DMARC policy is quarantine — spoofed messages are flagged. Upgrading to p=reject blocks them entirely. Review aggregate reports to confirm legitimate senders are aligned.",
                         DNSRecord:     fmt.Sprintf("_dmarc.%s TXT \"v=DMARC1; p=reject; rua=mailto:dmarc-reports@%s\"", domain, domain),
-                        RFC:           rfcDMARC,
-                        RFCURL:        rfcDMARCURL,
+                        RFC:           rfcDMARCPolicy,
+                        RFCURL:        rfcDMARCPolicyURL,
                         Severity:      severityLow,
                         SeverityColor: colorLow,
                         SeverityOrder: 4,
@@ -425,8 +438,8 @@ func extractMailFlags(results map[string]any, ps protocolState) mailFlags {
         hasNullMX := getBool(results, "has_null_mx")
 
         return mailFlags{
-                hasSPF:      ps.spfOK || ps.spfWarning,
-                hasDMARC:    ps.dmarcOK || ps.dmarcWarning,
+                hasSPF:      ps.spfOK || (ps.spfWarning && !ps.spfMissing),
+                hasDMARC:    ps.dmarcOK || (ps.dmarcWarning && !ps.dmarcMissing),
                 hasDKIM:     ps.dkimOK || ps.dkimProvider,
                 hasNullMX:   hasNullMX,
                 hasMX:       len(mxRecords) > 0 && !hasNullMX,

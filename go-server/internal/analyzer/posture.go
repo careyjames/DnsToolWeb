@@ -60,6 +60,7 @@ type protocolState struct {
         daneOK          bool
         dnssecOK        bool
         primaryProvider string
+        isNoMailDomain bool
 }
 
 type postureAccumulator struct {
@@ -100,6 +101,9 @@ func evaluateProtocolStates(results map[string]any) protocolState {
                 dmarcHasRua = true
         }
 
+        spfNoMailIntent := getBool(spf, "no_mail_intent")
+        isNoMailDomain := spfNoMailIntent || (allMech == "-all" && getBool(results, "has_null_mx"))
+
         return protocolState{
                 spfOK:           spf["status"] == "success",
                 spfWarning:      spf["status"] == "warning",
@@ -121,12 +125,18 @@ func evaluateProtocolStates(results map[string]any) protocolState {
                 daneOK:          dane["has_dane"] == true,
                 dnssecOK:        dnssec["status"] == "success",
                 primaryProvider: primaryProvider,
+                isNoMailDomain:  isNoMailDomain,
         }
 }
 
 func classifySPF(ps protocolState, acc *postureAccumulator) {
         if ps.spfOK {
-                acc.configured = append(acc.configured, "SPF")
+                if ps.spfHardFail {
+                        acc.configured = append(acc.configured, "SPF (-all)")
+                } else {
+                        acc.configured = append(acc.configured, "SPF (~all)")
+                        acc.recommendations = append(acc.recommendations, "SPF uses ~all (softfail) — consider -all (hardfail) for stricter enforcement per RFC 7208 §5")
+                }
                 return
         }
         if ps.spfWarning && !ps.spfMissing {
@@ -296,6 +306,7 @@ type gradeInput struct {
         hasSPF                bool
         hasDMARC              bool
         hasDKIM               bool
+        isNoMail              bool
 }
 
 func determineGrade(ps protocolState, hasSPF, hasDMARC, hasDKIM bool, monitoring, configured, absent []string) (state, icon, color, message string) {
@@ -308,6 +319,7 @@ func determineGrade(ps protocolState, hasSPF, hasDMARC, hasDKIM bool, monitoring
                 hasSPF:                hasSPF,
                 hasDMARC:              hasDMARC,
                 hasDKIM:               hasDKIM,
+                isNoMail:              ps.isNoMailDomain,
         }
 
         state, icon, color, message = classifyGrade(ps, gi, monitoring, configured, absent)
@@ -316,6 +328,9 @@ func determineGrade(ps protocolState, hasSPF, hasDMARC, hasDKIM bool, monitoring
 }
 
 func classifyGrade(ps protocolState, gi gradeInput, monitoring, configured, absent []string) (string, string, string, string) {
+        if gi.isNoMail {
+                return classifyNoMailGrade(ps, gi, configured, absent)
+        }
         if gi.corePresent && gi.dmarcStrict && gi.hasCAA && ps.dnssecOK {
                 return "Secure", iconShieldAlt, "success", buildDescriptiveMessage(ps, configured, absent, monitoring)
         }
@@ -344,6 +359,26 @@ func classifyGrade(ps protocolState, gi gradeInput, monitoring, configured, abse
         }
         return riskHigh, iconExclamationTriangle, "warning",
                 "Partial email authentication. Critical security controls are missing."
+}
+
+func classifyNoMailGrade(ps protocolState, gi gradeInput, configured, absent []string) (string, string, string, string) {
+        hasReject := ps.dmarcPolicy == "reject"
+        hasSPFDeny := ps.spfHardFail
+
+        if hasSPFDeny && hasReject {
+                return "Secure", iconShieldAlt, "success",
+                        "No-mail domain properly secured. SPF -all rejects all senders, DMARC p=reject discards unauthenticated mail."
+        }
+        if hasSPFDeny || hasReject {
+                return riskLow, iconShieldAlt, "success",
+                        "No-mail domain with partial protection. SPF and/or DMARC enforcement configured but not both are at full enforcement."
+        }
+        if gi.hasSPF {
+                return riskMedium, iconExclamationTriangle, "warning",
+                        "Domain appears to not send mail but SPF does not use -all (hardfail). Spoofing is still possible."
+        }
+        return riskHigh, iconExclamationTriangle, "warning",
+                "Domain appears to not send mail but lacks proper no-mail protections (SPF -all, DMARC p=reject)."
 }
 
 func applyMonitoringSuffix(state string, monitoring []string) string {
@@ -490,8 +525,14 @@ func computeInternalScore(ps protocolState) int {
 }
 
 func computeSPFScore(ps protocolState) int {
+        if ps.spfMissing {
+                return 0
+        }
         if ps.spfOK {
-                return 20
+                if ps.spfHardFail {
+                        return 20
+                }
+                return 15
         }
         if ps.spfWarning {
                 return 10
@@ -500,6 +541,9 @@ func computeSPFScore(ps protocolState) int {
 }
 
 func computeDMARCScore(ps protocolState) int {
+        if ps.dmarcMissing {
+                return 0
+        }
         if !ps.dmarcOK {
                 if ps.dmarcWarning {
                         return 10

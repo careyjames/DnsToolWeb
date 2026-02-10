@@ -115,7 +115,7 @@ func TestNonExistentDomainPosture(t *testing.T) {
 func TestPostureFullProtection(t *testing.T) {
         a := newTestAnalyzer()
         results := map[string]any{
-                "spf_analysis":   map[string]any{"status": "success"},
+                "spf_analysis":   map[string]any{"status": "success", "all_mechanism": "-all"},
                 "dmarc_analysis": map[string]any{"status": "success", "policy": "reject"},
                 "dkim_analysis":  map[string]any{"status": "success"},
                 "mta_sts_analysis": map[string]any{"status": "success"},
@@ -162,7 +162,7 @@ func TestPostureMinimalSPFOnly(t *testing.T) {
 func TestPostureScoreCapping(t *testing.T) {
         a := newTestAnalyzer()
         results := map[string]any{
-                "spf_analysis":     map[string]any{"status": "success"},
+                "spf_analysis":     map[string]any{"status": "success", "all_mechanism": "-all"},
                 "dmarc_analysis":   map[string]any{"status": "success", "policy": "reject"},
                 "dkim_analysis":    map[string]any{"status": "success"},
                 "mta_sts_analysis": map[string]any{"status": "success"},
@@ -294,7 +294,7 @@ func TestPostureTruthBasedGrades(t *testing.T) {
                 {
                         name: "Informational — full protection with reject + CAA + DNSSEC",
                         results: map[string]any{
-                                "spf_analysis":     map[string]any{"status": "success"},
+                                "spf_analysis":     map[string]any{"status": "success", "all_mechanism": "-all"},
                                 "dmarc_analysis":   map[string]any{"status": "success", "policy": "reject"},
                                 "dkim_analysis":    map[string]any{"status": "success"},
                                 "mta_sts_analysis": map[string]any{"status": "success"},
@@ -311,7 +311,7 @@ func TestPostureTruthBasedGrades(t *testing.T) {
                 {
                         name: "Low — core with reject + CAA, optional missing",
                         results: map[string]any{
-                                "spf_analysis":     map[string]any{"status": "success"},
+                                "spf_analysis":     map[string]any{"status": "success", "all_mechanism": "-all"},
                                 "dmarc_analysis":   map[string]any{"status": "success", "policy": "reject"},
                                 "dkim_analysis":    map[string]any{"status": "success"},
                                 "mta_sts_analysis": map[string]any{},
@@ -478,7 +478,7 @@ func TestRemediationFullySecure(t *testing.T) {
         a := newTestAnalyzer()
 
         results := map[string]any{
-                "spf_analysis":     map[string]any{"status": "success"},
+                "spf_analysis":     map[string]any{"status": "success", "all_mechanism": "-all"},
                 "dmarc_analysis":   map[string]any{"status": "success", "policy": "reject"},
                 "dkim_analysis":    map[string]any{"status": "success"},
                 "mta_sts_analysis": map[string]any{"status": "success"},
@@ -818,6 +818,173 @@ func TestPostureMissingDMARCRuaWarning(t *testing.T) {
         }
         if !found {
                 t.Error("expected rua missing warning in issues when DMARC has no rua configured")
+        }
+}
+
+func TestPostureSPFSoftfailVsHardfail(t *testing.T) {
+        a := newTestAnalyzer()
+
+        hardfail := map[string]any{
+                "spf_analysis":     map[string]any{"status": "success", "all_mechanism": "-all"},
+                "dmarc_analysis":   map[string]any{"status": "success", "policy": "reject"},
+                "dkim_analysis":    map[string]any{"status": "success"},
+                "mta_sts_analysis": map[string]any{},
+                "tlsrpt_analysis":  map[string]any{},
+                "bimi_analysis":    map[string]any{},
+                "dane_analysis":    map[string]any{},
+                "caa_analysis":     map[string]any{"status": "success"},
+                "dnssec_analysis":  map[string]any{},
+        }
+        softfail := map[string]any{
+                "spf_analysis":     map[string]any{"status": "success", "all_mechanism": "~all"},
+                "dmarc_analysis":   map[string]any{"status": "success", "policy": "reject"},
+                "dkim_analysis":    map[string]any{"status": "success"},
+                "mta_sts_analysis": map[string]any{},
+                "tlsrpt_analysis":  map[string]any{},
+                "bimi_analysis":    map[string]any{},
+                "dane_analysis":    map[string]any{},
+                "caa_analysis":     map[string]any{"status": "success"},
+                "dnssec_analysis":  map[string]any{},
+        }
+
+        pHard := a.CalculatePosture(hardfail)
+        pSoft := a.CalculatePosture(softfail)
+
+        scoreHard, _ := pHard["score"].(int)
+        scoreSoft, _ := pSoft["score"].(int)
+        if scoreHard <= scoreSoft {
+                t.Errorf("SPF -all (hardfail) should score higher than ~all (softfail): got %d vs %d", scoreHard, scoreSoft)
+        }
+
+        configured, _ := pSoft["configured"].([]string)
+        foundSoftfail := false
+        for _, c := range configured {
+                if strings.Contains(c, "~all") {
+                        foundSoftfail = true
+                }
+        }
+        if !foundSoftfail {
+                t.Error("SPF with ~all should show (~all) in configured list")
+        }
+
+        issues, _ := pSoft["issues"].([]string)
+        foundRec := false
+        for _, r := range issues {
+                if strings.Contains(r, "softfail") || strings.Contains(r, "~all") {
+                        foundRec = true
+                }
+        }
+        if !foundRec {
+                t.Error("SPF ~all should generate a recommendation about upgrading to -all")
+        }
+}
+
+func TestPostureMissingSPFScoreZero(t *testing.T) {
+        a := newTestAnalyzer()
+        results := map[string]any{
+                "spf_analysis":     map[string]any{"status": "warning", "valid_records": []string{}},
+                "dmarc_analysis":   map[string]any{"status": "warning", "valid_records": []string{}},
+                "dkim_analysis":    map[string]any{},
+                "mta_sts_analysis": map[string]any{},
+                "tlsrpt_analysis":  map[string]any{},
+                "bimi_analysis":    map[string]any{},
+                "dane_analysis":    map[string]any{},
+                "caa_analysis":     map[string]any{},
+                "dnssec_analysis":  map[string]any{},
+        }
+
+        posture := a.CalculatePosture(results)
+        score, _ := posture["score"].(int)
+        if score != 0 {
+                t.Errorf("domain with all missing records should score 0, got %d", score)
+        }
+        state, _ := posture["state"].(string)
+        if state != "Critical Risk" {
+                t.Errorf("domain with no email auth should be Critical Risk, got %s", state)
+        }
+}
+
+func TestPostureNoMailDomainSecure(t *testing.T) {
+        a := newTestAnalyzer()
+        results := map[string]any{
+                "spf_analysis":     map[string]any{"status": "success", "all_mechanism": "-all", "no_mail_intent": true},
+                "dmarc_analysis":   map[string]any{"status": "success", "policy": "reject"},
+                "dkim_analysis":    map[string]any{},
+                "mta_sts_analysis": map[string]any{},
+                "tlsrpt_analysis":  map[string]any{},
+                "bimi_analysis":    map[string]any{},
+                "dane_analysis":    map[string]any{},
+                "caa_analysis":     map[string]any{},
+                "dnssec_analysis":  map[string]any{},
+                "has_null_mx":      true,
+        }
+
+        posture := a.CalculatePosture(results)
+        state, _ := posture["state"].(string)
+        if state != "Secure" {
+                t.Errorf("no-mail domain with SPF -all + DMARC reject should be Secure, got %s", state)
+        }
+        msg, _ := posture["message"].(string)
+        if !strings.Contains(msg, "No-mail") && !strings.Contains(msg, "no-mail") {
+                t.Errorf("message should indicate no-mail domain, got %q", msg)
+        }
+}
+
+func TestPostureNoMailDomainPartial(t *testing.T) {
+        a := newTestAnalyzer()
+        results := map[string]any{
+                "spf_analysis":     map[string]any{"status": "success", "all_mechanism": "-all", "no_mail_intent": true},
+                "dmarc_analysis":   map[string]any{},
+                "dkim_analysis":    map[string]any{},
+                "mta_sts_analysis": map[string]any{},
+                "tlsrpt_analysis":  map[string]any{},
+                "bimi_analysis":    map[string]any{},
+                "dane_analysis":    map[string]any{},
+                "caa_analysis":     map[string]any{},
+                "dnssec_analysis":  map[string]any{},
+                "has_null_mx":      true,
+        }
+
+        posture := a.CalculatePosture(results)
+        state, _ := posture["state"].(string)
+        if state == "Critical Risk" {
+                t.Error("no-mail domain with SPF -all should not be Critical Risk — it has partial no-mail protection")
+        }
+}
+
+func TestRemediationSPFSoftfailUpgrade(t *testing.T) {
+        a := newTestAnalyzer()
+        results := map[string]any{
+                "domain":           "example.com",
+                "spf_analysis":     map[string]any{"status": "success", "all_mechanism": "~all"},
+                "dmarc_analysis":   map[string]any{"status": "success", "policy": "reject"},
+                "dkim_analysis":    map[string]any{"status": "success"},
+                "mta_sts_analysis": map[string]any{"status": "success"},
+                "tlsrpt_analysis":  map[string]any{"status": "success"},
+                "bimi_analysis":    map[string]any{"status": "success"},
+                "dane_analysis":    map[string]any{"has_dane": true},
+                "caa_analysis":     map[string]any{"status": "success"},
+                "dnssec_analysis":  map[string]any{"status": "success"},
+        }
+
+        remediation := a.GenerateRemediation(results)
+        allFixes, ok := remediation["all_fixes"].([]map[string]any)
+        if !ok {
+                t.Fatal("all_fixes is not []map[string]any")
+        }
+        found := false
+        for _, f := range allFixes {
+                title, _ := f["title"].(string)
+                if strings.Contains(title, "hard fail") || strings.Contains(title, "-all") {
+                        found = true
+                        sev, _ := f["severity_label"].(string)
+                        if sev != "Low" {
+                                t.Errorf("SPF softfail-to-hardfail upgrade should be Low severity, got %s", sev)
+                        }
+                }
+        }
+        if !found {
+                t.Error("expected a remediation fix to upgrade SPF from ~all to -all")
         }
 }
 
