@@ -9,7 +9,7 @@ Preferred communication style: Simple, everyday language.
 ## System Architecture
 
 ### Core System
-The application is implemented in Go using the Gin framework, having been rewritten from a Python/Flask codebase for improved performance and concurrency. The architecture follows an MVC-style separation.
+The application is implemented in Go using the Gin framework, having been rewritten from a Python/Flask codebase for improved performance and concurrency. The architecture follows an MVC-style separation. The legacy Python/Flask code is archived in `docs/legacy/` with full documentation in `docs/legacy/LEGACY_ARCHIVE.md` — it is not maintained or executed.
 
 ### Backend
 - **Technology Stack**: Go with Gin web framework, `pgx` v5 for PostgreSQL, `sqlc` for type-safe query generation, and `miekg/dns` for all DNS queries.
@@ -50,9 +50,9 @@ The app version is defined in `go-server/internal/config/config.go` (the `AppVer
 ### Build Notes (Replit-specific)
 - **Git lock issue**: `go build` in Replit triggers VCS stamping which fails due to `.git/index.lock`. **Always** use the `-buildvcs=false` flag.
 - **Binary replacement**: A running binary cannot be overwritten ("Text file busy"). Always build to `/tmp/` first, then rename-swap as described above.
-- **Workflow runs the binary directly**: The workflow executes `./dns-tool-server` (the pre-built binary). It does NOT use `run.sh` or `go run`. This means code changes require a manual rebuild + swap + restart to take effect.
+- **Workflow trampoline**: The `.replit` workflow command uses `gunicorn ... main:app` (legacy config). The `main.py` file is a process trampoline that immediately replaces itself with `./dns-tool-server` via `os.execvp`. The Go binary is what actually runs on port 5000. This is a workaround because the `.replit` file cannot be directly edited by the agent.
 - **`run.sh`**: Available as a convenience script that builds fresh and runs. Can be used for manual testing but is not invoked by the workflow.
-- **`.replit` file**: Cannot be directly edited by the agent. The workflow command text may not match reality — always verify by checking the actual running process.
+- **`.replit` file**: Cannot be directly edited by the agent. The workflow command references gunicorn but the actual server is the Go binary (via the main.py trampoline).
 - **Deployment**: The `.replit` deployment section has its own build command (`CGO_ENABLED=0 go build -o dns-tool-server ./go-server/cmd/server/`) and run command (`./dns-tool-server`) which handle production builds automatically.
 
 ### Risk Level Labels
