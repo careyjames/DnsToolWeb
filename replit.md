@@ -21,7 +21,7 @@ Preferred communication style: Simple, everyday language.
 - **Performance**: Utilizes a shared ThreadPoolExecutor, DNS result TTL cache, and CT cache. Includes semaphore-based concurrency control.
 - **Network Telemetry**: `network_telemetry.py` — per-provider health tracking (success rate, latency, consecutive failures), adaptive exponential backoff (500ms–30s), operation-specific timeouts. Exposes `/api/health` dashboard. Thread-safe singleton with non-reentrant locks (avoid calling properties from within locked blocks).
 - **Remediation Guidance**: `remediation_guidance.py` — maps analysis verdicts to prioritized, RFC-cited fix recommendations. Generates "Top 3 Fixes" sorted by severity (Critical > High > Medium > Low) and per-section guidance for SPF, DKIM, DMARC, DNSSEC, DANE, MTA-STS, TLS-RPT, BIMI, CAA. Context-aware: skips DKIM/MTA-STS/BIMI for no-mail domains, blocks BIMI when DMARC not enforced, suggests DANE only when DNSSEC is active.
-- **Testing**: Employs formal JSON Schema for contract testing, a golden fixture system for regression testing, and dependency injection for deterministic testing. DNSAnalyzer supports `offline_mode` to disable all outbound network calls (DoH, RDAP, WHOIS, CT logs, SMTP, DNSSEC AD validation, NS delegation) for fast deterministic tests. CI script at `scripts/run_contract_tests.sh` (default: fast offline tests; `./scripts/run_contract_tests.sh full` for integration tests). Test suite: 139 tests.
+- **Testing**: Employs formal JSON Schema for contract testing, a golden fixture system for regression testing, and dependency injection for deterministic testing. DNSAnalyzer supports `offline_mode` to disable all outbound network calls (DoH, RDAP, WHOIS, CT logs, SMTP, DNSSEC AD validation, NS delegation) for fast deterministic tests. CI script at `scripts/run_contract_tests.sh` (default: fast offline tests; `./scripts/run_contract_tests.sh full` for integration tests). Test suite: 229 tests.
 - **History Export**: Streaming NDJSON export of all analysis history via `/export/json`.
 - **Comparison View**: Side-by-side diff of two analyses of the same domain at `/compare`.
 
@@ -83,8 +83,59 @@ Preferred communication style: Simple, everyday language.
 - `app.py` is large (~1,580 lines); routing, models, and utility functions coexist. Acceptable for now but worth modularizing if more features are added.
 - Some direct `requests.get()` calls in `dns_analyzer.py` (DoH, CT logs) bypass `_safe_http_get()` — acceptable because they target hardcoded public API endpoints, not user-supplied URLs.
 
+## Go Rewrite — Migration Status
+
+### Current Phase: Phase 1 — Foundation (COMPLETE)
+
+**Decision**: Rewrite the DNS Tool from Python/Flask to Go for better performance and concurrency.
+
+**Go Stack**:
+- **Web Framework**: Gin (high-performance, middleware-friendly)
+- **Database**: pgx v5 (native PostgreSQL driver with connection pooling)
+- **DNS**: miekg/dns (planned for Phase 5)
+- **Templates**: Go `html/template` with custom FuncMap for Jinja2 filter equivalents
+
+**Project Structure** (`go-server/`):
+```
+go-server/
+├── cmd/server/main.go          # Entry point
+├── internal/
+│   ├── config/config.go        # Environment-based configuration
+│   ├── db/db.go                # PostgreSQL connection pool (pgx)
+│   ├── handlers/               # HTTP route handlers
+│   │   ├── health.go           # /go/health endpoint
+│   │   └── home.go             # GET / homepage
+│   ├── middleware/middleware.go # RequestContext, SecurityHeaders, Recovery
+│   ├── models/models.go        # DomainAnalysis, AnalysisStats structs (matches Python schema exactly)
+│   └── templates/funcs.go      # Template helper functions (countryFlag, formatDate, etc.)
+├── templates/index.html        # Phase 1 placeholder template
+├── go.mod / go.sum
+```
+
+**What's Working**:
+- Go binary compiles and runs
+- Connects to existing PostgreSQL database (same DB as Python app)
+- Health endpoint at `/go/health` returns DB status, memory stats, goroutine count
+- Structured logging with slog (trace IDs, request timing)
+- Security headers middleware (CSP with nonces, HSTS, X-Frame-Options, etc.)
+- DB models match Python DomainAnalysis/AnalysisStats schema exactly (schema version 2)
+- Template engine with custom helper functions (countryFlag, formatDate, formatDuration, dict, etc.)
+
+**Parallel Operation**: Python app continues serving production traffic on port 5000. Go server currently runs on port 5001 for testing only.
+
+### Remaining Phases:
+- **Phase 2**: Database queries — read/write DomainAnalysis and AnalysisStats via pgx
+- **Phase 3**: HTTP routes — all Python routes ported (analyze, history, stats, compare, export, BIMI proxy)
+- **Phase 4**: Template migration — convert 6 Jinja2 templates to Go html/template
+- **Phase 5**: DNS engine — port 5,400-line analyzer to Go with miekg/dns + goroutine concurrency
+- **Phase 6**: Security — SSRF protection, CSRF, rate limiting ported to Go
+- **Phase 7**: Telemetry & RDAP cache — health tracking, backoff, caching
+- **Phase 8**: Test parity — port test suite; Python tests as acceptance tests during transition
+
 ## Recent Changes
 
+- **2026-02-10**: Started Go rewrite — Phase 1 foundation complete. Go project skeleton with Gin web framework, pgx database driver, structured logging, security headers middleware, health endpoint, and template engine. Python app continues serving production traffic.
+- **2026-02-10**: Fixed 2 test failures (CSRF in test mode, trailing-dot domain validation). Test suite now at 229 passing tests.
 - **2026-02-09**: Removed SonarQube report file (false positive gitleaks alert). Cleaned 271 accumulated attached asset files. Added `.gitignore` for `attached_assets/`, `__pycache__/`, `.cache/`, `node_modules/`.
 - **2026-02-09**: Security hardening — host binding, token redaction in test fixtures, safe DOM manipulation, SSRF protection on BIMI proxy with redirect validation and response size limits.
 - **2026-01-22**: Added collapsible DNS security fixes view, code block copy functionality, remediation guidance system, network telemetry with `/api/health` dashboard.
