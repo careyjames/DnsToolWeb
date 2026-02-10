@@ -37,7 +37,7 @@ func (a *Analyzer) DiscoverSubdomains(ctx context.Context, domain string) map[st
 
         ctURL := fmt.Sprintf("https://crt.sh/?q=%%25.%s&output=json", domain)
         start := time.Now()
-        resp, err := a.HTTP.Get(ctx, ctURL)
+        resp, err := a.SlowHTTP.Get(ctx, ctURL)
         if err != nil {
                 a.Telemetry.RecordFailure(ctProvider, err.Error())
                 slog.Warn("CT log query failed", "domain", domain, "error", err)

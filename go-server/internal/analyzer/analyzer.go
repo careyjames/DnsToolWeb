@@ -13,6 +13,7 @@ import (
 type Analyzer struct {
         DNS        *dnsclient.Client
         HTTP       *dnsclient.SafeHTTPClient
+        SlowHTTP   *dnsclient.SafeHTTPClient
         IANARDAPMap map[string][]string
         Telemetry  *telemetry.Registry
         RDAPCache  *telemetry.TTLCache[map[string]any]
@@ -43,6 +44,7 @@ func New(opts ...Option) *Analyzer {
         a := &Analyzer{
                 DNS:           dnsclient.New(),
                 HTTP:          dnsclient.NewSafeHTTPClient(),
+                SlowHTTP:      dnsclient.NewSafeHTTPClientWithTimeout(25 * time.Second),
                 IANARDAPMap:   make(map[string][]string),
                 Telemetry:     telemetry.NewRegistry(),
                 RDAPCache:     telemetry.NewTTLCache[map[string]any]("rdap", 500, 24*time.Hour),

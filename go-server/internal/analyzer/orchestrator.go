@@ -22,6 +22,9 @@ func (a *Analyzer) AnalyzeDomain(ctx context.Context, domain string, customDKIMS
                 }
         }
 
+        ctx, cancel := context.WithTimeout(ctx, 60*time.Second)
+        defer cancel()
+
         domainExists := true
         domainStatus := "active"
         var domainStatusMessage *string

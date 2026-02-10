@@ -16,9 +16,13 @@ type SafeHTTPClient struct {
 }
 
 func NewSafeHTTPClient() *SafeHTTPClient {
+        return NewSafeHTTPClientWithTimeout(10 * time.Second)
+}
+
+func NewSafeHTTPClientWithTimeout(timeout time.Duration) *SafeHTTPClient {
         return &SafeHTTPClient{
                 client: &http.Client{
-                        Timeout: 10 * time.Second,
+                        Timeout: timeout,
                         Transport: &http.Transport{
                                 MaxIdleConns:        20,
                                 IdleConnTimeout:     30 * time.Second,

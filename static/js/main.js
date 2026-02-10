@@ -122,10 +122,9 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
-    const alerts = document.querySelectorAll('.alert-dismissible');
-    alerts.forEach(function(alert) {
+    document.querySelectorAll('.alert-dismissible:not(.alert-persistent)').forEach(function(alert) {
         setTimeout(function() {
-            const bsAlert = new bootstrap.Alert(alert);
+            var bsAlert = bootstrap.Alert.getOrCreateInstance(alert);
             bsAlert.close();
         }, 5000);
     });
