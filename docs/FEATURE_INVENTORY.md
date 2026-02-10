@@ -1,6 +1,6 @@
 # DNS Tool — Feature Inventory
 
-**Version:** 26.12.6
+**Version:** 26.12.7
 **Last Updated:** February 10, 2026
 **Implementation:** Go/Gin (`go-server/`)
 
