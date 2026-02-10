@@ -49,6 +49,7 @@ var enterpriseProviders = map[string]providerInfo{
         "verisign":         {Name: "Verisign DNS", Tier: tierEnterprise, Features: []string{featDDoSProtection, featAnycast, "Critical infrastructure"}},
         "csc.com":          {Name: "CSC Global DNS", Tier: tierEnterprise, Features: []string{featEnterpriseManagement, featBrandProtection, "Global infrastructure"}},
         "cscdns":           {Name: "CSC Global DNS", Tier: tierEnterprise, Features: []string{featEnterpriseManagement, featBrandProtection, "Global infrastructure"}},
+        "netnames":         {Name: "CSC Global DNS", Tier: tierEnterprise, Features: []string{featEnterpriseManagement, featBrandProtection, "Global infrastructure"}},
         "markmonitor":      {Name: "MarkMonitor DNS", Tier: tierEnterprise, Features: []string{featBrandProtection, featEnterpriseManagement, "Anti-fraud"}},
 }
 
@@ -244,6 +245,11 @@ var dnsHostingProviders = map[string]string{
         "ultradns": "Vercara UltraDNS", "nsone": "NS1",
         "digitalocean": nameDigitalOcean, "linode": nameLinode,
         "domaincontrol": nameGoDaddy, "registrar-servers": nameNamecheap,
+        "cscdns": "CSC Global DNS", "csc.com": "CSC Global DNS",
+        "netnames": "CSC Global DNS",
+        "akam": "Akamai Edge DNS", "dynect": "Oracle Dyn",
+        "verisign": "Verisign DNS", "markmonitor": "MarkMonitor DNS",
+        "porkbun": "Porkbun", "vultr": "Vultr",
 }
 
 var emailHostingProviders = map[string]string{

@@ -548,6 +548,7 @@ func TestEnterpriseProviderDetection(t *testing.T) {
                 {"Route53", []string{"ns-123.awsdns-01.net", "ns-456.awsdns-02.org"}, "enterprise"},
                 {"Azure", []string{"ns1-01.azure-dns.com", "ns2-01.azure-dns.net"}, "enterprise"},
                 {"UltraDNS", []string{"udns1.ultradns.net", "udns2.ultradns.net"}, "enterprise"},
+                {"CSC-NetNames", []string{"ns1.netnames.net", "ns2.netnames.net", "ns5.netnames.net", "ns6.netnames.net"}, "enterprise"},
                 {"GoDaddy", []string{"ns1.domaincontrol.com", "ns2.domaincontrol.com"}, "managed"},
                 {"Namecheap", []string{"ns1.registrar-servers.com", "ns2.registrar-servers.com"}, "managed"},
         }
