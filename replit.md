@@ -85,13 +85,13 @@ Preferred communication style: Simple, everyday language.
 
 ## Go Rewrite — Migration Status
 
-### Current Phase: Phase 1 — Foundation (COMPLETE)
+### Current Phase: Phase 2 — Database Queries (COMPLETE)
 
 **Decision**: Rewrite the DNS Tool from Python/Flask to Go for better performance and concurrency.
 
 **Go Stack**:
 - **Web Framework**: Gin (high-performance, middleware-friendly)
-- **Database**: pgx v5 (native PostgreSQL driver with connection pooling)
+- **Database**: pgx v5 (native PostgreSQL driver with connection pooling) + sqlc (type-safe query generation)
 - **DNS**: miekg/dns (planned for Phase 5)
 - **Templates**: Go `html/template` with custom FuncMap for Jinja2 filter equivalents
 
@@ -101,13 +101,24 @@ go-server/
 ├── cmd/server/main.go          # Entry point
 ├── internal/
 │   ├── config/config.go        # Environment-based configuration
-│   ├── db/db.go                # PostgreSQL connection pool (pgx)
+│   ├── db/
+│   │   ├── db.go               # PostgreSQL connection pool (pgx) + Queries accessor
+│   │   └── db_test.go          # Integration tests (6 tests)
+│   ├── dbq/                    # sqlc-generated type-safe query code
+│   │   ├── db.go               # DBTX interface, Queries struct
+│   │   ├── models.go           # DomainAnalysis, AnalysisStat structs
+│   │   ├── domain_analyses.sql.go  # DomainAnalysis CRUD queries
+│   │   └── analysis_stats.sql.go   # AnalysisStats queries
 │   ├── handlers/               # HTTP route handlers
 │   │   ├── health.go           # /go/health endpoint
 │   │   └── home.go             # GET / homepage
 │   ├── middleware/middleware.go # RequestContext, SecurityHeaders, Recovery
-│   ├── models/models.go        # DomainAnalysis, AnalysisStats structs (matches Python schema exactly)
+│   ├── models/models.go        # Legacy model structs (kept for reference)
 │   └── templates/funcs.go      # Template helper functions (countryFlag, formatDate, etc.)
+├── db/queries/                 # SQL query definitions for sqlc
+│   ├── domain_analyses.sql     # All DomainAnalysis queries
+│   └── analysis_stats.sql      # All AnalysisStats queries
+├── sqlc.yaml                   # sqlc configuration
 ├── templates/index.html        # Phase 1 placeholder template
 ├── go.mod / go.sum
 ```
@@ -118,13 +129,15 @@ go-server/
 - Health endpoint at `/go/health` returns DB status, memory stats, goroutine count
 - Structured logging with slog (trace IDs, request timing)
 - Security headers middleware (CSP with nonces, HSTS, X-Frame-Options, etc.)
-- DB models match Python DomainAnalysis/AnalysisStats schema exactly (schema version 2)
 - Template engine with custom helper functions (countryFlag, formatDate, formatDuration, dict, etc.)
+- **sqlc-generated type-safe database queries** for all DomainAnalysis and AnalysisStats operations
+- **DomainAnalysis queries**: CRUD, search by domain, list with pagination, count, popular domains, country distribution
+- **AnalysisStats queries**: CRUD, list recent, upsert daily stats, date range queries
+- **6 integration tests** passing against production PostgreSQL database
 
 **Parallel Operation**: Python app continues serving production traffic on port 5000. Go server currently runs on port 5001 for testing only.
 
 ### Remaining Phases:
-- **Phase 2**: Database queries — read/write DomainAnalysis and AnalysisStats via pgx
 - **Phase 3**: HTTP routes — all Python routes ported (analyze, history, stats, compare, export, BIMI proxy)
 - **Phase 4**: Template migration — convert 6 Jinja2 templates to Go html/template
 - **Phase 5**: DNS engine — port 5,400-line analyzer to Go with miekg/dns + goroutine concurrency
@@ -134,6 +147,7 @@ go-server/
 
 ## Recent Changes
 
+- **2026-02-10**: Go rewrite Phase 2 complete — sqlc integration for type-safe database queries. All DomainAnalysis and AnalysisStats operations ported with 6 integration tests passing. Database struct now exposes `Queries` accessor for handlers.
 - **2026-02-10**: Started Go rewrite — Phase 1 foundation complete. Go project skeleton with Gin web framework, pgx database driver, structured logging, security headers middleware, health endpoint, and template engine. Python app continues serving production traffic.
 - **2026-02-10**: Fixed 2 test failures (CSRF in test mode, trailing-dot domain validation). Test suite now at 229 passing tests.
 - **2026-02-09**: Removed SonarQube report file (false positive gitleaks alert). Cleaned 271 accumulated attached asset files. Added `.gitignore` for `attached_assets/`, `__pycache__/`, `.cache/`, `node_modules/`.
