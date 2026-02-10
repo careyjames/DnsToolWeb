@@ -8,5 +8,12 @@ func formatTimestamp(ts pgtype.Timestamp) string {
 	if !ts.Valid {
 		return ""
 	}
-	return ts.Time.Format("2006-01-02T15:04:05Z")
+	return ts.Time.UTC().Format("2 Jan 2006, 15:04 UTC")
+}
+
+func formatTimestampISO(ts pgtype.Timestamp) string {
+	if !ts.Valid {
+		return ""
+	}
+	return ts.Time.UTC().Format("2006-01-02T15:04:05Z")
 }

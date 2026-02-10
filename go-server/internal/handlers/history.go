@@ -54,8 +54,8 @@ func buildHistoryItem(a dbq.DomainAnalysis) historyAnalysisItem {
         }
         createdDate, createdTime := "", ""
         if a.CreatedAt.Valid {
-                createdDate = a.CreatedAt.Time.Format("2006-01-02")
-                createdTime = a.CreatedAt.Time.Format("15:04:05")
+                createdDate = a.CreatedAt.Time.UTC().Format("2 Jan 2006")
+                createdTime = a.CreatedAt.Time.UTC().Format("15:04 UTC")
         }
         toolVersion := ""
         if len(a.FullResults) > 0 {
