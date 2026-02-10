@@ -136,7 +136,7 @@ func (a *Analyzer) AnalyzeDMARC(ctx context.Context, domain string) map[string]a
         dmarcRecords := a.DNS.QueryDNS(ctx, "TXT", fmt.Sprintf("_dmarc.%s", domain))
 
         baseResult := map[string]any{
-                "status":           "error",
+                "status":           "warning",
                 "message":          "No DMARC record found",
                 "records":          []string{},
                 "valid_records":    []string{},

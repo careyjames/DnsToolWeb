@@ -111,9 +111,9 @@ func buildSPFVerdict(lookupCount int, permissiveness *string, noMailIntent bool,
         }
         if len(validSPF) == 0 {
                 if len(spfLike) > 0 {
-                        return "warning", "No valid SPF record found"
+                        return "warning", "SPF-like record found but not valid — check syntax"
                 }
-                return "error", "No valid SPF record found"
+                return "warning", "No SPF record found"
         }
 
         if lookupCount > 10 {
@@ -145,8 +145,8 @@ func (a *Analyzer) AnalyzeSPF(ctx context.Context, domain string) map[string]any
         txtRecords := a.DNS.QueryDNS(ctx, "TXT", domain)
 
         baseResult := map[string]any{
-                "status":            "error",
-                "message":           "No TXT records found",
+                "status":            "warning",
+                "message":           "No SPF record found",
                 "records":           []string{},
                 "valid_records":     []string{},
                 "spf_like":          []string{},
