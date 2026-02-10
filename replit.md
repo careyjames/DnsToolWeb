@@ -33,3 +33,27 @@ The application is implemented in Go using the Gin framework, having been rewrit
 
 ### Database
 - **PostgreSQL**: The primary database for persistent storage.
+
+## Development Operations
+
+### Version Bump Process
+The app version is defined in `go-server/internal/config/config.go` (the `AppVersion` field). To bump the version and get it live:
+
+1. **Edit the version** in `go-server/internal/config/config.go`
+2. **Rebuild the binary**: `go build -buildvcs=false -o /tmp/dns-tool-server ./go-server/cmd/server/`
+3. **Swap the binary** (rename-swap because the running binary is locked):
+   - `mv dns-tool-server dns-tool-server-old`
+   - `mv /tmp/dns-tool-server dns-tool-server`
+   - `rm dns-tool-server-old`
+4. **Restart the workflow** to pick up the new binary
+
+### Build Notes (Replit-specific)
+- **Git lock issue**: `go build` in Replit triggers VCS stamping which fails due to `.git/index.lock`. **Always** use the `-buildvcs=false` flag.
+- **Binary replacement**: A running binary cannot be overwritten ("Text file busy"). Always build to `/tmp/` first, then rename-swap as described above.
+- **Workflow runs the binary directly**: The workflow executes `./dns-tool-server` (the pre-built binary). It does NOT use `run.sh` or `go run`. This means code changes require a manual rebuild + swap + restart to take effect.
+- **`run.sh`**: Available as a convenience script that builds fresh and runs. Can be used for manual testing but is not invoked by the workflow.
+- **`.replit` file**: Cannot be directly edited by the agent. The workflow command text may not match reality — always verify by checking the actual running process.
+- **Deployment**: The `.replit` deployment section has its own build command (`CGO_ENABLED=0 go build -o dns-tool-server ./go-server/cmd/server/`) and run command (`./dns-tool-server`) which handle production builds automatically.
+
+### Risk Level Labels
+Posture risk levels follow CVSS-aligned semantics: **Informational** (best) → **Low Risk** → **Medium Risk** → **High Risk** → **Critical Risk** (worst). Legacy stored values (bare "Low", "Medium", etc.) are normalized at display time in `NormalizeResults()` in `go-server/internal/handlers/helpers.go`. Remediation severity labels (Critical/High/Medium/Low) are separate from posture states.
