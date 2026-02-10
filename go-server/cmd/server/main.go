@@ -64,7 +64,7 @@ func main() {
         homeHandler := handlers.NewHomeHandler(cfg)
         healthHandler := handlers.NewHealthHandler(database, dnsAnalyzer)
         historyHandler := handlers.NewHistoryHandler(database, cfg)
-        analysisHandler := handlers.NewAnalysisHandler(database, cfg)
+        analysisHandler := handlers.NewAnalysisHandler(database, cfg, dnsAnalyzer)
         statsHandler := handlers.NewStatsHandler(database, cfg)
         compareHandler := handlers.NewCompareHandler(database, cfg)
         exportHandler := handlers.NewExportHandler(database)
