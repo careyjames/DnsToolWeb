@@ -129,7 +129,7 @@ func classifySPF(ps protocolState, acc *postureAccumulator) {
                 acc.configured = append(acc.configured, "SPF")
                 return
         }
-        if ps.spfWarning {
+        if ps.spfWarning && !ps.spfMissing {
                 acc.configured = append(acc.configured, "SPF")
                 acc.issues = append(acc.issues, "SPF needs attention")
                 return
@@ -143,7 +143,7 @@ func classifyDMARC(ps protocolState, acc *postureAccumulator) {
                 classifyDMARCSuccess(ps, acc)
                 return
         }
-        if ps.dmarcWarning {
+        if ps.dmarcWarning && !ps.dmarcMissing {
                 classifyDMARCWarning(ps, acc)
                 return
         }
@@ -245,8 +245,8 @@ func (a *Analyzer) CalculatePosture(results map[string]any) map[string]any {
 
         acc := &postureAccumulator{}
 
-        hasSPF := ps.spfOK || ps.spfWarning
-        hasDMARC := ps.dmarcOK || ps.dmarcWarning
+        hasSPF := ps.spfOK || (ps.spfWarning && !ps.spfMissing)
+        hasDMARC := ps.dmarcOK || (ps.dmarcWarning && !ps.dmarcMissing)
         hasDKIM := ps.dkimOK || ps.dkimProvider
 
         classifySPF(ps, acc)

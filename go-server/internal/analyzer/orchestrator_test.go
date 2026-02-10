@@ -346,7 +346,7 @@ func TestPostureTruthBasedGrades(t *testing.T) {
                         name: "Medium Risk — core present but DMARC p=none",
                         results: map[string]any{
                                 "spf_analysis":     map[string]any{"status": "success"},
-                                "dmarc_analysis":   map[string]any{"status": "warning", "policy": "none"},
+                                "dmarc_analysis":   map[string]any{"status": "warning", "policy": "none", "valid_records": []string{"v=DMARC1; p=none"}},
                                 "dkim_analysis":    map[string]any{"status": "success"},
                                 "mta_sts_analysis": map[string]any{},
                                 "tlsrpt_analysis":  map[string]any{},
@@ -769,7 +769,7 @@ func TestPosturePartialDMARCPctDowngrade(t *testing.T) {
         a := newTestAnalyzer()
         results := map[string]any{
                 "spf_analysis":     map[string]any{"status": "success"},
-                "dmarc_analysis":   map[string]any{"status": "warning", "policy": "reject", "pct": 50},
+                "dmarc_analysis":   map[string]any{"status": "warning", "policy": "reject", "pct": 50, "valid_records": []string{"v=DMARC1; p=reject; pct=50"}},
                 "dkim_analysis":    map[string]any{"status": "success"},
                 "mta_sts_analysis": map[string]any{},
                 "tlsrpt_analysis":  map[string]any{},
