@@ -7,6 +7,7 @@ import (
         "net/http"
         "os"
         "path/filepath"
+        "strings"
 
         "dnstool/go-server/internal/analyzer"
         "dnstool/go-server/internal/config"
@@ -15,6 +16,7 @@ import (
         "dnstool/go-server/internal/middleware"
         tmplFuncs "dnstool/go-server/internal/templates"
 
+        "github.com/gin-contrib/gzip"
         "github.com/gin-gonic/gin"
 )
 
@@ -40,6 +42,7 @@ func main() {
         router := gin.New()
 
         router.Use(middleware.Recovery(cfg.AppVersion))
+        router.Use(gzip.Gzip(gzip.DefaultCompression))
         router.Use(middleware.RequestContext())
         router.Use(middleware.SecurityHeaders())
 
@@ -56,7 +59,32 @@ func main() {
         router.SetHTMLTemplate(tmpl)
 
         staticDir := findStaticDir()
-        router.Static("/static", staticDir)
+        staticFS := http.Dir(staticDir)
+        fileServer := http.StripPrefix("/static", http.FileServer(staticFS))
+        router.GET("/static/*filepath", func(c *gin.Context) {
+                fp := c.Param("filepath")
+                if strings.HasSuffix(fp, ".css") || strings.HasSuffix(fp, ".js") ||
+                        strings.HasSuffix(fp, ".woff2") || strings.HasSuffix(fp, ".woff") ||
+                        strings.HasSuffix(fp, ".png") || strings.HasSuffix(fp, ".ico") ||
+                        strings.HasSuffix(fp, ".svg") || strings.HasSuffix(fp, ".jpg") {
+                        if strings.Contains(fp, "?v=") || strings.Contains(c.Request.URL.RawQuery, "v=") {
+                                c.Header("Cache-Control", "public, max-age=31536000, immutable")
+                        } else {
+                                c.Header("Cache-Control", "public, max-age=86400")
+                        }
+                }
+                fileServer.ServeHTTP(c.Writer, c.Request)
+        })
+        router.HEAD("/static/*filepath", func(c *gin.Context) {
+                fp := c.Param("filepath")
+                if strings.HasSuffix(fp, ".css") || strings.HasSuffix(fp, ".js") ||
+                        strings.HasSuffix(fp, ".woff2") || strings.HasSuffix(fp, ".woff") ||
+                        strings.HasSuffix(fp, ".png") || strings.HasSuffix(fp, ".ico") ||
+                        strings.HasSuffix(fp, ".svg") || strings.HasSuffix(fp, ".jpg") {
+                        c.Header("Cache-Control", "public, max-age=86400")
+                }
+                fileServer.ServeHTTP(c.Writer, c.Request)
+        })
 
         dnsAnalyzer := analyzer.New()
         slog.Info("DNS analyzer initialized with telemetry")

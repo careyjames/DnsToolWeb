@@ -137,11 +137,15 @@ body {
     font-size: 1.1rem !important;
     padding: 0.65rem 1rem !important;
     border-radius: 0.5rem 0 0 0.5rem !important;
+    outline: 2px solid transparent;
+    outline-offset: -2px;
+    transition: outline-color 0.15s ease-in-out !important;
 }
 
 .search-input:focus {
     border-color: var(--status-info) !important;
-    box-shadow: 0 0 0 3px rgba(88, 166, 255, 0.15) !important;
+    outline-color: var(--status-info);
+    box-shadow: none !important;
 }
 
 .search-btn {

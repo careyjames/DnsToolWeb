@@ -643,8 +643,8 @@
                                         <span class="badge bg-{{if eq $spfPerm "DANGEROUS"}}danger{{else if or (eq $spfPerm "STRICT") (eq $spfPerm "SOFT")}}success{{else}}warning{{end}} ms-1">{{mapGetStr "all_mechanism" $spf}}</span>
                                     {{end}}
                                     {{$lookupCount := mapGetFloat "lookup_count" $spf}}
-                                    {{if gt $lookupCount 0}}
-                                        <span class="badge bg-{{if gt $lookupCount 10}}danger{{else if gte $lookupCount 8}}warning{{else}}secondary{{end}} ms-1" data-bs-toggle="tooltip" title="DNS lookup limit is 10">{{formatFloat 0 $lookupCount}}/10 lookups</span>
+                                    {{if gt $lookupCount 0.0}}
+                                        <span class="badge bg-{{if gt $lookupCount 10.0}}danger{{else if gte $lookupCount 8.0}}warning{{else}}secondary{{end}} ms-1" data-bs-toggle="tooltip" title="DNS lookup limit is 10">{{formatFloat 0 $lookupCount}}/10 lookups</span>
                                     {{end}}
                                 </div>
                                 <p class="text-muted mb-2 small">{{mapGetStr "message" $spf}}</p>
@@ -763,7 +763,7 @@
                                         <span class="badge bg-{{if eq $dmarcPolicy "reject"}}success{{else if eq $dmarcPolicy "quarantine"}}warning{{else}}secondary{{end}} ms-1">p={{$dmarcPolicy}}</span>
                                     {{end}}
                                     {{$dmarcPct := mapGetFloat "pct" $dmarc}}
-                                    {{if and (gt $dmarcPct 0) (lt $dmarcPct 100)}}
+                                    {{if and (gt $dmarcPct 0.0) (lt $dmarcPct 100.0)}}
                                         <span class="badge bg-warning ms-1">{{formatFloat 0 $dmarcPct}}% enforced</span>
                                     {{end}}
                                 </div>
@@ -925,8 +925,8 @@
                                                         {{$kiMap := toMap $ki}}
                                                         {{if $kiMap}}
                                                         {{$keyBits := mapGetFloat "key_bits" $kiMap}}
-                                                        {{if gt $keyBits 0}}
-                                                            <span class="badge bg-{{if lt $keyBits 2048}}warning{{else}}success{{end}} ms-1">{{formatFloat 0 $keyBits}}-bit</span>
+                                                        {{if gt $keyBits 0.0}}
+                                                            <span class="badge bg-{{if lt $keyBits 2048.0}}warning{{else}}success{{end}} ms-1">{{formatFloat 0 $keyBits}}-bit</span>
                                                         {{end}}
                                                         {{end}}
                                                     {{end}}
@@ -976,7 +976,7 @@
                                                 <li>Mode: <code>{{mapGetStr "policy_mode" $mta_sts}}</code></li>
                                             {{end}}
                                             {{$policyMaxAge := mapGetFloat "policy_max_age" $mta_sts}}
-                                            {{if gt $policyMaxAge 0}}
+                                            {{if gt $policyMaxAge 0.0}}
                                                 <li>Max Age: {{intDiv $policyMaxAge 86400}} days ({{formatFloat 0 $policyMaxAge}} seconds)</li>
                                             {{end}}
                                             {{$policyMx := mapGetSlice "policy_mx" $mta_sts}}
@@ -1281,7 +1281,7 @@
                                                     <td><code>{{mapGetStr "mx_host" $t}}</code></td>
                                                     <td>
                                                         {{$usage := mapGetFloat "usage" $t}}
-                                                        <span class="badge bg-{{if or (eq $usage 2) (eq $usage 3)}}success{{else}}warning{{end}}">{{formatFloat 0 $usage}}</span>
+                                                        <span class="badge bg-{{if or (eq $usage 2.0) (eq $usage 3.0)}}success{{else}}warning{{end}}">{{formatFloat 0 $usage}}</span>
                                                         <small class="text-muted ms-1">{{mapGetStr "usage_name" $t}}</small>
                                                     </td>
                                                     <td><small>{{mapGetStr "selector_name" $t}}</small></td>
@@ -1920,12 +1920,14 @@
                         <i class="fas fa-sitemap me-2"></i>Subdomain Discovery
                         <a href="https://datatracker.ietf.org/doc/html/rfc6962" target="_blank" rel="noopener" class="badge bg-dark bg-opacity-25 text-muted text-decoration-none fw-normal ms-2" style="font-size: 0.6rem;" title="Certificate Transparency">RFC 6962</a>
                         {{$ctFreshness := mapGetMap "ct_subdomains" $data_freshness}}
-                        {{if and $ctFreshness (eq (mapGetStr "source" $ctFreshness) "cache")}}<span class="badge bg-secondary bg-opacity-50 border border-secondary border-opacity-25 ms-1" style="font-size: 0.55rem;" data-bs-toggle="tooltip" title="CT log data cached for 1 hour — certificate records change infrequently">CACHED</span>{{else}}<span class="badge bg-success bg-opacity-25 border border-success border-opacity-25 ms-1" style="font-size: 0.55rem;" data-bs-toggle="tooltip" title="Live Certificate Transparency query">LIVE</span>{{end}}
+                        {{if or (eq (mapGetStr "status" $ct) "error") (eq (mapGetStr "status" $ct) "timeout")}}<span class="badge bg-warning bg-opacity-25 border border-warning border-opacity-25 text-warning ms-1" style="font-size: 0.55rem;" data-bs-toggle="tooltip" title="Certificate Transparency lookup encountered an issue">UNAVAILABLE</span>{{else if and $ctFreshness (eq (mapGetStr "source" $ctFreshness) "cache")}}<span class="badge bg-secondary bg-opacity-50 border border-secondary border-opacity-25 ms-1" style="font-size: 0.55rem;" data-bs-toggle="tooltip" title="CT log data cached for 1 hour — certificate records change infrequently">CACHED</span>{{else}}<span class="badge bg-success bg-opacity-25 border border-success border-opacity-25 ms-1" style="font-size: 0.55rem;" data-bs-toggle="tooltip" title="Live Certificate Transparency query">LIVE</span>{{end}}
                     </h5>
                     {{$ctStatus := mapGetStr "status" $ct}}
                     {{$ctUnique := mapGetFloat "unique_subdomains" $ct}}
-                    {{if and (eq $ctStatus "success") (gt $ctUnique 0)}}
-                    <span class="badge bg-info-subtle text-info border border-info-subtle">{{if mapGetBool "was_truncated" $ct}}{{mapGetStr "display_count" $ct}} of {{end}}{{formatFloat 0 $ctUnique}} subdomain{{if ne $ctUnique 1}}s{{end}}</span>
+                    {{if and (eq $ctStatus "success") (gt $ctUnique 0.0)}}
+                    <span class="badge bg-info-subtle text-info border border-info-subtle">{{if mapGetBool "was_truncated" $ct}}{{mapGetStr "display_count" $ct}} of {{end}}{{formatFloat 0 $ctUnique}} subdomain{{if ne $ctUnique 1.0}}s{{end}}</span>
+                    {{else if and (eq $ctStatus "success") (eq $ctUnique 0.0)}}
+                    <span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle">0 subdomains</span>
                     {{end}}
                 </div>
                 <div class="card-body">
@@ -1937,16 +1939,16 @@
                             <span class="badge bg-success-subtle text-success border border-success-subtle"><i class="fas fa-check me-1"></i>{{mapGetStr "current_count" $ct}} current</span>
                             <span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle"><i class="fas fa-history me-1"></i>{{mapGetStr "expired_count" $ct}} expired</span>
                             {{$cnameCount := mapGetFloat "cname_count" $ct}}
-                            {{if gt $cnameCount 0}}
-                            <span class="badge bg-primary-subtle text-primary border border-primary-subtle"><i class="fas fa-link me-1"></i>{{formatFloat 0 $cnameCount}} CNAME{{if ne $cnameCount 1}}s{{end}}</span>
+                            {{if gt $cnameCount 0.0}}
+                            <span class="badge bg-primary-subtle text-primary border border-primary-subtle"><i class="fas fa-link me-1"></i>{{formatFloat 0 $cnameCount}} CNAME{{if ne $cnameCount 1.0}}s{{end}}</span>
                             {{end}}
                             {{$cnameDiscCount := mapGetFloat "cname_discovered_count" $ct}}
-                            {{if gt $cnameDiscCount 0}}
+                            {{if gt $cnameDiscCount 0.0}}
                             <span class="badge border" style="font-size:0.7rem; color: #d4a0ff; background: #241b39; border-color: rgba(168,85,247,0.35) !important;"><i class="fas fa-project-diagram me-1"></i>{{formatFloat 0 $cnameDiscCount}} discovered via CNAME</span>
                             {{end}}
                             {{$providersFound := mapGetFloat "providers_found" $ct}}
-                            {{if gt $providersFound 0}}
-                            <span class="badge bg-warning-subtle text-warning border border-warning-subtle"><i class="fas fa-building me-1"></i>{{formatFloat 0 $providersFound}} provider{{if ne $providersFound 1}}s{{end}} identified</span>
+                            {{if gt $providersFound 0.0}}
+                            <span class="badge bg-warning-subtle text-warning border border-warning-subtle"><i class="fas fa-building me-1"></i>{{formatFloat 0 $providersFound}} provider{{if ne $providersFound 1.0}}s{{end}} identified</span>
                             {{end}}
                             <span class="badge bg-dark bg-opacity-25 text-muted fw-normal"><i class="fas fa-database me-1"></i>Source: {{mapGetStr "source" $ct}}</span>
                         </div>
@@ -2054,12 +2056,12 @@
                         Three cooperative discovery methods — CT logs (RFC 6962), DNS probing of ~290 common service names, and CNAME chain traversal — feed into a unified view.
                         Well-known service names (mail, vpn, api, sso, admin, etc.), DNS-resolving hosts, and subdomains with the most certificate activity are prioritized.
                         {{$expiredCount := mapGetFloat "expired_count" $ct}}
-                        {{if gt $expiredCount 0}}
-                        <span class="ms-1">{{formatFloat 0 $expiredCount}} expired-certificate-only subdomain{{if ne $expiredCount 1}}s{{end}} included where relevant.</span>
+                        {{if gt $expiredCount 0.0}}
+                        <span class="ms-1">{{formatFloat 0 $expiredCount}} expired-certificate-only subdomain{{if ne $expiredCount 1.0}}s{{end}} included where relevant.</span>
                         {{end}}
                     </div>
                     {{end}}
-                    {{else if and (eq $ctStatus "success") (eq $ctUnique 0)}}
+                    {{else if and (eq $ctStatus "success") (eq $ctUnique 0.0)}}
                     {{if and (mapGetBool "is_analyzed_subdomain" $ct) (mapGetStr "registered_domain" $ct)}}
                     {{$regDomain := mapGetStr "registered_domain" $ct}}
                     <div class="alert alert-info bg-info bg-opacity-10 border-info border-opacity-25 mb-0 small">
