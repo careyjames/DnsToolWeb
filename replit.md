@@ -78,6 +78,9 @@ DKIM selectors are not enumerable via DNS (RFC 6376 §3.6.2.1). The tool checks 
 ### Template Comparison Safety
 All six Go template comparison operators (`eq`, `ne`, `gt`, `lt`, `ge`, `le`) are overridden in `go-server/internal/templates/funcs.go` with type-safe versions that use `toFloat64()` for cross-type numeric comparisons. This prevents panics when comparing `float64` values (from `mapGetFloat`) with integer literals in templates. Template authors can safely write `eq $floatVar 0` without worrying about type mismatches. The custom `eq` preserves Go's variadic semantics (`eq arg1 arg2 arg3...` means `arg1==arg2 || arg1==arg3 || ...`).
 
+### Analysis Integrity Standard
+The tool's analysis logic — posture scoring, remediation recommendations, risk levels, and provider detection — must produce results that any RFC-literate security engineer, enterprise DNS engineer, or enterprise email infrastructure professional would independently reach the same conclusion reviewing the same data. This is the bar: convergent agreement across RFC standards bodies, enterprise security teams, and industry best practices from as many authoritative angles as possible. Every rating must be scientifically defensible and honest. Never inflate severity to appear thorough, never downplay to avoid attention. The golden rules test suite (`go-server/internal/analyzer/golden_rules_test.go`, 41 cases) is the automated regression guard protecting this standard.
+
 ### Remediation Best Practice Logic (Feb 2026)
 The remediation engine follows strict RFC-aligned best practices with nuanced, context-aware recommendations:
 
