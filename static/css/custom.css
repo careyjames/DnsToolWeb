@@ -1045,6 +1045,48 @@ main.container {
         print-color-adjust: exact !important;
     }
 
+    /* ================================================
+       BOOTSTRAP DARK THEME CSS CUSTOM PROPERTY RESET
+       Chrome honours data-bs-theme="dark" custom properties
+       in print, causing dark backgrounds/text. Safari ignores
+       them. Override all critical custom properties to light
+       values so both engines produce identical output.
+       ================================================ */
+    :root,
+    [data-bs-theme="dark"] {
+        --bs-body-bg: #ffffff !important;
+        --bs-body-color: #1a1a2e !important;
+        --bs-emphasis-color: #1a1a2e !important;
+        --bs-secondary-color: #6b7280 !important;
+        --bs-tertiary-color: #9ca3af !important;
+        --bs-body-bg-rgb: 255, 255, 255 !important;
+        --bs-body-color-rgb: 26, 26, 46 !important;
+        --bs-emphasis-color-rgb: 26, 26, 46 !important;
+        --bs-link-color: #1e40af !important;
+        --bs-link-color-rgb: 30, 64, 175 !important;
+        --bs-link-hover-color: #1e3a5f !important;
+        --bs-card-bg: #ffffff !important;
+        --bs-card-color: #1a1a2e !important;
+        --bs-card-border-color: #d1d5db !important;
+        --bs-card-cap-bg: #f0f4f8 !important;
+        --bs-card-cap-color: #1a1a2e !important;
+        --bs-border-color: #d1d5db !important;
+        --bs-border-color-translucent: rgba(0, 0, 0, 0.12) !important;
+        --bs-heading-color: #1a1a2e !important;
+        --bs-table-bg: #ffffff !important;
+        --bs-table-color: #1a1a2e !important;
+        --bs-table-border-color: #e5e7eb !important;
+        --bs-table-striped-bg: #f5f7fa !important;
+        --bs-table-striped-color: #1a1a2e !important;
+        --bs-table-hover-bg: #f0f4f8 !important;
+        --bs-table-hover-color: #1a1a2e !important;
+        --bs-tertiary-bg: #f5f7fa !important;
+        --bs-secondary-bg: #e5e7eb !important;
+        --bs-input-bg: #ffffff !important;
+        --bs-input-color: #1a1a2e !important;
+        --bs-input-border-color: #d1d5db !important;
+    }
+
     /* === Global Reset — Clean White Canvas === */
     body {
         background-color: #ffffff !important;
@@ -1866,9 +1908,12 @@ main.container {
         break-after: avoid;
     }
 
-    .collapse {
+    .collapse,
+    .collapse:not(.show) {
         display: block !important;
         height: auto !important;
+        overflow: visible !important;
+        visibility: visible !important;
     }
 
     /* ================================================
