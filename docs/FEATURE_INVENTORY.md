@@ -1,7 +1,7 @@
 # DNS Tool — Feature Inventory
 
-**Version:** 26.12.7
-**Last Updated:** February 10, 2026
+**Version:** 26.12.17
+**Last Updated:** February 11, 2026
 **Implementation:** Go/Gin (`go-server/`)
 
 ---
@@ -33,6 +33,7 @@ parsing and validation of a specific DNS protocol.
 | 8 | **DNSSEC Analysis** | RFC 4035 | `dnssec.go` | `dnssec_analysis` |
 | 9 | **CAA Analysis** | RFC 8659 | `caa.go` | `caa_analysis` |
 | 10 | **NS Delegation Analysis** | RFC 1034 | `ns_delegation.go` | `ns_delegation_analysis` |
+| 11 | **SMTP Transport Analysis** | RFC 3207 | `smtp_transport.go` | `smtp_transport` |
 
 ### 1.1 SPF Analysis (`spf.go`)
 - TXT record lookup and SPF record identification
@@ -55,9 +56,10 @@ parsing and validation of a specific DNS protocol.
 - Testing mode detection (`t=y`)
 - DMARC-like but invalid record detection
 - Multiple DMARC record detection
+- DMARCbis readiness checks (upcoming standard changes)
 
 ### 1.3 DKIM Analysis (`dkim.go`)
-- Common selector probing (30+ selectors)
+- Common selector probing (35 default selectors)
 - Provider-specific selector detection
 - Key record parsing (`v`, `k`, `p`, `t` flags)
 - Key type identification (RSA, Ed25519)
@@ -115,6 +117,7 @@ parsing and validation of a specific DNS protocol.
 - `issuewild` tag parsing (wildcard certificate CAs, separate per RFC 8659 §4.3)
 - `iodef` notification endpoint parsing
 - Unrestricted CA detection (no CAA records)
+- MPIC (Multi-Perspective Issuance Corroboration) awareness — CA/B Forum Ballot SC-067, mandatory since September 2025
 
 ### 1.10 NS Delegation Analysis (`ns_delegation.go`)
 - Child zone NS record query
@@ -124,22 +127,36 @@ parsing and validation of a specific DNS protocol.
 - Lame delegation detection
 - Undelegated domain handling
 
+### 1.11 SMTP Transport Analysis (`smtp_transport.go`)
+- Direct SMTP probe (port 25) with STARTTLS negotiation
+- TLS version detection (TLS 1.0 / 1.1 / 1.2 / 1.3)
+- Cipher suite extraction and strength assessment
+- Server certificate validation (issuer, expiry, chain)
+- DNS-inferred fallback when port 25 is blocked:
+  - MTA-STS enforce mode detection
+  - DANE/TLSA record presence
+  - TLS-RPT configuration as encryption signal
+  - Known provider capability inference (Google, Microsoft, Proton, etc.)
+- Explicit labeling of probe mode (direct vs. DNS-inferred) for honesty
+- Per-MX-host transport result aggregation
+- Summary verdict: Encrypted / Partial / Unencrypted / Inferred
+
 ---
 
 ## 2. Infrastructure Analysis
 
 | # | Feature | Source File | Schema Key |
 |---|---------|-------------|------------|
-| 11 | **Basic DNS Records** | `records.go` | `basic_records` |
-| 12 | **Authoritative Records** | `records.go` | `authoritative_records` |
-| 13 | **Resolver Consensus** | `records.go` | `resolver_consensus` |
-| 14 | **Propagation Status** | `records.go` | `propagation_status` |
-| 15 | **Registrar/RDAP Lookup** | `registrar.go` | `registrar_info` |
-| 16 | **CT Subdomain Discovery** | `subdomains.go` | `ct_subdomains` |
-| 17 | **DNS Infrastructure Detection** | `infrastructure.go` | `dns_infrastructure` |
-| 18 | **Hosting Summary** | `infrastructure.go` | `hosting_summary` |
-| 19 | **Domain Existence Detection** | `orchestrator.go` | `domain_exists` |
-| 20 | **Domain Status** | `orchestrator.go` | `domain_status`, `domain_status_message` |
+| 12 | **Basic DNS Records** | `records.go` | `basic_records` |
+| 13 | **Authoritative Records** | `records.go` | `authoritative_records` |
+| 14 | **Resolver Consensus** | `records.go` | `resolver_consensus` |
+| 15 | **Propagation Status** | `records.go` | `propagation_status` |
+| 16 | **Registrar/RDAP Lookup** | `registrar.go` | `registrar_info` |
+| 17 | **CT Subdomain Discovery** | `subdomains.go` | `ct_subdomains` |
+| 18 | **DNS Infrastructure Detection** | `infrastructure.go` | `dns_infrastructure` |
+| 19 | **Hosting Summary** | `infrastructure.go` | `hosting_summary` |
+| 20 | **Domain Existence Detection** | `orchestrator.go` | `domain_exists` |
+| 21 | **Domain Status** | `orchestrator.go` | `domain_status`, `domain_status_message` |
 
 ### 2.1 Basic DNS Records (`records.go`)
 - Multi-type DNS query: A, AAAA, MX, TXT, NS, CNAME, CAA, SOA, SRV
@@ -187,7 +204,7 @@ parsing and validation of a specific DNS protocol.
 - NS hostname matching against known provider database
 - Provider tier classification (enterprise / professional / standard / basic)
 - Feature detection (DNSSEC support, DDoS protection, anycast, geo-routing)
-- Government domain detection (.gov, .mil)
+- Government domain detection (.gov, .mil, .gov.uk, .gov.au, .gc.ca)
 - 200+ CNAME-to-provider mappings
 
 ### 2.8 Hosting Summary (`infrastructure.go`)
@@ -208,9 +225,9 @@ parsing and validation of a specific DNS protocol.
 
 | # | Feature | Source File | Schema Key |
 |---|---------|-------------|------------|
-| 21 | **Security Posture Assessment** | `posture.go` | `posture` |
-| 22 | **Mail Posture Classification** | `posture.go` | `mail_posture` |
-| 23 | **Remediation Engine** | `remediation.go` | `remediation` |
+| 22 | **Security Posture Assessment** | `posture.go` | `posture` |
+| 23 | **Mail Posture Classification** | `posture.go` | `mail_posture` |
+| 24 | **Remediation Engine** | `remediation.go` | `remediation` |
 
 ### 3.1 Security Posture Assessment (`posture.go`)
 - CVSS-aligned risk levels: Informational → Low → Medium → High → Critical
@@ -233,7 +250,7 @@ parsing and validation of a specific DNS protocol.
 ### 3.3 Remediation Engine (`remediation.go`)
 - Per-section status evaluation
 - Severity classification: Critical / High / Medium / Low
-- DNS record examples (copy-paste ready)
+- DNS record examples with actual domain (copy-paste ready)
 - RFC section references with citations
 - Top 3 priority fixes sorted by severity
 - Achievable posture projection ("if you fix these, you reach X")
@@ -245,9 +262,9 @@ parsing and validation of a specific DNS protocol.
 
 | # | Feature | Source File | Schema Key |
 |---|---------|-------------|------------|
-| 24 | **Email Security Management Detection** | `infrastructure.go` | `email_security_mgmt` |
-| 25 | **Null MX Detection** | `posture.go` | `has_null_mx` |
-| 26 | **No-Mail Domain Detection** | `posture.go` | `is_no_mail_domain` |
+| 25 | **Email Security Management Detection** | `infrastructure.go` | `email_security_mgmt` |
+| 26 | **Null MX Detection** | `posture.go` | `has_null_mx` |
+| 27 | **No-Mail Domain Detection** | `posture.go` | `is_no_mail_domain` |
 
 ### 4.1 Email Security Management Detection (`infrastructure.go`)
 - DMARC `rua` URI provider matching (30+ monitoring providers)
@@ -265,12 +282,11 @@ parsing and validation of a specific DNS protocol.
 
 | # | Feature | Source File | Schema Key |
 |---|---------|-------------|------------|
-| 27 | **Data Freshness Tracking** | `orchestrator.go` | `_data_freshness` |
-| 28 | **Section Status Summary** | `orchestrator.go` | `section_status` |
-| 29 | **Authoritative Query Status** | `records.go` | `auth_query_status` |
-| 30 | **Resolver TTL** | `records.go` | `resolver_ttl` |
-| 31 | **Authoritative TTL** | `records.go` | `auth_ttl` |
-| 32 | **SMTP Transport Analysis** | `orchestrator.go` | `smtp_transport` (placeholder — reserved for future implementation) |
+| 28 | **Data Freshness Tracking** | `orchestrator.go` | `_data_freshness` |
+| 29 | **Section Status Summary** | `orchestrator.go` | `section_status` |
+| 30 | **Authoritative Query Status** | `records.go` | `auth_query_status` |
+| 31 | **Resolver TTL** | `records.go` | `resolver_ttl` |
+| 32 | **Authoritative TTL** | `records.go` | `auth_ttl` |
 
 ---
 
@@ -360,15 +376,15 @@ Professional, client-facing print layout designed for executive audiences.
 | Hosted DKIM Providers | `providers.go` | Known hosted DKIM services |
 | Dynamic Services Zones | `providers.go` | DNS delegation subzone patterns |
 | DNS Infrastructure Providers | `infrastructure.go` | Enterprise/professional/standard tiers |
-| DKIM Selector Database | `dkim.go` | 29 default selectors |
+| DKIM Selector Database | `dkim.go` | 35 default selectors |
 | IANA RDAP Bootstrap | Runtime loaded | 1,196 TLDs |
 
 ---
 
 ## Total Feature Count: 48
 
-**Analysis Modules:** 10 | **Infrastructure:** 10 | **Assessment:** 3 |
-**Detection:** 3 | **Metadata:** 6 | **Platform:** 8 | **Security:** 8
+**Analysis Modules:** 11 | **Infrastructure:** 10 | **Assessment:** 3 |
+**Detection:** 3 | **Metadata:** 5 | **Platform:** 8 | **Security:** 8
 
 ---
 
@@ -431,7 +447,7 @@ is archived for historical reference. The Go manifest supersedes it.
 | `auth_query_status` | `analyzer/records.go` | Implemented |
 | `resolver_ttl` | `analyzer/records.go` | Implemented |
 | `auth_ttl` | `analyzer/records.go` | Implemented |
-| `smtp_transport` | `analyzer/orchestrator.go` | Placeholder (schema key present, logic reserved) |
+| `smtp_transport` | `analyzer/smtp_transport.go` | Implemented |
 | `has_null_mx` | `analyzer/posture.go` | Implemented |
 | `is_no_mail_domain` | `analyzer/posture.go` | Implemented |
 
