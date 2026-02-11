@@ -209,7 +209,6 @@ func TestPostureIssuesTracking(t *testing.T) {
                 "No SPF record",
                 "No DMARC record",
                 "No DKIM found",
-                "No CAA records",
         }
 
         if len(issues) != len(expectedIssues) {
@@ -219,6 +218,17 @@ func TestPostureIssuesTracking(t *testing.T) {
                 if i < len(issues) && issues[i] != expected {
                         t.Errorf("issue[%d] expected %q, got %q", i, expected, issues[i])
                 }
+        }
+
+        absent, _ := posture["absent"].([]string)
+        foundCAAInAbsent := false
+        for _, a := range absent {
+                if a == "CAA" {
+                        foundCAAInAbsent = true
+                }
+        }
+        if !foundCAAInAbsent {
+                t.Error("CAA should appear in absent list (Low severity, not in issues/recommendations)")
         }
 }
 
@@ -751,15 +761,15 @@ func TestPostureIssuesSeveritySeparation(t *testing.T) {
                 t.Errorf("Low domain should have no critical issues, got %v", criticalIssues)
         }
 
-        recs, _ := posture["recommendations"].([]string)
+        absent, _ := posture["absent"].([]string)
         foundCAA := false
-        for _, r := range recs {
-                if strings.Contains(r, "CAA") {
+        for _, a := range absent {
+                if a == "CAA" {
                         foundCAA = true
                 }
         }
         if !foundCAA {
-                t.Error("missing CAA should appear in recommendations, not critical issues")
+                t.Error("missing CAA should appear in absent list (Low severity advisory)")
         }
 
         state, _ := posture["state"].(string)
@@ -895,17 +905,15 @@ func TestPostureSPFSoftfailVsHardfail(t *testing.T) {
                 "dnssec_analysis":  map[string]any{},
         }
         pSoftNoDMARC := a.CalculatePosture(softfailNoDMARC)
-        recNoDMARC, _ := pSoftNoDMARC["recommendations"].([]string)
-        issNoDMARC, _ := pSoftNoDMARC["issues"].([]string)
-        allNoDMARC := append(recNoDMARC, issNoDMARC...)
-        foundRecNoDMARC := false
-        for _, r := range allNoDMARC {
-                if strings.Contains(r, "softfail") || strings.Contains(r, "~all") {
-                        foundRecNoDMARC = true
+        confNoDMARC, _ := pSoftNoDMARC["configured"].([]string)
+        foundSoftfailNoDMARC := false
+        for _, c := range confNoDMARC {
+                if strings.Contains(c, "~all") {
+                        foundSoftfailNoDMARC = true
                 }
         }
-        if !foundRecNoDMARC {
-                t.Error("SPF ~all without DMARC enforcement should generate a recommendation about upgrading to -all")
+        if !foundSoftfailNoDMARC {
+                t.Error("SPF ~all without DMARC enforcement should still show (~all) in configured list")
         }
 }
 
