@@ -13,6 +13,7 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
+    "csso-cli": "^4.0.2",
     "lighthouse": "^12.8.2"
   }
 }

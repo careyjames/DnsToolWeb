@@ -1038,9 +1038,18 @@ main.container {
     }
 
     /* === Force Color Rendering === */
-    *,
-    *::before,
-    *::after {
+    body,
+    .card, .card-header, .card-body, .card-footer,
+    .badge, .alert, .table, .table th, .table td,
+    .table-striped tbody tr,
+    .print-report-header, .print-domain-banner, .print-report-footer,
+    .print-header-accent, .print-footer-accent,
+    .print-tlp-badge, .code-block,
+    .dns-diff-container, .dns-diff-header,
+    .dns-diff-type-header, .dns-diff-row, .dns-diff-col,
+    .esm-provider-card, .provider-badge, .rfc-link,
+    .progress, .progress-bar,
+    .subdomain-table th, .subdomain-table td {
         -webkit-print-color-adjust: exact !important;
         print-color-adjust: exact !important;
     }

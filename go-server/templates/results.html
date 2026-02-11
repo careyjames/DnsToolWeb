@@ -2229,6 +2229,15 @@
     {{template "scripts" .}}
     <script nonce="{{.CspNonce}}">
     (function() {
+        var _printThemePrev = 'dark';
+        window.addEventListener('beforeprint', function() {
+            _printThemePrev = document.documentElement.getAttribute('data-bs-theme') || 'dark';
+            document.documentElement.setAttribute('data-bs-theme', 'light');
+        });
+        window.addEventListener('afterprint', function() {
+            document.documentElement.setAttribute('data-bs-theme', _printThemePrev);
+        });
+
         document.addEventListener('DOMContentLoaded', function() {
             document.querySelectorAll('.bimi-logo-img').forEach(function(img) {
                 img.addEventListener('error', function() {
