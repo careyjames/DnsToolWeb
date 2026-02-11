@@ -45,6 +45,7 @@ func (a *Analyzer) GenerateRemediation(results map[string]any) map[string]any {
         fixes = appendMTASTSFixes(fixes, ps, domain)
         fixes = appendTLSRPTFixes(fixes, ps, domain)
         fixes = appendDNSSECFixes(fixes, ps)
+        fixes = appendDANEFixes(fixes, ps, domain)
         fixes = appendBIMIFixes(fixes, ps, domain)
 
         sortFixes(fixes)
@@ -144,7 +145,47 @@ func extractSPFIncludes(results map[string]any) []string {
 func appendSPFFixes(fixes []fix, ps protocolState, results map[string]any, domain string) []fix {
         includes := extractSPFIncludes(results)
 
+        if ps.spfDangerous {
+                return append(fixes, fix{
+                        Title:         "Fix dangerously permissive SPF",
+                        Description:   "Your SPF record uses +all, which allows any server in the world to send email as your domain — it provides zero protection. Change to ~all (softfail) or -all (hardfail) immediately.",
+                        DNSRecord:     buildSPFRecordExample(domain, includes, "~all"),
+                        RFC:           "RFC 7208 §5.1",
+                        RFCURL:        "https://datatracker.ietf.org/doc/html/rfc7208#section-5.1",
+                        Severity:      severityCritical,
+                        SeverityColor: colorCritical,
+                        SeverityOrder: 1,
+                        Section:       "spf",
+                })
+        }
+
+        if ps.spfNeutral {
+                return append(fixes, fix{
+                        Title:         "Strengthen SPF enforcement",
+                        Description:   "Your SPF record uses ?all (neutral), which tells receivers to accept email regardless of SPF check results. Change to ~all (softfail) or -all (hardfail) to restrict unauthorized senders.",
+                        DNSRecord:     buildSPFRecordExample(domain, includes, "~all"),
+                        RFC:           "RFC 7208 §5.2",
+                        RFCURL:        "https://datatracker.ietf.org/doc/html/rfc7208#section-5.2",
+                        Severity:      severityHigh,
+                        SeverityColor: colorHigh,
+                        SeverityOrder: 2,
+                        Section:       "spf",
+                })
+        }
+
         if ps.spfOK {
+                if ps.spfLookupExceeded {
+                        fixes = append(fixes, fix{
+                                Title:         "Reduce SPF DNS lookups",
+                                Description:   fmt.Sprintf("Your SPF record uses %d DNS lookups (limit is 10). Exceeding 10 lookups causes SPF to permanently fail (PermError), meaning receivers treat it as if you have no SPF at all. Consolidate include mechanisms or use SPF flattening to stay within the limit.", ps.spfLookupCount),
+                                RFC:           "RFC 7208 §4.6.4",
+                                RFCURL:        "https://datatracker.ietf.org/doc/html/rfc7208#section-4.6.4",
+                                Severity:      severityMedium,
+                                SeverityColor: colorMedium,
+                                SeverityOrder: 3,
+                                Section:       "spf",
+                        })
+                }
                 if ps.spfHardFail {
                         return fixes
                 }
@@ -166,6 +207,18 @@ func appendSPFFixes(fixes []fix, ps protocolState, results map[string]any, domai
                 })
         }
         if ps.spfWarning && !ps.spfMissing {
+                if ps.spfLookupExceeded {
+                        fixes = append(fixes, fix{
+                                Title:         "Reduce SPF DNS lookups",
+                                Description:   fmt.Sprintf("Your SPF record uses %d DNS lookups (limit is 10). Exceeding 10 lookups causes SPF to permanently fail (PermError), meaning receivers treat it as if you have no SPF at all. Consolidate include mechanisms or use SPF flattening.", ps.spfLookupCount),
+                                RFC:           "RFC 7208 §4.6.4",
+                                RFCURL:        "https://datatracker.ietf.org/doc/html/rfc7208#section-4.6.4",
+                                Severity:      severityMedium,
+                                SeverityColor: colorMedium,
+                                SeverityOrder: 3,
+                                Section:       "spf",
+                        })
+                }
                 return fixes
         }
         return append(fixes, fix{
@@ -215,7 +268,7 @@ func appendDMARCFixes(fixes []fix, ps protocolState, results map[string]any, dom
         }
 
         if ps.dmarcPolicy == "quarantine" {
-                return append(fixes, fix{
+                fixes = append(fixes, fix{
                         Title:         "Upgrade DMARC to reject policy",
                         Description:   "Your DMARC policy is quarantine — spoofed messages are flagged. Upgrading to p=reject blocks them entirely. Review aggregate reports to confirm legitimate senders are aligned.",
                         DNSRecord:     fmt.Sprintf("_dmarc.%s TXT \"v=DMARC1; p=reject; rua=mailto:dmarc-reports@%s\"", domain, domain),
@@ -228,23 +281,50 @@ func appendDMARCFixes(fixes []fix, ps protocolState, results map[string]any, dom
                 })
         }
 
+        if (ps.dmarcOK || ps.dmarcWarning) && !ps.dmarcMissing && !ps.dmarcHasRua {
+                fixes = append(fixes, fix{
+                        Title:         "Add DMARC aggregate reporting",
+                        Description:   "Add a rua= tag to your DMARC record to receive aggregate reports about authentication results. Without reporting, you cannot see who is sending email as your domain or whether legitimate mail is failing authentication.",
+                        DNSRecord:     fmt.Sprintf("_dmarc.%s TXT \"v=DMARC1; p=%s; rua=mailto:dmarc-reports@%s\"", domain, ps.dmarcPolicy, domain),
+                        RFC:           "RFC 7489 §7.1",
+                        RFCURL:        "https://datatracker.ietf.org/doc/html/rfc7489#section-7.1",
+                        Severity:      severityMedium,
+                        SeverityColor: colorMedium,
+                        SeverityOrder: 3,
+                        Section:       "dmarc",
+                })
+        }
+
         return fixes
 }
 
 func appendDKIMFixes(fixes []fix, ps protocolState, results map[string]any, domain string) []fix {
-        if ps.dkimOK || ps.dkimProvider {
+        if ps.isNoMailDomain {
                 return fixes
         }
 
-        if ps.isNoMailDomain {
+        if ps.dkimOK || ps.dkimProvider {
+                if ps.dkimWeakKeys {
+                        fixes = append(fixes, fix{
+                                Title:         "Upgrade weak DKIM keys",
+                                Description:   "One or more DKIM selectors use 1024-bit RSA keys which are considered weak by modern standards. Upgrade to 2048-bit keys for stronger cryptographic protection.",
+                                DNSRecord:     fmt.Sprintf("selector1._domainkey.%s TXT \"v=DKIM1; k=rsa; p=<2048_bit_public_key>\"", domain),
+                                RFC:           "RFC 8301 §3.2",
+                                RFCURL:        "https://datatracker.ietf.org/doc/html/rfc8301#section-3.2",
+                                Severity:      severityMedium,
+                                SeverityColor: colorMedium,
+                                SeverityOrder: 3,
+                                Section:       "dkim",
+                        })
+                }
                 return fixes
         }
 
         dkim := getMapResult(results, "dkim_analysis")
         provider, _ := dkim["primary_provider"].(string)
 
-        if ps.dkimPartial && provider != "" && provider != "Unknown" {
-                return append(fixes, fix{
+        if ps.dkimThirdPartyOnly && provider != "" && provider != "Unknown" {
+                fixes = append(fixes, fix{
                         Title:         fmt.Sprintf("Enable DKIM for %s", provider),
                         Description:   fmt.Sprintf("DKIM is only configured for third-party services, not your primary mail platform (%s). Enable DKIM signing in %s settings to cover all outbound mail.", provider, provider),
                         DNSRecord:     fmt.Sprintf("selector1._domainkey.%s TXT \"v=DKIM1; k=rsa; p=<public_key>\"", domain),
@@ -255,6 +335,20 @@ func appendDKIMFixes(fixes []fix, ps protocolState, results map[string]any, doma
                         SeverityOrder: 3,
                         Section:       "dkim",
                 })
+                if ps.dkimWeakKeys {
+                        fixes = append(fixes, fix{
+                                Title:         "Upgrade weak DKIM keys",
+                                Description:   "One or more DKIM selectors use 1024-bit RSA keys. Upgrade to 2048-bit keys for stronger cryptographic protection.",
+                                DNSRecord:     fmt.Sprintf("selector1._domainkey.%s TXT \"v=DKIM1; k=rsa; p=<2048_bit_public_key>\"", domain),
+                                RFC:           "RFC 8301 §3.2",
+                                RFCURL:        "https://datatracker.ietf.org/doc/html/rfc8301#section-3.2",
+                                Severity:      severityMedium,
+                                SeverityColor: colorMedium,
+                                SeverityOrder: 3,
+                                Section:       "dkim",
+                        })
+                }
+                return fixes
         }
 
         if ps.dkimPartial {
@@ -339,6 +433,19 @@ func appendDNSSECFixes(fixes []fix, ps protocolState) []fix {
         if ps.dnssecOK {
                 return fixes
         }
+        if ps.dnssecBroken {
+                return append(fixes, fix{
+                        Title:         "Fix broken DNSSEC chain of trust",
+                        Description:   "DNSSEC is partially configured — DNSKEY records exist but the DS record is missing at the parent zone (registrar). This means DNS responses are signed but receivers cannot validate the signatures, causing validation failures. Publish the correct DS record at your registrar.",
+                        DNSRecord:     "",
+                        RFC:           "RFC 4035 §2.4",
+                        RFCURL:        "https://datatracker.ietf.org/doc/html/rfc4035#section-2.4",
+                        Severity:      severityCritical,
+                        SeverityColor: colorCritical,
+                        SeverityOrder: 1,
+                        Section:       "dnssec",
+                })
+        }
         return append(fixes, fix{
                 Title:         "Enable DNSSEC",
                 Description:   "DNSSEC (DNS Security Extensions) cryptographically signs DNS responses, preventing attackers from forging DNS answers. Contact your DNS hosting provider to enable DNSSEC signing.",
@@ -350,6 +457,36 @@ func appendDNSSECFixes(fixes []fix, ps protocolState) []fix {
                 SeverityOrder: 4,
                 Section:       "dnssec",
         })
+}
+
+func appendDANEFixes(fixes []fix, ps protocolState, domain string) []fix {
+        if ps.daneOK && !ps.dnssecOK {
+                return append(fixes, fix{
+                        Title:         "Enable DNSSEC for DANE validation",
+                        Description:   "DANE/TLSA records are published but DNSSEC is not enabled. DANE requires DNSSEC to work — without it, TLSA records cannot be authenticated and are ignored by validating resolvers (RFC 7672 §2.2). Enable DNSSEC first.",
+                        DNSRecord:     "",
+                        RFC:           "RFC 7672 §2.2",
+                        RFCURL:        "https://datatracker.ietf.org/doc/html/rfc7672#section-2.2",
+                        Severity:      severityHigh,
+                        SeverityColor: colorHigh,
+                        SeverityOrder: 2,
+                        Section:       "dane",
+                })
+        }
+        if !ps.daneOK && ps.dnssecOK {
+                return append(fixes, fix{
+                        Title:         "Deploy DANE/TLSA for email transport",
+                        Description:   "DNSSEC is already enabled — you can strengthen email transport security by publishing DANE TLSA records. DANE binds your mail server's TLS certificate to DNS, preventing man-in-the-middle attacks on SMTP connections.",
+                        DNSRecord:     fmt.Sprintf("_25._tcp.mail.%s TLSA 3 1 1 <certificate_hash>", domain),
+                        RFC:           "RFC 7672 §3",
+                        RFCURL:        "https://datatracker.ietf.org/doc/html/rfc7672#section-3",
+                        Severity:      severityLow,
+                        SeverityColor: colorLow,
+                        SeverityOrder: 4,
+                        Section:       "dane",
+                })
+        }
+        return fixes
 }
 
 func appendBIMIFixes(fixes []fix, ps protocolState, domain string) []fix {

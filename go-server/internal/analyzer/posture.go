@@ -41,27 +41,34 @@ func isKnownDKIMProvider(provider interface{}) bool {
 }
 
 type protocolState struct {
-        spfOK           bool
-        spfWarning      bool
-        spfMissing      bool
-        spfHardFail     bool
-        dmarcOK         bool
-        dmarcWarning    bool
-        dmarcMissing    bool
-        dmarcPolicy     string
-        dmarcPct        int
-        dmarcHasRua     bool
-        dkimOK          bool
-        dkimProvider    bool
-        dkimPartial     bool
-        caaOK           bool
-        mtaStsOK        bool
-        tlsrptOK        bool
-        bimiOK          bool
-        daneOK          bool
-        dnssecOK        bool
-        primaryProvider string
-        isNoMailDomain bool
+        spfOK              bool
+        spfWarning         bool
+        spfMissing         bool
+        spfHardFail        bool
+        spfDangerous       bool
+        spfNeutral         bool
+        spfLookupExceeded  bool
+        spfLookupCount     int
+        dmarcOK            bool
+        dmarcWarning       bool
+        dmarcMissing       bool
+        dmarcPolicy        string
+        dmarcPct           int
+        dmarcHasRua        bool
+        dkimOK             bool
+        dkimProvider       bool
+        dkimPartial        bool
+        dkimWeakKeys       bool
+        dkimThirdPartyOnly bool
+        caaOK              bool
+        mtaStsOK           bool
+        tlsrptOK           bool
+        bimiOK             bool
+        daneOK             bool
+        dnssecOK           bool
+        dnssecBroken       bool
+        primaryProvider    string
+        isNoMailDomain     bool
 }
 
 type postureAccumulator struct {
@@ -87,6 +94,7 @@ func evaluateProtocolStates(results map[string]any) protocolState {
         primaryProvider, _ := dkim["primary_provider"].(string)
 
         allMech, _ := spf["all_mechanism"].(string)
+        spfPerm, _ := spf["permissiveness"].(string)
 
         spfRecords, _ := spf["valid_records"].([]string)
         spfMissing := spf["status"] == "warning" && len(spfRecords) == 0
@@ -105,28 +113,64 @@ func evaluateProtocolStates(results map[string]any) protocolState {
         spfNoMailIntent := getBool(spf, "no_mail_intent")
         isNoMailDomain := spfNoMailIntent || (allMech == "-all" && getBool(results, "has_null_mx"))
 
+        spfLookupCount := 0
+        if lc, ok := spf["lookup_count"].(int); ok {
+                spfLookupCount = lc
+        } else if lc, ok := spf["lookup_count"].(float64); ok {
+                spfLookupCount = int(lc)
+        }
+
+        dkimWeakKeys := false
+        dkimThirdPartyOnly := false
+        switch ki := dkim["key_issues"].(type) {
+        case []string:
+                for _, s := range ki {
+                        if strings.Contains(s, "1024") {
+                                dkimWeakKeys = true
+                        }
+                }
+        case []any:
+                for _, issue := range ki {
+                        if s, ok := issue.(string); ok && strings.Contains(s, "1024") {
+                                dkimWeakKeys = true
+                        }
+                }
+        }
+        if tpo, ok := dkim["third_party_only"].(bool); ok {
+                dkimThirdPartyOnly = tpo
+        }
+
+        dnssecChain, _ := dnssec["chain_of_trust"].(string)
+
         return protocolState{
-                spfOK:           spf["status"] == "success",
-                spfWarning:      spf["status"] == "warning",
-                spfMissing:      spfMissing,
-                spfHardFail:     allMech == "-all",
-                dmarcOK:         dmarc["status"] == "success",
-                dmarcWarning:    dmarc["status"] == "warning",
-                dmarcMissing:    dmarcMissing,
-                dmarcPolicy:     dmarcPolicy,
-                dmarcPct:        dmarcPct,
-                dmarcHasRua:     dmarcHasRua,
-                dkimOK:          dkim["status"] == "success",
-                dkimProvider:    dkim["status"] == "info" && isKnownDKIMProvider(primaryProvider),
-                dkimPartial:     dkim["status"] == "info" && !isKnownDKIMProvider(primaryProvider),
-                caaOK:           caa["status"] == "success",
-                mtaStsOK:        mtaSts["status"] == "success",
-                tlsrptOK:        tlsrpt["status"] == "success",
-                bimiOK:          bimi["status"] == "success",
-                daneOK:          dane["has_dane"] == true,
-                dnssecOK:        dnssec["status"] == "success",
-                primaryProvider: primaryProvider,
-                isNoMailDomain:  isNoMailDomain,
+                spfOK:              spf["status"] == "success",
+                spfWarning:         spf["status"] == "warning",
+                spfMissing:         spfMissing,
+                spfHardFail:        allMech == "-all",
+                spfDangerous:       spfPerm == "DANGEROUS",
+                spfNeutral:         spfPerm == "NEUTRAL",
+                spfLookupExceeded:  spfLookupCount > 10,
+                spfLookupCount:     spfLookupCount,
+                dmarcOK:            dmarc["status"] == "success",
+                dmarcWarning:       dmarc["status"] == "warning",
+                dmarcMissing:       dmarcMissing,
+                dmarcPolicy:        dmarcPolicy,
+                dmarcPct:           dmarcPct,
+                dmarcHasRua:        dmarcHasRua,
+                dkimOK:             dkim["status"] == "success",
+                dkimProvider:       dkim["status"] == "info" && isKnownDKIMProvider(primaryProvider),
+                dkimPartial:        dkim["status"] == "info" && !isKnownDKIMProvider(primaryProvider),
+                dkimWeakKeys:       dkimWeakKeys,
+                dkimThirdPartyOnly: dkimThirdPartyOnly,
+                caaOK:              caa["status"] == "success",
+                mtaStsOK:           mtaSts["status"] == "success",
+                tlsrptOK:           tlsrpt["status"] == "success",
+                bimiOK:             bimi["status"] == "success",
+                daneOK:             dane["has_dane"] == true,
+                dnssecOK:           dnssec["status"] == "success",
+                dnssecBroken:       dnssecChain == "broken",
+                primaryProvider:    primaryProvider,
+                isNoMailDomain:     isNoMailDomain,
         }
 }
 
