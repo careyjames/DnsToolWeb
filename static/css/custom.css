@@ -1055,14 +1055,37 @@ main.container {
     }
 
     /* ================================================
-       BOOTSTRAP DARK THEME CSS CUSTOM PROPERTY RESET
-       Chrome honours data-bs-theme="dark" custom properties
-       in print, causing dark backgrounds/text. Safari ignores
-       them. Override all critical custom properties to light
-       values so both engines produce identical output.
+       CSS CUSTOM PROPERTY RESET FOR PRINT
+       Chrome honours ALL custom properties in print mode,
+       including dark-theme values. Safari ignores them.
+       Override both Bootstrap --bs-* AND app-specific
+       custom properties to light values so both engines
+       produce identical output.
        ================================================ */
     :root,
     [data-bs-theme="dark"] {
+        /* --- App custom properties (dark → light) --- */
+        --bg-primary: #ffffff !important;
+        --bg-secondary: #f5f7fa !important;
+        --bg-tertiary: #f0f4f8 !important;
+        --bg-elevated: #e5e7eb !important;
+        --text-primary: #1a1a2e !important;
+        --text-secondary: #6b7280 !important;
+        --code-bg: #f5f7fa !important;
+        --code-border: #d1d5db !important;
+        --status-success: #166534 !important;
+        --status-success-bg: #f0fdf4 !important;
+        --status-warning: #d97706 !important;
+        --status-warning-bg: #fffdf5 !important;
+        --status-danger: #991b1b !important;
+        --status-danger-bg: #fef2f2 !important;
+        --status-info: #0e7490 !important;
+        --status-info-bg: #ecfeff !important;
+        --status-neutral: #6b7280 !important;
+        --border-default: #d1d5db !important;
+        --border-muted: #e5e7eb !important;
+
+        /* --- Bootstrap custom properties (dark → light) --- */
         --bs-body-bg: #ffffff !important;
         --bs-body-color: #1a1a2e !important;
         --bs-emphasis-color: #1a1a2e !important;

@@ -214,6 +214,10 @@ func (a *Analyzer) GetHostingInfo(domain string, results map[string]any) map[str
         dnsHosting := detectProvider(nsRecords, dnsHostingProviders)
         emailHosting := detectProvider(mxRecords, emailHostingProviders)
 
+        if emailHosting == "" {
+                emailHosting = detectEmailProviderFromSPF(results)
+        }
+
         if hosting == "" {
                 hosting = "Unknown"
         }
@@ -230,6 +234,19 @@ func (a *Analyzer) GetHostingInfo(domain string, results map[string]any) map[str
                 "email_hosting": emailHosting,
                 "domain":        domain,
         }
+}
+
+func detectEmailProviderFromSPF(results map[string]any) string {
+        spfData, _ := results["spf_analysis"].(map[string]any)
+        if spfData == nil {
+                return ""
+        }
+        validRecords, _ := spfData["valid_records"].([]string)
+        if len(validRecords) == 0 {
+                return ""
+        }
+        combined := strings.Join(validRecords, " ")
+        return matchProviderFromRecords(combined, spfMailboxProviders)
 }
 
 var hostingProviders = map[string]string{
