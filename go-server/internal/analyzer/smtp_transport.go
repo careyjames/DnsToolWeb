@@ -185,9 +185,9 @@ func probeSingleSMTPServer(ctx context.Context, host string) map[string]any {
 }
 
 func negotiateTLS(conn net.Conn, host string, result map[string]any) {
-        tlsCfg := &tls.Config{
+        tlsCfg := &tls.Config{ //nolint:gosec // Intentional: diagnostic tool must connect to servers with self-signed/expired/mismatched certs to inspect and report on their TLS configuration. Certificate validation is performed separately in verifyCert().
                 ServerName:         host,
-                InsecureSkipVerify: true,
+                InsecureSkipVerify: true, //NOSONAR — S4830/S5527: deliberate diagnostic probe; verifyCert() validates independently
         }
         tlsConn := tls.Client(conn, tlsCfg)
         defer tlsConn.Close()
@@ -279,23 +279,31 @@ func readSMTPResponse(conn net.Conn, timeout time.Duration) (string, error) {
                 n, err := conn.Read(buf)
                 if n > 0 {
                         response.Write(buf[:n])
-                        lines := strings.Split(response.String(), "\n")
-                        lastLine := strings.TrimSpace(lines[len(lines)-1])
-                        if lastLine == "" && len(lines) > 1 {
-                                lastLine = strings.TrimSpace(lines[len(lines)-2])
-                        }
-                        if len(lastLine) >= 4 && lastLine[3] == ' ' {
+                        if smtpResponseComplete(response.String()) {
                                 break
                         }
                 }
                 if err != nil {
-                        if response.Len() > 0 {
-                                return response.String(), nil
-                        }
-                        return "", err
+                        return handlePartialResponse(response, err)
                 }
         }
         return response.String(), nil
+}
+
+func smtpResponseComplete(data string) bool {
+        lines := strings.Split(data, "\n")
+        lastLine := strings.TrimSpace(lines[len(lines)-1])
+        if lastLine == "" && len(lines) > 1 {
+                lastLine = strings.TrimSpace(lines[len(lines)-2])
+        }
+        return len(lastLine) >= 4 && lastLine[3] == ' '
+}
+
+func handlePartialResponse(response strings.Builder, err error) (string, error) {
+        if response.Len() > 0 {
+                return response.String(), nil
+        }
+        return "", err
 }
 
 func classifySMTPError(err error) string {

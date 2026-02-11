@@ -19,6 +19,8 @@ const (
         rfcDMARCPolicy    = "RFC 7489 §6.3"
         rfcDMARCPolicyURL = "https://datatracker.ietf.org/doc/html/rfc7489#section-6.3"
 
+        dkimRecordExample = "selector1._domainkey.%s TXT \"v=DKIM1; k=rsa; p=<public_key>\""
+
         tlsrptDescDefault = "TLS-RPT (TLS Reporting) sends you reports about TLS connection failures when other servers try to deliver mail to your domain. Helps diagnose MTA-STS and STARTTLS issues."
         tlsrptDescDANE    = "Your domain has DNSSEC + DANE — the strongest email transport security available. TLS-RPT adds operational visibility by reporting when sending servers fail DANE validation or encounter STARTTLS issues delivering to your MX hosts. It does not add security — it monitors the security you already have."
         tlsrptDescMTASTS  = "Your domain has MTA-STS configured for transport encryption. TLS-RPT complements MTA-STS by reporting when sending servers fail to establish TLS or encounter policy mismatches delivering to your domain. Essential for monitoring MTA-STS enforcement."
@@ -178,39 +180,8 @@ func appendSPFFixes(fixes []fix, ps protocolState, results map[string]any, domai
         }
 
         if ps.spfOK {
-                if ps.spfLookupExceeded {
-                        fixes = append(fixes, fix{
-                                Title:         "Reduce SPF DNS lookups",
-                                Description:   fmt.Sprintf("Your SPF record uses %d DNS lookups (limit is 10). Exceeding 10 lookups causes SPF to permanently fail (PermError), meaning receivers treat it as if you have no SPF at all. Consolidate include mechanisms or use SPF flattening to stay within the limit.", ps.spfLookupCount),
-                                RFC:           "RFC 7208 §4.6.4",
-                                RFCURL:        "https://datatracker.ietf.org/doc/html/rfc7208#section-4.6.4",
-                                Severity:      severityMedium,
-                                SeverityColor: colorMedium,
-                                SeverityOrder: 3,
-                                Section:       "spf",
-                        })
-                }
-                if ps.spfHardFail {
-                        return fixes
-                }
-                hasDKIM := ps.dkimOK || ps.dkimProvider
-                if hasDKIM {
-                        return fixes
-                }
-                if ps.isNoMailDomain {
-                        return fixes
-                }
-                return append(fixes, fix{
-                        Title:       "Upgrade SPF to hard fail (-all)",
-                        Description: "Your SPF record uses ~all (softfail) and no DKIM signing was detected. Without DKIM, SPF is your only line of defense — upgrading to -all (hardfail) instructs receivers to reject unauthorized senders outright. Verify all legitimate sending sources are included before switching. If you configure DKIM, ~all becomes the industry-standard best practice because DMARC evaluates both SPF and DKIM alignment (RFC 7489 §10.1).",
-                        DNSRecord:   buildSPFRecordExample(domain, includes, "-all"),
-                        RFC:         "RFC 7208 §5",
-                        RFCURL:      "https://datatracker.ietf.org/doc/html/rfc7208#section-5",
-                        Severity:    severityLow,
-                        SeverityColor: colorLow,
-                        SeverityOrder: 4,
-                        Section:     "spf",
-                })
+                fixes = appendSPFLookupFix(fixes, ps)
+                return appendSPFUpgradeFix(fixes, ps, domain, includes)
         }
         if ps.spfWarning && !ps.spfMissing {
                 if ps.spfLookupExceeded {
@@ -237,6 +208,39 @@ func appendSPFFixes(fixes []fix, ps protocolState, results map[string]any, domai
                 SeverityColor: colorCritical,
                 SeverityOrder: 1,
                 Section:       "spf",
+        })
+}
+
+func appendSPFLookupFix(fixes []fix, ps protocolState) []fix {
+        if !ps.spfLookupExceeded {
+                return fixes
+        }
+        return append(fixes, fix{
+                Title:         "Reduce SPF DNS lookups",
+                Description:   fmt.Sprintf("Your SPF record uses %d DNS lookups (limit is 10). Exceeding 10 lookups causes SPF to permanently fail (PermError), meaning receivers treat it as if you have no SPF at all. Consolidate include mechanisms or use SPF flattening to stay within the limit.", ps.spfLookupCount),
+                RFC:           "RFC 7208 §4.6.4",
+                RFCURL:        "https://datatracker.ietf.org/doc/html/rfc7208#section-4.6.4",
+                Severity:      severityMedium,
+                SeverityColor: colorMedium,
+                SeverityOrder: 3,
+                Section:       "spf",
+        })
+}
+
+func appendSPFUpgradeFix(fixes []fix, ps protocolState, domain string, includes []string) []fix {
+        if ps.spfHardFail || ps.dkimOK || ps.dkimProvider || ps.isNoMailDomain {
+                return fixes
+        }
+        return append(fixes, fix{
+                Title:       "Upgrade SPF to hard fail (-all)",
+                Description: "Your SPF record uses ~all (softfail) and no DKIM signing was detected. Without DKIM, SPF is your only line of defense — upgrading to -all (hardfail) instructs receivers to reject unauthorized senders outright. Verify all legitimate sending sources are included before switching. If you configure DKIM, ~all becomes the industry-standard best practice because DMARC evaluates both SPF and DKIM alignment (RFC 7489 §10.1).",
+                DNSRecord:   buildSPFRecordExample(domain, includes, "-all"),
+                RFC:         "RFC 7208 §5",
+                RFCURL:      "https://datatracker.ietf.org/doc/html/rfc7208#section-5",
+                Severity:    severityLow,
+                SeverityColor: colorLow,
+                SeverityOrder: 4,
+                Section:     "spf",
         })
 }
 
@@ -333,7 +337,7 @@ func appendDKIMFixes(fixes []fix, ps protocolState, results map[string]any, doma
                 fixes = append(fixes, fix{
                         Title:         fmt.Sprintf("Enable DKIM for %s", provider),
                         Description:   fmt.Sprintf("DKIM is only configured for third-party services, not your primary mail platform (%s). Enable DKIM signing in %s settings to cover all outbound mail.", provider, provider),
-                        DNSRecord:     fmt.Sprintf("selector1._domainkey.%s TXT \"v=DKIM1; k=rsa; p=<public_key>\"", domain),
+                        DNSRecord:     fmt.Sprintf(dkimRecordExample, domain),
                         RFC:           "RFC 6376 §3.6",
                         RFCURL:        "https://datatracker.ietf.org/doc/html/rfc6376#section-3.6",
                         Severity:      severityMedium,
@@ -361,7 +365,7 @@ func appendDKIMFixes(fixes []fix, ps protocolState, results map[string]any, doma
                 return append(fixes, fix{
                         Title:         "Verify DKIM configuration",
                         Description:   "DKIM selectors were not discoverable via common selector names. This does not confirm DKIM is absent — your provider may use custom or rotating selectors that cannot be enumerated through DNS (RFC 6376 §3.6.2.1). Check your email provider's DKIM settings to confirm signing is enabled.",
-                        DNSRecord:     fmt.Sprintf("selector1._domainkey.%s TXT \"v=DKIM1; k=rsa; p=<public_key>\"", domain),
+                        DNSRecord:     fmt.Sprintf(dkimRecordExample, domain),
                         RFC:           "RFC 6376 §3.6.2.1",
                         RFCURL:        "https://datatracker.ietf.org/doc/html/rfc6376#section-3.6.2.1",
                         Severity:      severityLow,
@@ -374,7 +378,7 @@ func appendDKIMFixes(fixes []fix, ps protocolState, results map[string]any, doma
         return append(fixes, fix{
                 Title:         "Configure DKIM signing",
                 Description:   "DKIM (DomainKeys Identified Mail) adds a cryptographic signature to outgoing emails, proving they haven't been tampered with. Enable DKIM in your email provider's settings.",
-                DNSRecord:     fmt.Sprintf("selector1._domainkey.%s TXT \"v=DKIM1; k=rsa; p=<public_key>\"", domain),
+                DNSRecord:     fmt.Sprintf(dkimRecordExample, domain),
                 RFC:           "RFC 6376 §3.6",
                 RFCURL:        "https://datatracker.ietf.org/doc/html/rfc6376#section-3.6",
                 Severity:      severityHigh,

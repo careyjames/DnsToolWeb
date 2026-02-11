@@ -92,60 +92,20 @@ func evaluateProtocolStates(results map[string]any) protocolState {
 
         dmarcPolicy, _ := dmarc["policy"].(string)
         primaryProvider, _ := dkim["primary_provider"].(string)
-
         allMech, _ := spf["all_mechanism"].(string)
         spfPerm, _ := spf["permissiveness"].(string)
+        dnssecChain, _ := dnssec["chain_of_trust"].(string)
 
-        spfRecords, _ := spf["valid_records"].([]string)
-        spfMissing := spf["status"] == "warning" && len(spfRecords) == 0
-        dmarcRecords, _ := dmarc["valid_records"].([]string)
-        dmarcMissing := dmarc["status"] == "warning" && len(dmarcRecords) == 0
-
-        dmarcPct := 100
-        if p, ok := dmarc["pct"].(int); ok {
-                dmarcPct = p
-        }
-        dmarcHasRua := false
-        if rua, ok := dmarc["rua"].(string); ok && rua != "" {
-                dmarcHasRua = true
-        }
+        spfLookupCount := extractIntField(spf, "lookup_count")
+        dkimWeakKeys, dkimThirdPartyOnly := evaluateDKIMIssues(dkim)
 
         spfNoMailIntent := getBool(spf, "no_mail_intent")
         isNoMailDomain := spfNoMailIntent || (allMech == "-all" && getBool(results, "has_null_mx"))
 
-        spfLookupCount := 0
-        if lc, ok := spf["lookup_count"].(int); ok {
-                spfLookupCount = lc
-        } else if lc, ok := spf["lookup_count"].(float64); ok {
-                spfLookupCount = int(lc)
-        }
-
-        dkimWeakKeys := false
-        dkimThirdPartyOnly := false
-        switch ki := dkim["key_issues"].(type) {
-        case []string:
-                for _, s := range ki {
-                        if strings.Contains(s, "1024") {
-                                dkimWeakKeys = true
-                        }
-                }
-        case []any:
-                for _, issue := range ki {
-                        if s, ok := issue.(string); ok && strings.Contains(s, "1024") {
-                                dkimWeakKeys = true
-                        }
-                }
-        }
-        if tpo, ok := dkim["third_party_only"].(bool); ok {
-                dkimThirdPartyOnly = tpo
-        }
-
-        dnssecChain, _ := dnssec["chain_of_trust"].(string)
-
         return protocolState{
                 spfOK:              spf["status"] == "success",
                 spfWarning:         spf["status"] == "warning",
-                spfMissing:         spfMissing,
+                spfMissing:         isMissingRecord(spf),
                 spfHardFail:        allMech == "-all",
                 spfDangerous:       spfPerm == "DANGEROUS",
                 spfNeutral:         spfPerm == "NEUTRAL",
@@ -153,10 +113,10 @@ func evaluateProtocolStates(results map[string]any) protocolState {
                 spfLookupCount:     spfLookupCount,
                 dmarcOK:            dmarc["status"] == "success",
                 dmarcWarning:       dmarc["status"] == "warning",
-                dmarcMissing:       dmarcMissing,
+                dmarcMissing:       isMissingRecord(dmarc),
                 dmarcPolicy:        dmarcPolicy,
-                dmarcPct:           dmarcPct,
-                dmarcHasRua:        dmarcHasRua,
+                dmarcPct:           extractIntFieldDefault(dmarc, "pct", 100),
+                dmarcHasRua:        hasNonEmptyString(dmarc, "rua"),
                 dkimOK:             dkim["status"] == "success",
                 dkimProvider:       dkim["status"] == "info" && isKnownDKIMProvider(primaryProvider),
                 dkimPartial:        dkim["status"] == "info" && !isKnownDKIMProvider(primaryProvider),
@@ -172,6 +132,57 @@ func evaluateProtocolStates(results map[string]any) protocolState {
                 primaryProvider:    primaryProvider,
                 isNoMailDomain:     isNoMailDomain,
         }
+}
+
+func isMissingRecord(m map[string]any) bool {
+        if m["status"] != "warning" {
+                return false
+        }
+        records, _ := m["valid_records"].([]string)
+        return len(records) == 0
+}
+
+func hasNonEmptyString(m map[string]any, key string) bool {
+        s, ok := m[key].(string)
+        return ok && s != ""
+}
+
+func extractIntField(m map[string]any, key string) int {
+        if v, ok := m[key].(int); ok {
+                return v
+        }
+        if v, ok := m[key].(float64); ok {
+                return int(v)
+        }
+        return 0
+}
+
+func extractIntFieldDefault(m map[string]any, key string, defaultVal int) int {
+        if v, ok := m[key].(int); ok {
+                return v
+        }
+        return defaultVal
+}
+
+func evaluateDKIMIssues(dkim map[string]any) (weakKeys bool, thirdPartyOnly bool) {
+        switch ki := dkim["key_issues"].(type) {
+        case []string:
+                for _, s := range ki {
+                        if strings.Contains(s, "1024") {
+                                weakKeys = true
+                        }
+                }
+        case []any:
+                for _, issue := range ki {
+                        if s, ok := issue.(string); ok && strings.Contains(s, "1024") {
+                                weakKeys = true
+                        }
+                }
+        }
+        if tpo, ok := dkim["third_party_only"].(bool); ok {
+                thirdPartyOnly = tpo
+        }
+        return
 }
 
 func classifySPF(ps protocolState, acc *postureAccumulator) {
