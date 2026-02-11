@@ -2,7 +2,7 @@ modules = ["python-3.11", "nodejs-20", "go-1.23", "postgresql-16"]
 
 [nix]
 channel = "stable-24_05"
-packages = ["cacert", "chromium", "openssl", "postgresql", "sqlc", "whois"]
+packages = ["cacert", "chromium", "openssl", "postgresql", "sqlc", "whois", "dnsutils"]
 
 [deployment]
 deploymentTarget = "autoscale"
