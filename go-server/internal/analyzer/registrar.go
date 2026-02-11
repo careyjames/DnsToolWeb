@@ -156,7 +156,7 @@ func (a *Analyzer) getRegistrarInfoUncached(ctx context.Context, domain string) 
 
         whoisResult, restricted, restrictedTLD := a.whoisLookup(ctx, domain)
         if whoisResult != "" {
-                return map[string]any{"status": "success", "source": "WHOIS", "registrar": whoisResult}
+                return map[string]any{"status": "success", "source": "WHOIS", "registrar": whoisResult, "confidence": ConfidenceObservedMap(MethodWHOIS)}
         }
 
         if result := a.tryParentZoneLookup(ctx, domain); result != nil {
@@ -176,7 +176,7 @@ func (a *Analyzer) tryRDAPLookup(ctx context.Context, domain string) map[string]
                 return nil
         }
         regStr := formatRegistrarWithRegistrant(registrar, extractRegistrantFromRDAP(rdapResult))
-        return map[string]any{"status": "success", "source": "RDAP", "registrar": regStr}
+        return map[string]any{"status": "success", "source": "RDAP", "registrar": regStr, "confidence": ConfidenceObservedMap(MethodRDAP)}
 }
 
 func formatRegistrarWithRegistrant(registrar, registrant string) string {
@@ -518,6 +518,7 @@ func (a *Analyzer) inferRegistrarFromNS(ctx context.Context, domain string) map[
                                 "registrar":   registrarName,
                                 "ns_inferred": true,
                                 "caveat":      "Inferred from nameserver records — indicates DNS hosting provider, which for integrated registrars typically matches the registrar.",
+                                "confidence":  ConfidenceInferredMap(MethodNSInference),
                         }
                 }
         }

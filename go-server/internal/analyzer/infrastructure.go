@@ -199,6 +199,10 @@ func (a *Analyzer) AnalyzeDNSInfrastructure(domain string, results map[string]an
 
         if im != nil {
                 result["provider_name"] = im.provider.Name
+                result["confidence"] = ConfidenceInferredMap(MethodNSPattern)
+        }
+        if isGovernment {
+                result["gov_confidence"] = ConfidenceInferredMap(MethodTLDSuffix)
         }
 
         return result
@@ -214,8 +218,10 @@ func (a *Analyzer) GetHostingInfo(domain string, results map[string]any) map[str
         dnsHosting := detectProvider(nsRecords, dnsHostingProviders)
         emailHosting := detectProvider(mxRecords, emailHostingProviders)
 
+        emailFromSPF := false
         if emailHosting == "" {
                 emailHosting = detectEmailProviderFromSPF(results)
+                emailFromSPF = emailHosting != ""
         }
 
         if hosting == "" {
@@ -228,11 +234,21 @@ func (a *Analyzer) GetHostingInfo(domain string, results map[string]any) map[str
                 emailHosting = "Unknown"
         }
 
+        hostingConf := ConfidenceInferredMap(MethodARecordPattern)
+        dnsConf := ConfidenceInferredMap(MethodNSPattern)
+        emailConf := ConfidenceInferredMap(MethodMXPattern)
+        if emailFromSPF {
+                emailConf = ConfidenceInferredMap(MethodSPFInclude)
+        }
+
         return map[string]any{
-                "hosting":       hosting,
-                "dns_hosting":   dnsHosting,
-                "email_hosting": emailHosting,
-                "domain":        domain,
+                "hosting":              hosting,
+                "dns_hosting":          dnsHosting,
+                "email_hosting":        emailHosting,
+                "domain":               domain,
+                "hosting_confidence":   hostingConf,
+                "dns_confidence":       dnsConf,
+                "email_confidence":     emailConf,
         }
 }
 
@@ -308,6 +324,7 @@ func (a *Analyzer) DetectEmailSecurityManagement(spf, dmarc, tlsrpt, mtasts map[
                 "providers":        providerList,
                 "spf_flattening":   spfFlattening,
                 "provider_count":   len(providerList),
+                "confidence":       ConfidenceInferredMap(MethodDMARCRua),
         }
 }
 

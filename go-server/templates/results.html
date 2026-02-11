@@ -431,7 +431,11 @@
                         <div class="row align-items-center domain-summary-row">
                             <div class="col-6 col-md-3 domain-summary-col mb-2 mb-md-0">
                                 {{$regFreshness := mapGetMap "registrar" $data_freshness}}
-                                <small class="text-uppercase text-muted fw-bold d-block" style="font-size: 0.7rem;">Registrar <span class="text-info">({{if mapGetBool "ns_inferred" $registrar}}NS INFERENCE{{else if eq (mapGetStr "status" $registrar) "restricted"}}RESTRICTED{{else if mapGetStr "source" $registrar}}{{upper (mapGetStr "source" $registrar)}}{{else}}RDAP{{end}})</span>{{if and $regFreshness (eq (mapGetStr "source" $regFreshness) "cached")}} <span class="badge bg-secondary bg-opacity-50 border border-secondary border-opacity-25" style="font-size: 0.55rem; vertical-align: middle;" data-bs-toggle="tooltip" title="{{mapGetStr "note" $regFreshness}}">CACHED</span>{{else}} <span class="badge bg-success bg-opacity-25 border border-success border-opacity-25" style="font-size: 0.55rem; vertical-align: middle;" data-bs-toggle="tooltip" title="Live RDAP registry lookup">LIVE</span>{{end}}</small>
+                                <small class="text-uppercase text-muted fw-bold d-block" style="font-size: 0.7rem;">Registrar <span class="text-info">({{if mapGetBool "ns_inferred" $registrar}}NS INFERENCE{{else if eq (mapGetStr "status" $registrar) "restricted"}}RESTRICTED{{else if mapGetStr "source" $registrar}}{{upper (mapGetStr "source" $registrar)}}{{else}}RDAP{{end}})</span>
+                                    {{$regConf := mapGetMap "confidence" $registrar}}
+                                    {{if $regConf}}<span class="badge bg-{{if eq (mapGetStr "level" $regConf) "observed"}}success{{else}}info{{end}} bg-opacity-25 border border-{{if eq (mapGetStr "level" $regConf) "observed"}}success{{else}}info{{end}} border-opacity-25" style="font-size: 0.5rem; vertical-align: middle;" data-bs-toggle="tooltip" title="{{mapGetStr "label" $regConf}}: {{mapGetStr "method" $regConf}}">{{upper (mapGetStr "level" $regConf)}}</span>{{end}}
+                                    {{if and $regFreshness (eq (mapGetStr "source" $regFreshness) "cached")}}<span class="badge bg-secondary bg-opacity-50 border border-secondary border-opacity-25" style="font-size: 0.55rem; vertical-align: middle;" data-bs-toggle="tooltip" title="{{mapGetStr "note" $regFreshness}}">CACHED</span>{{else}}<span class="badge bg-success bg-opacity-25 border border-success border-opacity-25" style="font-size: 0.55rem; vertical-align: middle;" data-bs-toggle="tooltip" title="Live RDAP registry lookup">LIVE</span>{{end}}
+                                </small>
                                 {{$regName := mapGetStr "registrar" $registrar}}
                                 <div class="text-truncate" title="{{if $regName}}{{$regName}}{{else}}{{default "Unknown" (mapGetStr "message" $registrar)}}{{end}}">
                                     <i class="fas fa-id-card text-primary me-2"></i>
@@ -446,7 +450,10 @@
                                 <small class="text-muted d-block" style="font-size: 0.65rem;">{{if mapGetBool "ns_inferred" $registrar}}Inferred from NS records{{else if mapGetBool "registry_restricted" $registrar}}.{{mapGetStr "registry_restricted_tld" $registrar}} restricts public WHOIS{{else if mapGetStr "subdomain_of" $registrar}}Registrar for {{mapGetStr "subdomain_of" $registrar}}{{else}}Where you pay to own domain{{end}}</small>
                             </div>
                             <div class="col-6 col-md-3 domain-summary-col mb-2 mb-md-0">
-                                <small class="text-uppercase text-muted fw-bold d-block" style="font-size: 0.7rem;">Email Service Provider</small>
+                                <small class="text-uppercase text-muted fw-bold d-block" style="font-size: 0.7rem;">Email Service Provider
+                                    {{$emailConf := mapGetMap "email_confidence" $hosting}}
+                                    {{if $emailConf}}<span class="badge bg-{{if eq (mapGetStr "level" $emailConf) "observed"}}success{{else if eq (mapGetStr "level" $emailConf) "inferred"}}info{{else}}secondary{{end}} bg-opacity-25 border border-{{if eq (mapGetStr "level" $emailConf) "observed"}}success{{else if eq (mapGetStr "level" $emailConf) "inferred"}}info{{else}}secondary{{end}} border-opacity-25" style="font-size: 0.5rem; vertical-align: middle;" data-bs-toggle="tooltip" title="{{mapGetStr "label" $emailConf}}: {{mapGetStr "method" $emailConf}}">{{upper (mapGetStr "level" $emailConf)}}</span>{{end}}
+                                </small>
                                 <div class="text-truncate">
                                     {{$mpClass := mapGetStr "classification" $mp}}
                                     {{$mpIcon := "envelope"}}
@@ -457,7 +464,10 @@
                                 <small class="text-muted d-block" style="font-size: 0.65rem;">{{if mapGetStr "label" $mp}}{{mapGetStr "label" $mp}}{{else if mapGetBool "is_no_mail_domain" $results}}Domain declares no email{{else}}Where email is hosted (MX){{end}}</small>
                             </div>
                             <div class="col-6 col-md-3 domain-summary-col mb-2 mb-md-0">
-                                <small class="text-uppercase text-muted fw-bold d-block" style="font-size: 0.7rem;">Web Hosting</small>
+                                <small class="text-uppercase text-muted fw-bold d-block" style="font-size: 0.7rem;">Web Hosting
+                                    {{$hostConf := mapGetMap "hosting_confidence" $hosting}}
+                                    {{if $hostConf}}<span class="badge bg-info bg-opacity-25 border border-info border-opacity-25" style="font-size: 0.5rem; vertical-align: middle;" data-bs-toggle="tooltip" title="{{mapGetStr "label" $hostConf}}: {{mapGetStr "method" $hostConf}}">INFERRED</span>{{end}}
+                                </small>
                                 <div class="text-truncate">
                                     <i class="fas fa-server text-primary me-2"></i>
                                     <strong>{{if $hosting}}{{default "Unknown" (mapGetStr "hosting" $hosting)}}{{else}}Unknown{{end}}</strong>
@@ -465,7 +475,10 @@
                                 <small class="text-muted d-block" style="font-size: 0.65rem;">Where website is hosted</small>
                             </div>
                             <div class="col-6 col-md-3 domain-summary-col">
-                                <small class="text-uppercase text-muted fw-bold d-block" style="font-size: 0.7rem;">DNS Hosting</small>
+                                <small class="text-uppercase text-muted fw-bold d-block" style="font-size: 0.7rem;">DNS Hosting
+                                    {{$dnsConf := mapGetMap "dns_confidence" $hosting}}
+                                    {{if $dnsConf}}<span class="badge bg-info bg-opacity-25 border border-info border-opacity-25" style="font-size: 0.5rem; vertical-align: middle;" data-bs-toggle="tooltip" title="{{mapGetStr "label" $dnsConf}}: {{mapGetStr "method" $dnsConf}}">INFERRED</span>{{end}}
+                                </small>
                                 <div>
                                     <i class="fas fa-network-wired text-primary me-2"></i>
                                     <strong>{{if $hosting}}{{default "Standard" (mapGetStr "dns_hosting" $hosting)}}{{else}}Standard{{end}}</strong>
