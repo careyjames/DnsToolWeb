@@ -77,3 +77,22 @@ DKIM selectors are not enumerable via DNS (RFC 6376 §3.6.2.1). The tool checks 
 
 ### Template Comparison Safety
 All six Go template comparison operators (`eq`, `ne`, `gt`, `lt`, `ge`, `le`) are overridden in `go-server/internal/templates/funcs.go` with type-safe versions that use `toFloat64()` for cross-type numeric comparisons. This prevents panics when comparing `float64` values (from `mapGetFloat`) with integer literals in templates. Template authors can safely write `eq $floatVar 0` without worrying about type mismatches. The custom `eq` preserves Go's variadic semantics (`eq arg1 arg2 arg3...` means `arg1==arg2 || arg1==arg3 || ...`).
+
+### Remediation Best Practice Logic (Feb 2026)
+The remediation engine follows strict RFC-aligned best practices with nuanced, context-aware recommendations:
+
+**SPF ~all vs -all**: Per RFC 7489 §10.1, ~all (softfail) is the industry-standard best practice when DKIM is present, because DMARC evaluates both SPF and DKIM alignment. The tool only recommends upgrading to -all when DKIM is absent and SPF is the sole line of defense. SPF +all is flagged as Critical (anyone can spoof), ?all as High (no protection).
+
+**SPF Lookup Count**: Exceeding 10 DNS lookups causes PermError (RFC 7208 §4.6.4), flagged as Medium severity.
+
+**DMARC Reporting**: Missing rua= tag is flagged as Medium severity — without aggregate reporting, domain owners cannot monitor authentication results.
+
+**DKIM Key Strength**: 1024-bit RSA keys are flagged as Medium severity with upgrade recommendation to 2048-bit (RFC 8301 §3.2). Third-party-only DKIM (no primary provider DKIM) also flagged.
+
+**DNSSEC Broken Chain**: DNSKEY without DS at registrar is Critical — signatures exist but cannot be validated.
+
+**DANE without DNSSEC**: TLSA records without DNSSEC are flagged as High — DANE requires DNSSEC to function (RFC 7672 §2.2). Conversely, if DNSSEC is present but DANE is not, a Low-severity recommendation suggests deploying DANE.
+
+**CAA**: Absence is Low severity (advisory only). Not included in the posture "Recommended" summary to avoid overstating importance.
+
+**Posture Summary Categories**: "Action Required" (red) for security-critical issues (SPF +all, broken DNSSEC). "Monitoring" (yellow-green) for deliberate monitoring states. "Configured" (green) for working protocols. "Not Configured" (grey) for absent protocols. The yellow "Recommended" section is reserved for genuinely actionable items — SPF ~all and CAA absence are NOT included here when the domain has proper DKIM/DMARC.
