@@ -18,6 +18,10 @@ const (
 
         rfcDMARCPolicy    = "RFC 7489 §6.3"
         rfcDMARCPolicyURL = "https://datatracker.ietf.org/doc/html/rfc7489#section-6.3"
+
+        tlsrptDescDefault = "TLS-RPT (TLS Reporting) sends you reports about TLS connection failures when other servers try to deliver mail to your domain. Helps diagnose MTA-STS and STARTTLS issues."
+        tlsrptDescDANE    = "Your domain has DNSSEC + DANE — the strongest email transport security available. TLS-RPT adds operational visibility by reporting when sending servers fail DANE validation or encounter STARTTLS issues delivering to your MX hosts. It does not add security — it monitors the security you already have."
+        tlsrptDescMTASTS  = "Your domain has MTA-STS configured for transport encryption. TLS-RPT complements MTA-STS by reporting when sending servers fail to establish TLS or encounter policy mismatches delivering to your domain. Essential for monitoring MTA-STS enforcement."
 )
 
 type fix struct {
@@ -418,9 +422,15 @@ func appendTLSRPTFixes(fixes []fix, ps protocolState, domain string) []fix {
         if ps.tlsrptOK {
                 return fixes
         }
+        desc := tlsrptDescDefault
+        if ps.daneOK && ps.dnssecOK {
+                desc = tlsrptDescDANE
+        } else if ps.mtaStsOK {
+                desc = tlsrptDescMTASTS
+        }
         return append(fixes, fix{
                 Title:         "Configure TLS-RPT reporting",
-                Description:   "TLS-RPT (TLS Reporting) sends you reports about TLS connection failures when other servers try to deliver mail to your domain. Helps diagnose MTA-STS and STARTTLS issues.",
+                Description:   desc,
                 DNSRecord:     fmt.Sprintf("_smtp._tls.%s TXT \"v=TLSRPTv1; rua=mailto:tls-reports@%s\"", domain, domain),
                 RFC:           "RFC 8460 §3",
                 RFCURL:        "https://datatracker.ietf.org/doc/html/rfc8460#section-3",
