@@ -175,16 +175,21 @@ func evaluateProtocolStates(results map[string]any) protocolState {
 }
 
 func classifySPF(ps protocolState, acc *postureAccumulator) {
+        if ps.spfDangerous {
+                acc.configured = append(acc.configured, "SPF (+all)")
+                acc.issues = append(acc.issues, "SPF uses +all — anyone can send as this domain")
+                return
+        }
+        if ps.spfNeutral {
+                acc.configured = append(acc.configured, "SPF (?all)")
+                acc.issues = append(acc.issues, "SPF uses ?all — provides no protection")
+                return
+        }
         if ps.spfOK {
                 if ps.spfHardFail {
                         acc.configured = append(acc.configured, "SPF (-all)")
                 } else {
                         acc.configured = append(acc.configured, "SPF (~all)")
-                        dmarcEnforcing := ps.dmarcOK && (ps.dmarcPolicy == "reject" || ps.dmarcPolicy == "quarantine")
-                        hasDKIM := ps.dkimOK || ps.dkimProvider
-                        if !dmarcEnforcing || !hasDKIM {
-                                acc.recommendations = append(acc.recommendations, "SPF uses ~all (softfail) — consider -all (hardfail) for stricter enforcement per RFC 7208 §5")
-                        }
                 }
                 return
         }
@@ -284,7 +289,6 @@ func classifySimpleProtocols(ps protocolState, acc *postureAccumulator) {
                 acc.configured = append(acc.configured, "CAA")
         } else {
                 acc.absent = append(acc.absent, "CAA")
-                acc.recommendations = append(acc.recommendations, "No CAA records")
         }
 
         if ps.dnssecOK {

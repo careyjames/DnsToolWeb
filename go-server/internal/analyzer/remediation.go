@@ -189,14 +189,16 @@ func appendSPFFixes(fixes []fix, ps protocolState, results map[string]any, domai
                 if ps.spfHardFail {
                         return fixes
                 }
-                dmarcEnforcing := ps.dmarcOK && (ps.dmarcPolicy == "reject" || ps.dmarcPolicy == "quarantine")
                 hasDKIM := ps.dkimOK || ps.dkimProvider
-                if dmarcEnforcing && hasDKIM {
+                if hasDKIM {
+                        return fixes
+                }
+                if ps.isNoMailDomain {
                         return fixes
                 }
                 return append(fixes, fix{
                         Title:       "Upgrade SPF to hard fail (-all)",
-                        Description: "Your SPF record uses ~all (softfail), which asks receivers to accept but flag unauthorized senders. Upgrading to -all (hardfail) instructs receivers to reject unauthorized senders outright. Verify all legitimate sending sources are included before switching. Note: if you later enable DMARC enforcement (p=reject or p=quarantine) with DKIM, ~all becomes acceptable because DMARC evaluates both SPF and DKIM alignment before making decisions (RFC 7489 §10.1).",
+                        Description: "Your SPF record uses ~all (softfail) and no DKIM signing was detected. Without DKIM, SPF is your only line of defense — upgrading to -all (hardfail) instructs receivers to reject unauthorized senders outright. Verify all legitimate sending sources are included before switching. If you configure DKIM, ~all becomes the industry-standard best practice because DMARC evaluates both SPF and DKIM alignment (RFC 7489 §10.1).",
                         DNSRecord:   buildSPFRecordExample(domain, includes, "-all"),
                         RFC:         "RFC 7208 §5",
                         RFCURL:      "https://datatracker.ietf.org/doc/html/rfc7208#section-5",
@@ -384,13 +386,13 @@ func appendCAAFixes(fixes []fix, ps protocolState, domain string) []fix {
         }
         return append(fixes, fix{
                 Title:         "Add CAA records",
-                Description:   "Publish CAA DNS records to restrict which Certificate Authorities can issue TLS certificates for your domain. Specify your preferred CA (e.g., letsencrypt.org, digicert.com).",
+                Description:   "Publish CAA DNS records to restrict which Certificate Authorities can issue TLS certificates for your domain. Specify your preferred CA (e.g., letsencrypt.org, digicert.com). CAA is advisory — CAs must check it before issuing, but absence means any CA can issue.",
                 DNSRecord:     fmt.Sprintf("%s CAA 0 issue \"letsencrypt.org\"", domain),
                 RFC:           "RFC 8659 §4",
                 RFCURL:        "https://datatracker.ietf.org/doc/html/rfc8659#section-4",
-                Severity:      severityMedium,
-                SeverityColor: colorMedium,
-                SeverityOrder: 3,
+                Severity:      severityLow,
+                SeverityColor: colorLow,
+                SeverityOrder: 4,
                 Section:       "caa",
         })
 }
