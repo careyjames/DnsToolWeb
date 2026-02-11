@@ -559,7 +559,7 @@ func computeAchievablePosture(ps protocolState, fixes []fix) string {
         }
 
         if hasCritical {
-                return riskLow
+                return riskMedium
         }
 
         return riskLow

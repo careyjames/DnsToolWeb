@@ -61,6 +61,7 @@ func (a *Analyzer) AnalyzeDomain(ctx context.Context, domain string, customDKIMS
         spfAnalysis := getMapResult(resultsMap, "spf")
 
         results := map[string]any{
+                "domain":                 domain,
                 "domain_exists":          true,
                 "domain_status":          domainStatus,
                 "domain_status_message":  derefStr(domainStatusMessage),
@@ -84,10 +85,11 @@ func (a *Analyzer) AnalyzeDomain(ctx context.Context, domain string, customDKIMS
                 "registrar_info":         getOrDefault(resultsMap, "registrar", map[string]any{"status": "error", "registrar": nil}),
                 "resolver_consensus":     getOrDefault(resultsMap, "resolver_consensus", map[string]any{}),
                 "ct_subdomains":          getOrDefault(resultsMap, "ct_subdomains", map[string]any{"status": "error", "subdomains": []any{}, "unique_subdomains": 0}),
-                "smtp_transport":         nil,
                 "has_null_mx":            detectNullMX(basic),
                 "is_no_mail_domain":      spfAnalysis["no_mail_intent"] == true,
         }
+
+        results["smtp_transport"] = a.AnalyzeSMTPTransport(ctx, domain, mxForDANE)
 
         results["hosting_summary"] = a.GetHostingInfo(domain, results)
         results["dns_infrastructure"] = a.AnalyzeDNSInfrastructure(domain, results)
@@ -219,6 +221,7 @@ func detectNullMX(basic map[string]any) bool {
 
 func (a *Analyzer) buildNonExistentResult(domain, status string, statusMessage *string) map[string]any {
         return map[string]any{
+                "domain":                 domain,
                 "domain_exists":          false,
                 "domain_status":          status,
                 "domain_status_message":  derefStr(statusMessage),
@@ -241,7 +244,7 @@ func (a *Analyzer) buildNonExistentResult(domain, status string, statusMessage *
                 "dnssec_analysis":        map[string]any{"status": "n/a"},
                 "ns_delegation_analysis": map[string]any{"status": "error", "delegation_ok": false, "message": msgDomainNotExist},
                 "registrar_info":         map[string]any{"status": "n/a", "registrar": nil},
-                "smtp_transport":         nil,
+                "smtp_transport":         map[string]any{"status": "n/a", "message": "Domain does not exist"},
                 "ct_subdomains":          map[string]any{"status": "success", "subdomains": []any{}, "unique_subdomains": 0, "total_certs": 0},
                 "has_null_mx":            false,
                 "is_no_mail_domain":      false,

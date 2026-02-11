@@ -15,7 +15,7 @@ The application is implemented in Go using the Gin framework, having been rewrit
 - **Technology Stack**: Go with Gin web framework, `pgx` v5 for PostgreSQL, `sqlc` for type-safe query generation, and `miekg/dns` for all DNS queries.
 - **Templates**: Go `html/template`.
 - **Project Structure**: `go-server/cmd/server/` (entry point), `go-server/internal/` (config, db, handlers, middleware, models, templates, analyzer, dnsclient, telemetry, providers), `go-server/db/queries/`, `go-server/templates/`.
-- **Key Features**: Multi-resolver consensus DNS client with DoH fallback, CT subdomain discovery, posture scoring, concurrent orchestrator, CSRF middleware (HMAC-signed cookie tokens), rate limiting, SSRF hardening, and telemetry for provider health monitoring and RDAP caching.
+- **Key Features**: Multi-resolver consensus DNS client with DoH fallback, CT subdomain discovery, posture scoring, concurrent orchestrator, SMTP transport verification (STARTTLS/TLS/cipher/cert with DNS-inferred fallback), CSRF middleware (HMAC-signed cookie tokens), rate limiting, SSRF hardening, and telemetry for provider health monitoring and RDAP caching.
 - **Posture Evaluation**: Risk levels are CVSS-aligned (Critical, High, Medium, Low, Informational), derived from actual protocol states and providing comprehensive remediation guidance with RFC citations.
 
 ### Frontend

@@ -284,6 +284,7 @@ func (h *AnalysisHandler) APIAnalysis(c *gin.Context) {
 }
 
 func (h *AnalysisHandler) saveAnalysis(ctx context.Context, domain, asciiDomain string, results map[string]any, duration float64, countryCode, countryName string) (int32, string) {
+        results["_tool_version"] = h.Config.AppVersion
         fullResultsJSON, _ := json.Marshal(results)
 
         basicRecordsJSON := getJSONFromResults(results, "basic_records", "")
