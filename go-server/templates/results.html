@@ -944,12 +944,17 @@
                                     <div class="alert alert-warning py-2 px-3 small mb-2">
                                         <i class="fas fa-exclamation-triangle me-1"></i>
                                         {{mapGetStr "primary_dkim_note" $dkim}}
-                                        {{if not (contains (mapGetStr "primary_dkim_note" $dkim) "custom DKIM selector")}} Try re-scanning with a custom DKIM selector if you know yours.{{end}}
+                                        <div class="mt-2 pt-2 border-top border-warning border-opacity-50">
+                                            <i class="fas fa-key me-1"></i><strong>Know your DKIM selector?</strong> <a href="/" class="text-warning">Re-scan with a custom selector</a> to verify.
+                                        </div>
                                     </div>
                                 {{else if and (eq $dkimStatus "info") $dkimIsKnownProvider}}
                                     <div class="alert alert-success py-2 px-3 small mb-2">
                                         <i class="fas fa-check-circle me-1"></i>
-                                        <strong>{{$dkimPrimaryProvider}}</strong> detected as primary mail platform — DKIM signing is managed by the provider. The primary provider may use custom selectors not discoverable through standard checks. Try re-scanning with a custom DKIM selector if you know yours.
+                                        <strong>{{$dkimPrimaryProvider}}</strong> detected as primary mail platform — DKIM signing is managed by the provider. The primary provider may use custom selectors not discoverable through standard checks.
+                                        <div class="mt-2 pt-2 border-top border-success border-opacity-50">
+                                            <i class="fas fa-key me-1"></i><strong>Know your DKIM selector?</strong> <a href="/" class="text-success">Re-scan with a custom selector</a> to verify.
+                                        </div>
                                     </div>
                                 {{end}}
                                 {{$keyIssues := mapGetSlice "key_issues" $dkim}}
