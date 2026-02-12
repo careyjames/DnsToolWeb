@@ -1284,6 +1284,14 @@
                         </h5>
                     </div>
                     <div class="card-body">
+                        {{if and $hasDane (ne (mapGetStr "status" $dnssec) "success")}}
+                        <div class="alert alert-warning py-2 mb-3 d-flex align-items-center" role="alert">
+                            <i class="fas fa-link-slash me-2 fs-5"></i>
+                            <div>
+                                <strong>DNSSEC dependency not met.</strong> DANE requires DNSSEC validation to provide authenticated TLS binding (<a href="https://datatracker.ietf.org/doc/html/rfc7672#section-1.3" target="_blank" rel="noopener" class="alert-link">RFC 7672 §1.3</a>). Without DNSSEC, these TLSA records cannot be trusted and DANE is not security-effective.
+                            </div>
+                        </div>
+                        {{end}}
                         <p class="text-muted mb-2 small">{{mapGetStr "message" $dane}}</p>
 
                         {{if and $hasDane (mapGetSlice "tlsa_records" $dane)}}
@@ -1333,11 +1341,6 @@
                             {{end}}
                         {{end}}
 
-                        {{if and $hasDane (ne (mapGetStr "status" $dnssec) "success")}}
-                            <div class="small text-warning mt-1">
-                                <i class="fas fa-exclamation-triangle me-1"></i>DANE requires DNSSEC to provide its security guarantees (RFC 7672 §1.3). Without DNSSEC validation, TLSA records could be spoofed. Enable DNSSEC to fully benefit from DANE.
-                            </div>
-                        {{end}}
                         {{if not $hasDane}}
                             {{$mx_prov := mapGetMap "mx_provider" $dane}}
                             {{if and $mx_prov (eq $daneDeployable "false")}}
@@ -1608,14 +1611,14 @@
             </div>
         </div>
 
-        <!-- SMTP Transport Security Section -->
+        <!-- Live SMTP TLS Validation Section -->
         {{if and $smtp (ne (mapGetStr "status" $smtp) "n/a")}}
         <div class="row section-smtp-transport">
             <div class="col-12 mb-4">
                 <div class="card">
                     <div class="card-header">
                         <h5 class="mb-0 d-flex align-items-center justify-content-between flex-wrap">
-                            <span><i class="fas fa-exchange-alt me-2"></i>SMTP Transport Security</span>
+                            <span><i class="fas fa-exchange-alt me-2"></i>Live SMTP TLS Validation</span>
                             <span>
                                 {{$smtpStatus := mapGetStr "status" $smtp}}
                                 <span class="badge bg-{{if eq $smtpStatus "success"}}success{{else if eq $smtpStatus "warning"}}warning{{else if eq $smtpStatus "error"}}danger{{else}}info{{end}}">
