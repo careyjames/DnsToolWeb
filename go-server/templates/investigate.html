@@ -16,7 +16,7 @@
         <div class="container">
             <div class="text-center hero-content">
                 <div class="hero-badge mb-3">
-                    <i class="fas fa-crosshairs me-1"></i> IP Investigation
+                    <i class="fas fa-route me-1"></i> IP Investigation
                 </div>
                 <h1 class="hero-title mb-3">
                     IP Address Investigation
@@ -61,7 +61,7 @@
                                        aria-label="IP address to investigate"
                                        value="{{.FormIP}}">
                                 <button class="btn btn-primary search-btn" type="submit" id="investigateBtn" aria-label="Investigate IP">
-                                    <i class="fas fa-crosshairs me-2" aria-hidden="true"></i>Investigate
+                                    <i class="fas fa-route me-2" aria-hidden="true"></i>Investigate
                                 </button>
                             </div>
                             <div class="form-text search-hint mt-2">
@@ -137,7 +137,7 @@
     <div class="container mt-4">
         <div class="d-flex align-items-center mb-4 flex-wrap gap-2">
             <h1 class="h3 mb-0">
-                <i class="fas fa-crosshairs me-2 text-info"></i>IP Investigation Report
+                <i class="fas fa-route me-2 text-info"></i>IP Investigation Report
             </h1>
             <a href="/investigate" class="btn btn-outline-secondary btn-sm ms-auto">
                 <i class="fas fa-search me-1"></i>New Investigation
@@ -356,7 +356,7 @@
 
         <div class="text-center mb-5">
             <a href="/investigate" class="btn btn-outline-info me-2">
-                <i class="fas fa-crosshairs me-1"></i>Investigate Another IP
+                <i class="fas fa-route me-1"></i>Investigate Another IP
             </a>
             <a href="/analyze?domain={{.AsciiDomain}}" class="btn btn-outline-primary">
                 <i class="fas fa-shield-alt me-1"></i>Run Full Domain Audit on {{.Domain}}
@@ -372,7 +372,7 @@
     <output id="loadingOverlay" class="loading-overlay d-none" aria-live="polite" aria-busy="true" aria-label="Running IP investigation">
         <div class="loading-content">
             <div class="loading-spinner">
-                <i class="fas fa-crosshairs fa-spin"></i>
+                <i class="fas fa-route fa-spin"></i>
             </div>
             <h4 class="mt-4 mb-2">Investigating IP Relationship</h4>
             <p class="text-muted mb-0" id="loadingIP"></p>

@@ -1056,12 +1056,20 @@ main.container {
     color: var(--text-primary);
 }
 
+.print-only {
+    display: none !important;
+}
+
 /* ============================================
    PRINT STYLES — Executive Intelligence Report
    Professional, colorful yet B&W laser-safe
    Colors chosen for distinct grayscale mapping
    ============================================ */
 @media print {
+
+    .print-only {
+        display: block !important;
+    }
 
     /* === Page Setup === */
     @page {
