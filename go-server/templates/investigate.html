@@ -3,7 +3,7 @@
 <head>
     {{template "head" .}}
     <title>IP Investigation - DNS Tool</title>
-    <meta name="description" content="Assess whether an IP address appears to be legitimate infrastructure, an authorized service provider, or an external actor. Correlates reverse DNS, ASN ownership, SPF records, and CT subdomain data for evidence-based attribution in the context of your domain.">
+    <meta name="description" content="Is this IP authorized to act on behalf of your domain? Correlates reverse DNS, ASN ownership, SPF records, and CT subdomain data for evidence-based attribution.">
     {{template "critical_css" .}}
     {{template "head_css" .}}
 </head>
@@ -20,9 +20,12 @@
                     <span class="badge bg-warning text-dark ms-2" style="font-size: 0.65em; vertical-align: middle;">BETA</span>
                 </div>
                 <h1 class="hero-title mb-3">
-                    IP Attribution &amp; Authorization
+                    IP Investigation
                 </h1>
-                <p class="hero-subtitle mx-auto mb-4">
+                <p class="hero-subtitle mx-auto mb-4" style="font-size: 1.35rem;">
+                    Is this IP authorized to act on behalf of your domain?
+                </p>
+                <p class="text-muted mx-auto mb-4" style="max-width: 600px;">
                     Assess whether an IP address appears to be legitimate infrastructure, an approved service provider, or an external actor &mdash; based on DNS evidence in the context of your domain
                 </p>
             </div>
