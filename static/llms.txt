@@ -1,7 +1,7 @@
 # DNS Tool - Domain Security Audit & Email Authentication Checker
 > Free domain security audit tool for IT professionals, executives, DNS specialists, and business leaders
 
-DNS Tool provides instant, real-time DNS intelligence reports with email authentication validation (SPF, DKIM, DMARC), DANE/TLSA certificate pinning analysis, DNSSEC chain verification, BIMI brand checking, MTA-STS/TLS-RPT analysis, CAA certificate controls with MPIC awareness, DMARCbis readiness checks, and domain intelligence via RDAP. Every query fetches fresh data from multiple resolvers — never cached.
+DNS Tool provides instant, real-time DNS intelligence reports with email authentication validation (SPF, DKIM, DMARC), DANE/TLSA certificate pinning analysis, DNSSEC chain verification, BIMI brand checking, MTA-STS/TLS-RPT analysis, CAA certificate controls with MPIC awareness, DMARCbis readiness checks, IP investigation, and domain intelligence via RDAP. Every query fetches fresh data from multiple resolvers — never cached. Every recommendation is backed by RFC citations. Every conclusion can be independently verified using standard Unix commands.
 
 ## How to Use This Tool (for AI Agents)
 
@@ -31,19 +31,46 @@ A single-page report with these sections (scroll down):
 - **Domain Security**: DNSSEC chain, CAA records with MPIC context
 - **Traffic & Routing**: DNS records (A, AAAA, MX, NS, SOA, TXT, SRV, CNAME)
 - **Domain Intelligence**: Registrar, creation/expiration, nameservers via RDAP
+- **DNS History Timeline**: Record changes over time (A, MX, NS) via SecurityTrails
+- **Subdomain Discovery**: Certificate Transparency + DNS probing
+- **Intelligence Sources**: Summary of all data sources used in the analysis
+- **Verify It Yourself**: Terminal commands (dig, openssl, curl) to independently reproduce every finding
 
 ### Re-Analyzing
 To get fresh data for the same domain, click the "Re-Analyze" button on any results page. Rate limit: 8 analyses per minute per visitor.
 
 ### Other Pages
+- `/sources` — Complete inventory of all intelligence sources, methodologies, rate limits, and verification commands
+- `/investigate` — IP Investigation: determine how an IP address relates to a domain (Direct Asset, Email Provider, CDN/Edge, DNS Provider, SPF-Authorized Sender)
 - `/history` — List of recently analyzed domains
 - `/stats` — Usage statistics and trends
+- `/compare` — Side-by-side domain comparison
+
+## Intelligence Sources & Transparency
+DNS Tool uses only open-source Unix commands and public protocols. Every conclusion can be independently verified. Sources include:
+- **4 DNS Resolvers**: Cloudflare, Google, Quad9, OpenDNS — queried in parallel with majority-agreement consensus
+- **Reverse DNS (PTR)**: Identifies hosting providers from IP addresses without any third-party API
+- **Team Cymru**: Free community DNS service for IP-to-ASN attribution (no API key, no rate limits)
+- **SMTP Probing**: Live STARTTLS verification of mail servers
+- **SecurityTrails**: DNS history timeline (50 API calls/month free tier)
+- **crt.sh**: Certificate Transparency log searches
+- **IANA RDAP**: Domain registration data
+- **ip-api.com**: Visitor geolocation only (footer flag) — NOT used for any analysis data; degrades gracefully if unavailable
+
+All sources are documented at `/sources` with methodology, rate limits, and verification commands.
+
+### Confidence Taxonomy
+Every attribution includes a confidence label:
+- **Observed**: Directly verified via DNS query, RDAP lookup, or SMTP connection
+- **Inferred**: Derived from pattern matching (e.g., PTR hostnames, ASN ownership)
+- **Third-party**: Sourced from external services (SecurityTrails, crt.sh)
 
 ## Who It's For
 - **Executives & Board Members**: Clear SECURE / PARTIAL / INSECURE verdicts for cybersecurity posture at a glance
 - **IT Professionals**: Validate SPF, DKIM, DMARC, DANE/TLSA configurations and troubleshoot DNS records
 - **DNS Specialists**: Authoritative nameserver queries, multi-resolver consensus, DNSSEC chain validation, DANE analysis
 - **Business & Compliance**: Vendor security assessments, supply chain risk evaluation, brand protection
+- **Security Analysts**: IP investigation, infrastructure attribution, subdomain discovery, DNS history forensics
 
 ## Features
 - Authoritative DNS record lookups (A, AAAA, MX, TXT, NS, SOA, CAA, SRV)
@@ -59,15 +86,23 @@ To get fresh data for the same domain, click the "Re-Analyze" button on any resu
 - Email security management provider detection (DMARC monitoring, SPF flattening)
 - Enterprise DNS provider detection (Cloudflare, AWS, Google, Akamai, Azure)
 - Multi-resolver consensus verification (Cloudflare, Google, Quad9, OpenDNS)
+- PTR-based hosting/CDN detection (reverse DNS provider identification)
+- IP-to-ASN attribution via Team Cymru DNS (network ownership identification)
+- IP Investigation workflow (IP-to-domain relationship determination)
 - Domain registrar information via RDAP
+- DNS history timeline via SecurityTrails (A, MX, NS record changes over time)
 - Security posture scoring with executive-level verdicts
 - Automatic subdomain discovery via Certificate Transparency logs and DNS probing
+- Confidence taxonomy (Observed / Inferred / Third-party) for all attributions
+- "Verify It Yourself" terminal commands appendix (dig, openssl, curl)
+- Intelligence sources inventory with full transparency
 
 ## Common Search Terms
-Domain security audit, SPF checker, DKIM validator, DMARC lookup, DNSSEC validation tool, DANE checker, TLSA lookup, DANE TLSA email security, DMARCbis, email authentication checker, email spoofing protection, cybersecurity posture report, DNS intelligence, domain reputation check, CAA record check, MPIC, MTA-STS checker, BIMI checker
+Domain security audit, SPF checker, DKIM validator, DMARC lookup, DNSSEC validation tool, DANE checker, TLSA lookup, DANE TLSA email security, DMARCbis, email authentication checker, email spoofing protection, cybersecurity posture report, DNS intelligence, domain reputation check, CAA record check, MPIC, MTA-STS checker, BIMI checker, IP investigation, reverse DNS lookup, ASN attribution, DNS history, subdomain discovery
 
 ## Documentation
 - Full agent guide with result interpretation: /llms-full.txt
+- Intelligence sources inventory: /sources
 - Blog guide: https://www.it-help.tech/blog/dns-security-best-practices/
 
 ## Contact

@@ -27,8 +27,8 @@
         "@context": "https://schema.org",
         "@type": "WebApplication",
         "name": "DNS Tool - Domain Security Audit",
-        "alternateName": ["DNS Checker", "SPF Checker", "DMARC Lookup", "DKIM Validator", "DNSSEC Checker", "DANE Checker", "TLSA Lookup", "Email Security Audit Tool", "Email Security Management Detector", "MTA-STS Checker", "TLS-RPT Checker"],
-        "description": "Free domain security audit tool for IT professionals, executives, and DNS specialists. Check SPF, DKIM, DMARC, DANE/TLSA, DNSSEC, BIMI, MTA-STS, TLS-RPT, and CAA records. DANE certificate pinning analysis for mail transport, DMARCbis readiness checks, MPIC-aware CAA validation. Detect email security management providers (DMARC monitoring, SPF flattening), SMTP transport encryption, and enterprise DNS infrastructure. Executive-ready security posture reports.",
+        "alternateName": ["DNS Checker", "SPF Checker", "DMARC Lookup", "DKIM Validator", "DNSSEC Checker", "DANE Checker", "TLSA Lookup", "Email Security Audit Tool", "Email Security Management Detector", "MTA-STS Checker", "TLS-RPT Checker", "IP Investigation Tool"],
+        "description": "Free domain security audit tool for IT professionals, executives, and DNS specialists. Check SPF, DKIM, DMARC, DANE/TLSA, DNSSEC, BIMI, MTA-STS, TLS-RPT, and CAA records. DANE certificate pinning analysis, DMARCbis readiness, MPIC-aware CAA validation. IP investigation, PTR-based hosting detection, Team Cymru ASN attribution, DNS history timeline. Every conclusion independently verifiable with standard Unix commands. Full intelligence sources transparency.",
         "url": "https://dnstool.it-help.tech",
         "applicationCategory": "SecurityApplication",
         "applicationSubCategory": "DNS Security Analysis",
@@ -114,7 +114,7 @@
                 "name": "How is this different from other DNS lookup tools?",
                 "acceptedAnswer": {
                     "@type": "Answer",
-                    "text": "Most DNS tools show raw records — and most skip advanced protocols entirely. DNS Tool provides a complete security intelligence report including multi-resolver consensus verification, email authentication scoring, DKIM key strength analysis, DANE/TLSA certificate pinning analysis for mail transport (a protocol most tools ignore), DMARCbis readiness checks, enterprise DNS provider detection, email security management provider identification (DMARC monitoring, SPF flattening, TLS-RPT reporting), SMTP transport encryption checks, BIMI brand verification, MPIC-aware CAA validation, Certificate Transparency subdomain discovery, historical comparison, JSON export, and a CVSS-aligned risk level (Critical / High / Medium / Low / Informational) with per-section remediation designed for both technical and executive audiences."
+                    "text": "Most DNS tools show raw records — and most skip advanced protocols entirely. DNS Tool provides a complete security intelligence report including multi-resolver consensus verification, email authentication scoring, DKIM key strength analysis, DANE/TLSA certificate pinning analysis for mail transport (a protocol most tools ignore), DMARCbis readiness checks, enterprise DNS provider detection, email security management provider identification (DMARC monitoring, SPF flattening, TLS-RPT reporting), SMTP transport encryption checks, BIMI brand verification, MPIC-aware CAA validation, Certificate Transparency subdomain discovery, DNS history timeline, IP investigation, PTR-based hosting detection, Team Cymru ASN attribution, JSON export, and a CVSS-aligned risk level (Critical / High / Medium / Low / Informational) with per-section remediation designed for both technical and executive audiences. Every conclusion can be independently verified using the 'Verify It Yourself' terminal commands appendix, and our full intelligence sources are documented at /sources."
                 }
             },
             {
@@ -155,6 +155,14 @@
                 "acceptedAnswer": {
                     "@type": "Answer",
                     "text": "This is one of the most widespread misconceptions in email security. The Netherlands adopted DANE early and aggressively — SIDN (the .nl registry) promoted it and the Dutch government mandated it, creating the false impression DANE was only a Dutch phenomenon. Making things worse, DANE for web browsers genuinely failed (Let's Encrypt solved HTTPS differently), so people conflated 'DANE for websites is dead' with 'DANE is dead' — missing that DANE for email (SMTP, RFC 7672) was thriving separately. What actually happened: over 1.1 million domains now publish TLSA records globally. Microsoft Exchange Online announced GA of inbound SMTP DANE with DNSSEC in October 2024, available to all tenants at no extra cost. Outbound DANE has been live since March 2022. The IETF itself uses DANE on mail.ietf.org. Adoption extends beyond the Netherlands: Sweden, Norway, Czech Republic, and EU public agencies all deploy it. Most security audit tools still skip DANE because it requires DNSSEC (RFC 7672 §1.3) and was historically complex to check, creating a self-reinforcing blind spot. DNS Tool breaks that cycle by checking DANE/TLSA for every MX host alongside MTA-STS. Best practice: deploy both DANE (cryptographic strength) and MTA-STS (broader compatibility)."
+                }
+            },
+            {
+                "@type": "Question",
+                "name": "How do I know the results are accurate? Can I verify them?",
+                "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "Every DNS Tool report includes a 'Verify It Yourself' appendix with the exact terminal commands (dig, openssl, curl) to independently reproduce every finding. We also publish our complete intelligence sources inventory at /sources, documenting every data source, methodology, rate limit, and verification command. Our analysis uses 4 independent DNS resolvers with majority-agreement consensus, reverse DNS (PTR) for hosting detection, Team Cymru for ASN attribution, and standard SMTP probing — all using open-source Unix commands available on any system. Every attribution includes a confidence label (Observed, Inferred, or Third-party) so you know exactly how each conclusion was reached."
                 }
             },
             {

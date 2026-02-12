@@ -48,6 +48,8 @@ func (h *StaticHandler) SitemapXML(c *gin.Context) {
                 Priority   string
         }{
                 {"https://dnstool.it-help.tech/", "weekly", "1.0"},
+                {"https://dnstool.it-help.tech/investigate", "weekly", "0.7"},
+                {"https://dnstool.it-help.tech/sources", "monthly", "0.6"},
                 {"https://dnstool.it-help.tech/history", "daily", "0.6"},
                 {"https://dnstool.it-help.tech/compare", "weekly", "0.5"},
                 {"https://dnstool.it-help.tech/stats", "daily", "0.5"},

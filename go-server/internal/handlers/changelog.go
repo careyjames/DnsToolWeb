@@ -1,6 +1,7 @@
 package handlers
 
 const (
+        dateFeb12 = "Feb 12, 2026"
         dateFeb11 = "Feb 11, 2026"
         dateFeb10 = "Feb 10, 2026"
 )
@@ -17,6 +18,30 @@ type ChangelogEntry struct {
 
 func GetChangelog() []ChangelogEntry {
         return []ChangelogEntry{
+                {
+                        Version:     "26.12.27",
+                        Date:        dateFeb12,
+                        Category:    "Transparency",
+                        Title:       "Intelligence Sources Inventory",
+                        Description: "New /sources page documents every intelligence source used by DNS Tool — DNS resolvers, reverse DNS, Team Cymru ASN attribution, SMTP probing, SecurityTrails, crt.sh, IANA RDAP — with methodology, rate limits, and verification commands. No black boxes.",
+                        Icon:        "fas fa-satellite-dish",
+                },
+                {
+                        Version:     "26.12.26",
+                        Date:        dateFeb12,
+                        Category:    "Intelligence",
+                        Title:       "PTR-Based Hosting Detection",
+                        Description: "Reverse DNS (PTR) lookups now identify hosting providers directly from IP addresses — the old-fashioned Unix way. CloudFront, AWS, Google Cloud, Azure, and more detected without any third-party API.",
+                        Icon:        "fas fa-undo-alt",
+                },
+                {
+                        Version:     "26.12.25",
+                        Date:        dateFeb12,
+                        Category:    "Intelligence",
+                        Title:       "IP-to-ASN Attribution",
+                        Description: "Team Cymru DNS-based IP-to-ASN mapping identifies which organization owns each IP address (AWS, Cloudflare, Google, etc.). Free community service with no API key and no rate limits.",
+                        Icon:        "fas fa-map-marked-alt",
+                },
                 {
                         Version:     "26.12.24",
                         Date:        dateFeb11,

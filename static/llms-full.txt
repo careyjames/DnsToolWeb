@@ -183,7 +183,15 @@ Each analysis always fetches fresh DNS data — there is no caching.
 
 ---
 
-## Browsing History & Statistics
+## Other Pages
+
+### Intelligence Sources Inventory
+URL: `https://dnstool.it-help.tech/sources`
+Complete transparency page documenting every intelligence source used by DNS Tool: DNS resolvers, reverse DNS (PTR), Team Cymru ASN attribution, SMTP probing, SecurityTrails, crt.sh, IANA RDAP, and ip-api.com (visitor geolocation only). Each source includes methodology, rate limits, and verification commands. This page embodies the principle: "No proprietary scanners. No black boxes. Just DNS."
+
+### IP Investigation
+URL: `https://dnstool.it-help.tech/investigate`
+Standalone investigative workflow for determining IP-to-domain relationships. Enter any IP address and a domain to discover the relationship: Direct Asset, Email Provider, CDN/Edge, DNS Provider, SPF-Authorized Sender, or CT Subdomain Match. Includes PTR/FCrDNS validation and ASN attribution via Team Cymru. SSRF-safe input blocking prevents abuse.
 
 ### Analysis History
 URL: `https://dnstool.it-help.tech/history`
@@ -193,6 +201,10 @@ Shows a paginated list of all previously analyzed domains with timestamps. Click
 URL: `https://dnstool.it-help.tech/stats`
 (Also accessible via `https://dnstool.it-help.tech/statistics`)
 Shows usage trends, analysis counts, popular domains, and visitor geography.
+
+### Domain Comparison
+URL: `https://dnstool.it-help.tech/compare`
+Side-by-side comparison of two domains' security configurations.
 
 ---
 
@@ -251,12 +263,24 @@ DNS Tool detects when a domain uses a hosted email provider and adjusts DANE ana
 - **WEAK**: Missing critical security records
 - **CRITICAL**: No security controls detected
 
+### Infrastructure Intelligence
+- PTR-based hosting detection: Reverse DNS lookups identify hosting providers (e.g., CloudFront, AWS, Google) without third-party APIs
+- IP-to-ASN attribution: Team Cymru DNS service maps IPs to owning organizations (free, no API key, no rate limits)
+- Confidence taxonomy: Every attribution labeled as Observed (direct DNS/RDAP), Inferred (pattern matching), or Third-party (external services)
+
+### Verification & Transparency
+- Every report includes a "Verify It Yourself" appendix with domain-specific terminal commands (dig, openssl, curl)
+- Intelligence Sources summary on each results page showing which sources contributed
+- Full sources inventory at /sources documenting methodology, rate limits, and verification commands
+
 ### Technical Details
-- Backend: Python/Flask
-- DNS Library: dnspython with multiple resolver fallback
+- Backend: Go with Gin web framework
+- DNS Client: Custom multi-resolver consensus engine with DoH fallback (miekg/dns library)
+- Database: PostgreSQL (pgx v5, sqlc for type-safe queries)
 - RDAP: Direct IANA bootstrap queries
 - Response Time: Typically 2-5 seconds per analysis
 - Data: Always fresh, never cached
+- External services: Only ip-api.com (visitor geolocation flag in footer, 45 req/min free tier) uses a rate-limited API — core analysis relies entirely on unlimited DNS protocol queries
 
 ---
 
