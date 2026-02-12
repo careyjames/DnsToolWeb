@@ -12,6 +12,8 @@ import (
         "time"
 )
 
+const contentTypeJSON = "application/json"
+
 var (
         securityTrailsEnabled bool
         securityTrailsAPIKey  string
@@ -61,7 +63,7 @@ func FetchSubdomains(ctx context.Context, domain string) ([]string, *STFetchStat
                 return []string{}, &STFetchStatus{Errored: true}, nil
         }
         req.Header.Set("APIKEY", securityTrailsAPIKey)
-        req.Header.Set("Accept", "application/json")
+        req.Header.Set("Accept", contentTypeJSON)
 
         resp, err := securityTrailsHTTPClient.Do(req)
         if err != nil {
@@ -121,8 +123,8 @@ func FetchDomainsByIP(ctx context.Context, ip string) ([]string, error) {
                 return []string{}, nil
         }
         req.Header.Set("APIKEY", securityTrailsAPIKey)
-        req.Header.Set("Accept", "application/json")
-        req.Header.Set("Content-Type", "application/json")
+        req.Header.Set("Accept", contentTypeJSON)
+        req.Header.Set("Content-Type", contentTypeJSON)
 
         resp, err := securityTrailsHTTPClient.Do(req)
         if err != nil {

@@ -549,7 +549,7 @@
             overlay.classList.remove('d-none');
 
             var startTime = Date.now();
-            var timerInterval = setInterval(function() {
+            setInterval(function() {
                 var elapsed = Math.floor((Date.now() - startTime) / 1000);
                 if (loadingTimer) loadingTimer.textContent = elapsed + 's';
             }, 1000);

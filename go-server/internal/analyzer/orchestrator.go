@@ -117,31 +117,7 @@ func (a *Analyzer) AnalyzeDomain(ctx context.Context, domain string, customDKIMS
         ctData := getMapResult(resultsMap, "ct_subdomains")
         ctSubdomains, _ := ctData["subdomains"].([]map[string]any)
 
-        initSecurityTrails()
-        if securityTrailsEnabled {
-                stSubs, _, err := FetchSubdomains(ctx, domain)
-                if err == nil && len(stSubs) > 0 {
-                        existing := make(map[string]bool, len(ctSubdomains))
-                        for _, sd := range ctSubdomains {
-                                if name, ok := sd["subdomain"].(string); ok {
-                                        existing[name] = true
-                                }
-                        }
-                        for _, fqdn := range stSubs {
-                                if !existing[fqdn] {
-                                        existing[fqdn] = true
-                                        ctSubdomains = append(ctSubdomains, map[string]any{
-                                                "subdomain":  fqdn,
-                                                "source":     "securitytrails",
-                                                "cert_count": 0,
-                                        })
-                                }
-                        }
-                        ctData["subdomains"] = ctSubdomains
-                        ctData["unique_subdomains"] = len(ctSubdomains)
-                        results["ct_subdomains"] = ctData
-                }
-        }
+        ctSubdomains = mergeSecurityTrailsSubdomains(ctx, domain, ctSubdomains, ctData, results)
 
         results["dangling_dns"] = a.DetectDanglingDNS(ctx, domain, ctSubdomains)
 
@@ -150,6 +126,37 @@ func (a *Analyzer) AnalyzeDomain(ctx context.Context, domain string, customDKIMS
         results["mail_posture"] = buildMailPosture(results)
 
         return results
+}
+
+func mergeSecurityTrailsSubdomains(ctx context.Context, domain string, ctSubdomains []map[string]any, ctData, results map[string]any) []map[string]any {
+        initSecurityTrails()
+        if !securityTrailsEnabled {
+                return ctSubdomains
+        }
+        stSubs, _, err := FetchSubdomains(ctx, domain)
+        if err != nil || len(stSubs) == 0 {
+                return ctSubdomains
+        }
+        existing := make(map[string]bool, len(ctSubdomains))
+        for _, sd := range ctSubdomains {
+                if name, ok := sd["subdomain"].(string); ok {
+                        existing[name] = true
+                }
+        }
+        for _, fqdn := range stSubs {
+                if !existing[fqdn] {
+                        existing[fqdn] = true
+                        ctSubdomains = append(ctSubdomains, map[string]any{
+                                "subdomain":  fqdn,
+                                "source":     "securitytrails",
+                                "cert_count": 0,
+                        })
+                }
+        }
+        ctData["subdomains"] = ctSubdomains
+        ctData["unique_subdomains"] = len(ctSubdomains)
+        results["ct_subdomains"] = ctData
+        return ctSubdomains
 }
 
 func (a *Analyzer) checkDomainExists(ctx context.Context, domain string) (bool, string, *string) {

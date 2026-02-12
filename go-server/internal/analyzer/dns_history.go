@@ -12,6 +12,8 @@ import (
         "time"
 )
 
+const dateFormatISO = "2006-01-02"
+
 type DNSHistoryCache struct {
         mu      sync.RWMutex
         entries map[string]*dnsHistoryCacheEntry
@@ -174,14 +176,7 @@ func FetchDNSHistory(ctx context.Context, domain string, cache *DNSHistoryCache)
         anyFailed := failedCount > 0
         fullyChecked := failedCount == 0
 
-        status := "success"
-        if allRateLimited {
-                status = "rate_limited"
-        } else if allFailed {
-                status = "error"
-        } else if anyFailed {
-                status = "partial"
-        }
+        status := determineHistoryStatus(allRateLimited, allFailed, anyFailed)
 
         result := map[string]any{
                 "available":      !allFailed,
@@ -203,6 +198,19 @@ func FetchDNSHistory(ctx context.Context, domain string, cache *DNSHistoryCache)
         return result
 }
 
+func determineHistoryStatus(allRateLimited, allFailed, anyFailed bool) string {
+        if allRateLimited {
+                return "rate_limited"
+        }
+        if allFailed {
+                return "error"
+        }
+        if anyFailed {
+                return "partial"
+        }
+        return "success"
+}
+
 func fetchHistoryForType(ctx context.Context, domain, rtype string) historyFetchResult {
         url := fmt.Sprintf("https://api.securitytrails.com/v1/history/%s/dns/%s", domain, rtype)
 
@@ -212,7 +220,7 @@ func fetchHistoryForType(ctx context.Context, domain, rtype string) historyFetch
                 return historyFetchResult{errored: true}
         }
         req.Header.Set("APIKEY", securityTrailsAPIKey)
-        req.Header.Set("Accept", "application/json")
+        req.Header.Set("Accept", contentTypeJSON)
 
         resp, err := securityTrailsHTTPClient.Do(req)
         if err != nil {
@@ -247,13 +255,13 @@ func fetchHistoryForType(ctx context.Context, domain, rtype string) historyFetch
                         continue
                 }
 
-                firstSeen, _ := time.Parse("2006-01-02", rec.FirstSeen)
+                firstSeen, _ := time.Parse(dateFormatISO, rec.FirstSeen)
 
                 var daysActive int
                 var daysSinceGone int
 
                 if rec.LastSeen != nil {
-                        lastSeen, _ := time.Parse("2006-01-02", *rec.LastSeen)
+                        lastSeen, _ := time.Parse(dateFormatISO, *rec.LastSeen)
                         daysActive = int(lastSeen.Sub(firstSeen).Hours() / 24)
                         daysSinceGone = int(now.Sub(lastSeen).Hours() / 24)
                 } else {
@@ -276,7 +284,7 @@ func fetchHistoryForType(ctx context.Context, domain, rtype string) historyFetch
                 })
 
                 if rec.LastSeen != nil {
-                        lastSeen, _ := time.Parse("2006-01-02", *rec.LastSeen)
+                        lastSeen, _ := time.Parse(dateFormatISO, *rec.LastSeen)
                         changes = append(changes, dnsChangeEvent{
                                 RecordType:  upperType,
                                 Value:       value,

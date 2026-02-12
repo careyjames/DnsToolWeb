@@ -5,6 +5,11 @@ import (
         "strings"
 )
 
+const (
+        sectionDNSRecords = "DNS Records"
+        rfcDNS1035        = "RFC 1035"
+)
+
 type VerifyCommand struct {
         Section     string
         Description string
@@ -39,37 +44,37 @@ func GenerateVerificationCommands(domain string, results map[string]any) []Verif
 func generateDNSRecordCommands(domain string) []VerifyCommand {
         return []VerifyCommand{
                 {
-                        Section:     "DNS Records",
+                        Section:     sectionDNSRecords,
                         Description: "Query A records (IPv4 addresses)",
                         Command:     fmt.Sprintf("dig +short A %s", domain),
-                        RFC:         "RFC 1035",
+                        RFC:         rfcDNS1035,
                 },
                 {
-                        Section:     "DNS Records",
+                        Section:     sectionDNSRecords,
                         Description: "Query AAAA records (IPv6 addresses)",
                         Command:     fmt.Sprintf("dig +short AAAA %s", domain),
                         RFC:         "RFC 3596",
                 },
                 {
-                        Section:     "DNS Records",
+                        Section:     sectionDNSRecords,
                         Description: "Query MX records (mail servers)",
                         Command:     fmt.Sprintf("dig +short MX %s", domain),
                         RFC:         "RFC 5321",
                 },
                 {
-                        Section:     "DNS Records",
+                        Section:     sectionDNSRecords,
                         Description: "Query NS records (nameservers)",
                         Command:     fmt.Sprintf("dig +short NS %s", domain),
-                        RFC:         "RFC 1035",
+                        RFC:         rfcDNS1035,
                 },
                 {
-                        Section:     "DNS Records",
+                        Section:     sectionDNSRecords,
                         Description: "Query all TXT records",
                         Command:     fmt.Sprintf("dig +short TXT %s", domain),
-                        RFC:         "RFC 1035",
+                        RFC:         rfcDNS1035,
                 },
                 {
-                        Section:     "DNS Records",
+                        Section:     sectionDNSRecords,
                         Description: "Multi-resolver consensus (compare across resolvers)",
                         Command:     fmt.Sprintf("dig @1.1.1.1 +short A %s && dig @8.8.8.8 +short A %s && dig @9.9.9.9 +short A %s && dig @208.67.222.222 +short A %s", domain, domain, domain, domain),
                         RFC:         "",
@@ -359,32 +364,41 @@ func generateCDSCommands(domain string) []VerifyCommand {
 }
 
 func extractMXHostsFromResults(results map[string]any) []string {
+        basic, ok := results["basic_records"].(map[string]any)
+        if !ok {
+                return nil
+        }
+        mxRaw, ok := basic["MX"]
+        if !ok {
+                return nil
+        }
+        return parseMXHostEntries(mxRaw)
+}
+
+func parseMXHostEntries(mxRaw any) []string {
         var hosts []string
-        if basic, ok := results["basic_records"].(map[string]any); ok {
-                if mxRaw, ok := basic["MX"]; ok {
-                        switch mx := mxRaw.(type) {
-                        case []string:
-                                for _, h := range mx {
-                                        parts := strings.Fields(h)
-                                        if len(parts) >= 2 {
-                                                hosts = append(hosts, parts[len(parts)-1])
-                                        } else if len(parts) == 1 {
-                                                hosts = append(hosts, parts[0])
-                                        }
-                                }
-                        case []any:
-                                for _, h := range mx {
-                                        if s, ok := h.(string); ok {
-                                                parts := strings.Fields(s)
-                                                if len(parts) >= 2 {
-                                                        hosts = append(hosts, parts[len(parts)-1])
-                                                } else if len(parts) == 1 {
-                                                        hosts = append(hosts, parts[0])
-                                                }
-                                        }
-                                }
+        switch mx := mxRaw.(type) {
+        case []string:
+                for _, h := range mx {
+                        hosts = appendMXHost(hosts, h)
+                }
+        case []any:
+                for _, h := range mx {
+                        if s, ok := h.(string); ok {
+                                hosts = appendMXHost(hosts, s)
                         }
                 }
+        }
+        return hosts
+}
+
+func appendMXHost(hosts []string, entry string) []string {
+        parts := strings.Fields(entry)
+        if len(parts) >= 2 {
+                return append(hosts, parts[len(parts)-1])
+        }
+        if len(parts) == 1 {
+                return append(hosts, parts[0])
         }
         return hosts
 }

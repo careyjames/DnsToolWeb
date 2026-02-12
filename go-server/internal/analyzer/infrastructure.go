@@ -164,18 +164,7 @@ func (a *Analyzer) AnalyzeDNSInfrastructure(domain string, results map[string]an
         basicRecords, _ := results["basic_records"].(map[string]any)
         nsRecords, _ := basicRecords["NS"].([]string)
 
-        nsFromParent := false
-        if len(nsRecords) == 0 {
-                if parent := parentZone(domain); parent != "" {
-                        ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-                        parentNS := a.DNS.QueryDNS(ctx, "NS", parent)
-                        cancel()
-                        if len(parentNS) > 0 {
-                                nsRecords = parentNS
-                                nsFromParent = true
-                        }
-                }
-        }
+        nsRecords, nsFromParent := a.resolveNSRecords(domain, nsRecords)
 
         nsStr := strings.ToLower(strings.Join(nsRecords, " "))
         nsList := make([]string, len(nsRecords))
@@ -183,6 +172,36 @@ func (a *Analyzer) AnalyzeDNSInfrastructure(domain string, results map[string]an
                 nsList[i] = strings.ToLower(ns)
         }
 
+        im := matchAllProviders(nsList, nsStr)
+        govMatch, isGovernment := matchGovernmentDomain(domain)
+        if im == nil && govMatch != nil {
+                im = govMatch
+        }
+
+        return buildInfraResult(im, isGovernment, nsFromParent, results)
+}
+
+func (a *Analyzer) resolveNSRecords(domain string, nsRecords []string) ([]string, bool) {
+        if len(nsRecords) > 0 {
+                return nsRecords, false
+        }
+        if a.DNS == nil {
+                return nsRecords, false
+        }
+        parent := parentZone(domain)
+        if parent == "" {
+                return nsRecords, false
+        }
+        ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+        parentNS := a.DNS.QueryDNS(ctx, "NS", parent)
+        cancel()
+        if len(parentNS) > 0 {
+                return parentNS, true
+        }
+        return nsRecords, false
+}
+
+func matchAllProviders(nsList []string, nsStr string) *infraMatch {
         im := matchEnterpriseProvider(nsList)
         if im == nil {
                 im = matchSelfHostedProvider(nsStr)
@@ -190,12 +209,10 @@ func (a *Analyzer) AnalyzeDNSInfrastructure(domain string, results map[string]an
         if im == nil {
                 im = matchManagedProvider(nsStr)
         }
+        return im
+}
 
-        govMatch, isGovernment := matchGovernmentDomain(domain)
-        if im == nil && govMatch != nil {
-                im = govMatch
-        }
-
+func buildInfraResult(im *infraMatch, isGovernment, nsFromParent bool, results map[string]any) map[string]any {
         providerTier := "standard"
         var providerFeatures []string
         if im != nil {
@@ -241,32 +258,59 @@ func (a *Analyzer) GetHostingInfo(domain string, results map[string]any) map[str
         mxRecords, _ := basicRecords["MX"].([]string)
 
         hosting := detectProvider(aRecords, hostingProviders)
-        dnsHosting := detectProvider(nsRecords, dnsHostingProviders)
+        dnsHosting, dnsFromParent := a.resolveDNSHosting(domain, nsRecords)
+        emailHosting, emailFromSPF := resolveEmailHosting(results, mxRecords)
+        isNoMail := getBool(results, "is_no_mail_domain")
 
-        dnsFromParent := false
-        if dnsHosting == "" {
-                if parent := parentZone(domain); parent != "" {
-                        ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-                        parentNS := a.DNS.QueryDNS(ctx, "NS", parent)
-                        cancel()
-                        if len(parentNS) > 0 {
-                                dnsHosting = detectProvider(parentNS, dnsHostingProviders)
-                                if dnsHosting != "" {
-                                        dnsFromParent = true
-                                }
-                        }
+        hosting, dnsHosting, emailHosting = applyHostingDefaults(hosting, dnsHosting, emailHosting, isNoMail)
+
+        return map[string]any{
+                "hosting":              hosting,
+                "dns_hosting":          dnsHosting,
+                "email_hosting":        emailHosting,
+                "domain":               domain,
+                "hosting_confidence":   hostingConfidence(hosting),
+                "dns_confidence":       dnsConfidence(dnsFromParent),
+                "email_confidence":     emailConfidence(emailFromSPF, isNoMail),
+                "dns_from_parent":      dnsFromParent,
+        }
+}
+
+func (a *Analyzer) resolveDNSHosting(domain string, nsRecords []string) (string, bool) {
+        dnsHosting := detectProvider(nsRecords, dnsHostingProviders)
+        if dnsHosting != "" {
+                return dnsHosting, false
+        }
+        parent := parentZone(domain)
+        if parent == "" {
+                return "", false
+        }
+        ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+        parentNS := a.DNS.QueryDNS(ctx, "NS", parent)
+        cancel()
+        if len(parentNS) > 0 {
+                dnsHosting = detectProvider(parentNS, dnsHostingProviders)
+                if dnsHosting != "" {
+                        return dnsHosting, true
                 }
         }
+        return "", false
+}
 
+func resolveEmailHosting(results map[string]any, mxRecords []string) (string, bool) {
         emailHosting := detectProvider(mxRecords, emailHostingProviders)
-
-        isNoMail := getBool(results, "is_no_mail_domain")
-        emailFromSPF := false
-        if emailHosting == "" && !isNoMail {
-                emailHosting = detectEmailProviderFromSPF(results)
-                emailFromSPF = emailHosting != ""
+        if emailHosting != "" {
+                return emailHosting, false
         }
+        isNoMail := getBool(results, "is_no_mail_domain")
+        if isNoMail {
+                return "", false
+        }
+        emailHosting = detectEmailProviderFromSPF(results)
+        return emailHosting, emailHosting != ""
+}
 
+func applyHostingDefaults(hosting, dnsHosting, emailHosting string, isNoMail bool) (string, string, string) {
         if hosting == "" {
                 hosting = "Unknown"
         }
@@ -278,33 +322,31 @@ func (a *Analyzer) GetHostingInfo(domain string, results map[string]any) map[str
         } else if emailHosting == "" {
                 emailHosting = "Unknown"
         }
+        return hosting, dnsHosting, emailHosting
+}
 
-        hostingConf := ConfidenceObservedMap(MethodARecordPattern)
+func hostingConfidence(hosting string) map[string]any {
         if hosting == "Unknown" {
-                hostingConf = map[string]any{}
+                return map[string]any{}
         }
-        dnsConf := ConfidenceObservedMap(MethodNSPattern)
-        if dnsFromParent {
-                dnsConf = ConfidenceInferredMap("Parent zone NS records")
-        }
-        emailConf := ConfidenceObservedMap(MethodMXPattern)
-        if emailFromSPF {
-                emailConf = ConfidenceObservedMap(MethodSPFInclude)
-        }
-        if isNoMail {
-                emailConf = ConfidenceObservedMap("SPF -all declares no mail")
-        }
+        return ConfidenceObservedMap(MethodARecordPattern)
+}
 
-        return map[string]any{
-                "hosting":              hosting,
-                "dns_hosting":          dnsHosting,
-                "email_hosting":        emailHosting,
-                "domain":               domain,
-                "hosting_confidence":   hostingConf,
-                "dns_confidence":       dnsConf,
-                "email_confidence":     emailConf,
-                "dns_from_parent":      dnsFromParent,
+func dnsConfidence(dnsFromParent bool) map[string]any {
+        if dnsFromParent {
+                return ConfidenceInferredMap("Parent zone NS records")
         }
+        return ConfidenceObservedMap(MethodNSPattern)
+}
+
+func emailConfidence(emailFromSPF, isNoMail bool) map[string]any {
+        if isNoMail {
+                return ConfidenceObservedMap("SPF -all declares no mail")
+        }
+        if emailFromSPF {
+                return ConfidenceObservedMap(MethodSPFInclude)
+        }
+        return ConfidenceObservedMap(MethodMXPattern)
 }
 
 func detectEmailProviderFromSPF(results map[string]any) string {

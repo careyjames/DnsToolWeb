@@ -23,7 +23,19 @@ var (
         spfIPv6Re = regexp.MustCompile(`(?i)ip6:([^\s;]+)`)
 )
 
-const neighborhoodDisplayCap = 10
+const (
+        neighborhoodDisplayCap = 10
+
+        classCDNEdge       = "CDN/Edge Network"
+        classCloudHosting  = "Cloud Hosting"
+        classDirectA       = "Direct Asset (A Record)"
+        classDirectAAAA    = "Direct Asset (AAAA Record)"
+        classDirectReverse = "Direct Asset (Reverse DNS)"
+        classEmailMX       = "Email Provider (MX)"
+        classDNSNS         = "DNS Provider (NS)"
+        classSPFAuth       = "SPF-Authorized Sender"
+        classCTSubdomain   = "CT Subdomain Match"
+)
 
 func ValidateIPAddress(ip string) bool {
         return net.ParseIP(ip) != nil
@@ -94,7 +106,7 @@ func (a *Analyzer) InvestigateIP(ctx context.Context, domain, ip string) map[str
                 result["is_cdn"] = true
                 result["cdn_provider"] = cdnProvider
                 infraRels = append(infraRels, map[string]any{
-                        "classification": "CDN/Edge Network",
+                        "classification": classCDNEdge,
                         "evidence":       fmt.Sprintf("IP belongs to %s (ASN %s)", cdnProvider, mapGetStr(asnInfo, "asn")),
                         "record_type":    "ASN",
                 })
@@ -103,7 +115,7 @@ func (a *Analyzer) InvestigateIP(ctx context.Context, domain, ip string) map[str
                 result["cdn_provider"] = ""
                 result["cloud_provider"] = cdnProvider
                 infraRels = append(infraRels, map[string]any{
-                        "classification": "Cloud Hosting",
+                        "classification": classCloudHosting,
                         "evidence":       fmt.Sprintf("IP belongs to %s (ASN %s)", cdnProvider, mapGetStr(asnInfo, "asn")),
                         "record_type":    "ASN",
                 })
@@ -204,32 +216,32 @@ func buildExecutiveVerdict(classification, cdnProvider, domain, ip string, direc
         orgName := mapGetStr(asnInfo, "as_name")
 
         switch {
-        case classification == "Direct Asset (A Record)" || classification == "Direct Asset (AAAA Record)":
+        case classification == classDirectA || classification == classDirectAAAA:
                 return fmt.Sprintf("This IP is a direct infrastructure asset for %s — it hosts your domain's web content.", domain)
-        case classification == "Direct Asset (Reverse DNS)":
+        case classification == classDirectReverse:
                 return fmt.Sprintf("This IP's reverse DNS (PTR) record points to %s, confirming it is assigned to your domain's infrastructure.", domain)
-        case classification == "Email Provider (MX)":
-                hostname := findFirstHostname(directRels, "Email Provider (MX)")
+        case classification == classEmailMX:
+                hostname := findFirstHostname(directRels, classEmailMX)
                 if hostname != "" {
                         return fmt.Sprintf("This IP belongs to your email provider (%s) and handles mail delivery for %s.", hostname, domain)
                 }
                 return fmt.Sprintf("This IP serves as an email server for %s.", domain)
-        case classification == "DNS Provider (NS)":
-                hostname := findFirstHostname(directRels, "DNS Provider (NS)")
+        case classification == classDNSNS:
+                hostname := findFirstHostname(directRels, classDNSNS)
                 if hostname != "" {
                         return fmt.Sprintf("This IP hosts one of your nameservers (%s) that provides DNS resolution for %s.", hostname, domain)
                 }
                 return fmt.Sprintf("This IP is a nameserver providing DNS resolution for %s.", domain)
-        case strings.HasPrefix(classification, "SPF-Authorized Sender"):
+        case strings.HasPrefix(classification, classSPFAuth):
                 return fmt.Sprintf("This IP is authorized to send email on behalf of %s via SPF policy. It is a legitimate email sender for your domain.", domain)
-        case classification == "CT Subdomain Match":
+        case classification == classCTSubdomain:
                 return fmt.Sprintf("This IP hosts a subdomain of %s discovered via Certificate Transparency logs — it is part of your broader infrastructure.", domain)
-        case classification == "CDN/Edge Network":
+        case classification == classCDNEdge:
                 if cdnProvider != "" {
                         return fmt.Sprintf("This IP is a %s CDN edge node. Your domain's traffic may route through it, but it is shared infrastructure — not dedicated to %s.", cdnProvider, domain)
                 }
                 return "This IP belongs to a CDN/edge network and serves as shared proxy infrastructure."
-        case classification == "Cloud Hosting":
+        case classification == classCloudHosting:
                 if cdnProvider != "" {
                         return fmt.Sprintf("This IP is hosted on %s cloud infrastructure (ASN %s). It is a cloud-hosted server, not a CDN edge node.", cdnProvider, asName)
                 }
@@ -255,15 +267,15 @@ func verdictSeverity(classification string) string {
         switch {
         case strings.HasPrefix(classification, "Direct Asset"):
                 return "success"
-        case classification == "Email Provider (MX)", classification == "DNS Provider (NS)":
+        case classification == classEmailMX, classification == classDNSNS:
                 return "info"
-        case strings.HasPrefix(classification, "SPF-Authorized Sender"):
+        case strings.HasPrefix(classification, classSPFAuth):
                 return "warning"
-        case classification == "CT Subdomain Match":
+        case classification == classCTSubdomain:
                 return "info"
-        case classification == "CDN/Edge Network":
+        case classification == classCDNEdge:
                 return "primary"
-        case classification == "Cloud Hosting":
+        case classification == classCloudHosting:
                 return "info"
         default:
                 return "secondary"
@@ -291,7 +303,7 @@ func (a *Analyzer) checkPTRRecords(ctx context.Context, ip, domain string, resul
                 if ptrLower == domainLower || strings.HasSuffix(ptrLower, "."+domainLower) {
                         result["fcrdns_match"] = true
                         rels = append(rels, map[string]any{
-                                "classification": "Direct Asset (Reverse DNS)",
+                                "classification": classDirectReverse,
                                 "evidence":       fmt.Sprintf("PTR record %s matches domain %s", ptr, domain),
                                 "record_type":    "PTR",
                                 "hostname":       ptr,
@@ -318,7 +330,7 @@ func (a *Analyzer) checkDomainARecords(ctx context.Context, domain, ip string, r
                 for _, rec := range aRecords {
                         if rec == ip {
                                 rels = append(rels, map[string]any{
-                                        "classification": "Direct Asset (A Record)",
+                                        "classification": classDirectA,
                                         "evidence":       fmt.Sprintf("%s resolves to %s", host, ip),
                                         "record_type":    "A",
                                         "hostname":       host,
@@ -330,7 +342,7 @@ func (a *Analyzer) checkDomainARecords(ctx context.Context, domain, ip string, r
                 for _, rec := range aaaaRecords {
                         if rec == ip {
                                 rels = append(rels, map[string]any{
-                                        "classification": "Direct Asset (AAAA Record)",
+                                        "classification": classDirectAAAA,
                                         "evidence":       fmt.Sprintf("%s resolves to %s", host, ip),
                                         "record_type":    "AAAA",
                                         "hostname":       host,
@@ -353,7 +365,7 @@ func (a *Analyzer) checkMXRecords(ctx context.Context, domain, ip string, rels [
                 for _, rec := range aRecords {
                         if rec == ip {
                                 rels = append(rels, map[string]any{
-                                        "classification": "Email Provider (MX)",
+                                        "classification": classEmailMX,
                                         "evidence":       fmt.Sprintf("MX host %s resolves to %s", mxHost, ip),
                                         "record_type":    "MX",
                                         "hostname":       mxHost,
@@ -365,7 +377,7 @@ func (a *Analyzer) checkMXRecords(ctx context.Context, domain, ip string, rels [
                 for _, rec := range aaaaRecords {
                         if rec == ip {
                                 rels = append(rels, map[string]any{
-                                        "classification": "Email Provider (MX)",
+                                        "classification": classEmailMX,
                                         "evidence":       fmt.Sprintf("MX host %s resolves to %s", mxHost, ip),
                                         "record_type":    "MX",
                                         "hostname":       mxHost,
@@ -385,7 +397,7 @@ func (a *Analyzer) checkNSRecords(ctx context.Context, domain, ip string, rels [
                 for _, rec := range aRecords {
                         if rec == ip {
                                 rels = append(rels, map[string]any{
-                                        "classification": "DNS Provider (NS)",
+                                        "classification": classDNSNS,
                                         "evidence":       fmt.Sprintf("Nameserver %s resolves to %s", ns, ip),
                                         "record_type":    "NS",
                                         "hostname":       ns,
@@ -398,38 +410,49 @@ func (a *Analyzer) checkNSRecords(ctx context.Context, domain, ip string, rels [
 
 func (a *Analyzer) checkSPFAuthorization(ctx context.Context, domain, ip string, rels []map[string]any) []map[string]any {
         txtRecords := a.DNS.QueryDNS(ctx, "TXT", domain)
+        spfRecord := findSPFTXTRecord(txtRecords)
+        if spfRecord == "" {
+                return rels
+        }
 
+        if checkIPInSPFRecord(spfRecord, ip) {
+                rels = append(rels, map[string]any{
+                        "classification": classSPFAuth,
+                        "evidence":       fmt.Sprintf("IP %s is directly authorized in SPF record", ip),
+                        "record_type":    "SPF",
+                })
+        }
+
+        rels = a.checkSPFIncludes(ctx, spfRecord, ip, rels)
+        return rels
+}
+
+func findSPFTXTRecord(txtRecords []string) string {
         for _, txt := range txtRecords {
                 lower := strings.ToLower(txt)
-                if !strings.HasPrefix(lower, "v=spf1") && !strings.HasPrefix(lower, "\"v=spf1") {
-                        continue
+                if strings.HasPrefix(lower, "v=spf1") || strings.HasPrefix(lower, "\"v=spf1") {
+                        return txt
                 }
+        }
+        return ""
+}
 
-                if checkIPInSPFRecord(txt, ip) {
-                        rels = append(rels, map[string]any{
-                                "classification": "SPF-Authorized Sender",
-                                "evidence":       fmt.Sprintf("IP %s is directly authorized in SPF record", ip),
-                                "record_type":    "SPF",
-                        })
-                }
-
-                includeMatches := spfIncludeRe.FindAllStringSubmatch(lower, -1)
-                for _, m := range includeMatches {
-                        includeDomain := m[1]
-                        includeTXTs := a.DNS.QueryDNS(ctx, "TXT", includeDomain)
-                        for _, iTXT := range includeTXTs {
-                                if checkIPInSPFRecord(iTXT, ip) {
-                                        rels = append(rels, map[string]any{
-                                                "classification": "SPF-Authorized Sender (via include)",
-                                                "evidence":       fmt.Sprintf("IP %s authorized via include:%s", ip, includeDomain),
-                                                "record_type":    "SPF",
-                                                "hostname":       includeDomain,
-                                        })
-                                }
+func (a *Analyzer) checkSPFIncludes(ctx context.Context, spfRecord, ip string, rels []map[string]any) []map[string]any {
+        lower := strings.ToLower(spfRecord)
+        includeMatches := spfIncludeRe.FindAllStringSubmatch(lower, -1)
+        for _, m := range includeMatches {
+                includeDomain := m[1]
+                includeTXTs := a.DNS.QueryDNS(ctx, "TXT", includeDomain)
+                for _, iTXT := range includeTXTs {
+                        if checkIPInSPFRecord(iTXT, ip) {
+                                rels = append(rels, map[string]any{
+                                        "classification": "SPF-Authorized Sender (via include)",
+                                        "evidence":       fmt.Sprintf("IP %s authorized via include:%s", ip, includeDomain),
+                                        "record_type":    "SPF",
+                                        "hostname":       includeDomain,
+                                })
                         }
                 }
-
-                break
         }
         return rels
 }
@@ -486,7 +509,7 @@ func (a *Analyzer) checkCTSubdomains(ctx context.Context, domain, ip string, rel
                 for _, rec := range aRecords {
                         if rec == ip {
                                 rels = append(rels, map[string]any{
-                                        "classification": "CT Subdomain Match",
+                                        "classification": classCTSubdomain,
                                         "evidence":       fmt.Sprintf("CT-discovered subdomain %s resolves to %s", subdomain, ip),
                                         "record_type":    "A (CT)",
                                         "hostname":       subdomain,
@@ -556,16 +579,16 @@ func classifyOverall(directRels, infraRels []map[string]any, cdnProvider string,
         }
 
         priorities := map[string]int{
-                "Direct Asset (A Record)":              1,
-                "Direct Asset (AAAA Record)":           1,
-                "Direct Asset (Reverse DNS)":           2,
-                "Email Provider (MX)":                  3,
-                "DNS Provider (NS)":                    4,
-                "SPF-Authorized Sender":                5,
+                classDirectA:       1,
+                classDirectAAAA:    1,
+                classDirectReverse: 2,
+                classEmailMX:       3,
+                classDNSNS:         4,
+                classSPFAuth:       5,
                 "SPF-Authorized Sender (via include)":  6,
-                "CT Subdomain Match":                   7,
-                "CDN/Edge Network":                     8,
-                "Cloud Hosting":                        9,
+                classCTSubdomain:  7,
+                classCDNEdge:      8,
+                classCloudHosting: 9,
         }
 
         best := allRels[0]

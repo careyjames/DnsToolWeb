@@ -2894,10 +2894,10 @@
 
         {{if .VerificationCommands}}
         <div class="card border-info border-opacity-50 mt-4 screen-only" id="verify-commands" style="background-color: var(--bg-secondary);">
-            <div class="card-header d-flex align-items-center justify-content-between" role="button" data-bs-toggle="collapse" data-bs-target="#verifyCommandsBody" aria-expanded="false" aria-controls="verifyCommandsBody" style="cursor:pointer; background-color: rgba(13, 202, 240, 0.08); border-bottom: 1px solid rgba(13, 202, 240, 0.2);">
+            <div class="card-header d-flex align-items-center justify-content-between" role="button" tabindex="0" data-bs-toggle="collapse" data-bs-target="#verifyCommandsBody" aria-expanded="false" aria-controls="verifyCommandsBody" style="cursor:pointer; background-color: rgba(13, 202, 240, 0.08); border-bottom: 1px solid rgba(13, 202, 240, 0.2);">
                 <h5 class="mb-0" style="color: #e6edf3;">
                     <i class="fas fa-terminal me-2" style="color: #58a6ff;"></i>Verify It Yourself
-                    <span class="badge ms-2" style="background-color: rgba(88, 166, 255, 0.2); color: #58a6ff; border: 1px solid rgba(88, 166, 255, 0.3); font-size: 0.7rem;">Transparency</span>
+                    <span class="badge ms-2" style="background-color: rgba(88, 166, 255, 0.2); color: #a5cbff; border: 1px solid rgba(88, 166, 255, 0.3); font-size: 0.7rem;">Transparency</span>
                 </h5>
                 <i class="fas fa-chevron-down" style="color: #8b949e; font-size: 0.9rem;"></i>
             </div>
@@ -2916,7 +2916,7 @@
                     {{end}}
                     <div class="mb-2">
                         <div class="d-flex align-items-center justify-content-between mb-1">
-                            <span class="small" style="color: #c9d1d9;">{{.Description}}{{if .RFC}} <span class="badge ms-1" style="font-size:0.65rem; background-color: rgba(88,166,255,0.15); color: #79c0ff; border: 1px solid rgba(88,166,255,0.2);">{{.RFC}}</span>{{end}}</span>
+                            <span class="small" style="color: #c9d1d9;">{{.Description}}{{if .RFC}} <span class="badge ms-1" style="font-size:0.65rem; background-color: rgba(88,166,255,0.15); color: #a5cbff; border: 1px solid rgba(88,166,255,0.2);">{{.RFC}}</span>{{end}}</span>
                             <button class="btn btn-sm btn-outline-info border-0 copy-cmd-btn" data-cmd="{{.Command}}" title="Copy command" style="padding:2px 6px;font-size:0.7rem;">
                                 <i class="fas fa-copy"></i>
                             </button>
@@ -3017,7 +3017,7 @@
     (function() {
         var _printThemePrev = 'dark';
         window.addEventListener('beforeprint', function() {
-            _printThemePrev = document.documentElement.getAttribute('data-bs-theme') || 'dark';
+            _printThemePrev = document.documentElement.dataset.bsTheme || 'dark';
             document.documentElement.setAttribute('data-bs-theme', 'light');
         });
         window.addEventListener('afterprint', function() {
@@ -3094,7 +3094,7 @@
             }
             document.querySelectorAll('.copy-cmd-btn').forEach(function(btn) {
                 btn.addEventListener('click', function() {
-                    var cmd = this.getAttribute('data-cmd');
+                    var cmd = this.dataset.cmd;
                     if (navigator.clipboard) {
                         navigator.clipboard.writeText(cmd).then(function() {
                             btn.innerHTML = '<i class="fas fa-check"></i>';

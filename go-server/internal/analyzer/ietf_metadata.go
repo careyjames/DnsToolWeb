@@ -228,7 +228,19 @@ func EnrichRemediationWithRFCMeta(remediation map[string]any) map[string]any {
                 return remediation
         }
 
-        for i, fix := range allFixes {
+        enrichFixesWithRFCMeta(allFixes)
+
+        topFixes, ok := remediation["top_fixes"].([]map[string]any)
+        if ok {
+                enrichFixesWithRFCMeta(topFixes)
+        }
+
+        remediation["rfc_metadata_enriched"] = true
+        return remediation
+}
+
+func enrichFixesWithRFCMeta(fixes []map[string]any) {
+        for i, fix := range fixes {
                 rfcRef, _ := fix["rfc"].(string)
                 if rfcRef == "" {
                         continue
@@ -241,40 +253,17 @@ func EnrichRemediationWithRFCMeta(remediation map[string]any) map[string]any {
                 if meta == nil {
                         continue
                 }
-                allFixes[i]["rfc_title"] = meta.Title
-                allFixes[i]["rfc_status"] = meta.Status
-                allFixes[i]["rfc_obsolete"] = meta.IsObsolete
-                if meta.IsObsolete && len(meta.ObsoletedBy) > 0 {
-                        allFixes[i]["rfc_obsoleted_by"] = meta.ObsoletedBy
-                }
+                applyRFCMetaToFix(fixes[i], meta)
         }
+}
 
-        topFixes, ok := remediation["top_fixes"].([]map[string]any)
-        if ok {
-                for i, fix := range topFixes {
-                        rfcRef, _ := fix["rfc"].(string)
-                        if rfcRef == "" {
-                                continue
-                        }
-                        number := extractRFCNumberFromRef(rfcRef)
-                        if number == "" {
-                                continue
-                        }
-                        meta := GetRFCMetadata(number)
-                        if meta == nil {
-                                continue
-                        }
-                        topFixes[i]["rfc_title"] = meta.Title
-                        topFixes[i]["rfc_status"] = meta.Status
-                        topFixes[i]["rfc_obsolete"] = meta.IsObsolete
-                        if meta.IsObsolete && len(meta.ObsoletedBy) > 0 {
-                                topFixes[i]["rfc_obsoleted_by"] = meta.ObsoletedBy
-                        }
-                }
+func applyRFCMetaToFix(fix map[string]any, meta *RFCMetadata) {
+        fix["rfc_title"] = meta.Title
+        fix["rfc_status"] = meta.Status
+        fix["rfc_obsolete"] = meta.IsObsolete
+        if meta.IsObsolete && len(meta.ObsoletedBy) > 0 {
+                fix["rfc_obsoleted_by"] = meta.ObsoletedBy
         }
-
-        remediation["rfc_metadata_enriched"] = true
-        return remediation
 }
 
 func extractRFCNumberFromRef(ref string) string {

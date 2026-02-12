@@ -1007,37 +1007,37 @@ main.container {
 }
 .changelog-badge-transparency {
     background-color: rgba(13, 202, 240, 0.15) !important;
-    color: #67d6ed !important;
+    color: #9be8f5 !important;
     border-color: rgba(13, 202, 240, 0.3);
 }
 .changelog-badge-intelligence {
     background-color: rgba(111, 66, 193, 0.18) !important;
-    color: #b794f6 !important;
+    color: #d4b8ff !important;
     border-color: rgba(111, 66, 193, 0.35);
 }
 .changelog-badge-analysis {
     background-color: rgba(25, 135, 84, 0.18) !important;
-    color: #75d4a7 !important;
+    color: #a3e4c4 !important;
     border-color: rgba(25, 135, 84, 0.35);
 }
 .changelog-badge-security {
     background-color: rgba(255, 193, 7, 0.15) !important;
-    color: #ffd95a !important;
+    color: #ffe082 !important;
     border-color: rgba(255, 193, 7, 0.3);
 }
 .changelog-badge-core {
     background-color: rgba(108, 117, 125, 0.2) !important;
-    color: #b0b8c1 !important;
+    color: #d0d6dc !important;
     border-color: rgba(108, 117, 125, 0.35);
 }
 .changelog-badge-incident {
     background-color: rgba(255, 152, 0, 0.18) !important;
-    color: #ffb74d !important;
+    color: #ffcc80 !important;
     border-color: rgba(255, 152, 0, 0.4);
 }
 .changelog-badge-performance {
     background-color: rgba(0, 188, 212, 0.15) !important;
-    color: #4dd0e1 !important;
+    color: #80deea !important;
     border-color: rgba(0, 188, 212, 0.3);
 }
 .changelog-card-incident {

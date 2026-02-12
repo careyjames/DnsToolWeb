@@ -151,24 +151,12 @@ func (h *AnalysisHandler) Analyze(c *gin.Context) {
         }
 
         if domain == "" {
-                c.HTML(http.StatusOK, templateIndex, gin.H{
-                        "AppVersion":    h.Config.AppVersion,
-                        "CspNonce":      nonce,
-                        "CsrfToken":    csrfToken,
-                        "ActivePage":    "home",
-                        "FlashMessages": []FlashMessage{{Category: "danger", Message: "Please enter a domain name."}},
-                })
+                h.renderIndexFlash(c, nonce, csrfToken, "danger", "Please enter a domain name.")
                 return
         }
 
         if !dnsclient.ValidateDomain(domain) {
-                c.HTML(http.StatusOK, templateIndex, gin.H{
-                        "AppVersion":    h.Config.AppVersion,
-                        "CspNonce":      nonce,
-                        "CsrfToken":    csrfToken,
-                        "ActivePage":    "home",
-                        "FlashMessages": []FlashMessage{{Category: "danger", Message: fmt.Sprintf("Invalid domain name: %s", domain)}},
-                })
+                h.renderIndexFlash(c, nonce, csrfToken, "danger", fmt.Sprintf("Invalid domain name: %s", domain))
                 return
         }
 
@@ -177,42 +165,13 @@ func (h *AnalysisHandler) Analyze(c *gin.Context) {
                 asciiDomain = domain
         }
 
-        var customSelectors []string
-        for _, sel := range []string{c.PostForm("dkim_selector1"), c.PostForm("dkim_selector2")} {
-                sel = strings.TrimSpace(sel)
-                if sel != "" {
-                        customSelectors = append(customSelectors, sel)
-                }
-        }
+        customSelectors := extractCustomSelectors(c)
 
-        var results map[string]any
-        var analysisDuration float64
-        fromCache := false
-
-        if h.Cache != nil && len(customSelectors) == 0 {
-                if cached, ok := h.Cache.Get(asciiDomain); ok {
-                        results = cached.Results
-                        analysisDuration = 0.0
-                        fromCache = true
-                        slog.Info("Serving from pre-cache", "domain", asciiDomain)
-                }
-        }
-
-        if results == nil {
-                startTime := time.Now()
-                results = h.Analyzer.AnalyzeDomain(c.Request.Context(), asciiDomain, customSelectors)
-                analysisDuration = time.Since(startTime).Seconds()
-        }
+        results, analysisDuration, fromCache := h.resolveAnalysis(c, asciiDomain, customSelectors)
 
         if success, ok := results["analysis_success"].(bool); ok && !success {
                 if errMsg, ok := results["error"].(string); ok {
-                        c.HTML(http.StatusOK, templateIndex, gin.H{
-                                "AppVersion":    h.Config.AppVersion,
-                                "CspNonce":      nonce,
-                                "CsrfToken":    csrfToken,
-                                "ActivePage":    "home",
-                                "FlashMessages": []FlashMessage{{Category: "warning", Message: errMsg}},
-                        })
+                        h.renderIndexFlash(c, nonce, csrfToken, "warning", errMsg)
                         return
                 }
         }
@@ -221,26 +180,13 @@ func (h *AnalysisHandler) Analyze(c *gin.Context) {
                 h.Cache.Set(asciiDomain, results)
         }
 
-        dnsHistory := analyzer.FetchDNSHistory(c.Request.Context(), asciiDomain, h.DNSHistoryCache)
-        results["dns_history"] = dnsHistory
-
-        if rem, ok := results["remediation"].(map[string]any); ok {
-                results["remediation"] = analyzer.EnrichRemediationWithRFCMeta(rem)
-        }
-
-        results["rfc_metadata"] = analyzer.GetAllRFCMetadata()
+        h.enrichResults(c, asciiDomain, results)
 
         countryCode, countryName := lookupCountry(c.ClientIP())
 
         analysisID, timestamp := h.saveAnalysis(c.Request.Context(), domain, asciiDomain, results, analysisDuration, countryCode, countryName)
 
-        domainExists := true
-        if v, ok := results["domain_exists"]; ok {
-                if b, ok := v.(bool); ok {
-                        domainExists = b
-                }
-        }
-
+        domainExists := resultsDomainExists(results)
         verifyCommands := analyzer.GenerateVerificationCommands(asciiDomain, results)
 
         isSub, rootDom := extractRootDomain(asciiDomain)
@@ -263,6 +209,60 @@ func (h *AnalysisHandler) Analyze(c *gin.Context) {
                 "IsSubdomain":          isSub,
                 "RootDomain":           rootDom,
         })
+}
+
+func (h *AnalysisHandler) renderIndexFlash(c *gin.Context, nonce, csrfToken any, category, message string) {
+        c.HTML(http.StatusOK, templateIndex, gin.H{
+                "AppVersion":    h.Config.AppVersion,
+                "CspNonce":      nonce,
+                "CsrfToken":    csrfToken,
+                "ActivePage":    "home",
+                "FlashMessages": []FlashMessage{{Category: category, Message: message}},
+        })
+}
+
+func extractCustomSelectors(c *gin.Context) []string {
+        var customSelectors []string
+        for _, sel := range []string{c.PostForm("dkim_selector1"), c.PostForm("dkim_selector2")} {
+                sel = strings.TrimSpace(sel)
+                if sel != "" {
+                        customSelectors = append(customSelectors, sel)
+                }
+        }
+        return customSelectors
+}
+
+func (h *AnalysisHandler) resolveAnalysis(c *gin.Context, asciiDomain string, customSelectors []string) (map[string]any, float64, bool) {
+        if h.Cache != nil && len(customSelectors) == 0 {
+                if cached, ok := h.Cache.Get(asciiDomain); ok {
+                        slog.Info("Serving from pre-cache", "domain", asciiDomain)
+                        return cached.Results, 0.0, true
+                }
+        }
+
+        startTime := time.Now()
+        results := h.Analyzer.AnalyzeDomain(c.Request.Context(), asciiDomain, customSelectors)
+        return results, time.Since(startTime).Seconds(), false
+}
+
+func (h *AnalysisHandler) enrichResults(c *gin.Context, asciiDomain string, results map[string]any) {
+        dnsHistory := analyzer.FetchDNSHistory(c.Request.Context(), asciiDomain, h.DNSHistoryCache)
+        results["dns_history"] = dnsHistory
+
+        if rem, ok := results["remediation"].(map[string]any); ok {
+                results["remediation"] = analyzer.EnrichRemediationWithRFCMeta(rem)
+        }
+
+        results["rfc_metadata"] = analyzer.GetAllRFCMetadata()
+}
+
+func resultsDomainExists(results map[string]any) bool {
+        if v, ok := results["domain_exists"]; ok {
+                if b, ok := v.(bool); ok {
+                        return b
+                }
+        }
+        return true
 }
 
 func (h *AnalysisHandler) APISubdomains(c *gin.Context) {

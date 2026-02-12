@@ -325,24 +325,29 @@ func classifyDMARCReportAuth(results map[string]any, acc *postureAccumulator) {
         if auth == nil || !getBool(auth, "checked") {
                 return
         }
-        switch extDomains := auth["external_domains"].(type) {
-        case []map[string]any:
-                for _, ed := range extDomains {
-                        if authorized, ok := ed["authorized"].(bool); ok && !authorized {
-                                domain, _ := ed["external_domain"].(string)
-                                acc.recommendations = append(acc.recommendations, fmt.Sprintf("DMARC external reporting to %s is not authorized (RFC 7489 §7.1)", domain))
-                        }
-                }
-        case []any:
-                for _, item := range extDomains {
-                        if ed, ok := item.(map[string]any); ok {
-                                if authorized, ok := ed["authorized"].(bool); ok && !authorized {
-                                        domain, _ := ed["external_domain"].(string)
-                                        acc.recommendations = append(acc.recommendations, fmt.Sprintf("DMARC external reporting to %s is not authorized (RFC 7489 §7.1)", domain))
-                                }
-                        }
+        domains := extractExternalDomainMaps(auth["external_domains"])
+        for _, ed := range domains {
+                if authorized, ok := ed["authorized"].(bool); ok && !authorized {
+                        domain, _ := ed["external_domain"].(string)
+                        acc.recommendations = append(acc.recommendations, fmt.Sprintf("DMARC external reporting to %s is not authorized (RFC 7489 §7.1)", domain))
                 }
         }
+}
+
+func extractExternalDomainMaps(raw any) []map[string]any {
+        switch v := raw.(type) {
+        case []map[string]any:
+                return v
+        case []any:
+                var result []map[string]any
+                for _, item := range v {
+                        if ed, ok := item.(map[string]any); ok {
+                                result = append(result, ed)
+                        }
+                }
+                return result
+        }
+        return nil
 }
 
 func evaluateDeliberateMonitoring(ps protocolState, configuredCount int) (bool, string) {
