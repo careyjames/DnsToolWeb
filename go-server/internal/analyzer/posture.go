@@ -309,6 +309,42 @@ func classifySimpleProtocols(ps protocolState, acc *postureAccumulator) {
         }
 }
 
+func classifyDanglingDNS(results map[string]any, acc *postureAccumulator) {
+        dangling := getMapResult(results, "dangling_dns")
+        if dangling == nil {
+                return
+        }
+        count := extractIntField(dangling, "dangling_count")
+        if count > 0 {
+                acc.issues = append(acc.issues, fmt.Sprintf("%d dangling DNS record(s) detected — potential subdomain takeover risk", count))
+        }
+}
+
+func classifyDMARCReportAuth(results map[string]any, acc *postureAccumulator) {
+        auth := getMapResult(results, "dmarc_report_auth")
+        if auth == nil || !getBool(auth, "checked") {
+                return
+        }
+        switch extDomains := auth["external_domains"].(type) {
+        case []map[string]any:
+                for _, ed := range extDomains {
+                        if authorized, ok := ed["authorized"].(bool); ok && !authorized {
+                                domain, _ := ed["external_domain"].(string)
+                                acc.recommendations = append(acc.recommendations, fmt.Sprintf("DMARC external reporting to %s is not authorized (RFC 7489 §7.1)", domain))
+                        }
+                }
+        case []any:
+                for _, item := range extDomains {
+                        if ed, ok := item.(map[string]any); ok {
+                                if authorized, ok := ed["authorized"].(bool); ok && !authorized {
+                                        domain, _ := ed["external_domain"].(string)
+                                        acc.recommendations = append(acc.recommendations, fmt.Sprintf("DMARC external reporting to %s is not authorized (RFC 7489 §7.1)", domain))
+                                }
+                        }
+                }
+        }
+}
+
 func evaluateDeliberateMonitoring(ps protocolState, configuredCount int) (bool, string) {
         if ps.dmarcPolicy != "none" {
                 return false, ""
@@ -344,6 +380,8 @@ func (a *Analyzer) CalculatePosture(results map[string]any) map[string]any {
 
         classifyDKIM(ps, acc)
         classifySimpleProtocols(ps, acc)
+        classifyDanglingDNS(results, acc)
+        classifyDMARCReportAuth(results, acc)
 
         state, icon, color, message := determineGrade(ps, hasSPF, hasDMARC, hasDKIM, acc.monitoring, acc.configured, acc.absent)
 

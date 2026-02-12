@@ -45,6 +45,14 @@
         {{$auth_query_status := mapGetMap "auth_query_status" $results}}
         {{$data_freshness := mapGetMap "_data_freshness" $results}}
         {{$section_status := mapGetMap "section_status" $results}}
+        {{$dmarc_report_auth := mapGetMap "dmarc_report_auth" $results}}
+        {{$dangling_dns := mapGetMap "dangling_dns" $results}}
+        {{$https_svcb := mapGetMap "https_svcb" $results}}
+        {{$asn_info := mapGetMap "asn_info" $results}}
+        {{$edge_cdn := mapGetMap "edge_cdn" $results}}
+        {{$saas_txt := mapGetMap "saas_txt" $results}}
+        {{$cds_cdnskey := mapGetMap "cds_cdnskey" $results}}
+        {{$smimea := mapGetMap "smimea_openpgpkey" $results}}
 
         <!-- Print-Only Report Header -->
         <div class="print-report-header">
@@ -1393,6 +1401,120 @@
                             </div>
                         </div>
                         {{end}}
+
+                        {{if and $dmarc_report_auth (mapGetBool "checked" $dmarc_report_auth)}}
+                        {{$extDomains := mapGetSlice "external_domains" $dmarc_report_auth}}
+                        {{if $extDomains}}
+                        <div class="row mt-3 pt-3 border-top">
+                            <div class="col-12">
+                                {{$draStatus := mapGetStr "status" $dmarc_report_auth}}
+                                <h6 class="d-flex align-items-center">
+                                    <i class="fas fa-paper-plane me-2"></i>DMARC External Reporting Authorization
+                                    <span class="badge bg-{{if eq $draStatus "success"}}success{{else}}warning{{end}} ms-2">{{title $draStatus}}</span>
+                                </h6>
+                                <p class="text-muted mb-2 small">{{mapGetStr "message" $dmarc_report_auth}}</p>
+                                <div class="table-responsive">
+                                    <table class="table table-sm table-dark small mb-2">
+                                        <thead>
+                                            <tr>
+                                                <th>External Domain</th>
+                                                <th>Authorization</th>
+                                                <th>Auth Record</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {{range $ed := $extDomains}}
+                                            {{$edMap := toMap $ed}}
+                                            {{if $edMap}}
+                                            <tr>
+                                                <td><code>{{mapGetStr "external_domain" $edMap}}</code></td>
+                                                <td>
+                                                    {{if mapGetBool "authorized" $edMap}}
+                                                    <span class="badge bg-success"><i class="fas fa-check me-1"></i>Authorized</span>
+                                                    {{else}}
+                                                    <span class="badge bg-warning text-dark"><i class="fas fa-times me-1"></i>Unauthorized</span>
+                                                    {{end}}
+                                                </td>
+                                                <td>
+                                                    {{$authRec := mapGetStr "auth_record" $edMap}}
+                                                    {{if $authRec}}<code class="small">{{$authRec}}</code>{{else}}<span class="text-muted">—</span>{{end}}
+                                                </td>
+                                            </tr>
+                                            {{end}}
+                                            {{end}}
+                                        </tbody>
+                                    </table>
+                                </div>
+                                {{$draIssues := mapGetSlice "issues" $dmarc_report_auth}}
+                                {{if $draIssues}}
+                                {{range $issue := $draIssues}}
+                                <div class="text-warning small"><i class="fas fa-exclamation-triangle me-1"></i>{{$issue}}</div>
+                                {{end}}
+                                {{end}}
+                            </div>
+                        </div>
+                        {{end}}
+                        {{end}}
+
+                        {{if $smimea}}
+                        {{if or (mapGetBool "has_smimea" $smimea) (mapGetBool "has_openpgpkey" $smimea)}}
+                        <div class="row mt-3 pt-3 border-top">
+                            <div class="col-12">
+                                {{$smimeaStatus := mapGetStr "status" $smimea}}
+                                <h6 class="d-flex align-items-center">
+                                    <i class="fas fa-user-shield me-2"></i>S/MIME &amp; OpenPGP (SMIMEA / OPENPGPKEY)
+                                    <a href="https://datatracker.ietf.org/doc/html/rfc8162" target="_blank" rel="noopener" class="ms-2 text-muted rfc-link"><i class="fas fa-info-circle"></i><span class="rfc-label">RFC 8162</span></a>
+                                    <span class="badge bg-{{if eq $smimeaStatus "success"}}success{{else}}info{{end}} ms-2">{{title $smimeaStatus}}</span>
+                                    {{if mapGetBool "has_smimea" $smimea}}<span class="badge bg-info ms-1">SMIMEA</span>{{end}}
+                                    {{if mapGetBool "has_openpgpkey" $smimea}}<span class="badge bg-info ms-1">OPENPGPKEY</span>{{end}}
+                                </h6>
+                                <p class="text-muted mb-2 small">{{mapGetStr "message" $smimea}}</p>
+                                {{$smimeaRecords := mapGetSlice "smimea_records" $smimea}}
+                                {{if $smimeaRecords}}
+                                <div class="table-responsive">
+                                    <table class="table table-sm table-dark small mb-2">
+                                        <thead>
+                                            <tr><th>Usage</th><th>Selector</th><th>Matching Type</th><th>Certificate Data</th></tr>
+                                        </thead>
+                                        <tbody>
+                                            {{range $rec := $smimeaRecords}}
+                                            {{$r := toMap $rec}}
+                                            {{if $r}}
+                                            <tr>
+                                                <td><span class="badge bg-secondary">{{formatFloat 0 (mapGetFloat "usage" $r)}}</span></td>
+                                                <td>{{formatFloat 0 (mapGetFloat "selector" $r)}}</td>
+                                                <td>{{formatFloat 0 (mapGetFloat "matching_type" $r)}}</td>
+                                                <td><code class="small">{{mapGetStr "certificate_data" $r}}</code></td>
+                                            </tr>
+                                            {{end}}
+                                            {{end}}
+                                        </tbody>
+                                    </table>
+                                </div>
+                                {{end}}
+                                {{$opgpRecords := mapGetSlice "openpgpkey_records" $smimea}}
+                                {{if $opgpRecords}}
+                                <div class="mt-2">
+                                    <small class="text-muted d-block mb-1">OPENPGPKEY Records:</small>
+                                    {{range $rec := $opgpRecords}}
+                                    {{$r := toMap $rec}}
+                                    {{if $r}}
+                                    <div class="code-block small mb-1" style="font-size: 0.7rem;">{{mapGetStr "raw" $r}}</div>
+                                    {{end}}
+                                    {{end}}
+                                </div>
+                                {{end}}
+                                {{$smimeaIssues := mapGetSlice "issues" $smimea}}
+                                {{if $smimeaIssues}}
+                                {{range $issue := $smimeaIssues}}
+                                <div class="text-warning small"><i class="fas fa-exclamation-triangle me-1"></i>{{$issue}}</div>
+                                {{end}}
+                                {{end}}
+                            </div>
+                        </div>
+                        {{end}}
+                        {{end}}
+
                     </div>
                 </div>
             </div>
@@ -1527,6 +1649,146 @@
                         </div>
                         {{end}}
                         {{end}}
+                    </div>
+                </div>
+            </div>
+        </div>
+        {{end}}
+
+        <!-- Infrastructure Intelligence Section -->
+        {{if or $asn_info $edge_cdn $saas_txt}}
+        <div class="row section-infrastructure-intel">
+            <div class="col-12 mb-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0 d-flex align-items-center justify-content-between flex-wrap">
+                            <span><i class="fas fa-network-wired me-2"></i>Infrastructure Intelligence</span>
+                            <small class="text-muted">Network identity, edge services &amp; SaaS footprint</small>
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            {{if $asn_info}}
+                            <div class="col-md-{{if and $edge_cdn $saas_txt}}4{{else if or $edge_cdn $saas_txt}}6{{else}}12{{end}} mb-3">
+                                {{$asnStatus := mapGetStr "status" $asn_info}}
+                                <h6 class="d-flex align-items-center">
+                                    <i class="fas fa-server me-2"></i>ASN / Network
+                                    <span class="badge bg-{{if eq $asnStatus "success"}}success{{else}}info{{end}} ms-2">{{title $asnStatus}}</span>
+                                </h6>
+                                <p class="text-muted mb-2 small">{{mapGetStr "message" $asn_info}}</p>
+                                {{$uniqueAsns := mapGetSlice "unique_asns" $asn_info}}
+                                {{if $uniqueAsns}}
+                                <div class="table-responsive">
+                                    <table class="table table-sm table-dark small mb-2">
+                                        <thead><tr><th>ASN</th><th>Name</th><th>Country</th></tr></thead>
+                                        <tbody>
+                                            {{range $a := $uniqueAsns}}
+                                            {{$am := toMap $a}}
+                                            {{if $am}}
+                                            <tr>
+                                                <td><code>AS{{mapGetStr "asn" $am}}</code></td>
+                                                <td>{{mapGetStr "as_name" $am}}</td>
+                                                <td><span class="badge bg-secondary">{{mapGetStr "country" $am}}</span></td>
+                                            </tr>
+                                            {{end}}
+                                            {{end}}
+                                        </tbody>
+                                    </table>
+                                </div>
+                                {{end}}
+                                {{$ipv4Asn := mapGetSlice "ipv4_asn" $asn_info}}
+                                {{if $ipv4Asn}}
+                                <div class="mt-1">
+                                    <small class="text-muted d-block mb-1">IPv4 Mappings:</small>
+                                    {{range $entry := $ipv4Asn}}
+                                    {{$e := toMap $entry}}
+                                    {{if $e}}
+                                    <div class="small"><code>{{mapGetStr "ip" $e}}</code> → <span class="text-muted">AS{{mapGetStr "asn" $e}} ({{mapGetStr "prefix" $e}})</span></div>
+                                    {{end}}
+                                    {{end}}
+                                </div>
+                                {{end}}
+                                {{$ipv6Asn := mapGetSlice "ipv6_asn" $asn_info}}
+                                {{if $ipv6Asn}}
+                                <div class="mt-1">
+                                    <small class="text-muted d-block mb-1">IPv6 Mappings:</small>
+                                    {{range $entry := $ipv6Asn}}
+                                    {{$e := toMap $entry}}
+                                    {{if $e}}
+                                    <div class="small"><code>{{mapGetStr "ip" $e}}</code> → <span class="text-muted">AS{{mapGetStr "asn" $e}} ({{mapGetStr "prefix" $e}})</span></div>
+                                    {{end}}
+                                    {{end}}
+                                </div>
+                                {{end}}
+                            </div>
+                            {{end}}
+
+                            {{if $edge_cdn}}
+                            <div class="col-md-{{if and $asn_info $saas_txt}}4{{else if or $asn_info $saas_txt}}6{{else}}12{{end}} mb-3">
+                                {{$cdnStatus := mapGetStr "status" $edge_cdn}}
+                                <h6 class="d-flex align-items-center">
+                                    <i class="fas fa-cloud me-2"></i>Edge / CDN
+                                    <span class="badge bg-{{if eq $cdnStatus "success"}}success{{else}}info{{end}} ms-2">{{title $cdnStatus}}</span>
+                                    {{if mapGetBool "is_behind_cdn" $edge_cdn}}
+                                    <span class="badge bg-info ms-1">{{mapGetStr "cdn_provider" $edge_cdn}}</span>
+                                    {{end}}
+                                </h6>
+                                <p class="text-muted mb-2 small">{{mapGetStr "message" $edge_cdn}}</p>
+                                {{if mapGetBool "is_behind_cdn" $edge_cdn}}
+                                <div class="mb-2">
+                                    <span class="badge bg-success"><i class="fas fa-shield-alt me-1"></i>Behind CDN</span>
+                                    {{if not (mapGetBool "origin_visible" $edge_cdn)}}
+                                    <span class="badge bg-success ms-1"><i class="fas fa-eye-slash me-1"></i>Origin Hidden</span>
+                                    {{else}}
+                                    <span class="badge bg-warning ms-1"><i class="fas fa-eye me-1"></i>Origin Visible</span>
+                                    {{end}}
+                                </div>
+                                {{$cdnIndicators := mapGetSlice "cdn_indicators" $edge_cdn}}
+                                {{if $cdnIndicators}}
+                                <div class="small text-muted">
+                                    {{range $ind := $cdnIndicators}}
+                                    <div><i class="fas fa-angle-right me-1"></i>{{$ind}}</div>
+                                    {{end}}
+                                </div>
+                                {{end}}
+                                {{end}}
+                            </div>
+                            {{end}}
+
+                            {{if $saas_txt}}
+                            <div class="col-md-{{if and $asn_info $edge_cdn}}4{{else if or $asn_info $edge_cdn}}6{{else}}12{{end}} mb-3">
+                                {{$saasStatus := mapGetStr "status" $saas_txt}}
+                                <h6 class="d-flex align-items-center">
+                                    <i class="fas fa-puzzle-piece me-2"></i>SaaS TXT Footprint
+                                    <span class="badge bg-{{if eq $saasStatus "success"}}success{{else}}info{{end}} ms-2">{{title $saasStatus}}</span>
+                                    {{$svcCount := mapGetFloat "service_count" $saas_txt}}
+                                    {{if gt $svcCount 0}}
+                                    <span class="badge bg-info ms-1">{{formatFloat 0 $svcCount}} service{{if ne $svcCount 1}}s{{end}}</span>
+                                    {{end}}
+                                </h6>
+                                <p class="text-muted mb-2 small">{{mapGetStr "message" $saas_txt}}</p>
+                                {{$saasServices := mapGetSlice "services" $saas_txt}}
+                                {{if $saasServices}}
+                                <div class="table-responsive">
+                                    <table class="table table-sm table-dark small mb-2">
+                                        <thead><tr><th>Service</th><th>Verification Record</th></tr></thead>
+                                        <tbody>
+                                            {{range $svc := $saasServices}}
+                                            {{$s := toMap $svc}}
+                                            {{if $s}}
+                                            <tr>
+                                                <td><strong>{{mapGetStr "name" $s}}</strong></td>
+                                                <td><code class="small" style="word-break: break-all;">{{mapGetStr "record" $s}}</code></td>
+                                            </tr>
+                                            {{end}}
+                                            {{end}}
+                                        </tbody>
+                                    </table>
+                                </div>
+                                {{end}}
+                            </div>
+                            {{end}}
+                        </div>
                     </div>
                 </div>
             </div>
@@ -1747,6 +2009,139 @@
                         {{end}}
                         {{end}}
                         {{end}}
+
+                        {{if $https_svcb}}
+                        {{if or (mapGetBool "has_https" $https_svcb) (mapGetBool "has_svcb" $https_svcb)}}
+                        <div class="row mt-3 pt-3 border-top">
+                            <div class="col-12">
+                                {{$httpsSvcbStatus := mapGetStr "status" $https_svcb}}
+                                <h6 class="d-flex align-items-center">
+                                    <i class="fas fa-bolt me-2"></i>HTTPS / SVCB Records
+                                    <a href="https://datatracker.ietf.org/doc/html/rfc9460" target="_blank" rel="noopener" class="ms-2 text-muted rfc-link"><i class="fas fa-info-circle"></i><span class="rfc-label">RFC 9460</span></a>
+                                    <span class="badge bg-{{if eq $httpsSvcbStatus "success"}}success{{else}}info{{end}} ms-2">{{title $httpsSvcbStatus}}</span>
+                                    {{if mapGetBool "has_https" $https_svcb}}<span class="badge bg-info ms-1">HTTPS</span>{{end}}
+                                    {{if mapGetBool "has_svcb" $https_svcb}}<span class="badge bg-info ms-1">SVCB</span>{{end}}
+                                    {{if mapGetBool "supports_http3" $https_svcb}}<span class="badge bg-success ms-1">HTTP/3</span>{{end}}
+                                    {{if mapGetBool "supports_ech" $https_svcb}}<span class="badge bg-success ms-1">ECH</span>{{end}}
+                                </h6>
+                                <p class="text-muted mb-2 small">{{mapGetStr "message" $https_svcb}}</p>
+                                {{$httpsRecords := mapGetSlice "https_records" $https_svcb}}
+                                {{if $httpsRecords}}
+                                <div class="table-responsive">
+                                    <table class="table table-sm table-dark small mb-2">
+                                        <thead><tr><th>Priority</th><th>Target</th><th>ALPN</th><th>ECH</th><th>Raw</th></tr></thead>
+                                        <tbody>
+                                            {{range $rec := $httpsRecords}}
+                                            {{$r := toMap $rec}}
+                                            {{if $r}}
+                                            <tr>
+                                                <td>{{formatFloat 0 (mapGetFloat "priority" $r)}}</td>
+                                                <td><code>{{mapGetStr "target" $r}}</code></td>
+                                                <td>{{$alpn := mapGetSlice "alpn" $r}}{{if $alpn}}{{range $i, $a := $alpn}}{{if $i}}, {{end}}<span class="badge bg-secondary">{{$a}}</span>{{end}}{{else}}<span class="text-muted">—</span>{{end}}</td>
+                                                <td>{{if mapGetBool "ech" $r}}<span class="badge bg-success">Yes</span>{{else}}<span class="text-muted">No</span>{{end}}</td>
+                                                <td><code class="small" style="word-break: break-all; font-size: 0.7rem;">{{mapGetStr "raw" $r}}</code></td>
+                                            </tr>
+                                            {{end}}
+                                            {{end}}
+                                        </tbody>
+                                    </table>
+                                </div>
+                                {{end}}
+                                {{$svcbRecords := mapGetSlice "svcb_records" $https_svcb}}
+                                {{if $svcbRecords}}
+                                <div class="mt-2">
+                                    <small class="text-muted d-block mb-1">SVCB Records:</small>
+                                    {{range $rec := $svcbRecords}}
+                                    {{$r := toMap $rec}}
+                                    {{if $r}}
+                                    <div class="code-block small mb-1" style="font-size: 0.7rem;">{{mapGetStr "raw" $r}}</div>
+                                    {{end}}
+                                    {{end}}
+                                </div>
+                                {{end}}
+                                {{$httpsSvcbIssues := mapGetSlice "issues" $https_svcb}}
+                                {{if $httpsSvcbIssues}}
+                                {{range $issue := $httpsSvcbIssues}}
+                                <div class="text-warning small"><i class="fas fa-exclamation-triangle me-1"></i>{{$issue}}</div>
+                                {{end}}
+                                {{end}}
+                            </div>
+                        </div>
+                        {{end}}
+                        {{end}}
+
+                        {{if $cds_cdnskey}}
+                        {{if or (mapGetBool "has_cds" $cds_cdnskey) (mapGetBool "has_cdnskey" $cds_cdnskey)}}
+                        <div class="row mt-3 pt-3 border-top">
+                            <div class="col-12">
+                                {{$cdsStatus := mapGetStr "status" $cds_cdnskey}}
+                                <h6 class="d-flex align-items-center">
+                                    <i class="fas fa-sync me-2"></i>CDS / CDNSKEY (DNSSEC Automation)
+                                    <a href="https://datatracker.ietf.org/doc/html/rfc7344" target="_blank" rel="noopener" class="ms-2 text-muted rfc-link"><i class="fas fa-info-circle"></i><span class="rfc-label">RFC 7344</span></a>
+                                    <span class="badge bg-{{if eq $cdsStatus "success"}}success{{else}}info{{end}} ms-2">{{title $cdsStatus}}</span>
+                                    {{if mapGetBool "has_cds" $cds_cdnskey}}<span class="badge bg-info ms-1">CDS</span>{{end}}
+                                    {{if mapGetBool "has_cdnskey" $cds_cdnskey}}<span class="badge bg-info ms-1">CDNSKEY</span>{{end}}
+                                    {{$automation := mapGetStr "automation" $cds_cdnskey}}
+                                    {{if eq $automation "full"}}<span class="badge bg-success ms-1">Full Automation</span>
+                                    {{else if eq $automation "partial"}}<span class="badge bg-warning ms-1">Partial</span>
+                                    {{else if eq $automation "delete_signal"}}<span class="badge bg-danger ms-1">Delete Signal</span>
+                                    {{end}}
+                                </h6>
+                                <p class="text-muted mb-2 small">{{mapGetStr "message" $cds_cdnskey}}</p>
+                                {{$cdsRecords := mapGetSlice "cds_records" $cds_cdnskey}}
+                                {{if $cdsRecords}}
+                                <div class="table-responsive">
+                                    <table class="table table-sm table-dark small mb-2">
+                                        <thead><tr><th>Key Tag</th><th>Algorithm</th><th>Digest Type</th><th>Digest</th></tr></thead>
+                                        <tbody>
+                                            {{range $rec := $cdsRecords}}
+                                            {{$r := toMap $rec}}
+                                            {{if $r}}
+                                            <tr>
+                                                <td><code>{{formatFloat 0 (mapGetFloat "key_tag" $r)}}</code></td>
+                                                <td>{{mapGetStr "algorithm" $r}}</td>
+                                                <td>{{mapGetStr "digest_type" $r}}</td>
+                                                <td><code class="small" style="word-break: break-all; font-size: 0.7rem;">{{mapGetStr "digest" $r}}</code></td>
+                                            </tr>
+                                            {{end}}
+                                            {{end}}
+                                        </tbody>
+                                    </table>
+                                </div>
+                                {{end}}
+                                {{$cdnskeyRecords := mapGetSlice "cdnskey_records" $cds_cdnskey}}
+                                {{if $cdnskeyRecords}}
+                                <div class="table-responsive mt-2">
+                                    <small class="text-muted d-block mb-1">CDNSKEY Records:</small>
+                                    <table class="table table-sm table-dark small mb-2">
+                                        <thead><tr><th>Flags</th><th>Protocol</th><th>Algorithm</th><th>Public Key</th></tr></thead>
+                                        <tbody>
+                                            {{range $rec := $cdnskeyRecords}}
+                                            {{$r := toMap $rec}}
+                                            {{if $r}}
+                                            <tr>
+                                                <td><code>{{formatFloat 0 (mapGetFloat "flags" $r)}}</code></td>
+                                                <td>{{formatFloat 0 (mapGetFloat "protocol" $r)}}</td>
+                                                <td>{{mapGetStr "algorithm" $r}}</td>
+                                                <td><code class="small" style="word-break: break-all; font-size: 0.7rem;">{{mapGetStr "public_key" $r}}</code></td>
+                                            </tr>
+                                            {{end}}
+                                            {{end}}
+                                        </tbody>
+                                    </table>
+                                </div>
+                                {{end}}
+                                {{$cdsIssues := mapGetSlice "issues" $cds_cdnskey}}
+                                {{if $cdsIssues}}
+                                {{range $issue := $cdsIssues}}
+                                <div class="text-warning small"><i class="fas fa-exclamation-triangle me-1"></i>{{$issue}}</div>
+                                {{end}}
+                                {{end}}
+                            </div>
+                        </div>
+                        {{end}}
+                        {{end}}
+
                     </div>
                 </div>
             </div>
@@ -2257,6 +2652,62 @@
                         {{if $ctMessage}}{{$ctMessage}}{{end}}
                     </p>
                     {{end}}
+
+                    {{if and $dangling_dns (mapGetBool "checked" $dangling_dns)}}
+                    {{$danglingCount := mapGetFloat "dangling_count" $dangling_dns}}
+                    {{if gt $danglingCount 0}}
+                    <div class="mt-4 pt-3 border-top">
+                        {{$danglingStatus := mapGetStr "status" $dangling_dns}}
+                        <h6 class="d-flex align-items-center">
+                            <i class="fas fa-unlink me-2"></i>Dangling DNS / Subdomain Takeover Risk
+                            <span class="badge bg-{{if eq $danglingStatus "critical"}}danger{{else if eq $danglingStatus "warning"}}warning{{else}}success{{end}} ms-2">
+                                {{formatFloat 0 $danglingCount}} risk{{if ne $danglingCount 1}}s{{end}}
+                            </span>
+                        </h6>
+                        <p class="text-muted mb-2 small">{{mapGetStr "message" $dangling_dns}}</p>
+                        {{$danglingRecords := mapGetSlice "dangling_records" $dangling_dns}}
+                        {{if $danglingRecords}}
+                        <div class="table-responsive">
+                            <table class="table table-sm table-dark small mb-2">
+                                <thead>
+                                    <tr>
+                                        <th>Subdomain</th>
+                                        <th>CNAME Target</th>
+                                        <th>Service</th>
+                                        <th>Risk</th>
+                                        <th>Reason</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {{range $dr := $danglingRecords}}
+                                    {{$d := toMap $dr}}
+                                    {{if $d}}
+                                    <tr>
+                                        <td><code>{{mapGetStr "subdomain" $d}}</code></td>
+                                        <td><code class="small">{{mapGetStr "cname_target" $d}}</code></td>
+                                        <td><span class="badge bg-secondary">{{mapGetStr "service" $d}}</span></td>
+                                        <td>
+                                            {{$risk := mapGetStr "risk" $d}}
+                                            <span class="badge bg-{{if eq $risk "critical"}}danger{{else if eq $risk "high"}}danger{{else if eq $risk "medium"}}warning{{else}}info{{end}}">{{$risk}}</span>
+                                        </td>
+                                        <td class="small text-muted">{{mapGetStr "reason" $d}}</td>
+                                    </tr>
+                                    {{end}}
+                                    {{end}}
+                                </tbody>
+                            </table>
+                        </div>
+                        {{end}}
+                        {{$danglingIssues := mapGetSlice "issues" $dangling_dns}}
+                        {{if $danglingIssues}}
+                        {{range $issue := $danglingIssues}}
+                        <div class="text-warning small"><i class="fas fa-exclamation-triangle me-1"></i>{{$issue}}</div>
+                        {{end}}
+                        {{end}}
+                    </div>
+                    {{end}}
+                    {{end}}
+
                 </div>
             </div>
         </div>
