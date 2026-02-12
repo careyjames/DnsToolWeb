@@ -199,6 +199,8 @@
                                         <span class="badge bg-info fs-6"><i class="fas fa-certificate me-1"></i>{{$classification}}</span>
                                     {{else if eq $classification "CDN/Edge Network"}}
                                         <span class="badge bg-primary fs-6"><i class="fas fa-globe me-1"></i>{{$classification}}</span>
+                                    {{else if eq $classification "Cloud Hosting"}}
+                                        <span class="badge bg-info fs-6"><i class="fas fa-cloud me-1"></i>{{$classification}}</span>
                                     {{else}}
                                         <span class="badge bg-secondary fs-6">{{$classification}}</span>
                                     {{end}}
@@ -294,6 +296,13 @@
                                 <div class="alert alert-info py-2 mb-0 small">
                                     <i class="fas fa-globe me-2"></i><strong>CDN/Edge Network:</strong> This IP belongs to <strong>{{$cdnProv}}</strong>'s global edge network. Traffic is proxied through shared infrastructure — this IP is not dedicated to any single customer.
                                 </div>
+                            {{else}}
+                                {{$cloudProv := mapGetStr "cloud_provider" $results}}
+                                {{if ne $cloudProv ""}}
+                                <div class="alert alert-secondary py-2 mb-0 small">
+                                    <i class="fas fa-cloud me-2"></i><strong>Cloud Hosting:</strong> This IP is hosted on <strong>{{$cloudProv}}</strong> cloud infrastructure. This is a standard cloud-hosted server, not a CDN edge node.
+                                </div>
+                                {{end}}
                             {{end}}
                         {{else}}
                             <p class="text-muted small mb-0">ASN information unavailable.</p>
@@ -400,6 +409,8 @@
                                 {{$class := mapGetStr "classification" .}}
                                 {{if eq $class "CDN/Edge Network"}}
                                     <span class="badge bg-primary">{{$class}}</span>
+                                {{else if eq $class "Cloud Hosting"}}
+                                    <span class="badge bg-info"><i class="fas fa-cloud me-1"></i>{{$class}}</span>
                                 {{else if eq $class "CT Subdomain Match"}}
                                     <span class="badge bg-info">{{$class}}</span>
                                 {{else}}

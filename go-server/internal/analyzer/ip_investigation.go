@@ -88,12 +88,22 @@ func (a *Analyzer) InvestigateIP(ctx context.Context, domain, ip string) map[str
         asnInfo := a.lookupInvestigationASN(ctx, ip)
         result["asn_info"] = asnInfo
 
-        cdnProvider := checkASNForCDNDirect(asnInfo)
-        if cdnProvider != "" {
+        ptrRecords, _ := result["ptr_records"].([]string)
+        cdnProvider, isCDN := checkASNForCDNDirect(asnInfo, ptrRecords)
+        if isCDN {
                 result["is_cdn"] = true
                 result["cdn_provider"] = cdnProvider
                 infraRels = append(infraRels, map[string]any{
                         "classification": "CDN/Edge Network",
+                        "evidence":       fmt.Sprintf("IP belongs to %s (ASN %s)", cdnProvider, mapGetStr(asnInfo, "asn")),
+                        "record_type":    "ASN",
+                })
+        } else if cdnProvider != "" {
+                result["is_cdn"] = false
+                result["cdn_provider"] = ""
+                result["cloud_provider"] = cdnProvider
+                infraRels = append(infraRels, map[string]any{
+                        "classification": "Cloud Hosting",
                         "evidence":       fmt.Sprintf("IP belongs to %s (ASN %s)", cdnProvider, mapGetStr(asnInfo, "asn")),
                         "record_type":    "ASN",
                 })
@@ -106,7 +116,12 @@ func (a *Analyzer) InvestigateIP(ctx context.Context, domain, ip string) map[str
         initSecurityTrails()
         if securityTrailsEnabled {
                 neighborhoodRels, neighborhoodTotal = fetchNeighborhoodDomains(ctx, ip, domain)
-                neighborhoodCtx = buildNeighborhoodContext(cdnProvider, neighborhoodTotal)
+                effectiveProvider := cdnProvider
+                if effectiveProvider == "" {
+                        ep, _ := result["cloud_provider"].(string)
+                        effectiveProvider = ep
+                }
+                neighborhoodCtx = buildNeighborhoodContext(effectiveProvider, neighborhoodTotal)
         }
 
         result["direct_relationships"] = directRels
@@ -214,6 +229,11 @@ func buildExecutiveVerdict(classification, cdnProvider, domain, ip string, direc
                         return fmt.Sprintf("This IP is a %s CDN edge node. Your domain's traffic may route through it, but it is shared infrastructure — not dedicated to %s.", cdnProvider, domain)
                 }
                 return "This IP belongs to a CDN/edge network and serves as shared proxy infrastructure."
+        case classification == "Cloud Hosting":
+                if cdnProvider != "" {
+                        return fmt.Sprintf("This IP is hosted on %s cloud infrastructure (ASN %s). It is a cloud-hosted server, not a CDN edge node.", cdnProvider, asName)
+                }
+                return "This IP is hosted on cloud infrastructure."
         default:
                 if orgName != "" {
                         return fmt.Sprintf("This IP (AS%s, %s) has no direct relationship to %s in DNS records, email infrastructure, or SPF authorization.", asName, orgName, domain)
@@ -243,6 +263,8 @@ func verdictSeverity(classification string) string {
                 return "info"
         case classification == "CDN/Edge Network":
                 return "primary"
+        case classification == "Cloud Hosting":
+                return "info"
         default:
                 return "secondary"
         }
@@ -482,15 +504,15 @@ func (a *Analyzer) lookupInvestigationASN(ctx context.Context, ip string) map[st
         return a.lookupIPv4ASN(ctx, ip)
 }
 
-func checkASNForCDNDirect(asnInfo map[string]any) string {
+func checkASNForCDNDirect(asnInfo map[string]any, ptrRecords []string) (provider string, isCDN bool) {
         asn, _ := asnInfo["asn"].(string)
         if asn == "" {
-                return ""
+                return "", false
         }
         if cdn, ok := cdnASNs[asn]; ok {
-                return cdn
+                return cdn, true
         }
-        return ""
+        return classifyCloudIP(asn, ptrRecords)
 }
 
 func buildArpaName(ip string) string {
@@ -543,6 +565,7 @@ func classifyOverall(directRels, infraRels []map[string]any, cdnProvider string,
                 "SPF-Authorized Sender (via include)":  6,
                 "CT Subdomain Match":                   7,
                 "CDN/Edge Network":                     8,
+                "Cloud Hosting":                        9,
         }
 
         best := allRels[0]

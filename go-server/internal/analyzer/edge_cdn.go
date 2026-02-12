@@ -7,12 +7,6 @@ import (
 var cdnASNs = map[string]string{
 	"13335":  "Cloudflare",
 	"209242": "Cloudflare",
-	"14061":  "DigitalOcean",
-	"16509":  "AWS",
-	"14618":  "AWS",
-	"8075":   "Microsoft Azure",
-	"15169":  "Google Cloud",
-	"396982": "Google Cloud",
 	"19551":  "Incapsula/Imperva",
 	"20940":  "Akamai",
 	"16625":  "Akamai",
@@ -28,27 +22,41 @@ var cdnASNs = map[string]string{
 	"209101": "Sucuri",
 }
 
+var cloudASNs = map[string]string{
+	"16509":  "AWS",
+	"14618":  "AWS",
+	"8075":   "Microsoft Azure",
+	"15169":  "Google Cloud",
+	"396982": "Google Cloud",
+	"14061":  "DigitalOcean",
+}
+
+var cloudCDNPTRPatterns = map[string]string{
+	"cloudfront.net":    "AWS CloudFront",
+	"awsglobalaccelerator.com": "AWS Global Accelerator",
+}
+
 var cdnCNAMEPatterns = map[string]string{
-	"cloudflare":         "Cloudflare",
-	"cloudfront.net":     "AWS CloudFront",
-	"akamaiedge.net":     "Akamai",
-	"akamai.net":         "Akamai",
-	"edgekey.net":        "Akamai",
-	"fastly.net":         "Fastly",
-	"global.fastly.net":  "Fastly",
-	"azureedge.net":      "Azure CDN",
-	"azurefd.net":        "Azure Front Door",
-	"edgecastcdn.net":    "Edgecast/Verizon",
-	"stackpathdns.com":   "StackPath",
-	"stackpathcdn.com":   "StackPath",
-	"cdn77.org":          "CDN77",
-	"incapdns.net":       "Imperva/Incapsula",
-	"sucuri.net":         "Sucuri WAF",
-	"netlify.app":        "Netlify CDN",
-	"vercel-dns.com":     "Vercel",
-	"dualstack.":         "AWS ELB/CloudFront",
-	"elb.amazonaws.com":  "AWS ELB",
-	"ghproxy":            "GitHub CDN",
+	"cloudflare":        "Cloudflare",
+	"cloudfront.net":    "AWS CloudFront",
+	"akamaiedge.net":    "Akamai",
+	"akamai.net":        "Akamai",
+	"edgekey.net":       "Akamai",
+	"fastly.net":        "Fastly",
+	"global.fastly.net": "Fastly",
+	"azureedge.net":     "Azure CDN",
+	"azurefd.net":       "Azure Front Door",
+	"edgecastcdn.net":   "Edgecast/Verizon",
+	"stackpathdns.com":  "StackPath",
+	"stackpathcdn.com":  "StackPath",
+	"cdn77.org":         "CDN77",
+	"incapdns.net":      "Imperva/Incapsula",
+	"sucuri.net":        "Sucuri WAF",
+	"netlify.app":       "Netlify CDN",
+	"vercel-dns.com":    "Vercel",
+	"dualstack.":        "AWS ELB/CloudFront",
+	"elb.amazonaws.com": "AWS ELB",
+	"ghproxy":           "GitHub CDN",
 }
 
 func DetectEdgeCDN(results map[string]any) map[string]any {
@@ -129,4 +137,22 @@ func checkCNAMEForCDN(results map[string]any, indicators []string) (string, []st
 	}
 
 	return "", indicators
+}
+
+func classifyCloudIP(asn string, ptrRecords []string) (provider string, isCDN bool) {
+	cloud, ok := cloudASNs[asn]
+	if !ok {
+		return "", false
+	}
+
+	for _, ptr := range ptrRecords {
+		ptrLower := strings.ToLower(ptr)
+		for pattern, cdnName := range cloudCDNPTRPatterns {
+			if strings.Contains(ptrLower, pattern) {
+				return cdnName, true
+			}
+		}
+	}
+
+	return cloud, false
 }
