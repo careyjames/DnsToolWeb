@@ -404,13 +404,73 @@ func sliceIndex(i int, s []interface{}) interface{} {
         return s[i]
 }
 
+func toInt(v interface{}) int {
+        switch n := v.(type) {
+        case int:
+                return n
+        case int32:
+                return int(n)
+        case int64:
+                return int(n)
+        case float64:
+                return int(n)
+        case float32:
+                return int(n)
+        default:
+                return 0
+        }
+}
+
+func toStringSlice(v interface{}) []string {
+        if v == nil {
+                return nil
+        }
+        switch s := v.(type) {
+        case []string:
+                return s
+        case []interface{}:
+                result := make([]string, 0, len(s))
+                for _, item := range s {
+                        if str, ok := item.(string); ok {
+                                result = append(result, str)
+                        }
+                }
+                return result
+        default:
+                return nil
+        }
+}
+
+func toMapSlice(v interface{}) []map[string]interface{} {
+        if v == nil {
+                return nil
+        }
+        switch s := v.(type) {
+        case []map[string]interface{}:
+                return s
+        case []interface{}:
+                result := make([]map[string]interface{}, 0, len(s))
+                for _, item := range s {
+                        if m, ok := item.(map[string]interface{}); ok {
+                                result = append(result, m)
+                        }
+                }
+                return result
+        default:
+                return nil
+        }
+}
+
 func sliceFuncs() template.FuncMap {
         return template.FuncMap{
-                "list":       listSlice,
-                "seq":        seq,
-                "isSlice":    isSlice,
-                "sliceFrom":  sliceFrom,
-                "sliceIndex": sliceIndex,
+                "list":          listSlice,
+                "seq":           seq,
+                "isSlice":       isSlice,
+                "sliceFrom":     sliceFrom,
+                "sliceIndex":    sliceIndex,
+                "toInt":         toInt,
+                "toStringSlice": toStringSlice,
+                "toMapSlice":    toMapSlice,
         }
 }
 

@@ -132,6 +132,10 @@ func main() {
 
         router.GET("/proxy/bimi-logo", proxyHandler.BIMILogo)
 
+        investigateHandler := handlers.NewInvestigateHandler(cfg, dnsAnalyzer)
+        router.GET("/investigate", investigateHandler.InvestigatePage)
+        router.POST("/investigate", middleware.AnalyzeRateLimit(rateLimiter), investigateHandler.Investigate)
+
         router.NoRoute(func(c *gin.Context) {
                 nonce, _ := c.Get("csp_nonce")
                 csrfToken, _ := c.Get("csrf_token")

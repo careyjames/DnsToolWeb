@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="dark">
+<head>
+    {{template "head" .}}
+    <title>IP Investigation - DNS Tool</title>
+    <meta name="description" content="Investigate how an IP address relates to your domain. Find out if an IP is a direct asset, email provider, CDN, DNS host, or authorized sender.">
+    {{template "critical_css" .}}
+    {{template "head_css" .}}
+</head>
+<body>
+    {{template "nav" .}}
+    <main id="main-content">
+
+    {{if .ShowForm}}
+    <section class="hero-section">
+        <div class="container">
+            <div class="text-center hero-content">
+                <div class="hero-badge mb-3">
+                    <i class="fas fa-crosshairs me-1"></i> IP Investigation
+                </div>
+                <h1 class="hero-title mb-3">
+                    IP Address Investigation
+                </h1>
+                <p class="hero-subtitle mx-auto mb-4">
+                    Investigate how an IP address interacts with or is associated with your domain or a connected service provider
+                </p>
+            </div>
+
+            {{template "flash_messages" .}}
+
+            <div class="row justify-content-center">
+                <div class="col-lg-7 col-xl-6">
+                    <div class="search-card">
+                        <form method="POST" action="/investigate" id="investigateForm">
+                            <input type="hidden" name="csrf_token" value="{{.CsrfToken}}">
+                            <label for="domain" class="form-label search-label">
+                                <i class="fas fa-globe me-2"></i>Your Domain
+                            </label>
+                            <div class="input-group input-group-lg search-input-group mb-3">
+                                <input type="text"
+                                       class="form-control search-input"
+                                       id="domain"
+                                       name="domain"
+                                       placeholder="example.com"
+                                       required
+                                       autocomplete="off"
+                                       aria-label="Domain to investigate against"
+                                       value="{{.FormDomain}}">
+                            </div>
+                            <label for="ip_address" class="form-label search-label">
+                                <i class="fas fa-network-wired me-2"></i>IP Address to Investigate
+                            </label>
+                            <div class="input-group input-group-lg search-input-group mb-3">
+                                <input type="text"
+                                       class="form-control search-input"
+                                       id="ip_address"
+                                       name="ip_address"
+                                       placeholder="203.0.113.50 or 2001:db8::1"
+                                       required
+                                       autocomplete="off"
+                                       aria-label="IP address to investigate"
+                                       value="{{.FormIP}}">
+                                <button class="btn btn-primary search-btn" type="submit" id="investigateBtn" aria-label="Investigate IP">
+                                    <i class="fas fa-crosshairs me-2" aria-hidden="true"></i>Investigate
+                                </button>
+                            </div>
+                            <div class="form-text search-hint mt-2">
+                                <i class="fas fa-info-circle me-1"></i>
+                                Enter a domain and an IP address you found in a report, log, or email header. We'll show you exactly how that IP relates to your domain's infrastructure.
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <div class="text-center mt-4 hero-trust">
+                <span><i class="fas fa-search-location me-1"></i> Reverse DNS + FCrDNS</span>
+                <span class="trust-divider"></span>
+                <span><i class="fas fa-network-wired me-1"></i> ASN Attribution</span>
+                <span class="trust-divider"></span>
+                <span><i class="fas fa-envelope me-1"></i> SPF Authorization Check</span>
+                <span class="trust-divider"></span>
+                <span><i class="fas fa-sitemap me-1"></i> Infrastructure Mapping</span>
+            </div>
+        </div>
+    </section>
+
+    <div class="container">
+        <section class="features-section">
+            <h2 class="section-heading text-center mb-2">What We Check</h2>
+            <p class="text-center text-muted mb-4">Cross-referencing the IP against every layer of your domain's infrastructure</p>
+            <div class="row g-4">
+                <div class="col-md-6 col-lg-3">
+                    <div class="feature-card">
+                        <div class="feature-card-icon feature-card-icon--primary">
+                            <i class="fas fa-server"></i>
+                        </div>
+                        <h3 class="feature-card-title">DNS Records</h3>
+                        <p class="feature-card-text">Compare against your domain's A, AAAA, MX, and NS records to identify direct hosting and service providers</p>
+                    </div>
+                </div>
+                <div class="col-md-6 col-lg-3">
+                    <div class="feature-card">
+                        <div class="feature-card-icon feature-card-icon--success">
+                            <i class="fas fa-envelope-open-text"></i>
+                        </div>
+                        <h3 class="feature-card-title">SPF Authorization</h3>
+                        <p class="feature-card-text">Check if the IP is authorized to send email on your behalf via SPF ip4/ip6 mechanisms and include chains</p>
+                    </div>
+                </div>
+                <div class="col-md-6 col-lg-3">
+                    <div class="feature-card">
+                        <div class="feature-card-icon feature-card-icon--info">
+                            <i class="fas fa-building"></i>
+                        </div>
+                        <h3 class="feature-card-title">ASN & Provider</h3>
+                        <p class="feature-card-text">Identify the network operator, autonomous system, and whether the IP belongs to a CDN or cloud provider</p>
+                    </div>
+                </div>
+                <div class="col-md-6 col-lg-3">
+                    <div class="feature-card">
+                        <div class="feature-card-icon feature-card-icon--warning">
+                            <i class="fas fa-certificate"></i>
+                        </div>
+                        <h3 class="feature-card-title">CT Subdomains</h3>
+                        <p class="feature-card-text">Cross-reference against Certificate Transparency discovered subdomains to find hidden infrastructure matches</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        {{template "footer" .}}
+    </div>
+    {{end}}
+
+    {{if .ShowResults}}
+    <div class="container mt-4">
+        <div class="d-flex align-items-center mb-4 flex-wrap gap-2">
+            <h1 class="h3 mb-0">
+                <i class="fas fa-crosshairs me-2 text-info"></i>IP Investigation Report
+            </h1>
+            <a href="/investigate" class="btn btn-outline-secondary btn-sm ms-auto">
+                <i class="fas fa-search me-1"></i>New Investigation
+            </a>
+            <a href="/analyze?domain={{.AsciiDomain}}" class="btn btn-outline-info btn-sm">
+                <i class="fas fa-shield-alt me-1"></i>Full Domain Audit
+            </a>
+        </div>
+
+        {{$results := .Results}}
+        {{$classification := mapGetStr "classification" $results}}
+        {{$matchCount := toInt (mapGet "match_count" $results)}}
+        {{$summary := mapGetStr "summary" $results}}
+
+        <div class="card mb-4">
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <div class="col-md-8">
+                        <h5 class="mb-1">
+                            <i class="fas fa-network-wired me-2 text-info"></i>
+                            <code class="text-light">{{.IPAddress}}</code>
+                            <i class="fas fa-long-arrow-alt-right mx-2 text-muted"></i>
+                            <code class="text-light">{{.Domain}}</code>
+                        </h5>
+                        <div class="mt-2">
+                            {{if eq $classification "Unrelated"}}
+                                <span class="badge bg-secondary fs-6"><i class="fas fa-unlink me-1"></i>{{$classification}}</span>
+                            {{else if or (eq $classification "Direct Asset (A Record)") (eq $classification "Direct Asset (AAAA Record)") (eq $classification "Direct Asset (Reverse DNS)")}}
+                                <span class="badge bg-success fs-6"><i class="fas fa-check-circle me-1"></i>{{$classification}}</span>
+                            {{else if eq $classification "Email Provider (MX)"}}
+                                <span class="badge bg-info fs-6"><i class="fas fa-envelope me-1"></i>{{$classification}}</span>
+                            {{else if eq $classification "DNS Provider (NS)"}}
+                                <span class="badge bg-primary fs-6"><i class="fas fa-server me-1"></i>{{$classification}}</span>
+                            {{else if or (eq $classification "SPF-Authorized Sender") (eq $classification "SPF-Authorized Sender (via include)")}}
+                                <span class="badge bg-warning text-dark fs-6"><i class="fas fa-paper-plane me-1"></i>{{$classification}}</span>
+                            {{else if eq $classification "CT Subdomain Match"}}
+                                <span class="badge bg-info fs-6"><i class="fas fa-sitemap me-1"></i>{{$classification}}</span>
+                            {{else if eq $classification "CDN/Edge Network"}}
+                                <span class="badge bg-primary fs-6"><i class="fas fa-cloud me-1"></i>{{$classification}}</span>
+                            {{else}}
+                                <span class="badge bg-secondary fs-6"><i class="fas fa-question-circle me-1"></i>{{$classification}}</span>
+                            {{end}}
+                            <span class="badge bg-dark border border-secondary ms-2">{{mapGetStr "ip_version" $results}}</span>
+                            {{if gt $matchCount 0}}
+                                <span class="badge bg-dark border border-info ms-2">{{$matchCount}} relationship(s)</span>
+                            {{end}}
+                        </div>
+                    </div>
+                    <div class="col-md-4 text-md-end mt-3 mt-md-0">
+                        {{$asnInfo := mapGetMap "asn_info" $results}}
+                        {{if $asnInfo}}
+                            {{$asn := mapGetStr "asn" $asnInfo}}
+                            {{$asName := mapGetStr "as_name" $asnInfo}}
+                            {{$country := mapGetStr "country" $asnInfo}}
+                            {{if ne $asn ""}}
+                                <div class="text-muted small">
+                                    <div><strong>AS{{$asn}}</strong> {{$asName}}</div>
+                                    {{if ne $country ""}}<div><i class="fas fa-globe me-1"></i>{{$country}}</div>{{end}}
+                                </div>
+                            {{end}}
+                        {{end}}
+                    </div>
+                </div>
+                <div class="mt-3">
+                    <p class="mb-0 text-muted">{{$summary}}</p>
+                </div>
+            </div>
+        </div>
+
+        {{$ptrSlice := toStringSlice (mapGet "ptr_records" $results)}}
+        {{$fcrdns := mapGetBool "fcrdns_match" $results}}
+        <div class="card mb-4">
+            <div class="card-header bg-dark">
+                <h5 class="mb-0"><i class="fas fa-undo me-2 text-info"></i>Reverse DNS (PTR)</h5>
+            </div>
+            <div class="card-body">
+                {{if and $ptrSlice (gt (len $ptrSlice) 0)}}
+                    <table class="table table-dark table-sm mb-2">
+                        <thead>
+                            <tr>
+                                <th>PTR Record</th>
+                                <th>Forward-Confirmed (FCrDNS)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {{range $ptrSlice}}
+                            <tr>
+                                <td><code>{{.}}</code></td>
+                                <td>
+                                    {{if $fcrdns}}
+                                        <span class="badge bg-success"><i class="fas fa-check me-1"></i>Confirmed</span>
+                                    {{else}}
+                                        <span class="badge bg-secondary"><i class="fas fa-minus me-1"></i>No match</span>
+                                    {{end}}
+                                </td>
+                            </tr>
+                            {{end}}
+                        </tbody>
+                    </table>
+                    <div class="text-muted small">
+                        <i class="fas fa-info-circle me-1"></i>
+                        Forward-Confirmed Reverse DNS (FCrDNS) means the PTR hostname resolves back to the same IP, confirming ownership.
+                    </div>
+                {{else}}
+                    <p class="text-muted mb-0"><i class="fas fa-minus-circle me-1"></i>No PTR records found for this IP address. The hosting provider may not have configured reverse DNS.</p>
+                {{end}}
+            </div>
+        </div>
+
+        {{$relSlice := toMapSlice (mapGet "relationships" $results)}}
+        <div class="card mb-4">
+            <div class="card-header bg-dark">
+                <h5 class="mb-0"><i class="fas fa-project-diagram me-2 text-info"></i>Relationship Evidence</h5>
+            </div>
+            <div class="card-body">
+                {{if and $relSlice (gt (len $relSlice) 0)}}
+                    <table class="table table-dark table-sm table-hover mb-0">
+                        <thead>
+                            <tr>
+                                <th>Relationship</th>
+                                <th>Evidence</th>
+                                <th>Record Type</th>
+                                <th>Hostname</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {{range $relSlice}}
+                            <tr>
+                                <td>
+                                    {{$class := mapGetStr "classification" .}}
+                                    {{if or (eq $class "Direct Asset (A Record)") (eq $class "Direct Asset (AAAA Record)") (eq $class "Direct Asset (Reverse DNS)")}}
+                                        <span class="badge bg-success">{{$class}}</span>
+                                    {{else if eq $class "Email Provider (MX)"}}
+                                        <span class="badge bg-info">{{$class}}</span>
+                                    {{else if eq $class "DNS Provider (NS)"}}
+                                        <span class="badge bg-primary">{{$class}}</span>
+                                    {{else if or (eq $class "SPF-Authorized Sender") (eq $class "SPF-Authorized Sender (via include)")}}
+                                        <span class="badge bg-warning text-dark">{{$class}}</span>
+                                    {{else if eq $class "CT Subdomain Match"}}
+                                        <span class="badge bg-info">{{$class}}</span>
+                                    {{else if eq $class "CDN/Edge Network"}}
+                                        <span class="badge bg-primary">{{$class}}</span>
+                                    {{else}}
+                                        <span class="badge bg-secondary">{{$class}}</span>
+                                    {{end}}
+                                </td>
+                                <td class="small">{{mapGetStr "evidence" .}}</td>
+                                <td><code>{{mapGetStr "record_type" .}}</code></td>
+                                <td>
+                                    {{$hostname := mapGetStr "hostname" .}}
+                                    {{if ne $hostname ""}}<code>{{$hostname}}</code>{{else}}<span class="text-muted">&mdash;</span>{{end}}
+                                </td>
+                            </tr>
+                            {{end}}
+                        </tbody>
+                    </table>
+                {{else}}
+                    <div class="text-center py-4">
+                        <i class="fas fa-unlink fa-2x text-muted mb-3 d-block"></i>
+                        <p class="text-muted mb-0">No relationships found between <code>{{$.IPAddress}}</code> and <code>{{$.Domain}}</code>.</p>
+                        <p class="text-muted small mt-2">This IP does not appear in the domain's A/AAAA, MX, NS, or SPF records, and was not found in CT-discovered subdomains.</p>
+                    </div>
+                {{end}}
+            </div>
+        </div>
+
+        {{$asnInfoCard := mapGetMap "asn_info" $results}}
+        {{if $asnInfoCard}}
+        <div class="card mb-4">
+            <div class="card-header bg-dark">
+                <h5 class="mb-0"><i class="fas fa-building me-2 text-info"></i>Network Attribution</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <table class="table table-dark table-sm mb-0">
+                            <tbody>
+                                {{$asn2 := mapGetStr "asn" $asnInfoCard}}
+                                {{if ne $asn2 ""}}
+                                <tr><th class="text-muted" style="width:40%">ASN</th><td><code>AS{{$asn2}}</code></td></tr>
+                                {{end}}
+                                {{$asName2 := mapGetStr "as_name" $asnInfoCard}}
+                                {{if ne $asName2 ""}}
+                                <tr><th class="text-muted">Organization</th><td>{{$asName2}}</td></tr>
+                                {{end}}
+                                {{$prefix := mapGetStr "prefix" $asnInfoCard}}
+                                {{if ne $prefix ""}}
+                                <tr><th class="text-muted">IP Prefix</th><td><code>{{$prefix}}</code></td></tr>
+                                {{end}}
+                                {{$country2 := mapGetStr "country" $asnInfoCard}}
+                                {{if ne $country2 ""}}
+                                <tr><th class="text-muted">Country</th><td>{{$country2}}</td></tr>
+                                {{end}}
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="col-md-6">
+                        {{$isCdn := mapGetBool "is_cdn" $results}}
+                        {{$cdnProv := mapGetStr "cdn_provider" $results}}
+                        {{if $isCdn}}
+                            <div class="alert alert-info mb-0">
+                                <i class="fas fa-cloud me-2"></i>
+                                <strong>CDN/Edge Network Detected:</strong> This IP belongs to <strong>{{$cdnProv}}</strong>'s edge network. It serves as a CDN proxy rather than origin infrastructure.
+                            </div>
+                        {{else}}
+                            <div class="alert alert-secondary mb-0">
+                                <i class="fas fa-server me-2"></i>
+                                This IP does not belong to a known CDN or edge network. It may be origin infrastructure or a dedicated hosting provider.
+                            </div>
+                        {{end}}
+                    </div>
+                </div>
+            </div>
+        </div>
+        {{end}}
+
+        <div class="text-center mb-5">
+            <a href="/investigate" class="btn btn-outline-info me-2">
+                <i class="fas fa-crosshairs me-1"></i>Investigate Another IP
+            </a>
+            <a href="/analyze?domain={{.AsciiDomain}}" class="btn btn-outline-primary">
+                <i class="fas fa-shield-alt me-1"></i>Run Full Domain Audit on {{.Domain}}
+            </a>
+        </div>
+
+        {{template "footer" .}}
+    </div>
+    {{end}}
+
+    </main>
+    <script src="/static/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
