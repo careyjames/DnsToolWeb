@@ -520,6 +520,9 @@ func appendDANEFixes(fixes []fix, ps protocolState, results map[string]any, doma
                 if !isDANEDeployable(results) {
                         return fixes
                 }
+                if isHostedMXProvider(results) {
+                        return fixes
+                }
                 return append(fixes, fix{
                         Title:         "Deploy DANE/TLSA for email transport",
                         Description:   "DNSSEC is already enabled — you can strengthen email transport security by publishing DANE TLSA records. DANE binds your mail server's TLS certificate to DNS, preventing man-in-the-middle attacks on SMTP connections.",
@@ -533,6 +536,21 @@ func appendDANEFixes(fixes []fix, ps protocolState, results map[string]any, doma
                 })
         }
         return fixes
+}
+
+var hostedMXProviders = map[string]bool{
+        providerGoogleWS:        true,
+        providerMicrosoft365:    true,
+        providerZohoMail:        true,
+        providerFastmail:        true,
+        providerProtonMail:      true,
+        providerCloudflareEmail: true,
+}
+
+func isHostedMXProvider(results map[string]any) bool {
+        dkim := getMapResult(results, "dkim_analysis")
+        provider, _ := dkim["primary_provider"].(string)
+        return hostedMXProviders[provider]
 }
 
 func isDANEDeployable(results map[string]any) bool {
