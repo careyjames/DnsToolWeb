@@ -40,13 +40,14 @@ type fix struct {
 
 func (a *Analyzer) GenerateRemediation(results map[string]any) map[string]any {
         ps := evaluateProtocolStates(results)
+        ds := classifyDKIMState(ps)
         domain := extractDomain(results)
 
         var fixes []fix
 
-        fixes = appendSPFFixes(fixes, ps, results, domain)
+        fixes = appendSPFFixes(fixes, ps, ds, results, domain)
         fixes = appendDMARCFixes(fixes, ps, results, domain)
-        fixes = appendDKIMFixes(fixes, ps, results, domain)
+        fixes = appendDKIMFixes(fixes, ps, ds, results, domain)
         fixes = appendCAAFixes(fixes, ps, domain)
         fixes = appendMTASTSFixes(fixes, ps, domain)
         fixes = appendTLSRPTFixes(fixes, ps, domain)
@@ -148,7 +149,7 @@ func extractSPFIncludes(results map[string]any) []string {
         return nil
 }
 
-func appendSPFFixes(fixes []fix, ps protocolState, results map[string]any, domain string) []fix {
+func appendSPFFixes(fixes []fix, ps protocolState, ds DKIMState, results map[string]any, domain string) []fix {
         includes := extractSPFIncludes(results)
 
         if ps.spfDangerous {
@@ -181,7 +182,7 @@ func appendSPFFixes(fixes []fix, ps protocolState, results map[string]any, domai
 
         if ps.spfOK {
                 fixes = appendSPFLookupFix(fixes, ps)
-                return appendSPFUpgradeFix(fixes, ps, domain, includes)
+                return appendSPFUpgradeFix(fixes, ps, ds, domain, includes)
         }
         if ps.spfWarning && !ps.spfMissing {
                 if ps.spfLookupExceeded {
@@ -227,8 +228,8 @@ func appendSPFLookupFix(fixes []fix, ps protocolState) []fix {
         })
 }
 
-func appendSPFUpgradeFix(fixes []fix, ps protocolState, domain string, includes []string) []fix {
-        if ps.spfHardFail || ps.dkimOK || ps.dkimProvider || ps.isNoMailDomain {
+func appendSPFUpgradeFix(fixes []fix, ps protocolState, ds DKIMState, domain string, includes []string) []fix {
+        if ps.spfHardFail || ds.IsPresent() || ds == DKIMNoMailDomain {
                 return fixes
         }
         return append(fixes, fix{
@@ -308,60 +309,40 @@ func appendDMARCFixes(fixes []fix, ps protocolState, results map[string]any, dom
         return fixes
 }
 
-func appendDKIMFixes(fixes []fix, ps protocolState, results map[string]any, domain string) []fix {
-        if ps.isNoMailDomain {
-                return fixes
-        }
-
-        if ps.dkimOK || ps.dkimProvider {
-                if ps.dkimWeakKeys {
-                        fixes = append(fixes, fix{
-                                Title:         "Upgrade weak DKIM keys",
-                                Description:   "One or more DKIM selectors use 1024-bit RSA keys which are considered weak by modern standards. Upgrade to 2048-bit keys for stronger cryptographic protection.",
-                                DNSRecord:     fmt.Sprintf("selector1._domainkey.%s TXT \"v=DKIM1; k=rsa; p=<2048_bit_public_key>\"", domain),
-                                RFC:           "RFC 8301 §3.2",
-                                RFCURL:        "https://datatracker.ietf.org/doc/html/rfc8301#section-3.2",
-                                Severity:      severityMedium,
-                                SeverityColor: colorMedium,
-                                SeverityOrder: 3,
-                                Section:       "dkim",
-                        })
-                }
-                return fixes
-        }
-
+func appendDKIMFixes(fixes []fix, ps protocolState, ds DKIMState, results map[string]any, domain string) []fix {
         dkim := getMapResult(results, "dkim_analysis")
         provider, _ := dkim["primary_provider"].(string)
 
-        if ps.dkimThirdPartyOnly && provider != "" && provider != "Unknown" {
-                fixes = append(fixes, fix{
-                        Title:         fmt.Sprintf("Enable DKIM for %s", provider),
-                        Description:   fmt.Sprintf("DKIM is only configured for third-party services, not your primary mail platform (%s). Enable DKIM signing in %s settings to cover all outbound mail.", provider, provider),
-                        DNSRecord:     fmt.Sprintf(dkimRecordExample, domain),
-                        RFC:           "RFC 6376 §3.6",
-                        RFCURL:        "https://datatracker.ietf.org/doc/html/rfc6376#section-3.6",
-                        Severity:      severityMedium,
-                        SeverityColor: colorMedium,
-                        SeverityOrder: 3,
-                        Section:       "dkim",
-                })
+        switch ds {
+        case DKIMNoMailDomain:
+                return fixes
+
+        case DKIMSuccess, DKIMProviderInferred:
                 if ps.dkimWeakKeys {
+                        fixes = append(fixes, weakKeysFix(domain))
+                }
+                return fixes
+
+        case DKIMThirdPartyOnly:
+                if provider != "" && provider != "Unknown" {
                         fixes = append(fixes, fix{
-                                Title:         "Upgrade weak DKIM keys",
-                                Description:   "One or more DKIM selectors use 1024-bit RSA keys. Upgrade to 2048-bit keys for stronger cryptographic protection.",
-                                DNSRecord:     fmt.Sprintf("selector1._domainkey.%s TXT \"v=DKIM1; k=rsa; p=<2048_bit_public_key>\"", domain),
-                                RFC:           "RFC 8301 §3.2",
-                                RFCURL:        "https://datatracker.ietf.org/doc/html/rfc8301#section-3.2",
+                                Title:         fmt.Sprintf("Enable DKIM for %s", provider),
+                                Description:   fmt.Sprintf("DKIM is only configured for third-party services, not your primary mail platform (%s). Enable DKIM signing in %s settings to cover all outbound mail.", provider, provider),
+                                DNSRecord:     fmt.Sprintf(dkimRecordExample, domain),
+                                RFC:           "RFC 6376 §3.6",
+                                RFCURL:        "https://datatracker.ietf.org/doc/html/rfc6376#section-3.6",
                                 Severity:      severityMedium,
                                 SeverityColor: colorMedium,
                                 SeverityOrder: 3,
                                 Section:       "dkim",
                         })
                 }
+                if ps.dkimWeakKeys {
+                        fixes = append(fixes, weakKeysFix(domain))
+                }
                 return fixes
-        }
 
-        if ps.dkimPartial {
+        case DKIMInconclusive:
                 return append(fixes, fix{
                         Title:         "Verify DKIM configuration",
                         Description:   "DKIM selectors were not discoverable via common selector names. This does not confirm DKIM is absent — your provider may use custom or rotating selectors that cannot be enumerated through DNS (RFC 6376 §3.6.2.1). Check your email provider's DKIM settings to confirm signing is enabled.",
@@ -373,19 +354,36 @@ func appendDKIMFixes(fixes []fix, ps protocolState, results map[string]any, doma
                         SeverityOrder: 4,
                         Section:       "dkim",
                 })
+
+        case DKIMAbsent:
+                return append(fixes, fix{
+                        Title:         "Configure DKIM signing",
+                        Description:   "DKIM (DomainKeys Identified Mail) adds a cryptographic signature to outgoing emails, proving they haven't been tampered with. Enable DKIM in your email provider's settings.",
+                        DNSRecord:     fmt.Sprintf(dkimRecordExample, domain),
+                        RFC:           "RFC 6376 §3.6",
+                        RFCURL:        "https://datatracker.ietf.org/doc/html/rfc6376#section-3.6",
+                        Severity:      severityHigh,
+                        SeverityColor: colorHigh,
+                        SeverityOrder: 2,
+                        Section:       "dkim",
+                })
         }
 
-        return append(fixes, fix{
-                Title:         "Configure DKIM signing",
-                Description:   "DKIM (DomainKeys Identified Mail) adds a cryptographic signature to outgoing emails, proving they haven't been tampered with. Enable DKIM in your email provider's settings.",
-                DNSRecord:     fmt.Sprintf(dkimRecordExample, domain),
-                RFC:           "RFC 6376 §3.6",
-                RFCURL:        "https://datatracker.ietf.org/doc/html/rfc6376#section-3.6",
-                Severity:      severityHigh,
-                SeverityColor: colorHigh,
-                SeverityOrder: 2,
+        return fixes
+}
+
+func weakKeysFix(domain string) fix {
+        return fix{
+                Title:         "Upgrade weak DKIM keys",
+                Description:   "One or more DKIM selectors use 1024-bit RSA keys which are considered weak by modern standards. Upgrade to 2048-bit keys for stronger cryptographic protection.",
+                DNSRecord:     fmt.Sprintf("selector1._domainkey.%s TXT \"v=DKIM1; k=rsa; p=<2048_bit_public_key>\"", domain),
+                RFC:           "RFC 8301 §3.2",
+                RFCURL:        "https://datatracker.ietf.org/doc/html/rfc8301#section-3.2",
+                Severity:      severityMedium,
+                SeverityColor: colorMedium,
+                SeverityOrder: 3,
                 Section:       "dkim",
-        })
+        }
 }
 
 func appendCAAFixes(fixes []fix, ps protocolState, domain string) []fix {

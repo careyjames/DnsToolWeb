@@ -250,33 +250,26 @@ func classifyDMARCWarning(ps protocolState, acc *postureAccumulator) {
         acc.issues = append(acc.issues, "DMARC needs strengthening")
 }
 
-func classifyDKIM(ps protocolState, acc *postureAccumulator) {
-        switch {
-        case ps.dkimOK:
+func classifyDKIMPosture(ds DKIMState, primaryProvider string, acc *postureAccumulator) {
+        switch ds {
+        case DKIMSuccess:
                 acc.configured = append(acc.configured, "DKIM")
-        case ps.dkimProvider:
+        case DKIMProviderInferred:
                 acc.configured = append(acc.configured, "DKIM (provider-verified)")
-        case ps.dkimThirdPartyOnly:
+        case DKIMThirdPartyOnly:
                 acc.configured = append(acc.configured, "DKIM (third-party)")
                 acc.recommendations = append(acc.recommendations,
-                        fmt.Sprintf("DKIM found for third-party senders only — enable DKIM for primary mail platform (%s) for full alignment", ps.primaryProvider))
-        case ps.dkimPartial:
-                if ps.isNoMailDomain {
-                        acc.recommendations = append(acc.recommendations,
-                                "DKIM not applicable for no-mail domains — DKIM signing is only relevant for domains that send email")
-                } else {
-                        acc.monitoring = append(acc.monitoring, "DKIM (inconclusive)")
-                        acc.recommendations = append(acc.recommendations,
-                                "DKIM not discoverable via common selectors — may be configured with custom or rotating selectors (RFC 6376 §3.6.2.1)")
-                }
-        default:
-                if ps.isNoMailDomain {
-                        acc.recommendations = append(acc.recommendations,
-                                "DKIM not applicable for no-mail domains — DKIM signing is only relevant for domains that send email")
-                } else {
-                        acc.absent = append(acc.absent, "DKIM")
-                        acc.issues = append(acc.issues, "No DKIM found")
-                }
+                        fmt.Sprintf("DKIM found for third-party senders only — enable DKIM for primary mail platform (%s) for full alignment", primaryProvider))
+        case DKIMInconclusive:
+                acc.monitoring = append(acc.monitoring, "DKIM (inconclusive)")
+                acc.recommendations = append(acc.recommendations,
+                        "DKIM not discoverable via common selectors — may be configured with custom or rotating selectors (RFC 6376 §3.6.2.1)")
+        case DKIMNoMailDomain:
+                acc.recommendations = append(acc.recommendations,
+                        "DKIM not applicable for no-mail domains — DKIM signing is only relevant for domains that send email")
+        case DKIMAbsent:
+                acc.absent = append(acc.absent, "DKIM")
+                acc.issues = append(acc.issues, "No DKIM found")
         }
 }
 
@@ -373,12 +366,13 @@ func evaluateDeliberateMonitoring(ps protocolState, configuredCount int) (bool, 
 
 func (a *Analyzer) CalculatePosture(results map[string]any) map[string]any {
         ps := evaluateProtocolStates(results)
+        ds := classifyDKIMState(ps)
 
         acc := &postureAccumulator{}
 
         hasSPF := ps.spfOK || (ps.spfWarning && !ps.spfMissing)
         hasDMARC := ps.dmarcOK || (ps.dmarcWarning && !ps.dmarcMissing)
-        hasDKIM := ps.dkimOK || ps.dkimProvider || ps.dkimThirdPartyOnly
+        hasDKIM := ds.IsPresent()
 
         classifySPF(ps, acc)
         classifyDMARC(ps, acc)
@@ -387,17 +381,17 @@ func (a *Analyzer) CalculatePosture(results map[string]any) map[string]any {
                 acc.recommendations = append(acc.recommendations, "No DMARC aggregate reporting (rua) configured — unable to monitor authentication results")
         }
 
-        classifyDKIM(ps, acc)
+        classifyDKIMPosture(ds, ps.primaryProvider, acc)
         classifySimpleProtocols(ps, acc)
         classifyDanglingDNS(results, acc)
         classifyDMARCReportAuth(results, acc)
 
-        state, icon, color, message := determineGrade(ps, hasSPF, hasDMARC, hasDKIM, acc.monitoring, acc.configured, acc.absent)
+        state, icon, color, message := determineGrade(ps, ds, hasSPF, hasDMARC, hasDKIM, acc.monitoring, acc.configured, acc.absent)
 
         deliberateMonitoring, deliberateMonitoringNote := evaluateDeliberateMonitoring(ps, len(acc.configured))
 
-        score := computeInternalScore(ps)
-        verdicts := buildVerdicts(ps, hasSPF, hasDMARC, hasDKIM)
+        score := computeInternalScore(ps, ds)
+        verdicts := buildVerdicts(ps, ds, hasSPF, hasDMARC, hasDKIM)
         allIssues := append(acc.issues, acc.recommendations...)
 
         return map[string]any{
@@ -433,7 +427,7 @@ type gradeInput struct {
         isNoMail              bool
 }
 
-func determineGrade(ps protocolState, hasSPF, hasDMARC, hasDKIM bool, monitoring, configured, absent []string) (state, icon, color, message string) {
+func determineGrade(ps protocolState, ds DKIMState, hasSPF, hasDMARC, hasDKIM bool, monitoring, configured, absent []string) (state, icon, color, message string) {
         gi := gradeInput{
                 corePresent:           hasSPF && hasDMARC && hasDKIM,
                 dmarcFullEnforcing:    (ps.dmarcPolicy == "reject" || ps.dmarcPolicy == "quarantine") && ps.dmarcPct == 100,
@@ -443,8 +437,8 @@ func determineGrade(ps protocolState, hasSPF, hasDMARC, hasDKIM bool, monitoring
                 hasSPF:                hasSPF,
                 hasDMARC:              hasDMARC,
                 hasDKIM:               hasDKIM,
-                dkimInconclusive:      ps.dkimPartial,
-                isNoMail:              ps.isNoMailDomain,
+                dkimInconclusive:      ds == DKIMInconclusive,
+                isNoMail:              ds == DKIMNoMailDomain,
         }
 
         state, icon, color, message = classifyGrade(ps, gi, monitoring, configured, absent)
@@ -574,19 +568,19 @@ func buildDescriptiveMessage(ps protocolState, configured, absent, monitoring []
         return strings.Join(parts, ". ") + "."
 }
 
-func buildVerdicts(ps protocolState, hasSPF, hasDMARC, hasDKIM bool) map[string]any {
+func buildVerdicts(ps protocolState, ds DKIMState, hasSPF, hasDMARC, hasDKIM bool) map[string]any {
         verdicts := make(map[string]any)
-        buildEmailVerdict(ps, hasSPF, hasDMARC, hasDKIM, verdicts)
+        buildEmailVerdict(ps, ds, hasSPF, hasDMARC, hasDKIM, verdicts)
         buildBrandVerdict(ps, verdicts)
         buildDNSVerdict(ps, verdicts)
         return verdicts
 }
 
-func buildEmailVerdict(ps protocolState, hasSPF, hasDMARC, hasDKIM bool, verdicts map[string]any) {
+func buildEmailVerdict(ps protocolState, ds DKIMState, hasSPF, hasDMARC, hasDKIM bool, verdicts map[string]any) {
         enforcing := ps.dmarcPolicy == "reject" || ps.dmarcPolicy == "quarantine"
 
         if hasSPF && hasDMARC && enforcing && hasDKIM {
-                buildEnforcingEmailVerdict(ps, verdicts)
+                buildEnforcingEmailVerdict(ps, ds, verdicts)
                 return
         }
         if hasSPF && hasDMARC && ps.dmarcPolicy == "none" {
@@ -612,33 +606,25 @@ func buildEmailVerdict(ps protocolState, hasSPF, hasDMARC, hasDKIM bool, verdict
         verdicts["email_answer"] = "Partially"
 }
 
-func buildEnforcingEmailVerdict(ps protocolState, verdicts map[string]any) {
+func buildEnforcingEmailVerdict(ps protocolState, ds DKIMState, verdicts map[string]any) {
         action := map[string]string{"reject": "blocked", "quarantine": "flagged as spam"}[ps.dmarcPolicy]
         msg := "DMARC policy is " + ps.dmarcPolicy + " — spoofed messages will be " + action + " by receiving servers."
 
-        if ps.dkimThirdPartyOnly {
+        switch ds {
+        case DKIMThirdPartyOnly:
                 msg += " DKIM verified for third-party senders; primary provider (" + ps.primaryProvider + ") DKIM not observed."
-        } else if ps.dkimProvider {
+        case DKIMProviderInferred:
                 msg += " DKIM keys verified (provider-verified for " + ps.primaryProvider + ")."
-        } else {
+        default:
                 msg += " DKIM keys verified with strong cryptography."
         }
 
         verdicts["email"] = msg
-        if ps.dkimThirdPartyOnly {
-                verdicts["email_secure"] = ps.dmarcPolicy == "reject"
-                if ps.dmarcPolicy == "reject" {
-                        verdicts["email_answer"] = "No"
-                } else {
-                        verdicts["email_answer"] = "Mostly No"
-                }
+        verdicts["email_secure"] = ps.dmarcPolicy == "reject"
+        if ps.dmarcPolicy == "reject" {
+                verdicts["email_answer"] = "No"
         } else {
-                verdicts["email_secure"] = ps.dmarcPolicy == "reject"
-                if ps.dmarcPolicy == "reject" {
-                        verdicts["email_answer"] = "No"
-                } else {
-                        verdicts["email_answer"] = "Mostly No"
-                }
+                verdicts["email_answer"] = "Mostly No"
         }
 }
 
@@ -675,8 +661,8 @@ func buildDNSVerdict(ps protocolState, verdicts map[string]any) {
         }
 }
 
-func computeInternalScore(ps protocolState) int {
-        score := computeSPFScore(ps) + computeDMARCScore(ps) + computeDKIMScore(ps) + computeAuxScore(ps)
+func computeInternalScore(ps protocolState, ds DKIMState) int {
+        score := computeSPFScore(ps) + computeDMARCScore(ps) + computeDKIMScore(ds) + computeAuxScore(ps)
         if score > 100 {
                 return 100
         }
@@ -719,18 +705,21 @@ func computeDMARCScore(ps protocolState) int {
         return base
 }
 
-func computeDKIMScore(ps protocolState) int {
-        switch {
-        case ps.dkimOK:
+func computeDKIMScore(ds DKIMState) int {
+        switch ds {
+        case DKIMSuccess:
                 return 20
-        case ps.dkimProvider:
+        case DKIMProviderInferred:
                 return 15
-        case ps.dkimThirdPartyOnly:
+        case DKIMThirdPartyOnly:
                 return 12
-        case ps.dkimPartial:
+        case DKIMInconclusive:
                 return 5
+        case DKIMWeakKeysOnly:
+                return 10
+        default:
+                return 0
         }
-        return 0
 }
 
 func computeAuxScore(ps protocolState) int {
