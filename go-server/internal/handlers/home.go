@@ -28,5 +28,6 @@ func (h *HomeHandler) Index(c *gin.Context) {
                 "WaitSeconds": c.Query("wait_seconds"),
                 "WaitReason":  c.DefaultQuery("wait_reason", "anti_repeat"),
                 "Changelog":   GetChangelog(),
+                "DKIMExpand":  c.Query("dkim") != "",
         })
 }

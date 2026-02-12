@@ -258,10 +258,10 @@
                                 Enter the raw domain (e.g., <strong>example.com</strong>) &mdash; no https://. Pro tip: <strong>www</strong> is just a subdomain, the same way DKIM selectors like <strong>google._domainkey</strong> are.
                             </div>
                             <div class="mt-2">
-                                <button type="button" class="btn btn-link small text-muted text-decoration-none p-0 border-0" data-bs-toggle="collapse" data-bs-target="#dkimSelectors" aria-expanded="false" aria-controls="dkimSelectors">
+                                <button type="button" class="btn btn-link small text-muted text-decoration-none p-0 border-0" data-bs-toggle="collapse" data-bs-target="#dkimSelectors" aria-expanded="{{if .DKIMExpand}}true{{else}}false{{end}}" aria-controls="dkimSelectors">
                                     <i class="fas fa-key me-1" style="color: #d4a855;"></i>Custom DKIM Selectors <span class="text-muted">(optional)</span> <i class="fas fa-chevron-down ms-1 small"></i>
                                 </button>
-                                <div class="collapse mt-2" id="dkimSelectors">
+                                <div class="collapse{{if .DKIMExpand}} show{{end}} mt-2" id="dkimSelectors">
                                     <div class="row g-2">
                                         <div class="col-6">
                                             <input type="text"
@@ -650,10 +650,8 @@
     (function() {
         document.addEventListener('DOMContentLoaded', function() {
             if (new URLSearchParams(window.location.search).has('dkim')) {
-                var el = document.getElementById('dkimSelectors');
-                if (el) { new bootstrap.Collapse(el, {toggle: true}); }
                 var sel1 = document.querySelector('input[name="dkim_selector1"]');
-                if (sel1) { setTimeout(function() { sel1.focus(); }, 350); }
+                if (sel1) { sel1.focus(); }
             }
             const analyzeBtn = document.getElementById('analyzeBtn');
             if (analyzeBtn && analyzeBtn.dataset.waitSeconds) {
