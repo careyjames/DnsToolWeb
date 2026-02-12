@@ -31,7 +31,7 @@ func GetChangelog() []ChangelogEntry {
                         Date:        dateFeb12,
                         Category:    "Intelligence",
                         Title:       "PTR-Based Hosting Detection",
-                        Description: "Reverse DNS (PTR) lookups now identify hosting providers directly from IP addresses — the old-fashioned Unix way. CloudFront, AWS, Google Cloud, Azure, and more detected without any third-party API.",
+                        Description: "Reverse DNS (PTR) lookups now identify hosting providers directly from IP addresses — the classic DNS way. CloudFront, AWS, Google Cloud, Azure, and more detected without any third-party API.",
                         Icon:        "fas fa-undo-alt",
                 },
                 {
