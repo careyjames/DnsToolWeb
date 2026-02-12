@@ -17,10 +17,18 @@
         {{template "flash_messages" .}}
 
         {{if .IsSubdomain}}
-        <div class="alert alert-info border-0 d-flex align-items-center mb-3" style="background: rgba(13,202,240,0.08);">
-            <i class="fas fa-sitemap me-2 text-info"></i>
-            <span>You are analyzing the subdomain <strong>{{.Domain}}</strong>.
-            <a href="/analyze?domain={{.RootDomain}}" class="alert-link text-info">Analyze the root domain <strong>{{.RootDomain}}</strong> instead?</a></span>
+        <div class="alert alert-info border-0 mb-3" style="background: rgba(13,202,240,0.08);">
+            <div class="d-flex align-items-start">
+                <i class="fas fa-sitemap me-2 mt-1 text-info"></i>
+                <div>
+                    <span>You are analyzing the subdomain <strong>{{.Domain}}</strong>.
+                    <a href="/analyze?domain={{.RootDomain}}" class="alert-link text-info">Analyze the root domain <strong>{{.RootDomain}}</strong> instead?</a></span>
+                    <div class="mt-1 small text-info-emphasis" style="opacity: 0.75;">
+                        Email security records (SPF, DMARC, DKIM, MTA-STS) are typically configured at the root domain level.
+                        A subdomain like <strong>www</strong> or a DKIM selector like <strong>google._domainkey</strong> inherits policies from its parent &mdash; analyzing <strong>{{.RootDomain}}</strong> gives the full picture.
+                    </div>
+                </div>
+            </div>
         </div>
         {{end}}
 
