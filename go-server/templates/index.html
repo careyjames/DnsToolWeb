@@ -406,10 +406,10 @@
             <div class="row g-3">
                 {{range .Changelog}}
                 <div class="col-md-6 col-lg-4">
-                    <div class="card bg-dark border-secondary h-100">
+                    <div class="card bg-dark border-secondary h-100 {{if eq .Category "Incident"}}changelog-card-incident{{end}}">
                         <div class="card-body">
                             <div class="d-flex align-items-center mb-2">
-                                <i class="{{.Icon}} text-info me-2"></i>
+                                <i class="{{.Icon}} {{if eq .Category "Incident"}}text-warning{{else}}text-info{{end}} me-2"></i>
                                 <span class="badge changelog-badge changelog-badge-{{.Category | lower}} me-2" style="font-size:0.65rem;">{{.Category}}</span>
                                 <span class="text-muted small ms-auto">{{.Date}}</span>
                             </div>

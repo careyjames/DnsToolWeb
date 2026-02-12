@@ -1030,6 +1030,21 @@ main.container {
     color: #b0b8c1 !important;
     border-color: rgba(108, 117, 125, 0.35);
 }
+.changelog-badge-incident {
+    background-color: rgba(255, 152, 0, 0.18) !important;
+    color: #ffb74d !important;
+    border-color: rgba(255, 152, 0, 0.4);
+}
+.changelog-badge-performance {
+    background-color: rgba(0, 188, 212, 0.15) !important;
+    color: #4dd0e1 !important;
+    border-color: rgba(0, 188, 212, 0.3);
+}
+.changelog-card-incident {
+    border-color: rgba(255, 152, 0, 0.5) !important;
+    border-left: 3px solid #ff9800 !important;
+    background: linear-gradient(135deg, rgba(255, 152, 0, 0.06), rgba(33, 37, 41, 1)) !important;
+}
 
 /* Executive-level verdict box styling */
 .alert-success {

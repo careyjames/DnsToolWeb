@@ -14,7 +14,7 @@ func GetChangelog() []ChangelogEntry {
                 {
                         Version:     "26.12.24",
                         Date:        "Feb 12, 2026",
-                        Category:    "Transparency",
+                        Category:    "Incident",
                         Title:       "Incident Disclosure: Inaccurate Analysis Output",
                         Description: "On Feb 10–11, a data-processing issue caused some reports to display incorrect analysis results. The root cause has been identified and fixed, and safeguards have been added so incomplete or failed data retrieval can never be silently presented as valid results. We believe in full transparency — you deserve to know when we get it wrong.",
                         Icon:        "fas fa-exclamation-triangle",
