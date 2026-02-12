@@ -383,12 +383,9 @@
                                     <div class="code-block small mt-1 border-warning" style="font-size: 0.7rem;">{{mapGetStr "dns_record" $fixMap}}</div>
                                     {{end}}
                                     <div class="mt-1 d-flex align-items-center flex-wrap gap-1">
-                                        <a href="{{mapGetStr "rfc_url" $fixMap}}" target="_blank" rel="noopener" class="text-muted rfc-link" style="font-size: 0.65rem;">
+                                        <a href="{{mapGetStr "rfc_url" $fixMap}}" target="_blank" rel="noopener" class="text-muted rfc-link" style="font-size: 0.65rem;" data-bs-toggle="tooltip" title="{{mapGetStr "rfc_title" $fixMap}}">
                                             <i class="fas fa-book me-1"></i>{{mapGetStr "rfc" $fixMap}}
                                         </a>
-                                        {{if mapGetStr "rfc_status" $fixMap}}
-                                        <span class="badge bg-dark bg-opacity-50 text-light" style="font-size:0.55rem" data-bs-toggle="tooltip" title="{{mapGetStr "rfc_title" $fixMap}}">{{mapGetStr "rfc_status" $fixMap}}</span>
-                                        {{end}}
                                         {{if mapGetBool "rfc_obsolete" $fixMap}}
                                         <span class="badge bg-danger" style="font-size:0.55rem"><i class="fas fa-exclamation-triangle me-1"></i>Obsoleted</span>
                                         {{end}}
@@ -420,12 +417,9 @@
                                         <div class="code-block small mt-1 border-warning" style="font-size: 0.7rem;">{{mapGetStr "dns_record" $fixMap}}</div>
                                         {{end}}
                                         <div class="mt-1 d-flex align-items-center flex-wrap gap-1">
-                                            <a href="{{mapGetStr "rfc_url" $fixMap}}" target="_blank" rel="noopener" class="text-muted rfc-link" style="font-size: 0.65rem;">
+                                            <a href="{{mapGetStr "rfc_url" $fixMap}}" target="_blank" rel="noopener" class="text-muted rfc-link" style="font-size: 0.65rem;" data-bs-toggle="tooltip" title="{{mapGetStr "rfc_title" $fixMap}}">
                                                 <i class="fas fa-book me-1"></i>{{mapGetStr "rfc" $fixMap}}
                                             </a>
-                                            {{if mapGetStr "rfc_status" $fixMap}}
-                                            <span class="badge bg-dark bg-opacity-50 text-light" style="font-size:0.55rem" data-bs-toggle="tooltip" title="{{mapGetStr "rfc_title" $fixMap}}">{{mapGetStr "rfc_status" $fixMap}}</span>
-                                            {{end}}
                                             {{if mapGetBool "rfc_obsolete" $fixMap}}
                                             <span class="badge bg-danger" style="font-size:0.55rem"><i class="fas fa-exclamation-triangle me-1"></i>Obsoleted</span>
                                             {{end}}
