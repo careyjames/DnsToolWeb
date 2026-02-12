@@ -239,10 +239,23 @@
 
         <div class="card mb-4">
             <div class="card-header" style="background: linear-gradient(135deg, rgba(13, 110, 253, 0.15), rgba(13, 110, 253, 0.05)); border-bottom: 1px solid rgba(13, 110, 253, 0.2);">
-                <h5 class="mb-0"><i class="fas fa-id-card me-2" style="color: #58a6ff;"></i>Network Identity</h5>
+                <h5 class="mb-0 d-flex align-items-center justify-content-between flex-wrap">
+                    <span><i class="fas fa-id-card me-2" style="color: #58a6ff;"></i>Network Identity</span>
+                    <small class="text-muted">Who owns this IP, and do they claim it publicly?
+                        {{if and $ptrSlice (gt (len $ptrSlice) 0)}}
+                            {{if $fcrdns}}
+                                <span class="badge bg-success ms-1">Verified</span>
+                            {{else}}
+                                <span class="badge bg-warning ms-1">Unverified</span>
+                            {{end}}
+                        {{else}}
+                            <span class="badge bg-secondary ms-1">No PTR</span>
+                        {{end}}
+                    </small>
+                </h5>
             </div>
             <div class="card-body">
-                <p class="text-muted small mb-3"><i class="fas fa-info-circle me-1"></i><strong>What this tells you:</strong> Who owns this IP address and what name they've assigned to it. Reverse DNS (PTR) is set by the IP owner; Forward-Confirmed (FCrDNS) proves the PTR name points back to the same IP.</p>
+                <p class="text-muted small mb-3"><i class="fas fa-info-circle me-1"></i>Reverse DNS (PTR) is set by the IP owner; Forward-Confirmed (FCrDNS) proves the PTR name actually points back to this IP.</p>
 
                 <div class="row">
                     <div class="col-lg-6 mb-3 mb-lg-0">
@@ -320,17 +333,19 @@
 
         <div class="card mb-4">
             <div class="card-header" style="background: linear-gradient(135deg, rgba(25, 135, 84, 0.15), rgba(25, 135, 84, 0.05)); border-bottom: 1px solid rgba(25, 135, 84, 0.2);">
-                <h5 class="mb-0">
-                    <i class="fas fa-project-diagram me-2" style="color: #3fb950;"></i>Domain Relationship
-                    {{if gt $directCount 0}}
-                        <span class="badge bg-success ms-2 small">{{$directCount}} match{{if gt $directCount 1}}es{{end}}</span>
-                    {{else}}
-                        <span class="badge bg-secondary ms-2 small">No matches</span>
-                    {{end}}
+                <h5 class="mb-0 d-flex align-items-center justify-content-between flex-wrap">
+                    <span><i class="fas fa-project-diagram me-2" style="color: #3fb950;"></i>Domain Relationship</span>
+                    <small class="text-muted">Does this IP serve or send for your domain?
+                        {{if gt $directCount 0}}
+                            <span class="badge bg-success ms-1">{{$directCount}} match{{if gt $directCount 1}}es{{end}}</span>
+                        {{else}}
+                            <span class="badge bg-secondary ms-1">No</span>
+                        {{end}}
+                    </small>
                 </h5>
             </div>
             <div class="card-body">
-                <p class="text-muted small mb-3"><i class="fas fa-info-circle me-1"></i><strong>What this tells you:</strong> Whether this IP appears directly in your domain's DNS records (A/AAAA for web hosting, MX for email, NS for DNS), or is authorized in your SPF policy to send email on your behalf.</p>
+                <p class="text-muted small mb-3"><i class="fas fa-info-circle me-1"></i>Checks A/AAAA (web hosting), MX (email), NS (DNS) records and SPF authorization to send email on your behalf.</p>
 
                 {{if and $directRels (gt (len $directRels) 0)}}
                     <table class="table table-dark table-sm table-hover mb-0">
@@ -388,10 +403,20 @@
         {{if and $infraRels (gt (len $infraRels) 0)}}
         <div class="card mb-4">
             <div class="card-header" style="background: linear-gradient(135deg, rgba(13, 202, 240, 0.15), rgba(13, 202, 240, 0.05)); border-bottom: 1px solid rgba(13, 202, 240, 0.2);">
-                <h5 class="mb-0"><i class="fas fa-server me-2" style="color: #58c4dc;"></i>Infrastructure Context</h5>
+                <h5 class="mb-0 d-flex align-items-center justify-content-between flex-wrap">
+                    <span><i class="fas fa-server me-2" style="color: #58c4dc;"></i>Infrastructure Context</span>
+                    <small class="text-muted">Is this IP part of your broader infrastructure?
+                        {{$infraCount := len $infraRels}}
+                        {{if gt $infraCount 0}}
+                            <span class="badge bg-info ms-1">{{$infraCount}} signal{{if gt $infraCount 1}}s{{end}}</span>
+                        {{else}}
+                            <span class="badge bg-secondary ms-1">No</span>
+                        {{end}}
+                    </small>
+                </h5>
             </div>
             <div class="card-body">
-                <p class="text-muted small mb-3"><i class="fas fa-info-circle me-1"></i><strong>What this tells you:</strong> Broader infrastructure signals — whether this IP is part of a CDN edge network, or if Certificate Transparency logs reveal subdomains of your domain hosted on this IP.</p>
+                <p class="text-muted small mb-3"><i class="fas fa-info-circle me-1"></i>CDN edge network membership and Certificate Transparency subdomain matches — infrastructure links beyond direct DNS records.</p>
 
                 <table class="table table-dark table-sm table-hover mb-0">
                     <thead>
@@ -442,9 +467,11 @@
         {{if gt $neighborTotal 0}}
         <div class="card mb-4">
             <div class="card-header" style="background: linear-gradient(135deg, rgba(108, 117, 125, 0.15), rgba(108, 117, 125, 0.05)); border-bottom: 1px solid rgba(108, 117, 125, 0.3);">
-                <h5 class="mb-0">
-                    <i class="fas fa-building me-2" style="color: #8b949e;"></i>IP Neighborhood
-                    <span class="badge bg-dark border border-secondary ms-2 small">{{$neighborTotal}} domain{{if gt $neighborTotal 1}}s{{end}} on this IP</span>
+                <h5 class="mb-0 d-flex align-items-center justify-content-between flex-wrap">
+                    <span><i class="fas fa-building me-2" style="color: #8b949e;"></i>IP Neighborhood</span>
+                    <small class="text-muted">Who else lives at this address?
+                        <span class="badge bg-dark border border-secondary ms-1">{{$neighborTotal}} domain{{if gt $neighborTotal 1}}s{{end}}</span>
+                    </small>
                 </h5>
             </div>
             <div class="card-body">
@@ -454,7 +481,7 @@
                 </div>
                 {{end}}
 
-                <p class="text-muted small mb-3"><i class="fas fa-info-circle me-1"></i><strong>What this tells you:</strong> Other domains that share this same IP address. {{if $isCdn}}On CDN networks, thousands of unrelated websites share edge IPs — these are co-tenants, not affiliates.{{else}}On shared hosting, co-tenants may be worth reviewing for reputation concerns. On dedicated hosting, these could indicate additional properties owned by the same organization.{{end}}</p>
+                <p class="text-muted small mb-3"><i class="fas fa-info-circle me-1"></i>{{if $isCdn}}On CDN networks, thousands of unrelated websites share edge IPs — co-tenants, not affiliates.{{else}}On shared hosting, co-tenants may be worth reviewing for reputation. On dedicated hosting, these could indicate properties owned by the same organization.{{end}}</p>
 
                 {{if and $neighborRels (gt (len $neighborRels) 0)}}
                     <table class="table table-dark table-sm mb-0">
