@@ -25,7 +25,7 @@ func GetChangelog() []ChangelogEntry {
                         Category:    "Transparency",
                         Title:       "Honest Data Reporting",
                         Description: "When third-party data sources are rate-limited or unavailable, reports now say exactly that — never claiming 'no changes detected' when the data simply couldn't be checked. Four clear states: success, rate-limited, error, and partial.",
-                        Icon:        "fas fa-balance-scale",
+                        Icon:        "fas fa-gavel",
                 },
                 {
                         Version:     "26.12.22",
@@ -41,7 +41,7 @@ func GetChangelog() []ChangelogEntry {
                         Category:    "Intelligence",
                         Title:       "Verify It Yourself",
                         Description: "Each report now includes terminal commands (dig, openssl, curl) to independently verify the underlying DNS queries. Our analysis adds consensus and RFC evaluation on top — but the raw data is always verifiable.",
-                        Icon:        "fas fa-terminal",
+                        Icon:        "fas fa-laptop-code",
                 },
                 {
                         Version:     "26.12.20",
@@ -49,7 +49,7 @@ func GetChangelog() []ChangelogEntry {
                         Category:    "Transparency",
                         Title:       "Confidence Indicators",
                         Description: "Every attribution now shows whether data was directly observed (RDAP lookup, DNS record), inferred (pattern matching), or sourced from a third party — so you know exactly how each conclusion was reached.",
-                        Icon:        "fas fa-microscope",
+                        Icon:        "fas fa-eye",
                 },
                 {
                         Version:     "26.12.19",
@@ -65,7 +65,7 @@ func GetChangelog() []ChangelogEntry {
                         Category:    "Analysis",
                         Title:       "Enhanced Remediation Engine",
                         Description: "RFC-cited remediation guidance now distinguishes SPF softfail vs hardfail context per RFC 7489 §10.1, with nuanced recommendations based on whether DKIM is present.",
-                        Icon:        "fas fa-wrench",
+                        Icon:        "fas fa-cogs",
                 },
                 {
                         Version:     "26.12.17",
@@ -73,7 +73,7 @@ func GetChangelog() []ChangelogEntry {
                         Category:    "Intelligence",
                         Title:       "Email Security Management Detection",
                         Description: "Automatic identification of DMARC monitoring providers (Valimail, dmarcian, Agari, etc.), SPF flattening services, and TLS-RPT reporting platforms from DNS records.",
-                        Icon:        "fas fa-user-shield",
+                        Icon:        "fas fa-envelope",
                 },
                 {
                         Version:     "26.12.16",
@@ -89,7 +89,7 @@ func GetChangelog() []ChangelogEntry {
                         Category:    "Core",
                         Title:       "Go Performance Rewrite",
                         Description: "Complete rewrite from Python/Flask to Go/Gin for dramatically improved performance and concurrency. Multi-resolver consensus DNS client with DoH fallback across Cloudflare, Google, Quad9, and OpenDNS.",
-                        Icon:        "fas fa-rocket",
+                        Icon:        "fas fa-bolt",
                 },
         }
 }
