@@ -281,7 +281,7 @@ func (a *Analyzer) GetHostingInfo(domain string, results map[string]any) map[str
 
         hostingConf := ConfidenceObservedMap(MethodARecordPattern)
         if hosting == "Unknown" {
-                hostingConf = ConfidenceInferredMap(MethodARecordPattern)
+                hostingConf = map[string]any{}
         }
         dnsConf := ConfidenceObservedMap(MethodNSPattern)
         if dnsFromParent {
