@@ -1266,10 +1266,16 @@
                     <div class="card-header">
                         <h5 class="mb-0 d-flex align-items-center justify-content-between flex-wrap">
                             <span><i class="fas fa-certificate me-2"></i>DANE / TLSA</span>
-                            <span>
+                            <small class="text-muted">Can mail servers prove their identity without a certificate authority?
                                 {{$daneStatus := mapGetStr "status" $dane}}
                                 {{$hasDane := mapGetBool "has_dane" $dane}}
                                 {{$daneDeployable := mapGetStr "dane_deployable" $dane}}
+                                <span class="badge bg-{{if eq $daneStatus "success"}}success{{else if eq $daneStatus "warning"}}warning{{else}}secondary{{end}} ms-1">
+                                    {{if $hasDane}}Yes{{else}}No{{end}}
+                                </span>
+                            </small>
+                        </h5>
+                        <div class="mt-1">
                                 <a href="https://datatracker.ietf.org/doc/html/rfc7672#section-3" target="_blank" rel="noopener" class="me-1 text-muted rfc-link" data-bs-toggle="tooltip" data-bs-html="true" title="<strong>DANE for SMTP</strong><br>Publishes TLS certificate information in DNS (TLSA records), enabling mail servers to verify certificates without relying solely on certificate authorities. §3 covers SMTP with DANE." aria-label="Learn about DANE - RFC 7672 §3"><i class="fas fa-info-circle"></i><span class="rfc-label">RFC 7672 §3</span></a>
                                 <a href="https://datatracker.ietf.org/doc/html/rfc6698#section-2" target="_blank" rel="noopener" class="me-2 text-muted rfc-link" data-bs-toggle="tooltip" data-bs-html="true" title="<strong>DANE Protocol</strong><br>DNS-based Authentication of Named Entities — binds TLS certificates to DNS names via TLSA records. §2 covers the TLSA RR." aria-label="Learn about DANE - RFC 6698 §2"><span class="rfc-label">RFC 6698 §2</span></a>
                                 <span class="badge bg-{{if eq $daneStatus "success"}}success{{else if eq $daneStatus "warning"}}warning{{else}}secondary{{end}}">
@@ -1281,8 +1287,7 @@
                                         Not Configured
                                     {{end}}
                                 </span>
-                            </span>
-                        </h5>
+                        </div>
                     </div>
                     <div class="card-body">
                         {{if and $hasDane (ne (mapGetStr "status" $dnssec) "success")}}
@@ -1620,15 +1625,15 @@
                     <div class="card-header">
                         <h5 class="mb-0 d-flex align-items-center justify-content-between flex-wrap">
                             <span><i class="fas fa-exchange-alt me-2"></i>Live SMTP TLS Validation</span>
-                            <span>
+                            <small class="text-muted">Is email actually encrypted in transit?
                                 {{$smtpStatus := mapGetStr "status" $smtp}}
-                                <span class="badge bg-{{if eq $smtpStatus "success"}}success{{else if eq $smtpStatus "warning"}}warning{{else if eq $smtpStatus "error"}}danger{{else}}info{{end}}">
-                                    {{if eq $smtpStatus "success"}}Encrypted{{else if eq $smtpStatus "warning"}}Partial{{else if eq $smtpStatus "error"}}Unencrypted{{else}}Inferred{{end}}
+                                <span class="badge bg-{{if eq $smtpStatus "success"}}success{{else if eq $smtpStatus "warning"}}warning{{else if eq $smtpStatus "error"}}danger{{else}}info{{end}} ms-1">
+                                    {{if eq $smtpStatus "success"}}Yes{{else if eq $smtpStatus "warning"}}Partial{{else if eq $smtpStatus "error"}}No{{else}}Likely{{end}}
                                 </span>
                                 {{if mapGetBool "dns_inferred" $smtp}}
                                     <span class="badge bg-secondary ms-1">DNS-Inferred</span>
                                 {{end}}
-                            </span>
+                            </small>
                         </h5>
                     </div>
                     <div class="card-body">
@@ -2244,9 +2249,9 @@
             <div class="col-12 mb-4">
                 <div class="card">
                     <div class="card-header">
-                        <h5 class="mb-0">
-                            <i class="fas fa-route me-2"></i>Traffic &amp; Routing
-                            <small class="text-muted ms-2">Where traffic flows &amp; how services resolve</small>
+                        <h5 class="mb-0 d-flex align-items-center justify-content-between flex-wrap">
+                            <span><i class="fas fa-route me-2"></i>Traffic &amp; Routing</span>
+                            <small class="text-muted">Where traffic flows &amp; how services resolve</small>
                         </h5>
                     </div>
                     <div class="card-body">
@@ -2434,9 +2439,9 @@
         <div class="col-12 mb-4">
             <div class="card">
                 <div class="card-header">
-                    <h5 class="mb-0">
-                        <i class="fas fa-code-compare me-2"></i>DNS Evidence Diff
-                        <small class="text-muted ms-2">Side-by-side comparison</small>
+                    <h5 class="mb-0 d-flex align-items-center justify-content-between flex-wrap">
+                        <span><i class="fas fa-code-compare me-2"></i>DNS Evidence Diff</span>
+                        <small class="text-muted">Side-by-side comparison</small>
                     </h5>
                 </div>
                 <div class="card-body p-0">
