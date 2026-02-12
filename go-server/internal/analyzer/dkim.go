@@ -455,7 +455,8 @@ func buildThirdPartyNote(foundProviders map[string]bool, primaryProvider string)
         }
         return fmt.Sprintf(
                 "DKIM verified for %s only — no DKIM found for primary mail platform (%s). "+
-                        "The primary provider may use custom selectors not discoverable through standard checks.",
+                        "The primary provider may use custom selectors not discoverable through standard checks. "+
+                        "Try re-scanning with a custom DKIM selector if you know yours.",
                 thirdPartyNames, primaryProvider,
         )
 }
