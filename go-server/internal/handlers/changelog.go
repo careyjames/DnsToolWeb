@@ -13,7 +13,7 @@ func GetChangelog() []ChangelogEntry {
         return []ChangelogEntry{
                 {
                         Version:     "26.12.24",
-                        Date:        "Feb 12, 2026",
+                        Date:        "Feb 11, 2026",
                         Category:    "Transparency",
                         Title:       "Incident Disclosure: Inaccurate Analysis Output",
                         Description: "On Feb 10–11, a data-processing issue caused some reports to display incorrect analysis results. The root cause has been identified and fixed, and safeguards have been added so incomplete or failed data retrieval can never be silently presented as valid results. We believe in full transparency — you deserve to know when we get it wrong.",
@@ -21,7 +21,7 @@ func GetChangelog() []ChangelogEntry {
                 },
                 {
                         Version:     "26.12.23",
-                        Date:        "Feb 12, 2026",
+                        Date:        "Feb 11, 2026",
                         Category:    "Transparency",
                         Title:       "Honest Data Reporting",
                         Description: "When third-party data sources are rate-limited or unavailable, reports now say exactly that — never claiming 'no changes detected' when the data simply couldn't be checked. Four clear states: success, rate-limited, error, and partial.",
@@ -29,7 +29,7 @@ func GetChangelog() []ChangelogEntry {
                 },
                 {
                         Version:     "26.12.22",
-                        Date:        "Feb 12, 2026",
+                        Date:        "Feb 11, 2026",
                         Category:    "Performance",
                         Title:       "DNS History Cache",
                         Description: "Successful DNS history lookups are now cached for 24 hours, completely isolated from live analysis. Reduces API calls while ensuring live DNS queries are never served stale data.",
@@ -37,7 +37,7 @@ func GetChangelog() []ChangelogEntry {
                 },
                 {
                         Version:     "26.12.21",
-                        Date:        "Feb 12, 2026",
+                        Date:        "Feb 11, 2026",
                         Category:    "Intelligence",
                         Title:       "Verify It Yourself",
                         Description: "Each report now includes terminal commands (dig, openssl, curl) to independently verify the underlying DNS queries. Our analysis adds consensus and RFC evaluation on top — but the raw data is always verifiable.",
