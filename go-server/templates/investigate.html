@@ -3,7 +3,7 @@
 <head>
     {{template "head" .}}
     <title>IP Investigation - DNS Tool</title>
-    <meta name="description" content="Investigate how an IP address relates to your domain. Find out if an IP is a direct asset, email provider, CDN, DNS host, or authorized sender.">
+    <meta name="description" content="Assess whether an IP address appears to be legitimate infrastructure, an authorized service provider, or an external actor. Correlates reverse DNS, ASN ownership, SPF records, and CT subdomain data for evidence-based attribution in the context of your domain.">
     {{template "critical_css" .}}
     {{template "head_css" .}}
 </head>
@@ -20,10 +20,10 @@
                     <span class="badge bg-warning text-dark ms-2" style="font-size: 0.65em; vertical-align: middle;">BETA</span>
                 </div>
                 <h1 class="hero-title mb-3">
-                    IP Address Investigation
+                    IP Attribution &amp; Authorization
                 </h1>
                 <p class="hero-subtitle mx-auto mb-4">
-                    Investigate how an IP address interacts with or is associated with your domain or a connected service provider
+                    Assess whether an IP address appears to be legitimate infrastructure, an approved service provider, or an external actor &mdash; based on DNS evidence in the context of your domain
                 </p>
             </div>
 
@@ -67,7 +67,7 @@
                             </div>
                             <div class="form-text search-hint mt-2">
                                 <i class="fas fa-info-circle me-1"></i>
-                                Enter a domain and an IP address you found in a report, log, or email header. We'll show you exactly how that IP relates to your domain's infrastructure.
+                                Enter a domain and an IP address from a report, log, or email header. We&rsquo;ll correlate reverse DNS, ASN ownership, SPF authorization, and infrastructure mapping &mdash; evidence-based attribution, not just a lookup.
                             </div>
                         </form>
                     </div>
