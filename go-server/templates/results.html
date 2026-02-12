@@ -196,10 +196,10 @@
                             {{if or $postureIssues $postureMonitoring}}
                             <div class="mt-2 mt-md-0">
                                 {{if $postureIssues}}
-                                    <small class="text-danger d-block"><i class="fas fa-times-circle me-1"></i>{{len $postureIssues}} issue{{if gt (len $postureIssues) 1}}s{{end}}</small>
+                                    <a href="#findings-summary" class="text-danger text-decoration-none d-block"><small><i class="fas fa-times-circle me-1"></i>{{len $postureIssues}} issue{{if gt (len $postureIssues) 1}}s{{end}}</small></a>
                                 {{end}}
                                 {{if $postureMonitoring}}
-                                    <small class="text-info d-block"><i class="fas fa-eye me-1"></i>{{len $postureMonitoring}} monitoring</small>
+                                    <a href="#findings-summary" class="text-info text-decoration-none d-block"><small><i class="fas fa-eye me-1"></i>{{len $postureMonitoring}} monitoring</small></a>
                                 {{end}}
                             </div>
                             {{end}}
@@ -319,7 +319,7 @@
         {{$postureConfigured := mapGetSlice "configured" $posture}}
         {{$postureAbsent := mapGetSlice "absent" $posture}}
         {{if or $postureIssuesF $postureMonitoringF $postureConfigured $postureAbsent}}
-        <div class="row mb-3">
+        <div class="row mb-3" id="findings-summary">
             <div class="col-12">
                 <div class="card border-0 bg-dark bg-opacity-50">
                     <div class="card-body py-2 px-3">
@@ -919,9 +919,11 @@
                                     <a href="https://datatracker.ietf.org/doc/html/rfc6376#section-3.6" target="_blank" rel="noopener" class="ms-2 text-muted rfc-link" data-bs-toggle="tooltip" data-bs-html="true" title="<strong>DomainKeys Identified Mail</strong><br>Cryptographic signatures that verify email hasn't been altered in transit. §3.6 covers key records." aria-label="Learn about DKIM - RFC 6376 §3.6"><i class="fas fa-info-circle"></i><span class="rfc-label">RFC 6376 §3.6</span></a>
                                 </p>
                                 {{$dkimStatus := mapGetStr "status" $dkim}}
+                                {{$dkimPrimaryProvider := mapGetStr "primary_provider" $dkim}}
+                                {{$dkimIsKnownProvider := and (ne $dkimPrimaryProvider "") (ne $dkimPrimaryProvider "Unknown")}}
                                 <div class="mb-2">
-                                    <span class="badge bg-{{if eq $dkimStatus "success"}}success{{else if or (eq $dkimStatus "warning") (eq $dkimStatus "partial")}}warning{{else}}secondary{{end}}">
-                                        {{if eq $dkimStatus "success"}}Found{{else if eq $dkimStatus "partial"}}Third-Party Only{{else if eq $dkimStatus "warning"}}Weak Keys{{else}}Not Discoverable{{end}}
+                                    <span class="badge bg-{{if eq $dkimStatus "success"}}success{{else if or (eq $dkimStatus "warning") (eq $dkimStatus "partial")}}warning{{else if and (eq $dkimStatus "info") $dkimIsKnownProvider}}success{{else}}secondary{{end}}">
+                                        {{if eq $dkimStatus "success"}}Found{{else if eq $dkimStatus "partial"}}Third-Party Only{{else if eq $dkimStatus "warning"}}Weak Keys{{else if and (eq $dkimStatus "info") $dkimIsKnownProvider}}Provider Verified{{else}}Not Discoverable{{end}}
                                     </span>
                                     {{$keyStrengths := mapGetSlice "key_strengths" $dkim}}
                                     {{if $keyStrengths}}
@@ -938,6 +940,11 @@
                                     <div class="alert alert-warning py-2 px-3 small mb-2">
                                         <i class="fas fa-exclamation-triangle me-1"></i>
                                         {{mapGetStr "primary_dkim_note" $dkim}}
+                                    </div>
+                                {{else if and (eq $dkimStatus "info") $dkimIsKnownProvider}}
+                                    <div class="alert alert-success py-2 px-3 small mb-2">
+                                        <i class="fas fa-check-circle me-1"></i>
+                                        <strong>{{$dkimPrimaryProvider}}</strong> detected as primary mail platform — DKIM signing is managed by the provider. The primary provider may use custom selectors not discoverable through standard checks.
                                     </div>
                                 {{end}}
                                 {{$keyIssues := mapGetSlice "key_issues" $dkim}}
