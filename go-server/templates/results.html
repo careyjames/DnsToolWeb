@@ -2315,6 +2315,46 @@
 
         {{end}}
 
+        {{if .VerificationCommands}}
+        <div class="card bg-dark border-secondary mt-4 screen-only" id="verify-commands">
+            <div class="card-header bg-dark border-secondary d-flex align-items-center justify-content-between" role="button" data-bs-toggle="collapse" data-bs-target="#verifyCommandsBody" aria-expanded="false" aria-controls="verifyCommandsBody" style="cursor:pointer;">
+                <h5 class="mb-0">
+                    <i class="fas fa-terminal me-2 text-info"></i>Verify It Yourself
+                    <span class="badge bg-info bg-opacity-25 text-info ms-2 small">Transparency</span>
+                </h5>
+                <i class="fas fa-chevron-down text-muted"></i>
+            </div>
+            <div class="collapse" id="verifyCommandsBody">
+                <div class="card-body">
+                    <p class="text-muted small mb-3">
+                        The core DNS queries behind this report can be independently reproduced using standard command-line tools. Our analysis adds multi-resolver consensus, RFC-based evaluation, and cross-referencing &mdash; but the underlying data is always verifiable. We are intelligence analysts, not gatekeepers.
+                    </p>
+                    {{$currentSection := ""}}
+                    {{range .VerificationCommands}}
+                    {{if ne .Section $currentSection}}
+                    {{$currentSection = .Section}}
+                    <h6 class="text-info mt-3 mb-2 border-bottom border-secondary pb-1">
+                        <i class="fas fa-angle-right me-1"></i>{{.Section}}
+                    </h6>
+                    {{end}}
+                    <div class="mb-2">
+                        <div class="d-flex align-items-center justify-content-between mb-1">
+                            <span class="text-muted small">{{.Description}}{{if .RFC}} <span class="badge bg-secondary bg-opacity-50 ms-1" style="font-size:0.65rem;">{{.RFC}}</span>{{end}}</span>
+                            <button class="btn btn-sm btn-outline-secondary border-0 copy-cmd-btn" data-cmd="{{.Command}}" title="Copy command" style="padding:2px 6px;font-size:0.7rem;">
+                                <i class="fas fa-copy"></i>
+                            </button>
+                        </div>
+                        <pre class="bg-black text-light p-2 rounded small mb-0" style="font-size:0.78rem;overflow-x:auto;white-space:pre-wrap;word-break:break-all;"><code>{{.Command}}</code></pre>
+                    </div>
+                    {{end}}
+                    <div class="mt-3 text-muted small">
+                        <i class="fas fa-info-circle me-1"></i>Commands use <code>dig</code>, <code>openssl</code>, and <code>curl</code> &mdash; standard tools available on macOS, Linux, and WSL. Results may vary slightly due to DNS propagation timing and resolver caching.
+                    </div>
+                </div>
+            </div>
+        </div>
+        {{end}}
+
         <!-- Screen Footer -->
         <footer class="text-center mt-5 mb-4 text-muted small screen-only" aria-label="Site footer">
             <a href="https://www.it-help.tech" target="_blank" rel="noopener">
@@ -2324,6 +2364,26 @@
             <p class="mb-1">Made by <a href="https://www.it-help.tech/blog/dns-security-best-practices/" target="_blank" rel="noopener" class="text-info">IT Help San Diego Inc.</a></p>
             <p class="mb-0">Need help with DNS? Call <a href="tel:619-853-5008" class="text-info">619-853-5008</a></p>
         </footer>
+
+        {{if .VerificationCommands}}
+        <div class="print-only" style="page-break-before:always;">
+            <h4 style="color:#0dcaf0;margin-bottom:0.5rem;"><i class="fas fa-terminal me-2"></i>Appendix: Verification Commands</h4>
+            <p style="font-size:0.75rem;color:#6c757d;margin-bottom:0.75rem;">
+                The core DNS queries behind this report can be independently verified using these standard terminal commands (dig, openssl, curl). DNS Tool adds multi-resolver consensus, RFC-based evaluation, and cross-referencing on top of the raw data shown here.
+            </p>
+            {{$printSection := ""}}
+            {{range .VerificationCommands}}
+            {{if ne .Section $printSection}}
+            {{$printSection = .Section}}
+            <h6 style="color:#0dcaf0;margin-top:0.5rem;margin-bottom:0.25rem;font-size:0.8rem;border-bottom:1px solid #495057;padding-bottom:2px;">{{.Section}}</h6>
+            {{end}}
+            <div style="margin-bottom:4px;">
+                <span style="font-size:0.7rem;color:#6c757d;">{{.Description}}{{if .RFC}} ({{.RFC}}){{end}}</span>
+                <pre style="background:#1a1a2e;padding:4px 8px;border-radius:3px;font-size:0.68rem;margin:2px 0 0 0;overflow-wrap:break-word;white-space:pre-wrap;"><code>{{.Command}}</code></pre>
+            </div>
+            {{end}}
+        </div>
+        {{end}}
 
         <!-- Print Footer -->
         <footer class="print-report-footer" aria-label="Print report footer">
@@ -2428,7 +2488,7 @@
                 if (waitSeconds > 0) {
                     startCountdown(waitSeconds);
                 }
-                
+
                 reanalyzeBtn.addEventListener('click', function(e) {
                     e.preventDefault();
                     if (this.classList.contains('disabled')) {
@@ -2455,6 +2515,17 @@
                     });
                 });
             }
+            document.querySelectorAll('.copy-cmd-btn').forEach(function(btn) {
+                btn.addEventListener('click', function() {
+                    var cmd = this.getAttribute('data-cmd');
+                    if (navigator.clipboard) {
+                        navigator.clipboard.writeText(cmd).then(function() {
+                            btn.innerHTML = '<i class="fas fa-check"></i>';
+                            setTimeout(function() { btn.innerHTML = '<i class="fas fa-copy"></i>'; }, 1500);
+                        });
+                    }
+                });
+            });
         });
     })();
     </script>

@@ -110,22 +110,25 @@ func (h *AnalysisHandler) ViewAnalysisStatic(c *gin.Context) {
                 toolVersion = tv
         }
 
+        verifyCommands := analyzer.GenerateVerificationCommands(analysis.AsciiDomain, results)
+
         c.HTML(http.StatusOK, "results.html", gin.H{
-                "AppVersion":        h.Config.AppVersion,
-                "CspNonce":          nonce,
-                "CsrfToken":        csrfToken,
-                "ActivePage":        "",
-                "Domain":            analysis.Domain,
-                "AsciiDomain":       analysis.AsciiDomain,
-                "Results":           results,
-                "AnalysisID":        analysis.ID,
-                "AnalysisDuration":  dur,
-                "AnalysisTimestamp": timestamp,
-                "FromHistory":       true,
-                "WaitSeconds":       waitSeconds,
-                "WaitReason":        waitReason,
-                "DomainExists":      domainExists,
-                "ToolVersion":       toolVersion,
+                "AppVersion":           h.Config.AppVersion,
+                "CspNonce":             nonce,
+                "CsrfToken":           csrfToken,
+                "ActivePage":           "",
+                "Domain":               analysis.Domain,
+                "AsciiDomain":          analysis.AsciiDomain,
+                "Results":              results,
+                "AnalysisID":           analysis.ID,
+                "AnalysisDuration":     dur,
+                "AnalysisTimestamp":    timestamp,
+                "FromHistory":          true,
+                "WaitSeconds":          waitSeconds,
+                "WaitReason":           waitReason,
+                "DomainExists":         domainExists,
+                "ToolVersion":          toolVersion,
+                "VerificationCommands": verifyCommands,
         })
 }
 
@@ -205,20 +208,23 @@ func (h *AnalysisHandler) Analyze(c *gin.Context) {
                 }
         }
 
+        verifyCommands := analyzer.GenerateVerificationCommands(asciiDomain, results)
+
         c.HTML(http.StatusOK, "results.html", gin.H{
-                "AppVersion":        h.Config.AppVersion,
-                "CspNonce":          nonce,
-                "CsrfToken":        csrfToken,
-                "ActivePage":        "",
-                "Domain":            domain,
-                "AsciiDomain":       asciiDomain,
-                "Results":           results,
-                "AnalysisID":        analysisID,
-                "AnalysisDuration":  analysisDuration,
-                "AnalysisTimestamp": timestamp,
-                "FromHistory":       false,
-                "DomainExists":      domainExists,
-                "ToolVersion":       h.Config.AppVersion,
+                "AppVersion":           h.Config.AppVersion,
+                "CspNonce":             nonce,
+                "CsrfToken":           csrfToken,
+                "ActivePage":           "",
+                "Domain":               domain,
+                "AsciiDomain":          asciiDomain,
+                "Results":              results,
+                "AnalysisID":           analysisID,
+                "AnalysisDuration":     analysisDuration,
+                "AnalysisTimestamp":    timestamp,
+                "FromHistory":          false,
+                "DomainExists":         domainExists,
+                "ToolVersion":          h.Config.AppVersion,
+                "VerificationCommands": verifyCommands,
         })
 }
 

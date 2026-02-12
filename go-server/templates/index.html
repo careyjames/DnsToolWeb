@@ -374,6 +374,30 @@
             </div>
         </section>
 
+        {{if .Changelog}}
+        <section class="mt-5 mb-4" id="whats-new">
+            <h2 class="section-heading text-center mb-2"><i class="fas fa-bolt me-2"></i>What's New</h2>
+            <p class="text-center text-muted mb-4">Recent improvements to analysis accuracy, transparency, and intelligence depth</p>
+            <div class="row g-3">
+                {{range .Changelog}}
+                <div class="col-md-6 col-lg-4">
+                    <div class="card bg-dark border-secondary h-100">
+                        <div class="card-body">
+                            <div class="d-flex align-items-center mb-2">
+                                <i class="{{.Icon}} text-info me-2"></i>
+                                <span class="badge bg-info bg-opacity-25 text-info me-2" style="font-size:0.65rem;">{{.Category}}</span>
+                                <span class="text-muted small ms-auto">{{.Date}}</span>
+                            </div>
+                            <h6 class="card-title mb-1">{{.Title}}</h6>
+                            <p class="card-text text-muted small mb-0">{{.Description}}</p>
+                        </div>
+                    </div>
+                </div>
+                {{end}}
+            </div>
+        </section>
+        {{end}}
+
         <!-- FAQ Section -->
         <div class="row mt-4 mb-5">
             <div class="col-lg-8 mx-auto">
@@ -564,24 +588,28 @@
             <div class="loading-dots mt-2">
                 <span></span><span></span><span></span>
             </div>
-            <p class="text-muted small mt-3 mb-0" id="loadingNote" style="max-width: 400px; margin: 0 auto; opacity: 0; transition: opacity 0.8s;">
-                We query multiple independent DNS resolvers, certificate transparency logs, RDAP registries, and live SMTP servers in parallel &mdash; then cross-reference and verify every result to deliver the most authoritative, thoroughly validated report possible. This typically takes 15&ndash;30 seconds.
+            <p class="text-muted small mt-3 mb-0" id="loadingNote" style="max-width: 440px; margin: 0 auto; opacity: 0; transition: opacity 0.8s;">
+                We query multiple independent DNS resolvers, certificate transparency logs, RDAP registries, and live SMTP servers &mdash; then cross-reference and verify every result. Your report will include terminal commands to independently verify the underlying data. This typically takes 15&ndash;30 seconds.
             </p>
             <div class="loading-status mt-3">
-                <span>Querying 4 independent DNS resolvers in parallel...</span>
-                <span>Cross-referencing results across resolver consensus...</span>
-                <span>Verifying SPF, DMARC, and DKIM against RFC standards...</span>
-                <span>Scanning Certificate Transparency logs for subdomains...</span>
-                <span>Probing 290+ common service names via DNS...</span>
-                <span>Running RDAP &amp; WHOIS lookups for registrar verification...</span>
-                <span>Validating DNSSEC chain of trust...</span>
-                <span>Querying DANE/TLSA records for MX hosts...</span>
-                <span>Checking MTA-STS, TLS-RPT, and BIMI policies...</span>
-                <span>Resolving CNAME chains to identify service providers...</span>
-                <span>Verifying SMTP transport encryption and certificates...</span>
-                <span>Cross-checking authoritative vs. resolver records...</span>
-                <span>Aggregating intelligence from all sources...</span>
-                <span>Compiling verified security posture report...</span>
+                <span>Querying Cloudflare, Google, Quad9, and OpenDNS in parallel&hellip;</span>
+                <span>Cross-referencing results for multi-resolver consensus&hellip;</span>
+                <span>Validating SPF against RFC 7208 &mdash; checking lookup limits and mechanisms&hellip;</span>
+                <span>Evaluating DMARC policy against RFC 7489 &mdash; checking alignment and reporting&hellip;</span>
+                <span>Scanning ~35 common DKIM selectors for key discovery&hellip;</span>
+                <span>Querying Certificate Transparency logs for subdomain discovery&hellip;</span>
+                <span>Probing 290+ common service names via DNS&hellip;</span>
+                <span>Running RDAP registry lookups for registrar verification&hellip;</span>
+                <span>Walking the DNSSEC chain of trust from root to domain&hellip;</span>
+                <span>Querying DANE/TLSA records for each MX host (RFC 7672)&hellip;</span>
+                <span>Fetching MTA-STS policy and checking TLS-RPT reporting&hellip;</span>
+                <span>Connecting to mail servers to verify STARTTLS and certificates&hellip;</span>
+                <span>Resolving CNAME chains to identify infrastructure providers&hellip;</span>
+                <span>Checking BIMI records and CAA certificate authority controls&hellip;</span>
+                <span>Cross-checking authoritative nameserver records vs. resolver data&hellip;</span>
+                <span>Scoring security posture with CVSS-aligned risk levels&hellip;</span>
+                <span>Generating RFC-cited remediation guidance&hellip;</span>
+                <span>Compiling verified intelligence report&hellip;</span>
             </div>
         </div>
     </output>

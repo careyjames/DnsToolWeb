@@ -15,7 +15,10 @@ The application is implemented in Go using the Gin framework, having been rewrit
 - **Technology Stack**: Go with Gin web framework, `pgx` v5 for PostgreSQL, `sqlc` for type-safe query generation, and `miekg/dns` for all DNS queries.
 - **Templates**: Go `html/template`.
 - **Project Structure**: `go-server/cmd/server/` (entry point), `go-server/internal/` (config, db, handlers, middleware, models, templates, analyzer, dnsclient, telemetry, providers), `go-server/db/queries/`, `go-server/templates/`.
-- **Key Features**: Multi-resolver consensus DNS client with DoH fallback, CT subdomain discovery, posture scoring, concurrent orchestrator, SMTP transport verification (STARTTLS/TLS/cipher/cert with DNS-inferred fallback), CSRF middleware (HMAC-signed cookie tokens), rate limiting, SSRF hardening, and telemetry for provider health monitoring and RDAP caching.
+- **Key Features**: Multi-resolver consensus DNS client with DoH fallback, CT subdomain discovery, posture scoring, concurrent orchestrator, SMTP transport verification (STARTTLS/TLS/cipher/cert with DNS-inferred fallback), CSRF middleware (HMAC-signed cookie tokens), rate limiting, SSRF hardening, telemetry for provider health monitoring and RDAP caching, confidence labeling (Observed/Inferred/Third-party), and "Verify It Yourself" command equivalence appendix.
+- **Confidence Taxonomy**: Three-tier attribution labels (Observed/Inferred/Third-party) in `go-server/internal/analyzer/confidence.go`. All heuristic attributions (provider detection, registrar, hosting, government entity) include confidence metadata.
+- **Verification Commands**: `go-server/internal/analyzer/commands.go` generates domain-specific terminal commands (dig, openssl, curl) replicating every analysis step. Shown in results page (collapsible section) and print/PDF reports (appendix).
+- **Changelog**: `go-server/internal/handlers/changelog.go` maintains a structured changelog displayed as "What's New" cards on the homepage.
 - **Posture Evaluation**: Risk levels are CVSS-aligned (Critical, High, Medium, Low, Informational), derived from actual protocol states and providing comprehensive remediation guidance with RFC citations.
 
 ### Frontend
