@@ -352,7 +352,7 @@ func appendDKIMFixes(fixes []fix, ps protocolState, ds DKIMState, results map[st
                 if provider != "" && provider != "Unknown" {
                         fixes = append(fixes, fix{
                                 Title:         fmt.Sprintf("Enable DKIM for %s", provider),
-                                Description:   fmt.Sprintf("DKIM is only configured for third-party services, not your primary mail platform (%s). Enable DKIM signing in %s settings to cover all outbound mail.", provider, provider),
+                                Description:   fmt.Sprintf("DKIM is only configured for third-party services, not your primary mail platform (%s). Enable DKIM signing in %s settings to cover all outbound mail. Note: large organizations may already have DKIM configured with custom or rotating selectors not discoverable through standard checks — verify in your %s admin console before making changes.", provider, provider, provider),
                                 DNSRecord:     dkimRecordExample(domain, provider),
                                 RFC:           "RFC 6376 §3.6",
                                 RFCURL:        "https://datatracker.ietf.org/doc/html/rfc6376#section-3.6",
