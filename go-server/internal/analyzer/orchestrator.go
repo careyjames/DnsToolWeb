@@ -116,6 +116,33 @@ func (a *Analyzer) AnalyzeDomain(ctx context.Context, domain string, customDKIMS
 
         ctData := getMapResult(resultsMap, "ct_subdomains")
         ctSubdomains, _ := ctData["subdomains"].([]map[string]any)
+
+        initSecurityTrails()
+        if securityTrailsEnabled {
+                stSubs, err := FetchSubdomains(ctx, domain)
+                if err == nil && len(stSubs) > 0 {
+                        existing := make(map[string]bool, len(ctSubdomains))
+                        for _, sd := range ctSubdomains {
+                                if name, ok := sd["subdomain"].(string); ok {
+                                        existing[name] = true
+                                }
+                        }
+                        for _, fqdn := range stSubs {
+                                if !existing[fqdn] {
+                                        existing[fqdn] = true
+                                        ctSubdomains = append(ctSubdomains, map[string]any{
+                                                "subdomain":  fqdn,
+                                                "source":     "securitytrails",
+                                                "cert_count": 0,
+                                        })
+                                }
+                        }
+                        ctData["subdomains"] = ctSubdomains
+                        ctData["unique_subdomains"] = len(ctSubdomains)
+                        results["ct_subdomains"] = ctData
+                }
+        }
+
         results["dangling_dns"] = a.DetectDanglingDNS(ctx, domain, ctSubdomains)
 
         results["posture"] = a.CalculatePosture(results)

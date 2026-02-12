@@ -1123,6 +1123,156 @@
             </div>
         </div>
 
+        <!-- DANE/TLSA & Email Transport Security Section -->
+        {{if $dane}}
+        <div class="row section-dane-transport">
+            <div class="col-12 mb-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0 d-flex align-items-center justify-content-between flex-wrap">
+                            <span><i class="fas fa-certificate me-2"></i>DANE / TLSA</span>
+                            <span>
+                                {{$daneStatus := mapGetStr "status" $dane}}
+                                {{$hasDane := mapGetBool "has_dane" $dane}}
+                                {{$daneDeployable := mapGetStr "dane_deployable" $dane}}
+                                <a href="https://datatracker.ietf.org/doc/html/rfc7672#section-3" target="_blank" rel="noopener" class="me-1 text-muted rfc-link" data-bs-toggle="tooltip" data-bs-html="true" title="<strong>DANE for SMTP</strong><br>Publishes TLS certificate information in DNS (TLSA records), enabling mail servers to verify certificates without relying solely on certificate authorities. §3 covers SMTP with DANE." aria-label="Learn about DANE - RFC 7672 §3"><i class="fas fa-info-circle"></i><span class="rfc-label">RFC 7672 §3</span></a>
+                                <a href="https://datatracker.ietf.org/doc/html/rfc6698#section-2" target="_blank" rel="noopener" class="me-2 text-muted rfc-link" data-bs-toggle="tooltip" data-bs-html="true" title="<strong>DANE Protocol</strong><br>DNS-based Authentication of Named Entities — binds TLS certificates to DNS names via TLSA records. §2 covers the TLSA RR." aria-label="Learn about DANE - RFC 6698 §2"><span class="rfc-label">RFC 6698 §2</span></a>
+                                <span class="badge bg-{{if eq $daneStatus "success"}}success{{else if eq $daneStatus "warning"}}warning{{else}}secondary{{end}}">
+                                    {{if $hasDane}}
+                                        {{mapGetStr "mx_hosts_with_dane" $dane}}/{{mapGetStr "mx_hosts_checked" $dane}} MX
+                                    {{else if eq $daneDeployable "false"}}
+                                        Not Available
+                                    {{else}}
+                                        Not Configured
+                                    {{end}}
+                                </span>
+                            </span>
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <p class="text-muted mb-2 small">{{mapGetStr "message" $dane}}</p>
+
+                        {{if and $hasDane (mapGetSlice "tlsa_records" $dane)}}
+                            <div class="table-responsive">
+                                <table class="table table-sm table-dark small mb-2">
+                                    <thead>
+                                        <tr>
+                                            <th>MX Host</th>
+                                            <th>Usage</th>
+                                            <th>Selector</th>
+                                            <th>Match</th>
+                                            <th>Certificate Data</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {{range $tlsa := mapGetSlice "tlsa_records" $dane}}
+                                        {{$t := toMap $tlsa}}
+                                        {{if $t}}
+                                        <tr>
+                                            <td><code>{{mapGetStr "mx_host" $t}}</code></td>
+                                            <td>
+                                                {{$usage := mapGetFloat "usage" $t}}
+                                                <span class="badge bg-{{if or (eq $usage 2) (eq $usage 3)}}success{{else}}warning{{end}}">{{formatFloat 0 $usage}}</span>
+                                                <small class="text-muted ms-1">{{mapGetStr "usage_name" $t}}</small>
+                                            </td>
+                                            <td><small>{{mapGetStr "selector_name" $t}}</small></td>
+                                            <td><small>{{mapGetStr "matching_name" $t}}</small></td>
+                                            <td><code class="small">{{mapGetStr "certificate_data" $t}}</code></td>
+                                        </tr>
+                                        {{$rec := mapGetStr "recommendation" $t}}
+                                        {{if $rec}}
+                                        <tr>
+                                            <td colspan="5" class="text-warning small border-0 pt-0"><i class="fas fa-exclamation-triangle me-1"></i>{{$rec}}</td>
+                                        </tr>
+                                        {{end}}
+                                        {{end}}
+                                        {{end}}
+                                    </tbody>
+                                </table>
+                            </div>
+                        {{end}}
+
+                        {{$daneIssues := mapGetSlice "issues" $dane}}
+                        {{if $daneIssues}}
+                            {{range $issue := $daneIssues}}
+                                <div class="text-warning small"><i class="fas fa-exclamation-triangle me-1"></i>{{$issue}}</div>
+                            {{end}}
+                        {{end}}
+
+                        {{if and $hasDane (ne (mapGetStr "status" $dnssec) "success")}}
+                            <div class="small text-warning mt-1">
+                                <i class="fas fa-exclamation-triangle me-1"></i>DANE requires DNSSEC to provide its security guarantees (RFC 7672 §1.3). Without DNSSEC validation, TLSA records could be spoofed. Enable DNSSEC to fully benefit from DANE.
+                            </div>
+                        {{end}}
+                        {{if not $hasDane}}
+                            {{$mx_prov := mapGetMap "mx_provider" $dane}}
+                            {{if and $mx_prov (eq $daneDeployable "false")}}
+                            <div class="small mt-1 p-2 rounded" style="background: rgba(255,193,7,0.08); border-left: 3px solid #ffc107;">
+                                {{if mapGetBool "dane_migration_available" $mx_prov}}
+                                <i class="fas fa-exclamation-circle text-warning me-1"></i><strong>DANE not available on current MX endpoints</strong>
+                                {{else}}
+                                <i class="fas fa-exclamation-circle text-warning me-1"></i><strong>DANE not deployable on {{mapGetStr "provider_name" $mx_prov}}</strong>
+                                {{end}}
+                                <p class="mb-1 mt-1">{{mapGetStr "reason" $mx_prov}}</p>
+                                {{$alt := mapGetStr "alternative" $mx_prov}}
+                                {{if $alt}}
+                                <p class="mb-0"><i class="fas fa-arrow-right me-1"></i><strong>Recommended alternative:</strong> {{$alt}}{{if and $mta_sts (eq (mapGetStr "status" $mta_sts) "success")}} <span class="text-success">(already configured)</span>{{end}}</p>
+                                {{end}}
+                                {{if mapGetBool "dane_outbound" $mx_prov}}
+                                <p class="mb-0 mt-1 text-muted"><i class="fas fa-info-circle me-1"></i>Note: {{mapGetStr "provider_name" $mx_prov}} does validate DANE/TLSA when <em>sending</em> mail to DANE-enabled recipients (outbound DANE).</p>
+                                {{end}}
+                            </div>
+                            {{else}}
+                            <div class="small text-muted mt-1">
+                                <i class="fas fa-info-circle me-1"></i>DANE (<a href="https://datatracker.ietf.org/doc/html/rfc7672" target="_blank" rel="noopener" class="text-info">RFC 7672</a>) binds TLS certificates to DNSSEC-signed DNS records, protecting email transport against man-in-the-middle attacks and rogue CAs. It is the primary transport security standard &mdash; MTA-STS (<a href="https://datatracker.ietf.org/doc/html/rfc8461#section-2" target="_blank" rel="noopener" class="text-info">RFC 8461</a>) was created as the alternative for domains that cannot deploy DNSSEC. Over 1 million domains use DANE globally, including Microsoft Exchange Online, Proton Mail, and Fastmail. Best practice: deploy both for defense in depth.
+                            </div>
+                            {{end}}
+                        {{end}}
+
+                        {{$hasMtaSts := and $mta_sts (eq (mapGetStr "status" $mta_sts) "success")}}
+                        {{$hasDnssec := and $dnssec (eq (mapGetStr "status" $dnssec) "success")}}
+                        <div class="small mt-3 p-2 rounded" style="background: rgba(255,255,255,0.03); border-left: 3px solid {{if and $hasDane $hasMtaSts}}#198754{{else if $hasDane}}#198754{{else if $hasMtaSts}}#0dcaf0{{else}}#6c757d{{end}};">
+                            <strong><i class="fas fa-balance-scale me-1"></i>Email Transport Security</strong>
+                            <p class="mb-1 mt-1">Two mechanisms protect email in transit. DANE is the primary standard; MTA-STS is the alternative for domains that cannot deploy DNSSEC:</p>
+                            <ul class="mb-1 ps-3">
+                                <li><strong>DNSSEC + DANE</strong> (<a href="https://datatracker.ietf.org/doc/html/rfc7672" target="_blank" rel="noopener" class="text-info">RFC 7672</a>) &mdash; Cryptographic chain of trust from DNS root to mail server certificate. Eliminates reliance on certificate authorities. No trust-on-first-use weakness. Requires DNSSEC.</li>
+                                <li><strong>MTA-STS</strong> (<a href="https://datatracker.ietf.org/doc/html/rfc8461" target="_blank" rel="noopener" class="text-info">RFC 8461</a>) &mdash; HTTPS-based policy requiring TLS for mail delivery. Works without DNSSEC but relies on CA trust and is vulnerable on first use (<a href="https://datatracker.ietf.org/doc/html/rfc8461#section-10" target="_blank" rel="noopener" class="text-info">&sect;10</a>). Created for domains where &ldquo;deploying DNSSEC is undesirable or impractical&rdquo; (<a href="https://datatracker.ietf.org/doc/html/rfc8461#section-2" target="_blank" rel="noopener" class="text-info">&sect;2</a>).</li>
+                            </ul>
+                            {{if and $hasDane $hasMtaSts}}
+                                <span class="text-success"><i class="fas fa-check-circle me-1"></i><strong>This domain deploys both DANE and MTA-STS &mdash; defense in depth.</strong></span> DANE provides cryptographic certificate binding via DNSSEC, while MTA-STS ensures compatibility with senders that don't validate DNSSEC. Per <a href="https://datatracker.ietf.org/doc/html/rfc8461#section-2" target="_blank" rel="noopener" class="text-info">RFC 8461</a>, DANE takes precedence &mdash; MTA-STS must not override a failing DANE validation.
+                            {{else if and $hasDane (not $hasMtaSts)}}
+                                <span class="text-success"><i class="fas fa-check-circle me-1"></i><strong>This domain uses DNSSEC + DANE &mdash; the strongest cryptographic transport security.</strong></span> DANE binds TLS certificates to DNSSEC-signed DNS records, creating a verifiable chain of trust from root to mail server (<a href="https://datatracker.ietf.org/doc/html/rfc7672#section-1.3" target="_blank" rel="noopener" class="text-info">RFC 7672 &sect;1.3</a>). MTA-STS could complement this for senders that don't validate DNSSEC, but DANE alone provides the highest level of protection available.
+                            {{else if and $hasMtaSts (not $hasDane)}}
+                                {{$mx_prov := mapGetMap "mx_provider" $dane}}
+                                {{if and $mx_prov (eq $daneDeployable "false")}}
+                                {{if mapGetBool "dane_migration_available" $mx_prov}}
+                                <span class="text-success"><i class="fas fa-check-circle me-1"></i><strong>This domain uses MTA-STS &mdash; good, but DANE is also available.</strong></span> {{mapGetStr "provider_name" $mx_prov}} supports inbound DANE on its newer MX endpoints. This domain's current MX records use legacy endpoints without DANE. Migrating MX records would enable DANE alongside MTA-STS for defense in depth. MTA-STS enforces TLS via HTTPS-based policy (<a href="https://datatracker.ietf.org/doc/html/rfc8461" target="_blank" rel="noopener" class="text-info">RFC 8461</a>).
+                                {{else}}
+                                <span class="text-success"><i class="fas fa-check-circle me-1"></i><strong>This domain uses MTA-STS &mdash; the best available option for {{mapGetStr "provider_name" $mx_prov}}.</strong></span> Since {{mapGetStr "provider_name" $mx_prov}} does not support inbound DANE, MTA-STS is the strongest transport security this domain can deploy. MTA-STS enforces TLS via HTTPS-based policy, protecting against downgrade attacks (<a href="https://datatracker.ietf.org/doc/html/rfc8461" target="_blank" rel="noopener" class="text-info">RFC 8461</a>).
+                                {{end}}
+                                {{else}}
+                                <span class="text-info"><i class="fas fa-info-circle me-1"></i><strong>This domain uses MTA-STS without DANE.</strong></span> MTA-STS provides transport security through HTTPS-based policy (<a href="https://datatracker.ietf.org/doc/html/rfc8461" target="_blank" rel="noopener" class="text-info">RFC 8461</a>), but relies on CA trust and is vulnerable on first use. Adding DANE (<a href="https://datatracker.ietf.org/doc/html/rfc7672" target="_blank" rel="noopener" class="text-info">RFC 7672</a>) would provide cryptographic certificate pinning independent of certificate authorities{{if not $hasDnssec}} &mdash; this domain would first need to enable DNSSEC{{end}}.
+                                {{end}}
+                            {{else}}
+                                {{$mx_prov := mapGetMap "mx_provider" $dane}}
+                                {{if and $mx_prov (eq $daneDeployable "false")}}
+                                {{if mapGetBool "dane_migration_available" $mx_prov}}
+                                <span class="text-warning"><i class="fas fa-exclamation-circle me-1"></i><strong>This domain has neither DANE nor MTA-STS.</strong></span> {{mapGetStr "provider_name" $mx_prov}} supports inbound DANE on its newer MX endpoints, but this domain uses legacy endpoints. Migrate MX records to enable DANE, or deploy MTA-STS (<a href="https://datatracker.ietf.org/doc/html/rfc8461" target="_blank" rel="noopener" class="text-info">RFC 8461</a>) to enforce TLS and protect against downgrade attacks.
+                                {{else}}
+                                <span class="text-warning"><i class="fas fa-exclamation-circle me-1"></i><strong>This domain has neither DANE nor MTA-STS.</strong></span> Since {{mapGetStr "provider_name" $mx_prov}} does not support inbound DANE, deploy MTA-STS (<a href="https://datatracker.ietf.org/doc/html/rfc8461" target="_blank" rel="noopener" class="text-info">RFC 8461</a>) to enforce TLS and protect against downgrade attacks.
+                                {{end}}
+                                {{else}}
+                                <span class="text-muted"><i class="fas fa-info-circle me-1"></i><strong>This domain has neither DANE nor MTA-STS.</strong></span> Mail transport relies on opportunistic TLS without policy enforcement, leaving it vulnerable to downgrade attacks. Deploy DANE (<a href="https://datatracker.ietf.org/doc/html/rfc7672" target="_blank" rel="noopener" class="text-info">RFC 7672</a>) with DNSSEC for the strongest protection, or MTA-STS (<a href="https://datatracker.ietf.org/doc/html/rfc8461" target="_blank" rel="noopener" class="text-info">RFC 8461</a>) if DNSSEC is not feasible.
+                                {{end}}
+                            {{end}}
+                            <p class="mb-0 mt-1 text-muted" style="font-size: 0.8em;"><i class="fas fa-chart-line me-1"></i><strong>Industry trend:</strong> Microsoft Exchange Online enforces inbound DANE with DNSSEC (GA October 2024), and providers like Proton Mail and Fastmail also support DANE. Google Workspace does not support DANE and relies on MTA-STS. Both mechanisms coexist because DANE is backward-compatible &mdash; senders skip the check if the domain isn't DNSSEC-signed (<a href="https://datatracker.ietf.org/doc/html/rfc7672#section-1.3" target="_blank" rel="noopener" class="text-info">RFC 7672 &sect;1.3</a>).</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {{end}}
+
         <!-- Brand Security Section -->
         <div class="row section-brand-security">
             <div class="col-12 mb-4">
@@ -1259,148 +1409,6 @@
                                 {{end}}
                             </div>
                         </div>
-
-                        <!-- DANE/TLSA Analysis -->
-                        {{if $dane}}
-                        <div class="row mt-3">
-                            <div class="col-12">
-                                {{$daneStatus := mapGetStr "status" $dane}}
-                                {{$hasDane := mapGetBool "has_dane" $dane}}
-                                {{$daneDeployable := mapGetStr "dane_deployable" $dane}}
-                                <h6 class="d-flex align-items-center">
-                                    <i class="fas fa-certificate me-2"></i>DANE / TLSA
-                                    <a href="https://datatracker.ietf.org/doc/html/rfc7672#section-3" target="_blank" rel="noopener" class="ms-2 text-muted rfc-link" data-bs-toggle="tooltip" data-bs-html="true" title="<strong>DANE for SMTP</strong><br>Publishes TLS certificate information in DNS (TLSA records), enabling mail servers to verify certificates without relying solely on certificate authorities. §3 covers SMTP with DANE." aria-label="Learn about DANE - RFC 7672 §3"><i class="fas fa-info-circle"></i><span class="rfc-label">RFC 7672 §3</span></a>
-                                    <a href="https://datatracker.ietf.org/doc/html/rfc6698#section-2" target="_blank" rel="noopener" class="ms-1 text-muted rfc-link" data-bs-toggle="tooltip" data-bs-html="true" title="<strong>DANE Protocol</strong><br>DNS-based Authentication of Named Entities — binds TLS certificates to DNS names via TLSA records. §2 covers the TLSA RR." aria-label="Learn about DANE - RFC 6698 §2"><span class="rfc-label">RFC 6698 §2</span></a>
-                                    <span class="badge bg-{{if eq $daneStatus "success"}}success{{else if eq $daneStatus "warning"}}warning{{else}}secondary{{end}} ms-2">
-                                        {{if $hasDane}}
-                                            {{mapGetStr "mx_hosts_with_dane" $dane}}/{{mapGetStr "mx_hosts_checked" $dane}} MX
-                                        {{else if eq $daneDeployable "false"}}
-                                            Not Available
-                                        {{else}}
-                                            Not Configured
-                                        {{end}}
-                                    </span>
-                                </h6>
-                                <p class="text-muted mb-2 small">{{mapGetStr "message" $dane}}</p>
-
-                                {{if and $hasDane (mapGetSlice "tlsa_records" $dane)}}
-                                    <div class="table-responsive">
-                                        <table class="table table-sm table-dark small mb-2">
-                                            <thead>
-                                                <tr>
-                                                    <th>MX Host</th>
-                                                    <th>Usage</th>
-                                                    <th>Selector</th>
-                                                    <th>Match</th>
-                                                    <th>Certificate Data</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                {{range $tlsa := mapGetSlice "tlsa_records" $dane}}
-                                                {{$t := toMap $tlsa}}
-                                                {{if $t}}
-                                                <tr>
-                                                    <td><code>{{mapGetStr "mx_host" $t}}</code></td>
-                                                    <td>
-                                                        {{$usage := mapGetFloat "usage" $t}}
-                                                        <span class="badge bg-{{if or (eq $usage 2) (eq $usage 3)}}success{{else}}warning{{end}}">{{formatFloat 0 $usage}}</span>
-                                                        <small class="text-muted ms-1">{{mapGetStr "usage_name" $t}}</small>
-                                                    </td>
-                                                    <td><small>{{mapGetStr "selector_name" $t}}</small></td>
-                                                    <td><small>{{mapGetStr "matching_name" $t}}</small></td>
-                                                    <td><code class="small">{{mapGetStr "certificate_data" $t}}</code></td>
-                                                </tr>
-                                                {{$rec := mapGetStr "recommendation" $t}}
-                                                {{if $rec}}
-                                                <tr>
-                                                    <td colspan="5" class="text-warning small border-0 pt-0"><i class="fas fa-exclamation-triangle me-1"></i>{{$rec}}</td>
-                                                </tr>
-                                                {{end}}
-                                                {{end}}
-                                                {{end}}
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                {{end}}
-
-                                {{$daneIssues := mapGetSlice "issues" $dane}}
-                                {{if $daneIssues}}
-                                    {{range $issue := $daneIssues}}
-                                        <div class="text-warning small"><i class="fas fa-exclamation-triangle me-1"></i>{{$issue}}</div>
-                                    {{end}}
-                                {{end}}
-
-                                {{if and $hasDane (ne (mapGetStr "status" $dnssec) "success")}}
-                                    <div class="small text-warning mt-1">
-                                        <i class="fas fa-exclamation-triangle me-1"></i>DANE requires DNSSEC to provide its security guarantees (RFC 7672 §1.3). Without DNSSEC validation, TLSA records could be spoofed. Enable DNSSEC to fully benefit from DANE.
-                                    </div>
-                                {{end}}
-                                {{if not $hasDane}}
-                                    {{$mx_prov := mapGetMap "mx_provider" $dane}}
-                                    {{if and $mx_prov (eq $daneDeployable "false")}}
-                                    <div class="small mt-1 p-2 rounded" style="background: rgba(255,193,7,0.08); border-left: 3px solid #ffc107;">
-                                        {{if mapGetBool "dane_migration_available" $mx_prov}}
-                                        <i class="fas fa-exclamation-circle text-warning me-1"></i><strong>DANE not available on current MX endpoints</strong>
-                                        {{else}}
-                                        <i class="fas fa-exclamation-circle text-warning me-1"></i><strong>DANE not deployable on {{mapGetStr "provider_name" $mx_prov}}</strong>
-                                        {{end}}
-                                        <p class="mb-1 mt-1">{{mapGetStr "reason" $mx_prov}}</p>
-                                        {{$alt := mapGetStr "alternative" $mx_prov}}
-                                        {{if $alt}}
-                                        <p class="mb-0"><i class="fas fa-arrow-right me-1"></i><strong>Recommended alternative:</strong> {{$alt}}{{if and $mta_sts (eq (mapGetStr "status" $mta_sts) "success")}} <span class="text-success">(already configured)</span>{{end}}</p>
-                                        {{end}}
-                                        {{if mapGetBool "dane_outbound" $mx_prov}}
-                                        <p class="mb-0 mt-1 text-muted"><i class="fas fa-info-circle me-1"></i>Note: {{mapGetStr "provider_name" $mx_prov}} does validate DANE/TLSA when <em>sending</em> mail to DANE-enabled recipients (outbound DANE).</p>
-                                        {{end}}
-                                    </div>
-                                    {{else}}
-                                    <div class="small text-muted mt-1">
-                                        <i class="fas fa-info-circle me-1"></i>DANE (<a href="https://datatracker.ietf.org/doc/html/rfc7672" target="_blank" rel="noopener" class="text-info">RFC 7672</a>) binds TLS certificates to DNSSEC-signed DNS records, protecting email transport against man-in-the-middle attacks and rogue CAs. It is the primary transport security standard &mdash; MTA-STS (<a href="https://datatracker.ietf.org/doc/html/rfc8461#section-2" target="_blank" rel="noopener" class="text-info">RFC 8461</a>) was created as the alternative for domains that cannot deploy DNSSEC. Over 1 million domains use DANE globally, including Microsoft Exchange Online, Proton Mail, and Fastmail. Best practice: deploy both for defense in depth.
-                                    </div>
-                                    {{end}}
-                                {{end}}
-
-                                {{$hasMtaSts := and $mta_sts (eq (mapGetStr "status" $mta_sts) "success")}}
-                                {{$hasDnssec := and $dnssec (eq (mapGetStr "status" $dnssec) "success")}}
-                                <div class="small mt-2 p-2 rounded" style="background: rgba(255,255,255,0.03); border-left: 3px solid {{if and $hasDane $hasMtaSts}}#198754{{else if $hasDane}}#198754{{else if $hasMtaSts}}#0dcaf0{{else}}#6c757d{{end}};">
-                                    <strong><i class="fas fa-balance-scale me-1"></i>Email Transport Security</strong>
-                                    <p class="mb-1 mt-1">Two mechanisms protect email in transit. DANE is the primary standard; MTA-STS is the alternative for domains that cannot deploy DNSSEC:</p>
-                                    <ul class="mb-1 ps-3">
-                                        <li><strong>DNSSEC + DANE</strong> (<a href="https://datatracker.ietf.org/doc/html/rfc7672" target="_blank" rel="noopener" class="text-info">RFC 7672</a>) &mdash; Cryptographic chain of trust from DNS root to mail server certificate. Eliminates reliance on certificate authorities. No trust-on-first-use weakness. Requires DNSSEC.</li>
-                                        <li><strong>MTA-STS</strong> (<a href="https://datatracker.ietf.org/doc/html/rfc8461" target="_blank" rel="noopener" class="text-info">RFC 8461</a>) &mdash; HTTPS-based policy requiring TLS for mail delivery. Works without DNSSEC but relies on CA trust and is vulnerable on first use (<a href="https://datatracker.ietf.org/doc/html/rfc8461#section-10" target="_blank" rel="noopener" class="text-info">&sect;10</a>). Created for domains where &ldquo;deploying DNSSEC is undesirable or impractical&rdquo; (<a href="https://datatracker.ietf.org/doc/html/rfc8461#section-2" target="_blank" rel="noopener" class="text-info">&sect;2</a>).</li>
-                                    </ul>
-                                    {{if and $hasDane $hasMtaSts}}
-                                        <span class="text-success"><i class="fas fa-check-circle me-1"></i><strong>This domain deploys both DANE and MTA-STS &mdash; defense in depth.</strong></span> DANE provides cryptographic certificate binding via DNSSEC, while MTA-STS ensures compatibility with senders that don't validate DNSSEC. Per <a href="https://datatracker.ietf.org/doc/html/rfc8461#section-2" target="_blank" rel="noopener" class="text-info">RFC 8461</a>, DANE takes precedence &mdash; MTA-STS must not override a failing DANE validation.
-                                    {{else if and $hasDane (not $hasMtaSts)}}
-                                        <span class="text-success"><i class="fas fa-check-circle me-1"></i><strong>This domain uses DNSSEC + DANE &mdash; the strongest cryptographic transport security.</strong></span> DANE binds TLS certificates to DNSSEC-signed DNS records, creating a verifiable chain of trust from root to mail server (<a href="https://datatracker.ietf.org/doc/html/rfc7672#section-1.3" target="_blank" rel="noopener" class="text-info">RFC 7672 &sect;1.3</a>). MTA-STS could complement this for senders that don't validate DNSSEC, but DANE alone provides the highest level of protection available.
-                                    {{else if and $hasMtaSts (not $hasDane)}}
-                                        {{$mx_prov := mapGetMap "mx_provider" $dane}}
-                                        {{if and $mx_prov (eq $daneDeployable "false")}}
-                                        {{if mapGetBool "dane_migration_available" $mx_prov}}
-                                        <span class="text-success"><i class="fas fa-check-circle me-1"></i><strong>This domain uses MTA-STS &mdash; good, but DANE is also available.</strong></span> {{mapGetStr "provider_name" $mx_prov}} supports inbound DANE on its newer MX endpoints. This domain's current MX records use legacy endpoints without DANE. Migrating MX records would enable DANE alongside MTA-STS for defense in depth. MTA-STS enforces TLS via HTTPS-based policy (<a href="https://datatracker.ietf.org/doc/html/rfc8461" target="_blank" rel="noopener" class="text-info">RFC 8461</a>).
-                                        {{else}}
-                                        <span class="text-success"><i class="fas fa-check-circle me-1"></i><strong>This domain uses MTA-STS &mdash; the best available option for {{mapGetStr "provider_name" $mx_prov}}.</strong></span> Since {{mapGetStr "provider_name" $mx_prov}} does not support inbound DANE, MTA-STS is the strongest transport security this domain can deploy. MTA-STS enforces TLS via HTTPS-based policy, protecting against downgrade attacks (<a href="https://datatracker.ietf.org/doc/html/rfc8461" target="_blank" rel="noopener" class="text-info">RFC 8461</a>).
-                                        {{end}}
-                                        {{else}}
-                                        <span class="text-info"><i class="fas fa-info-circle me-1"></i><strong>This domain uses MTA-STS without DANE.</strong></span> MTA-STS provides transport security through HTTPS-based policy (<a href="https://datatracker.ietf.org/doc/html/rfc8461" target="_blank" rel="noopener" class="text-info">RFC 8461</a>), but relies on CA trust and is vulnerable on first use. Adding DANE (<a href="https://datatracker.ietf.org/doc/html/rfc7672" target="_blank" rel="noopener" class="text-info">RFC 7672</a>) would provide cryptographic certificate pinning independent of certificate authorities{{if not $hasDnssec}} &mdash; this domain would first need to enable DNSSEC{{end}}.
-                                        {{end}}
-                                    {{else}}
-                                        {{$mx_prov := mapGetMap "mx_provider" $dane}}
-                                        {{if and $mx_prov (eq $daneDeployable "false")}}
-                                        {{if mapGetBool "dane_migration_available" $mx_prov}}
-                                        <span class="text-warning"><i class="fas fa-exclamation-circle me-1"></i><strong>This domain has neither DANE nor MTA-STS.</strong></span> {{mapGetStr "provider_name" $mx_prov}} supports inbound DANE on its newer MX endpoints, but this domain uses legacy endpoints. Migrate MX records to enable DANE, or deploy MTA-STS (<a href="https://datatracker.ietf.org/doc/html/rfc8461" target="_blank" rel="noopener" class="text-info">RFC 8461</a>) to enforce TLS and protect against downgrade attacks.
-                                        {{else}}
-                                        <span class="text-warning"><i class="fas fa-exclamation-circle me-1"></i><strong>This domain has neither DANE nor MTA-STS.</strong></span> Since {{mapGetStr "provider_name" $mx_prov}} does not support inbound DANE, deploy MTA-STS (<a href="https://datatracker.ietf.org/doc/html/rfc8461" target="_blank" rel="noopener" class="text-info">RFC 8461</a>) to enforce TLS and protect against downgrade attacks.
-                                        {{end}}
-                                        {{else}}
-                                        <span class="text-muted"><i class="fas fa-info-circle me-1"></i><strong>This domain has neither DANE nor MTA-STS.</strong></span> Mail transport relies on opportunistic TLS without policy enforcement, leaving it vulnerable to downgrade attacks. Deploy DANE (<a href="https://datatracker.ietf.org/doc/html/rfc7672" target="_blank" rel="noopener" class="text-info">RFC 7672</a>) with DNSSEC for the strongest protection, or MTA-STS (<a href="https://datatracker.ietf.org/doc/html/rfc8461" target="_blank" rel="noopener" class="text-info">RFC 8461</a>) if DNSSEC is not feasible.
-                                        {{end}}
-                                    {{end}}
-                                    <p class="mb-0 mt-1 text-muted" style="font-size: 0.8em;"><i class="fas fa-chart-line me-1"></i><strong>Industry trend:</strong> Microsoft Exchange Online enforces inbound DANE with DNSSEC (GA October 2024), and providers like Proton Mail and Fastmail also support DANE. Google Workspace does not support DANE and relies on MTA-STS. Both mechanisms coexist because DANE is backward-compatible &mdash; senders skip the check if the domain isn't DNSSEC-signed (<a href="https://datatracker.ietf.org/doc/html/rfc7672#section-1.3" target="_blank" rel="noopener" class="text-info">RFC 7672 &sect;1.3</a>).</p>
-                                </div>
-                            </div>
-                        </div>
-                        {{end}}
 
                         {{if and $dmarc_report_auth (mapGetBool "checked" $dmarc_report_auth)}}
                         {{$extDomains := mapGetSlice "external_domains" $dmarc_report_auth}}
@@ -2767,17 +2775,17 @@
         {{end}}
 
         {{if .VerificationCommands}}
-        <div class="card bg-dark border-secondary mt-4 screen-only" id="verify-commands">
-            <div class="card-header bg-dark border-secondary d-flex align-items-center justify-content-between" role="button" data-bs-toggle="collapse" data-bs-target="#verifyCommandsBody" aria-expanded="false" aria-controls="verifyCommandsBody" style="cursor:pointer;">
-                <h5 class="mb-0">
-                    <i class="fas fa-terminal me-2 text-info"></i>Verify It Yourself
-                    <span class="badge bg-info bg-opacity-25 text-info ms-2 small">Transparency</span>
+        <div class="card border-info border-opacity-50 mt-4 screen-only" id="verify-commands" style="background-color: var(--bg-secondary);">
+            <div class="card-header d-flex align-items-center justify-content-between" role="button" data-bs-toggle="collapse" data-bs-target="#verifyCommandsBody" aria-expanded="false" aria-controls="verifyCommandsBody" style="cursor:pointer; background-color: rgba(13, 202, 240, 0.08); border-bottom: 1px solid rgba(13, 202, 240, 0.2);">
+                <h5 class="mb-0" style="color: #e6edf3;">
+                    <i class="fas fa-terminal me-2" style="color: #58a6ff;"></i>Verify It Yourself
+                    <span class="badge ms-2" style="background-color: rgba(88, 166, 255, 0.2); color: #58a6ff; border: 1px solid rgba(88, 166, 255, 0.3); font-size: 0.7rem;">Transparency</span>
                 </h5>
-                <i class="fas fa-chevron-down text-muted"></i>
+                <i class="fas fa-chevron-down" style="color: #8b949e; font-size: 0.9rem;"></i>
             </div>
             <div class="collapse" id="verifyCommandsBody">
                 <div class="card-body">
-                    <p class="text-muted small mb-3">
+                    <p class="small mb-3" style="color: #c9d1d9;">
                         The core DNS queries behind this report can be independently reproduced using standard command-line tools. Our analysis adds multi-resolver consensus, RFC-based evaluation, and cross-referencing &mdash; but the underlying data is always verifiable. We are intelligence analysts, not gatekeepers.
                     </p>
                     {{$currentSection := ""}}
@@ -2790,16 +2798,16 @@
                     {{end}}
                     <div class="mb-2">
                         <div class="d-flex align-items-center justify-content-between mb-1">
-                            <span class="text-muted small">{{.Description}}{{if .RFC}} <span class="badge bg-secondary bg-opacity-50 ms-1" style="font-size:0.65rem;">{{.RFC}}</span>{{end}}</span>
-                            <button class="btn btn-sm btn-outline-secondary border-0 copy-cmd-btn" data-cmd="{{.Command}}" title="Copy command" style="padding:2px 6px;font-size:0.7rem;">
+                            <span class="small" style="color: #c9d1d9;">{{.Description}}{{if .RFC}} <span class="badge ms-1" style="font-size:0.65rem; background-color: rgba(88,166,255,0.15); color: #79c0ff; border: 1px solid rgba(88,166,255,0.2);">{{.RFC}}</span>{{end}}</span>
+                            <button class="btn btn-sm btn-outline-info border-0 copy-cmd-btn" data-cmd="{{.Command}}" title="Copy command" style="padding:2px 6px;font-size:0.7rem;">
                                 <i class="fas fa-copy"></i>
                             </button>
                         </div>
-                        <pre class="bg-black text-light p-2 rounded small mb-0" style="font-size:0.78rem;overflow-x:auto;white-space:pre-wrap;word-break:break-all;"><code>{{.Command}}</code></pre>
+                        <pre class="p-2 rounded small mb-0" style="font-size:0.78rem;overflow-x:auto;white-space:pre-wrap;word-break:break-all;background-color:#0d1117;color:#e6edf3;border:1px solid #21262d;"><code>{{.Command}}</code></pre>
                     </div>
                     {{end}}
-                    <div class="mt-3 text-muted small">
-                        <i class="fas fa-info-circle me-1"></i>Commands use <code>dig</code>, <code>openssl</code>, and <code>curl</code> &mdash; standard tools available on macOS, Linux, and WSL. Results may vary slightly due to DNS propagation timing and resolver caching.
+                    <div class="small mt-3" style="color: #8b949e;">
+                        <i class="fas fa-info-circle me-1"></i>Commands use <code style="color:#79c0ff;">dig</code>, <code style="color:#79c0ff;">openssl</code>, and <code style="color:#79c0ff;">curl</code> &mdash; standard tools available on macOS, Linux, and WSL. Results may vary slightly due to DNS propagation timing and resolver caching.
                     </div>
                 </div>
             </div>

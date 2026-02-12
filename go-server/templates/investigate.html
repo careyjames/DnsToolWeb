@@ -368,6 +368,86 @@
     {{end}}
 
     </main>
+
+    <output id="loadingOverlay" class="loading-overlay d-none" aria-live="polite" aria-busy="true" aria-label="Running IP investigation">
+        <div class="loading-content">
+            <div class="loading-spinner">
+                <i class="fas fa-crosshairs fa-spin"></i>
+            </div>
+            <h4 class="mt-4 mb-2">Investigating IP Relationship</h4>
+            <p class="text-muted mb-0" id="loadingIP"></p>
+            <div class="loading-elapsed mt-2">
+                <span class="text-muted small" id="loadingTimer">0s</span>
+            </div>
+            <div class="loading-dots mt-2">
+                <span></span><span></span><span></span>
+            </div>
+            <p class="text-muted small mt-3 mb-0" id="loadingNote" style="max-width: 440px; margin: 0 auto; opacity: 0; transition: opacity 0.8s;">
+                We're checking reverse DNS, comparing against your domain's DNS records, verifying SPF authorization, querying Certificate Transparency logs, and performing ASN attribution. This typically takes 10&ndash;20 seconds.
+            </p>
+            <div class="loading-status mt-3">
+                <span>Performing reverse DNS (PTR) lookup&hellip;</span>
+                <span>Validating Forward-Confirmed reverse DNS (FCrDNS)&hellip;</span>
+                <span>Comparing against domain A/AAAA records&hellip;</span>
+                <span>Checking MX host resolution&hellip;</span>
+                <span>Verifying nameserver IP addresses&hellip;</span>
+                <span>Parsing SPF record for IP authorization&hellip;</span>
+                <span>Walking SPF include chain&hellip;</span>
+                <span>Querying Certificate Transparency logs&hellip;</span>
+                <span>Looking up ASN and network attribution&hellip;</span>
+                <span>Detecting CDN/edge network presence&hellip;</span>
+                <span>Classifying IP-to-domain relationship&hellip;</span>
+            </div>
+        </div>
+    </output>
+
     <script src="/static/js/bootstrap.bundle.min.js"></script>
+    <script nonce="{{.CspNonce}}">
+    (function() {
+        var form = document.getElementById('investigateForm');
+        if (!form) return;
+        form.addEventListener('submit', function(e) {
+            var domain = document.getElementById('domain');
+            var ip = document.getElementById('ip_address');
+            if (!domain || !ip || !domain.value.trim() || !ip.value.trim()) return;
+
+            var overlay = document.getElementById('loadingOverlay');
+            var loadingIP = document.getElementById('loadingIP');
+            var loadingNote = document.getElementById('loadingNote');
+            var loadingTimer = document.getElementById('loadingTimer');
+            if (!overlay) return;
+
+            if (loadingIP) loadingIP.textContent = ip.value.trim() + ' \u2194 ' + domain.value.trim();
+            overlay.classList.remove('d-none');
+
+            var startTime = Date.now();
+            var timerInterval = setInterval(function() {
+                var elapsed = Math.floor((Date.now() - startTime) / 1000);
+                if (loadingTimer) loadingTimer.textContent = elapsed + 's';
+            }, 1000);
+
+            setTimeout(function() {
+                if (loadingNote) loadingNote.style.opacity = '1';
+            }, 3000);
+
+            var statusSpans = overlay.querySelectorAll('.loading-status span');
+            if (statusSpans.length > 0) {
+                var idx = 0;
+                statusSpans[0].classList.add('active');
+                setInterval(function() {
+                    statusSpans[idx].classList.remove('active');
+                    idx = (idx + 1) % statusSpans.length;
+                    statusSpans[idx].classList.add('active');
+                }, 2000);
+            }
+
+            var btn = document.getElementById('investigateBtn');
+            if (btn) {
+                btn.disabled = true;
+                btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Investigating\u2026';
+            }
+        });
+    })();
+    </script>
 </body>
 </html>
