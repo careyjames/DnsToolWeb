@@ -1825,6 +1825,10 @@ main.container {
     .section-dns-history > .col-12 > .card > .card-header .text-muted {
         color: #ffffff !important;
     }
+    .section-dns-history > .col-12 > .card > .card-header p.text-warning-emphasis {
+        color: #fef3c7 !important;
+        font-style: italic;
+    }
 
     .section-dns-history .table th {
         background-color: #1e3a5f !important;

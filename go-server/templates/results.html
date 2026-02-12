@@ -1199,11 +1199,12 @@
                     <div class="card-header">
                         <h5 class="mb-0 d-flex align-items-center justify-content-between flex-wrap">
                             <span><i class="fas fa-history me-2"></i>DNS History Timeline</span>
-                            <small class="text-muted">Historical DNS record changes &mdash; Source: {{mapGetStr "source" $dns_history}}</small>
+                            <small class="text-muted">Source: {{mapGetStr "source" $dns_history}}</small>
                         </h5>
+                        <p class="mb-0 mt-2 text-warning-emphasis" style="font-size:0.95em; font-weight:500;"><i class="fas fa-search me-1"></i>When was a record added, removed, or changed &mdash; and could that change be the problem?</p>
                     </div>
                     <div class="card-body">
-                        <p class="text-muted mb-3"><i class="fas fa-info-circle me-1"></i>Recent DNS record changes for this domain. Shows when records appeared or were removed, helping identify infrastructure transitions (e.g., mail provider migrations, hosting changes).</p>
+                        <p class="text-muted mb-3"><i class="fas fa-info-circle me-1"></i>Forensic audit trail of DNS record changes. Use this to pinpoint when a security-critical record was created, deleted, or modified &mdash; such as a mail provider migration, SPF change, or hosting cutover.</p>
                         {{$changes := mapGetSlice "changes" $dns_history}}
                         {{if $changes}}
                         <div class="table-responsive">
