@@ -67,6 +67,24 @@
                 {{template "source_card" .}}
                 {{end}}
 
+                <div class="card bg-dark border-info mt-4">
+                    <div class="card-body">
+                        <h5 class="card-title"><i class="fas fa-microchip me-2 text-info"></i>Under the Hood</h5>
+                        <div class="row">
+                            <div class="col-md-6 mb-3 mb-md-0">
+                                <h6 class="text-info">Analysis Engine</h6>
+                                <p class="text-muted small mb-2">DNS Tool&rsquo;s core engine is built in Go using the <a href="https://github.com/miekg/dns" class="text-info" target="_blank" rel="noopener">miekg/dns</a> library &mdash; constructing raw DNS packets in memory and sending them directly over the wire. No shelling out. No subprocess calls. No external binaries.</p>
+                                <p class="text-muted small mb-0">The engine controls EDNS0, the DO bit for DNSSEC validation, recursion flags, timeout and retry logic, and parallel resolution across four independent resolvers with majority-agreement consensus. This is native DNS at the packet level.</p>
+                            </div>
+                            <div class="col-md-6">
+                                <h6 class="text-info">Verification Commands</h6>
+                                <p class="text-muted small mb-2">The <code>dig</code>, <code>openssl</code>, and <code>curl</code> commands in each report are not how we analyze &mdash; they&rsquo;re how <em>you</em> verify. Every finding maps to a standard command you can run in your own terminal to independently confirm our results.</p>
+                                <p class="text-muted small mb-0">The transport layer is not the product. The interpretation layer is &mdash; SPF policy reasoning, DKIM state analysis, DMARC alignment logic, MX transport security, provider fingerprinting, and cross-record correlation. That&rsquo;s what 25 years of field experience looks like in code.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="card bg-dark border-secondary mt-4">
                     <div class="card-body text-center">
                         <h5 class="card-title"><i class="fas fa-laptop-code me-2 text-info"></i>Every Command, Open Source</h5>
