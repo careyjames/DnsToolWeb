@@ -16,6 +16,14 @@
     <main id="main-content" class="container my-4">
         {{template "flash_messages" .}}
 
+        {{if .IsSubdomain}}
+        <div class="alert alert-info border-0 d-flex align-items-center mb-3" style="background: rgba(13,202,240,0.08);">
+            <i class="fas fa-sitemap me-2 text-info"></i>
+            <span>You are analyzing the subdomain <strong>{{.Domain}}</strong>.
+            <a href="/analyze?domain={{.RootDomain}}" class="alert-link text-info">Analyze the root domain <strong>{{.RootDomain}}</strong> instead?</a></span>
+        </div>
+        {{end}}
+
         {{$results := .Results}}
         {{$spf := mapGetMap "spf_analysis" $results}}
         {{$dmarc := mapGetMap "dmarc_analysis" $results}}
@@ -130,7 +138,7 @@
                 <div class="row justify-content-center">
                     <div class="col-lg-8">
                         <div class="alert alert-info border-info mb-0 text-light" style="background-color: rgba(13, 202, 240, 0.15);">
-                            <h6 class="alert-heading mb-2 text-info"><i class="fas fa-info-circle me-2"></i>What This Means</h6>
+                            <p class="alert-heading mb-2 text-info fw-semibold"><i class="fas fa-info-circle me-2"></i>What This Means</p>
                             <ul class="text-start mb-0 small">
                                 <li>No authoritative DNS data is available for this domain</li>
                                 <li>Security posture cannot be evaluated without DNS records</li>
@@ -658,10 +666,10 @@
                         <div class="row">
                             <!-- SPF Analysis -->
                             <div class="col-md-4 mb-3 mb-md-0">
-                                <h6 class="d-flex align-items-center mb-1">
+                                <p class="d-flex align-items-center mb-1">
                                     <i class="fas fa-envelope me-2"></i>SPF Record
                                     <a href="https://datatracker.ietf.org/doc/html/rfc7208#section-4" target="_blank" rel="noopener" class="ms-2 text-muted rfc-link" data-bs-toggle="tooltip" data-bs-html="true" title="<strong>Sender Policy Framework</strong><br>Specifies which mail servers can send email for your domain. §4 defines SPF record syntax." aria-label="Learn about SPF - RFC 7208 §4"><i class="fas fa-info-circle"></i><span class="rfc-label">RFC 7208 §4</span></a>
-                                </h6>
+                                </p>
                                 {{$spfStatus := mapGetStr "status" $spf}}
                                 <div class="mb-2">
                                     <span class="badge bg-{{if eq $spfStatus "success"}}success{{else if eq $spfStatus "error"}}danger{{else}}warning{{end}}">
@@ -774,10 +782,10 @@
 
                             <!-- DMARC Analysis -->
                             <div class="col-md-4 mb-3 mb-md-0">
-                                <h6 class="d-flex align-items-center mb-1">
+                                <p class="d-flex align-items-center mb-1">
                                     <i class="fas fa-lock me-2"></i>DMARC Policy
                                     <a href="https://datatracker.ietf.org/doc/html/rfc7489#section-6.3" target="_blank" rel="noopener" class="ms-2 text-muted rfc-link" data-bs-toggle="tooltip" data-bs-html="true" title="<strong>Domain-based Message Authentication</strong><br>Tells receivers how to handle SPF/DKIM failures and where to send reports. §6.3 covers policy enforcement." aria-label="Learn about DMARC - RFC 7489 §6.3"><i class="fas fa-info-circle"></i><span class="rfc-label">RFC 7489 §6.3</span></a>
-                                </h6>
+                                </p>
                                 {{$dmarcStatus := mapGetStr "status" $dmarc}}
                                 {{$dmarcPolicy := mapGetStr "policy" $dmarc}}
                                 <div class="mb-2">
@@ -898,10 +906,10 @@
 
                             <!-- DKIM Analysis -->
                             <div class="col-md-4">
-                                <h6 class="d-flex align-items-center mb-1">
+                                <p class="d-flex align-items-center mb-1">
                                     <i class="fas fa-key me-2"></i>DKIM Records
                                     <a href="https://datatracker.ietf.org/doc/html/rfc6376#section-3.6" target="_blank" rel="noopener" class="ms-2 text-muted rfc-link" data-bs-toggle="tooltip" data-bs-html="true" title="<strong>DomainKeys Identified Mail</strong><br>Cryptographic signatures that verify email hasn't been altered in transit. §3.6 covers key records." aria-label="Learn about DKIM - RFC 6376 §3.6"><i class="fas fa-info-circle"></i><span class="rfc-label">RFC 6376 §3.6</span></a>
-                                </h6>
+                                </p>
                                 {{$dkimStatus := mapGetStr "status" $dkim}}
                                 <div class="mb-2">
                                     <span class="badge bg-{{if eq $dkimStatus "success"}}success{{else if or (eq $dkimStatus "warning") (eq $dkimStatus "partial")}}warning{{else}}secondary{{end}}">
@@ -978,7 +986,7 @@
                         <div class="row mt-4 pt-3 border-top mta-sts-tlsrpt-row">
                             <!-- MTA-STS Analysis -->
                             <div class="col-md-6 mb-3 mb-md-0">
-                                <h6 class="d-flex align-items-center flex-wrap">
+                                <p class="d-flex align-items-center flex-wrap">
                                     <i class="fas fa-shield-alt me-2"></i>MTA-STS
                                     <a href="https://datatracker.ietf.org/doc/html/rfc8461#section-3" target="_blank" rel="noopener" class="ms-2 text-muted rfc-link" data-bs-toggle="tooltip" data-bs-html="true" title="<strong>SMTP MTA Strict Transport Security</strong><br>Forces TLS encryption between mail servers to prevent downgrade attacks. §3 covers the DNS record." aria-label="Learn about MTA-STS - RFC 8461 §3"><i class="fas fa-info-circle"></i><span class="rfc-label">RFC 8461 §3</span></a>
                                     {{$mtaStsStatus := mapGetStr "status" $mta_sts}}
@@ -992,7 +1000,7 @@
                                     {{if mapGetBool "policy_fetched" $mta_sts}}
                                         <span class="badge bg-info ms-1" title="Policy file fetched and validated"><i class="fas fa-check-circle"></i> Policy Verified</span>
                                     {{end}}
-                                </h6>
+                                </p>
                                 <p class="text-muted mb-2 small">{{mapGetStr "message" $mta_sts}}</p>
                                 {{if mapGetStr "record" $mta_sts}}
                                     <div class="code-block small">{{mapGetStr "record" $mta_sts}}</div>
@@ -1042,14 +1050,14 @@
 
                             <!-- TLS-RPT Analysis -->
                             <div class="col-md-6">
-                                <h6 class="d-flex align-items-center">
+                                <p class="d-flex align-items-center">
                                     <i class="fas fa-file-alt me-2"></i>TLS-RPT
                                     <a href="https://datatracker.ietf.org/doc/html/rfc8460#section-3" target="_blank" rel="noopener" class="ms-2 text-muted rfc-link" data-bs-toggle="tooltip" data-bs-html="true" title="<strong>TLS Reporting</strong><br>Sends reports about TLS connection failures to help diagnose delivery issues. §3 covers the reporting record." aria-label="Learn about TLS-RPT - RFC 8460 §3"><i class="fas fa-info-circle"></i><span class="rfc-label">RFC 8460 §3</span></a>
                                     {{$tlsrptStatus := mapGetStr "status" $tlsrpt}}
                                     <span class="badge bg-{{if eq $tlsrptStatus "success"}}success{{else if eq $tlsrptStatus "error"}}danger{{else}}warning{{end}} ms-2">
                                         {{title $tlsrptStatus}}
                                     </span>
-                                </h6>
+                                </p>
                                 <p class="text-muted mb-2 small">{{mapGetStr "message" $tlsrpt}}</p>
                                 {{if mapGetStr "record" $tlsrpt}}
                                     <div class="code-block small">{{mapGetStr "record" $tlsrpt}}</div>
@@ -1079,10 +1087,10 @@
                         <!-- Email Security Management Stack -->
                         <div class="row mt-4 pt-3 border-top">
                             <div class="col-12">
-                                <h6 class="d-flex align-items-center mb-3">
+                                <p class="d-flex align-items-center mb-3">
                                     <i class="fas fa-cogs me-2"></i>Email Security Management
                                     <span class="badge bg-success ms-2"><i class="fas fa-check-circle me-1"></i>Actively Managed</span>
-                                </h6>
+                                </p>
                                 <div class="alert alert-info py-2 mb-3 small">
                                     <i class="fas fa-search me-2"></i><strong>Intelligence:</strong> This domain uses dedicated email security management — indicating continuous monitoring and professional oversight, not a &quot;set and forget&quot; configuration. Most tools ignore reporting destinations; we extract the operational security partner network directly from DNS.
                                 </div>
@@ -1132,11 +1140,11 @@
                         <div class="row mt-3 pt-3 border-top">
                             <div class="col-12">
                                 {{$draStatus := mapGetStr "status" $dmarc_report_auth}}
-                                <h6 class="d-flex align-items-center">
+                                <p class="d-flex align-items-center">
                                     <i class="fas fa-paper-plane me-2"></i>DMARC External Reporting Authorization
                                     <a href="https://datatracker.ietf.org/doc/html/rfc7489#section-7.1" target="_blank" rel="noopener" class="ms-2 text-muted rfc-link" data-bs-toggle="tooltip" data-bs-html="true" title="<strong>DMARC External Reporting</strong><br>Verifies that external domains listed in rua/ruf tags have authorized this domain to send them reports. §7.1 covers the verification mechanism." aria-label="Learn about DMARC External Reporting - RFC 7489 §7.1"><i class="fas fa-info-circle"></i><span class="rfc-label">RFC 7489 §7.1</span></a>
                                     <span class="badge bg-{{if eq $draStatus "success"}}success{{else}}warning{{end}} ms-2">{{title $draStatus}}</span>
-                                </h6>
+                                </p>
                                 <p class="text-muted mb-2 small">{{mapGetStr "message" $dmarc_report_auth}}</p>
                                 <div class="table-responsive">
                                     <table class="table table-sm table-dark small mb-2">
@@ -1186,71 +1194,6 @@
             </div>
         </div>
 
-        <!-- DNS History Timeline Section -->
-        {{if mapGetBool "available" $dns_history}}
-        <div class="row section-dns-history">
-            <div class="col-12 mb-4">
-                <div class="card">
-                    <div class="card-header">
-                        <h5 class="mb-0 d-flex align-items-center justify-content-between flex-wrap">
-                            <span><i class="fas fa-history me-2"></i>DNS History Timeline</span>
-                            <small class="text-muted">Source: {{mapGetStr "source" $dns_history}}</small>
-                        </h5>
-                        <p class="mb-0 mt-2 text-warning-emphasis" style="font-size:0.95em; font-weight:500;"><i class="fas fa-search me-1"></i>When was a record added, removed, or changed &mdash; and could that change be the problem?</p>
-                    </div>
-                    <div class="card-body">
-                        <p class="text-muted mb-3"><i class="fas fa-info-circle me-1"></i>Forensic audit trail of DNS record changes. Use this to pinpoint when a security-critical record was created, deleted, or modified &mdash; such as a mail provider migration, SPF change, or hosting cutover.</p>
-                        {{$changes := mapGetSlice "changes" $dns_history}}
-                        {{if $changes}}
-                        <div class="table-responsive">
-                            <table class="table table-sm table-striped mb-0">
-                                <thead>
-                                    <tr>
-                                        <th style="width:80px">Date</th>
-                                        <th style="width:60px">Type</th>
-                                        <th style="width:70px">Action</th>
-                                        <th>Value</th>
-                                        <th>Organization</th>
-                                        <th>Timeline</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {{range $changes}}
-                                    {{$ch := toMap .}}
-                                    {{if $ch}}
-                                    <tr>
-                                        <td><code class="text-muted" style="font-size:0.8em">{{mapGetStr "date" $ch}}</code></td>
-                                        <td><span class="badge bg-{{if eq (mapGetStr "record_type" $ch) "A"}}primary{{else if eq (mapGetStr "record_type" $ch) "MX"}}success{{else if eq (mapGetStr "record_type" $ch) "NS"}}info{{else}}secondary{{end}}">{{mapGetStr "record_type" $ch}}</span></td>
-                                        <td>
-                                            {{if eq (mapGetStr "action" $ch) "added"}}
-                                            <span class="text-success"><i class="fas fa-plus-circle me-1"></i>Added</span>
-                                            {{else}}
-                                            <span class="text-danger"><i class="fas fa-minus-circle me-1"></i>Removed</span>
-                                            {{end}}
-                                        </td>
-                                        <td><code style="font-size:0.85em">{{mapGetStr "value" $ch}}</code></td>
-                                        <td>
-                                            {{if ne (mapGetStr "org" $ch) ""}}
-                                            <span class="text-muted">{{mapGetStr "org" $ch}}</span>
-                                            {{else}}
-                                            <span class="text-muted">&mdash;</span>
-                                            {{end}}
-                                        </td>
-                                        <td><span class="text-muted" style="font-size:0.85em">{{mapGetStr "description" $ch}}</span></td>
-                                    </tr>
-                                    {{end}}
-                                    {{end}}
-                                </tbody>
-                            </table>
-                        </div>
-                        {{else}}
-                        <p class="text-muted mb-0"><i class="fas fa-check-circle text-success me-1"></i>No recent DNS changes detected. This domain's DNS configuration appears stable.</p>
-                        {{end}}
-                    </div>
-                </div>
-            </div>
-        </div>
-        {{end}}
 
         <!-- DANE/TLSA & Email Transport Security Section -->
         {{if $dane}}
@@ -1443,7 +1386,7 @@
                             <!-- BIMI Analysis -->
                             <div class="col-md-6 mb-3 mb-md-0">
                                 {{$bimiStatus := mapGetStr "status" $bimi}}
-                                <h6 class="d-flex align-items-center">
+                                <p class="d-flex align-items-center">
                                     <i class="fas fa-image me-2"></i>BIMI
                                     <a href="https://bimigroup.org/implementation-guide/" target="_blank" rel="noopener" class="ms-2 text-muted rfc-link" data-bs-toggle="tooltip" data-bs-html="true" title="<strong>Brand Indicators for Message Identification</strong><br>Displays your brand logo next to emails in recipients' inboxes." aria-label="Learn about BIMI - BIMI Group Specification"><i class="fas fa-info-circle"></i><span class="rfc-label">BIMI Spec</span></a>
                                     <span class="badge bg-{{if eq $bimiStatus "success"}}success{{else if eq $bimiStatus "error"}}danger{{else}}warning{{end}} ms-2">
@@ -1462,7 +1405,7 @@
                                     {{if mapGetBool "logo_valid" $bimi}}
                                         <span class="badge bg-success ms-1" title="Logo validated"><i class="fas fa-check"></i> {{default "Logo" (mapGetStr "logo_format" $bimi)}}</span>
                                     {{end}}
-                                </h6>
+                                </p>
                                 <p class="text-muted mb-2 small">{{mapGetStr "message" $bimi}}</p>
                                 {{if and (eq $bimiStatus "success") (not $vmcUrl)}}
                                     <div class="small text-info mb-2">
@@ -1512,7 +1455,7 @@
                             <!-- CAA Analysis -->
                             <div class="col-md-6">
                                 {{$caaStatus := mapGetStr "status" $caa}}
-                                <h6 class="d-flex align-items-center">
+                                <p class="d-flex align-items-center">
                                     <i class="fas fa-lock me-2"></i>CAA
                                     <a href="https://datatracker.ietf.org/doc/html/rfc8659#section-4" target="_blank" rel="noopener" class="ms-2 text-muted rfc-link" data-bs-toggle="tooltip" data-bs-html="true" title="<strong>Certificate Authority Authorization</strong><br>Controls which CAs can issue SSL certificates for your domain. §4 covers record processing." aria-label="Learn about CAA - RFC 8659 §4"><i class="fas fa-info-circle"></i><span class="rfc-label">RFC 8659 §4</span></a>
                                     <span class="badge bg-{{if eq $caaStatus "success"}}success{{else}}warning{{end}} ms-2">
@@ -1521,7 +1464,7 @@
                                     {{if mapGetBool "has_iodef" $caa}}
                                         <span class="badge bg-info ms-1">IODEF</span>
                                     {{end}}
-                                </h6>
+                                </p>
                                 <p class="text-muted mb-2 small">{{mapGetStr "message" $caa}}</p>
                                 {{$issuers := mapGetSlice "issuers" $caa}}
                                 {{if $issuers}}
@@ -1552,13 +1495,13 @@
                         <div class="row mt-3 pt-3 border-top">
                             <div class="col-12">
                                 {{$smimeaStatus := mapGetStr "status" $smimea}}
-                                <h6 class="d-flex align-items-center">
+                                <p class="d-flex align-items-center">
                                     <i class="fas fa-user-shield me-2"></i>S/MIME &amp; OpenPGP (SMIMEA / OPENPGPKEY)
                                     <a href="https://datatracker.ietf.org/doc/html/rfc8162" target="_blank" rel="noopener" class="ms-2 text-muted rfc-link"><i class="fas fa-info-circle"></i><span class="rfc-label">RFC 8162</span></a>
                                     <span class="badge bg-{{if eq $smimeaStatus "success"}}success{{else}}info{{end}} ms-2">{{title $smimeaStatus}}</span>
                                     {{if mapGetBool "has_smimea" $smimea}}<span class="badge bg-info ms-1">SMIMEA</span>{{end}}
                                     {{if mapGetBool "has_openpgpkey" $smimea}}<span class="badge bg-info ms-1">OPENPGPKEY</span>{{end}}
-                                </h6>
+                                </p>
                                 <p class="text-muted mb-2 small">{{mapGetStr "message" $smimea}}</p>
                                 {{$smimeaRecords := mapGetSlice "smimea_records" $smimea}}
                                 {{if $smimeaRecords}}
@@ -1762,10 +1705,10 @@
                             {{if $asn_info}}
                             <div class="col-md-{{if and $edge_cdn $saas_txt}}4{{else if or $edge_cdn $saas_txt}}6{{else}}12{{end}} mb-3">
                                 {{$asnStatus := mapGetStr "status" $asn_info}}
-                                <h6 class="d-flex align-items-center">
+                                <p class="d-flex align-items-center">
                                     <i class="fas fa-server me-2"></i>ASN / Network
                                     <span class="badge bg-{{if eq $asnStatus "success"}}success{{else}}info{{end}} ms-2">{{title $asnStatus}}</span>
-                                </h6>
+                                </p>
                                 <p class="text-muted mb-2 small">{{mapGetStr "message" $asn_info}}</p>
                                 {{$uniqueAsns := mapGetSlice "unique_asns" $asn_info}}
                                 {{if $uniqueAsns}}
@@ -1817,13 +1760,13 @@
                             {{if $edge_cdn}}
                             <div class="col-md-{{if and $asn_info $saas_txt}}4{{else if or $asn_info $saas_txt}}6{{else}}12{{end}} mb-3">
                                 {{$cdnStatus := mapGetStr "status" $edge_cdn}}
-                                <h6 class="d-flex align-items-center">
+                                <p class="d-flex align-items-center">
                                     <i class="fas fa-cloud me-2"></i>Edge / CDN
                                     <span class="badge bg-{{if eq $cdnStatus "success"}}success{{else}}info{{end}} ms-2">{{title $cdnStatus}}</span>
                                     {{if mapGetBool "is_behind_cdn" $edge_cdn}}
                                     <span class="badge bg-info ms-1">{{mapGetStr "cdn_provider" $edge_cdn}}</span>
                                     {{end}}
-                                </h6>
+                                </p>
                                 <p class="text-muted mb-2 small">{{mapGetStr "message" $edge_cdn}}</p>
                                 {{if mapGetBool "is_behind_cdn" $edge_cdn}}
                                 <div class="mb-2">
@@ -1849,14 +1792,14 @@
                             {{if $saas_txt}}
                             <div class="col-md-{{if and $asn_info $edge_cdn}}4{{else if or $asn_info $edge_cdn}}6{{else}}12{{end}} mb-3">
                                 {{$saasStatus := mapGetStr "status" $saas_txt}}
-                                <h6 class="d-flex align-items-center">
+                                <p class="d-flex align-items-center">
                                     <i class="fas fa-puzzle-piece me-2"></i>SaaS TXT Footprint
                                     <span class="badge bg-{{if eq $saasStatus "success"}}success{{else}}info{{end}} ms-2">{{title $saasStatus}}</span>
                                     {{$svcCount := mapGetFloat "service_count" $saas_txt}}
                                     {{if gt $svcCount 0}}
                                     <span class="badge bg-info ms-1">{{formatFloat 0 $svcCount}} service{{if ne $svcCount 1}}s{{end}}</span>
                                     {{end}}
-                                </h6>
+                                </p>
                                 <p class="text-muted mb-2 small">{{mapGetStr "message" $saas_txt}}</p>
                                 {{$saasServices := mapGetSlice "services" $saas_txt}}
                                 {{if $saasServices}}
@@ -1919,7 +1862,7 @@
                             <div class="col-md-6 mb-3 mb-md-0">
                                 {{$dnssecStatus := mapGetStr "status" $dnssec}}
                                 {{$chainOfTrust := mapGetStr "chain_of_trust" $dnssec}}
-                                <h6 class="d-flex align-items-center flex-wrap">
+                                <p class="d-flex align-items-center flex-wrap">
                                     <i class="fas fa-key me-2"></i>DNSSEC
                                     <a href="https://datatracker.ietf.org/doc/html/rfc4033#section-2" target="_blank" rel="noopener" class="ms-2 text-muted rfc-link" data-bs-toggle="tooltip" data-bs-html="true" title="<strong>DNS Security Extensions</strong><br>Cryptographic signatures that prove DNS responses are authentic and untampered. §2 covers DNSSEC concepts." aria-label="Learn about DNSSEC - RFC 4033 §2"><i class="fas fa-info-circle"></i><span class="rfc-label">RFC 4033 §2</span></a>
                                     <span class="badge bg-{{if eq $dnssecStatus "success"}}success{{else}}warning{{end}} ms-2">
@@ -1928,7 +1871,7 @@
                                     {{if mapGetStr "algorithm_name" $dnssec}}
                                         <span class="badge bg-info ms-2 text-break">{{mapGetStr "algorithm_name" $dnssec}}</span>
                                     {{end}}
-                                </h6>
+                                </p>
                                 <p class="text-muted mb-2 small">{{mapGetStr "message" $dnssec}}</p>
                                 
                                 {{if and (eq $dnssecStatus "success") (eq $chainOfTrust "inherited")}}
@@ -2007,7 +1950,7 @@
                                 {{$nsIsSubdomain := mapGetBool "is_subdomain" $ns}}
                                 {{$nsDelegationOk := mapGetBool "delegation_ok" $ns}}
                                 {{$nsMatch := mapGetStr "match" $ns}}
-                                <h6 class="d-flex align-items-center">
+                                <p class="d-flex align-items-center">
                                     <i class="fas fa-project-diagram me-2"></i>NS Delegation
                                     <span class="badge bg-{{if eq $nsStatus "success"}}success{{else if eq $nsStatus "warning"}}warning{{else}}secondary{{end}} ms-2">
                                         {{if $nsIsSubdomain}}Subdomain{{else if $nsDelegationOk}}Verified{{else}}Check Failed{{end}}
@@ -2017,7 +1960,7 @@
                                     {{else if eq $nsMatch "false"}}
                                         <span class="badge bg-warning ms-1">Mismatch</span>
                                     {{end}}
-                                </h6>
+                                </p>
                                 <p class="text-muted mb-2 small">{{mapGetStr "message" $ns}}</p>
                                 
                                 {{if $nsIsSubdomain}}
@@ -2106,7 +2049,7 @@
                         <div class="row mt-3 pt-3 border-top">
                             <div class="col-12">
                                 {{$httpsSvcbStatus := mapGetStr "status" $https_svcb}}
-                                <h6 class="d-flex align-items-center">
+                                <p class="d-flex align-items-center">
                                     <i class="fas fa-bolt me-2"></i>HTTPS / SVCB Records
                                     <a href="https://datatracker.ietf.org/doc/html/rfc9460" target="_blank" rel="noopener" class="ms-2 text-muted rfc-link"><i class="fas fa-info-circle"></i><span class="rfc-label">RFC 9460</span></a>
                                     <span class="badge bg-{{if eq $httpsSvcbStatus "success"}}success{{else}}info{{end}} ms-2">{{title $httpsSvcbStatus}}</span>
@@ -2114,7 +2057,7 @@
                                     {{if mapGetBool "has_svcb" $https_svcb}}<span class="badge bg-info ms-1">SVCB</span>{{end}}
                                     {{if mapGetBool "supports_http3" $https_svcb}}<span class="badge bg-success ms-1">HTTP/3</span>{{end}}
                                     {{if mapGetBool "supports_ech" $https_svcb}}<span class="badge bg-success ms-1">ECH</span>{{end}}
-                                </h6>
+                                </p>
                                 <p class="text-muted mb-2 small">{{mapGetStr "message" $https_svcb}}</p>
                                 {{$httpsRecords := mapGetSlice "https_records" $https_svcb}}
                                 {{if $httpsRecords}}
@@ -2166,7 +2109,7 @@
                         <div class="row mt-3 pt-3 border-top">
                             <div class="col-12">
                                 {{$cdsStatus := mapGetStr "status" $cds_cdnskey}}
-                                <h6 class="d-flex align-items-center">
+                                <p class="d-flex align-items-center">
                                     <i class="fas fa-sync me-2"></i>CDS / CDNSKEY (DNSSEC Automation)
                                     <a href="https://datatracker.ietf.org/doc/html/rfc7344" target="_blank" rel="noopener" class="ms-2 text-muted rfc-link"><i class="fas fa-info-circle"></i><span class="rfc-label">RFC 7344</span></a>
                                     <span class="badge bg-{{if eq $cdsStatus "success"}}success{{else}}info{{end}} ms-2">{{title $cdsStatus}}</span>
@@ -2177,7 +2120,7 @@
                                     {{else if eq $automation "partial"}}<span class="badge bg-warning ms-1">Partial</span>
                                     {{else if eq $automation "delete_signal"}}<span class="badge bg-danger ms-1">Delete Signal</span>
                                     {{end}}
-                                </h6>
+                                </p>
                                 <p class="text-muted mb-2 small">{{mapGetStr "message" $cds_cdnskey}}</p>
                                 {{$cdsRecords := mapGetSlice "cds_records" $cds_cdnskey}}
                                 {{if $cdsRecords}}
@@ -2252,9 +2195,9 @@
                         <div class="row">
                             <!-- A Records (IPv4) -->
                             <div class="col-md-3 mb-3">
-                                <h6 class="d-flex align-items-center">
+                                <p class="d-flex align-items-center">
                                     <span class="badge bg-primary me-2">A</span>IPv4 Address
-                                </h6>
+                                </p>
                                 {{$aRecords := mapGetSlice "A" $basic}}
                                 {{if $aRecords}}
                                     {{range $record := $aRecords}}
@@ -2269,9 +2212,9 @@
 
                             <!-- AAAA Records (IPv6) -->
                             <div class="col-md-3 mb-3">
-                                <h6 class="d-flex align-items-center">
+                                <p class="d-flex align-items-center">
                                     <span class="badge bg-info me-2">AAAA</span>IPv6 Address
-                                </h6>
+                                </p>
                                 {{$aaaaRecords := mapGetSlice "AAAA" $basic}}
                                 {{if $aaaaRecords}}
                                     {{range $record := $aaaaRecords}}
@@ -2286,9 +2229,9 @@
 
                             <!-- MX Records (Mail) -->
                             <div class="col-md-3 mb-3">
-                                <h6 class="d-flex align-items-center">
+                                <p class="d-flex align-items-center">
                                     <span class="badge bg-warning text-dark me-2">MX</span>Mail Servers
-                                </h6>
+                                </p>
                                 {{$mxRecords := mapGetSlice "MX" $basic}}
                                 {{if $mxRecords}}
                                     {{if mapGetBool "has_null_mx" $results}}
@@ -2314,9 +2257,9 @@
 
                             <!-- SRV Records (Services) -->
                             <div class="col-md-3 mb-3">
-                                <h6 class="d-flex align-items-center">
+                                <p class="d-flex align-items-center">
                                     <span class="badge bg-secondary me-2">SRV</span>Services
-                                </h6>
+                                </p>
                                 {{$srvRecords := mapGetSlice "SRV" $basic}}
                                 {{if $srvRecords}}
                                     {{range $record := $srvRecords}}
@@ -2411,19 +2354,15 @@
             </div>
         </div>
 
-        <!-- Live DNS Diff Feature Callout -->
+        <!-- DNS Intelligence Section Header -->
         <div class="card bg-dark border-info mb-4">
             <div class="card-body py-3">
-                <div class="d-flex align-items-center">
-                    <div class="me-3">
-                        <span class="badge bg-info text-dark px-3 py-2" style="font-size: 0.9rem;">
-                            <i class="fas fa-code-compare me-2"></i>Live DNS Diff
+                <div class="d-flex align-items-center justify-content-between flex-wrap">
+                    <div class="d-flex align-items-center">
+                        <span class="badge bg-info text-dark px-3 py-2 me-3" style="font-size: 0.9rem;">
+                            <i class="fas fa-microscope me-2"></i>DNS Intelligence
                         </span>
-                    </div>
-                    <div>
-                        <strong class="text-info">Real-time propagation comparison</strong>
-                        <span class="text-muted ms-2">|</span>
-                        <span class="text-light ms-2">See exactly what public resolvers return vs. what your authoritative nameserver has. Spot propagation delays, stale cache, and DNS misconfigurations instantly.</span>
+                        <span class="text-light">What does DNS look like <strong class="text-info">right now</strong> &mdash; and what <strong class="text-info">changed over time</strong>?</span>
                     </div>
                 </div>
             </div>
@@ -2545,6 +2484,87 @@
             </div>
         </div>
         </div>
+
+        <!-- DNS History Timeline (SecurityTrails) -->
+        {{if mapGetBool "available" $dns_history}}
+        <div class="col-12 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0 d-flex align-items-center justify-content-between flex-wrap">
+                        <span><i class="fas fa-history me-2"></i>DNS History Timeline</span>
+                        <small class="text-muted">Source: {{mapGetStr "source" $dns_history}}</small>
+                    </h5>
+                    <p class="mb-0 mt-2 text-warning-emphasis" style="font-size:0.95em; font-weight:500;"><i class="fas fa-search me-1"></i>When was a record added, removed, or changed &mdash; and could that change be the problem?</p>
+                </div>
+                <div class="card-body">
+                    {{$changes := mapGetSlice "changes" $dns_history}}
+                    {{if $changes}}
+                    <div class="table-responsive">
+                        <table class="table table-sm table-striped mb-0">
+                            <thead>
+                                <tr>
+                                    <th style="width:80px">Date</th>
+                                    <th style="width:60px">Type</th>
+                                    <th style="width:70px">Action</th>
+                                    <th>Value</th>
+                                    <th>Organization</th>
+                                    <th>Timeline</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {{range $changes}}
+                                {{$ch := toMap .}}
+                                {{if $ch}}
+                                <tr>
+                                    <td><code class="text-muted" style="font-size:0.8em">{{mapGetStr "date" $ch}}</code></td>
+                                    <td><span class="badge bg-{{if eq (mapGetStr "record_type" $ch) "A"}}primary{{else if eq (mapGetStr "record_type" $ch) "MX"}}success{{else if eq (mapGetStr "record_type" $ch) "NS"}}info{{else}}secondary{{end}}">{{mapGetStr "record_type" $ch}}</span></td>
+                                    <td>
+                                        {{if eq (mapGetStr "action" $ch) "added"}}
+                                        <span class="text-success"><i class="fas fa-plus-circle me-1"></i>Added</span>
+                                        {{else}}
+                                        <span class="text-danger"><i class="fas fa-minus-circle me-1"></i>Removed</span>
+                                        {{end}}
+                                    </td>
+                                    <td><code style="font-size:0.85em">{{mapGetStr "value" $ch}}</code></td>
+                                    <td>
+                                        {{if ne (mapGetStr "org" $ch) ""}}
+                                        <span class="text-muted">{{mapGetStr "org" $ch}}</span>
+                                        {{else}}
+                                        <span class="text-muted">&mdash;</span>
+                                        {{end}}
+                                    </td>
+                                    <td><span class="text-muted" style="font-size:0.85em">{{mapGetStr "description" $ch}}</span></td>
+                                </tr>
+                                {{end}}
+                                {{end}}
+                            </tbody>
+                        </table>
+                    </div>
+                    {{else}}
+                    <p class="text-muted mb-0"><i class="fas fa-check-circle text-success me-1"></i>No recent DNS changes detected. This domain's DNS configuration appears stable.</p>
+                    {{end}}
+                </div>
+            </div>
+        </div>
+        {{else}}
+        <div class="col-12 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0 d-flex align-items-center justify-content-between flex-wrap">
+                        <span><i class="fas fa-history me-2"></i>DNS History Timeline</span>
+                        <small class="text-muted">SecurityTrails</small>
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {{if mapGetBool "api_enabled" $dns_history}}
+                    <p class="text-muted mb-0"><i class="fas fa-check-circle text-success me-1"></i>No recent DNS changes detected. This domain's DNS configuration appears stable.</p>
+                    {{else}}
+                    <p class="text-muted mb-0"><i class="fas fa-info-circle text-info me-1"></i>DNS history requires a SecurityTrails API integration. Historical A, MX, and NS record changes will appear here once enabled.</p>
+                    {{end}}
+                </div>
+            </div>
+        </div>
+        {{end}}
 
         <!-- Subdomain Discovery (Certificate Transparency) -->
         <div class="row mt-4">
@@ -2749,12 +2769,12 @@
                     {{if gt $danglingCount 0}}
                     <div class="mt-4 pt-3 border-top">
                         {{$danglingStatus := mapGetStr "status" $dangling_dns}}
-                        <h6 class="d-flex align-items-center">
+                        <p class="d-flex align-items-center">
                             <i class="fas fa-unlink me-2"></i>Dangling DNS / Subdomain Takeover Risk
                             <span class="badge bg-{{if eq $danglingStatus "critical"}}danger{{else if eq $danglingStatus "warning"}}warning{{else}}success{{end}} ms-2">
                                 {{formatFloat 0 $danglingCount}} risk{{if ne $danglingCount 1}}s{{end}}
                             </span>
-                        </h6>
+                        </p>
                         <p class="text-muted mb-2 small">{{mapGetStr "message" $dangling_dns}}</p>
                         {{$danglingRecords := mapGetSlice "dangling_records" $dangling_dns}}
                         {{if $danglingRecords}}
@@ -2822,7 +2842,7 @@
                         <i class="fas fa-paper-plane fa-2x text-secondary opacity-75"></i>
                     </div>
                     <div class="flex-grow-1">
-                        <h6 class="mb-1">Confirm Your Email Configuration</h6>
+                        <p class="mb-1 fw-semibold">Confirm Your Email Configuration</p>
                         <p class="text-muted mb-0 small">
                             This tool analyzes DNS records, but to verify actual email delivery, send a test email to 
                             <a href="https://redsift.com/tools/investigate" target="_blank" rel="noopener" class="text-info">
@@ -2838,7 +2858,7 @@
         <!-- Data Freshness & Methodology Disclosure -->
         <div class="card border-secondary border-opacity-25 mt-4 mb-3">
             <div class="card-body py-3 px-4">
-                <h6 class="text-muted mb-2" style="font-size: 0.8rem;"><i class="fas fa-flask me-1"></i>DATA FRESHNESS &amp; METHODOLOGY</h6>
+                <p class="text-muted mb-2 fw-semibold" style="font-size: 0.8rem;"><i class="fas fa-flask me-1"></i>DATA FRESHNESS &amp; METHODOLOGY</p>
                 <p class="text-muted mb-2" style="font-size: 0.75rem; line-height: 1.6;">
                     All security-critical records (SPF, DMARC, DKIM, DANE/TLSA, DNSSEC, MTA-STS, TLS-RPT, BIMI, CAA) are queried <strong>live</strong> from authoritative nameservers and cross-referenced against 4 independent public DNS resolvers (Cloudflare, Google, Quad9, OpenDNS) at the time of each analysis. No security verdict uses cached data.
                 </p>
@@ -2875,9 +2895,9 @@
                     {{range .VerificationCommands}}
                     {{if ne .Section $currentSection}}
                     {{$currentSection = .Section}}
-                    <h6 class="text-info mt-3 mb-2 border-bottom border-secondary pb-1">
+                    <p class="text-info mt-3 mb-2 border-bottom border-secondary pb-1 fw-semibold">
                         <i class="fas fa-angle-right me-1"></i>{{.Section}}
-                    </h6>
+                    </p>
                     {{end}}
                     <div class="mb-2">
                         <div class="d-flex align-items-center justify-content-between mb-1">
@@ -2917,7 +2937,7 @@
             {{range .VerificationCommands}}
             {{if ne .Section $printSection}}
             {{$printSection = .Section}}
-            <h6 style="color:#0dcaf0;margin-top:0.5rem;margin-bottom:0.25rem;font-size:0.8rem;border-bottom:1px solid #495057;padding-bottom:2px;">{{.Section}}</h6>
+            <p style="color:#0dcaf0;margin-top:0.5rem;margin-bottom:0.25rem;font-size:0.8rem;border-bottom:1px solid #495057;padding-bottom:2px;font-weight:600;">{{.Section}}</p>
             {{end}}
             <div style="margin-bottom:4px;">
                 <span style="font-size:0.7rem;color:#6c757d;">{{.Description}}{{if .RFC}} ({{.RFC}}){{end}}</span>

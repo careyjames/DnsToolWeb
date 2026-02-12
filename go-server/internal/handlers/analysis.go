@@ -113,6 +113,7 @@ func (h *AnalysisHandler) ViewAnalysisStatic(c *gin.Context) {
 
         verifyCommands := analyzer.GenerateVerificationCommands(analysis.AsciiDomain, results)
 
+        isSub, rootDom := extractRootDomain(analysis.AsciiDomain)
         c.HTML(http.StatusOK, "results.html", gin.H{
                 "AppVersion":           h.Config.AppVersion,
                 "CspNonce":             nonce,
@@ -130,6 +131,8 @@ func (h *AnalysisHandler) ViewAnalysisStatic(c *gin.Context) {
                 "DomainExists":         domainExists,
                 "ToolVersion":          toolVersion,
                 "VerificationCommands": verifyCommands,
+                "IsSubdomain":          isSub,
+                "RootDomain":           rootDom,
         })
 }
 
@@ -239,6 +242,7 @@ func (h *AnalysisHandler) Analyze(c *gin.Context) {
 
         verifyCommands := analyzer.GenerateVerificationCommands(asciiDomain, results)
 
+        isSub, rootDom := extractRootDomain(asciiDomain)
         c.HTML(http.StatusOK, "results.html", gin.H{
                 "AppVersion":           h.Config.AppVersion,
                 "CspNonce":             nonce,
@@ -255,6 +259,8 @@ func (h *AnalysisHandler) Analyze(c *gin.Context) {
                 "DomainExists":         domainExists,
                 "ToolVersion":          h.Config.AppVersion,
                 "VerificationCommands": verifyCommands,
+                "IsSubdomain":          isSub,
+                "RootDomain":           rootDom,
         })
 }
 
