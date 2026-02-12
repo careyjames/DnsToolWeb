@@ -385,7 +385,7 @@
                         <div class="card-body">
                             <div class="d-flex align-items-center mb-2">
                                 <i class="{{.Icon}} text-info me-2"></i>
-                                <span class="badge bg-info bg-opacity-25 text-info me-2" style="font-size:0.65rem;">{{.Category}}</span>
+                                <span class="badge changelog-badge changelog-badge-{{.Category | lower}} me-2" style="font-size:0.65rem;">{{.Category}}</span>
                                 <span class="text-muted small ms-auto">{{.Date}}</span>
                             </div>
                             <h6 class="card-title mb-1">{{.Title}}</h6>

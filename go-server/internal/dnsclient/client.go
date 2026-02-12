@@ -517,6 +517,11 @@ func (c *Client) CheckDNSSECADFlag(ctx context.Context, domain string) ADFlagRes
         return result
 }
 
+func (c *Client) ExchangeContext(ctx context.Context, msg *dns.Msg) (*dns.Msg, error) {
+        resolverAddr := net.JoinHostPort(c.resolvers[0].IP, "53")
+        return c.exchangeWithFallback(ctx, msg, resolverAddr)
+}
+
 func (c *Client) exchangeWithFallback(ctx context.Context, msg *dns.Msg, resolverAddr string) (*dns.Msg, error) {
         udpClient := &dns.Client{Net: "udp", Timeout: c.timeout}
         r, _, err := udpClient.ExchangeContext(ctx, msg, resolverAddr)

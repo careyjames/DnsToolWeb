@@ -999,6 +999,38 @@ main.container {
     color: #ffffff;
 }
 
+/* Changelog category badges - WCAG AA contrast on dark cards */
+.changelog-badge {
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    border: 1px solid transparent;
+}
+.changelog-badge-transparency {
+    background-color: rgba(13, 202, 240, 0.15) !important;
+    color: #67d6ed !important;
+    border-color: rgba(13, 202, 240, 0.3);
+}
+.changelog-badge-intelligence {
+    background-color: rgba(111, 66, 193, 0.18) !important;
+    color: #b794f6 !important;
+    border-color: rgba(111, 66, 193, 0.35);
+}
+.changelog-badge-analysis {
+    background-color: rgba(25, 135, 84, 0.18) !important;
+    color: #75d4a7 !important;
+    border-color: rgba(25, 135, 84, 0.35);
+}
+.changelog-badge-security {
+    background-color: rgba(255, 193, 7, 0.15) !important;
+    color: #ffd95a !important;
+    border-color: rgba(255, 193, 7, 0.3);
+}
+.changelog-badge-core {
+    background-color: rgba(108, 117, 125, 0.2) !important;
+    color: #b0b8c1 !important;
+    border-color: rgba(108, 117, 125, 0.35);
+}
+
 /* Executive-level verdict box styling */
 .alert-success {
     background-color: var(--status-success-bg);
