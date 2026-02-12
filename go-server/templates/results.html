@@ -399,7 +399,18 @@
                                         <strong class="small">{{mapGetStr "title" $fixMap}}</strong>
                                     </div>
                                     <p class="text-muted mb-1" style="font-size: 0.75rem;">{{mapGetStr "fix" $fixMap}}</p>
-                                    {{if mapGetStr "dns_record" $fixMap}}
+                                    {{if mapGetStr "dns_host" $fixMap}}
+                                    <div class="mt-1 p-2 rounded" style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); font-size: 0.72rem;">
+                                        <div class="text-muted mb-1" style="font-size: 0.65rem;"><i class="fas fa-info-circle me-1"></i>{{mapGetStr "dns_purpose" $fixMap}}</div>
+                                        <table class="table table-dark table-sm table-borderless mb-0" style="font-size: 0.72rem;">
+                                            <tbody>
+                                                <tr><td style="width: 70px; color: #8b949e;" class="py-0 fw-semibold">Type</td><td class="py-0"><code class="text-info">{{mapGetStr "dns_type" $fixMap}}</code></td></tr>
+                                                <tr><td style="color: #8b949e;" class="py-0 fw-semibold">Host</td><td class="py-0"><code class="text-info">{{mapGetStr "dns_host" $fixMap}}</code> <span class="text-muted" style="font-size: 0.62rem;">{{mapGetStr "dns_host_help" $fixMap}}</span></td></tr>
+                                                <tr><td style="color: #8b949e;" class="py-0 fw-semibold">Value</td><td class="py-0"><code class="text-warning">{{mapGetStr "dns_value" $fixMap}}</code></td></tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                    {{else if mapGetStr "dns_record" $fixMap}}
                                     <div class="code-block small mt-1 border-warning" style="font-size: 0.7rem;">{{mapGetStr "dns_record" $fixMap}}</div>
                                     {{end}}
                                     <div class="mt-1 d-flex align-items-center flex-wrap gap-1">
@@ -433,7 +444,18 @@
                                             <strong class="small">{{mapGetStr "title" $fixMap}}</strong>
                                         </div>
                                         <p class="text-muted mb-1" style="font-size: 0.75rem;">{{mapGetStr "fix" $fixMap}}</p>
-                                        {{if mapGetStr "dns_record" $fixMap}}
+                                        {{if mapGetStr "dns_host" $fixMap}}
+                                        <div class="mt-1 p-2 rounded" style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); font-size: 0.72rem;">
+                                            <div class="text-muted mb-1" style="font-size: 0.65rem;"><i class="fas fa-info-circle me-1"></i>{{mapGetStr "dns_purpose" $fixMap}}</div>
+                                            <table class="table table-dark table-sm table-borderless mb-0" style="font-size: 0.72rem;">
+                                                <tbody>
+                                                    <tr><td style="width: 70px; color: #8b949e;" class="py-0 fw-semibold">Type</td><td class="py-0"><code class="text-info">{{mapGetStr "dns_type" $fixMap}}</code></td></tr>
+                                                    <tr><td style="color: #8b949e;" class="py-0 fw-semibold">Host</td><td class="py-0"><code class="text-info">{{mapGetStr "dns_host" $fixMap}}</code> <span class="text-muted" style="font-size: 0.62rem;">{{mapGetStr "dns_host_help" $fixMap}}</span></td></tr>
+                                                    <tr><td style="color: #8b949e;" class="py-0 fw-semibold">Value</td><td class="py-0"><code class="text-warning">{{mapGetStr "dns_value" $fixMap}}</code></td></tr>
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                        {{else if mapGetStr "dns_record" $fixMap}}
                                         <div class="code-block small mt-1 border-warning" style="font-size: 0.7rem;">{{mapGetStr "dns_record" $fixMap}}</div>
                                         {{end}}
                                         <div class="mt-1 d-flex align-items-center flex-wrap gap-1">
@@ -621,12 +643,36 @@
                                     {{end}}
                                 </div>
                                 {{end}}
-                                {{$recRecs := mapGetSlice "recommended_records" $mp}}
+                                {{$recRecs := toMapSlice (mapGet "recommended_records" $mp)}}
                                 {{if $recRecs}}
                                 <div class="mt-2 pt-2 border-top border-warning border-opacity-25">
-                                    <strong class="d-block mb-1"><i class="fas fa-code me-1"></i>Recommended DNS records:</strong>
+                                    <strong class="d-block mb-2"><i class="fas fa-plus-circle me-1"></i>Add these DNS records at your provider:</strong>
+                                    <div class="small text-muted mb-2"><i class="fas fa-info-circle me-1"></i>Log in to wherever you manage DNS for this domain (e.g., Cloudflare, GoDaddy, Namecheap) and add each record below.</div>
                                     {{range $rec := $recRecs}}
-                                    <div class="code-block small mb-1">{{$rec}}</div>
+                                    <div class="mb-3 p-2 rounded" style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08);">
+                                        <div class="d-flex align-items-center mb-1">
+                                            <span class="badge bg-warning text-dark me-2">{{mapGetStr "record_type" $rec}}</span>
+                                            <span class="text-muted small">{{mapGetStr "purpose" $rec}}</span>
+                                        </div>
+                                        <table class="table table-dark table-sm table-borderless mb-0" style="font-size: 0.8rem;">
+                                            <tbody>
+                                                <tr>
+                                                    <td style="width: 90px; color: #8b949e;" class="fw-semibold">Host / Name</td>
+                                                    <td><code class="text-info">{{mapGetStr "host" $rec}}</code></td>
+                                                    <td class="text-muted" style="font-size: 0.75rem;">{{mapGetStr "host_help" $rec}}</td>
+                                                </tr>
+                                                <tr>
+                                                    <td style="color: #8b949e;" class="fw-semibold">Type</td>
+                                                    <td><code class="text-info">{{mapGetStr "record_type" $rec}}</code></td>
+                                                    <td class="text-muted" style="font-size: 0.75rem;">Select this from the record type dropdown</td>
+                                                </tr>
+                                                <tr>
+                                                    <td style="color: #8b949e;" class="fw-semibold">Value</td>
+                                                    <td colspan="2"><code class="text-warning">{{mapGetStr "value" $rec}}</code></td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
                                     {{end}}
                                 </div>
                                 {{end}}
@@ -653,12 +699,36 @@
                                     {{end}}
                                 </div>
                                 {{end}}
-                                {{$recRecs := mapGetSlice "recommended_records" $mp}}
+                                {{$recRecs := toMapSlice (mapGet "recommended_records" $mp)}}
                                 {{if $recRecs}}
                                 <div class="mt-2 pt-2 border-top border-secondary border-opacity-25">
-                                    <strong class="d-block mb-1"><i class="fas fa-code me-1"></i>Recommended DNS records:</strong>
+                                    <strong class="d-block mb-2"><i class="fas fa-plus-circle me-1"></i>Add these DNS records at your provider:</strong>
+                                    <div class="small text-muted mb-2"><i class="fas fa-info-circle me-1"></i>Log in to wherever you manage DNS for this domain (e.g., Cloudflare, GoDaddy, Namecheap) and add each record below.</div>
                                     {{range $rec := $recRecs}}
-                                    <div class="code-block small mb-1">{{$rec}}</div>
+                                    <div class="mb-3 p-2 rounded" style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08);">
+                                        <div class="d-flex align-items-center mb-1">
+                                            <span class="badge bg-secondary me-2">{{mapGetStr "record_type" $rec}}</span>
+                                            <span class="text-muted small">{{mapGetStr "purpose" $rec}}</span>
+                                        </div>
+                                        <table class="table table-dark table-sm table-borderless mb-0" style="font-size: 0.8rem;">
+                                            <tbody>
+                                                <tr>
+                                                    <td style="width: 90px; color: #8b949e;" class="fw-semibold">Host / Name</td>
+                                                    <td><code class="text-info">{{mapGetStr "host" $rec}}</code></td>
+                                                    <td class="text-muted" style="font-size: 0.75rem;">{{mapGetStr "host_help" $rec}}</td>
+                                                </tr>
+                                                <tr>
+                                                    <td style="color: #8b949e;" class="fw-semibold">Type</td>
+                                                    <td><code class="text-info">{{mapGetStr "record_type" $rec}}</code></td>
+                                                    <td class="text-muted" style="font-size: 0.75rem;">Select this from the record type dropdown</td>
+                                                </tr>
+                                                <tr>
+                                                    <td style="color: #8b949e;" class="fw-semibold">Value</td>
+                                                    <td colspan="2"><code class="text-warning">{{mapGetStr "value" $rec}}</code></td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
                                     {{end}}
                                 </div>
                                 {{end}}
@@ -781,7 +851,17 @@
                                         <i class="fas fa-wrench text-warning me-1"></i>
                                         <strong class="text-warning">{{mapGetStr "title" $spfFix}}:</strong>
                                         <span class="text-muted">{{truncate 120 (mapGetStr "why" $spfFix)}}</span>
-                                        {{if mapGetStr "dns_record" $spfFix}}
+                                        {{if mapGetStr "dns_host" $spfFix}}
+                                        <div class="mt-1 p-2 rounded" style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); font-size: 0.72rem;">
+                                            <table class="table table-dark table-sm table-borderless mb-0" style="font-size: 0.72rem;">
+                                                <tbody>
+                                                    <tr><td style="width: 55px; color: #8b949e;" class="py-0 fw-semibold">Type</td><td class="py-0"><code class="text-info">{{mapGetStr "dns_type" $spfFix}}</code></td></tr>
+                                                    <tr><td style="color: #8b949e;" class="py-0 fw-semibold">Host</td><td class="py-0"><code class="text-info">{{mapGetStr "dns_host" $spfFix}}</code></td></tr>
+                                                    <tr><td style="color: #8b949e;" class="py-0 fw-semibold">Value</td><td class="py-0"><code class="text-warning">{{mapGetStr "dns_value" $spfFix}}</code></td></tr>
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                        {{else if mapGetStr "dns_record" $spfFix}}
                                         <div class="code-block small mt-1 border-warning" style="font-size: 0.7rem;">{{mapGetStr "dns_record" $spfFix}}</div>
                                         {{end}}
                                     </div>
@@ -905,7 +985,17 @@
                                         <i class="fas fa-wrench text-warning me-1"></i>
                                         <strong class="text-warning">{{mapGetStr "title" $dmarcFix}}:</strong>
                                         <span class="text-muted">{{truncate 120 (mapGetStr "why" $dmarcFix)}}</span>
-                                        {{if mapGetStr "dns_record" $dmarcFix}}
+                                        {{if mapGetStr "dns_host" $dmarcFix}}
+                                        <div class="mt-1 p-2 rounded" style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); font-size: 0.72rem;">
+                                            <table class="table table-dark table-sm table-borderless mb-0" style="font-size: 0.72rem;">
+                                                <tbody>
+                                                    <tr><td style="width: 55px; color: #8b949e;" class="py-0 fw-semibold">Type</td><td class="py-0"><code class="text-info">{{mapGetStr "dns_type" $dmarcFix}}</code></td></tr>
+                                                    <tr><td style="color: #8b949e;" class="py-0 fw-semibold">Host</td><td class="py-0"><code class="text-info">{{mapGetStr "dns_host" $dmarcFix}}</code></td></tr>
+                                                    <tr><td style="color: #8b949e;" class="py-0 fw-semibold">Value</td><td class="py-0"><code class="text-warning">{{mapGetStr "dns_value" $dmarcFix}}</code></td></tr>
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                        {{else if mapGetStr "dns_record" $dmarcFix}}
                                         <div class="code-block small mt-1 border-warning" style="font-size: 0.7rem;">{{mapGetStr "dns_record" $dmarcFix}}</div>
                                         {{end}}
                                     </div>

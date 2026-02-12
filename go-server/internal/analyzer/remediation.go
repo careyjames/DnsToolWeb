@@ -55,6 +55,11 @@ type fix struct {
         Title         string
         Description   string
         DNSRecord     string
+        DNSHost       string
+        DNSType       string
+        DNSValue      string
+        DNSPurpose    string
+        DNSHostHelp   string
         RFC           string
         RFCURL        string
         Severity      string
@@ -117,7 +122,7 @@ func extractDomain(results map[string]any) string {
 }
 
 func fixToMap(f fix) map[string]any {
-        return map[string]any{
+        m := map[string]any{
                 "title":          f.Title,
                 "fix":            f.Description,
                 "dns_record":     f.DNSRecord,
@@ -128,6 +133,14 @@ func fixToMap(f fix) map[string]any {
                 "severity_order": f.SeverityOrder,
                 "section":        f.Section,
         }
+        if f.DNSHost != "" {
+                m["dns_host"] = f.DNSHost
+                m["dns_type"] = f.DNSType
+                m["dns_value"] = f.DNSValue
+                m["dns_purpose"] = f.DNSPurpose
+                m["dns_host_help"] = f.DNSHostHelp
+        }
+        return m
 }
 
 func sortFixes(fixes []fix) {
@@ -140,6 +153,19 @@ func sortFixes(fixes []fix) {
                 }
                 fixes[j+1] = key
         }
+}
+
+func buildSPFValue(includes []string, qualifier string) string {
+        var parts []string
+        parts = append(parts, "v=spf1")
+        for _, inc := range includes {
+                parts = append(parts, fmt.Sprintf("include:%s", inc))
+        }
+        if len(includes) == 0 {
+                parts = append(parts, "include:_spf.google.com")
+        }
+        parts = append(parts, qualifier)
+        return strings.Join(parts, " ")
 }
 
 func buildSPFRecordExample(domain string, includes []string, qualifier string) string {
@@ -182,6 +208,11 @@ func appendSPFFixes(fixes []fix, ps protocolState, ds DKIMState, results map[str
                         Title:         "Fix dangerously permissive SPF",
                         Description:   "Your SPF record uses +all, which allows any server in the world to send email as your domain — it provides zero protection. Change to ~all (softfail) or -all (hardfail) immediately.",
                         DNSRecord:     buildSPFRecordExample(domain, includes, "~all"),
+                        DNSHost:       "@",
+                        DNSType:       "TXT",
+                        DNSValue:      buildSPFValue(includes, "~all"),
+                        DNSPurpose:    "Replaces the dangerous +all with ~all to restrict unauthorized senders",
+                        DNSHostHelp:   "@ means the root domain itself — some providers show this as the domain name or leave it blank",
                         RFC:           "RFC 7208 §5.1",
                         RFCURL:        "https://datatracker.ietf.org/doc/html/rfc7208#section-5.1",
                         Severity:      severityCritical,
@@ -196,6 +227,11 @@ func appendSPFFixes(fixes []fix, ps protocolState, ds DKIMState, results map[str
                         Title:         "Strengthen SPF enforcement",
                         Description:   "Your SPF record uses ?all (neutral), which tells receivers to accept email regardless of SPF check results. Change to ~all (softfail) or -all (hardfail) to restrict unauthorized senders.",
                         DNSRecord:     buildSPFRecordExample(domain, includes, "~all"),
+                        DNSHost:       "@",
+                        DNSType:       "TXT",
+                        DNSValue:      buildSPFValue(includes, "~all"),
+                        DNSPurpose:    "Replaces ?all (neutral) with ~all to restrict unauthorized senders",
+                        DNSHostHelp:   "@ means the root domain itself — some providers show this as the domain name or leave it blank",
                         RFC:           "RFC 7208 §5.2",
                         RFCURL:        "https://datatracker.ietf.org/doc/html/rfc7208#section-5.2",
                         Severity:      severityHigh,
@@ -228,6 +264,11 @@ func appendSPFFixes(fixes []fix, ps protocolState, ds DKIMState, results map[str
                 Title:         "Publish SPF record",
                 Description:   "SPF (Sender Policy Framework) tells receiving mail servers which IP addresses are authorized to send email for your domain. Without SPF, any server can claim to send as your domain.",
                 DNSRecord:     buildSPFRecordExample(domain, includes, "~all"),
+                DNSHost:       "@",
+                DNSType:       "TXT",
+                DNSValue:      buildSPFValue(includes, "~all"),
+                DNSPurpose:    "Defines which servers are authorized to send email for this domain",
+                DNSHostHelp:   "@ means the root domain itself — some providers show this as the domain name or leave it blank",
                 RFC:           "RFC 7208 §4",
                 RFCURL:        "https://datatracker.ietf.org/doc/html/rfc7208#section-4",
                 Severity:      severityCritical,
@@ -280,6 +321,11 @@ func appendDMARCFixes(fixes []fix, ps protocolState, results map[string]any, dom
                         Title:         "Publish DMARC policy",
                         Description:   "DMARC (Domain-based Message Authentication, Reporting & Conformance) tells receivers how to handle messages that fail SPF/DKIM checks. Without DMARC, failed authentication checks are ignored. Start with p=none and rua reporting to monitor, then escalate to p=quarantine and p=reject.",
                         DNSRecord:     fmt.Sprintf("_dmarc.%s TXT \"v=DMARC1; p=none; rua=mailto:dmarc-reports@%s\"", domain, domain),
+                        DNSHost:       "_dmarc",
+                        DNSType:       "TXT",
+                        DNSValue:      fmt.Sprintf("v=DMARC1; p=none; rua=mailto:dmarc-reports@%s", domain),
+                        DNSPurpose:    "Tells receivers how to handle messages that fail authentication checks",
+                        DNSHostHelp:   "Enter _dmarc as the hostname — your provider will append the domain automatically",
                         RFC:           rfcDMARCPolicy,
                         RFCURL:        rfcDMARCPolicyURL,
                         Severity:      severityCritical,
@@ -294,6 +340,11 @@ func appendDMARCFixes(fixes []fix, ps protocolState, results map[string]any, dom
                         Title:         "Escalate DMARC from monitoring to enforcement",
                         Description:   "Change your DMARC policy from p=none to p=quarantine (then p=reject). Review your DMARC aggregate reports first to ensure legitimate senders pass authentication.",
                         DNSRecord:     fmt.Sprintf("_dmarc.%s TXT \"v=DMARC1; p=quarantine; rua=mailto:dmarc-reports@%s\"", domain, domain),
+                        DNSHost:       "_dmarc",
+                        DNSType:       "TXT",
+                        DNSValue:      fmt.Sprintf("v=DMARC1; p=quarantine; rua=mailto:dmarc-reports@%s", domain),
+                        DNSPurpose:    "Upgrades DMARC from monitoring to quarantining failed messages",
+                        DNSHostHelp:   "Enter _dmarc as the hostname — your provider will append the domain automatically",
                         RFC:           rfcDMARCPolicy,
                         RFCURL:        rfcDMARCPolicyURL,
                         Severity:      severityHigh,
@@ -308,6 +359,11 @@ func appendDMARCFixes(fixes []fix, ps protocolState, results map[string]any, dom
                         Title:         "Upgrade DMARC to reject policy",
                         Description:   "Your DMARC policy is quarantine — spoofed messages are flagged. Upgrading to p=reject blocks them entirely. Review aggregate reports to confirm legitimate senders are aligned.",
                         DNSRecord:     fmt.Sprintf("_dmarc.%s TXT \"v=DMARC1; p=reject; rua=mailto:dmarc-reports@%s\"", domain, domain),
+                        DNSHost:       "_dmarc",
+                        DNSType:       "TXT",
+                        DNSValue:      fmt.Sprintf("v=DMARC1; p=reject; rua=mailto:dmarc-reports@%s", domain),
+                        DNSPurpose:    "Blocks spoofed messages entirely by rejecting authentication failures",
+                        DNSHostHelp:   "Enter _dmarc as the hostname — your provider will append the domain automatically",
                         RFC:           rfcDMARCPolicy,
                         RFCURL:        rfcDMARCPolicyURL,
                         Severity:      severityLow,
@@ -322,6 +378,11 @@ func appendDMARCFixes(fixes []fix, ps protocolState, results map[string]any, dom
                         Title:         "Add DMARC aggregate reporting",
                         Description:   "Add a rua= tag to your DMARC record to receive aggregate reports about authentication results. Without reporting, you cannot see who is sending email as your domain or whether legitimate mail is failing authentication.",
                         DNSRecord:     fmt.Sprintf("_dmarc.%s TXT \"v=DMARC1; p=%s; rua=mailto:dmarc-reports@%s\"", domain, ps.dmarcPolicy, domain),
+                        DNSHost:       "_dmarc",
+                        DNSType:       "TXT",
+                        DNSValue:      fmt.Sprintf("v=DMARC1; p=%s; rua=mailto:dmarc-reports@%s", ps.dmarcPolicy, domain),
+                        DNSPurpose:    "Enables aggregate reports so you can see who sends email as your domain",
+                        DNSHostHelp:   "Enter _dmarc as the hostname — your provider will append the domain automatically",
                         RFC:           "RFC 7489 §7.1",
                         RFCURL:        "https://datatracker.ietf.org/doc/html/rfc7489#section-7.1",
                         Severity:      severityMedium,
@@ -423,6 +484,11 @@ func appendCAAFixes(fixes []fix, ps protocolState, domain string) []fix {
                 Title:         "Add CAA records",
                 Description:   desc,
                 DNSRecord:     fmt.Sprintf("%s CAA 0 issue \"letsencrypt.org\"", domain),
+                DNSHost:       "@",
+                DNSType:       "CAA",
+                DNSValue:      `0 issue "letsencrypt.org"`,
+                DNSPurpose:    "Controls which certificate authorities can issue SSL certificates for this domain",
+                DNSHostHelp:   "@ means the root domain — some providers show this as the domain name or leave it blank",
                 RFC:           "RFC 8659 §4",
                 RFCURL:        "https://datatracker.ietf.org/doc/html/rfc8659#section-4",
                 Severity:      severityLow,
@@ -440,6 +506,11 @@ func appendMTASTSFixes(fixes []fix, ps protocolState, domain string) []fix {
                 Title:         "Deploy MTA-STS policy",
                 Description:   fmt.Sprintf("Publish an MTA-STS DNS record and host a policy file at https://mta-sts.%s/.well-known/mta-sts.txt. This tells senders to require TLS when delivering mail to your domain.", domain),
                 DNSRecord:     fmt.Sprintf("_mta-sts.%s TXT \"v=STSv1; id=20240101\"", domain),
+                DNSHost:       "_mta-sts",
+                DNSType:       "TXT",
+                DNSValue:      "v=STSv1; id=20240101",
+                DNSPurpose:    "Enables strict transport security for incoming email connections",
+                DNSHostHelp:   "Enter _mta-sts as the hostname — your provider will append the domain automatically",
                 RFC:           "RFC 8461 §3",
                 RFCURL:        "https://datatracker.ietf.org/doc/html/rfc8461#section-3",
                 Severity:      severityMedium,
@@ -463,6 +534,11 @@ func appendTLSRPTFixes(fixes []fix, ps protocolState, domain string) []fix {
                 Title:         "Configure TLS-RPT reporting",
                 Description:   desc,
                 DNSRecord:     fmt.Sprintf("_smtp._tls.%s TXT \"v=TLSRPTv1; rua=mailto:tls-reports@%s\"", domain, domain),
+                DNSHost:       "_smtp._tls",
+                DNSType:       "TXT",
+                DNSValue:      fmt.Sprintf("v=TLSRPTv1; rua=mailto:tls-reports@%s", domain),
+                DNSPurpose:    "Enables reports about TLS connection failures with your mail servers",
+                DNSHostHelp:   "Enter _smtp._tls as the hostname — your provider will append the domain automatically",
                 RFC:           "RFC 8460 §3",
                 RFCURL:        "https://datatracker.ietf.org/doc/html/rfc8460#section-3",
                 Severity:      severityLow,
@@ -647,6 +723,14 @@ type mailFlags struct {
         dmarcPolicy string
 }
 
+type dnsRecord struct {
+        RecordType string `json:"record_type"`
+        Host       string `json:"host"`
+        Value      string `json:"value"`
+        Purpose    string `json:"purpose"`
+        HostHelp   string `json:"host_help"`
+}
+
 type mailClassification struct {
         classification string
         label          string
@@ -654,7 +738,7 @@ type mailClassification struct {
         icon           string
         summary        string
         isNoMail       bool
-        recommended    []string
+        recommended    []dnsRecord
 }
 
 func buildMailPosture(results map[string]any) map[string]any {
@@ -682,7 +766,17 @@ func buildMailPosture(results map[string]any) map[string]any {
         mp["summary"] = cls.summary
         mp["is_no_mail"] = cls.isNoMail
         if len(cls.recommended) > 0 {
-                mp["recommended_records"] = cls.recommended
+                var recMaps []map[string]any
+                for _, r := range cls.recommended {
+                        recMaps = append(recMaps, map[string]any{
+                                "record_type": r.RecordType,
+                                "host":        r.Host,
+                                "value":       r.Value,
+                                "purpose":     r.Purpose,
+                                "host_help":   r.HostHelp,
+                        })
+                }
+                mp["recommended_records"] = recMaps
         } else {
                 mp["recommended_records"] = nil
         }
@@ -821,7 +915,7 @@ func classifyMailPosture(mf mailFlags, presentCount int, domain string, ps proto
                         color: "warning", icon: "exclamation-triangle",
                         summary:     fmt.Sprintf("This domain appears to not send mail but only %d of 3 no-mail signals are present.", presentCount),
                         isNoMail:    true,
-                        recommended: buildNoMailRecommendedRecords(mf, domain),
+                        recommended: buildNoMailStructuredRecords(mf, domain),
                 }
         }
 
@@ -856,11 +950,7 @@ func classifyMailPosture(mf mailFlags, presentCount int, domain string, ps proto
                 summary: "No email authentication detected. It is unclear whether this domain sends email.",
         }
         if !mf.hasMX {
-                cls.recommended = []string{
-                        fmt.Sprintf("%s MX 0 .", domain),
-                        fmt.Sprintf("%s TXT \"v=spf1 -all\"", domain),
-                        fmt.Sprintf("_dmarc.%s TXT \"v=DMARC1; p=reject;\"", domain),
-                }
+                cls.recommended = buildNoMailStructuredRecords(mailFlags{}, domain)
         }
         return cls
 }
@@ -875,6 +965,38 @@ func buildNoMailRecommendedRecords(mf mailFlags, domain string) []string {
         }
         if !mf.dmarcReject {
                 recs = append(recs, fmt.Sprintf("_dmarc.%s TXT \"v=DMARC1; p=reject;\"", domain))
+        }
+        return recs
+}
+
+func buildNoMailStructuredRecords(mf mailFlags, domain string) []dnsRecord {
+        var recs []dnsRecord
+        if !mf.hasNullMX {
+                recs = append(recs, dnsRecord{
+                        RecordType: "MX",
+                        Host:       "@",
+                        Value:      "0 .",
+                        Purpose:    "Declares this domain does not accept email (null MX)",
+                        HostHelp:   "@ means the root domain itself — some providers show this as the domain name or leave it blank",
+                })
+        }
+        if !mf.spfDenyAll {
+                recs = append(recs, dnsRecord{
+                        RecordType: "TXT",
+                        Host:       "@",
+                        Value:      "v=spf1 -all",
+                        Purpose:    "Tells receiving mail servers that no one is authorized to send email from this domain",
+                        HostHelp:   "@ means the root domain itself — some providers show this as the domain name or leave it blank",
+                })
+        }
+        if !mf.dmarcReject {
+                recs = append(recs, dnsRecord{
+                        RecordType: "TXT",
+                        Host:       "_dmarc",
+                        Value:      "v=DMARC1; p=reject;",
+                        Purpose:    "Instructs receiving servers to reject any email claiming to be from this domain",
+                        HostHelp:   "Enter _dmarc as the hostname — your provider will append the domain automatically",
+                })
         }
         return recs
 }
