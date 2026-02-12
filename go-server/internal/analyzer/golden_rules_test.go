@@ -110,6 +110,21 @@ func withCAA(r map[string]any, status string) map[string]any {
         return r
 }
 
+func withMTASTS(r map[string]any, status string) map[string]any {
+        r["mta_sts_analysis"] = map[string]any{"status": status}
+        return r
+}
+
+func withTLSRPT(r map[string]any, status string) map[string]any {
+        r["tlsrpt_analysis"] = map[string]any{"status": status}
+        return r
+}
+
+func withBIMI(r map[string]any, status string) map[string]any {
+        r["bimi_analysis"] = map[string]any{"status": status}
+        return r
+}
+
 func withNoMail(r map[string]any) map[string]any {
         spf := r["spf_analysis"].(map[string]any)
         spf["no_mail_intent"] = true
@@ -791,5 +806,144 @@ func TestGoldenRulesNoMail(t *testing.T) {
                 rem := a.GenerateRemediation(r)
 
                 forbidFixContaining(t, rem, "DKIM")
+        })
+}
+
+// =============================================================================
+// Gold Standard Domain Profiles
+// =============================================================================
+// These tests model the actual DNS profiles of well-known domains.
+// They serve as regression guards: if a domain's real DNS changes, the test
+// should fail, prompting investigation and an intentional update.
+// =============================================================================
+
+func TestGoldStandard_Cloudflare(t *testing.T) {
+        // cloudflare.com DNS profile (verified 2026-02-12):
+        //   MX:     cf-emailsecurity.net (Cloudflare's own gateway, not in our known gateway list)
+        //   SPF:    v=spf1 ... include:_spf.google.com ... -all
+        //   DMARC:  v=DMARC1; p=reject; pct=100; rua=mailto:rua@cloudflare.com,...
+        //   DKIM:   No selectors found (google, google2048, default, selector1, cf1 all empty)
+        //   DNSSEC: Active (DNSKEY + DS present, chain valid)
+        //   CAA:    Comprehensive (11 records)
+        //   MTA-STS: Not configured
+        //   TLS-RPT: Not configured
+        //   BIMI:   Not configured
+        //
+        // Provider detection path:
+        //   MX "cf-emailsecurity.net" → not in mxToDKIMProvider → mxProvider=""
+        //   SPF "include:_spf.google.com" → spfProvider="Google Workspace"
+        //   resolveProviderWithGateway("", "Google Workspace") → provider="Google Workspace", gateway=nil
+        //   No DKIM selectors → status="info", isKnownDKIMProvider=true → DKIMProviderInferred
+        //
+        // This is the gold standard for the "known provider, no direct DKIM selectors" pattern.
+
+        a := testAnalyzer()
+
+        buildCloudflareResults := func() map[string]any {
+                r := baseResults()
+                r["domain"] = "cloudflare.com"
+                withSPF(r, "success", "-all", "")
+                withDMARC(r, "success", "reject")
+                withDMARCRua(r, "mailto:rua@cloudflare.com")
+                withDKIM(r, "info", providerGoogleWorkspace)
+                withDNSSEC(r, "success", "full")
+                withCAA(r, "success")
+                withMTASTS(r, "warning")
+                withTLSRPT(r, "warning")
+                withBIMI(r, "warning")
+                return r
+        }
+
+        t.Run("Rule_CF01_Grade_Secure", func(t *testing.T) {
+                r := buildCloudflareResults()
+                pos := a.CalculatePosture(r)
+                grade, _ := pos["grade"].(string)
+
+                if grade != "Secure" {
+                        t.Errorf("cloudflare.com grade = %q, want %q", grade, "Secure")
+                }
+        })
+
+        t.Run("Rule_CF02_DKIM_ProviderInferred_Configured", func(t *testing.T) {
+                r := buildCloudflareResults()
+                pos := a.CalculatePosture(r)
+
+                postureHas(t, pos, "configured", "DKIM (provider-verified)")
+                postureNotHas(t, pos, "absent", "DKIM")
+                postureNotHas(t, pos, "monitoring", "DKIM")
+        })
+
+        t.Run("Rule_CF03_SPF_HardFail_Configured", func(t *testing.T) {
+                r := buildCloudflareResults()
+                pos := a.CalculatePosture(r)
+
+                postureHas(t, pos, "configured", "SPF (-all)")
+        })
+
+        t.Run("Rule_CF04_DMARC_Reject_Configured", func(t *testing.T) {
+                r := buildCloudflareResults()
+                pos := a.CalculatePosture(r)
+
+                postureHas(t, pos, "configured", "DMARC (reject)")
+        })
+
+        t.Run("Rule_CF05_DNSSEC_Configured", func(t *testing.T) {
+                r := buildCloudflareResults()
+                pos := a.CalculatePosture(r)
+
+                postureHas(t, pos, "configured", "DNSSEC")
+        })
+
+        t.Run("Rule_CF06_CAA_Configured", func(t *testing.T) {
+                r := buildCloudflareResults()
+                pos := a.CalculatePosture(r)
+
+                postureHas(t, pos, "configured", "CAA")
+        })
+
+        t.Run("Rule_CF07_EmailSpoofing_No", func(t *testing.T) {
+                r := buildCloudflareResults()
+                pos := a.CalculatePosture(r)
+
+                verdicts, _ := pos["verdicts"].(map[string]any)
+                emailAns, _ := verdicts["email_answer"].(string)
+                if emailAns != "No" {
+                        t.Errorf("cloudflare.com email_answer = %q, want %q", emailAns, "No")
+                }
+        })
+
+        t.Run("Rule_CF08_No_SPF_Upgrade_Fix", func(t *testing.T) {
+                r := buildCloudflareResults()
+                rem := a.GenerateRemediation(r)
+
+                forbidFixContaining(t, rem, "SPF")
+        })
+
+        t.Run("Rule_CF09_No_HighSeverity_Fixes", func(t *testing.T) {
+                r := buildCloudflareResults()
+                rem := a.GenerateRemediation(r)
+
+                allFixes, _ := rem["all_fixes"].([]map[string]any)
+                for _, fix := range allFixes {
+                        sev, _ := fix["severity_label"].(string)
+                        title, _ := fix["title"].(string)
+                        if sev == "High" || sev == "Critical" {
+                                t.Errorf("cloudflare.com should have no High/Critical fixes, found %q (%s)", title, sev)
+                        }
+                }
+        })
+
+        t.Run("Rule_CF10_MTA_STS_Absent", func(t *testing.T) {
+                r := buildCloudflareResults()
+                pos := a.CalculatePosture(r)
+
+                postureHas(t, pos, "absent", "MTA-STS")
+        })
+
+        t.Run("Rule_CF11_DMARC_Reporting_No_Fix", func(t *testing.T) {
+                r := buildCloudflareResults()
+                rem := a.GenerateRemediation(r)
+
+                forbidFixContaining(t, rem, "DMARC aggregate reporting")
         })
 }
