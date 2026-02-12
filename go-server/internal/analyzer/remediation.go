@@ -51,7 +51,7 @@ func (a *Analyzer) GenerateRemediation(results map[string]any) map[string]any {
         fixes = appendMTASTSFixes(fixes, ps, domain)
         fixes = appendTLSRPTFixes(fixes, ps, domain)
         fixes = appendDNSSECFixes(fixes, ps)
-        fixes = appendDANEFixes(fixes, ps, domain)
+        fixes = appendDANEFixes(fixes, ps, results, domain)
         fixes = appendBIMIFixes(fixes, ps, domain)
 
         sortFixes(fixes)
@@ -475,7 +475,7 @@ func appendDNSSECFixes(fixes []fix, ps protocolState) []fix {
         })
 }
 
-func appendDANEFixes(fixes []fix, ps protocolState, domain string) []fix {
+func appendDANEFixes(fixes []fix, ps protocolState, results map[string]any, domain string) []fix {
         if ps.daneOK && !ps.dnssecOK {
                 return append(fixes, fix{
                         Title:         "Enable DNSSEC for DANE validation",
@@ -490,6 +490,9 @@ func appendDANEFixes(fixes []fix, ps protocolState, domain string) []fix {
                 })
         }
         if !ps.daneOK && ps.dnssecOK {
+                if !isDANEDeployable(results) {
+                        return fixes
+                }
                 return append(fixes, fix{
                         Title:         "Deploy DANE/TLSA for email transport",
                         Description:   "DNSSEC is already enabled — you can strengthen email transport security by publishing DANE TLSA records. DANE binds your mail server's TLS certificate to DNS, preventing man-in-the-middle attacks on SMTP connections.",
@@ -503,6 +506,15 @@ func appendDANEFixes(fixes []fix, ps protocolState, domain string) []fix {
                 })
         }
         return fixes
+}
+
+func isDANEDeployable(results map[string]any) bool {
+        dane := getMapResult(results, "dane_analysis")
+        deployable, ok := dane["dane_deployable"].(bool)
+        if ok {
+                return deployable
+        }
+        return true
 }
 
 func appendBIMIFixes(fixes []fix, ps protocolState, domain string) []fix {
