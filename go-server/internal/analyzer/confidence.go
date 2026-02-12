@@ -27,6 +27,7 @@ const (
         MethodTeamCymru       = "Team Cymru DNS-based ASN lookup"
         MethodASNMatch        = "ASN and CNAME pattern matching"
         MethodTXTPattern      = "TXT record pattern matching"
+        MethodPTRRecord       = "Reverse DNS (PTR) record lookup"
 )
 
 func confidenceMap(level, label, method string) map[string]any {

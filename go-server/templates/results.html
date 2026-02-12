@@ -2897,6 +2897,32 @@
 
         {{end}}
 
+        <div class="card border-secondary mt-4 screen-only" style="background-color: var(--bg-secondary);">
+            <div class="card-body py-3">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <h6 class="mb-1" style="color: #e6edf3;">
+                            <i class="fas fa-satellite-dish me-2 text-info"></i>Intelligence Sources
+                        </h6>
+                        <p class="text-muted small mb-0">
+                            This analysis used
+                            <strong class="text-light">4 DNS resolvers</strong> (consensus),
+                            <strong class="text-light">reverse DNS</strong> (PTR),
+                            <strong class="text-light">Team Cymru</strong> (ASN attribution),
+                            <strong class="text-light">IANA RDAP</strong> (registrar),
+                            {{if and $dns_history (ne (mapGetStr "status" $dns_history) "")}}<strong class="text-light">SecurityTrails</strong> (DNS history),{{end}}
+                            <strong class="text-light">crt.sh</strong> (CT logs),
+                            and <strong class="text-light">SMTP probing</strong> (transport).
+                            All using open-source Unix commands.
+                        </p>
+                    </div>
+                    <a href="/sources" class="btn btn-sm btn-outline-info ms-3 text-nowrap">
+                        <i class="fas fa-list me-1"></i>Full List
+                    </a>
+                </div>
+            </div>
+        </div>
+
         {{if .VerificationCommands}}
         <div class="card border-info border-opacity-50 mt-4 screen-only" id="verify-commands" style="background-color: var(--bg-secondary);">
             <div class="card-header d-flex align-items-center justify-content-between" role="button" tabindex="0" data-bs-toggle="collapse" data-bs-target="#verifyCommandsBody" aria-expanded="false" aria-controls="verifyCommandsBody" style="cursor:pointer; background-color: rgba(13, 202, 240, 0.08); border-bottom: 1px solid rgba(13, 202, 240, 0.2);">

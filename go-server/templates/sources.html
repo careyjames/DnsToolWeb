@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="dark">
+<head>
+    {{template "head" .}}
+    <title>Intelligence Sources - DNS Tool</title>
+    <meta name="description" content="Complete transparency: every intelligence source, methodology, and rate limit used by DNS Tool's domain security analysis.">
+</head>
+<body>
+    {{template "nav" .}}
+    <main id="main-content" class="container mt-4 mb-5">
+        <div class="row justify-content-center">
+            <div class="col-lg-10">
+
+                <div class="text-center mb-4">
+                    <h1 class="h2"><i class="fas fa-satellite-dish me-2 text-info"></i>Intelligence Sources</h1>
+                    <p class="text-muted lead">Every data source, methodology, and limitation &mdash; fully transparent.</p>
+                    <p class="text-muted small">DNS Tool uses only open-source Unix commands and public protocols. Every conclusion can be independently verified.</p>
+                </div>
+
+                <div class="card bg-dark border-info mb-4">
+                    <div class="card-body">
+                        <h5 class="card-title"><i class="fas fa-gavel me-2 text-info"></i>Our Principles</h5>
+                        <div class="row">
+                            <div class="col-md-4 mb-2">
+                                <strong class="text-info">Verifiable</strong><br>
+                                <small class="text-muted">Every analysis step maps to a standard Unix command you can run yourself.</small>
+                            </div>
+                            <div class="col-md-4 mb-2">
+                                <strong class="text-info">Honest</strong><br>
+                                <small class="text-muted">When a source is unavailable or rate-limited, we say so &mdash; never fabricating results.</small>
+                            </div>
+                            <div class="col-md-4 mb-2">
+                                <strong class="text-info">Redundant</strong><br>
+                                <small class="text-muted">Multiple independent methods reach the same conclusion. No single point of failure.</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <h3 class="h5 mt-4 mb-3"><i class="fas fa-network-wired me-2 text-primary"></i>DNS Resolution &amp; Record Queries</h3>
+                <p class="text-muted small mb-3">The foundation of every analysis. Four independent resolvers queried in parallel with majority-agreement consensus.</p>
+                {{range .DNSSources}}
+                {{template "source_card" .}}
+                {{end}}
+
+                <h3 class="h5 mt-4 mb-3"><i class="fas fa-server me-2 text-success"></i>Infrastructure Intelligence</h3>
+                <p class="text-muted small mb-3">Hosting, CDN, and network attribution through standard DNS protocols and community services.</p>
+                {{range .InfraSources}}
+                {{template "source_card" .}}
+                {{end}}
+
+                <h3 class="h5 mt-4 mb-3"><i class="fas fa-history me-2 text-warning"></i>Historical &amp; Discovery</h3>
+                <p class="text-muted small mb-3">DNS change timelines and subdomain discovery from certificate transparency logs.</p>
+                {{range .HistorySources}}
+                {{template "source_card" .}}
+                {{end}}
+
+                <h3 class="h5 mt-4 mb-3"><i class="fas fa-building me-2 text-info"></i>Registry &amp; Reference</h3>
+                <p class="text-muted small mb-3">Domain registration data and RFC standards metadata.</p>
+                {{range .MetaSources}}
+                {{template "source_card" .}}
+                {{end}}
+
+                <div class="card bg-dark border-secondary mt-4">
+                    <div class="card-body text-center">
+                        <h5 class="card-title"><i class="fas fa-laptop-code me-2 text-info"></i>Every Command, Open Source</h5>
+                        <p class="text-muted mb-2">Our analysis uses <code>dig</code>, <code>openssl</code>, <code>curl</code>, and standard DNS protocol &mdash; the same tools available on any Unix system. Each report includes a "Verify It Yourself" appendix with the exact commands to reproduce every finding.</p>
+                        <p class="text-muted small mb-0">No proprietary scanners. No black boxes. Just DNS.</p>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </main>
+    {{template "footer" .}}
+    {{template "scripts" .}}
+</body>
+</html>
+
+{{define "source_card"}}
+<div class="card bg-dark border-secondary mb-3">
+    <div class="card-body">
+        <div class="d-flex align-items-start">
+            <div class="me-3 mt-1">
+                <i class="{{.Icon}} fa-lg text-info"></i>
+            </div>
+            <div class="flex-grow-1">
+                <div class="d-flex align-items-center flex-wrap mb-1">
+                    <h6 class="mb-0 me-2">{{.Name}}</h6>
+                    <span class="badge bg-secondary me-1">{{.Category}}</span>
+                    {{if .Free}}<span class="badge bg-success">Free</span>{{end}}
+                    {{if .APIRequired}}<span class="badge bg-warning text-dark">API Key</span>{{end}}
+                </div>
+                <p class="text-muted small mb-2">{{.Purpose}}</p>
+                <div class="row small">
+                    <div class="col-md-6 mb-1">
+                        <strong class="text-muted">Method:</strong> <span class="text-light">{{.Method}}</span>
+                    </div>
+                    <div class="col-md-6 mb-1">
+                        <strong class="text-muted">Rate Limits:</strong> <span class="text-light">{{.RateLimits}}</span>
+                    </div>
+                </div>
+                {{if .VerifyCmd}}
+                <div class="mt-2">
+                    <code class="small text-info">{{.VerifyCmd}}</code>
+                </div>
+                {{end}}
+                {{if .URL}}
+                <div class="mt-1">
+                    <a href="{{.URL}}" target="_blank" rel="noopener" class="small text-muted"><i class="fas fa-external-link-alt me-1"></i>Documentation</a>
+                </div>
+                {{end}}
+            </div>
+        </div>
+    </div>
+</div>
+{{end}}

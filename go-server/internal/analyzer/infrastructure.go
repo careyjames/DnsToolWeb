@@ -251,13 +251,17 @@ func parentZone(domain string) string {
         return strings.Join(parts[1:], ".")
 }
 
-func (a *Analyzer) GetHostingInfo(domain string, results map[string]any) map[string]any {
+func (a *Analyzer) GetHostingInfo(ctx context.Context, domain string, results map[string]any) map[string]any {
         basicRecords, _ := results["basic_records"].(map[string]any)
         aRecords, _ := basicRecords["A"].([]string)
         nsRecords, _ := basicRecords["NS"].([]string)
         mxRecords, _ := basicRecords["MX"].([]string)
 
         hosting := detectProvider(aRecords, hostingProviders)
+        hostingFromPTR := false
+        if hosting == "" {
+                hosting, hostingFromPTR = a.detectHostingFromPTR(ctx, aRecords)
+        }
         dnsHosting, dnsFromParent := a.resolveDNSHosting(domain, nsRecords)
         emailHosting, emailFromSPF := resolveEmailHosting(results, mxRecords)
         isNoMail := getBool(results, "is_no_mail_domain")
@@ -269,11 +273,34 @@ func (a *Analyzer) GetHostingInfo(domain string, results map[string]any) map[str
                 "dns_hosting":          dnsHosting,
                 "email_hosting":        emailHosting,
                 "domain":               domain,
-                "hosting_confidence":   hostingConfidence(hosting),
+                "hosting_confidence":   hostingConfidence(hosting, hostingFromPTR),
                 "dns_confidence":       dnsConfidence(dnsFromParent),
                 "email_confidence":     emailConfidence(emailFromSPF, isNoMail),
                 "dns_from_parent":      dnsFromParent,
         }
+}
+
+func (a *Analyzer) detectHostingFromPTR(ctx context.Context, aRecords []string) (string, bool) {
+        if a.DNS == nil {
+                return "", false
+        }
+        for _, ip := range aRecords {
+                arpaName := buildArpaName(ip)
+                if arpaName == "" {
+                        continue
+                }
+                ptrCtx, cancel := context.WithTimeout(ctx, 3*time.Second)
+                ptrRecords := a.DNS.QueryDNS(ptrCtx, "PTR", arpaName)
+                cancel()
+                for _, ptr := range ptrRecords {
+                        ptr = strings.TrimSuffix(ptr, ".")
+                        provider := detectProvider([]string{ptr}, hostingPTRProviders)
+                        if provider != "" {
+                                return provider, true
+                        }
+                }
+        }
+        return "", false
 }
 
 func (a *Analyzer) resolveDNSHosting(domain string, nsRecords []string) (string, bool) {
@@ -325,9 +352,12 @@ func applyHostingDefaults(hosting, dnsHosting, emailHosting string, isNoMail boo
         return hosting, dnsHosting, emailHosting
 }
 
-func hostingConfidence(hosting string) map[string]any {
+func hostingConfidence(hosting string, fromPTR bool) map[string]any {
         if hosting == "Unknown" {
                 return map[string]any{}
+        }
+        if fromPTR {
+                return ConfidenceObservedMap(MethodPTRRecord)
         }
         return ConfidenceObservedMap(MethodARecordPattern)
 }
@@ -391,6 +421,30 @@ var hostingProviders = map[string]string{
         "ovh": "OVH", "netlify": "Netlify", "vercel": "Vercel",
         "heroku": "Heroku", "github": "GitHub Pages",
         "squarespace": "Squarespace", "wix": "Wix", "shopify": "Shopify",
+}
+
+var hostingPTRProviders = map[string]string{
+        "cloudfront.net":           "AWS CloudFront",
+        "amazonaws.com":            "AWS",
+        "awsglobalaccelerator.com": "AWS Global Accelerator",
+        "cloudflare":               nameCloudflare,
+        "azure":                    "Azure",
+        "google":                   "Google Cloud",
+        "digitalocean":             nameDigitalOcean,
+        "linode":                   nameLinode,
+        "vultr":                    "Vultr",
+        "hetzner":                  "Hetzner",
+        "ovh":                      "OVH",
+        "netlify":                  "Netlify",
+        "vercel":                   "Vercel",
+        "heroku":                   "Heroku",
+        "github":                   "GitHub Pages",
+        "squarespace":              "Squarespace",
+        "shopify":                  "Shopify",
+        "akamai":                   "Akamai",
+        "fastly":                   "Fastly",
+        "edgecastcdn":              "Edgecast/Verizon",
+        "stackpath":                "StackPath",
 }
 
 var dnsHostingProviders = map[string]string{

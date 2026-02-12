@@ -1,0 +1,214 @@
+package handlers
+
+import (
+	"net/http"
+
+	"dnstool/go-server/internal/config"
+
+	"github.com/gin-gonic/gin"
+)
+
+type IntelSource struct {
+	Name        string
+	Icon        string
+	Category    string
+	Purpose     string
+	Method      string
+	RateLimits  string
+	VerifyCmd   string
+	URL         string
+	APIRequired bool
+	Free        bool
+}
+
+type SourcesHandler struct {
+	Config *config.Config
+}
+
+func NewSourcesHandler(cfg *config.Config) *SourcesHandler {
+	return &SourcesHandler{Config: cfg}
+}
+
+func (h *SourcesHandler) Sources(c *gin.Context) {
+	nonce, _ := c.Get("csp_nonce")
+	c.HTML(http.StatusOK, "sources.html", gin.H{
+		"AppVersion":     h.Config.AppVersion,
+		"CspNonce":       nonce,
+		"ActivePage":     "sources",
+		"DNSSources":     getDNSSources(),
+		"InfraSources":   getInfraSources(),
+		"HistorySources": getHistorySources(),
+		"MetaSources":    getMetaSources(),
+	})
+}
+
+func getDNSSources() []IntelSource {
+	return []IntelSource{
+		{
+			Name:       "Multi-Resolver DNS Consensus",
+			Icon:       "fas fa-network-wired",
+			Category:   "Primary",
+			Purpose:    "All DNS record queries (A, AAAA, MX, NS, TXT, CNAME, DNSKEY, DS, TLSA, CAA, HTTPS, SVCB, CDS, CDNSKEY, SMIMEA, OPENPGPKEY). Four resolvers queried in parallel with majority-agreement consensus to detect censorship, poisoning, or propagation delays.",
+			Method:     "UDP/TCP DNS queries with DoH (DNS-over-HTTPS) fallback",
+			RateLimits: "No rate limits. Public DNS resolvers are free and unrestricted.",
+			VerifyCmd:  "dig @1.1.1.1 +short A example.com",
+			URL:        "",
+			Free:       true,
+		},
+		{
+			Name:       "Cloudflare DNS (1.1.1.1)",
+			Icon:       "fas fa-cloud",
+			Category:   "Resolver",
+			Purpose:    "Primary consensus resolver. Privacy-focused, DNSSEC-validating resolver operated by Cloudflare.",
+			Method:     "UDP/TCP with DoH fallback via https://cloudflare-dns.com/dns-query",
+			RateLimits: "No rate limits.",
+			VerifyCmd:  "dig @1.1.1.1 +short A example.com",
+			URL:        "https://developers.cloudflare.com/1.1.1.1/",
+			Free:       true,
+		},
+		{
+			Name:       "Google Public DNS (8.8.8.8)",
+			Icon:       "fab fa-google",
+			Category:   "Resolver",
+			Purpose:    "Primary consensus resolver. Globally distributed, DNSSEC-validating resolver operated by Google.",
+			Method:     "UDP/TCP with DoH fallback via https://dns.google/resolve",
+			RateLimits: "No rate limits.",
+			VerifyCmd:  "dig @8.8.8.8 +short A example.com",
+			URL:        "https://developers.google.com/speed/public-dns",
+			Free:       true,
+		},
+		{
+			Name:       "Quad9 (9.9.9.9)",
+			Icon:       "fas fa-shield-alt",
+			Category:   "Resolver",
+			Purpose:    "Consensus resolver with threat-intelligence filtering. Swiss-based nonprofit, DNSSEC-validating.",
+			Method:     "UDP/TCP with DoH fallback via https://dns.quad9.net/dns-query",
+			RateLimits: "No rate limits.",
+			VerifyCmd:  "dig @9.9.9.9 +short A example.com",
+			URL:        "https://www.quad9.net/",
+			Free:       true,
+		},
+		{
+			Name:       "OpenDNS / Cisco Umbrella (208.67.222.222)",
+			Icon:       "fas fa-umbrella",
+			Category:   "Resolver",
+			Purpose:    "Consensus resolver. Enterprise-grade resolver operated by Cisco.",
+			Method:     "UDP/TCP",
+			RateLimits: "No rate limits.",
+			VerifyCmd:  "dig @208.67.222.222 +short A example.com",
+			URL:        "https://www.opendns.com/",
+			Free:       true,
+		},
+		{
+			Name:       "Authoritative NS Direct Query",
+			Icon:       "fas fa-server",
+			Category:   "Primary",
+			Purpose:    "Direct queries to the domain's own authoritative nameservers for DKIM selector probing, delegation checks, and DNSSEC chain validation. Bypasses resolver caching for ground-truth data.",
+			Method:     "UDP/TCP DNS queries to authoritative NS IPs",
+			RateLimits: "No rate limits (querying the domain's own infrastructure).",
+			VerifyCmd:  "dig @ns1.example.com +short A example.com",
+			Free:       true,
+		},
+	}
+}
+
+func getInfraSources() []IntelSource {
+	return []IntelSource{
+		{
+			Name:       "Reverse DNS (PTR Records)",
+			Icon:       "fas fa-undo-alt",
+			Category:   "Primary",
+			Purpose:    "Identifies hosting providers by resolving IP addresses back to hostnames. A PTR record for a CloudFront IP returns server-xxx.cloudfront.net, directly revealing the hosting provider without any third-party API.",
+			Method:     "Standard DNS PTR query (dig -x)",
+			RateLimits: "No rate limits. Standard DNS protocol.",
+			VerifyCmd:  "dig +short -x 13.248.169.35",
+			Free:       true,
+		},
+		{
+			Name:       "Team Cymru IP-to-ASN Mapping",
+			Icon:       "fas fa-map-marked-alt",
+			Category:   "Community",
+			Purpose:    "Maps IP addresses to their owning Autonomous System Number (ASN) and organization. Identifies whether an IP belongs to AWS (AS16509), Cloudflare (AS13335), Google (AS15169), etc. Used for CDN/edge detection and infrastructure attribution.",
+			Method:     "DNS TXT queries to origin.asn.cymru.com (IPv4) and origin6.asn.cymru.com (IPv6)",
+			RateLimits: "No published rate limits. Free community DNS service. Responses are cacheable.",
+			VerifyCmd:  "dig +short TXT 35.169.248.13.origin.asn.cymru.com",
+			URL:        "https://www.team-cymru.com/ip-asn-mapping",
+			Free:       true,
+		},
+		{
+			Name:       "SMTP Transport Probing",
+			Icon:       "fas fa-envelope-open-text",
+			Category:   "Primary",
+			Purpose:    "Live STARTTLS verification of mail servers. Tests TLS version support, cipher suites, certificate validity, and DANE/TLSA matching. Falls back to DNS-inferred analysis when direct connection is unavailable.",
+			Method:     "TCP connection to port 25 with STARTTLS negotiation",
+			RateLimits: "No rate limits (standard SMTP protocol).",
+			VerifyCmd:  "openssl s_client -starttls smtp -connect mx.example.com:25",
+			Free:       true,
+		},
+	}
+}
+
+func getHistorySources() []IntelSource {
+	return []IntelSource{
+		{
+			Name:        "SecurityTrails",
+			Icon:        "fas fa-history",
+			Category:    "Third-party API",
+			Purpose:     "Provides DNS record change history (A, MX, NS records over time) and subdomain enumeration. Shows when DNS records changed and what they changed from/to, enabling timeline analysis of infrastructure changes.",
+			Method:      "HTTPS REST API with API key authentication",
+			RateLimits:  "Free tier: 50 API calls/month (~16 unique domain scans). Cached for 24 hours on success.",
+			VerifyCmd:   "curl -s 'https://api.securitytrails.com/v1/domain/example.com/dns/history/a' -H 'apikey: YOUR_KEY'",
+			URL:         "https://securitytrails.com/",
+			APIRequired: true,
+			Free:        true,
+		},
+		{
+			Name:       "Certificate Transparency (crt.sh)",
+			Icon:       "fas fa-certificate",
+			Category:   "Public Log",
+			Purpose:    "Discovers subdomains by searching Certificate Transparency logs for all SSL/TLS certificates ever issued for a domain. Reveals infrastructure that may not be publicly linked.",
+			Method:     "HTTPS query to crt.sh PostgreSQL interface",
+			RateLimits: "Community service with telemetry-based cooldown. Honest timeout/error messaging when unavailable.",
+			VerifyCmd:  "curl -s 'https://crt.sh/?q=%.example.com&output=json' | jq '.[].name_value'",
+			URL:        "https://crt.sh/",
+			Free:       true,
+		},
+	}
+}
+
+func getMetaSources() []IntelSource {
+	return []IntelSource{
+		{
+			Name:       "IANA RDAP",
+			Icon:       "fas fa-building",
+			Category:   "Registry",
+			Purpose:    "Registration Data Access Protocol — the modern successor to WHOIS. Retrieves domain registrar, registration dates, status codes, and nameserver delegation from the authoritative registry.",
+			Method:     "HTTPS REST API (no authentication required)",
+			RateLimits: "Varies by registry. Telemetry-based cooldown with honest unavailability messaging.",
+			VerifyCmd:  "curl -s 'https://rdap.verisign.com/com/v1/domain/example.com' | jq '.entities[0].vcardArray'",
+			URL:        "https://www.iana.org/domains/rdap",
+			Free:       true,
+		},
+		{
+			Name:       "IETF Datatracker",
+			Icon:       "fas fa-book",
+			Category:   "Reference",
+			Purpose:    "Fetches RFC metadata (titles, status, obsoleted-by) for all cited RFCs. Ensures RFC references in remediation guidance are current and accurate.",
+			Method:     "HTTPS REST API (no authentication required)",
+			RateLimits: "No published rate limits.",
+			VerifyCmd:  "curl -s 'https://datatracker.ietf.org/doc/api/rfc/?format=json&rfc=7489' | jq '.objects[0].title'",
+			URL:        "https://datatracker.ietf.org/",
+			Free:       true,
+		},
+		{
+			Name:       "ip-api.com",
+			Icon:       "fas fa-map-pin",
+			Category:   "Supplemental",
+			Purpose:    "Visitor IP geolocation only (your location flag in the footer). Not used for any analysis data. Degrades gracefully on failure.",
+			Method:     "HTTPS REST API (no authentication required)",
+			RateLimits: "45 requests/minute on free tier.",
+			URL:        "https://ip-api.com/",
+			Free:       true,
+		},
+	}
+}

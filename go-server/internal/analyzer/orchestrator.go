@@ -91,7 +91,7 @@ func (a *Analyzer) AnalyzeDomain(ctx context.Context, domain string, customDKIMS
 
         results["smtp_transport"] = a.AnalyzeSMTPTransport(ctx, domain, mxForDANE)
 
-        results["hosting_summary"] = a.GetHostingInfo(domain, results)
+        results["hosting_summary"] = a.GetHostingInfo(ctx, domain, results)
         results["dns_infrastructure"] = a.AnalyzeDNSInfrastructure(domain, results)
         results["email_security_mgmt"] = a.DetectEmailSecurityManagement(
                 spfAnalysis,

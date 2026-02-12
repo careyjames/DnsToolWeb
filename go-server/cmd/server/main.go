@@ -147,6 +147,9 @@ func main() {
         router.GET("/investigate", investigateHandler.InvestigatePage)
         router.POST("/investigate", middleware.AnalyzeRateLimit(rateLimiter), investigateHandler.Investigate)
 
+        sourcesHandler := handlers.NewSourcesHandler(cfg)
+        router.GET("/sources", sourcesHandler.Sources)
+
         router.NoRoute(func(c *gin.Context) {
                 nonce, _ := c.Get("csp_nonce")
                 csrfToken, _ := c.Get("csrf_token")

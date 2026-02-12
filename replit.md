@@ -24,7 +24,7 @@ The application is implemented in Go using the Gin framework, having been rewrit
 ### Frontend
 - **Technology**: Server-rendered HTML using Go `html/template`, Bootstrap dark theme, custom CSS, and client-side JavaScript.
 - **UI/UX**: PWA support, comprehensive accessibility, and full mobile responsiveness.
-- **Pages**: Index, Results, History, Statistics, Compare.
+- **Pages**: Index, Results, History, Statistics, Compare, Sources (intelligence sources inventory), IP Investigate.
 - **Print/PDF Report**: Executive-grade print stylesheet (`@media print` in `static/css/custom.css`) with TLP:CLEAR classification, domain banner focal point, colored section headers (navy/teal alternating), B&W laser-safe color palette, gradient accent bars, zebra-striped tables, and controlled page breaks. Print-only markup in `go-server/templates/results.html` (`.print-report-header`, `.print-domain-banner`, `.print-report-footer`). Full feature details in `docs/FEATURE_INVENTORY.md` §6.1.1.
 
 ## External Dependencies

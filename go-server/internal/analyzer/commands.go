@@ -7,6 +7,7 @@ import (
 
 const (
         sectionDNSRecords = "DNS Records"
+        sectionInfraIntel = "Infrastructure Intelligence"
         rfcDNS1035        = "RFC 1035"
 )
 
@@ -335,9 +336,21 @@ func generateASNCommands(results map[string]any) []VerifyCommand {
                 reversed := reverseIPv4(ip)
                 if reversed != "" {
                         cmds = append(cmds, VerifyCommand{
-                                Section:     "ASN Attribution",
-                                Description: fmt.Sprintf("Look up ASN for %s via Team Cymru", ip),
+                                Section:     sectionInfraIntel,
+                                Description: fmt.Sprintf("Reverse DNS (PTR) lookup for %s — identifies hosting provider", ip),
+                                Command:     fmt.Sprintf("dig +short -x %s", ip),
+                                RFC:         rfcDNS1035,
+                        })
+                        cmds = append(cmds, VerifyCommand{
+                                Section:     sectionInfraIntel,
+                                Description: fmt.Sprintf("Look up ASN for %s via Team Cymru (free, no rate limits)", ip),
                                 Command:     fmt.Sprintf("dig +short TXT %s.origin.asn.cymru.com", reversed),
+                                RFC:         "",
+                        })
+                        cmds = append(cmds, VerifyCommand{
+                                Section:     sectionInfraIntel,
+                                Description: "Look up ASN organization name",
+                                Command:     fmt.Sprintf("dig +short TXT AS$(dig +short TXT %s.origin.asn.cymru.com | awk -F'|' '{print $1}' | tr -d ' \"').peer.asn.cymru.com", reversed),
                                 RFC:         "",
                         })
                 }
