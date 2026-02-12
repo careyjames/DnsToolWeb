@@ -85,7 +85,7 @@ func GetChangelog() []ChangelogEntry {
                 },
                 {
                         Version:     "26.12.15",
-                        Date:        "Feb 2, 2026",
+                        Date:        "Feb 10, 2026",
                         Category:    "Core",
                         Title:       "Go Performance Rewrite",
                         Description: "Complete rewrite from Python/Flask to Go/Gin for dramatically improved performance and concurrency. Multi-resolver consensus DNS client with DoH fallback across Cloudflare, Google, Quad9, and OpenDNS.",
