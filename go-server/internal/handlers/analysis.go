@@ -24,14 +24,15 @@ const (
 )
 
 type AnalysisHandler struct {
-        DB       *db.Database
-        Config   *config.Config
-        Analyzer *analyzer.Analyzer
-        Cache    *analyzer.AnalysisCache
+        DB              *db.Database
+        Config          *config.Config
+        Analyzer        *analyzer.Analyzer
+        Cache           *analyzer.AnalysisCache
+        DNSHistoryCache *analyzer.DNSHistoryCache
 }
 
-func NewAnalysisHandler(database *db.Database, cfg *config.Config, a *analyzer.Analyzer, cache *analyzer.AnalysisCache) *AnalysisHandler {
-        return &AnalysisHandler{DB: database, Config: cfg, Analyzer: a, Cache: cache}
+func NewAnalysisHandler(database *db.Database, cfg *config.Config, a *analyzer.Analyzer, cache *analyzer.AnalysisCache, historyCache *analyzer.DNSHistoryCache) *AnalysisHandler {
+        return &AnalysisHandler{DB: database, Config: cfg, Analyzer: a, Cache: cache, DNSHistoryCache: historyCache}
 }
 
 func (h *AnalysisHandler) ViewAnalysisStatic(c *gin.Context) {
@@ -220,7 +221,7 @@ func (h *AnalysisHandler) Analyze(c *gin.Context) {
                 h.Cache.Set(asciiDomain, results)
         }
 
-        dnsHistory := analyzer.FetchDNSHistory(c.Request.Context(), asciiDomain)
+        dnsHistory := analyzer.FetchDNSHistory(c.Request.Context(), asciiDomain, h.DNSHistoryCache)
         results["dns_history"] = dnsHistory
 
         if rem, ok := results["remediation"].(map[string]any); ok {

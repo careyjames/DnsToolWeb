@@ -119,7 +119,7 @@ func (a *Analyzer) AnalyzeDomain(ctx context.Context, domain string, customDKIMS
 
         initSecurityTrails()
         if securityTrailsEnabled {
-                stSubs, err := FetchSubdomains(ctx, domain)
+                stSubs, _, err := FetchSubdomains(ctx, domain)
                 if err == nil && len(stSubs) > 0 {
                         existing := make(map[string]bool, len(ctSubdomains))
                         for _, sd := range ctSubdomains {

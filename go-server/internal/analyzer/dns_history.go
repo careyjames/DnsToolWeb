@@ -8,8 +8,73 @@ import (
         "net/http"
         "sort"
         "strings"
+        "sync"
         "time"
 )
+
+type DNSHistoryCache struct {
+        mu      sync.RWMutex
+        entries map[string]*dnsHistoryCacheEntry
+        ttl     time.Duration
+}
+
+type dnsHistoryCacheEntry struct {
+        result   map[string]any
+        cachedAt time.Time
+}
+
+func NewDNSHistoryCache(ttl time.Duration) *DNSHistoryCache {
+        return &DNSHistoryCache{
+                entries: make(map[string]*dnsHistoryCacheEntry),
+                ttl:     ttl,
+        }
+}
+
+func (c *DNSHistoryCache) Get(domain string) (map[string]any, bool) {
+        c.mu.RLock()
+        defer c.mu.RUnlock()
+
+        entry, ok := c.entries[domain]
+        if !ok {
+                return nil, false
+        }
+        if time.Since(entry.cachedAt) > c.ttl {
+                return nil, false
+        }
+
+        cached := make(map[string]any, len(entry.result))
+        for k, v := range entry.result {
+                cached[k] = v
+        }
+        cached["cache_hit"] = true
+        cached["cached_at"] = entry.cachedAt.UTC().Format(time.RFC3339)
+        return cached, true
+}
+
+func (c *DNSHistoryCache) Set(domain string, result map[string]any) {
+        c.mu.Lock()
+        defer c.mu.Unlock()
+        c.entries[domain] = &dnsHistoryCacheEntry{
+                result:   result,
+                cachedAt: time.Now(),
+        }
+}
+
+func (c *DNSHistoryCache) Stats() map[string]any {
+        c.mu.RLock()
+        defer c.mu.RUnlock()
+        active := 0
+        for _, e := range c.entries {
+                if time.Since(e.cachedAt) <= c.ttl {
+                        active++
+                }
+        }
+        return map[string]any{
+                "total_entries":  len(c.entries),
+                "active_entries": active,
+                "ttl_hours":      int(c.ttl.Hours()),
+        }
+}
 
 type stHistoryResponse struct {
         Records []stHistoryRecord `json:"records"`
@@ -40,7 +105,13 @@ type dnsChangeEvent struct {
         DaysAgo     int
 }
 
-func FetchDNSHistory(ctx context.Context, domain string) map[string]any {
+type historyFetchResult struct {
+        changes     []dnsChangeEvent
+        rateLimited bool
+        errored     bool
+}
+
+func FetchDNSHistory(ctx context.Context, domain string, cache *DNSHistoryCache) map[string]any {
         initSecurityTrails()
         if !securityTrailsEnabled {
                 return map[string]any{
@@ -52,12 +123,27 @@ func FetchDNSHistory(ctx context.Context, domain string) map[string]any {
                 }
         }
 
+        if cache != nil {
+                if cached, ok := cache.Get(domain); ok {
+                        slog.Info("DNS history cache hit", "domain", domain)
+                        return cached
+                }
+        }
+
         recordTypes := []string{"a", "mx", "ns"}
         var allChanges []dnsChangeEvent
+        rateLimitedCount := 0
+        errorCount := 0
 
         for _, rtype := range recordTypes {
-                changes := fetchHistoryForType(ctx, domain, rtype)
-                allChanges = append(allChanges, changes...)
+                result := fetchHistoryForType(ctx, domain, rtype)
+                allChanges = append(allChanges, result.changes...)
+                if result.rateLimited {
+                        rateLimitedCount++
+                }
+                if result.errored {
+                        errorCount++
+                }
         }
 
         sort.Slice(allChanges, func(i, j int) bool {
@@ -82,23 +168,48 @@ func FetchDNSHistory(ctx context.Context, domain string) map[string]any {
                 }
         }
 
-        return map[string]any{
-                "available":    true,
-                "api_enabled":  true,
-                "has_changes":  len(allChanges) > 0,
-                "changes":      changesMaps,
-                "total_events": float64(len(allChanges)),
-                "source":       "SecurityTrails",
+        failedCount := rateLimitedCount + errorCount
+        allFailed := failedCount == len(recordTypes)
+        allRateLimited := rateLimitedCount == len(recordTypes)
+        anyFailed := failedCount > 0
+        fullyChecked := failedCount == 0
+
+        status := "success"
+        if allRateLimited {
+                status = "rate_limited"
+        } else if allFailed {
+                status = "error"
+        } else if anyFailed {
+                status = "partial"
         }
+
+        result := map[string]any{
+                "available":      !allFailed,
+                "api_enabled":    true,
+                "has_changes":    len(allChanges) > 0,
+                "changes":       changesMaps,
+                "total_events":  float64(len(allChanges)),
+                "source":        "SecurityTrails",
+                "status":        status,
+                "rate_limited":  rateLimitedCount > 0,
+                "fully_checked": fullyChecked,
+        }
+
+        if cache != nil && status == "success" {
+                cache.Set(domain, result)
+                slog.Info("DNS history cached", "domain", domain, "ttl", cache.ttl)
+        }
+
+        return result
 }
 
-func fetchHistoryForType(ctx context.Context, domain, rtype string) []dnsChangeEvent {
+func fetchHistoryForType(ctx context.Context, domain, rtype string) historyFetchResult {
         url := fmt.Sprintf("https://api.securitytrails.com/v1/history/%s/dns/%s", domain, rtype)
 
         req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
         if err != nil {
                 slog.Warn("SecurityTrails history: failed to create request", "domain", domain, "type", rtype, "error", err)
-                return nil
+                return historyFetchResult{errored: true}
         }
         req.Header.Set("APIKEY", securityTrailsAPIKey)
         req.Header.Set("Accept", "application/json")
@@ -106,24 +217,24 @@ func fetchHistoryForType(ctx context.Context, domain, rtype string) []dnsChangeE
         resp, err := securityTrailsHTTPClient.Do(req)
         if err != nil {
                 slog.Warn("SecurityTrails history: request failed", "domain", domain, "type", rtype, "error", err)
-                return nil
+                return historyFetchResult{errored: true}
         }
         defer resp.Body.Close()
 
         if resp.StatusCode == http.StatusTooManyRequests {
                 slog.Warn("SecurityTrails history: rate limited", "domain", domain, "type", rtype)
-                return nil
+                return historyFetchResult{rateLimited: true}
         }
 
         if resp.StatusCode != http.StatusOK {
                 slog.Warn("SecurityTrails history: unexpected status", "domain", domain, "type", rtype, "status", resp.StatusCode)
-                return nil
+                return historyFetchResult{errored: true}
         }
 
         var histResp stHistoryResponse
         if err := json.NewDecoder(resp.Body).Decode(&histResp); err != nil {
                 slog.Warn("SecurityTrails history: parse failed", "domain", domain, "type", rtype, "error", err)
-                return nil
+                return historyFetchResult{errored: true}
         }
 
         now := time.Now()
@@ -179,7 +290,7 @@ func fetchHistoryForType(ctx context.Context, domain, rtype string) []dnsChangeE
         }
 
         slog.Info("SecurityTrails history: fetched", "domain", domain, "type", rtype, "events", len(changes))
-        return changes
+        return historyFetchResult{changes: changes}
 }
 
 func extractHistoryValue(rec stHistoryRecord, rtype string) string {

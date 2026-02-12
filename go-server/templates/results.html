@@ -2494,19 +2494,39 @@
         </div>
 
         <!-- DNS History Timeline (SecurityTrails) -->
-        {{if mapGetBool "available" $dns_history}}
+        {{if mapGetBool "api_enabled" $dns_history}}
         <div class="col-12 mb-4">
             <div class="card">
                 <div class="card-header">
                     <h5 class="mb-0 d-flex align-items-center justify-content-between flex-wrap">
                         <span><i class="fas fa-history me-2"></i>DNS History Timeline</span>
+                        {{if eq (mapGetStr "status" $dns_history) "rate_limited"}}
+                        <span class="badge bg-warning-subtle text-warning border border-warning-subtle" style="font-size:0.65rem;">QUERY LIMIT REACHED</span>
+                        {{else if eq (mapGetStr "status" $dns_history) "error"}}
+                        <span class="badge bg-danger-subtle text-danger border border-danger-subtle" style="font-size:0.65rem;">UNAVAILABLE</span>
+                        {{else if eq (mapGetStr "status" $dns_history) "partial"}}
+                        <span class="badge bg-warning-subtle text-warning border border-warning-subtle" style="font-size:0.65rem;">INCOMPLETE</span>
+                        {{else}}
                         <small class="text-muted">Source: {{mapGetStr "source" $dns_history}}</small>
+                        {{end}}
                     </h5>
+                    {{if mapGetBool "available" $dns_history}}
                     <p class="mb-0 mt-2 text-warning-emphasis" style="font-size:0.95em; font-weight:500;"><i class="fas fa-search me-1"></i>When was a record added, removed, or changed &mdash; and could that change be the problem?</p>
+                    {{end}}
                 </div>
                 <div class="card-body">
+                    {{if eq (mapGetStr "status" $dns_history) "rate_limited"}}
+                    <p class="text-warning mb-0"><i class="fas fa-exclamation-triangle me-1"></i>DNS history data is temporarily unavailable. The third-party data source has reached its query limit. This section will return automatically &mdash; no action needed on your part.</p>
+                    {{else if eq (mapGetStr "status" $dns_history) "error"}}
+                    <p class="text-warning mb-0"><i class="fas fa-exclamation-triangle me-1"></i>DNS history data could not be retrieved at this time. The third-party data source did not respond. Try again shortly.</p>
+                    {{else}}
                     {{$changes := mapGetSlice "changes" $dns_history}}
                     {{if $changes}}
+                    {{if eq (mapGetStr "status" $dns_history) "partial"}}
+                    <div class="alert alert-warning border-0 py-2 mb-3" style="background: rgba(255,193,7,0.08); font-size: 0.8rem;">
+                        <i class="fas fa-info-circle me-1"></i>Some record types could not be checked due to third-party query limits. The changes shown below may be incomplete.
+                    </div>
+                    {{end}}
                     <div class="table-responsive">
                         <table class="table table-sm table-striped mb-0">
                             <thead>
@@ -2549,23 +2569,13 @@
                         </table>
                     </div>
                     {{else}}
-                    <p class="text-muted mb-0"><i class="fas fa-check-circle text-success me-1"></i>No recent DNS changes detected. This domain's DNS configuration appears stable.</p>
+                    {{if eq (mapGetStr "status" $dns_history) "partial"}}
+                    <p class="text-warning mb-0"><i class="fas fa-exclamation-triangle me-1"></i>Some record types could not be checked due to third-party query limits. No changes were found in the record types that were successfully checked, but the result may be incomplete.</p>
+                    {{else}}
+                    <p class="text-muted mb-0"><i class="fas fa-check-circle text-success me-1"></i>No DNS record changes detected in available history. A, MX, and NS records for this domain have remained stable.</p>
                     {{end}}
-                </div>
-            </div>
-        </div>
-        {{else if mapGetBool "api_enabled" $dns_history}}
-        <!-- API enabled but no data returned (e.g. rate limited) -->
-        <div class="col-12 mb-4">
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="mb-0 d-flex align-items-center justify-content-between flex-wrap">
-                        <span><i class="fas fa-history me-2"></i>DNS History Timeline</span>
-                        <small class="text-muted">SecurityTrails</small>
-                    </h5>
-                </div>
-                <div class="card-body">
-                    <p class="text-muted mb-0"><i class="fas fa-check-circle text-success me-1"></i>No recent DNS changes detected. This domain's DNS configuration appears stable.</p>
+                    {{end}}
+                    {{end}}
                 </div>
             </div>
         </div>
