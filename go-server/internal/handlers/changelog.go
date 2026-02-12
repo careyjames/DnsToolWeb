@@ -1,12 +1,13 @@
 package handlers
 
 type ChangelogEntry struct {
-        Version     string
-        Date        string
-        Category    string
-        Title       string
+        Version    string
+        Date       string
+        Category   string
+        Title      string
         Description string
-        Icon        string
+        Icon       string
+        IsIncident bool
 }
 
 func GetChangelog() []ChangelogEntry {
@@ -18,6 +19,7 @@ func GetChangelog() []ChangelogEntry {
                         Title:       "Incident Disclosure: Inaccurate Analysis Output",
                         Description: "On Feb 10–11, a data-processing issue caused some reports to display incorrect analysis results. The root cause has been identified and fixed, and safeguards have been added so incomplete or failed data retrieval can never be silently presented as valid results. We believe in full transparency — you deserve to know when we get it wrong.",
                         Icon:        "fas fa-exclamation-triangle",
+                        IsIncident:  true,
                 },
                 {
                         Version:     "26.12.23",
