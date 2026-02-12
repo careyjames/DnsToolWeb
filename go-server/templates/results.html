@@ -945,7 +945,7 @@
                                         <i class="fas fa-exclamation-triangle me-1"></i>
                                         {{mapGetStr "primary_dkim_note" $dkim}}
                                         <div class="mt-2 pt-2 border-top border-warning border-opacity-50">
-                                            <i class="fas fa-key me-1"></i><strong>Know your DKIM selector?</strong> <a href="/" class="text-warning">Re-scan with a custom selector</a> to verify.
+                                            <i class="fas fa-key me-1"></i><strong>Know your DKIM selector?</strong> <a href="/?dkim=1" class="text-warning">Re-scan with a custom selector</a> to verify.
                                         </div>
                                     </div>
                                 {{else if and (eq $dkimStatus "info") $dkimIsKnownProvider}}
@@ -953,7 +953,7 @@
                                         <i class="fas fa-check-circle me-1"></i>
                                         <strong>{{$dkimPrimaryProvider}}</strong> detected as primary mail platform — DKIM signing is managed by the provider. The primary provider may use custom selectors not discoverable through standard checks.
                                         <div class="mt-2 pt-2 border-top border-success border-opacity-50">
-                                            <i class="fas fa-key me-1"></i><strong>Know your DKIM selector?</strong> <a href="/" class="text-success">Re-scan with a custom selector</a> to verify.
+                                            <i class="fas fa-key me-1"></i><strong>Know your DKIM selector?</strong> <a href="/?dkim=1" class="text-success">Re-scan with a custom selector</a> to verify.
                                         </div>
                                     </div>
                                 {{end}}

@@ -649,6 +649,12 @@
     <script nonce="{{.CspNonce}}">
     (function() {
         document.addEventListener('DOMContentLoaded', function() {
+            if (new URLSearchParams(window.location.search).has('dkim')) {
+                var el = document.getElementById('dkimSelectors');
+                if (el) { new bootstrap.Collapse(el, {toggle: true}); }
+                var sel1 = document.querySelector('input[name="dkim_selector1"]');
+                if (sel1) { setTimeout(function() { sel1.focus(); }, 350); }
+            }
             const analyzeBtn = document.getElementById('analyzeBtn');
             if (analyzeBtn && analyzeBtn.dataset.waitSeconds) {
                 var waitSeconds = Number.parseInt(analyzeBtn.dataset.waitSeconds, 10);
