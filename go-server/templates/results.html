@@ -2501,7 +2501,7 @@
                     <h5 class="mb-0 d-flex align-items-center justify-content-between flex-wrap">
                         <span><i class="fas fa-history me-2"></i>DNS History Timeline</span>
                         {{if eq (mapGetStr "status" $dns_history) "rate_limited"}}
-                        <span class="badge bg-warning-subtle text-warning border border-warning-subtle" style="font-size:0.65rem;">QUERY LIMIT REACHED</span>
+                        <span class="badge bg-warning-subtle text-warning border border-warning-subtle" style="font-size:0.65rem;">TEMPORARILY UNAVAILABLE</span>
                         {{else if eq (mapGetStr "status" $dns_history) "error"}}
                         <span class="badge bg-danger-subtle text-danger border border-danger-subtle" style="font-size:0.65rem;">UNAVAILABLE</span>
                         {{else if eq (mapGetStr "status" $dns_history) "partial"}}
@@ -2516,7 +2516,7 @@
                 </div>
                 <div class="card-body">
                     {{if eq (mapGetStr "status" $dns_history) "rate_limited"}}
-                    <p class="text-warning mb-0"><i class="fas fa-exclamation-triangle me-1"></i>DNS history data is temporarily unavailable. The third-party data source has reached its query limit. This section will return automatically &mdash; no action needed on your part.</p>
+                    <p class="text-warning mb-0"><i class="fas fa-exclamation-triangle me-1"></i>DNS history data is temporarily unavailable. The upstream data source is experiencing high demand. This section will return automatically &mdash; no action needed on your part.</p>
                     {{else if eq (mapGetStr "status" $dns_history) "error"}}
                     <p class="text-warning mb-0"><i class="fas fa-exclamation-triangle me-1"></i>DNS history data could not be retrieved at this time. The third-party data source did not respond. Try again shortly.</p>
                     {{else}}
@@ -2524,7 +2524,7 @@
                     {{if $changes}}
                     {{if eq (mapGetStr "status" $dns_history) "partial"}}
                     <div class="alert alert-warning border-0 py-2 mb-3" style="background: rgba(255,193,7,0.08); font-size: 0.8rem;">
-                        <i class="fas fa-info-circle me-1"></i>Some record types could not be checked due to third-party query limits. The changes shown below may be incomplete.
+                        <i class="fas fa-info-circle me-1"></i>Some record types could not be retrieved from the upstream data source. The changes shown below may be incomplete.
                     </div>
                     {{end}}
                     <div class="table-responsive">
@@ -2570,7 +2570,7 @@
                     </div>
                     {{else}}
                     {{if eq (mapGetStr "status" $dns_history) "partial"}}
-                    <p class="text-warning mb-0"><i class="fas fa-exclamation-triangle me-1"></i>Some record types could not be checked due to third-party query limits. No changes were found in the record types that were successfully checked, but the result may be incomplete.</p>
+                    <p class="text-warning mb-0"><i class="fas fa-exclamation-triangle me-1"></i>Some record types could not be retrieved from the upstream data source. No changes were found in the record types that were successfully checked, but the result may be incomplete.</p>
                     {{else}}
                     <p class="text-muted mb-0"><i class="fas fa-check-circle text-success me-1"></i>No DNS record changes detected in available history. A, MX, and NS records for this domain have remained stable.</p>
                     {{end}}
