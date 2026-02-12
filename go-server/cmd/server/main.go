@@ -8,6 +8,7 @@ import (
         "os"
         "path/filepath"
         "strings"
+        "time"
 
         "dnstool/go-server/internal/analyzer"
         "dnstool/go-server/internal/config"
@@ -91,10 +92,17 @@ func main() {
         dnsAnalyzer := analyzer.New()
         slog.Info("DNS analyzer initialized with telemetry")
 
+        analyzer.InitIETFMetadata()
+        analyzer.ScheduleRFCRefresh()
+
+        analysisCache := analyzer.NewAnalysisCache(30 * time.Minute)
+        dnsAnalyzer.WarmCache(analysisCache)
+        dnsAnalyzer.ScheduleCacheRefresh(analysisCache, 25*time.Minute)
+
         homeHandler := handlers.NewHomeHandler(cfg)
         healthHandler := handlers.NewHealthHandler(database, dnsAnalyzer)
         historyHandler := handlers.NewHistoryHandler(database, cfg)
-        analysisHandler := handlers.NewAnalysisHandler(database, cfg, dnsAnalyzer)
+        analysisHandler := handlers.NewAnalysisHandler(database, cfg, dnsAnalyzer, analysisCache)
         statsHandler := handlers.NewStatsHandler(database, cfg)
         compareHandler := handlers.NewCompareHandler(database, cfg)
         exportHandler := handlers.NewExportHandler(database)

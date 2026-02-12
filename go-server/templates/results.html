@@ -53,6 +53,7 @@
         {{$saas_txt := mapGetMap "saas_txt" $results}}
         {{$cds_cdnskey := mapGetMap "cds_cdnskey" $results}}
         {{$smimea := mapGetMap "smimea_openpgpkey" $results}}
+        {{$dns_history := mapGetMap "dns_history" $results}}
 
         <!-- Print-Only Report Header -->
         <div class="print-report-header">
@@ -381,10 +382,16 @@
                                     {{if mapGetStr "dns_record" $fixMap}}
                                     <div class="code-block small mt-1 border-warning" style="font-size: 0.7rem;">{{mapGetStr "dns_record" $fixMap}}</div>
                                     {{end}}
-                                    <div class="mt-1">
+                                    <div class="mt-1 d-flex align-items-center flex-wrap gap-1">
                                         <a href="{{mapGetStr "rfc_url" $fixMap}}" target="_blank" rel="noopener" class="text-muted rfc-link" style="font-size: 0.65rem;">
                                             <i class="fas fa-book me-1"></i>{{mapGetStr "rfc" $fixMap}}
                                         </a>
+                                        {{if mapGetStr "rfc_status" $fixMap}}
+                                        <span class="badge bg-dark bg-opacity-50 text-light" style="font-size:0.55rem" data-bs-toggle="tooltip" title="{{mapGetStr "rfc_title" $fixMap}}">{{mapGetStr "rfc_status" $fixMap}}</span>
+                                        {{end}}
+                                        {{if mapGetBool "rfc_obsolete" $fixMap}}
+                                        <span class="badge bg-danger" style="font-size:0.55rem"><i class="fas fa-exclamation-triangle me-1"></i>Obsoleted</span>
+                                        {{end}}
                                     </div>
                                 </div>
                             </div>
@@ -412,10 +419,16 @@
                                         {{if mapGetStr "dns_record" $fixMap}}
                                         <div class="code-block small mt-1 border-warning" style="font-size: 0.7rem;">{{mapGetStr "dns_record" $fixMap}}</div>
                                         {{end}}
-                                        <div class="mt-1">
+                                        <div class="mt-1 d-flex align-items-center flex-wrap gap-1">
                                             <a href="{{mapGetStr "rfc_url" $fixMap}}" target="_blank" rel="noopener" class="text-muted rfc-link" style="font-size: 0.65rem;">
                                                 <i class="fas fa-book me-1"></i>{{mapGetStr "rfc" $fixMap}}
                                             </a>
+                                            {{if mapGetStr "rfc_status" $fixMap}}
+                                            <span class="badge bg-dark bg-opacity-50 text-light" style="font-size:0.55rem" data-bs-toggle="tooltip" title="{{mapGetStr "rfc_title" $fixMap}}">{{mapGetStr "rfc_status" $fixMap}}</span>
+                                            {{end}}
+                                            {{if mapGetBool "rfc_obsolete" $fixMap}}
+                                            <span class="badge bg-danger" style="font-size:0.55rem"><i class="fas fa-exclamation-triangle me-1"></i>Obsoleted</span>
+                                            {{end}}
                                         </div>
                                     </div>
                                 </div>
@@ -1656,6 +1669,71 @@
                             {{end}}
                         </div>
                         {{end}}
+                        {{end}}
+                    </div>
+                </div>
+            </div>
+        </div>
+        {{end}}
+
+        <!-- DNS History Timeline Section -->
+        {{if mapGetBool "available" $dns_history}}
+        <div class="row section-dns-history">
+            <div class="col-12 mb-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0 d-flex align-items-center justify-content-between flex-wrap">
+                            <span><i class="fas fa-history me-2"></i>DNS History Timeline</span>
+                            <small class="text-muted">Historical DNS record changes &mdash; Source: {{mapGetStr "source" $dns_history}}</small>
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <p class="text-muted mb-3"><i class="fas fa-info-circle me-1"></i>Recent DNS record changes for this domain. Shows when records appeared or were removed, helping identify infrastructure transitions (e.g., mail provider migrations, hosting changes).</p>
+                        {{$changes := mapGetSlice "changes" $dns_history}}
+                        {{if $changes}}
+                        <div class="table-responsive">
+                            <table class="table table-sm table-striped mb-0">
+                                <thead>
+                                    <tr>
+                                        <th style="width:80px">Date</th>
+                                        <th style="width:60px">Type</th>
+                                        <th style="width:70px">Action</th>
+                                        <th>Value</th>
+                                        <th>Organization</th>
+                                        <th>Timeline</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {{range $changes}}
+                                    {{$ch := toMap .}}
+                                    {{if $ch}}
+                                    <tr>
+                                        <td><code class="text-muted" style="font-size:0.8em">{{mapGetStr "date" $ch}}</code></td>
+                                        <td><span class="badge bg-{{if eq (mapGetStr "record_type" $ch) "A"}}primary{{else if eq (mapGetStr "record_type" $ch) "MX"}}success{{else if eq (mapGetStr "record_type" $ch) "NS"}}info{{else}}secondary{{end}}">{{mapGetStr "record_type" $ch}}</span></td>
+                                        <td>
+                                            {{if eq (mapGetStr "action" $ch) "added"}}
+                                            <span class="text-success"><i class="fas fa-plus-circle me-1"></i>Added</span>
+                                            {{else}}
+                                            <span class="text-danger"><i class="fas fa-minus-circle me-1"></i>Removed</span>
+                                            {{end}}
+                                        </td>
+                                        <td><code style="font-size:0.85em">{{mapGetStr "value" $ch}}</code></td>
+                                        <td>
+                                            {{if ne (mapGetStr "org" $ch) ""}}
+                                            <span class="text-muted">{{mapGetStr "org" $ch}}</span>
+                                            {{else}}
+                                            <span class="text-muted">&mdash;</span>
+                                            {{end}}
+                                        </td>
+                                        <td><span class="text-muted" style="font-size:0.85em">{{mapGetStr "description" $ch}}</span></td>
+                                    </tr>
+                                    {{end}}
+                                    {{end}}
+                                </tbody>
+                            </table>
+                        </div>
+                        {{else}}
+                        <p class="text-muted mb-0"><i class="fas fa-check-circle text-success me-1"></i>No recent DNS changes detected. This domain's DNS configuration appears stable.</p>
                         {{end}}
                     </div>
                 </div>

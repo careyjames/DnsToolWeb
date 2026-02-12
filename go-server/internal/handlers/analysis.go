@@ -27,10 +27,11 @@ type AnalysisHandler struct {
         DB       *db.Database
         Config   *config.Config
         Analyzer *analyzer.Analyzer
+        Cache    *analyzer.AnalysisCache
 }
 
-func NewAnalysisHandler(database *db.Database, cfg *config.Config, a *analyzer.Analyzer) *AnalysisHandler {
-        return &AnalysisHandler{DB: database, Config: cfg, Analyzer: a}
+func NewAnalysisHandler(database *db.Database, cfg *config.Config, a *analyzer.Analyzer, cache *analyzer.AnalysisCache) *AnalysisHandler {
+        return &AnalysisHandler{DB: database, Config: cfg, Analyzer: a, Cache: cache}
 }
 
 func (h *AnalysisHandler) ViewAnalysisStatic(c *gin.Context) {
@@ -180,9 +181,24 @@ func (h *AnalysisHandler) Analyze(c *gin.Context) {
                 }
         }
 
-        startTime := time.Now()
-        results := h.Analyzer.AnalyzeDomain(c.Request.Context(), asciiDomain, customSelectors)
-        analysisDuration := time.Since(startTime).Seconds()
+        var results map[string]any
+        var analysisDuration float64
+        fromCache := false
+
+        if h.Cache != nil && len(customSelectors) == 0 {
+                if cached, ok := h.Cache.Get(asciiDomain); ok {
+                        results = cached.Results
+                        analysisDuration = 0.0
+                        fromCache = true
+                        slog.Info("Serving from pre-cache", "domain", asciiDomain)
+                }
+        }
+
+        if results == nil {
+                startTime := time.Now()
+                results = h.Analyzer.AnalyzeDomain(c.Request.Context(), asciiDomain, customSelectors)
+                analysisDuration = time.Since(startTime).Seconds()
+        }
 
         if success, ok := results["analysis_success"].(bool); ok && !success {
                 if errMsg, ok := results["error"].(string); ok {
@@ -196,6 +212,19 @@ func (h *AnalysisHandler) Analyze(c *gin.Context) {
                         return
                 }
         }
+
+        if !fromCache && h.Cache != nil && h.Cache.IsTopDomain(asciiDomain) {
+                h.Cache.Set(asciiDomain, results)
+        }
+
+        dnsHistory := analyzer.FetchDNSHistory(c.Request.Context(), asciiDomain)
+        results["dns_history"] = dnsHistory
+
+        if rem, ok := results["remediation"].(map[string]any); ok {
+                results["remediation"] = analyzer.EnrichRemediationWithRFCMeta(rem)
+        }
+
+        results["rfc_metadata"] = analyzer.GetAllRFCMetadata()
 
         countryCode, countryName := lookupCountry(c.ClientIP())
 
@@ -222,6 +251,7 @@ func (h *AnalysisHandler) Analyze(c *gin.Context) {
                 "AnalysisDuration":     analysisDuration,
                 "AnalysisTimestamp":    timestamp,
                 "FromHistory":          false,
+                "FromCache":            fromCache,
                 "DomainExists":         domainExists,
                 "ToolVersion":          h.Config.AppVersion,
                 "VerificationCommands": verifyCommands,
