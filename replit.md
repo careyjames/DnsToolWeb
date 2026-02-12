@@ -32,8 +32,10 @@ The application is implemented in Go using the Gin framework, having been rewrit
 ### External Services
 - **DNS Resolvers**: Cloudflare DNS, Google Public DNS, Quad9, OpenDNS/Cisco Umbrella (for consensus).
 - **IANA RDAP**: For registry data lookups.
-- **ip-api.com**: For IP-to-country lookups.
-- **crt.sh**: For Certificate Transparency logs.
+- **ip-api.com**: For visitor IP-to-country lookups (not analysis data; degrades gracefully on failure).
+- **crt.sh**: For Certificate Transparency logs (with telemetry cooldown and honest error messaging).
+- **SecurityTrails**: For DNS history timeline (A, MX, NS record changes over time). 50 API calls/month free tier (~16 unique domain scans). `SECURITYTRAILS_API_KEY` stored as Replit secret. No viable free alternative API exists for equivalent historical DNS data.
+- **Team Cymru**: DNS-based IP-to-ASN attribution (no quotas, no API key needed).
 
 ### Database
 - **PostgreSQL**: The primary database for persistent storage.
@@ -80,6 +82,22 @@ DKIM selectors are not enumerable via DNS (RFC 6376 §3.6.2.1). The tool checks 
 
 ### Template Comparison Safety
 All six Go template comparison operators (`eq`, `ne`, `gt`, `lt`, `ge`, `le`) are overridden in `go-server/internal/templates/funcs.go` with type-safe versions that use `toFloat64()` for cross-type numeric comparisons. This prevents panics when comparing `float64` values (from `mapGetFloat`) with integer literals in templates. Template authors can safely write `eq $floatVar 0` without worrying about type mismatches. The custom `eq` preserves Go's variadic semantics (`eq arg1 arg2 arg3...` means `arg1==arg2 || arg1==arg3 || ...`).
+
+### DNS History Cache
+A dedicated `DNSHistoryCache` (24h TTL) in `go-server/internal/analyzer/dns_history.go` is completely isolated from the live analysis cache (`AnalysisCache`, 30min TTL in `precache.go`). The DNS history cache:
+- Only caches successful SecurityTrails responses — never caches rate-limited or error states
+- Uses four-state status reporting: `success`, `rate_limited`, `error`, `partial`
+- Template messaging in `results.html` matches status — no false "no changes" claims when data is unavailable
+- Created in `main.go`, passed through `AnalysisHandler` → `FetchDNSHistory`
+- Live DNS queries (SPF, DMARC, DKIM, etc.) are NEVER affected by this cache
+
+### External Service Honesty Policy
+All external service integrations follow strict honesty about data availability:
+- **SecurityTrails**: Four-state status (success/rate_limited/error/partial) with transparent template messaging
+- **crt.sh**: Telemetry cooldown with honest error/timeout messaging
+- **IANA RDAP**: Telemetry cooldown with honest unavailability messaging
+- **ip-api.com**: Silent graceful degradation (visitor geolocation only, not analysis data)
+- **Team Cymru**: DNS-based, no quotas, no honesty concerns
 
 ### Analysis Integrity Standard
 The tool's analysis logic — posture scoring, remediation recommendations, risk levels, and provider detection — must produce results that any RFC-literate security engineer, enterprise DNS engineer, or enterprise email infrastructure professional would independently reach the same conclusion reviewing the same data. This is the bar: convergent agreement across RFC standards bodies, enterprise security teams, and industry best practices from as many authoritative angles as possible. Every rating must be scientifically defensible and honest. Never inflate severity to appear thorough, never downplay to avoid attention. The golden rules test suite (`go-server/internal/analyzer/golden_rules_test.go`, 41 cases) is the automated regression guard protecting this standard.

@@ -1,7 +1,7 @@
 # DNS Tool — Feature Inventory
 
-**Version:** 26.12.17
-**Last Updated:** February 11, 2026
+**Version:** 26.12.23
+**Last Updated:** February 12, 2026
 **Implementation:** Go/Gin (`go-server/`)
 
 ---
@@ -157,6 +157,7 @@ parsing and validation of a specific DNS protocol.
 | 19 | **Hosting Summary** | `infrastructure.go` | `hosting_summary` |
 | 20 | **Domain Existence Detection** | `orchestrator.go` | `domain_exists` |
 | 21 | **Domain Status** | `orchestrator.go` | `domain_status`, `domain_status_message` |
+| 22 | **DNS History Timeline** | `dns_history.go` | `dns_history` |
 
 ### 2.1 Basic DNS Records (`records.go`)
 - Multi-type DNS query: A, AAAA, MX, TXT, NS, CNAME, CAA, SOA, SRV
@@ -219,15 +220,26 @@ parsing and validation of a specific DNS protocol.
 - Undelegated domain handling
 - Human-readable status messages (`domain_status_message`)
 
+### 2.10 DNS History Timeline (`dns_history.go`)
+- SecurityTrails API integration for historical A, MX, NS records
+- Change event extraction (added/removed records with dates)
+- Organization attribution per IP/hostname
+- Dedicated 24h TTL cache (isolated from live analysis cache)
+- Only caches successful responses — never caches rate-limited or error states
+- Four-state honest status reporting: success, rate_limited, error, partial
+- Template messaging matches status — no false "no changes" claims when data is unavailable
+- SecurityTrails limitations: 50 API queries/month (~16 unique domain scans at 3 calls per scan)
+- No alternative free DNS history API exists with equivalent data quality; tool is transparent about this limitation
+
 ---
 
 ## 3. Assessment & Scoring
 
 | # | Feature | Source File | Schema Key |
 |---|---------|-------------|------------|
-| 22 | **Security Posture Assessment** | `posture.go` | `posture` |
-| 23 | **Mail Posture Classification** | `posture.go` | `mail_posture` |
-| 24 | **Remediation Engine** | `remediation.go` | `remediation` |
+| 23 | **Security Posture Assessment** | `posture.go` | `posture` |
+| 24 | **Mail Posture Classification** | `posture.go` | `mail_posture` |
+| 25 | **Remediation Engine** | `remediation.go` | `remediation` |
 
 ### 3.1 Security Posture Assessment (`posture.go`)
 - CVSS-aligned risk levels: Informational → Low → Medium → High → Critical
@@ -262,9 +274,9 @@ parsing and validation of a specific DNS protocol.
 
 | # | Feature | Source File | Schema Key |
 |---|---------|-------------|------------|
-| 25 | **Email Security Management Detection** | `infrastructure.go` | `email_security_mgmt` |
-| 26 | **Null MX Detection** | `posture.go` | `has_null_mx` |
-| 27 | **No-Mail Domain Detection** | `posture.go` | `is_no_mail_domain` |
+| 26 | **Email Security Management Detection** | `infrastructure.go` | `email_security_mgmt` |
+| 27 | **Null MX Detection** | `posture.go` | `has_null_mx` |
+| 28 | **No-Mail Domain Detection** | `posture.go` | `is_no_mail_domain` |
 
 ### 4.1 Email Security Management Detection (`infrastructure.go`)
 - DMARC `rua` URI provider matching (30+ monitoring providers)
@@ -282,11 +294,11 @@ parsing and validation of a specific DNS protocol.
 
 | # | Feature | Source File | Schema Key |
 |---|---------|-------------|------------|
-| 28 | **Data Freshness Tracking** | `orchestrator.go` | `_data_freshness` |
-| 29 | **Section Status Summary** | `orchestrator.go` | `section_status` |
-| 30 | **Authoritative Query Status** | `records.go` | `auth_query_status` |
-| 31 | **Resolver TTL** | `records.go` | `resolver_ttl` |
-| 32 | **Authoritative TTL** | `records.go` | `auth_ttl` |
+| 29 | **Data Freshness Tracking** | `orchestrator.go` | `_data_freshness` |
+| 30 | **Section Status Summary** | `orchestrator.go` | `section_status` |
+| 31 | **Authoritative Query Status** | `records.go` | `auth_query_status` |
+| 32 | **Resolver TTL** | `records.go` | `resolver_ttl` |
+| 33 | **Authoritative TTL** | `records.go` | `auth_ttl` |
 
 ---
 
@@ -294,14 +306,14 @@ parsing and validation of a specific DNS protocol.
 
 | # | Feature | Handler | Template |
 |---|---------|---------|----------|
-| 33 | **Domain Analysis** | `analysis.go` | `results.html` |
-| 34 | **Analysis History** | `history.go` | `history.html` |
-| 35 | **Domain Comparison** | `compare.go` | `compare.html` |
-| 36 | **Statistics Dashboard** | `stats.go` | `stats.html` |
-| 37 | **JSON Export** | `export.go` | — |
-| 38 | **BIMI Logo Proxy** | `proxy.go` | — |
-| 39 | **Health Check** | `health.go` | — |
-| 40 | **PWA / Service Worker** | `static.go` | `sw.js` |
+| 34 | **Domain Analysis** | `analysis.go` | `results.html` |
+| 35 | **Analysis History** | `history.go` | `history.html` |
+| 36 | **Domain Comparison** | `compare.go` | `compare.html` |
+| 37 | **Statistics Dashboard** | `stats.go` | `stats.html` |
+| 38 | **JSON Export** | `export.go` | — |
+| 39 | **BIMI Logo Proxy** | `proxy.go` | — |
+| 40 | **Health Check** | `health.go` | — |
+| 41 | **PWA / Service Worker** | `static.go` | `sw.js` |
 
 ### 6.1 Domain Analysis
 - Single-domain comprehensive audit
@@ -354,14 +366,15 @@ Professional, client-facing print layout designed for executive audiences.
 
 | # | Feature | Source |
 |---|---------|-------|
-| 41 | **CSRF Protection** | `middleware/csrf.go` — HMAC-signed cookie tokens |
-| 42 | **Rate Limiting** | `middleware/rate_limit.go` — 8 req/min per IP |
-| 43 | **SSRF Hardening** | `dnsclient/` — private IP blocking |
-| 44 | **Multi-Resolver DNS Client** | `dnsclient/` — TCP with DoH fallback |
-| 45 | **Provider Health Telemetry** | `telemetry/` — resolver latency tracking |
-| 46 | **RDAP Response Caching** | `telemetry/` — 24h TTL per RFC 9224 |
-| 47 | **Concurrent Orchestrator** | `orchestrator.go` — goroutine-based parallel analysis |
-| 48 | **60s Master Deadline** | `orchestrator.go` — context-based timeout |
+| 42 | **CSRF Protection** | `middleware/csrf.go` — HMAC-signed cookie tokens |
+| 43 | **Rate Limiting** | `middleware/rate_limit.go` — 8 req/min per IP |
+| 44 | **SSRF Hardening** | `dnsclient/` — private IP blocking |
+| 45 | **Multi-Resolver DNS Client** | `dnsclient/` — TCP with DoH fallback |
+| 46 | **Provider Health Telemetry** | `telemetry/` — resolver latency tracking |
+| 47 | **RDAP Response Caching** | `telemetry/` — 24h TTL per RFC 9224 |
+| 48 | **DNS History Caching** | `dns_history.go` — 24h TTL, isolated from analysis cache |
+| 49 | **Concurrent Orchestrator** | `orchestrator.go` — goroutine-based parallel analysis |
+| 50 | **60s Master Deadline** | `orchestrator.go` — context-based timeout |
 
 ---
 
@@ -381,10 +394,10 @@ Professional, client-facing print layout designed for executive audiences.
 
 ---
 
-## Total Feature Count: 48
+## Total Feature Count: 50
 
-**Analysis Modules:** 11 | **Infrastructure:** 10 | **Assessment:** 3 |
-**Detection:** 3 | **Metadata:** 5 | **Platform:** 8 | **Security:** 8
+**Analysis Modules:** 11 | **Infrastructure:** 11 | **Assessment:** 3 |
+**Detection:** 3 | **Metadata:** 5 | **Platform:** 8 | **Security:** 9
 
 ---
 
