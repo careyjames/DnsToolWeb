@@ -472,7 +472,7 @@
                                 <div class="text-truncate">
                                     {{$mpClass := mapGetStr "classification" $mp}}
                                     {{$mpIcon := "envelope"}}
-                                    {{if or (eq $mpClass "no_mail_verified") (eq $mpClass "no_mail_partial")}}{{$mpIcon = "ban"}}{{else if eq $mpClass "email_ambiguous"}}{{$mpIcon = "question-circle"}}{{end}}
+                                    {{if or (eq $mpClass "no_mail_verified") (eq $mpClass "no_mail_partial") (eq $mpClass "no_mail_intent") (mapGetBool "is_no_mail_domain" $results)}}{{$mpIcon = "ban"}}{{else if eq $mpClass "email_ambiguous"}}{{$mpIcon = "question-circle"}}{{end}}
                                     <i class="fas fa-{{$mpIcon}} text-primary me-2"></i>
                                     <strong>{{if and $hosting (mapGetStr "email_hosting" $hosting)}}{{mapGetStr "email_hosting" $hosting}}{{else}}Unknown{{end}}</strong>
                                 </div>
@@ -504,7 +504,7 @@
                                     <span class="badge bg-success ms-1" style="font-size: 0.55rem;" title="Enterprise-grade DNS infrastructure">Enterprise</span>
                                     {{end}}
                                 </div>
-                                <small class="text-muted d-block" style="font-size: 0.65rem;">Where DNS records are edited</small>
+                                <small class="text-muted d-block" style="font-size: 0.65rem;">{{if and $hosting (mapGetBool "dns_from_parent" $hosting)}}Via parent zone NS records{{else}}Where DNS records are edited{{end}}</small>
                             </div>
                         </div>
                     </div>
