@@ -172,7 +172,8 @@
         {{$postureIcon := mapGetStr "icon" $posture}}
         {{$postureState := mapGetStr "state" $posture}}
         {{$postureMsg := mapGetStr "message" $posture}}
-        {{$postureIssues := mapGetSlice "issues" $posture}}
+        {{$postureCritical := mapGetSlice "critical_issues" $posture}}
+        {{$postureRecs := mapGetSlice "recommendations" $posture}}
         {{$postureMonitoring := mapGetSlice "monitoring" $posture}}
         <div class="row mb-4">
             <div class="col-12">
@@ -193,10 +194,13 @@
                                     {{end}}
                                 </div>
                             </div>
-                            {{if or $postureIssues $postureMonitoring}}
+                            {{if or $postureCritical $postureRecs $postureMonitoring}}
                             <div class="mt-2 mt-md-0">
-                                {{if $postureIssues}}
-                                    <a href="#findings-summary" class="text-danger text-decoration-none d-block"><small><i class="fas fa-times-circle me-1"></i>{{len $postureIssues}} issue{{if gt (len $postureIssues) 1}}s{{end}}</small></a>
+                                {{if $postureCritical}}
+                                    <a href="#findings-summary" class="text-danger text-decoration-none d-block"><small><i class="fas fa-times-circle me-1"></i>{{len $postureCritical}} action required</small></a>
+                                {{end}}
+                                {{if $postureRecs}}
+                                    <a href="#findings-summary" class="text-warning text-decoration-none d-block"><small><i class="fas fa-lightbulb me-1"></i>{{len $postureRecs}} recommendation{{if gt (len $postureRecs) 1}}s{{end}}</small></a>
                                 {{end}}
                                 {{if $postureMonitoring}}
                                     <a href="#findings-summary" class="text-info text-decoration-none d-block"><small><i class="fas fa-eye me-1"></i>{{len $postureMonitoring}} monitoring</small></a>
