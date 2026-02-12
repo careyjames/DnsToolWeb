@@ -2554,7 +2554,8 @@
                 </div>
             </div>
         </div>
-        {{else}}
+        {{else if mapGetBool "api_enabled" $dns_history}}
+        <!-- API enabled but no data returned (e.g. rate limited) -->
         <div class="col-12 mb-4">
             <div class="card">
                 <div class="card-header">
@@ -2564,11 +2565,7 @@
                     </h5>
                 </div>
                 <div class="card-body">
-                    {{if mapGetBool "api_enabled" $dns_history}}
                     <p class="text-muted mb-0"><i class="fas fa-check-circle text-success me-1"></i>No recent DNS changes detected. This domain's DNS configuration appears stable.</p>
-                    {{else}}
-                    <p class="text-muted mb-0"><i class="fas fa-info-circle text-info me-1"></i>DNS history requires a SecurityTrails API integration. Historical A, MX, and NS record changes will appear here once enabled.</p>
-                    {{end}}
                 </div>
             </div>
         </div>
