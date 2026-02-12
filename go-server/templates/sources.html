@@ -44,7 +44,7 @@
                 </div>
 
                 <h3 class="h5 mt-4 mb-3"><i class="fas fa-network-wired me-2 text-primary"></i>DNS Resolution &amp; Record Queries</h3>
-                <p class="text-muted small mb-3">The foundation of every analysis. Four independent resolvers queried in parallel with majority-agreement consensus.</p>
+                <p class="text-muted small mb-3">The foundation of every analysis. Four independent resolvers queried in parallel via native DNS over UDP/TCP with majority-agreement consensus. The <code>dig</code> commands shown are the equivalent terminal commands for manual verification.</p>
                 {{range .DNSSources}}
                 {{template "source_card" .}}
                 {{end}}
@@ -126,6 +126,7 @@
                 </div>
                 {{if .VerifyCmd}}
                 <div class="mt-2">
+                    <span class="text-muted small me-1"><i class="fas fa-terminal me-1"></i>Verify:</span>
                     <code class="small text-info">{{.VerifyCmd}}</code>
                 </div>
                 {{end}}
