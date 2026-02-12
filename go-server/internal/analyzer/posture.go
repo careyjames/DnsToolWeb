@@ -119,9 +119,9 @@ func evaluateProtocolStates(results map[string]any) protocolState {
                 dmarcHasRua:        hasNonEmptyString(dmarc, "rua"),
                 dkimOK:             dkim["status"] == "success",
                 dkimProvider:       dkim["status"] == "info" && isKnownDKIMProvider(primaryProvider),
-                dkimPartial:        dkim["status"] == "info" && !isKnownDKIMProvider(primaryProvider),
+                dkimPartial:        (dkim["status"] == "info" && !isKnownDKIMProvider(primaryProvider)) || dkim["status"] == "partial",
                 dkimWeakKeys:       dkimWeakKeys,
-                dkimThirdPartyOnly: dkimThirdPartyOnly,
+                dkimThirdPartyOnly: dkimThirdPartyOnly || dkim["status"] == "partial",
                 caaOK:              caa["status"] == "success",
                 mtaStsOK:           mtaSts["status"] == "success",
                 tlsrptOK:           tlsrpt["status"] == "success",
@@ -256,6 +256,10 @@ func classifyDKIM(ps protocolState, acc *postureAccumulator) {
                 acc.configured = append(acc.configured, "DKIM")
         case ps.dkimProvider:
                 acc.configured = append(acc.configured, "DKIM (provider-verified)")
+        case ps.dkimThirdPartyOnly:
+                acc.configured = append(acc.configured, "DKIM (third-party)")
+                acc.recommendations = append(acc.recommendations,
+                        fmt.Sprintf("DKIM found for third-party senders only — enable DKIM for primary mail platform (%s) for full alignment", ps.primaryProvider))
         case ps.dkimPartial:
                 if ps.isNoMailDomain {
                         acc.recommendations = append(acc.recommendations,
@@ -374,7 +378,7 @@ func (a *Analyzer) CalculatePosture(results map[string]any) map[string]any {
 
         hasSPF := ps.spfOK || (ps.spfWarning && !ps.spfMissing)
         hasDMARC := ps.dmarcOK || (ps.dmarcWarning && !ps.dmarcMissing)
-        hasDKIM := ps.dkimOK || ps.dkimProvider
+        hasDKIM := ps.dkimOK || ps.dkimProvider || ps.dkimThirdPartyOnly
 
         classifySPF(ps, acc)
         classifyDMARC(ps, acc)
@@ -534,7 +538,11 @@ func buildDescriptiveMessage(ps protocolState, configured, absent, monitoring []
         var parts []string
 
         if ps.dmarcPolicy == "reject" {
-                parts = append(parts, "Email authentication with full DMARC enforcement")
+                if ps.dkimThirdPartyOnly {
+                        parts = append(parts, "Email authentication with full DMARC enforcement. DKIM verified for third-party senders; primary provider DKIM recommended")
+                } else {
+                        parts = append(parts, "Email authentication with full DMARC enforcement")
+                }
         } else if ps.dmarcPolicy == "quarantine" {
                 parts = append(parts, "Email authentication configured with DMARC quarantine policy")
         }
@@ -608,18 +616,29 @@ func buildEnforcingEmailVerdict(ps protocolState, verdicts map[string]any) {
         action := map[string]string{"reject": "blocked", "quarantine": "flagged as spam"}[ps.dmarcPolicy]
         msg := "DMARC policy is " + ps.dmarcPolicy + " — spoofed messages will be " + action + " by receiving servers."
 
-        dkimSuffix := " with strong cryptography"
-        if ps.dkimProvider {
-                dkimSuffix = " (provider-verified for " + ps.primaryProvider + ")"
+        if ps.dkimThirdPartyOnly {
+                msg += " DKIM verified for third-party senders; primary provider (" + ps.primaryProvider + ") DKIM not observed."
+        } else if ps.dkimProvider {
+                msg += " DKIM keys verified (provider-verified for " + ps.primaryProvider + ")."
+        } else {
+                msg += " DKIM keys verified with strong cryptography."
         }
-        msg += " DKIM keys verified" + dkimSuffix + "."
 
         verdicts["email"] = msg
-        verdicts["email_secure"] = ps.dmarcPolicy == "reject"
-        if ps.dmarcPolicy == "reject" {
-                verdicts["email_answer"] = "No"
+        if ps.dkimThirdPartyOnly {
+                verdicts["email_secure"] = ps.dmarcPolicy == "reject"
+                if ps.dmarcPolicy == "reject" {
+                        verdicts["email_answer"] = "No"
+                } else {
+                        verdicts["email_answer"] = "Mostly No"
+                }
         } else {
-                verdicts["email_answer"] = "Mostly No"
+                verdicts["email_secure"] = ps.dmarcPolicy == "reject"
+                if ps.dmarcPolicy == "reject" {
+                        verdicts["email_answer"] = "No"
+                } else {
+                        verdicts["email_answer"] = "Mostly No"
+                }
         }
 }
 
@@ -706,6 +725,8 @@ func computeDKIMScore(ps protocolState) int {
                 return 20
         case ps.dkimProvider:
                 return 15
+        case ps.dkimThirdPartyOnly:
+                return 12
         case ps.dkimPartial:
                 return 5
         }

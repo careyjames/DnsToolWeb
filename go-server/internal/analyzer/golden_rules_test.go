@@ -528,9 +528,35 @@ func TestGoldenRulesDKIM(t *testing.T) {
                 withDKIM(r, "warning", providerGoogleWorkspace)
                 withDKIMThirdPartyOnly(r)
                 rem := a.GenerateRemediation(r)
+                pos := a.CalculatePosture(r)
 
                 requireFixContaining(t, rem, "Enable DKIM for")
                 requireSeverityContaining(t, rem, "Enable DKIM for", "Medium")
+                postureHas(t, pos, "configured", "DKIM (third-party)")
+                postureNotHas(t, pos, "absent", "DKIM")
+        })
+
+        t.Run("Rule20b_DKIM_PartialStatus_ThirdPartyOnly", func(t *testing.T) {
+                r := withSPF(baseResults(), "success", "-all", "")
+                withDMARC(r, "success", "reject")
+                withDKIM(r, "partial", providerGoogleWorkspace)
+                withDKIMThirdPartyOnly(r)
+                withCAA(r, "success")
+                pos := a.CalculatePosture(r)
+
+                postureHas(t, pos, "configured", "DKIM (third-party)")
+                postureNotHas(t, pos, "absent", "DKIM")
+
+                grade, _ := pos["grade"].(string)
+                if grade == riskMedium || grade == riskHigh || grade == riskCritical {
+                        t.Errorf("SPF -all + DMARC reject + third-party DKIM should not be %s, got %s", riskMedium, grade)
+                }
+
+                verdicts, _ := pos["verdicts"].(map[string]any)
+                emailAnswer, _ := verdicts["email_answer"].(string)
+                if emailAnswer == "Partially" || emailAnswer == "Yes" {
+                        t.Errorf("email_answer should be 'No' for SPF -all + DMARC reject + third-party DKIM, got %s", emailAnswer)
+                }
         })
 
         t.Run("Rule21_DKIM_NoMail_NoFix", func(t *testing.T) {
