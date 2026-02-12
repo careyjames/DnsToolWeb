@@ -392,9 +392,13 @@ func appendCAAFixes(fixes []fix, ps protocolState, domain string) []fix {
         if ps.caaOK {
                 return fixes
         }
+        desc := "Publish CAA DNS records to restrict which Certificate Authorities can issue TLS certificates for your domain. Specify your preferred CA (e.g., letsencrypt.org, digicert.com). CAA is advisory — CAs must check it before issuing, but absence means any CA can issue."
+        if ps.daneOK {
+                desc = "Publish CAA DNS records to restrict which Certificate Authorities can issue TLS certificates for your web services (HTTPS). Your email transport already uses DANE, which validates mail server certificates via DNSSEC without relying on CAs — so CAA is primarily relevant to your web-facing certificates."
+        }
         return append(fixes, fix{
                 Title:         "Add CAA records",
-                Description:   "Publish CAA DNS records to restrict which Certificate Authorities can issue TLS certificates for your domain. Specify your preferred CA (e.g., letsencrypt.org, digicert.com). CAA is advisory — CAs must check it before issuing, but absence means any CA can issue.",
+                Description:   desc,
                 DNSRecord:     fmt.Sprintf("%s CAA 0 issue \"letsencrypt.org\"", domain),
                 RFC:           "RFC 8659 §4",
                 RFCURL:        "https://datatracker.ietf.org/doc/html/rfc8659#section-4",
