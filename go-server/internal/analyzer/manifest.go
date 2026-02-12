@@ -388,6 +388,95 @@ var FeatureParityManifest = []ManifestEntry{
                         "Mail signal aggregation",
                 },
         },
+        {
+                Feature:     "DMARC External Reporting Authorization",
+                Category:    "analysis",
+                Description: "Verify external DMARC report recipients have published authorization records",
+                SchemaKey:   "dmarc_report_auth",
+                DetectionMethods: []string{
+                        "<domain>._report._dmarc.<external> TXT lookup",
+                        "v=DMARC1 authorization record validation",
+                },
+                RFC: "RFC 7489 §7.1",
+        },
+        {
+                Feature:     "Dangling DNS / Subdomain Takeover Risk",
+                Category:    "detection",
+                Description: "Detect CNAME records pointing to unclaimed services or NXDOMAIN targets",
+                SchemaKey:   "dangling_dns",
+                DetectionMethods: []string{
+                        "CNAME target resolution check",
+                        "Known takeover-vulnerable service fingerprinting",
+                        "CT subdomain CNAME chain analysis",
+                },
+        },
+        {
+                Feature:     "HTTPS/SVCB Record Intelligence",
+                Category:    "analysis",
+                Description: "Query HTTPS and SVCB records, parse SvcParams for HTTP/3 and ECH support",
+                SchemaKey:   "https_svcb",
+                DetectionMethods: []string{
+                        "HTTPS (type 65) record query",
+                        "SVCB record query",
+                        "SvcParam parsing (alpn, port, ipv4hint, ipv6hint, ech)",
+                        "HTTP/3 and ECH capability detection",
+                },
+                RFC: "RFC 9460",
+        },
+        {
+                Feature:     "IP-to-ASN Attribution",
+                Category:    "infrastructure",
+                Description: "Look up ASN information for A/AAAA records via Team Cymru DNS",
+                SchemaKey:   "asn_info",
+                DetectionMethods: []string{
+                        "Team Cymru DNS-based ASN lookup (origin.asn.cymru.com)",
+                        "IPv4 and IPv6 reverse mapping",
+                        "AS name enrichment (peer.asn.cymru.com)",
+                },
+        },
+        {
+                Feature:     "Edge/CDN vs Origin Detection",
+                Category:    "detection",
+                Description: "Classify whether domain is behind a CDN/edge network or direct origin",
+                SchemaKey:   "edge_cdn",
+                DetectionMethods: []string{
+                        "ASN-to-CDN provider mapping",
+                        "CNAME chain CDN pattern matching",
+                },
+        },
+        {
+                Feature:     "SaaS TXT Footprint",
+                Category:    "detection",
+                Description: "Extract SaaS service verification records from TXT records",
+                SchemaKey:   "saas_txt",
+                DetectionMethods: []string{
+                        "TXT record regex pattern matching against known SaaS verification prefixes",
+                },
+        },
+        {
+                Feature:     "CDS/CDNSKEY Automation Detection",
+                Category:    "analysis",
+                Description: "Detect automated DNSSEC key rollover signaling via CDS/CDNSKEY records",
+                SchemaKey:   "cds_cdnskey",
+                DetectionMethods: []string{
+                        "CDS record query",
+                        "CDNSKEY record query",
+                        "Automation level classification",
+                        "Delete signal detection (RFC 8078 §4)",
+                },
+                RFC: "RFC 8078",
+        },
+        {
+                Feature:     "SMIMEA/OPENPGPKEY Detection",
+                Category:    "analysis",
+                Description: "Detect email encryption key publication via SMIMEA and OPENPGPKEY records",
+                SchemaKey:   "smimea_openpgpkey",
+                DetectionMethods: []string{
+                        "SMIMEA record query (*._smimecert)",
+                        "OPENPGPKEY record query (*._openpgpkey)",
+                },
+                RFC: "RFC 8162",
+        },
 }
 
 var RequiredSchemaKeys []string

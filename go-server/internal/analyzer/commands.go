@@ -28,6 +28,10 @@ func GenerateVerificationCommands(domain string, results map[string]any) []Verif
         cmds = append(cmds, generateRegistrarCommands(domain)...)
         cmds = append(cmds, generateSMTPCommands(domain, results)...)
         cmds = append(cmds, generateCTCommands(domain)...)
+        cmds = append(cmds, generateDMARCReportAuthCommands(domain, results)...)
+        cmds = append(cmds, generateHTTPSSVCBCommands(domain)...)
+        cmds = append(cmds, generateASNCommands(results)...)
+        cmds = append(cmds, generateCDSCommands(domain)...)
 
         return cmds
 }
@@ -272,6 +276,84 @@ func generateCTCommands(domain string) []VerifyCommand {
                         Description: "Search CT logs for subdomains",
                         Command:     fmt.Sprintf("curl -s 'https://crt.sh/?q=%%25.%s&output=json' | python3 -c \"import json,sys; [print(e['name_value']) for e in json.load(sys.stdin)]\" | sort -u | head -20", domain),
                         RFC:         "RFC 6962",
+                },
+        }
+}
+
+func generateDMARCReportAuthCommands(domain string, results map[string]any) []VerifyCommand {
+        var cmds []VerifyCommand
+
+        dmarcAuth, _ := results["dmarc_report_auth"].(map[string]any)
+        if dmarcAuth == nil {
+                return cmds
+        }
+
+        extDomains, _ := dmarcAuth["external_domains"].([]map[string]any)
+        for _, ed := range extDomains {
+                extDomain, _ := ed["external_domain"].(string)
+                if extDomain == "" {
+                        continue
+                }
+                cmds = append(cmds, VerifyCommand{
+                        Section:     "DMARC Report Auth",
+                        Description: fmt.Sprintf("Check external reporting authorization for %s", extDomain),
+                        Command:     fmt.Sprintf("dig +short TXT %s._report._dmarc.%s", domain, extDomain),
+                        RFC:         "RFC 7489 §7.1",
+                })
+        }
+
+        return cmds
+}
+
+func generateHTTPSSVCBCommands(domain string) []VerifyCommand {
+        return []VerifyCommand{
+                {
+                        Section:     "HTTPS/SVCB",
+                        Description: "Query HTTPS records (type 65)",
+                        Command:     fmt.Sprintf("dig +short TYPE65 %s", domain),
+                        RFC:         "RFC 9460",
+                },
+        }
+}
+
+func generateASNCommands(results map[string]any) []VerifyCommand {
+        var cmds []VerifyCommand
+
+        basicRecords, _ := results["basic_records"].(map[string]any)
+        if basicRecords == nil {
+                return cmds
+        }
+
+        aRecords, _ := basicRecords["A"].([]string)
+        if len(aRecords) > 0 {
+                ip := aRecords[0]
+                reversed := reverseIPv4(ip)
+                if reversed != "" {
+                        cmds = append(cmds, VerifyCommand{
+                                Section:     "ASN Attribution",
+                                Description: fmt.Sprintf("Look up ASN for %s via Team Cymru", ip),
+                                Command:     fmt.Sprintf("dig +short TXT %s.origin.asn.cymru.com", reversed),
+                                RFC:         "",
+                        })
+                }
+        }
+
+        return cmds
+}
+
+func generateCDSCommands(domain string) []VerifyCommand {
+        return []VerifyCommand{
+                {
+                        Section:     "CDS/CDNSKEY",
+                        Description: "Query CDS records (automated DNSSEC key rollover)",
+                        Command:     fmt.Sprintf("dig +short CDS %s", domain),
+                        RFC:         "RFC 8078",
+                },
+                {
+                        Section:     "CDS/CDNSKEY",
+                        Description: "Query CDNSKEY records",
+                        Command:     fmt.Sprintf("dig +short CDNSKEY %s", domain),
+                        RFC:         "RFC 8078",
                 },
         }
 }
