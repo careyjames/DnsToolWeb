@@ -114,6 +114,8 @@ func (a *Analyzer) AnalyzeDomain(ctx context.Context, domain string, customDKIMS
 
         results["edge_cdn"] = DetectEdgeCDN(results)
 
+        enrichHostingFromEdgeCDN(results)
+
         ctData := getMapResult(resultsMap, "ct_subdomains")
         ctSubdomains, _ := ctData["subdomains"].([]map[string]any)
 

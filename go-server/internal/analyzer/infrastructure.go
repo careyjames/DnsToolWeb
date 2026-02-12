@@ -349,6 +349,28 @@ func emailConfidence(emailFromSPF, isNoMail bool) map[string]any {
         return ConfidenceObservedMap(MethodMXPattern)
 }
 
+func enrichHostingFromEdgeCDN(results map[string]any) {
+        hostingSummary, _ := results["hosting_summary"].(map[string]any)
+        if hostingSummary == nil {
+                return
+        }
+        hosting, _ := hostingSummary["hosting"].(string)
+        if hosting != "Unknown" {
+                return
+        }
+        edgeCDN, _ := results["edge_cdn"].(map[string]any)
+        if edgeCDN == nil {
+                return
+        }
+        isBehindCDN, _ := edgeCDN["is_behind_cdn"].(bool)
+        cdnProvider, _ := edgeCDN["cdn_provider"].(string)
+        if !isBehindCDN || cdnProvider == "" {
+                return
+        }
+        hostingSummary["hosting"] = cdnProvider + " (CDN)"
+        hostingSummary["hosting_confidence"] = ConfidenceInferredMap(MethodASNMatch)
+}
+
 func detectEmailProviderFromSPF(results map[string]any) string {
         spfData, _ := results["spf_analysis"].(map[string]any)
         if spfData == nil {

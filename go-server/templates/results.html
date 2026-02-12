@@ -1215,9 +1215,14 @@
                                 {{$daneStatus := mapGetStr "status" $dane}}
                                 {{$hasDane := mapGetBool "has_dane" $dane}}
                                 {{$daneDeployable := mapGetStr "dane_deployable" $dane}}
-                                <span class="badge bg-{{if eq $daneStatus "success"}}success{{else if eq $daneStatus "warning"}}warning{{else}}secondary{{end}} ms-1">
-                                    {{if $hasDane}}Yes{{else}}No{{end}}
-                                </span>
+                                {{$hasMtaStsHeader := and $mta_sts (eq (mapGetStr "status" $mta_sts) "success")}}
+                                {{if $hasDane}}
+                                    <span class="badge bg-success ms-1">Yes</span>
+                                {{else if $hasMtaStsHeader}}
+                                    <span class="badge bg-info ms-1" data-bs-toggle="tooltip" title="DANE (CA-free) is not available, but MTA-STS enforces TLS using CA-issued certificates">via MTA-STS (CA)</span>
+                                {{else}}
+                                    <span class="badge bg-secondary ms-1">No</span>
+                                {{end}}
                             </small>
                         </h5>
                         <div class="mt-1">
@@ -3014,14 +3019,39 @@
 
     {{template "scripts" .}}
     <script nonce="{{.CspNonce}}">
+    function setupCopyCommandButtons() {
+        document.querySelectorAll('.copy-cmd-btn').forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                var cmd = this.dataset.cmd;
+                if (navigator.clipboard) {
+                    navigator.clipboard.writeText(cmd).then(function() {
+                        btn.innerHTML = '<i class="fas fa-check"></i>';
+                        setTimeout(function() { btn.innerHTML = '<i class="fas fa-copy"></i>'; }, 1500);
+                    });
+                }
+            });
+        });
+    }
+
+    function setupCollapseKeyboardHandlers() {
+        document.querySelectorAll('[role="button"][data-bs-toggle="collapse"]').forEach(function(el) {
+            el.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    this.click();
+                }
+            });
+        });
+    }
+
     (function() {
         var _printThemePrev = 'dark';
-        window.addEventListener('beforeprint', function() {
+        globalThis.addEventListener('beforeprint', function() {
             _printThemePrev = document.documentElement.dataset.bsTheme || 'dark';
-            document.documentElement.setAttribute('data-bs-theme', 'light');
+            document.documentElement.dataset.bsTheme = 'light';
         });
-        window.addEventListener('afterprint', function() {
-            document.documentElement.setAttribute('data-bs-theme', _printThemePrev);
+        globalThis.addEventListener('afterprint', function() {
+            document.documentElement.dataset.bsTheme = _printThemePrev;
         });
 
         document.addEventListener('DOMContentLoaded', function() {
@@ -3092,17 +3122,8 @@
                     });
                 });
             }
-            document.querySelectorAll('.copy-cmd-btn').forEach(function(btn) {
-                btn.addEventListener('click', function() {
-                    var cmd = this.dataset.cmd;
-                    if (navigator.clipboard) {
-                        navigator.clipboard.writeText(cmd).then(function() {
-                            btn.innerHTML = '<i class="fas fa-check"></i>';
-                            setTimeout(function() { btn.innerHTML = '<i class="fas fa-copy"></i>'; }, 1500);
-                        });
-                    }
-                });
-            });
+            setupCopyCommandButtons();
+            setupCollapseKeyboardHandlers();
         });
     })();
     </script>

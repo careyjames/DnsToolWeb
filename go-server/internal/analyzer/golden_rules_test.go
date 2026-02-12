@@ -480,7 +480,7 @@ func TestGoldenRulesDKIM(t *testing.T) {
         t.Run("Rule16_DKIM_ProviderVerified_NoFix", func(t *testing.T) {
                 r := withSPF(baseResults(), "success", "~all", "")
                 withDMARC(r, "success", "reject")
-                withDKIM(r, "info", "Google Workspace")
+                withDKIM(r, "info", providerGoogleWorkspace)
                 rem := a.GenerateRemediation(r)
 
                 forbidFixContaining(t, rem, "Configure DKIM")
@@ -525,7 +525,7 @@ func TestGoldenRulesDKIM(t *testing.T) {
         t.Run("Rule20_DKIM_ThirdPartyOnly_MediumFix", func(t *testing.T) {
                 r := withSPF(baseResults(), "success", "~all", "")
                 withDMARC(r, "success", "reject")
-                withDKIM(r, "warning", "Google Workspace")
+                withDKIM(r, "warning", providerGoogleWorkspace)
                 withDKIMThirdPartyOnly(r)
                 rem := a.GenerateRemediation(r)
 
