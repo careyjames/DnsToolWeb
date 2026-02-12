@@ -23,6 +23,8 @@ var (
         spfIPv6Re = regexp.MustCompile(`(?i)ip6:([^\s;]+)`)
 )
 
+const neighborhoodDisplayCap = 10
+
 func ValidateIPAddress(ip string) bool {
         return net.ParseIP(ip) != nil
 }
@@ -41,39 +43,47 @@ func IsIPv6(ip string) bool {
 
 func (a *Analyzer) InvestigateIP(ctx context.Context, domain, ip string) map[string]any {
         result := map[string]any{
-                "status":          "success",
-                "domain":          domain,
-                "ip":              ip,
-                "ip_version":      "IPv4",
-                "relationships":   []map[string]any{},
-                "ptr_records":     []string{},
-                "fcrdns_match":    false,
-                "asn_info":        map[string]any{},
-                "geolocation":     map[string]any{},
-                "is_cdn":          false,
-                "cdn_provider":    "",
-                "summary":         "",
-                "classification":  "Unrelated",
-                "match_count":     0,
+                "status":     "success",
+                "domain":     domain,
+                "ip":         ip,
+                "ip_version": "IPv4",
+
+                "ptr_records":  []string{},
+                "fcrdns_match": false,
+                "asn_info":     map[string]any{},
+                "is_cdn":       false,
+                "cdn_provider": "",
+
+                "direct_relationships": []map[string]any{},
+                "infra_context":        []map[string]any{},
+                "neighborhood":         []map[string]any{},
+                "neighborhood_total":   0,
+                "neighborhood_context": "",
+
+                "executive_verdict":  "",
+                "verdict_severity":   "info",
+                "direct_match_count": 0,
+
+                "relationships":  []map[string]any{},
+                "summary":        "",
+                "classification": "Unrelated",
+                "match_count":    0,
         }
 
         if IsIPv6(ip) {
                 result["ip_version"] = "IPv6"
         }
 
-        var relationships []map[string]any
+        var directRels []map[string]any
+        var infraRels []map[string]any
 
-        relationships = a.checkPTRRecords(ctx, ip, domain, result, relationships)
-        relationships = a.checkDomainARecords(ctx, domain, ip, relationships)
-        relationships = a.checkMXRecords(ctx, domain, ip, relationships)
-        relationships = a.checkNSRecords(ctx, domain, ip, relationships)
-        relationships = a.checkSPFAuthorization(ctx, domain, ip, relationships)
-        relationships = a.checkCTSubdomains(ctx, domain, ip, relationships)
+        directRels = a.checkPTRRecords(ctx, ip, domain, result, directRels)
+        directRels = a.checkDomainARecords(ctx, domain, ip, directRels)
+        directRels = a.checkMXRecords(ctx, domain, ip, directRels)
+        directRels = a.checkNSRecords(ctx, domain, ip, directRels)
+        directRels = a.checkSPFAuthorization(ctx, domain, ip, directRels)
 
-        initSecurityTrails()
-        if securityTrailsEnabled {
-                relationships = checkSecurityTrailsDomains(ctx, ip, relationships)
-        }
+        infraRels = a.checkCTSubdomains(ctx, domain, ip, infraRels)
 
         asnInfo := a.lookupInvestigationASN(ctx, ip)
         result["asn_info"] = asnInfo
@@ -82,21 +92,160 @@ func (a *Analyzer) InvestigateIP(ctx context.Context, domain, ip string) map[str
         if cdnProvider != "" {
                 result["is_cdn"] = true
                 result["cdn_provider"] = cdnProvider
-                relationships = append(relationships, map[string]any{
+                infraRels = append(infraRels, map[string]any{
                         "classification": "CDN/Edge Network",
                         "evidence":       fmt.Sprintf("IP belongs to %s (ASN %s)", cdnProvider, mapGetStr(asnInfo, "asn")),
                         "record_type":    "ASN",
                 })
         }
 
-        result["relationships"] = relationships
-        result["match_count"] = len(relationships)
+        var neighborhoodRels []map[string]any
+        var neighborhoodTotal int
+        var neighborhoodCtx string
 
-        classification, summary := classifyOverall(relationships, cdnProvider, result)
+        initSecurityTrails()
+        if securityTrailsEnabled {
+                neighborhoodRels, neighborhoodTotal = fetchNeighborhoodDomains(ctx, ip, domain)
+                neighborhoodCtx = buildNeighborhoodContext(cdnProvider, neighborhoodTotal)
+        }
+
+        result["direct_relationships"] = directRels
+        result["infra_context"] = infraRels
+        result["neighborhood"] = neighborhoodRels
+        result["neighborhood_total"] = neighborhoodTotal
+        result["neighborhood_context"] = neighborhoodCtx
+        result["direct_match_count"] = len(directRels)
+
+        var allRels []map[string]any
+        allRels = append(allRels, directRels...)
+        allRels = append(allRels, infraRels...)
+        result["relationships"] = allRels
+        result["match_count"] = len(directRels) + len(infraRels)
+
+        classification, summary := classifyOverall(directRels, infraRels, cdnProvider, result)
         result["classification"] = classification
         result["summary"] = summary
+        result["executive_verdict"] = buildExecutiveVerdict(classification, cdnProvider, domain, ip, directRels, infraRels, asnInfo)
+        result["verdict_severity"] = verdictSeverity(classification)
 
         return result
+}
+
+func fetchNeighborhoodDomains(ctx context.Context, ip, investigatedDomain string) ([]map[string]any, int) {
+        domains, err := FetchDomainsByIP(ctx, ip)
+        if err != nil || len(domains) == 0 {
+                return nil, 0
+        }
+
+        var filtered []string
+        domainLower := strings.ToLower(investigatedDomain)
+        for _, d := range domains {
+                if strings.ToLower(d) != domainLower && !strings.HasSuffix(strings.ToLower(d), "."+domainLower) {
+                        filtered = append(filtered, d)
+                }
+        }
+
+        filteredTotal := len(filtered)
+        if filteredTotal == 0 {
+                return nil, 0
+        }
+
+        displayCount := filteredTotal
+        if displayCount > neighborhoodDisplayCap {
+                displayCount = neighborhoodDisplayCap
+        }
+
+        var rels []map[string]any
+        for i := 0; i < displayCount; i++ {
+                rels = append(rels, map[string]any{
+                        "classification": "IP Neighbor",
+                        "evidence":       fmt.Sprintf("%s also resolves to this IP", filtered[i]),
+                        "record_type":    "SecurityTrails",
+                        "hostname":       filtered[i],
+                })
+        }
+
+        return rels, filteredTotal
+}
+
+func buildNeighborhoodContext(cdnProvider string, totalDomains int) string {
+        if totalDomains == 0 {
+                return "No other domains were found sharing this IP address."
+        }
+        if cdnProvider != "" {
+                return fmt.Sprintf("This IP belongs to %s's edge network. The %d domain(s) listed below are other %s customers routed through the same edge node — they have no organizational relationship to your domain. CDN edge IPs are shared among thousands of unrelated websites.", cdnProvider, totalDomains, cdnProvider)
+        }
+        if totalDomains > 50 {
+                return fmt.Sprintf("%d domains share this IP address, suggesting a large shared hosting environment or load balancer. Co-tenancy on shared hosting is normal but may warrant review if you expect dedicated infrastructure.", totalDomains)
+        }
+        if totalDomains > 10 {
+                return fmt.Sprintf("%d domains share this IP address, indicating shared hosting. These are other customers of the same hosting provider — they are not necessarily related to your domain.", totalDomains)
+        }
+        return fmt.Sprintf("%d domain(s) share this IP address. On a dedicated or small shared host, co-tenants may be worth reviewing for reputation or security concerns.", totalDomains)
+}
+
+func buildExecutiveVerdict(classification, cdnProvider, domain, ip string, directRels, infraRels []map[string]any, asnInfo map[string]any) string {
+        asName := mapGetStr(asnInfo, "asn")
+        orgName := mapGetStr(asnInfo, "as_name")
+
+        switch {
+        case classification == "Direct Asset (A Record)" || classification == "Direct Asset (AAAA Record)":
+                return fmt.Sprintf("This IP is a direct infrastructure asset for %s — it hosts your domain's web content.", domain)
+        case classification == "Direct Asset (Reverse DNS)":
+                return fmt.Sprintf("This IP's reverse DNS (PTR) record points to %s, confirming it is assigned to your domain's infrastructure.", domain)
+        case classification == "Email Provider (MX)":
+                hostname := findFirstHostname(directRels, "Email Provider (MX)")
+                if hostname != "" {
+                        return fmt.Sprintf("This IP belongs to your email provider (%s) and handles mail delivery for %s.", hostname, domain)
+                }
+                return fmt.Sprintf("This IP serves as an email server for %s.", domain)
+        case classification == "DNS Provider (NS)":
+                hostname := findFirstHostname(directRels, "DNS Provider (NS)")
+                if hostname != "" {
+                        return fmt.Sprintf("This IP hosts one of your nameservers (%s) that provides DNS resolution for %s.", hostname, domain)
+                }
+                return fmt.Sprintf("This IP is a nameserver providing DNS resolution for %s.", domain)
+        case strings.HasPrefix(classification, "SPF-Authorized Sender"):
+                return fmt.Sprintf("This IP is authorized to send email on behalf of %s via SPF policy. It is a legitimate email sender for your domain.", domain)
+        case classification == "CT Subdomain Match":
+                return fmt.Sprintf("This IP hosts a subdomain of %s discovered via Certificate Transparency logs — it is part of your broader infrastructure.", domain)
+        case classification == "CDN/Edge Network":
+                if cdnProvider != "" {
+                        return fmt.Sprintf("This IP is a %s CDN edge node. Your domain's traffic may route through it, but it is shared infrastructure — not dedicated to %s.", cdnProvider, domain)
+                }
+                return "This IP belongs to a CDN/edge network and serves as shared proxy infrastructure."
+        default:
+                if orgName != "" {
+                        return fmt.Sprintf("This IP (AS%s, %s) has no direct relationship to %s in DNS records, email infrastructure, or SPF authorization.", asName, orgName, domain)
+                }
+                return fmt.Sprintf("This IP has no direct relationship to %s in DNS records, email infrastructure, or SPF authorization.", domain)
+        }
+}
+
+func findFirstHostname(rels []map[string]any, classification string) string {
+        for _, rel := range rels {
+                if mapGetStr(rel, "classification") == classification {
+                        return mapGetStr(rel, "hostname")
+                }
+        }
+        return ""
+}
+
+func verdictSeverity(classification string) string {
+        switch {
+        case strings.HasPrefix(classification, "Direct Asset"):
+                return "success"
+        case classification == "Email Provider (MX)", classification == "DNS Provider (NS)":
+                return "info"
+        case strings.HasPrefix(classification, "SPF-Authorized Sender"):
+                return "warning"
+        case classification == "CT Subdomain Match":
+                return "info"
+        case classification == "CDN/Edge Network":
+                return "primary"
+        default:
+                return "secondary"
+        }
 }
 
 func (a *Analyzer) checkPTRRecords(ctx context.Context, ip, domain string, result map[string]any, rels []map[string]any) []map[string]any {
@@ -370,33 +519,35 @@ func extractMXHost(mx string) string {
         return ""
 }
 
-func classifyOverall(rels []map[string]any, cdnProvider string, result map[string]any) (string, string) {
-        if len(rels) == 0 {
+func classifyOverall(directRels, infraRels []map[string]any, cdnProvider string, result map[string]any) (string, string) {
+        allRels := append(directRels, infraRels...)
+
+        if len(allRels) == 0 {
                 ip, _ := result["ip"].(string)
                 domain, _ := result["domain"].(string)
                 asnInfo, _ := result["asn_info"].(map[string]any)
                 asName, _ := asnInfo["as_name"].(string)
                 if asName != "" {
-                        return "Unrelated", fmt.Sprintf("IP %s (AS: %s) has no direct relationship to %s in DNS records, SPF authorization, MX/NS infrastructure, or CT-discovered subdomains.", ip, asName, domain)
+                        return "Unrelated", fmt.Sprintf("IP %s (%s) has no direct relationship to %s.", ip, asName, domain)
                 }
-                return "Unrelated", fmt.Sprintf("IP %s has no direct relationship to %s in DNS records, SPF authorization, MX/NS infrastructure, or CT-discovered subdomains.", ip, domain)
+                return "Unrelated", fmt.Sprintf("IP %s has no direct relationship to %s.", ip, domain)
         }
 
         priorities := map[string]int{
-                "Direct Asset (A Record)":          1,
-                "Direct Asset (AAAA Record)":       1,
-                "Direct Asset (Reverse DNS)":       2,
-                "Email Provider (MX)":              3,
-                "DNS Provider (NS)":                4,
-                "SPF-Authorized Sender":            5,
-                "SPF-Authorized Sender (via include)": 6,
-                "CT Subdomain Match":               7,
-                "CDN/Edge Network":                 8,
+                "Direct Asset (A Record)":              1,
+                "Direct Asset (AAAA Record)":           1,
+                "Direct Asset (Reverse DNS)":           2,
+                "Email Provider (MX)":                  3,
+                "DNS Provider (NS)":                    4,
+                "SPF-Authorized Sender":                5,
+                "SPF-Authorized Sender (via include)":  6,
+                "CT Subdomain Match":                   7,
+                "CDN/Edge Network":                     8,
         }
 
-        best := rels[0]
+        best := allRels[0]
         bestPriority := 99
-        for _, rel := range rels {
+        for _, rel := range allRels {
                 class, _ := rel["classification"].(string)
                 if p, ok := priorities[class]; ok && p < bestPriority {
                         bestPriority = p
@@ -407,27 +558,10 @@ func classifyOverall(rels []map[string]any, cdnProvider string, result map[strin
         classification, _ := best["classification"].(string)
         evidence, _ := best["evidence"].(string)
 
-        if len(rels) == 1 {
+        if len(allRels) == 1 {
                 return classification, evidence
         }
-        return classification, fmt.Sprintf("%s (and %d other relationship(s) found)", evidence, len(rels)-1)
-}
-
-func checkSecurityTrailsDomains(ctx context.Context, ip string, rels []map[string]any) []map[string]any {
-        domains, err := FetchDomainsByIP(ctx, ip)
-        if err != nil || len(domains) == 0 {
-                return rels
-        }
-
-        for _, hostname := range domains {
-                rels = append(rels, map[string]any{
-                        "classification": "SecurityTrails Domain Match",
-                        "evidence":       fmt.Sprintf("SecurityTrails reports %s is associated with IP %s", hostname, ip),
-                        "record_type":    "SecurityTrails",
-                        "hostname":       hostname,
-                })
-        }
-        return rels
+        return classification, fmt.Sprintf("%s (and %d other relationship(s) found)", evidence, len(allRels)-1)
 }
 
 func mapGetStr(m map[string]any, key string) string {
