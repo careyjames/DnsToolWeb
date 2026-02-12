@@ -5,6 +5,8 @@ import (
         "math"
         "sort"
         "strings"
+
+        "golang.org/x/net/publicsuffix"
 )
 
 type PaginationInfo struct {
@@ -228,9 +230,13 @@ func getSection(results map[string]interface{}, key string) map[string]interface
 }
 
 func extractRootDomain(domain string) (isSubdomain bool, root string) {
-        parts := strings.Split(strings.TrimRight(domain, "."), ".")
-        if len(parts) <= 2 {
+        domain = strings.TrimRight(domain, ".")
+        registrable, err := publicsuffix.EffectiveTLDPlusOne(domain)
+        if err != nil {
                 return false, ""
         }
-        return true, parts[len(parts)-2] + "." + parts[len(parts)-1]
+        if strings.EqualFold(domain, registrable) {
+                return false, ""
+        }
+        return true, registrable
 }

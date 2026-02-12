@@ -326,38 +326,38 @@
         <div class="row mb-3" id="findings-summary">
             <div class="col-12">
                 <div class="card border-0 bg-dark bg-opacity-50">
-                    <div class="card-body py-2 px-3">
-                        <div class="row g-2 align-items-start small">
+                    <div class="card-body py-3 px-3">
+                        <div class="row g-3 align-items-start" style="font-size: 0.88rem;">
                             {{$criticalIssues := mapGetSlice "critical_issues" $posture}}
                             {{$postureRecs := mapGetSlice "recommendations" $posture}}
                             {{if $criticalIssues}}
                             <div class="col-6 col-lg-3">
                                 <span class="text-danger fw-bold"><i class="fas fa-times-circle me-1"></i>Action Required</span>
-                                <div class="text-danger-emphasis">{{range $i, $issue := $criticalIssues}}{{if $i}}, {{end}}{{$issue}}{{end}}</div>
+                                <div class="mt-1" style="color: #f08080;">{{range $i, $issue := $criticalIssues}}{{if $i}}, {{end}}{{$issue}}{{end}}</div>
                             </div>
                             {{end}}
                             {{if $postureRecs}}
                             <div class="col-6 col-lg-3">
                                 <span class="text-warning fw-bold"><i class="fas fa-lightbulb me-1"></i>Recommended</span>
-                                <div class="text-warning-emphasis">{{range $i, $rec := $postureRecs}}{{if $i}}, {{end}}{{$rec}}{{end}}</div>
+                                <div class="mt-1" style="color: #e0c97a;">{{range $i, $rec := $postureRecs}}{{if $i}}, {{end}}{{$rec}}{{end}}</div>
                             </div>
                             {{end}}
                             {{if $postureMonitoringF}}
                             <div class="col-6 col-lg-3">
-                                <span class="text-warning fw-bold"><i class="fas fa-eye me-1"></i>Monitoring</span>
-                                <div class="text-warning-emphasis">{{range $i, $item := $postureMonitoringF}}{{if $i}}, {{end}}{{$item}}{{end}}</div>
+                                <span class="text-info fw-bold"><i class="fas fa-eye me-1"></i>Monitoring</span>
+                                <div class="mt-1" style="color: #7ec8e3;">{{range $i, $item := $postureMonitoringF}}{{if $i}}, {{end}}{{$item}}{{end}}</div>
                             </div>
                             {{end}}
                             {{if $postureConfigured}}
                             <div class="col-6 col-lg-3">
                                 <span class="text-success fw-bold"><i class="fas fa-check-circle me-1"></i>Configured</span>
-                                <div class="text-success-emphasis">{{range $i, $item := $postureConfigured}}{{if $i}}, {{end}}{{$item}}{{end}}</div>
+                                <div class="mt-1" style="color: #8fd19e;">{{range $i, $item := $postureConfigured}}{{if $i}}, {{end}}{{$item}}{{end}}</div>
                             </div>
                             {{end}}
                             {{if $postureAbsent}}
                             <div class="col-6 col-lg-3">
                                 <span class="text-muted fw-bold"><i class="fas fa-minus-circle me-1"></i>Not Configured</span>
-                                <div class="text-muted">{{range $i, $item := $postureAbsent}}{{if $i}}, {{end}}{{$item}}{{end}}</div>
+                                <div class="mt-1 text-muted">{{range $i, $item := $postureAbsent}}{{if $i}}, {{end}}{{$item}}{{end}}</div>
                             </div>
                             {{end}}
                         </div>
