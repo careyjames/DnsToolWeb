@@ -10,9 +10,9 @@ const (
         ConfidenceLabelThirdParty = "Third-party data"
 
         MethodDNSRecord       = "Direct DNS record query"
-        MethodNSPattern       = "NS record pattern matching"
-        MethodMXPattern       = "MX record pattern matching"
-        MethodARecordPattern  = "A/AAAA record pattern matching"
+        MethodNSPattern       = "Authoritative NS record query"
+        MethodMXPattern       = "MX record query"
+        MethodARecordPattern  = "A/AAAA record query"
         MethodSPFInclude      = "SPF include mechanism analysis"
         MethodCNAMETarget     = "CNAME target pattern matching"
         MethodTLDSuffix       = "TLD suffix rule"

@@ -199,7 +199,7 @@ func (a *Analyzer) AnalyzeDNSInfrastructure(domain string, results map[string]an
 
         if im != nil {
                 result["provider_name"] = im.provider.Name
-                result["confidence"] = ConfidenceInferredMap(MethodNSPattern)
+                result["confidence"] = ConfidenceObservedMap(MethodNSPattern)
         }
         if isGovernment {
                 result["gov_confidence"] = ConfidenceInferredMap(MethodTLDSuffix)
@@ -234,11 +234,14 @@ func (a *Analyzer) GetHostingInfo(domain string, results map[string]any) map[str
                 emailHosting = "Unknown"
         }
 
-        hostingConf := ConfidenceInferredMap(MethodARecordPattern)
-        dnsConf := ConfidenceInferredMap(MethodNSPattern)
-        emailConf := ConfidenceInferredMap(MethodMXPattern)
+        hostingConf := ConfidenceObservedMap(MethodARecordPattern)
+        if hosting == "Unknown" {
+                hostingConf = ConfidenceInferredMap(MethodARecordPattern)
+        }
+        dnsConf := ConfidenceObservedMap(MethodNSPattern)
+        emailConf := ConfidenceObservedMap(MethodMXPattern)
         if emailFromSPF {
-                emailConf = ConfidenceInferredMap(MethodSPFInclude)
+                emailConf = ConfidenceObservedMap(MethodSPFInclude)
         }
 
         return map[string]any{

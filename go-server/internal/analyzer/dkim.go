@@ -640,10 +640,15 @@ func (a *Analyzer) AnalyzeDKIM(ctx context.Context, domain string, mxRecords []s
         }
         sort.Strings(sortedProviders)
 
+        selectorMap := make(map[string]any, len(foundSelectors))
+        for k, v := range foundSelectors {
+                selectorMap[k] = v
+        }
+
         return map[string]any{
                 "status":            status,
                 "message":           message,
-                "selectors":         foundSelectors,
+                "selectors":         selectorMap,
                 "key_issues":        keyIssues,
                 "key_strengths":     uniqueStrings(keyStrengths),
                 "primary_provider":  primaryProvider,
