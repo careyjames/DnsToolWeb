@@ -1087,6 +1087,8 @@ main.container {
     .print-tlp-badge, .code-block,
     .dns-diff-container, .dns-diff-header,
     .dns-diff-type-header, .dns-diff-row, .dns-diff-col,
+    .section-dns-history .table, .section-dns-history .table th,
+    .section-dns-history .table td,
     .esm-provider-card, .provider-badge, .rfc-link,
     .progress, .progress-bar,
     .subdomain-table th, .subdomain-table td {
@@ -1811,6 +1813,34 @@ main.container {
         border: 1pt solid rgba(255,255,255,0.3) !important;
     }
 
+    .section-dns-history > .col-12 > .card > .card-header {
+        background-color: #0e7490 !important;
+        color: #ffffff !important;
+        border-bottom: none !important;
+    }
+    .section-dns-history > .col-12 > .card > .card-header h5,
+    .section-dns-history > .col-12 > .card > .card-header .h5,
+    .section-dns-history > .col-12 > .card > .card-header span,
+    .section-dns-history > .col-12 > .card > .card-header small,
+    .section-dns-history > .col-12 > .card > .card-header .text-muted {
+        color: #ffffff !important;
+    }
+
+    .section-dns-history .table th {
+        background-color: #1e3a5f !important;
+        color: #ffffff !important;
+    }
+
+    .section-dns-history .text-success {
+        color: #166534 !important;
+        font-weight: 700 !important;
+    }
+
+    .section-dns-history .text-danger {
+        color: #991b1b !important;
+        font-weight: 700 !important;
+    }
+
     .section-brand-security > .col-12 > .card > .card-header {
         background-color: #0e7490 !important;
         color: #ffffff !important;
@@ -1943,6 +1973,14 @@ main.container {
        ================================================ */
     .section-email-security {
         page-break-before: always;
+    }
+
+    .section-dns-history {
+        page-break-before: always;
+    }
+
+    .section-dns-history .card {
+        page-break-inside: auto;
     }
 
     .section-brand-security {

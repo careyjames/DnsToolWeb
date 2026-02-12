@@ -1130,11 +1130,131 @@
                             </div>
                         </div>
                         {{end}}
+
+                        {{if and $dmarc_report_auth (mapGetBool "checked" $dmarc_report_auth)}}
+                        {{$extDomains := mapGetSlice "external_domains" $dmarc_report_auth}}
+                        {{if $extDomains}}
+                        <div class="row mt-3 pt-3 border-top">
+                            <div class="col-12">
+                                {{$draStatus := mapGetStr "status" $dmarc_report_auth}}
+                                <h6 class="d-flex align-items-center">
+                                    <i class="fas fa-paper-plane me-2"></i>DMARC External Reporting Authorization
+                                    <a href="https://datatracker.ietf.org/doc/html/rfc7489#section-7.1" target="_blank" rel="noopener" class="ms-2 text-muted rfc-link" data-bs-toggle="tooltip" data-bs-html="true" title="<strong>DMARC External Reporting</strong><br>Verifies that external domains listed in rua/ruf tags have authorized this domain to send them reports. §7.1 covers the verification mechanism." aria-label="Learn about DMARC External Reporting - RFC 7489 §7.1"><i class="fas fa-info-circle"></i><span class="rfc-label">RFC 7489 §7.1</span></a>
+                                    <span class="badge bg-{{if eq $draStatus "success"}}success{{else}}warning{{end}} ms-2">{{title $draStatus}}</span>
+                                </h6>
+                                <p class="text-muted mb-2 small">{{mapGetStr "message" $dmarc_report_auth}}</p>
+                                <div class="table-responsive">
+                                    <table class="table table-sm table-dark small mb-2">
+                                        <thead>
+                                            <tr>
+                                                <th>External Domain</th>
+                                                <th>Authorization</th>
+                                                <th>Auth Record</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {{range $ed := $extDomains}}
+                                            {{$edMap := toMap $ed}}
+                                            {{if $edMap}}
+                                            <tr>
+                                                <td><code>{{mapGetStr "external_domain" $edMap}}</code></td>
+                                                <td>
+                                                    {{if mapGetBool "authorized" $edMap}}
+                                                    <span class="badge bg-success"><i class="fas fa-check me-1"></i>Authorized</span>
+                                                    {{else}}
+                                                    <span class="badge bg-warning text-dark"><i class="fas fa-times me-1"></i>Unauthorized</span>
+                                                    {{end}}
+                                                </td>
+                                                <td>
+                                                    {{$authRec := mapGetStr "auth_record" $edMap}}
+                                                    {{if $authRec}}<code class="small">{{$authRec}}</code>{{else}}<span class="text-muted">—</span>{{end}}
+                                                </td>
+                                            </tr>
+                                            {{end}}
+                                            {{end}}
+                                        </tbody>
+                                    </table>
+                                </div>
+                                {{$draIssues := mapGetSlice "issues" $dmarc_report_auth}}
+                                {{if $draIssues}}
+                                {{range $issue := $draIssues}}
+                                <div class="text-warning small"><i class="fas fa-exclamation-triangle me-1"></i>{{$issue}}</div>
+                                {{end}}
+                                {{end}}
+                            </div>
+                        </div>
+                        {{end}}
+                        {{end}}
                         
                     </div>
                 </div>
             </div>
         </div>
+
+        <!-- DNS History Timeline Section -->
+        {{if mapGetBool "available" $dns_history}}
+        <div class="row section-dns-history">
+            <div class="col-12 mb-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0 d-flex align-items-center justify-content-between flex-wrap">
+                            <span><i class="fas fa-history me-2"></i>DNS History Timeline</span>
+                            <small class="text-muted">Historical DNS record changes &mdash; Source: {{mapGetStr "source" $dns_history}}</small>
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <p class="text-muted mb-3"><i class="fas fa-info-circle me-1"></i>Recent DNS record changes for this domain. Shows when records appeared or were removed, helping identify infrastructure transitions (e.g., mail provider migrations, hosting changes).</p>
+                        {{$changes := mapGetSlice "changes" $dns_history}}
+                        {{if $changes}}
+                        <div class="table-responsive">
+                            <table class="table table-sm table-striped mb-0">
+                                <thead>
+                                    <tr>
+                                        <th style="width:80px">Date</th>
+                                        <th style="width:60px">Type</th>
+                                        <th style="width:70px">Action</th>
+                                        <th>Value</th>
+                                        <th>Organization</th>
+                                        <th>Timeline</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {{range $changes}}
+                                    {{$ch := toMap .}}
+                                    {{if $ch}}
+                                    <tr>
+                                        <td><code class="text-muted" style="font-size:0.8em">{{mapGetStr "date" $ch}}</code></td>
+                                        <td><span class="badge bg-{{if eq (mapGetStr "record_type" $ch) "A"}}primary{{else if eq (mapGetStr "record_type" $ch) "MX"}}success{{else if eq (mapGetStr "record_type" $ch) "NS"}}info{{else}}secondary{{end}}">{{mapGetStr "record_type" $ch}}</span></td>
+                                        <td>
+                                            {{if eq (mapGetStr "action" $ch) "added"}}
+                                            <span class="text-success"><i class="fas fa-plus-circle me-1"></i>Added</span>
+                                            {{else}}
+                                            <span class="text-danger"><i class="fas fa-minus-circle me-1"></i>Removed</span>
+                                            {{end}}
+                                        </td>
+                                        <td><code style="font-size:0.85em">{{mapGetStr "value" $ch}}</code></td>
+                                        <td>
+                                            {{if ne (mapGetStr "org" $ch) ""}}
+                                            <span class="text-muted">{{mapGetStr "org" $ch}}</span>
+                                            {{else}}
+                                            <span class="text-muted">&mdash;</span>
+                                            {{end}}
+                                        </td>
+                                        <td><span class="text-muted" style="font-size:0.85em">{{mapGetStr "description" $ch}}</span></td>
+                                    </tr>
+                                    {{end}}
+                                    {{end}}
+                                </tbody>
+                            </table>
+                        </div>
+                        {{else}}
+                        <p class="text-muted mb-0"><i class="fas fa-check-circle text-success me-1"></i>No recent DNS changes detected. This domain's DNS configuration appears stable.</p>
+                        {{end}}
+                    </div>
+                </div>
+            </div>
+        </div>
+        {{end}}
 
         <!-- DANE/TLSA & Email Transport Security Section -->
         {{if $dane}}
@@ -1423,60 +1543,6 @@
                             </div>
                         </div>
 
-                        {{if and $dmarc_report_auth (mapGetBool "checked" $dmarc_report_auth)}}
-                        {{$extDomains := mapGetSlice "external_domains" $dmarc_report_auth}}
-                        {{if $extDomains}}
-                        <div class="row mt-3 pt-3 border-top">
-                            <div class="col-12">
-                                {{$draStatus := mapGetStr "status" $dmarc_report_auth}}
-                                <h6 class="d-flex align-items-center">
-                                    <i class="fas fa-paper-plane me-2"></i>DMARC External Reporting Authorization
-                                    <span class="badge bg-{{if eq $draStatus "success"}}success{{else}}warning{{end}} ms-2">{{title $draStatus}}</span>
-                                </h6>
-                                <p class="text-muted mb-2 small">{{mapGetStr "message" $dmarc_report_auth}}</p>
-                                <div class="table-responsive">
-                                    <table class="table table-sm table-dark small mb-2">
-                                        <thead>
-                                            <tr>
-                                                <th>External Domain</th>
-                                                <th>Authorization</th>
-                                                <th>Auth Record</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            {{range $ed := $extDomains}}
-                                            {{$edMap := toMap $ed}}
-                                            {{if $edMap}}
-                                            <tr>
-                                                <td><code>{{mapGetStr "external_domain" $edMap}}</code></td>
-                                                <td>
-                                                    {{if mapGetBool "authorized" $edMap}}
-                                                    <span class="badge bg-success"><i class="fas fa-check me-1"></i>Authorized</span>
-                                                    {{else}}
-                                                    <span class="badge bg-warning text-dark"><i class="fas fa-times me-1"></i>Unauthorized</span>
-                                                    {{end}}
-                                                </td>
-                                                <td>
-                                                    {{$authRec := mapGetStr "auth_record" $edMap}}
-                                                    {{if $authRec}}<code class="small">{{$authRec}}</code>{{else}}<span class="text-muted">—</span>{{end}}
-                                                </td>
-                                            </tr>
-                                            {{end}}
-                                            {{end}}
-                                        </tbody>
-                                    </table>
-                                </div>
-                                {{$draIssues := mapGetSlice "issues" $dmarc_report_auth}}
-                                {{if $draIssues}}
-                                {{range $issue := $draIssues}}
-                                <div class="text-warning small"><i class="fas fa-exclamation-triangle me-1"></i>{{$issue}}</div>
-                                {{end}}
-                                {{end}}
-                            </div>
-                        </div>
-                        {{end}}
-                        {{end}}
-
                         {{if $smimea}}
                         {{if or (mapGetBool "has_smimea" $smimea) (mapGetBool "has_openpgpkey" $smimea)}}
                         <div class="row mt-3 pt-3 border-top">
@@ -1669,71 +1735,6 @@
                             {{end}}
                         </div>
                         {{end}}
-                        {{end}}
-                    </div>
-                </div>
-            </div>
-        </div>
-        {{end}}
-
-        <!-- DNS History Timeline Section -->
-        {{if mapGetBool "available" $dns_history}}
-        <div class="row section-dns-history">
-            <div class="col-12 mb-4">
-                <div class="card">
-                    <div class="card-header">
-                        <h5 class="mb-0 d-flex align-items-center justify-content-between flex-wrap">
-                            <span><i class="fas fa-history me-2"></i>DNS History Timeline</span>
-                            <small class="text-muted">Historical DNS record changes &mdash; Source: {{mapGetStr "source" $dns_history}}</small>
-                        </h5>
-                    </div>
-                    <div class="card-body">
-                        <p class="text-muted mb-3"><i class="fas fa-info-circle me-1"></i>Recent DNS record changes for this domain. Shows when records appeared or were removed, helping identify infrastructure transitions (e.g., mail provider migrations, hosting changes).</p>
-                        {{$changes := mapGetSlice "changes" $dns_history}}
-                        {{if $changes}}
-                        <div class="table-responsive">
-                            <table class="table table-sm table-striped mb-0">
-                                <thead>
-                                    <tr>
-                                        <th style="width:80px">Date</th>
-                                        <th style="width:60px">Type</th>
-                                        <th style="width:70px">Action</th>
-                                        <th>Value</th>
-                                        <th>Organization</th>
-                                        <th>Timeline</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {{range $changes}}
-                                    {{$ch := toMap .}}
-                                    {{if $ch}}
-                                    <tr>
-                                        <td><code class="text-muted" style="font-size:0.8em">{{mapGetStr "date" $ch}}</code></td>
-                                        <td><span class="badge bg-{{if eq (mapGetStr "record_type" $ch) "A"}}primary{{else if eq (mapGetStr "record_type" $ch) "MX"}}success{{else if eq (mapGetStr "record_type" $ch) "NS"}}info{{else}}secondary{{end}}">{{mapGetStr "record_type" $ch}}</span></td>
-                                        <td>
-                                            {{if eq (mapGetStr "action" $ch) "added"}}
-                                            <span class="text-success"><i class="fas fa-plus-circle me-1"></i>Added</span>
-                                            {{else}}
-                                            <span class="text-danger"><i class="fas fa-minus-circle me-1"></i>Removed</span>
-                                            {{end}}
-                                        </td>
-                                        <td><code style="font-size:0.85em">{{mapGetStr "value" $ch}}</code></td>
-                                        <td>
-                                            {{if ne (mapGetStr "org" $ch) ""}}
-                                            <span class="text-muted">{{mapGetStr "org" $ch}}</span>
-                                            {{else}}
-                                            <span class="text-muted">&mdash;</span>
-                                            {{end}}
-                                        </td>
-                                        <td><span class="text-muted" style="font-size:0.85em">{{mapGetStr "description" $ch}}</span></td>
-                                    </tr>
-                                    {{end}}
-                                    {{end}}
-                                </tbody>
-                            </table>
-                        </div>
-                        {{else}}
-                        <p class="text-muted mb-0"><i class="fas fa-check-circle text-success me-1"></i>No recent DNS changes detected. This domain's DNS configuration appears stable.</p>
                         {{end}}
                     </div>
                 </div>
