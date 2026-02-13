@@ -2030,10 +2030,10 @@
                     <div class="card-header">
                         <h5 class="mb-0 d-flex align-items-center justify-content-between flex-wrap">
                             <span><i class="fas fa-exchange-alt me-2"></i>Live SMTP TLS Validation</span>
-                            <small class="text-muted">Is email actually encrypted in transit?
+                            <small class="text-muted">Transport encryption observed?
                                 {{$smtpStatus := mapGetStr "status" $smtp}}
                                 <span class="badge bg-{{if eq $smtpStatus "success"}}success{{else if eq $smtpStatus "warning"}}warning{{else if eq $smtpStatus "error"}}danger{{else}}info{{end}} ms-1">
-                                    {{if eq $smtpStatus "success"}}Yes{{else if eq $smtpStatus "warning"}}Partial{{else if eq $smtpStatus "error"}}No{{else}}Likely{{end}}
+                                    {{if eq $smtpStatus "success"}}All Servers{{else if eq $smtpStatus "warning"}}Partial{{else if eq $smtpStatus "error"}}Not Observed{{else}}Inferred{{end}}
                                 </span>
                                 {{if mapGetBool "dns_inferred" $smtp}}
                                     <span class="badge bg-secondary ms-1">DNS-Inferred</span>

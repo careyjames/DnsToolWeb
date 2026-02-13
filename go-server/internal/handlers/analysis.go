@@ -27,12 +27,11 @@ type AnalysisHandler struct {
         DB              *db.Database
         Config          *config.Config
         Analyzer        *analyzer.Analyzer
-        Cache           *analyzer.AnalysisCache
         DNSHistoryCache *analyzer.DNSHistoryCache
 }
 
-func NewAnalysisHandler(database *db.Database, cfg *config.Config, a *analyzer.Analyzer, cache *analyzer.AnalysisCache, historyCache *analyzer.DNSHistoryCache) *AnalysisHandler {
-        return &AnalysisHandler{DB: database, Config: cfg, Analyzer: a, Cache: cache, DNSHistoryCache: historyCache}
+func NewAnalysisHandler(database *db.Database, cfg *config.Config, a *analyzer.Analyzer, historyCache *analyzer.DNSHistoryCache) *AnalysisHandler {
+        return &AnalysisHandler{DB: database, Config: cfg, Analyzer: a, DNSHistoryCache: historyCache}
 }
 
 func (h *AnalysisHandler) ViewAnalysisStatic(c *gin.Context) {
@@ -167,17 +166,15 @@ func (h *AnalysisHandler) Analyze(c *gin.Context) {
 
         customSelectors := extractCustomSelectors(c)
 
-        results, analysisDuration, fromCache := h.resolveAnalysis(c, asciiDomain, customSelectors)
+        startTime := time.Now()
+        results := h.Analyzer.AnalyzeDomain(c.Request.Context(), asciiDomain, customSelectors)
+        analysisDuration := time.Since(startTime).Seconds()
 
         if success, ok := results["analysis_success"].(bool); ok && !success {
                 if errMsg, ok := results["error"].(string); ok {
                         h.renderIndexFlash(c, nonce, csrfToken, "warning", errMsg)
                         return
                 }
-        }
-
-        if !fromCache && h.Cache != nil && h.Cache.IsTopDomain(asciiDomain) {
-                h.Cache.Set(asciiDomain, results)
         }
 
         h.enrichResults(c, asciiDomain, results)
@@ -202,7 +199,7 @@ func (h *AnalysisHandler) Analyze(c *gin.Context) {
                 "AnalysisDuration":     analysisDuration,
                 "AnalysisTimestamp":    timestamp,
                 "FromHistory":          false,
-                "FromCache":            fromCache,
+                "FromCache":            false,
                 "DomainExists":         domainExists,
                 "ToolVersion":          h.Config.AppVersion,
                 "VerificationCommands": verifyCommands,
@@ -232,18 +229,6 @@ func extractCustomSelectors(c *gin.Context) []string {
         return customSelectors
 }
 
-func (h *AnalysisHandler) resolveAnalysis(c *gin.Context, asciiDomain string, customSelectors []string) (map[string]any, float64, bool) {
-        if h.Cache != nil && len(customSelectors) == 0 {
-                if cached, ok := h.Cache.Get(asciiDomain); ok {
-                        slog.Info("Serving from pre-cache", "domain", asciiDomain)
-                        return cached.Results, 0.0, true
-                }
-        }
-
-        startTime := time.Now()
-        results := h.Analyzer.AnalyzeDomain(c.Request.Context(), asciiDomain, customSelectors)
-        return results, time.Since(startTime).Seconds(), false
-}
 
 func (h *AnalysisHandler) enrichResults(c *gin.Context, asciiDomain string, results map[string]any) {
         dnsHistory := analyzer.FetchDNSHistory(c.Request.Context(), asciiDomain, h.DNSHistoryCache)

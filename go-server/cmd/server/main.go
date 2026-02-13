@@ -95,17 +95,13 @@ func main() {
         analyzer.InitIETFMetadata()
         analyzer.ScheduleRFCRefresh()
 
-        analysisCache := analyzer.NewAnalysisCache(30 * time.Minute)
-        dnsAnalyzer.WarmCache(analysisCache)
-        dnsAnalyzer.ScheduleCacheRefresh(analysisCache, 25*time.Minute)
-
         dnsHistoryCache := analyzer.NewDNSHistoryCache(24 * time.Hour)
         slog.Info("DNS history cache initialized", "ttl", "24h")
 
         homeHandler := handlers.NewHomeHandler(cfg)
         healthHandler := handlers.NewHealthHandler(database, dnsAnalyzer)
         historyHandler := handlers.NewHistoryHandler(database, cfg)
-        analysisHandler := handlers.NewAnalysisHandler(database, cfg, dnsAnalyzer, analysisCache, dnsHistoryCache)
+        analysisHandler := handlers.NewAnalysisHandler(database, cfg, dnsAnalyzer, dnsHistoryCache)
         statsHandler := handlers.NewStatsHandler(database, cfg)
         compareHandler := handlers.NewCompareHandler(database, cfg)
         exportHandler := handlers.NewExportHandler(database)
