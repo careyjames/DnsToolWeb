@@ -108,8 +108,8 @@ func New(opts ...Option) *Client {
                 timeout:  defaultTimeout,
                 lifetime: defaultLifetime,
                 cache:    make(map[string]cacheEntry),
-                cacheTTL: 30 * time.Second,
-                cacheMax: 5000,
+                cacheTTL: 0,
+                cacheMax: 0,
         }
         for _, o := range opts {
                 o(c)
