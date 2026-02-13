@@ -1913,7 +1913,7 @@
                                 </div>
                                 {{else if mapGetBool "allows_ai_crawlers" $aiRobots}}
                                 <div class="alert alert-warning py-2 small">
-                                    <i class="fas fa-exclamation-triangle me-1"></i> <strong>AI crawlers explicitly allowed</strong> — no blocking directives found
+                                    <i class="fas fa-exclamation-triangle me-1"></i> <strong>No AI crawler blocking observed</strong> — no blocking directives found in robots.txt
                                     {{$allowed := mapGetSlice "allowed_crawlers" $aiRobots}}
                                     {{if $allowed}}
                                     <div class="mt-1">
