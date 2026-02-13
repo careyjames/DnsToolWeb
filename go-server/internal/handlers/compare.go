@@ -210,14 +210,30 @@ func (h *CompareHandler) selectDomain(c *gin.Context, domain string) {
                 return
         }
 
-        if len(analyses) < 2 {
+        if len(analyses) == 0 {
                 c.HTML(http.StatusOK, templateCompareSelect, gin.H{
                         "AppVersion":     h.Config.AppVersion,
                         "CspNonce":       nonce,
                         "CsrfToken":     csrfToken,
                         "ActivePage":     "compare",
                         "Domain":         domain,
-                        "FlashMessages":  []FlashMessage{{Category: "warning", Message: "Need at least 2 analyses to compare"}},
+                        "AnalysisCount":  0,
+                })
+                return
+        }
+        if len(analyses) < 2 {
+                items := make([]AnalysisItem, 0, len(analyses))
+                for _, a := range analyses {
+                        items = append(items, buildSelectAnalysisItem(a))
+                }
+                c.HTML(http.StatusOK, templateCompareSelect, gin.H{
+                        "AppVersion":     h.Config.AppVersion,
+                        "CspNonce":       nonce,
+                        "CsrfToken":     csrfToken,
+                        "ActivePage":     "compare",
+                        "Domain":         domain,
+                        "Analyses":       items,
+                        "AnalysisCount":  len(analyses),
                 })
                 return
         }

@@ -3,6 +3,18 @@
 <head>
     {{template "head" .}}
     <title>Compare Analyses - {{.Domain}} - DNS Tool</title>
+    <meta name="description" content="Select two DNS security analyses for {{.Domain}} to compare side by side. Track how domain security posture has changed over time.">
+    <meta property="og:url" content="https://dnstool.it-help.tech/compare/select?domain={{.Domain}}">
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="Select Analyses to Compare — {{.Domain}} - DNS Tool">
+    <meta property="og:description" content="Select two DNS security analyses for {{.Domain}} to compare side by side. Track how domain security posture has changed over time.">
+    <meta property="og:image" content="https://dnstool.it-help.tech/static/images/og-image.png">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta property="twitter:domain" content="dnstool.it-help.tech">
+    <meta property="twitter:url" content="https://dnstool.it-help.tech/compare/select?domain={{.Domain}}">
+    <meta name="twitter:title" content="Select Analyses to Compare — {{.Domain}} - DNS Tool">
+    <meta name="twitter:description" content="Select two DNS security analyses for {{.Domain}} to compare side by side. Track how domain security posture has changed over time.">
+    <meta name="twitter:image" content="https://dnstool.it-help.tech/static/images/og-image.png">
     {{template "critical_css" .}}
     <style nonce="{{.CspNonce}}">
         .selected-row{background-color:rgba(13,110,253,0.15)!important}
@@ -22,6 +34,7 @@
 
         {{template "flash_messages" .}}
 
+        {{if and .Analyses (gt (len .Analyses) 1)}}
         <div class="card mb-3">
             <div class="card-body">
                 <p class="mb-2"><i class="fas fa-info-circle text-info me-1"></i> Click two rows to select them for comparison, then press Compare.</p>
@@ -103,6 +116,37 @@
                 </form>
             </div>
         </div>
+        {{else}}
+        <div class="card mb-3 border-0" style="background: rgba(255,255,255,0.03);">
+            <div class="card-body text-center py-5">
+                <i class="fas fa-code-compare text-muted mb-3" style="font-size: 3rem; opacity: 0.3;"></i>
+                {{if .Domain}}
+                    {{if .Analyses}}
+                    <h5 class="text-muted mb-2">Only 1 analysis on file for <strong class="text-light">{{.Domain}}</strong></h5>
+                    <p class="text-muted mb-3">Comparison requires at least two analyses of the same domain.<br>Run another analysis, then come back to see what changed.</p>
+                    <a href="/analyze?domain={{.Domain}}&refresh=1" class="btn btn-primary me-2">
+                        <i class="fas fa-search me-1"></i>Analyze {{.Domain}} Again
+                    </a>
+                    {{else}}
+                    <h5 class="text-muted mb-2">No analyses found for <strong class="text-light">{{.Domain}}</strong></h5>
+                    <p class="text-muted mb-3">This domain hasn't been analyzed yet. Run your first analysis to get started.</p>
+                    <a href="/analyze?domain={{.Domain}}" class="btn btn-primary me-2">
+                        <i class="fas fa-search me-1"></i>Analyze {{.Domain}}
+                    </a>
+                    {{end}}
+                    <a href="/history" class="btn btn-outline-secondary">
+                        <i class="fas fa-history me-1"></i>View History
+                    </a>
+                {{else}}
+                    <h5 class="text-muted mb-2">No domain selected</h5>
+                    <p class="text-muted mb-3">Enter a domain on the homepage to analyze, then visit History to access comparisons.</p>
+                    <a href="/" class="btn btn-primary">
+                        <i class="fas fa-search me-1"></i>Analyze a Domain
+                    </a>
+                {{end}}
+            </div>
+        </div>
+        {{end}}
 
         {{template "footer" .}}
     </main>

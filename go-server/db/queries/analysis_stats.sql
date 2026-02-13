@@ -33,6 +33,13 @@ WHERE date = $1;
 INSERT INTO analysis_stats (date, total_analyses, successful_analyses, failed_analyses, unique_domains, avg_analysis_time, created_at, updated_at)
 VALUES ($1, 1, CASE WHEN $2::boolean THEN 1 ELSE 0 END, CASE WHEN NOT $2::boolean THEN 1 ELSE 0 END, 0, $3, NOW(), NOW());
 
+-- name: SumAnalysisStats :one
+SELECT 
+    COALESCE(SUM(total_analyses), 0)::bigint AS total,
+    COALESCE(SUM(successful_analyses), 0)::bigint AS successful,
+    COALESCE(SUM(failed_analyses), 0)::bigint AS failed
+FROM analysis_stats;
+
 -- name: CountUniqueDomainsByDate :one
 SELECT COUNT(DISTINCT domain) FROM domain_analyses
 WHERE created_at::date = $1;

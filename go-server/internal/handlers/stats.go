@@ -37,9 +37,13 @@ func (h *StatsHandler) Stats(c *gin.Context) {
                 return
         }
 
-        totalAnalyses, _ := h.DB.Queries.CountAllAnalyses(ctx)
-        successfulAnalyses, _ := h.DB.Queries.CountSuccessfulAnalysesTotal(ctx)
+        storedCount, _ := h.DB.Queries.CountAllAnalyses(ctx)
         uniqueDomains, _ := h.DB.Queries.CountUniqueDomainsTotal(ctx)
+
+        aggregateStats, _ := h.DB.Queries.SumAnalysisStats(ctx)
+        failedFromStats := aggregateStats.Failed
+        totalAnalyses := storedCount + failedFromStats
+        successfulAnalyses := storedCount
 
         popularDomains, _ := h.DB.Queries.ListPopularDomains(ctx, 10)
         countryStats, _ := h.DB.Queries.ListCountryDistribution(ctx, 20)
@@ -72,6 +76,7 @@ func (h *StatsHandler) Stats(c *gin.Context) {
                 "ActivePage":         "stats",
                 "TotalAnalyses":      totalAnalyses,
                 "SuccessfulAnalyses": successfulAnalyses,
+                "FailedAnalyses":     failedFromStats,
                 "UniqueDomains":      uniqueDomains,
                 "CountryStats":       countryItems,
                 "PopularDomains":     popItems,

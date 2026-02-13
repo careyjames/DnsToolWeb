@@ -195,6 +195,83 @@ func evaluateSPFRecordSet(validSPF []string) (int, []string, []string, *string, 
         return lookupCount, lookupMechanisms, includes, permissiveness, allMechanism, issues, noMailIntent
 }
 
+func extractRedirectTarget(spfRecord string) string {
+        m := spfRedirectRe.FindStringSubmatch(spfRecord)
+        if m == nil {
+                return ""
+        }
+        return strings.TrimRight(m[1], ".")
+}
+
+func hasAllMechanism(spfRecord string) bool {
+        return spfAllRe.MatchString(spfRecord)
+}
+
+type spfRedirectHop struct {
+        Domain    string `json:"domain"`
+        SPFRecord string `json:"spf_record"`
+}
+
+func (a *Analyzer) followSPFRedirectChain(ctx context.Context, spfRecord string, totalLookups int) ([]spfRedirectHop, string, int, []string) {
+        var chain []spfRedirectHop
+        visited := map[string]bool{}
+        var redirectIssues []string
+        currentRecord := spfRecord
+        cumulativeLookups := totalLookups
+
+        for i := 0; i < 10; i++ {
+                target := extractRedirectTarget(currentRecord)
+                if target == "" {
+                        break
+                }
+
+                if hasAllMechanism(currentRecord) {
+                        break
+                }
+
+                if visited[strings.ToLower(target)] {
+                        redirectIssues = append(redirectIssues, fmt.Sprintf("SPF redirect loop detected at %s", target))
+                        break
+                }
+                visited[strings.ToLower(target)] = true
+
+                if cumulativeLookups > 10 {
+                        redirectIssues = append(redirectIssues, "SPF redirect chain exceeds 10 DNS lookup limit")
+                        break
+                }
+
+                targetTXT := a.DNS.QueryDNS(ctx, "TXT", target)
+                targetValid, _ := classifySPFRecords(targetTXT)
+
+                if len(targetValid) == 0 {
+                        redirectIssues = append(redirectIssues, fmt.Sprintf("SPF redirect target %s has no valid SPF record — results in PermError (RFC 7208 §6.1)", target))
+                        chain = append(chain, spfRedirectHop{Domain: target, SPFRecord: "(none)"})
+                        break
+                }
+                if len(targetValid) > 1 {
+                        redirectIssues = append(redirectIssues, fmt.Sprintf("SPF redirect target %s has multiple SPF records — results in PermError", target))
+                }
+
+                resolvedRecord := targetValid[0]
+                chain = append(chain, spfRedirectHop{Domain: target, SPFRecord: resolvedRecord})
+
+                targetMechs := countSPFLookupMechanisms(strings.ToLower(resolvedRecord))
+                cumulativeLookups += targetMechs.lookupCount
+
+                if extractRedirectTarget(resolvedRecord) != "" && !hasAllMechanism(resolvedRecord) {
+                        currentRecord = resolvedRecord
+                        continue
+                }
+
+                return chain, resolvedRecord, cumulativeLookups, redirectIssues
+        }
+
+        if len(chain) > 0 {
+                return chain, chain[len(chain)-1].SPFRecord, cumulativeLookups, redirectIssues
+        }
+        return chain, "", cumulativeLookups, redirectIssues
+}
+
 func (a *Analyzer) AnalyzeSPF(ctx context.Context, domain string) map[string]any {
         txtRecords := a.DNS.QueryDNS(ctx, "TXT", domain)
 
@@ -211,6 +288,8 @@ func (a *Analyzer) AnalyzeSPF(ctx context.Context, domain string) map[string]any
                 "issues":            []string{},
                 "includes":          []string{},
                 "no_mail_intent":    false,
+                "redirect_chain":    []map[string]any{},
+                "resolved_spf":     "",
         }
 
         if len(txtRecords) == 0 {
@@ -219,7 +298,55 @@ func (a *Analyzer) AnalyzeSPF(ctx context.Context, domain string) map[string]any
 
         validSPF, spfLike := classifySPFRecords(txtRecords)
         lookupCount, lookupMechanisms, includes, permissiveness, allMechanism, issues, noMailIntent := evaluateSPFRecordSet(validSPF)
+
+        var redirectChainMaps []map[string]any
+        resolvedSPF := ""
+
+        if len(validSPF) == 1 {
+                target := extractRedirectTarget(validSPF[0])
+                if target != "" && !hasAllMechanism(validSPF[0]) {
+                        chain, resolved, totalLookups, redirectIssues := a.followSPFRedirectChain(ctx, validSPF[0], lookupCount)
+                        lookupCount = totalLookups
+                        issues = append(issues, redirectIssues...)
+
+                        for _, hop := range chain {
+                                redirectChainMaps = append(redirectChainMaps, map[string]any{
+                                        "domain":     hop.Domain,
+                                        "spf_record": hop.SPFRecord,
+                                })
+                        }
+
+                        if resolved != "" && resolved != "(none)" {
+                                resolvedSPF = resolved
+                                _, resolvedMechs, resolvedIncludes, resolvedPerm, resolvedAll, _, resolvedNoMail := parseSPFMechanisms(resolved)
+                                lookupMechanisms = append(lookupMechanisms, resolvedMechs...)
+                                includes = append(includes, resolvedIncludes...)
+                                if resolvedPerm != nil {
+                                        permissiveness = resolvedPerm
+                                }
+                                if resolvedAll != nil {
+                                        allMechanism = resolvedAll
+                                }
+                                if resolvedNoMail {
+                                        noMailIntent = true
+                                }
+                        }
+                }
+        }
+
         status, message := buildSPFVerdict(lookupCount, permissiveness, noMailIntent, validSPF, spfLike)
+
+        if len(redirectChainMaps) > 0 && resolvedSPF != "" {
+                chainDomains := make([]string, 0, len(redirectChainMaps))
+                for _, hop := range redirectChainMaps {
+                        chainDomains = append(chainDomains, hop["domain"].(string))
+                }
+                message = fmt.Sprintf("%s (via redirect: %s)", message, strings.Join(chainDomains, " → "))
+        }
+
+        if redirectChainMaps == nil {
+                redirectChainMaps = []map[string]any{}
+        }
 
         result := map[string]any{
                 "status":            status,
@@ -234,6 +361,8 @@ func (a *Analyzer) AnalyzeSPF(ctx context.Context, domain string) map[string]any
                 "issues":            issues,
                 "includes":          includes,
                 "no_mail_intent":    noMailIntent,
+                "redirect_chain":    redirectChainMaps,
+                "resolved_spf":     resolvedSPF,
         }
 
         ensureStringSlices(result, "valid_records", "spf_like", "lookup_mechanisms", "issues", "includes")

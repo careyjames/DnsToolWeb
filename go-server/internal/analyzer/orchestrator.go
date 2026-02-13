@@ -107,6 +107,8 @@ func (a *Analyzer) AnalyzeDomain(ctx context.Context, domain string, customDKIMS
         results["https_svcb"] = getOrDefault(resultsMap, "https_svcb", map[string]any{"status": "info", "has_https": false, "has_svcb": false})
         results["cds_cdnskey"] = getOrDefault(resultsMap, "cds_cdnskey", map[string]any{"status": "info", "has_cds": false, "has_cdnskey": false})
         results["smimea_openpgpkey"] = getOrDefault(resultsMap, "smimea_openpgpkey", map[string]any{"status": "info", "has_smimea": false, "has_openpgpkey": false})
+        results["security_txt"] = getOrDefault(resultsMap, "security_txt", map[string]any{"status": "info", "found": false, "message": "Not checked", "contacts": []string{}, "issues": []string{}})
+        results["ai_surface"] = getOrDefault(resultsMap, "ai_surface", map[string]any{"status": "info", "message": "Not checked"})
 
         results["saas_txt"] = ExtractSaaSTXTFootprint(results)
 
@@ -177,7 +179,7 @@ func (a *Analyzer) checkDomainExists(ctx context.Context, domain string) (bool, 
 }
 
 func (a *Analyzer) runParallelAnalyses(ctx context.Context, domain string, customDKIMSelectors []string) map[string]any {
-        resultsCh := make(chan namedResult, 25)
+        resultsCh := make(chan namedResult, 26)
         var wg sync.WaitGroup
 
         tasks := map[string]func(){
@@ -197,7 +199,9 @@ func (a *Analyzer) runParallelAnalyses(ctx context.Context, domain string, custo
                 "subdomains": func() { resultsCh <- namedResult{"ct_subdomains", a.DiscoverSubdomains(ctx, domain)} },
                 "https_svcb": func() { resultsCh <- namedResult{"https_svcb", a.AnalyzeHTTPSSVCB(ctx, domain)} },
                 "cds_cdnskey": func() { resultsCh <- namedResult{"cds_cdnskey", a.AnalyzeCDSCDNSKEY(ctx, domain)} },
-                "smimea":     func() { resultsCh <- namedResult{"smimea_openpgpkey", a.AnalyzeSMIMEA(ctx, domain)} },
+                "smimea":       func() { resultsCh <- namedResult{"smimea_openpgpkey", a.AnalyzeSMIMEA(ctx, domain)} },
+                "security_txt": func() { resultsCh <- namedResult{"security_txt", a.AnalyzeSecurityTxt(ctx, domain)} },
+                "ai_surface":   func() { resultsCh <- namedResult{"ai_surface", a.AnalyzeAISurface(ctx, domain)} },
         }
 
         for _, fn := range tasks {
@@ -311,6 +315,8 @@ func (a *Analyzer) buildNonExistentResult(domain, status string, statusMessage *
                 "https_svcb":             map[string]any{"status": "info", "has_https": false, "has_svcb": false, "https_records": []map[string]any{}, "svcb_records": []map[string]any{}, "supports_http3": false, "supports_ech": false, "issues": []string{}},
                 "cds_cdnskey":            map[string]any{"status": "info", "has_cds": false, "has_cdnskey": false, "cds_records": []map[string]any{}, "cdnskey_records": []map[string]any{}, "automation": "none", "issues": []string{}},
                 "smimea_openpgpkey":      map[string]any{"status": "info", "has_smimea": false, "has_openpgpkey": false, "smimea_records": []map[string]any{}, "openpgpkey_records": []map[string]any{}, "issues": []string{}},
+                "security_txt":          map[string]any{"status": "info", "found": false, "message": "Domain does not exist", "contacts": []string{}, "issues": []string{}},
+                "ai_surface":            map[string]any{"status": "info", "message": "Domain does not exist", "llms_txt": map[string]any{"found": false}, "robots_txt": map[string]any{"found": false}, "poisoning": map[string]any{"ioc_count": 0}, "hidden_prompts": map[string]any{"artifact_count": 0}, "evidence": []map[string]any{}, "summary": map[string]any{}},
                 "saas_txt":               map[string]any{"status": "success", "services": []map[string]any{}, "service_count": 0, "issues": []string{}},
                 "asn_info":               map[string]any{"status": "info", "ipv4_asn": []map[string]any{}, "ipv6_asn": []map[string]any{}, "unique_asns": []map[string]any{}, "issues": []string{}},
                 "edge_cdn":               map[string]any{"status": "success", "is_behind_cdn": false, "cdn_provider": "", "cdn_indicators": []string{}, "origin_visible": true, "issues": []string{}},

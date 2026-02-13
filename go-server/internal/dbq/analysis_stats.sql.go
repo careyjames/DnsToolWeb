@@ -120,6 +120,27 @@ func (q *Queries) ListRecentStats(ctx context.Context, limit int32) ([]AnalysisS
 	return items, nil
 }
 
+const sumAnalysisStats = `-- name: SumAnalysisStats :one
+SELECT 
+    COALESCE(SUM(total_analyses), 0)::bigint AS total,
+    COALESCE(SUM(successful_analyses), 0)::bigint AS successful,
+    COALESCE(SUM(failed_analyses), 0)::bigint AS failed
+FROM analysis_stats
+`
+
+type SumAnalysisStatsRow struct {
+	Total      int64 `db:"total" json:"total"`
+	Successful int64 `db:"successful" json:"successful"`
+	Failed     int64 `db:"failed" json:"failed"`
+}
+
+func (q *Queries) SumAnalysisStats(ctx context.Context) (SumAnalysisStatsRow, error) {
+	row := q.db.QueryRow(ctx, sumAnalysisStats)
+	var i SumAnalysisStatsRow
+	err := row.Scan(&i.Total, &i.Successful, &i.Failed)
+	return i, err
+}
+
 const updateUniqueDomainCount = `-- name: UpdateUniqueDomainCount :exec
 UPDATE analysis_stats SET unique_domains = $2, updated_at = NOW() WHERE date = $1
 `

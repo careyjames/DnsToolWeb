@@ -3,6 +3,18 @@
 <head>
     {{template "head" .}}
     <title>Statistics - DNS Tool</title>
+    <meta name="description" content="DNS security adoption statistics across analyzed domains. See SPF, DKIM, DMARC, DNSSEC, DANE, MTA-STS deployment rates and protocol adoption trends.">
+    <meta property="og:url" content="https://dnstool.it-help.tech/stats">
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="DNS Security Statistics - DNS Tool">
+    <meta property="og:description" content="DNS security adoption statistics across analyzed domains. See SPF, DKIM, DMARC, DNSSEC, DANE, MTA-STS deployment rates and protocol adoption trends.">
+    <meta property="og:image" content="https://dnstool.it-help.tech/static/images/og-image.png">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta property="twitter:domain" content="dnstool.it-help.tech">
+    <meta property="twitter:url" content="https://dnstool.it-help.tech/stats">
+    <meta name="twitter:title" content="DNS Security Statistics - DNS Tool">
+    <meta name="twitter:description" content="DNS security adoption statistics across analyzed domains. See SPF, DKIM, DMARC, DNSSEC, DANE, MTA-STS deployment rates and protocol adoption trends.">
+    <meta name="twitter:image" content="https://dnstool.it-help.tech/static/images/og-image.png">
     {{template "critical_css" .}}
     {{template "head_css" .}}
 </head>
@@ -36,7 +48,12 @@
                 <div class="card text-center">
                     <div class="card-body">
                         <i class="fas fa-check-circle fa-2x text-success mb-2"></i>
-                        <h3 class="mb-1">{{.SuccessfulAnalyses}}</h3>
+                        <h3 class="mb-1">
+                            <span class="text-success">{{.SuccessfulAnalyses}}</span>
+                            {{if gt .FailedAnalyses 0}}
+                                <span class="text-danger" style="font-size: 0.65em;"> / {{.FailedAnalyses}} failed</span>
+                            {{end}}
+                        </h3>
                         <p class="text-muted mb-0">Successful</p>
                     </div>
                 </div>

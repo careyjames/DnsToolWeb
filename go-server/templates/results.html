@@ -3,6 +3,18 @@
 <head>
     {{template "head" .}}
     <title>{{.Domain}} - DNS Tool</title>
+    <meta name="description" content="Domain security audit for {{.Domain}}. SPF, DKIM, DMARC, DANE/TLSA, DNSSEC, MTA-STS, TLS-RPT, BIMI, CAA analysis with posture scoring and remediation guidance.">
+    <meta property="og:url" content="https://dnstool.it-help.tech/results?domain={{.Domain}}">
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="{{.Domain}} — Domain Security Audit - DNS Tool">
+    <meta property="og:description" content="Domain security audit for {{.Domain}}. SPF, DKIM, DMARC, DANE/TLSA, DNSSEC, MTA-STS, TLS-RPT, BIMI, CAA analysis with posture scoring and remediation guidance.">
+    <meta property="og:image" content="https://dnstool.it-help.tech/static/images/og-image.png">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta property="twitter:domain" content="dnstool.it-help.tech">
+    <meta property="twitter:url" content="https://dnstool.it-help.tech/results?domain={{.Domain}}">
+    <meta name="twitter:title" content="{{.Domain}} — Domain Security Audit - DNS Tool">
+    <meta name="twitter:description" content="Domain security audit for {{.Domain}}. SPF, DKIM, DMARC, DANE/TLSA, DNSSEC, MTA-STS, TLS-RPT, BIMI, CAA analysis with posture scoring and remediation guidance.">
+    <meta name="twitter:image" content="https://dnstool.it-help.tech/static/images/og-image.png">
     {{template "head_css" .}}
     {{template "critical_css" .}}
     <style nonce="{{.CspNonce}}">
@@ -69,6 +81,8 @@
         {{$saas_txt := mapGetMap "saas_txt" $results}}
         {{$cds_cdnskey := mapGetMap "cds_cdnskey" $results}}
         {{$smimea := mapGetMap "smimea_openpgpkey" $results}}
+        {{$security_txt := mapGetMap "security_txt" $results}}
+        {{$ai_surface := mapGetMap "ai_surface" $results}}
         {{$dns_history := mapGetMap "dns_history" $results}}
 
         <!-- Print-Only Report Header -->
@@ -772,6 +786,32 @@
                                     {{range $record := $spfRecords}}
                                         <div class="code-block small">{{$record}}</div>
                                     {{end}}
+                                {{end}}
+                                {{$redirectChain := mapGetSlice "redirect_chain" $spf}}
+                                {{if $redirectChain}}
+                                    <div class="mt-2 p-2 rounded small" style="background: rgba(13,202,240,0.06); border: 1px solid rgba(13,202,240,0.15);">
+                                        <div class="d-flex align-items-center mb-1">
+                                            <i class="fas fa-directions text-info me-2"></i>
+                                            <strong class="text-info">SPF Redirect Chain</strong>
+                                            <span class="badge bg-info bg-opacity-25 text-info ms-2" style="font-size: 0.65rem;">RFC 7208 §6.1</span>
+                                        </div>
+                                        <small class="text-muted d-block mb-2">This SPF record delegates policy via <code>redirect=</code> — the effective policy comes from the target domain.</small>
+                                        {{range $i, $hop := $redirectChain}}
+                                        {{$hopMap := toMap $hop}}
+                                        <div class="d-flex align-items-start mb-1">
+                                            <span class="text-info me-2" style="font-size: 0.7rem;">{{if eq $i 0}}<i class="fas fa-arrow-right"></i>{{else}}<i class="fas fa-long-arrow-alt-right"></i>{{end}}</span>
+                                            <div>
+                                                <code class="text-info">{{mapGetStr "domain" $hopMap}}</code>
+                                                {{$hopRecord := mapGetStr "spf_record" $hopMap}}
+                                                {{if and $hopRecord (ne $hopRecord "(none)")}}
+                                                <div class="code-block small mt-1" style="font-size: 0.7rem;">{{$hopRecord}}</div>
+                                                {{else}}
+                                                <span class="text-danger ms-2" style="font-size: 0.75rem;"><i class="fas fa-exclamation-circle me-1"></i>No SPF record found</span>
+                                                {{end}}
+                                            </div>
+                                        </div>
+                                        {{end}}
+                                    </div>
                                 {{end}}
                                 {{$spfIssues := mapGetSlice "issues" $spf}}
                                 {{if $spfIssues}}
@@ -1673,6 +1713,314 @@
                 </div>
             </div>
         </div>
+
+        <!-- security.txt Section (RFC 9116) -->
+        {{if $security_txt}}
+        <div class="row section-security-txt">
+            <div class="col-12 mb-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0 d-flex align-items-center justify-content-between flex-wrap">
+                            <span><i class="fas fa-shield-alt me-2"></i>Vulnerability Disclosure Policy (security.txt)</span>
+                            <small class="text-muted">Does this domain publish a vulnerability reporting channel?
+                                {{$secTxtStatus := mapGetStr "status" $security_txt}}
+                                <span class="badge bg-{{if eq $secTxtStatus "success"}}success{{else if eq $secTxtStatus "warning"}}warning{{else}}secondary{{end}} ms-1">
+                                    {{if eq $secTxtStatus "success"}}Yes{{else if eq $secTxtStatus "warning"}}Partial{{else}}No{{end}}
+                                </span>
+                                <a href="https://datatracker.ietf.org/doc/html/rfc9116" target="_blank" rel="noopener" class="ms-2 text-muted rfc-link"><i class="fas fa-info-circle"></i><span class="rfc-label">RFC 9116</span></a>
+                            </small>
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <p class="text-muted mb-3 small">{{mapGetStr "message" $security_txt}}</p>
+
+                        {{if mapGetBool "found" $security_txt}}
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <p class="fw-semibold mb-2"><i class="fas fa-envelope me-1"></i>Contact</p>
+                                {{$contacts := mapGetSlice "contacts" $security_txt}}
+                                {{if $contacts}}
+                                    {{range $c := $contacts}}
+                                    <div class="code-block small mb-1">{{$c}}</div>
+                                    {{end}}
+                                {{else}}
+                                    <span class="text-warning small"><i class="fas fa-exclamation-triangle me-1"></i>Missing (required by RFC 9116 §2.5.3)</span>
+                                {{end}}
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <p class="fw-semibold mb-2"><i class="fas fa-clock me-1"></i>Expires</p>
+                                {{$expires := mapGetStr "expires" $security_txt}}
+                                {{if $expires}}
+                                    <div class="code-block small mb-1">
+                                        {{$expires}}
+                                        {{if mapGetBool "expired" $security_txt}}
+                                            <span class="badge bg-danger ms-1">Expired</span>
+                                        {{else}}
+                                            <span class="badge bg-success ms-1">Valid</span>
+                                        {{end}}
+                                    </div>
+                                {{else}}
+                                    <span class="text-warning small"><i class="fas fa-exclamation-triangle me-1"></i>Missing (required by RFC 9116 §2.5.5)</span>
+                                {{end}}
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            {{$encryption := mapGetSlice "encryption" $security_txt}}
+                            {{if $encryption}}
+                            <div class="col-md-6 mb-3">
+                                <p class="fw-semibold mb-2"><i class="fas fa-lock me-1"></i>Encryption</p>
+                                {{range $e := $encryption}}
+                                <div class="code-block small mb-1">{{$e}}</div>
+                                {{end}}
+                            </div>
+                            {{end}}
+                            {{$policy := mapGetSlice "policy" $security_txt}}
+                            {{if $policy}}
+                            <div class="col-md-6 mb-3">
+                                <p class="fw-semibold mb-2"><i class="fas fa-file-alt me-1"></i>Policy</p>
+                                {{range $p := $policy}}
+                                <div class="code-block small mb-1">{{$p}}</div>
+                                {{end}}
+                            </div>
+                            {{end}}
+                        </div>
+
+                        <div class="d-flex flex-wrap gap-2 mt-2">
+                            {{if mapGetBool "signed" $security_txt}}
+                            <span class="badge bg-success"><i class="fas fa-signature me-1"></i>PGP Signed</span>
+                            {{end}}
+                            {{$languages := mapGetStr "languages" $security_txt}}
+                            {{if $languages}}
+                            <span class="badge bg-secondary"><i class="fas fa-language me-1"></i>{{$languages}}</span>
+                            {{end}}
+                            {{$canonical := mapGetSlice "canonical" $security_txt}}
+                            {{if $canonical}}
+                            <span class="badge bg-info"><i class="fas fa-link me-1"></i>Canonical URL</span>
+                            {{end}}
+                            {{$hiring := mapGetSlice "hiring" $security_txt}}
+                            {{if $hiring}}
+                            <span class="badge bg-primary"><i class="fas fa-briefcase me-1"></i>Hiring</span>
+                            {{end}}
+                            {{$ack := mapGetSlice "ack" $security_txt}}
+                            {{if $ack}}
+                            <span class="badge bg-warning text-dark"><i class="fas fa-trophy me-1"></i>Acknowledgments</span>
+                            {{end}}
+                        </div>
+
+                        {{$secTxtURL := mapGetStr "url" $security_txt}}
+                        {{if $secTxtURL}}
+                        <div class="mt-2">
+                            <small class="text-muted">Source: <a href="{{$secTxtURL}}" target="_blank" rel="noopener" class="text-info">{{$secTxtURL}}</a></small>
+                        </div>
+                        {{end}}
+
+                        {{$secTxtIssues := mapGetSlice "issues" $security_txt}}
+                        {{if $secTxtIssues}}
+                        <div class="mt-3">
+                            {{range $issue := $secTxtIssues}}
+                            <div class="text-warning small"><i class="fas fa-exclamation-triangle me-1"></i>{{$issue}}</div>
+                            {{end}}
+                        </div>
+                        {{end}}
+
+                        {{else}}
+                        {{$fetchErr := mapGetStr "fetch_error" $security_txt}}
+                        {{if $fetchErr}}
+                        <div class="text-muted small"><i class="fas fa-info-circle me-1"></i>Fetch error: {{$fetchErr}}</div>
+                        {{end}}
+                        <div class="mt-2">
+                            <small class="text-muted">
+                                <i class="fas fa-lightbulb me-1"></i>
+                                A security.txt file at <code>/.well-known/security.txt</code> provides security researchers with a standardized way to report vulnerabilities.
+                                See <a href="https://securitytxt.org/" target="_blank" rel="noopener" class="text-info">securitytxt.org</a> for a generator.
+                            </small>
+                        </div>
+                        {{end}}
+                    </div>
+                </div>
+            </div>
+        </div>
+        {{end}}
+
+        <!-- AI Surface Scanner Section -->
+        {{if $ai_surface}}
+        <div class="row section-ai-surface">
+            <div class="col-12 mb-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0 d-flex align-items-center justify-content-between flex-wrap">
+                            <span><i class="fas fa-robot me-2"></i>AI Surface Scanner</span>
+                            {{$aiStatus := mapGetStr "status" $ai_surface}}
+                            <span class="badge bg-{{if eq $aiStatus "success"}}success{{else if eq $aiStatus "warning"}}warning{{else if eq $aiStatus "error"}}danger{{else}}info{{end}}">
+                                {{if eq $aiStatus "success"}}Governance Active{{else if eq $aiStatus "warning"}}Risks Detected{{else}}Scanned{{end}}
+                            </span>
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        {{$aiSummary := mapGetMap "summary" $ai_surface}}
+                        <p class="text-muted mb-3 small">{{mapGetStr "message" $ai_surface}}</p>
+
+                        {{$aiLlms := mapGetMap "llms_txt" $ai_surface}}
+                        {{$aiRobots := mapGetMap "robots_txt" $ai_surface}}
+                        {{$aiPoisoning := mapGetMap "poisoning" $ai_surface}}
+                        {{$aiHidden := mapGetMap "hidden_prompts" $ai_surface}}
+
+                        <!-- llms.txt Detection -->
+                        {{if $aiLlms}}
+                        <div class="mb-3">
+                            <h6 class="text-info"><i class="fas fa-file-alt me-1"></i> llms.txt</h6>
+                            {{if mapGetBool "found" $aiLlms}}
+                            <div class="alert alert-success py-2 small">
+                                <i class="fas fa-check-circle me-1"></i> <strong>llms.txt found</strong> — domain provides structured context for LLMs
+                                {{$llmsFields := mapGetMap "fields" $aiLlms}}
+                                {{if $llmsFields}}
+                                <ul class="mt-2 mb-0">
+                                    {{$llmsTitle := mapGetStr "title" $llmsFields}}
+                                    {{if $llmsTitle}}<li><strong>Title:</strong> {{$llmsTitle}}</li>{{end}}
+                                    {{$llmsDesc := mapGetStr "description" $llmsFields}}
+                                    {{if $llmsDesc}}<li><strong>Description:</strong> {{$llmsDesc}}</li>{{end}}
+                                    {{$llmsUrl := mapGetStr "url" $llmsFields}}
+                                    {{if $llmsUrl}}<li><strong>URL:</strong> <a href="{{$llmsUrl}}" target="_blank" rel="noopener">{{$llmsUrl}}</a></li>{{end}}
+                                </ul>
+                                {{end}}
+                            </div>
+                            {{if mapGetBool "full_found" $aiLlms}}
+                            <div class="alert alert-info py-2 small">
+                                <i class="fas fa-file me-1"></i> <strong>llms-full.txt</strong> also available (extended LLM context)
+                            </div>
+                            {{end}}
+                            {{else}}
+                            <div class="text-muted small"><i class="fas fa-minus-circle me-1"></i> No llms.txt found</div>
+                            {{end}}
+                        </div>
+                        {{end}}
+
+                        <!-- robots.txt AI Crawler Directives -->
+                        {{if $aiRobots}}
+                        <div class="mb-3">
+                            <h6 class="text-info"><i class="fas fa-ban me-1"></i> AI Crawler Governance (robots.txt)</h6>
+                            {{if mapGetBool "found" $aiRobots}}
+                                {{if mapGetBool "blocks_ai_crawlers" $aiRobots}}
+                                <div class="alert alert-success py-2 small">
+                                    <i class="fas fa-shield-alt me-1"></i> <strong>AI crawlers blocked</strong>
+                                    {{$blocked := mapGetSlice "blocked_crawlers" $aiRobots}}
+                                    {{if $blocked}}
+                                    <div class="mt-1">
+                                        {{range $blocked}}<span class="badge bg-success me-1 mb-1">{{.}}</span>{{end}}
+                                    </div>
+                                    {{end}}
+                                </div>
+                                {{else if mapGetBool "allows_ai_crawlers" $aiRobots}}
+                                <div class="alert alert-warning py-2 small">
+                                    <i class="fas fa-exclamation-triangle me-1"></i> <strong>AI crawlers explicitly allowed</strong> — no blocking directives found
+                                    {{$allowed := mapGetSlice "allowed_crawlers" $aiRobots}}
+                                    {{if $allowed}}
+                                    <div class="mt-1">
+                                        {{range $allowed}}<span class="badge bg-warning text-dark me-1 mb-1">{{.}}</span>{{end}}
+                                    </div>
+                                    {{end}}
+                                </div>
+                                {{else}}
+                                <div class="text-muted small"><i class="fas fa-minus-circle me-1"></i> robots.txt found but no AI-specific directives detected</div>
+                                {{end}}
+                            {{else}}
+                            <div class="text-muted small"><i class="fas fa-minus-circle me-1"></i> No robots.txt found</div>
+                            {{end}}
+                        </div>
+                        {{end}}
+
+                        <!-- AI Recommendation Poisoning IOCs -->
+                        {{if $aiPoisoning}}
+                        <div class="mb-3">
+                            <h6 class="text-info"><i class="fas fa-biohazard me-1"></i> AI Recommendation Poisoning</h6>
+                            {{$iocCount := mapGetFloat "ioc_count" $aiPoisoning}}
+                            {{if gt $iocCount 0}}
+                            <div class="alert alert-warning py-2 small">
+                                <i class="fas fa-exclamation-triangle me-1"></i> <strong>{{$iocCount}} indicator(s) of concern</strong> detected on homepage
+                                {{$iocs := mapGetSlice "iocs" $aiPoisoning}}
+                                {{if $iocs}}
+                                <ul class="mt-2 mb-0">
+                                    {{range $iocs}}
+                                    <li>
+                                        {{$iocType := mapGetStr "type" .}}
+                                        {{if eq $iocType "prefilled_prompt_link"}}
+                                        <span class="badge bg-warning text-dark me-1">Prefilled Prompt Link</span>
+                                        {{else if eq $iocType "prompt_injection_text"}}
+                                        <span class="badge bg-danger me-1">Prompt Injection Text</span>
+                                        {{end}}
+                                        <code class="small">{{mapGetStr "detail" .}}</code>
+                                    </li>
+                                    {{end}}
+                                </ul>
+                                {{end}}
+                            </div>
+                            {{else}}
+                            <div class="text-success small"><i class="fas fa-check-circle me-1"></i> No AI recommendation poisoning indicators found</div>
+                            {{end}}
+                        </div>
+                        {{end}}
+
+                        <!-- Hidden Prompt Artifacts -->
+                        {{if $aiHidden}}
+                        <div class="mb-3">
+                            <h6 class="text-info"><i class="fas fa-eye-slash me-1"></i> Hidden Prompt Artifacts</h6>
+                            {{$hiddenCount := mapGetFloat "artifact_count" $aiHidden}}
+                            {{if gt $hiddenCount 0}}
+                            <div class="alert alert-danger py-2 small">
+                                <i class="fas fa-exclamation-circle me-1"></i> <strong>{{$hiddenCount}} hidden prompt artifact(s)</strong> found
+                                {{$artifacts := mapGetSlice "artifacts" $aiHidden}}
+                                {{if $artifacts}}
+                                <ul class="mt-2 mb-0">
+                                    {{range $artifacts}}
+                                    <li>
+                                        <span class="badge bg-danger me-1">{{mapGetStr "method" .}}</span>
+                                        <code class="small">{{mapGetStr "detail" .}}</code>
+                                    </li>
+                                    {{end}}
+                                </ul>
+                                {{end}}
+                            </div>
+                            {{else}}
+                            <div class="text-success small"><i class="fas fa-check-circle me-1"></i> No hidden prompt-like artifacts detected</div>
+                            {{end}}
+                        </div>
+                        {{end}}
+
+                        <!-- Evidence Summary -->
+                        {{$aiEvidence := mapGetSlice "evidence" $ai_surface}}
+                        {{if $aiEvidence}}
+                        <div class="mt-3">
+                            <h6 class="text-muted small"><i class="fas fa-list me-1"></i> Evidence Log ({{len $aiEvidence}} item{{if ne (len $aiEvidence) 1}}s{{end}})</h6>
+                            <div class="table-responsive">
+                                <table class="table table-sm table-dark small mb-0">
+                                    <thead><tr><th>Type</th><th>Detail</th><th>Severity</th><th>Confidence</th></tr></thead>
+                                    <tbody>
+                                        {{range $aiEvidence}}
+                                        <tr>
+                                            <td><code>{{mapGetStr "type" .}}</code></td>
+                                            <td>{{mapGetStr "detail" .}}</td>
+                                            <td>
+                                                {{$evSev := mapGetStr "severity" .}}
+                                                <span class="badge bg-{{if eq $evSev "high"}}danger{{else if eq $evSev "medium"}}warning{{else if eq $evSev "low"}}info{{else}}secondary{{end}}">{{$evSev}}</span>
+                                            </td>
+                                            <td>
+                                                {{$evConf := mapGetStr "confidence" .}}
+                                                <span class="badge bg-{{if eq $evConf "observed"}}success{{else if eq $evConf "inferred"}}warning{{else}}secondary{{end}}">{{$evConf}}</span>
+                                            </td>
+                                        </tr>
+                                        {{end}}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        {{end}}
+
+                    </div>
+                </div>
+            </div>
+        </div>
+        {{end}}
 
         <!-- Live SMTP TLS Validation Section -->
         {{if and $smtp (ne (mapGetStr "status" $smtp) "n/a")}}
@@ -3020,7 +3368,7 @@
                             {{if and $dns_history (ne (mapGetStr "status" $dns_history) "")}}<strong class="text-light">SecurityTrails</strong> (DNS history),{{end}}
                             <strong class="text-light">crt.sh</strong> (CT logs),
                             and <strong class="text-light">SMTP probing</strong> (transport).
-                            All using open-source commands.
+                            All using open-standard protocols.
                         </p>
                     </div>
                     <a href="/sources" class="btn btn-sm btn-outline-info ms-3 text-nowrap">
@@ -3118,7 +3466,7 @@
                 </div>
             </div>
             <div class="print-footer-disclaimer">
-                TLP:CLEAR — DNS records are public data. Analysis methodology, scoring, and remediation guidance are proprietary to DNS Tool.
+                TLP:CLEAR — DNS records are public data queried via open-standard protocols. Analysis methodology, posture scoring, and remediation guidance &copy; DNS Tool. All conclusions independently verifiable — see Verification Commands appendix.
             </div>
         </footer>
 

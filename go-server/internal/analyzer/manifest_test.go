@@ -79,6 +79,8 @@ func TestManifestSchemaKeysInLiveResultMap(t *testing.T) {
                 "saas_txt":               true,
                 "cds_cdnskey":            true,
                 "smimea_openpgpkey":      true,
+                "security_txt":          true,
+                "ai_surface":            true,
                 "posture":                true,
                 "remediation":            true,
                 "mail_posture":           true,
