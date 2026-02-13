@@ -1,3 +1,6 @@
+// Copyright (c) 2024-2026 IT Help San Diego Inc.
+// Licensed under AGPL-3.0 — See LICENSE for terms.
+// Analysis intelligence — also maintained under separate proprietary license.
 package analyzer
 
 import (
@@ -813,4 +816,3 @@ func (a *Analyzer) detectDynamicServices(providers map[string]map[string]any, do
                 addOrMergeProvider(providers, mpi, "Dynamic services", fmt.Sprintf("Dynamic services (%s)", capLabels))
         }
 }
-
