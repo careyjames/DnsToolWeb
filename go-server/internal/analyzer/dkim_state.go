@@ -1,6 +1,6 @@
 // Copyright (c) 2024-2026 IT Help San Diego Inc.
 // Licensed under AGPL-3.0 — See LICENSE for terms.
-// Analysis intelligence — also maintained under separate proprietary license.
+// This file contains stub implementations. See github.com/careyjames/dnstool-intel for the full version.
 package analyzer
 
 import "fmt"
@@ -8,13 +8,13 @@ import "fmt"
 type DKIMState int
 
 const (
-	DKIMAbsent          DKIMState = iota // Zero selectors found, domain sends mail
-	DKIMSuccess                          // Primary provider DKIM found with valid keys
-	DKIMProviderInferred                 // Primary provider known to use DKIM (e.g., Google Workspace via MX)
-	DKIMThirdPartyOnly                   // Selectors found but only for third-party senders (e.g., MailChimp, SendGrid)
-	DKIMInconclusive                     // No selectors found, provider unknown — may use custom/rotating selectors
-	DKIMWeakKeysOnly                     // DKIM found but all keys are 1024-bit (weak)
-	DKIMNoMailDomain                     // Domain does not send mail — DKIM not applicable
+	DKIMAbsent          DKIMState = iota
+	DKIMSuccess
+	DKIMProviderInferred
+	DKIMThirdPartyOnly
+	DKIMInconclusive
+	DKIMWeakKeysOnly
+	DKIMNoMailDomain
 )
 
 func (s DKIMState) String() string {
@@ -55,11 +55,7 @@ func (s DKIMState) IsConfigured() bool {
 }
 
 func (s DKIMState) NeedsAction() bool {
-	switch s {
-	case DKIMAbsent:
-		return true
-	}
-	return false
+	return s == DKIMAbsent
 }
 
 func (s DKIMState) NeedsMonitoring() bool {
@@ -67,25 +63,5 @@ func (s DKIMState) NeedsMonitoring() bool {
 }
 
 func classifyDKIMState(ps protocolState) DKIMState {
-	if ps.isNoMailDomain {
-		return DKIMNoMailDomain
-	}
-
-	if ps.dkimOK {
-		return DKIMSuccess
-	}
-
-	if ps.dkimProvider {
-		return DKIMProviderInferred
-	}
-
-	if ps.dkimThirdPartyOnly {
-		return DKIMThirdPartyOnly
-	}
-
-	if ps.dkimPartial {
-		return DKIMInconclusive
-	}
-
 	return DKIMAbsent
 }
