@@ -64,9 +64,10 @@ func SecurityHeaders() gin.HandlerFunc {
                 c.Header("X-Frame-Options", "DENY")
                 c.Header("Strict-Transport-Security", "max-age=63072000; includeSubDomains; preload")
                 c.Header("Referrer-Policy", "strict-origin-when-cross-origin")
-                c.Header("Permissions-Policy", "geolocation=(), microphone=(), camera=()")
+                c.Header("Permissions-Policy", "geolocation=(), microphone=(), camera=(), payment=(), usb=(), accelerometer=(), gyroscope=(), magnetometer=(), midi=(), screen-wake-lock=(), xr-spatial-tracking=(), interest-cohort=(), browsing-topics=()")
                 c.Header("Cross-Origin-Opener-Policy", "same-origin")
                 c.Header("Cross-Origin-Resource-Policy", "same-origin")
+                c.Header("X-Permitted-Cross-Domain-Policies", "none")
 
                 csp := fmt.Sprintf(
                         "default-src 'self'; "+
@@ -77,7 +78,7 @@ func SecurityHeaders() gin.HandlerFunc {
                                 "object-src 'none'; "+
                                 "connect-src 'self'; "+
                                 "frame-ancestors 'none'; "+
-                                "base-uri 'self'; "+
+                                "base-uri 'none'; "+
                                 "form-action 'self'; "+
                                 "upgrade-insecure-requests;",
                         nonceStr,
