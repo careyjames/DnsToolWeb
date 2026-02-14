@@ -2718,6 +2718,12 @@
                                             <div class="code-block small mb-1">{{$record}}</div>
                                         {{end}}
                                         <small class="text-muted">Priority + mail server for email delivery</small>
+                                        {{$mxEmailProvider := mapGetStr "email_hosting" $hosting}}
+                                        {{if and $mxEmailProvider (ne $mxEmailProvider "Unknown") (ne $mxEmailProvider "N/A")}}
+                                        <div class="mt-1">
+                                            <span class="badge bg-secondary bg-opacity-50"><i class="fas fa-envelope me-1"></i>{{$mxEmailProvider}}</span>
+                                        </div>
+                                        {{end}}
                                     {{end}}
                                 {{else}}
                                     <div class="text-muted small"><i class="fas fa-minus me-1"></i>No MX records</div>
@@ -2959,7 +2965,7 @@
         {{if not $dns_history_available}}
         <div class="col-12 mb-3 dns-history-load-wrapper">
             <button type="button" class="btn btn-sm btn-outline-secondary" id="dns-history-btn" onclick="loadDNSHistory('{{.AsciiDomain}}')">
-                <i class="fas fa-history me-1"></i>Load DNS History <span class="badge bg-info ms-1" style="font-size:0.7em; vertical-align:middle;">BETA</span>
+                <i class="fas fa-history me-1"></i>Load DNS History <span class="badge bg-warning text-dark ms-1" style="font-size:0.7em; vertical-align:middle;">BETA</span>
             </button>
         </div>
         {{end}}
@@ -2969,7 +2975,7 @@
             <div class="card">
                 <div class="card-header">
                     <h5 class="mb-0 d-flex align-items-center justify-content-between flex-wrap">
-                        <span><i class="fas fa-history me-2"></i>DNS History Timeline <span class="badge bg-info ms-1" style="font-size:0.55em; vertical-align:middle;">BETA</span></span>
+                        <span><i class="fas fa-history me-2"></i>DNS History Timeline <span class="badge bg-warning text-dark ms-1" style="font-size:0.55em; vertical-align:middle;">BETA</span></span>
                         <small class="text-muted" id="dns-history-source">{{if $dns_history_available}}Source: SecurityTrails{{end}}</small>
                     </h5>
                     <p class="mb-0 mt-2 text-warning-emphasis" style="font-size:0.95em; font-weight:500;"><i class="fas fa-search me-1"></i>When was a record added, removed, or changed &mdash; and could that change be the problem?</p>

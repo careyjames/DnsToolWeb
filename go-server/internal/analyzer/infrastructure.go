@@ -4,49 +4,49 @@
 package analyzer
 
 import (
-	"context"
-	"strings"
+        "context"
+        "strings"
 )
 
 const (
-	featDDoSProtection       = "DDoS protection"
-	featAnycast              = "Anycast"
-	nameAmazonRoute53        = "Amazon Route 53"
-	featBrandProtection      = "Brand protection"
-	featEnterpriseManagement = "Enterprise management"
-	featEnterpriseSecurity   = "Enterprise security"
-	featGlobalAnycast        = "Global Anycast"
-	featGlobalInfra          = "Global infrastructure"
-	featSelfManagedInfra     = "Self-managed infrastructure"
-	featProtectedInfra       = "Protected infrastructure"
-	featGovSecurityStandards = "Government security standards"
-	detMTASTS                = "MTA-STS"
+        featDDoSProtection       = "DDoS protection"
+        featAnycast              = "Anycast"
+        nameAmazonRoute53        = "Amazon Route 53"
+        featBrandProtection      = "Brand protection"
+        featEnterpriseManagement = "Enterprise management"
+        featEnterpriseSecurity   = "Enterprise security"
+        featGlobalAnycast        = "Global Anycast"
+        featGlobalInfra          = "Global infrastructure"
+        featSelfManagedInfra     = "Self-managed infrastructure"
+        featProtectedInfra       = "Protected infrastructure"
+        featGovSecurityStandards = "Government security standards"
+        detMTASTS                = "MTA-STS"
 
-	nameCloudflare   = "Cloudflare"
-	nameCSCGlobalDNS = "CSC Global DNS"
-	nameDigitalOcean = "DigitalOcean"
-	nameGoDaddy      = "GoDaddy"
-	nameLinode       = "Linode"
-	nameNamecheap    = "Namecheap"
+        nameCloudflare   = "Cloudflare"
+        nameCSCGlobalDNS = "CSC Global DNS"
+        nameDigitalOcean = "DigitalOcean"
+        nameGoDaddy      = "GoDaddy"
+        nameLinode       = "Linode"
+        nameNamecheap    = "Namecheap"
 
-	tierEnterprise = "enterprise"
-	tierManaged    = "managed"
+        tierEnterprise = "enterprise"
+        tierManaged    = "managed"
 )
 
 type providerInfo struct {
-	Name     string
-	Tier     string
-	Features []string
+        Name     string
+        Tier     string
+        Features []string
 }
 
 type infraMatch struct {
-	provider *providerInfo
-	tier     string
+        provider *providerInfo
+        tier     string
 }
 
 type dsDetection struct {
-	info         dynamicServiceInfo
-	capabilities []string
+        info         dynamicServiceInfo
+        capabilities []string
 }
 
 var enterpriseProviders = map[string]providerInfo{}
@@ -60,149 +60,160 @@ var emailHostingProviders = map[string]string{}
 var hostedMXProviders = map[string]bool{}
 
 func (a *Analyzer) AnalyzeDNSInfrastructure(domain string, results map[string]any) map[string]any {
-	return map[string]any{
-		"provider_tier":      "standard",
-		"provider_features":  []string{},
-		"is_government":      false,
-		"alt_security_items": []string{},
-		"assessment":         "Standard DNS",
-	}
+        return map[string]any{
+                "provider_tier":      "standard",
+                "provider_features":  []string{},
+                "is_government":      false,
+                "alt_security_items": []string{},
+                "assessment":         "Standard DNS",
+        }
 }
 
 func (a *Analyzer) GetHostingInfo(ctx context.Context, domain string, results map[string]any) map[string]any {
-	return map[string]any{
-		"hosting":            "Unknown",
-		"dns_hosting":        "Unknown",
-		"email_hosting":      "Unknown",
-		"domain":             domain,
-		"hosting_confidence": map[string]any{},
-		"dns_confidence":     map[string]any{},
-		"email_confidence":   map[string]any{},
-		"dns_from_parent":    false,
-	}
+        basic, _ := results["basic_records"].(map[string]any)
+        mxRecords, _ := basic["MX"].([]string)
+        nsRecords, _ := basic["NS"].([]string)
+        isNoMail := results["has_null_mx"] == true || results["is_no_mail_domain"] == true
+
+        emailHosting := identifyEmailProvider(mxRecords)
+        dnsHosting := identifyDNSProvider(nsRecords)
+        hosting := identifyWebHosting(basic)
+
+        hosting, dnsHosting, emailHosting = applyHostingDefaults(hosting, dnsHosting, emailHosting, isNoMail)
+
+        return map[string]any{
+                "hosting":            hosting,
+                "dns_hosting":        dnsHosting,
+                "email_hosting":      emailHosting,
+                "domain":             domain,
+                "hosting_confidence": map[string]any{},
+                "dns_confidence":     map[string]any{},
+                "email_confidence":   map[string]any{},
+                "dns_from_parent":    false,
+        }
 }
 
 func (a *Analyzer) DetectEmailSecurityManagement(spf, dmarc, tlsrpt, mtasts map[string]any, domain string, dkim map[string]any) map[string]any {
-	return map[string]any{
-		"actively_managed": false,
-		"providers":        []map[string]any{},
-		"spf_flattening":   nil,
-		"provider_count":   0,
-		"confidence":       ConfidenceInferredMap(MethodDMARCRua),
-	}
+        return map[string]any{
+                "actively_managed": false,
+                "providers":        []map[string]any{},
+                "spf_flattening":   nil,
+                "provider_count":   0,
+                "confidence":       ConfidenceInferredMap(MethodDMARCRua),
+        }
 }
 
 func enrichHostingFromEdgeCDN(results map[string]any) {}
 
 func matchEnterpriseProvider(nsList []string) *infraMatch {
-	return nil
+        return nil
 }
 
 func matchSelfHostedProvider(nsStr string) *infraMatch {
-	return nil
+        return nil
 }
 
 func matchManagedProvider(nsStr string) *infraMatch {
-	return nil
+        return nil
 }
 
 func matchGovernmentDomain(domain string) (*infraMatch, bool) {
-	return nil, false
+        return nil, false
 }
 
 func collectAltSecurityItems(results map[string]any) []string {
-	return nil
+        return nil
 }
 
 func assessTier(tier string) string {
-	return "Standard DNS"
+        return "Standard DNS"
 }
 
 func (a *Analyzer) resolveNSRecords(domain string, nsRecords []string) ([]string, bool) {
-	return nsRecords, false
+        return nsRecords, false
 }
 
 func matchAllProviders(nsList []string, nsStr string) *infraMatch {
-	return nil
+        return nil
 }
 
 func buildInfraResult(im *infraMatch, isGovernment, nsFromParent bool, results map[string]any) map[string]any {
-	return map[string]any{}
+        return map[string]any{}
 }
 
 func parentZone(domain string) string {
-	parts := strings.Split(domain, ".")
-	if len(parts) <= 2 {
-		return ""
-	}
-	return strings.Join(parts[1:], ".")
+        parts := strings.Split(domain, ".")
+        if len(parts) <= 2 {
+                return ""
+        }
+        return strings.Join(parts[1:], ".")
 }
 
 func (a *Analyzer) detectHostingFromPTR(ctx context.Context, aRecords []string) (string, bool) {
-	return "", false
+        return "", false
 }
 
 func (a *Analyzer) resolveDNSHosting(domain string, nsRecords []string) (string, bool) {
-	return "", false
+        return "", false
 }
 
 func resolveEmailHosting(results map[string]any, mxRecords []string) (string, bool) {
-	return "", false
+        return "", false
 }
 
 func applyHostingDefaults(hosting, dnsHosting, emailHosting string, isNoMail bool) (string, string, string) {
-	if hosting == "" {
-		hosting = "Unknown"
-	}
-	if dnsHosting == "" {
-		dnsHosting = "Unknown"
-	}
-	if isNoMail && emailHosting == "" {
-		emailHosting = "No Mail Domain"
-	} else if emailHosting == "" {
-		emailHosting = "Unknown"
-	}
-	return hosting, dnsHosting, emailHosting
+        if hosting == "" {
+                hosting = "Unknown"
+        }
+        if dnsHosting == "" {
+                dnsHosting = "Unknown"
+        }
+        if isNoMail && emailHosting == "" {
+                emailHosting = "No Mail Domain"
+        } else if emailHosting == "" {
+                emailHosting = "Unknown"
+        }
+        return hosting, dnsHosting, emailHosting
 }
 
 func hostingConfidence(hosting string, fromPTR bool) map[string]any {
-	return map[string]any{}
+        return map[string]any{}
 }
 
 func dnsConfidence(dnsFromParent bool) map[string]any {
-	return map[string]any{}
+        return map[string]any{}
 }
 
 func emailConfidence(emailFromSPF, isNoMail bool) map[string]any {
-	return map[string]any{}
+        return map[string]any{}
 }
 
 func detectEmailProviderFromSPF(results map[string]any) string {
-	return ""
+        return ""
 }
 
 func detectProvider(records []string, providers map[string]string) string {
-	return ""
+        return ""
 }
 
 func extractMailtoDomains(ruaStr string) []string {
-	return nil
+        return nil
 }
 
 func matchMonitoringProvider(domain string) *managementProviderInfo {
-	return nil
+        return nil
 }
 
 func addOrMergeProvider(providers map[string]map[string]any, info *managementProviderInfo, detectedFrom, source string) {
 }
 
 func containsStr(ss []string, s string) bool {
-	for _, v := range ss {
-		if v == s {
-			return true
-		}
-	}
-	return false
+        for _, v := range ss {
+                if v == s {
+                        return true
+                }
+        }
+        return false
 }
 
 func detectDMARCReportProviders(providers map[string]map[string]any, dmarc map[string]any) {}
@@ -210,7 +221,7 @@ func detectDMARCReportProviders(providers map[string]map[string]any, dmarc map[s
 func detectTLSRPTReportProviders(providers map[string]map[string]any, tlsrpt map[string]any) {}
 
 func detectSPFFlatteningProvider(providers map[string]map[string]any, spf map[string]any) map[string]any {
-	return nil
+        return nil
 }
 
 func detectMTASTSManagement(providers map[string]map[string]any, mtasts map[string]any) {}
@@ -219,17 +230,134 @@ func (a *Analyzer) detectHostedDKIMProviders(providers map[string]map[string]any
 }
 
 func zoneCapability(zoneKey string) string {
-	return zoneKey + " management"
+        return zoneKey + " management"
 }
 
 func matchDynamicServiceNS(nsLower string) (dynamicServiceInfo, bool) {
-	return dynamicServiceInfo{}, false
+        return dynamicServiceInfo{}, false
 }
 
 func addDSDetection(detections map[string]*dsDetection, dsInfo dynamicServiceInfo, cap string) {}
 
 func (a *Analyzer) scanDynamicServiceZones(ctx context.Context, zones map[string]string) map[string]*dsDetection {
-	return make(map[string]*dsDetection)
+        return make(map[string]*dsDetection)
 }
 
 func (a *Analyzer) detectDynamicServices(providers map[string]map[string]any, domain string) {}
+
+var mxProviderPatterns = map[string]string{
+        "google":             "Google Workspace",
+        "googlemail":         "Google Workspace",
+        "gmail":              "Google Workspace",
+        "outlook":            "Microsoft 365",
+        "microsoft":          "Microsoft 365",
+        "protection.outlook": "Microsoft 365",
+        "pphosted":           "Proofpoint",
+        "iphmx":              "Proofpoint",
+        "mimecast":           "Mimecast",
+        "barracuda":          "Barracuda",
+        "sophos":             "Sophos",
+        "zoho":               "Zoho Mail",
+        "mailgun":            "Mailgun",
+        "sendgrid":           "SendGrid",
+        "amazonses":          "Amazon SES",
+        "fastmail":           "Fastmail",
+        "protonmail":         "Proton Mail",
+        "yahoodns":           "Yahoo Mail",
+        "icloud":             "iCloud Mail",
+        "hover":              "Hover",
+        "migadu":             "Migadu",
+        "pobox":              "Pobox",
+        "rackspace":          "Rackspace Email",
+        "emailsrvr":          "Rackspace Email",
+        "secureserver":       "GoDaddy Email",
+        "forcepoint":         "Forcepoint",
+        "messagelabs":        "Symantec",
+        "hornetsecurity":     "Hornetsecurity",
+        "spamexperts":        "SpamExperts",
+        "antispamcloud":      "SpamExperts",
+}
+
+func identifyEmailProvider(mxRecords []string) string {
+        if len(mxRecords) == 0 {
+                return ""
+        }
+        joined := strings.ToLower(strings.Join(mxRecords, " "))
+        for pattern, provider := range mxProviderPatterns {
+                if strings.Contains(joined, strings.ToLower(pattern)) {
+                        return provider
+                }
+        }
+        return ""
+}
+
+var nsProviderPatterns = map[string]string{
+        "cloudflare":    "Cloudflare",
+        "awsdns":        "Amazon Route 53",
+        "route53":       "Amazon Route 53",
+        "google":        "Google Cloud DNS",
+        "azure-dns":     "Azure DNS",
+        "digitalocean":  "DigitalOcean",
+        "linode":        "Linode",
+        "godaddy":       "GoDaddy",
+        "domaincontrol": "GoDaddy",
+        "namecheap":     "Namecheap",
+        "registrar-servers": "Namecheap",
+        "hetzner":       "Hetzner",
+        "vultr":         "Vultr",
+        "dynect":        "Oracle Dyn",
+        "ultradns":      "UltraDNS",
+        "nsone":         "NS1",
+        "dns.he.net":    "Hurricane Electric",
+        "dnsimple":      "DNSimple",
+        "hover":         "Hover",
+        "squarespace":   "Squarespace",
+        "wix":           "Wix",
+        "vercel":        "Vercel",
+        "netlify":       "Netlify",
+}
+
+func identifyDNSProvider(nsRecords []string) string {
+        if len(nsRecords) == 0 {
+                return ""
+        }
+        joined := strings.ToLower(strings.Join(nsRecords, " "))
+        for pattern, provider := range nsProviderPatterns {
+                if strings.Contains(joined, strings.ToLower(pattern)) {
+                        return provider
+                }
+        }
+        return ""
+}
+
+func identifyWebHosting(basic map[string]any) string {
+        if basic == nil {
+                return ""
+        }
+        cnames, _ := basic["CNAME"].([]string)
+        joined := strings.ToLower(strings.Join(cnames, " "))
+
+        webPatterns := map[string]string{
+                "cloudflare":   "Cloudflare",
+                "amazonaws":    "AWS",
+                "cloudfront":   "AWS CloudFront",
+                "azurewebsites": "Azure",
+                "herokuapp":    "Heroku",
+                "netlify":      "Netlify",
+                "vercel":       "Vercel",
+                "squarespace":  "Squarespace",
+                "wix":          "Wix",
+                "shopify":      "Shopify",
+                "wpengine":     "WP Engine",
+                "pantheon":     "Pantheon",
+                "github.io":    "GitHub Pages",
+                "fastly":       "Fastly",
+                "akamai":       "Akamai",
+        }
+        for pattern, provider := range webPatterns {
+                if strings.Contains(joined, pattern) {
+                        return provider
+                }
+        }
+        return ""
+}
