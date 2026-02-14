@@ -138,3 +138,7 @@ func isHostedEmailProvider(_ string) bool {
 func isBIMICapableProvider(_ string) bool {
         return true
 }
+
+func isKnownDKIMProvider(_ interface{}) bool {
+        return false
+}

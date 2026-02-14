@@ -632,6 +632,196 @@ func TestGoldenRuleStubRegistryComplete(t *testing.T) {
         t.Logf("Stub registry: %d files are known stubs from dnstool-intel private repo", len(knownStubFiles))
 }
 
+func TestGoldenRuleNoProviderIntelligenceInPublicFiles(t *testing.T) {
+        knownStubFiles := map[string]bool{
+                "ai_surface/http.go":       true,
+                "ai_surface/llms_txt.go":   true,
+                "ai_surface/poisoning.go":  true,
+                "ai_surface/robots_txt.go": true,
+                "commands.go":              true,
+                "confidence.go":            true,
+                "dkim_state.go":            true,
+                "edge_cdn.go":              true,
+                "infrastructure.go":        true,
+                "ip_investigation.go":      true,
+                "manifest.go":              true,
+                "providers.go":             true,
+                "saas_txt.go":              true,
+        }
+
+        forbiddenPairPatterns := []string{
+                `"google", "microsoft"`,
+                `"google", "yahoo"`,
+                `"microsoft", "yahoo"`,
+                `"yahoo", "zoho"`,
+                `"zoho", "fastmail"`,
+                `"fastmail", "proofpoint"`,
+                `"proofpoint", "mimecast"`,
+                `"mimecast", "barracuda"`,
+                `"barracuda", "rackspace"`,
+                `"amazon ses", "sendgrid"`,
+                `"sendgrid", "mailgun"`,
+                `"mailgun", "postmark"`,
+                `"postmark", "sparkpost"`,
+                `"sparkpost", "mailchimp"`,
+                `"mailchimp", "constant contact"`,
+                `"google", "yahoo", "fastmail", "apple"`,
+        }
+
+        capabilityProviderNames := []string{
+                "mimecast", "barracuda", "rackspace", "sparkpost",
+                "constant contact", "amazon ses",
+        }
+
+        err := filepath.Walk(".", func(path string, info os.FileInfo, err error) error {
+                if err != nil || info.IsDir() || !strings.HasSuffix(path, ".go") || strings.HasSuffix(path, "_test.go") {
+                        return nil
+                }
+                if knownStubFiles[path] {
+                        return nil
+                }
+                data, readErr := os.ReadFile(path)
+                if readErr != nil {
+                        return nil
+                }
+                content := string(data)
+                lower := strings.ToLower(content)
+
+                for _, pattern := range forbiddenPairPatterns {
+                        if strings.Contains(lower, pattern) {
+                                t.Errorf("LEAKED PROVIDER INTELLIGENCE in %s: found pattern %q — provider capability lists belong in dnstool-intel stubs only", path, pattern)
+                        }
+                }
+
+                if path == "remediation.go" || path == "posture.go" || path == "scoring.go" {
+                        for _, name := range capabilityProviderNames {
+                                if strings.Contains(lower, `"`+name+`"`) {
+                                        t.Errorf("LEAKED PROVIDER NAME in %s: found %q — provider capability data belongs in dnstool-intel stubs only", path, name)
+                                }
+                        }
+                }
+
+                return nil
+        })
+        if err != nil {
+                t.Fatalf("failed to walk analyzer directory: %v", err)
+        }
+}
+
+func TestGoldenRuleRemediationDelegatesProviderLogic(t *testing.T) {
+        data, err := os.ReadFile("remediation.go")
+        if err != nil {
+                t.Fatalf("cannot read remediation.go: %v", err)
+        }
+        content := string(data)
+
+        if !strings.Contains(content, "isHostedEmailProvider(") {
+                t.Fatal("remediation.go must delegate DANE provider checks to isHostedEmailProvider() — do not inline provider lists")
+        }
+        if !strings.Contains(content, "isBIMICapableProvider(") {
+                t.Fatal("remediation.go must delegate BIMI provider checks to isBIMICapableProvider() — do not inline provider lists")
+        }
+
+        forbiddenInRemediation := []string{
+                `[]string{`,
+                `map[string]bool{`,
+                `map[string]string{`,
+        }
+        lines := strings.Split(content, "\n")
+        inDANEFunc := false
+        inBIMIFunc := false
+        for _, line := range lines {
+                trimmed := strings.TrimSpace(line)
+                if strings.HasPrefix(trimmed, "func providerSupportsDANE") {
+                        inDANEFunc = true
+                }
+                if strings.HasPrefix(trimmed, "func providerSupportsBIMI") {
+                        inBIMIFunc = true
+                }
+                if (inDANEFunc || inBIMIFunc) && strings.HasPrefix(trimmed, "}") && !strings.Contains(trimmed, "{") {
+                        inDANEFunc = false
+                        inBIMIFunc = false
+                }
+                if inDANEFunc || inBIMIFunc {
+                        for _, forbidden := range forbiddenInRemediation {
+                                if strings.Contains(trimmed, forbidden) {
+                                        t.Errorf("providerSupportsDANE/BIMI in remediation.go contains inline collection %q — delegate to providers.go stub instead", forbidden)
+                                }
+                        }
+                }
+        }
+}
+
+func TestGoldenRuleStubBoundaryFunctionsRegistered(t *testing.T) {
+        knownBoundaryFunctions := []string{
+                "func isHostedEmailProvider(",
+                "func isBIMICapableProvider(",
+                "func isKnownDKIMProvider(",
+        }
+
+        knownStubFiles := map[string]bool{
+                "ai_surface/http.go":       true,
+                "ai_surface/llms_txt.go":   true,
+                "ai_surface/poisoning.go":  true,
+                "ai_surface/robots_txt.go": true,
+                "commands.go":              true,
+                "confidence.go":            true,
+                "dkim_state.go":            true,
+                "edge_cdn.go":              true,
+                "infrastructure.go":        true,
+                "ip_investigation.go":      true,
+                "manifest.go":              true,
+                "providers.go":             true,
+                "saas_txt.go":              true,
+        }
+
+        providerFuncPattern := "func is"
+        providerFuncSuffix := "Provider("
+
+        err := filepath.Walk(".", func(path string, info os.FileInfo, err error) error {
+                if err != nil || info.IsDir() || !strings.HasSuffix(path, ".go") || strings.HasSuffix(path, "_test.go") {
+                        return nil
+                }
+                if knownStubFiles[path] {
+                        return nil
+                }
+                data, readErr := os.ReadFile(path)
+                if readErr != nil {
+                        return nil
+                }
+                content := string(data)
+
+                for _, fn := range knownBoundaryFunctions {
+                        if strings.Contains(content, fn) {
+                                t.Errorf("BOUNDARY FUNCTION %s found in non-stub file %s — intelligence boundary functions must only be defined in stub files (providers.go)", fn, path)
+                        }
+                }
+
+                for _, line := range strings.Split(content, "\n") {
+                        trimmed := strings.TrimSpace(line)
+                        if strings.HasPrefix(trimmed, providerFuncPattern) && strings.Contains(trimmed, providerFuncSuffix) {
+                                t.Errorf("UNREGISTERED PROVIDER FUNCTION in non-stub file %s: %q — provider capability functions must be defined in stub files only", path, trimmed)
+                        }
+                }
+
+                return nil
+        })
+        if err != nil {
+                t.Fatalf("failed to walk analyzer directory: %v", err)
+        }
+
+        stubData, err := os.ReadFile("providers.go")
+        if err != nil {
+                t.Fatalf("cannot read providers.go: %v", err)
+        }
+        stubContent := string(stubData)
+        for _, fn := range knownBoundaryFunctions {
+                if !strings.Contains(stubContent, fn) {
+                        t.Errorf("providers.go missing boundary function %s — stub must define all intelligence boundary functions", fn)
+                }
+        }
+}
+
 func TestGoldenRuleEnterpriseProvidersMapNotEmpty(t *testing.T) {
         if len(enterpriseProviders) == 0 {
                 t.Fatal("enterpriseProviders map must not be empty — enterprise detection will silently fail")

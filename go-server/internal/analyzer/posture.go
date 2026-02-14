@@ -20,34 +20,6 @@ const (
         protocolTLSRPT = "TLS-RPT"
 )
 
-var knownDKIMProviders = map[string]bool{
-        "google":        true,
-        "microsoft":     true,
-        "protonmail":    true,
-        "zoho":          true,
-        "fastmail":      true,
-        "mimecast":      true,
-        "barracuda":     true,
-        "mailchimp":     true,
-        "sendgrid":      true,
-        "amazonses":     true,
-        "postmark":      true,
-        "sparkpost":     true,
-        "mailgun":       true,
-        "mandrill":      true,
-        "sendinblue":    true,
-        "brevo":         true,
-        "constantcontact": true,
-}
-
-func isKnownDKIMProvider(provider interface{}) bool {
-        s, ok := provider.(string)
-        if !ok || s == "" {
-                return false
-        }
-        return knownDKIMProviders[strings.ToLower(s)]
-}
-
 type protocolState struct {
         spfOK              bool
         spfWarning         bool
