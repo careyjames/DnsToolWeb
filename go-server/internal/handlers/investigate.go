@@ -105,7 +105,32 @@ func (h *InvestigateHandler) Investigate(c *gin.Context) {
                 asciiDomain = domain
         }
 
+        securityTrailsKey := strings.TrimSpace(c.PostForm("securitytrails_key"))
+
         results := h.Analyzer.InvestigateIP(c.Request.Context(), asciiDomain, ip)
+
+        if securityTrailsKey != "" {
+                stDomains, stErr := analyzer.FetchDomainsByIPWithKey(c.Request.Context(), ip, securityTrailsKey)
+                if stErr == nil && len(stDomains) > 0 {
+                        neighborhood := make([]map[string]any, 0, len(stDomains))
+                        for _, d := range stDomains {
+                                if !strings.EqualFold(d, domain) && !strings.EqualFold(d, asciiDomain) {
+                                        neighborhood = append(neighborhood, map[string]any{
+                                                "domain": d,
+                                                "source": "securitytrails",
+                                        })
+                                }
+                        }
+                        cap := 10
+                        if len(neighborhood) > cap {
+                                neighborhood = neighborhood[:cap]
+                        }
+                        results["neighborhood"] = neighborhood
+                        results["neighborhood_total"] = len(stDomains)
+                        results["neighborhood_source"] = "SecurityTrails"
+                        results["st_enabled"] = true
+                }
+        }
 
         c.HTML(http.StatusOK, investigateTemplate, gin.H{
                 "AppVersion":  h.Config.AppVersion,

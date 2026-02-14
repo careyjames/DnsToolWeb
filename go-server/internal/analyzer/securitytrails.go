@@ -10,6 +10,7 @@ import (
         "log/slog"
         "net/http"
         "os"
+        "strings"
         "sync"
         "time"
 )
@@ -248,10 +249,25 @@ func FetchDomainsByIP(ctx context.Context, ip string) ([]string, error) {
         if !securityTrailsEnabled {
                 return nil, nil
         }
+        return fetchDomainsByIPInternal(ctx, ip, securityTrailsAPIKey)
+}
+
+func FetchDomainsByIPWithKey(ctx context.Context, ip, userAPIKey string) ([]string, error) {
+        if userAPIKey == "" {
+                return nil, nil
+        }
+        return fetchDomainsByIPInternal(ctx, ip, userAPIKey)
+}
+
+func fetchDomainsByIPInternal(ctx context.Context, ip, apiKey string) ([]string, error) {
+        ipField := "ipv4"
+        if strings.Contains(ip, ":") {
+                ipField = "ipv6"
+        }
 
         payload := map[string]any{
                 "filter": map[string]string{
-                        "ipv4": ip,
+                        ipField: ip,
                 },
         }
         body, err := json.Marshal(payload)
@@ -265,7 +281,7 @@ func FetchDomainsByIP(ctx context.Context, ip string) ([]string, error) {
                 slog.Warn("SecurityTrails: failed to create search request", "ip", ip, "error", err)
                 return []string{}, nil
         }
-        req.Header.Set("APIKEY", securityTrailsAPIKey)
+        req.Header.Set("APIKEY", apiKey)
         req.Header.Set("Accept", contentTypeJSON)
         req.Header.Set("Content-Type", contentTypeJSON)
 
@@ -301,4 +317,44 @@ func FetchDomainsByIP(ctx context.Context, ip string) ([]string, error) {
 
         slog.Info("SecurityTrails: discovered domains by IP", "ip", ip, "count", len(domains))
         return domains, nil
+}
+
+func FetchSubdomainsWithKey(ctx context.Context, domain, userAPIKey string) ([]string, error) {
+        if userAPIKey == "" {
+                return nil, nil
+        }
+
+        url := fmt.Sprintf("https://api.securitytrails.com/v1/domain/%s/subdomains?children_only=false&include_inactive=false", domain)
+
+        req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+        if err != nil {
+                return nil, err
+        }
+        req.Header.Set("APIKEY", userAPIKey)
+        req.Header.Set("Accept", contentTypeJSON)
+
+        resp, err := securityTrailsHTTPClient.Do(req)
+        if err != nil {
+                return nil, err
+        }
+        defer resp.Body.Close()
+
+        if resp.StatusCode != http.StatusOK {
+                return []string{}, nil
+        }
+
+        var stResp stSubdomainsResponse
+        if err := json.NewDecoder(resp.Body).Decode(&stResp); err != nil {
+                return nil, err
+        }
+
+        fqdns := make([]string, 0, len(stResp.Subdomains))
+        for _, label := range stResp.Subdomains {
+                if label != "" {
+                        fqdns = append(fqdns, label+"."+domain)
+                }
+        }
+
+        slog.Info("SecurityTrails: discovered subdomains (user key)", "domain", domain, "count", len(fqdns))
+        return fqdns, nil
 }

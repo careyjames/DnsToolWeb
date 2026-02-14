@@ -133,28 +133,6 @@ func (a *Analyzer) AnalyzeDomain(ctx context.Context, domain string, customDKIMS
         ctData := getMapResult(resultsMap, "ct_subdomains")
         ctSubdomains, _ := ctData["subdomains"].([]map[string]any)
 
-        if stSubs, ok := resultsMap["st_subdomains"].([]string); ok && len(stSubs) > 0 {
-                existing := make(map[string]bool, len(ctSubdomains))
-                for _, sd := range ctSubdomains {
-                        if name, ok := sd["subdomain"].(string); ok {
-                                existing[name] = true
-                        }
-                }
-                for _, fqdn := range stSubs {
-                        if !existing[fqdn] {
-                                existing[fqdn] = true
-                                ctSubdomains = append(ctSubdomains, map[string]any{
-                                        "subdomain":  fqdn,
-                                        "source":     "securitytrails",
-                                        "cert_count": 0,
-                                })
-                        }
-                }
-                ctData["subdomains"] = ctSubdomains
-                ctData["unique_subdomains"] = len(ctSubdomains)
-                results["ct_subdomains"] = ctData
-        }
-
         results["dangling_dns"] = a.DetectDanglingDNS(ctx, domain, ctSubdomains)
 
         results["posture"] = a.CalculatePosture(results)
@@ -192,7 +170,7 @@ func timedTask(ch chan<- namedResult, key string, fn func() any) func() {
 }
 
 func (a *Analyzer) runParallelAnalyses(ctx context.Context, domain string, customDKIMSelectors []string) map[string]any {
-        resultsCh := make(chan namedResult, 26)
+        resultsCh := make(chan namedResult, 25)
         var wg sync.WaitGroup
 
         tasks := []func(){
@@ -215,17 +193,6 @@ func (a *Analyzer) runParallelAnalyses(ctx context.Context, domain string, custo
                 timedTask(resultsCh, "smimea_openpgpkey", func() any { return a.AnalyzeSMIMEA(ctx, domain) }),
                 timedTask(resultsCh, "security_txt", func() any { return a.AnalyzeSecurityTxt(ctx, domain) }),
                 timedTask(resultsCh, "ai_surface", func() any { return a.AnalyzeAISurface(ctx, domain) }),
-                timedTask(resultsCh, "st_subdomains", func() any {
-                        initSecurityTrails()
-                        if !securityTrailsEnabled {
-                                return []string(nil)
-                        }
-                        subs, _, err := FetchSubdomains(ctx, domain)
-                        if err != nil {
-                                return []string(nil)
-                        }
-                        return subs
-                }),
         }
 
         for _, fn := range tasks {

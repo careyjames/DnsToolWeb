@@ -79,6 +79,29 @@
                                     <i class="fas fa-route me-2" aria-hidden="true"></i>Investigate
                                 </button>
                             </div>
+                            <details class="mb-3">
+                                <summary class="text-muted small" style="cursor:pointer;">
+                                    <i class="fas fa-key me-1"></i>SecurityTrails API Key <span class="text-muted">(optional)</span>
+                                </summary>
+                                <div class="mt-2">
+                                    <div class="input-group input-group-sm">
+                                        <input type="password"
+                                               class="form-control bg-dark text-light border-secondary"
+                                               id="securitytrails_key"
+                                               name="securitytrails_key"
+                                               placeholder="Enter your SecurityTrails API key"
+                                               autocomplete="off"
+                                               spellcheck="false"
+                                               data-lpignore="true"
+                                               data-1p-ignore="true"
+                                               aria-label="SecurityTrails API key for IP neighborhood discovery"
+                                               style="font-size:0.85em;">
+                                    </div>
+                                    <div class="mt-1 text-muted" style="font-size:0.75em;">
+                                        <i class="fas fa-shield-alt me-1"></i>Enables IP neighborhood discovery (other domains on this IP). Your key is sent directly to SecurityTrails and is never stored. <a href="https://securitytrails.com/app/signup" target="_blank" rel="noopener" class="text-info">Get a free API key</a>
+                                    </div>
+                                </div>
+                            </details>
                             <div class="form-text search-hint mt-2">
                                 <i class="fas fa-info-circle me-1"></i>
                                 Enter a domain and an IP address from a report, log, or email header. We&rsquo;ll correlate reverse DNS, ASN ownership, SPF authorization, and infrastructure mapping &mdash; evidence-based attribution, not just a lookup.
@@ -508,7 +531,7 @@
                         <tbody>
                             {{range $neighborRels}}
                             <tr>
-                                <td><code>{{mapGetStr "hostname" .}}</code></td>
+                                <td><code>{{if ne (mapGetStr "domain" .) ""}}{{mapGetStr "domain" .}}{{else}}{{mapGetStr "hostname" .}}{{end}}</code></td>
                                 <td><span class="badge bg-dark border border-secondary">SecurityTrails</span></td>
                             </tr>
                             {{end}}
@@ -518,6 +541,18 @@
                     <p class="text-muted small mt-2 mb-0"><i class="fas fa-info-circle me-1"></i>Showing 10 of {{$neighborTotal}} domains. {{if $isCdn}}The remaining domains are additional {{$cdnProv}} customers sharing this edge node.{{else}}Additional domains omitted for brevity.{{end}}</p>
                     {{end}}
                 {{end}}
+            </div>
+        </div>
+        {{else}}
+        <div class="card mb-4 bg-dark bg-opacity-25" style="border: 1px solid rgba(255,255,255,0.1);">
+            <div class="card-body py-3">
+                <div class="d-flex align-items-center flex-wrap gap-2">
+                    <span class="text-muted small"><i class="fas fa-building me-1"></i>IP Neighborhood</span>
+                    <span class="text-muted small">&mdash; Discover other domains hosted on this IP.</span>
+                </div>
+                <div class="mt-2 text-muted" style="font-size:0.8em;">
+                    <i class="fas fa-key me-1"></i>Add a <a href="https://securitytrails.com/app/signup" target="_blank" rel="noopener" class="text-info">free SecurityTrails API key</a> when investigating to see which domains share this IP address.
+                </div>
             </div>
         </div>
         {{end}}
