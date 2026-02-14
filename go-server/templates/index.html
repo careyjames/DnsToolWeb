@@ -288,6 +288,28 @@
                                     </div>
                                 </div>
                             </div>
+                            <div class="mt-2">
+                                <button type="button" class="btn btn-link small text-muted text-decoration-none p-0 border-0" data-bs-toggle="collapse" data-bs-target="#securityTrailsKey" aria-expanded="false" aria-controls="securityTrailsKey">
+                                    <i class="fas fa-history me-1" style="color: #5bc0de;"></i>DNS History Key <span class="text-muted">(optional)</span> <i class="fas fa-chevron-down ms-1 small"></i>
+                                </button>
+                                <div class="collapse mt-2" id="securityTrailsKey">
+                                    <div class="input-group input-group-sm">
+                                        <span class="input-group-text bg-dark border-secondary text-muted"><i class="fas fa-shield-alt"></i></span>
+                                        <input type="password"
+                                               class="form-control form-control-sm bg-dark text-light border-secondary"
+                                               name="securitytrails_key"
+                                               placeholder="SecurityTrails API key"
+                                               autocomplete="off"
+                                               spellcheck="false"
+                                               data-lpignore="true"
+                                               data-1p-ignore="true">
+                                    </div>
+                                    <div class="form-text text-muted mt-1 small">
+                                        <i class="fas fa-lock me-1"></i>Your key is transmitted over HTTPS, used once for this scan, and <strong>never stored</strong> on our servers.
+                                        <a href="https://securitytrails.com/app/signup" target="_blank" rel="noopener" class="text-info ms-1">Get a free API key</a>
+                                    </div>
+                                </div>
+                            </div>
                         </form>
                     </div>
                 </div>

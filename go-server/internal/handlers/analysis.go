@@ -135,6 +135,7 @@ func (h *AnalysisHandler) ViewAnalysisStatic(c *gin.Context) {
                 "VerificationCommands": verifyCommands,
                 "IsSubdomain":          isSub,
                 "RootDomain":           rootDom,
+                "SecurityTrailsKey":    "",
         })
 }
 
@@ -167,6 +168,7 @@ func (h *AnalysisHandler) Analyze(c *gin.Context) {
         }
 
         customSelectors := extractCustomSelectors(c)
+        securityTrailsKey := strings.TrimSpace(c.PostForm("securitytrails_key"))
 
         startTime := time.Now()
         ctx := c.Request.Context()
@@ -209,6 +211,7 @@ func (h *AnalysisHandler) Analyze(c *gin.Context) {
                 "VerificationCommands": verifyCommands,
                 "IsSubdomain":          isSub,
                 "RootDomain":           rootDom,
+                "SecurityTrailsKey":    securityTrailsKey,
         })
 }
 

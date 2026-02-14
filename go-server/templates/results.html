@@ -2969,7 +2969,7 @@
                     <div class="d-flex align-items-center flex-wrap gap-2">
                         <span class="text-muted small"><i class="fas fa-history me-1"></i>DNS History Timeline <span class="badge bg-warning text-dark ms-1" style="font-size:0.7em; vertical-align:middle;">BETA</span></span>
                         <div class="d-flex align-items-center gap-2 flex-grow-1" style="max-width:500px;">
-                            <input type="password" class="form-control form-control-sm bg-dark text-light border-secondary" id="st-api-key-input" placeholder="Enter your SecurityTrails API key" autocomplete="off" style="font-size:0.85em;">
+                            <input type="password" class="form-control form-control-sm bg-dark text-light border-secondary" id="st-api-key-input" placeholder="Enter your SecurityTrails API key" autocomplete="off" spellcheck="false" data-lpignore="true" data-1p-ignore="true" style="font-size:0.85em;">
                             <button type="button" class="btn btn-sm btn-outline-info" id="dns-history-btn" onclick="loadDNSHistory('{{.AsciiDomain}}')">
                                 <i class="fas fa-search me-1"></i>Go
                             </button>
@@ -3619,6 +3619,10 @@
                         if (btn) btn.click();
                     }
                 });
+                {{if .SecurityTrailsKey}}
+                stKeyInput.value = {{.SecurityTrailsKey}};
+                setTimeout(function() { loadDNSHistory('{{.AsciiDomain}}'); }, 500);
+                {{end}}
             }
         });
     })();
