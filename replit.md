@@ -1,29 +1,30 @@
 # DNS Tool — Domain Security Audit
 
 ## Overview
-The DNS Tool is a web-based intelligence platform designed for comprehensive, RFC-compliant domain security analysis. It serves as a **verification instrument** — when a sysadmin changes a DNS record and rescans, they must see the new state immediately. Every conclusion is independently verifiable using standard commands. Philosophy: **No proprietary magic.**
-
-It audits critical DNS records such as SPF, DKIM, DMARC, DANE/TLSA, DNSSEC, MTA-STS, TLS-RPT, BIMI, and CAA, with automatic subdomain discovery and DNS history timeline via SecurityTrails API integration. It includes an AI Surface Scanner for detecting AI-related governance signals, an IP Investigation workflow, and an Email Header Analyzer. All public-facing text uses observation-based language (not definitive claims) per the Analysis Integrity Standard.
+The DNS Tool is a web-based intelligence platform designed for comprehensive, RFC-compliant domain security analysis. It audits critical DNS records (SPF, DKIM, DMARC, DANE/TLSA, DNSSEC, MTA-STS, TLS-RPT, BIMI, CAA), includes automatic subdomain discovery, a DNS history timeline, an AI Surface Scanner, an IP Investigation workflow, and an Email Header Analyzer. The tool prioritizes immediate verification of DNS changes and ensures all conclusions are independently verifiable using standard commands, adhering to a "No proprietary magic" philosophy. It aims to be a verification instrument for sysadmins and a reporting tool for executives, focusing on observation-based language per the Analysis Integrity Standard.
 
 ## User Preferences
-Preferred communication style: Simple, everyday language.
+- Preferred communication style: Simple, everyday language.
+- Philosophy: "As open-source as humanly possible while protecting ability to sell as a commercial product."
+- Prioritize honest, observation-based reporting aligned with NIST/CISA standards.
+- Tool targets both technical sysadmins and non-technical executives (board-level).
+- Memory persistence is critical — `replit.md` is the single source of truth between sessions. Update it every session with decisions, changes, and rationale.
 
 ## System Architecture
 
 ### Core System
-The application is implemented in Go using the Gin framework, providing high performance and concurrency. The architecture follows an MVC-style separation.
+The application is built in Go using the Gin framework for high performance. It follows an MVC-style separation.
 
 ### Backend
-- **Technology Stack**: Go with Gin, `pgx` v5 for PostgreSQL, `sqlc` for type-safe query generation, and `miekg/dns` for DNS queries.
-- **Key Features**: Multi-resolver DNS client (no cross-request cache — TTL=0 for live queries), DoH fallback, CT subdomain discovery, posture scoring with CVSS-aligned risk levels, concurrent orchestrator, SMTP transport verification (observation-based language), CSRF middleware, rate limiting, SSRF hardening, telemetry, confidence labeling (Observed/Inferred/Third-party), "Verify It Yourself" command equivalence, DMARC external reporting authorization, dangling DNS/subdomain takeover detection, HTTPS/SVCB record intelligence, IP-to-ASN attribution, Edge/CDN vs origin detection, SaaS TXT footprint extraction, CDS/CDNSKEY automation detection, SMIMEA/OPENPGPKEY email encryption detection, **security.txt** detection, **AI Surface Scanner** (detects llms.txt at both `/.well-known/` and root paths, AI crawler governance, prefilled AI prompts, CSS-hidden prompt injection artifacts), **SPF redirect= chain handling** with loop detection, **DNS history timeline** via SecurityTrails API (24h cache, 50 calls/month limit), **IP Investigation** for IP-to-domain relationships, **OpenPhish** phishing URL feed integration, and **Email Header Analyzer** (paste/upload .eml files or raw headers for SPF/DKIM/DMARC verification, delivery route tracing, alignment checking, spoofing detection, base64/quoted-printable body decoding, phishing pattern scanning, Big Questions critical thinking prompts, spam flag detection, BCC delivery detection).
-- **Enterprise DNS Detection**: Automatic identification of enterprise-grade DNS providers (Route 53, Cloudflare, NS1, Azure DNS, Google Cloud DNS, Akamai, UltraDNS, Oracle Dyn, CSC Global, GoDaddy, Namecheap, Hurricane Electric, DigitalOcean, Hetzner, Vultr, DNSimple, Netlify, Vercel). Legacy provider blocklist prevents false Enterprise tagging (Network Solutions, Bluehost, HostGator, etc.). Protected by golden rule tests that fail if maps are emptied or blocklist is removed.
-- **SMTP Transport Status**: Live SMTP TLS validation with three display states: "All Servers" (live probe succeeded), "Inferred" (port 25 blocked but DNS signals confirm security — MTA-STS, TLS-RPT, provider inference), "No Mail" (no MX records). The "Inferred" status replaced a previous bug where DNS-inferred domains showed "No Mail".
-- **SEO**: Comprehensive meta descriptions, Open Graph, and Twitter Card tags. All claims observation-based per Analysis Integrity Standard.
-- **Analysis Integrity**: Adherence to an "Analysis Integrity Standard" ensuring results align with RFCs and industry best practices, enforced by automated golden rules tests. Observation-based language throughout (e.g., "Transport encryption observed?" not "Is email encrypted?").
-- **Golden Rules Tests**: `golden_rules_test.go` guards critical behaviors: email spoofing verdicts, DMARC rua detection, enterprise provider detection (all providers + map non-empty checks), legacy provider blocklist enforcement, no overlap between enterprise and blocklist, infrastructure tier classification, remediation engine non-stubbed (GenerateRemediation returns real fixes), mail posture non-stubbed (buildMailPosture returns classification/label/color), fixToMap produces valid maps, and **stub registry scanner** that walks all .go files for "stub implementations" headers and fails if unregistered stubs appear (13 known dnstool-intel stubs allowlisted).
-- **Remediation Engine** ("Priority Actions"): Fully implemented — generates RFC-aligned fixes for SPF/DMARC/DKIM/MTA-STS/TLS-RPT/BIMI/DNSSEC/DANE/CAA with severity sorting (Critical > High > Medium > Low), DNS record examples, and per-section grouping. UI panel renamed from "Top Fixes" to "Priority Actions" to match intelligence theme.
-- **Mail Posture Labels** (observation-based): "Strongly Protected", "Moderately Protected", "Limited Protection", "Unprotected", "No Mail Observed" — aligned with NIST/CISA observation-based language.
-- **Cache Policy**: DNS client cache disabled (TTL=0) — every scan does live queries. Only defensible caches retained: RDAP (24h, rate-limit protection), DNS History (24h, 50 calls/month), CT subdomains (1h, append-only data), RFC metadata (24h, reference data).
+- **Technology Stack**: Go with Gin, `pgx` v5 for PostgreSQL, `sqlc` for type-safe queries, and `miekg/dns` for DNS operations.
+- **Key Features**: Multi-resolver DNS client (no cross-request cache), DoH fallback, CT subdomain discovery, posture scoring with CVSS-aligned risk levels, concurrent orchestrator, observation-based SMTP transport verification, CSRF middleware, rate limiting, SSRF hardening, telemetry, confidence labeling, "Verify It Yourself" command equivalence, DMARC external reporting authorization, dangling DNS/subdomain takeover detection, HTTPS/SVCB record intelligence, IP-to-ASN attribution, Edge/CDN vs origin detection, SaaS TXT footprint extraction, CDS/CDNSKEY automation detection, SMIMEA/OPENPGPKEY detection, `security.txt` detection, AI Surface Scanner (detects `llms.txt`, AI crawler governance, prefilled prompts, CSS-hidden prompt injection artifacts), SPF `redirect=` chain handling with loop detection, DNS history timeline, IP Investigation, and Email Header Analyzer (SPF/DKIM/DMARC verification, delivery route tracing, spoofing detection, phishing pattern scanning).
+- **Enterprise DNS Detection**: Automatic identification of enterprise-grade DNS providers with a legacy provider blocklist.
+- **SMTP Transport Status**: Live SMTP TLS validation with "All Servers", "Inferred", or "No Mail" states.
+- **Analysis Integrity**: Adherence to an "Analysis Integrity Standard" for RFC compliance and best practices, enforced by automated golden rules tests.
+- **Remediation Engine**: Generates RFC-aligned fixes for various DNS records with severity sorting, examples, and grouping.
+- **Mail Posture Labels**: "Strongly Protected", "Moderately Protected", "Limited Protection", "Unprotected", "No Mail Observed" (NIST/CISA aligned).
+- **Cache Policy**: DNS client cache disabled. Only RDAP, DNS History, CT subdomains, and RFC metadata retain defensible caches.
+- **Licensing**: Public and private repositories use BSL 1.1 (Business Source License), converting to Apache-2.0 on 2029-02-14, supporting an open-core model.
 
 ### Frontend
 - **Technology**: Server-rendered HTML using Go `html/template`, Bootstrap dark theme, custom CSS, and client-side JavaScript.
@@ -34,59 +35,13 @@ The application is implemented in Go using the Gin framework, providing high per
 ## External Dependencies
 
 ### External Services
-- **DNS Resolvers**: Cloudflare DNS, Google Public DNS, Quad9, OpenDNS/Cisco Umbrella (for consensus).
-- **IANA RDAP**: For registry data lookups (24h cache due to aggressive rate limits).
-- **ip-api.com**: For visitor IP-to-country lookups.
-- **crt.sh**: For Certificate Transparency logs (1h cache, append-only historical data).
-- **SecurityTrails**: For DNS history timeline (user-provided API key, no server-side storage; 24h result cache). Users enter their own SecurityTrails API key on the results page — key is sent directly to SecurityTrails and never stored.
+- **DNS Resolvers**: Cloudflare DNS, Google Public DNS, Quad9, OpenDNS/Cisco Umbrella.
+- **IANA RDAP**: Registry data lookups.
+- **ip-api.com**: Visitor IP-to-country lookups.
+- **crt.sh**: Certificate Transparency logs.
+- **SecurityTrails**: DNS history timeline (user-provided API key).
 - **Team Cymru**: DNS-based IP-to-ASN attribution.
-- **OpenPhish**: Community phishing URL feed for real-time phishing detection.
+- **OpenPhish**: Community phishing URL feed.
 
 ### Database
-- **PostgreSQL**: The primary database for persistent storage. **Dev and production use separate databases** (Replit platform change, Dec 2025). The production database contains real user scan history; the dev database only has test scans. This is a platform-enforced separation — not configurable. Always verify features against the published site for real-world accuracy.
-
-## Quality Golden Standards
-These are minimum thresholds that must be maintained. Any proposed change that would drop below these must be discussed before proceeding.
-
-- **Mozilla Observatory**: 130+ (achieved Feb 2026, up from 120). CSP uses `default-src 'none'` with nonce-based `style-src` (no `unsafe-inline`). Secure cookie flag on CSRF. Target: 135 with Secure cookie fix deployed.
-- **Lighthouse Performance**: 98%+ (slight flexibility for network-dependent metrics)
-- **Lighthouse Accessibility**: 100%
-- **Lighthouse Best Practices**: 100%
-- **Lighthouse SEO**: 100%
-- **Golden Rules Tests**: All must pass — `cd go-server && GIT_DIR=/dev/null go test -run TestGoldenRule ./internal/analyzer/ -v`
-- **Live Integration Tests**: Optional — `cd go-server && GIT_DIR=/dev/null go test -tags=integration -run TestLive ./internal/analyzer/ -v -timeout 120s`. Tests real DNS queries against it-help.tech with structural assertions (not exact values). Failures may indicate domain config changes, not code bugs. Never runs in default test suite.
-- **Stub Registry**: 13 known stub files from dnstool-intel private repo. Any new stub file MUST be registered in `TestGoldenRuleStubRegistryComplete` or the test fails.
-- **Private Repo Sync**: After adding/modifying stubs in the public repo, the corresponding real implementation MUST be pushed to `dnstool-intel`. Use `dnstool-intel-staging/STUB_AUDIT.md` to track what needs syncing. Boundary functions: `isHostedEmailProvider`, `isBIMICapableProvider`, `isKnownDKIMProvider`.
-
-## Build & Deploy Checklist
-Before publishing or after making changes to static assets or Go code, always verify:
-
-1. **CSS minification** — `static/css/custom.min.css` must be regenerated from `custom.css` using `npx csso custom.css -o custom.min.css`. Check that min file is significantly smaller than source (not a copy).
-2. **JS minification** — `static/js/main.min.js` must be regenerated from `main.js` using `npx terser main.js -o main.min.js --compress --mangle`. Verify with `node -c main.min.js` (no syntax errors).
-3. **Version bump** — After changing any static asset (CSS/JS), bump `AppVersion` in `go-server/internal/config/config.go` so browsers fetch the new files instead of cached old ones. The version appears in `?v=` query strings on static URLs.
-4. **Go binary rebuild** — After changing any `.go` file, rebuild: `cd go-server && GIT_DIR=/dev/null go build -buildvcs=false -o /tmp/dns-tool-new ./cmd/server/` then swap via `cd /home/runner/workspace && mv /tmp/dns-tool-new dns-tool-server-new && mv dns-tool-server-new dns-tool-server`.
-5. **Binary cleanup** — Only keep `dns-tool-server`. Remove stale copies (`dns-tool`, `go-server/server`). All binary names are in `.gitignore`.
-6. **Run golden rules tests** — `cd go-server && GIT_DIR=/dev/null go test -run TestGoldenRule ./internal/analyzer/ -v` to verify enterprise detection, legacy blocklist, and email verdicts.
-7. **Run live integration tests** (optional) — `cd go-server && GIT_DIR=/dev/null go test -tags=integration -run TestLive ./internal/analyzer/ -v -timeout 120s` to verify real DNS queries produce correct result shapes. Skipped tests are normal (orchestrator timeout in constrained environments).
-8. **Restart workflow** — After binary swap, restart the "Start application" workflow.
-
-## Licensing
-- **Public repo (`DnsToolWeb`)**: BSL 1.1 (Business Source License) — source-available, converts to Apache-2.0 on 2029-02-14. Changed from AGPL-3.0 on Feb 14, 2026 because AGPL created legal tension with the proprietary private companion repo and hindered acquisition/commercial potential.
-- **Private repo (`dnstool-intel`)**: BSL 1.1 (same terms and Change Date as public repo). Changed from Proprietary on Feb 14, 2026 to match public repo.
-- **Legacy CLI repo (`dns-tool`)**: MIT License — unchanged, archived.
-- **Open-core model**: Public repo is the shell (visible to everyone), private repo is the intelligence (secret). Both BSL 1.1 — prevents competitors from hosting a competing service while keeping code fully visible. See `LICENSING.md` for details.
-
-## Public Repo Safety (Secret Sauce Protection)
-The public GitHub repo (`DnsToolWeb`) must NEVER expose proprietary intelligence:
-- **Never reveal** analyzer detection methods, scoring algorithms, provider database contents, schema keys, or remediation logic in public docs (DOCS.md, FEATURE_INVENTORY.md, README)
-- **Never include** legacy Python source code (dns_analyzer.py, dns_providers.py, etc.) — these are gitignored under docs/legacy/
-- **Public docs should be high-level** — what the tool does, not how it does it internally
-- **Definition of Done** (`DOD.md`) governs every change — see checklist
-- **Never request secrets** — only accept them when the user provides them for development
-- **Never output secrets** in code, logs, docs, or error messages
-
-## GitHub Repositories
-- **`careyjames/DnsToolWeb`** (Public) — This Replit project. Set as `origin` remote. All web app code pushes here. Docs must be sanitized before pushing.
-- **`careyjames/dnstool-intel`** (Private) — "Secret sauce" proprietary intelligence: analyzer logic, scoring, golden rules, remediation, AI surface scanner. Never push to public repos. **Agent has full push access** via the Replit GitHub integration (repo scope). Use the GitHub API (Contents API) to push files directly — no need for the user to do manual transfers. Staging directory: `dnstool-intel-staging/` (gitignored from public repo) holds files before push.
-- **`careyjames/dns-tool`** (Public, Legacy) — Original CLI version. Archived/legacy. Do NOT push to this repo — it points users to the web app now.
-- **`careyjames/it-help-tech-site`** (Public) — Main company site (www.it-help.tech). Rust/Zola static site on AWS. Separate project.
+- **PostgreSQL**: Primary database for persistent storage. Separate databases for development and production environments.
