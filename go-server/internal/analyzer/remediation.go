@@ -516,6 +516,18 @@ func appendDNSSECFixes(fixes []fix, ps protocolState) []fix {
                         Section:       "DNSSEC",
                 })
         }
+        if !ps.dnssecOK && !ps.dnssecBroken {
+                fixes = append(fixes, fix{
+                        Title:       "Enable DNSSEC",
+                        Description: "DNSSEC is not enabled for this domain. DNSSEC provides cryptographic authentication of DNS responses, preventing cache poisoning and DNS spoofing attacks.",
+                        RFC:         "RFC 4035",
+                        RFCURL:      "https://datatracker.ietf.org/doc/html/rfc4035",
+                        Severity:    severityMedium,
+                        SeverityColor: colorMedium,
+                        SeverityOrder: 3,
+                        Section:     "DNSSEC",
+                })
+        }
         return fixes
 }
 
@@ -532,7 +544,49 @@ func appendDANEFixes(fixes []fix, ps protocolState, results map[string]any, doma
                         Section:       "DANE",
                 })
         }
+        if !ps.daneOK && ps.dnssecOK && !ps.isNoMailDomain {
+                mxHost := extractFirstMXHost(results)
+                tlsaHost := "_25._tcp." + mxHost
+                fixes = append(fixes, fix{
+                        Title:       "Add DANE/TLSA Records",
+                        Description: "DNSSEC is active — adding TLSA records enables DANE, which cryptographically binds your mail server certificates to DNS and prevents certificate-based MITM attacks.",
+                        DNSHost:     tlsaHost,
+                        DNSType:     "TLSA",
+                        DNSValue:    "3 1 1 <certificate-sha256-hash>",
+                        DNSPurpose:  "TLSA pins your mail server's TLS certificate in DNS, verified via DNSSEC.",
+                        DNSHostHelp: "(TLSA record for primary MX — generate hash from your server certificate)",
+                        RFC:         "RFC 7672",
+                        RFCURL:      "https://datatracker.ietf.org/doc/html/rfc7672",
+                        Severity:    severityLow,
+                        SeverityColor: colorLow,
+                        SeverityOrder: 4,
+                        Section:     "DANE",
+                })
+        }
         return fixes
+}
+
+func extractFirstMXHost(results map[string]any) string {
+        mx, _ := results["mx_records"].([]any)
+        if len(mx) > 0 {
+                if rec, ok := mx[0].(map[string]any); ok {
+                        if host, ok := rec["host"].(string); ok && host != "" {
+                                return strings.TrimSuffix(host, ".")
+                        }
+                        if host, ok := rec["exchange"].(string); ok && host != "" {
+                                return strings.TrimSuffix(host, ".")
+                        }
+                }
+        }
+        mxAnalysis, _ := results["mx_analysis"].(map[string]any)
+        if mxAnalysis != nil {
+                if hosts, ok := mxAnalysis["mx_hosts"].([]any); ok && len(hosts) > 0 {
+                        if h, ok := hosts[0].(string); ok {
+                                return strings.TrimSuffix(h, ".")
+                        }
+                }
+        }
+        return "mail.yourdomain.com"
 }
 
 func appendBIMIFixes(fixes []fix, ps protocolState, domain string) []fix {
