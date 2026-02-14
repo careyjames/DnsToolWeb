@@ -32,11 +32,11 @@ Traditional DNS security tools treat DNSSEC as the only valid security measure, 
 
 ### Enterprise DNS Providers
 
-Providers like Cloudflare, AWS Route53, Google Cloud DNS, Akamai, Azure, and NS1 offer DDoS protection, anycast networks, and 24/7 security monitoring. A domain on Cloudflare without DNSSEC may be MORE secure than a self-hosted domain with DNSSEC. These are tagged "Enterprise" in the results.
+Major cloud and infrastructure DNS providers offer DDoS protection, anycast networks, and 24/7 security monitoring. A domain on a top-tier provider without DNSSEC may be MORE secure than a self-hosted domain with DNSSEC. These are tagged "Enterprise" in the results.
 
 ### Legacy Providers
 
-Network Solutions, Bluehost, HostGator, and similar legacy providers are explicitly blocklisted to prevent false "Enterprise" tagging.
+Certain legacy DNS providers are explicitly blocklisted to prevent false "Enterprise" tagging.
 
 ### Government Domains
 
@@ -85,92 +85,40 @@ Tests include unit tests, integration tests, golden rules (golden_rules_test.go)
 ## Architecture
 
 ```
-main.py                        # Process trampoline (execs Go binary via os.execvp)
-dns-tool-server                # Compiled Go binary
+main.py                    # Process trampoline (execs Go binary)
+dns-tool-server            # Compiled Go binary
 go-server/
-  cmd/server/
-    main.go                    # Entry point (Gin router, template setup, handlers)
+  cmd/server/main.go       # Entry point
   internal/
-    config/                    # Configuration loading (env vars, defaults)
-    analyzer/                  # DNS analysis engine
-                               #   - orchestrator.go (concurrent lookups, result aggregation)
-                               #   - spf.go, dkim.go, dmarc.go, dnssec.go, etc. (analyzers)
-                               #   - infrastructure.go (enterprise provider detection, golden rules)
-                               #   - posture.go (CVSS-aligned risk scoring)
-                               #   - ai_surface/ (llms.txt detection, prompt injection)
-                               #   - email header analysis, IP investigation
-    handlers/                  # HTTP route handlers
-                               #   - analysis.go (domain analysis, results page)
-                               #   - email_header.go (paste/upload email headers)
-                               #   - investigate.go (IP-to-domain, IP-to-ASN)
-                               #   - history.go (historical analyses)
-                               #   - export.go (JSON export)
-    dnsclient/                 # DNS client with multi-resolver consensus
-                               #   - Cloudflare, Google, Quad9, OpenDNS
-                               #   - DoH fallback for censorship resistance
-    db/                        # PostgreSQL database layer (pgx v5, sqlc)
-    middleware/                # CSRF, rate limiting, SSRF hardening
-    telemetry/                 # Caching (Redis-ready), metrics collection
-    models/                    # Data structures
-  templates/                   # Go html/template server-rendered pages
-  static/                      # CSS (Bootstrap dark theme), JS, assets
+    analyzer/              # DNS analysis engine
+    handlers/              # HTTP route handlers
+    dnsclient/             # Multi-resolver DNS client
+    db/                    # PostgreSQL (pgx v5, sqlc)
+    middleware/            # Security middleware
+    telemetry/             # Caching, metrics
+  templates/               # Server-rendered HTML
+  static/                  # CSS, JS, assets
 ```
 
 ## Key Features
 
 ### Email Security Analysis
-
-- **SPF**: Record validity, lookup count, permissiveness, redirect= chain handling with loop detection
-- **DKIM**: Common selectors, key strength, signature verification
-- **DMARC**: Policy (none/quarantine/reject), alignment, external reporting authorization (DMARC ARF delegation)
-- **MTA-STS**: Policy mode, MX host validation
-- **TLS-RPT**: Reporting URI configuration
-- **BIMI**: Logo URL, VMC certificate validation
-- **Email Header Analyzer**: Paste or upload email headers for SPF/DKIM/DMARC verification, delivery route tracing, alignment checking, spoofing detection, base64/QP body decoding
+SPF, DKIM, DMARC, MTA-STS, TLS-RPT, BIMI — RFC-compliant parsing and validation for all major email authentication protocols. Includes an Email Header Analyzer for pasting or uploading raw headers to verify authentication results and trace delivery routes.
 
 ### DNS Security
+DNSSEC chain-of-trust verification, CAA certificate authority restrictions, DANE/TLSA certificate pinning, NS delegation consistency.
 
-- **DNSSEC**: DS/DNSKEY presence, validation chain integrity
-- **CAA**: Certificate authority restrictions
-- **DANE/TLSA**: TLS certificate pinning records
-- **NS Delegation**: Authoritative nameserver consistency
+### Infrastructure Detection
+Automatic enterprise DNS provider recognition, government domain tier classification, edge/CDN detection, SMTP transport validation.
 
-### Infrastructure & Provider Detection
-
-- **Enterprise DNS**: Automatic detection of Cloudflare, AWS Route53, Google Cloud DNS, Akamai, Azure, NS1, and others with golden rule test coverage
-- **Legacy Provider Blocklist**: Explicitly prevents false "Enterprise" tagging
-- **Government Domains**: Recognition of .gov, .mil TLDs with inherent trust
-- **Self-Hosted Enterprise**: Detection via multiple matching nameservers
-- **Edge/CDN Detection**: Identifies CDN vs origin servers
-- **HTTPS/SVCB Records**: HTTP/3 and service binding intelligence
-
-### Advanced Analysis
-
-- **AI Surface Scanner**: Detects llms.txt at both `/.well-known/` and root, AI crawler governance signals (robots.txt), CSS-hidden prompt injection artifacts
-- **CT Subdomain Discovery**: Certificate Transparency logs for comprehensive subdomain enumeration (1h cache, append-only)
-- **DNS History Timeline**: SecurityTrails API integration for historical DNS records (24h cache, 50 calls/month limit)
-- **IP Investigation**: IP-to-domain reverse lookups, IP-to-ASN attribution via Team Cymru
-- **OpenPhish Integration**: Phishing URL detection against live feeds
-- **SMTP Transport Validation**: Live SMTP TLS verification with DNS-inferred fallback
-- **SaaS TXT Footprint**: Extraction of SaaS provider indicators
-- **CDS/CDNSKEY Detection**: Automation indicators for DNS delegation signer updates
-- **SMIMEA/OPENPGPKEY**: Email encryption key discovery
-- **security.txt Detection**: RFC 9116 security contact information
+### Intelligence
+AI Surface Scanner, CT subdomain discovery, DNS history timeline (SecurityTrails), IP investigation, phishing detection.
 
 ### Posture Scoring
+CVSS-aligned risk assessment with actionable remediation recommendations.
 
-Scores are aligned with CVSS methodology and categorized as:
-
-- **Action Required**: Critical security gap
-- **Monitoring**: Partial implementation, data collection in progress
-- **Configured**: Best practices implemented
-- **Not Configured**: Feature not in use
-
-### Reporting & Export
-
-- **Print/PDF Executive Report**: Professional print stylesheet with TLP:CLEAR classification, domain banner, colored sections, B&W laser-safe palette, controlled page breaks
-- **JSON Export**: Machine-readable analysis results
-- **Timestamp & Duration**: Every analysis includes creation time and execution duration
+### Reporting
+Executive print/PDF reports with TLP:CLEAR classification. JSON export for programmatic consumption.
 
 ## Rate Limiting & Abuse Prevention
 
@@ -202,25 +150,9 @@ Scores are aligned with CVSS methodology and categorized as:
 
 5. **Dark Theme UI**: Bootstrap dark theme with custom CSS. Eye-friendly, modern, professional appearance.
 
-6. **Middleware Stack**:
-   - **Recovery**: Graceful error handling with version reporting
-   - **Request Context**: CSP nonce generation, CSRF token injection
-   - **Security Headers**: HSTS, X-Content-Type-Options, X-Frame-Options, CSP
-   - **CSRF Protection**: Token validation on POST requests
-   - **Rate Limiting**: In-memory (Redis-ready for multi-worker deployments)
-   - **SSRF Hardening**: Blocks private IP ranges in external requests
+6. **Security Middleware**: CSRF, rate limiting, SSRF hardening, security headers, CSP nonces.
 
-7. **Database**: PostgreSQL via `pgx` v5 for high performance. Queries generated by `sqlc` for type safety and SQL injection prevention.
-
-## External Integrations
-
-- **DNS Resolvers**: Cloudflare DNS, Google Public DNS, Quad9, OpenDNS (for consensus)
-- **IANA RDAP**: Registry data lookups (24h cache due to rate limits)
-- **ip-api.com**: Visitor IP-to-country lookups
-- **Certificate Transparency (crt.sh)**: Subdomain discovery (1h cache)
-- **SecurityTrails**: DNS history timeline (user-provided API key, no server-side storage)
-- **Team Cymru**: DNS-based IP-to-ASN attribution
-- **OpenPhish**: Phishing URL detection
+7. **Database**: PostgreSQL via `pgx` v5. Queries generated by `sqlc` for type safety.
 
 ## Caching Strategy
 

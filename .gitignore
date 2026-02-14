@@ -6,4 +6,9 @@ __pycache__/
 node_modules/
 dns-tool
 dns-tool-server
+dns-tool-server-new
 go-server/server
+replit.md
+docs/legacy/src/
+docs/legacy/tests/
+docs/legacy/migrations/

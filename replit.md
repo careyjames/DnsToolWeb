@@ -55,8 +55,17 @@ Before publishing or after making changes to static assets or Go code, always ve
 6. **Run golden rules tests** — `cd go-server && GIT_DIR=/dev/null go test -run TestGoldenRule ./internal/analyzer/ -v` to verify enterprise detection, legacy blocklist, and email verdicts.
 7. **Restart workflow** — After binary swap, restart the "Start application" workflow.
 
+## Public Repo Safety (Secret Sauce Protection)
+The public GitHub repo (`DnsToolWeb`) must NEVER expose proprietary intelligence:
+- **Never reveal** analyzer detection methods, scoring algorithms, provider database contents, schema keys, or remediation logic in public docs (DOCS.md, FEATURE_INVENTORY.md, README)
+- **Never include** legacy Python source code (dns_analyzer.py, dns_providers.py, etc.) — these are gitignored under docs/legacy/
+- **Public docs should be high-level** — what the tool does, not how it does it internally
+- **Definition of Done** (`DOD.md`) governs every change — see checklist
+- **Never request secrets** — only accept them when the user provides them for development
+- **Never output secrets** in code, logs, docs, or error messages
+
 ## GitHub Repositories
-- **`careyjames/DnsToolWeb`** (Public) — This Replit project. Set as `origin` remote. All web app code pushes here.
+- **`careyjames/DnsToolWeb`** (Public) — This Replit project. Set as `origin` remote. All web app code pushes here. Docs must be sanitized before pushing.
 - **`careyjames/dnstool-intel`** (Private) — "Secret sauce" proprietary intelligence: analyzer logic, scoring, golden rules, remediation, AI surface scanner. Never push to public repos.
 - **`careyjames/dns-tool`** (Public, Legacy) — Original CLI version. Archived/legacy. Do NOT push to this repo — it points users to the web app now.
 - **`careyjames/it-help-tech-site`** (Public) — Main company site (www.it-help.tech). Rust/Zola static site on AWS. Separate project.
