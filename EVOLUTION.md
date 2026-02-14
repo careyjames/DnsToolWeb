@@ -99,3 +99,20 @@ All documentation files verified accurate:
 
 **Repo Sync**:
 - Both LICENSE and LICENSING.md pushed to private repo (dnstool-intel) and verified byte-identical
+
+### Session continuation: February 14, 2026 — Subdomain Discovery Enhancement
+
+**Root Cause**: Domains using wildcard TLS certificates (like it-help.tech with `*.it-help.tech`) showed "0 subdomains" because CT logs only had wildcard entries which got normalized to the base domain and filtered out. The subdomain discovery relied solely on CT logs.
+
+**Fix — Three-Layer Discovery**:
+1. **Wildcard cert detection**: Scans CT entries for `*.domain` patterns, reports them with active/expired status and shows info banner in UI
+2. **DNS probing**: Probes ~90 common subdomain names (www, mail, api, admin, etc.) via concurrent DNS lookups with 10-goroutine semaphore cap
+3. **Rich output**: Produces all fields the template expects (name, source, is_current, cert_count, first_seen, issuers, cname_target, wildcard_certs) — template already had full UI built
+
+**Date parsing robustness**: Added `parseCertDate()` that handles multiple formats (ISO 8601, date-only, datetime) to prevent silent failures from unexpected crt.sh response formats.
+
+**New Golden Rule Tests** (27 total, 25 previous + 2 new):
+- `TestGoldenRuleWildcardCTDetection` — wildcard-only CT entries produce 0 explicit subdomains but trigger wildcard flag
+- `TestGoldenRuleWildcardNotFalsePositive` — explicit subdomain entries don't falsely trigger wildcard detection
+
+**Result**: it-help.tech now shows www.it-help.tech (found via DNS probing with CNAME to CloudFront). When crt.sh is available, wildcard banner shows too.

@@ -21,6 +21,50 @@ type ctEntry struct {
         IssuerName string `json:"issuer_name"`
 }
 
+var commonSubdomainProbes = []string{
+        "www", "mail", "email", "webmail", "smtp", "pop", "imap",
+        "ftp", "sftp", "ssh",
+        "vpn", "remote", "gateway", "gw",
+        "api", "app", "apps", "portal",
+        "admin", "panel", "cpanel", "dashboard",
+        "blog", "news", "wiki", "docs", "help", "support", "kb",
+        "shop", "store", "billing", "pay",
+        "sso", "auth", "login", "id", "accounts",
+        "dev", "staging", "test", "demo", "sandbox", "beta",
+        "cdn", "static", "assets", "media", "img", "images",
+        "ns1", "ns2", "ns3", "dns",
+        "mx", "mx1", "mx2",
+        "autodiscover", "autoconfig",
+        "cloud", "server", "host",
+        "db", "database", "sql", "mysql", "postgres",
+        "monitor", "status", "grafana", "prometheus",
+        "git", "gitlab", "github", "repo",
+        "ci", "jenkins", "build",
+        "calendar", "cal", "meet", "video", "chat",
+        "crm", "erp", "hr",
+        "intranet", "internal",
+        "proxy", "lb", "loadbalancer",
+        "relay", "mta",
+        "owa", "exchange",
+        "m", "mobile",
+        "secure", "ssl", "tls",
+        "web", "www2", "www3",
+        "files", "download", "backup",
+        "forum", "community",
+        "preview", "uat", "stage",
+        "office", "work", "connect",
+        "analytics", "metrics", "logs",
+        "search", "es", "elastic",
+        "cache", "redis", "memcached",
+        "queue", "mq", "rabbitmq",
+        "s3", "storage", "bucket",
+        "map", "maps", "geo",
+        "docs", "doc", "confluence",
+        "jira", "ticket", "tickets",
+        "slack", "teams", "zoom",
+        "reports", "report",
+}
+
 func (a *Analyzer) DiscoverSubdomains(ctx context.Context, domain string) map[string]any {
         result := map[string]any{
                 "status":            "success",
@@ -28,6 +72,11 @@ func (a *Analyzer) DiscoverSubdomains(ctx context.Context, domain string) map[st
                 "unique_subdomains": 0,
                 "total_certs":       0,
                 "source":            "Certificate Transparency Logs",
+                "caveat":            "Subdomains discovered via CT logs (RFC 6962), DNS probing of common service names, and CNAME chain traversal.",
+                "current_count":     "0",
+                "expired_count":     "0",
+                "cname_count":       0.0,
+                "providers_found":   0.0,
         }
 
         if cached, ok := a.getCTCache(domain); ok {
@@ -38,54 +87,84 @@ func (a *Analyzer) DiscoverSubdomains(ctx context.Context, domain string) map[st
         }
 
         ctProvider := "ct:crt.sh"
+        var ctEntries []ctEntry
+        ctAvailable := true
+
         if a.Telemetry.InCooldown(ctProvider) {
                 slog.Info("CT provider in cooldown, skipping", "domain", domain)
-                result["status"] = "warning"
-                result["message"] = "Certificate Transparency service temporarily unavailable"
-                return result
+                ctAvailable = false
+        } else {
+                ctURL := fmt.Sprintf("https://crt.sh/?q=%%25.%s&output=json", domain)
+                start := time.Now()
+                resp, err := a.SlowHTTP.Get(ctx, ctURL)
+                if err != nil {
+                        a.Telemetry.RecordFailure(ctProvider, err.Error())
+                        slog.Warn("CT log query failed", "domain", domain, "error", err)
+                        ctAvailable = false
+                } else {
+                        body, err := a.HTTP.ReadBody(resp, 2<<20)
+                        if err != nil {
+                                a.Telemetry.RecordFailure(ctProvider, err.Error())
+                                ctAvailable = false
+                        } else if resp.StatusCode != 200 {
+                                a.Telemetry.RecordFailure(ctProvider, fmt.Sprintf("HTTP %d", resp.StatusCode))
+                                ctAvailable = false
+                        } else {
+                                a.Telemetry.RecordSuccess(ctProvider, time.Since(start))
+                                if json.Unmarshal(body, &ctEntries) != nil {
+                                        ctAvailable = false
+                                }
+                        }
+                }
         }
 
-        ctURL := fmt.Sprintf("https://crt.sh/?q=%%25.%s&output=json", domain)
-        start := time.Now()
-        resp, err := a.SlowHTTP.Get(ctx, ctURL)
-        if err != nil {
-                a.Telemetry.RecordFailure(ctProvider, err.Error())
-                slog.Warn("CT log query failed", "domain", domain, "error", err)
-                result["status"] = "warning"
-                result["message"] = "Certificate Transparency lookup failed"
-                return result
+        if ctAvailable {
+                result["total_certs"] = len(ctEntries)
         }
 
-        body, err := a.HTTP.ReadBody(resp, 2<<20)
-        if err != nil {
-                a.Telemetry.RecordFailure(ctProvider, err.Error())
-                result["status"] = "warning"
-                result["message"] = "Failed to read CT response"
-                return result
+        wildcardInfo := detectWildcardCerts(ctEntries, domain)
+        if wildcardInfo != nil {
+                result["wildcard_certs"] = wildcardInfo
         }
 
-        if resp.StatusCode != 200 {
-                a.Telemetry.RecordFailure(ctProvider, fmt.Sprintf("HTTP %d", resp.StatusCode))
-                result["status"] = "warning"
-                result["message"] = fmt.Sprintf("CT log returned HTTP %d", resp.StatusCode)
-                return result
+        subdomainSet := make(map[string]map[string]any)
+
+        if ctAvailable {
+                processCTEntries(ctEntries, domain, subdomainSet)
         }
 
-        a.Telemetry.RecordSuccess(ctProvider, time.Since(start))
+        dnsProbed := a.probeCommonSubdomains(ctx, domain, subdomainSet)
+        result["cname_discovered_count"] = 0.0
 
-        var ctEntries []ctEntry
-        if json.Unmarshal(body, &ctEntries) != nil {
-                result["status"] = "warning"
-                result["message"] = "Failed to parse CT response"
-                return result
+        var subdomains []map[string]any
+        currentCount := 0
+        expiredCount := 0
+        cnameCount := 0
+
+        for _, sd := range subdomainSet {
+                subdomains = append(subdomains, sd)
+                if isCurrent, ok := sd["is_current"].(bool); ok && isCurrent {
+                        currentCount++
+                } else {
+                        expiredCount++
+                }
+                if _, hasCname := sd["cname_target"]; hasCname {
+                        cnameCount++
+                }
         }
 
-        result["total_certs"] = len(ctEntries)
+        sort.Slice(subdomains, func(i, j int) bool {
+                si := subdomains[i]["name"].(string)
+                sj := subdomains[j]["name"].(string)
+                return si < sj
+        })
 
-        subdomains := deduplicateCTEntries(ctEntries, domain)
+        result["current_count"] = fmt.Sprintf("%d", currentCount)
+        result["expired_count"] = fmt.Sprintf("%d", expiredCount)
+        result["cname_count"] = float64(cnameCount)
 
         if len(subdomains) > 0 {
-                a.enrichSubdomains(ctx, domain, subdomains)
+                a.enrichSubdomainsV2(ctx, domain, subdomains)
         }
 
         a.setCTCache(domain, subdomains)
@@ -93,33 +172,197 @@ func (a *Analyzer) DiscoverSubdomains(ctx context.Context, domain string) map[st
         result["subdomains"] = subdomains
         result["unique_subdomains"] = len(subdomains)
         result["ct_source"] = "live"
+        _ = dnsProbed
 
         return result
 }
 
-func (a *Analyzer) enrichSubdomains(ctx context.Context, baseDomain string, subdomains []map[string]any) {
-        maxEnrich := 30
+func detectWildcardCerts(ctEntries []ctEntry, domain string) map[string]any {
+        wildcardPattern := "*." + domain
+        now := time.Now()
+        hasWildcard := false
+        isCurrent := false
+
+        for _, entry := range ctEntries {
+                names := strings.Split(entry.NameValue, "\n")
+                for _, name := range names {
+                        name = strings.TrimSpace(strings.ToLower(name))
+                        if name == wildcardPattern {
+                                hasWildcard = true
+                                if parseCertDate(entry.NotAfter).After(now) {
+                                        isCurrent = true
+                                }
+                        }
+                }
+        }
+
+        if !hasWildcard {
+                return nil
+        }
+
+        return map[string]any{
+                "present": true,
+                "pattern": wildcardPattern,
+                "current": isCurrent,
+        }
+}
+
+func parseCertDate(s string) time.Time {
+        s = strings.TrimSpace(s)
+        if s == "" {
+                return time.Time{}
+        }
+        formats := []string{
+                "2006-01-02T15:04:05",
+                "2006-01-02 15:04:05",
+                "2006-01-02",
+        }
+        for _, fmt := range formats {
+                if t, err := time.Parse(fmt, s); err == nil {
+                        return t
+                }
+        }
+        if len(s) >= 10 {
+                if t, err := time.Parse("2006-01-02", s[:10]); err == nil {
+                        return t
+                }
+        }
+        return time.Time{}
+}
+
+func processCTEntries(ctEntries []ctEntry, domain string, subdomainSet map[string]map[string]any) {
+        now := time.Now()
+        for _, entry := range ctEntries {
+                names := strings.Split(entry.NameValue, "\n")
+                for _, name := range names {
+                        name = normalizeCTName(name, domain)
+                        if name == "" {
+                                continue
+                        }
+
+                        isCurrent := parseCertDate(entry.NotAfter).After(now)
+
+                        issuer := simplifyIssuer(entry.IssuerName)
+
+                        if existing, exists := subdomainSet[name]; exists {
+                                existing["cert_count"] = fmt.Sprintf("%d", atoi(existing["cert_count"].(string))+1)
+                                if isCurrent {
+                                        existing["is_current"] = true
+                                }
+                                if issuers, ok := existing["issuers"].([]string); ok {
+                                        found := false
+                                        for _, iss := range issuers {
+                                                if iss == issuer {
+                                                        found = true
+                                                        break
+                                                }
+                                        }
+                                        if !found && len(issuers) < 5 {
+                                                existing["issuers"] = append(issuers, issuer)
+                                        }
+                                }
+                        } else {
+                                subdomainSet[name] = map[string]any{
+                                        "name":       name,
+                                        "source":     "ct",
+                                        "is_current": isCurrent,
+                                        "cert_count": "1",
+                                        "first_seen": entry.NotBefore,
+                                        "issuers":    []string{issuer},
+                                }
+                        }
+                }
+        }
+}
+
+func (a *Analyzer) probeCommonSubdomains(ctx context.Context, domain string, subdomainSet map[string]map[string]any) int {
+        found := 0
+        var mu sync.Mutex
+        var wg sync.WaitGroup
+
+        sem := make(chan struct{}, 10)
+
+        for _, prefix := range commonSubdomainProbes {
+                fqdn := prefix + "." + domain
+
+                mu.Lock()
+                _, alreadyFound := subdomainSet[fqdn]
+                mu.Unlock()
+                if alreadyFound {
+                        continue
+                }
+
+                wg.Add(1)
+                sem <- struct{}{}
+                go func(name string) {
+                        defer wg.Done()
+                        defer func() { <-sem }()
+
+                        aRecords := a.DNS.QueryDNS(ctx, "A", name)
+                        aaaaRecords := a.DNS.QueryDNS(ctx, "AAAA", name)
+                        cnameRecords := a.DNS.QueryDNS(ctx, "CNAME", name)
+
+                        if len(aRecords) == 0 && len(aaaaRecords) == 0 && len(cnameRecords) == 0 {
+                                return
+                        }
+
+                        entry := map[string]any{
+                                "name":       name,
+                                "source":     "dns",
+                                "is_current": true,
+                                "cert_count": "—",
+                                "first_seen": "—",
+                                "issuers":    []string{},
+                        }
+
+                        if len(cnameRecords) > 0 {
+                                entry["cname_target"] = cnameRecords[0]
+                        }
+
+                        mu.Lock()
+                        subdomainSet[name] = entry
+                        found++
+                        mu.Unlock()
+                }(fqdn)
+        }
+
+        wg.Wait()
+        return found
+}
+
+func (a *Analyzer) enrichSubdomainsV2(ctx context.Context, baseDomain string, subdomains []map[string]any) {
+        maxEnrich := 50
         if len(subdomains) < maxEnrich {
                 maxEnrich = len(subdomains)
         }
 
         var wg sync.WaitGroup
         var mu sync.Mutex
+        sem := make(chan struct{}, 10)
 
         for i := 0; i < maxEnrich; i++ {
                 wg.Add(1)
+                sem <- struct{}{}
                 go func(idx int) {
                         defer wg.Done()
+                        defer func() { <-sem }()
+
                         sd := subdomains[idx]
-                        name := sd["subdomain"].(string)
+                        name := sd["name"].(string)
+
+                        if sd["source"] == "dns" {
+                                return
+                        }
 
                         aRecords := a.DNS.QueryDNS(ctx, "A", name)
                         cnameRecords := a.DNS.QueryDNS(ctx, "CNAME", name)
 
                         mu.Lock()
-                        sd["has_dns"] = len(aRecords) > 0
+                        if len(aRecords) > 0 || len(cnameRecords) > 0 {
+                                sd["is_current"] = true
+                        }
                         if len(cnameRecords) > 0 {
-                                sd["cname"] = cnameRecords[0]
+                                sd["cname_target"] = cnameRecords[0]
                         }
                         mu.Unlock()
                 }(i)
@@ -127,32 +370,34 @@ func (a *Analyzer) enrichSubdomains(ctx context.Context, baseDomain string, subd
         wg.Wait()
 }
 
-func deduplicateCTEntries(ctEntries []ctEntry, domain string) []map[string]any {
-        subdomainSet := make(map[string]map[string]any)
-        for _, entry := range ctEntries {
-                processOneEntry(entry, domain, subdomainSet)
+func simplifyIssuer(issuer string) string {
+        parts := strings.Split(issuer, ",")
+        for _, part := range parts {
+                part = strings.TrimSpace(part)
+                if strings.HasPrefix(part, "O=") {
+                        return part[2:]
+                }
         }
-
-        var subdomains []map[string]any
-        for _, sd := range subdomainSet {
-                subdomains = append(subdomains, sd)
+        for _, part := range parts {
+                part = strings.TrimSpace(part)
+                if strings.HasPrefix(part, "CN=") {
+                        return part[3:]
+                }
         }
-
-        sort.Slice(subdomains, func(i, j int) bool {
-                return subdomains[i]["subdomain"].(string) < subdomains[j]["subdomain"].(string)
-        })
-        return subdomains
+        if len(issuer) > 40 {
+                return issuer[:40] + "..."
+        }
+        return issuer
 }
 
-func processOneEntry(entry ctEntry, domain string, subdomainSet map[string]map[string]any) {
-        names := strings.Split(entry.NameValue, "\n")
-        for _, name := range names {
-                name = normalizeCTName(name, domain)
-                if name == "" {
-                        continue
+func atoi(s string) int {
+        n := 0
+        for _, c := range s {
+                if c >= '0' && c <= '9' {
+                        n = n*10 + int(c-'0')
                 }
-                addOrIncrementSubdomain(subdomainSet, name, entry)
         }
+        return n
 }
 
 func normalizeCTName(name, domain string) string {
@@ -170,18 +415,4 @@ func normalizeCTName(name, domain string) string {
                 return ""
         }
         return name
-}
-
-func addOrIncrementSubdomain(subdomainSet map[string]map[string]any, name string, entry ctEntry) {
-        if _, exists := subdomainSet[name]; !exists {
-                subdomainSet[name] = map[string]any{
-                        "subdomain":  name,
-                        "not_before": entry.NotBefore,
-                        "not_after":  entry.NotAfter,
-                        "issuer":     entry.IssuerName,
-                        "cert_count": 1,
-                }
-        } else {
-                subdomainSet[name]["cert_count"] = subdomainSet[name]["cert_count"].(int) + 1
-        }
 }

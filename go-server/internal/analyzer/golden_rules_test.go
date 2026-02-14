@@ -954,6 +954,57 @@ func TestGoldenRuleStubBoundaryFunctionsRegistered(t *testing.T) {
         }
 }
 
+func TestGoldenRuleWildcardCTDetection(t *testing.T) {
+        entries := []ctEntry{
+                {NameValue: "*.example.com\nexample.com", NotBefore: "2025-01-01", NotAfter: "2027-01-01", IssuerName: "C=US, O=Let's Encrypt, CN=E6"},
+                {NameValue: "*.example.com\nexample.com", NotBefore: "2024-06-01", NotAfter: "2024-12-01", IssuerName: "C=US, O=Google Trust Services, CN=AE1"},
+        }
+
+        wc := detectWildcardCerts(entries, "example.com")
+        if wc == nil {
+                t.Fatal("wildcard certs must be detected when CT entries contain *.domain")
+        }
+        if !wc["present"].(bool) {
+                t.Error("wildcard_certs.present must be true")
+        }
+        if wc["pattern"].(string) != "*.example.com" {
+                t.Errorf("wildcard pattern must be *.example.com, got %s", wc["pattern"])
+        }
+        if !wc["current"].(bool) {
+                t.Error("wildcard_certs.current must be true when at least one cert is not expired")
+        }
+
+        subdomainSet := make(map[string]map[string]any)
+        processCTEntries(entries, "example.com", subdomainSet)
+        if len(subdomainSet) != 0 {
+                t.Errorf("wildcard-only CT entries must produce 0 explicit subdomains, got %d", len(subdomainSet))
+        }
+}
+
+func TestGoldenRuleWildcardNotFalsePositive(t *testing.T) {
+        entries := []ctEntry{
+                {NameValue: "mail.example.com", NotBefore: "2025-01-01", NotAfter: "2026-01-01", IssuerName: "CN=E6"},
+                {NameValue: "www.example.com", NotBefore: "2025-01-01", NotAfter: "2026-01-01", IssuerName: "CN=E6"},
+        }
+
+        wc := detectWildcardCerts(entries, "example.com")
+        if wc != nil {
+                t.Error("wildcard detection must not fire when no wildcard entries exist")
+        }
+
+        subdomainSet := make(map[string]map[string]any)
+        processCTEntries(entries, "example.com", subdomainSet)
+        if len(subdomainSet) != 2 {
+                t.Errorf("expected 2 explicit subdomains, got %d", len(subdomainSet))
+        }
+        if _, ok := subdomainSet["mail.example.com"]; !ok {
+                t.Error("mail.example.com must be in subdomainSet")
+        }
+        if _, ok := subdomainSet["www.example.com"]; !ok {
+                t.Error("www.example.com must be in subdomainSet")
+        }
+}
+
 func TestGoldenRuleEnterpriseProvidersMapNotEmpty(t *testing.T) {
         if len(enterpriseProviders) == 0 {
                 t.Fatal("enterpriseProviders map must not be empty — enterprise detection will silently fail")
