@@ -95,34 +95,17 @@ type missingStepDef struct {
 }
 
 func providerSupportsDANE(provider string) bool {
-        lower := strings.ToLower(provider)
-        for _, hosted := range []string{
-                "google", "microsoft", "office 365", "outlook",
-                "yahoo", "zoho", "fastmail", "proofpoint",
-                "mimecast", "barracuda", "rackspace",
-                "amazon ses", "sendgrid", "mailgun", "postmark",
-                "sparkpost", "mailchimp", "constant contact",
-        } {
-                if strings.Contains(lower, hosted) {
-                        return false
-                }
-        }
-        return true
-}
-
-func providerSupportsBIMI(provider string) bool {
-        lower := strings.ToLower(provider)
-        for _, supported := range []string{
-                "google", "yahoo", "fastmail", "apple",
-        } {
-                if strings.Contains(lower, supported) {
-                        return true
-                }
-        }
         if provider == "" {
                 return true
         }
-        return false
+        return !isHostedEmailProvider(provider)
+}
+
+func providerSupportsBIMI(provider string) bool {
+        if provider == "" {
+                return true
+        }
+        return isBIMICapableProvider(provider)
 }
 
 func (a *Analyzer) GenerateRemediation(results map[string]any) map[string]any {
@@ -627,21 +610,6 @@ func appendBIMIFixes(fixes []fix, ps protocolState, domain string) []fix {
                 })
         }
         return fixes
-}
-
-func isHostedMXProvider(results map[string]any) bool {
-        basic, _ := results["basic_records"].(map[string]any)
-        if basic == nil {
-                return false
-        }
-        mx, _ := basic["MX"].([]string)
-        for _, record := range mx {
-                lower := strings.ToLower(record)
-                if strings.Contains(lower, "google") || strings.Contains(lower, "outlook") || strings.Contains(lower, "microsoft") || strings.Contains(lower, "protonmail") || strings.Contains(lower, "zoho") {
-                        return true
-                }
-        }
-        return false
 }
 
 func isDANEDeployable(results map[string]any) bool {

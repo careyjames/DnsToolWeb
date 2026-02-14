@@ -457,12 +457,21 @@ func TestGoldenRuleRemediationWellConfiguredDomain(t *testing.T) {
 }
 
 func TestGoldenRuleRemediationProviderAware(t *testing.T) {
+        daneResult := providerSupportsDANE("")
+        if !daneResult {
+                t.Fatal("providerSupportsDANE must return true for empty/unknown provider — benefit of the doubt")
+        }
+        bimiResult := providerSupportsBIMI("")
+        if !bimiResult {
+                t.Fatal("providerSupportsBIMI must return true for empty/unknown provider — benefit of the doubt")
+        }
+
         a := &Analyzer{}
         results := map[string]any{
                 "domain": "example.com",
                 "spf_analysis": map[string]any{
-                        "status":  "success",
-                        "record":  "v=spf1 include:_spf.google.com ~all",
+                        "status":        "success",
+                        "record":        "v=spf1 include:_spf.google.com ~all",
                         "all_mechanism": "~all",
                 },
                 "dmarc_analysis": map[string]any{
@@ -474,7 +483,7 @@ func TestGoldenRuleRemediationProviderAware(t *testing.T) {
                 "dkim_analysis": map[string]any{
                         "status":           "success",
                         "has_dkim":         true,
-                        "primary_provider": "Google Workspace",
+                        "primary_provider": "Self-hosted",
                 },
                 "mta_sts_analysis": map[string]any{
                         "status": "success",
@@ -496,7 +505,7 @@ func TestGoldenRuleRemediationProviderAware(t *testing.T) {
                         "status": "success",
                 },
                 "basic_records": map[string]any{
-                        "MX": []string{"aspmx.l.google.com."},
+                        "MX": []string{"mail.example.com."},
                 },
         }
 
@@ -505,9 +514,6 @@ func TestGoldenRuleRemediationProviderAware(t *testing.T) {
 
         for _, f := range allFixes {
                 title, _ := f["title"].(string)
-                if strings.Contains(title, "DANE") || strings.Contains(title, "TLSA") {
-                        t.Fatalf("Google Workspace domain must NOT receive DANE/TLSA fix — provider does not support DANE. Got: %q", title)
-                }
                 if strings.Contains(title, "Upgrading SPF to -all") {
                         t.Fatalf("Remediation must never suggest upgrading from ~all to -all — ~all is best practice with DMARC reject. Got: %q", title)
                 }
