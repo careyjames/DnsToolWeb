@@ -81,15 +81,16 @@
                             </div>
                             <details class="mb-3">
                                 <summary class="text-muted small" style="cursor:pointer;">
-                                    <i class="fas fa-key me-1"></i>SecurityTrails API Key <span class="text-muted">(optional)</span>
+                                    <i class="fas fa-key me-1"></i>API Keys <span class="text-muted">(optional &mdash; enrich your results)</span>
                                 </summary>
                                 <div class="mt-2">
-                                    <div class="input-group input-group-sm">
+                                    <label class="text-muted small d-block mb-1"><i class="fas fa-building me-1"></i>SecurityTrails</label>
+                                    <div class="input-group input-group-sm mb-1">
                                         <input type="password"
                                                class="form-control bg-dark text-light border-secondary"
                                                id="securitytrails_key"
                                                name="securitytrails_key"
-                                               placeholder="Enter your SecurityTrails API key"
+                                               placeholder="SecurityTrails API key"
                                                autocomplete="off"
                                                spellcheck="false"
                                                data-lpignore="true"
@@ -97,8 +98,30 @@
                                                aria-label="SecurityTrails API key for IP neighborhood discovery"
                                                style="font-size:0.85em;">
                                     </div>
-                                    <div class="mt-1 text-muted" style="font-size:0.75em;">
-                                        <i class="fas fa-shield-alt me-1"></i>Enables IP neighborhood discovery (other domains on this IP). Your key is sent directly to SecurityTrails and is never stored. <a href="https://securitytrails.com/app/signup" target="_blank" rel="noopener" class="text-info">Get a free API key</a>
+                                    <div class="mb-3 text-muted" style="font-size:0.72em;">
+                                        IP neighborhood discovery. <a href="https://securitytrails.com/app/signup" target="_blank" rel="noopener" class="text-info">Get a free key</a>
+                                    </div>
+
+                                    <label class="text-muted small d-block mb-1"><i class="fas fa-map-marker-alt me-1"></i>IPinfo.io</label>
+                                    <div class="input-group input-group-sm mb-1">
+                                        <input type="password"
+                                               class="form-control bg-dark text-light border-secondary"
+                                               id="ipinfo_token"
+                                               name="ipinfo_token"
+                                               placeholder="IPinfo.io token"
+                                               autocomplete="off"
+                                               spellcheck="false"
+                                               data-lpignore="true"
+                                               data-1p-ignore="true"
+                                               aria-label="IPinfo.io token for geolocation and org data"
+                                               style="font-size:0.85em;">
+                                    </div>
+                                    <div class="mb-1 text-muted" style="font-size:0.72em;">
+                                        City-level geolocation &amp; organization data. <a href="https://ipinfo.io/signup" target="_blank" rel="noopener" class="text-info">Get a free token</a>
+                                    </div>
+
+                                    <div class="mt-2 text-muted" style="font-size:0.72em;">
+                                        <i class="fas fa-shield-alt me-1"></i>Your keys are sent directly to each service and are never stored.
                                     </div>
                                 </div>
                             </details>
@@ -364,6 +387,83 @@
 
 
         <!-- ═══════════════════════════════════════════
+             SECTION 2b: IPinfo.io Enrichment
+             ═══════════════════════════════════════════ -->
+        {{if .IPInfo}}
+        {{$ipinfo := .IPInfo}}
+        <div class="card mb-4">
+            <div class="card-header" style="background: linear-gradient(135deg, rgba(255, 193, 7, 0.12), rgba(255, 193, 7, 0.04)); border-bottom: 1px solid rgba(255, 193, 7, 0.2);">
+                <h5 class="mb-0 d-flex align-items-center justify-content-between flex-wrap">
+                    <span><i class="fas fa-map-marker-alt me-2" style="color: #f0ad4e;"></i>IP Geolocation &amp; Organization</span>
+                    <small class="text-muted">Where is this IP physically located?
+                        <span class="badge bg-dark border border-secondary ms-1">IPinfo.io</span>
+                    </small>
+                </h5>
+            </div>
+            <div class="card-body">
+                <p class="text-muted small mb-3"><i class="fas fa-info-circle me-1"></i>Geolocation and organization data from <a href="https://ipinfo.io/{{.IPAddress}}" target="_blank" rel="noopener" class="text-info">IPinfo.io</a>. Verify: <code>curl ipinfo.io/{{.IPAddress}}</code></p>
+
+                {{$ipCity := index $ipinfo "city"}}
+                {{$ipRegion := index $ipinfo "region"}}
+                {{$ipCountry := index $ipinfo "country"}}
+                {{$ipOrg := index $ipinfo "org"}}
+                {{$ipHostname := index $ipinfo "hostname"}}
+                {{$ipLoc := index $ipinfo "loc"}}
+                {{$ipPostal := index $ipinfo "postal"}}
+                {{$ipTimezone := index $ipinfo "timezone"}}
+                {{$ipAnycast := index $ipinfo "anycast"}}
+
+                <div class="row">
+                    <div class="col-lg-6 mb-3 mb-lg-0">
+                        <p class="text-muted mb-2 fw-semibold"><i class="fas fa-map-pin me-1"></i>Location</p>
+                        <table class="table table-dark table-sm mb-2">
+                            <tbody>
+                                {{if and $ipCity (ne (printf "%v" $ipCity) "")}}
+                                <tr><th class="text-muted" style="width:35%">City</th><td>{{$ipCity}}</td></tr>
+                                {{end}}
+                                {{if and $ipRegion (ne (printf "%v" $ipRegion) "")}}
+                                <tr><th class="text-muted">Region</th><td>{{$ipRegion}}</td></tr>
+                                {{end}}
+                                {{if and $ipCountry (ne (printf "%v" $ipCountry) "")}}
+                                <tr><th class="text-muted">Country</th><td>{{$ipCountry}}</td></tr>
+                                {{end}}
+                                {{if and $ipPostal (ne (printf "%v" $ipPostal) "")}}
+                                <tr><th class="text-muted">Postal</th><td>{{$ipPostal}}</td></tr>
+                                {{end}}
+                                {{if and $ipLoc (ne (printf "%v" $ipLoc) "")}}
+                                <tr><th class="text-muted">Coordinates</th><td><code>{{$ipLoc}}</code></td></tr>
+                                {{end}}
+                                {{if and $ipTimezone (ne (printf "%v" $ipTimezone) "")}}
+                                <tr><th class="text-muted">Timezone</th><td>{{$ipTimezone}}</td></tr>
+                                {{end}}
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="col-lg-6">
+                        <p class="text-muted mb-2 fw-semibold"><i class="fas fa-building me-1"></i>Organization</p>
+                        <table class="table table-dark table-sm mb-2">
+                            <tbody>
+                                {{if and $ipOrg (ne (printf "%v" $ipOrg) "")}}
+                                <tr><th class="text-muted" style="width:35%">Org</th><td>{{$ipOrg}}</td></tr>
+                                {{end}}
+                                {{if and $ipHostname (ne (printf "%v" $ipHostname) "")}}
+                                <tr><th class="text-muted">Hostname</th><td><code>{{$ipHostname}}</code></td></tr>
+                                {{end}}
+                            </tbody>
+                        </table>
+                        {{if $ipAnycast}}
+                        <div class="alert alert-info py-2 mb-0 small">
+                            <i class="fas fa-globe me-2"></i><strong>Anycast IP:</strong> This IP address is announced from multiple locations globally. The physical location shown may not reflect all deployment points.
+                        </div>
+                        {{end}}
+                    </div>
+                </div>
+            </div>
+        </div>
+        {{end}}
+
+
+        <!-- ═══════════════════════════════════════════
              SECTION 3: Domain Relationship
              ═══════════════════════════════════════════ -->
         {{$directRels := toMapSlice (mapGet "direct_relationships" $results)}}
@@ -552,6 +652,20 @@
                 </div>
                 <div class="mt-2 text-muted" style="font-size:0.8em;">
                     <i class="fas fa-key me-1"></i>Add a <a href="https://securitytrails.com/app/signup" target="_blank" rel="noopener" class="text-info">free SecurityTrails API key</a> when investigating to see which domains share this IP address.
+                </div>
+            </div>
+        </div>
+        {{end}}
+
+        {{if not .IPInfo}}
+        <div class="card mb-4 bg-dark bg-opacity-25" style="border: 1px solid rgba(255,255,255,0.1);">
+            <div class="card-body py-3">
+                <div class="d-flex align-items-center flex-wrap gap-2">
+                    <span class="text-muted small"><i class="fas fa-map-marker-alt me-1"></i>IP Geolocation</span>
+                    <span class="text-muted small">&mdash; City-level location and organization details.</span>
+                </div>
+                <div class="mt-2 text-muted" style="font-size:0.8em;">
+                    <i class="fas fa-key me-1"></i>Add a <a href="https://ipinfo.io/signup" target="_blank" rel="noopener" class="text-info">free IPinfo.io token</a> when investigating to see geolocation and organization data for this IP.
                 </div>
             </div>
         </div>

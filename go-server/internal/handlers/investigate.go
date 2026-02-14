@@ -106,6 +106,7 @@ func (h *InvestigateHandler) Investigate(c *gin.Context) {
         }
 
         securityTrailsKey := strings.TrimSpace(c.PostForm("securitytrails_key"))
+        ipInfoToken := strings.TrimSpace(c.PostForm("ipinfo_token"))
 
         results := h.Analyzer.InvestigateIP(c.Request.Context(), asciiDomain, ip)
 
@@ -132,6 +133,26 @@ func (h *InvestigateHandler) Investigate(c *gin.Context) {
                 }
         }
 
+        var ipInfoData map[string]any
+        if ipInfoToken != "" {
+                ipInfo, ipInfoErr := analyzer.FetchIPInfo(c.Request.Context(), ip, ipInfoToken)
+                if ipInfoErr == nil && ipInfo != nil {
+                        ipInfoData = map[string]any{
+                                "ip":       ipInfo.IP,
+                                "hostname": ipInfo.Hostname,
+                                "city":     ipInfo.City,
+                                "region":   ipInfo.Region,
+                                "country":  ipInfo.Country,
+                                "loc":      ipInfo.Loc,
+                                "org":      ipInfo.Org,
+                                "postal":   ipInfo.Postal,
+                                "timezone": ipInfo.Timezone,
+                                "anycast":  ipInfo.Anycast,
+                                "bogon":    ipInfo.Bogon,
+                        }
+                }
+        }
+
         c.HTML(http.StatusOK, investigateTemplate, gin.H{
                 "AppVersion":  h.Config.AppVersion,
                 "CspNonce":    nonce,
@@ -143,5 +164,6 @@ func (h *InvestigateHandler) Investigate(c *gin.Context) {
                 "AsciiDomain": asciiDomain,
                 "IPAddress":   ip,
                 "Results":     results,
+                "IPInfo":      ipInfoData,
         })
 }
