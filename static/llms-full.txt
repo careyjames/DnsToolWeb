@@ -166,7 +166,7 @@ Compares resolver and authoritative records for A, AAAA, MX, TXT, NS, CAA, SOA, 
 - Registry information
 
 ### 8. Subdomain Discovery
-- Dual-method approach: Certificate Transparency logs (crt.sh, RFC 6962) + DNS probing of ~290 common service names
+- Three-layer approach: Certificate Transparency logs (crt.sh, RFC 6962) + wildcard certificate detection + high-speed UDP DNS probing of ~140 common service names
 - Source attribution: "CT Log" vs "DNS" for each subdomain
 - Wildcard certificate detection and DNS wildcard filtering
 - Subdomain-aware context: detects when the analyzed domain is itself a subdomain and offers a link to scan the registered domain
@@ -192,6 +192,14 @@ Complete transparency page documenting every intelligence source used by DNS Too
 ### IP Investigation
 URL: `https://dnstool.it-help.tech/investigate`
 Standalone investigative workflow for determining IP-to-domain relationships. Enter any IP address and a domain to discover the relationship: Direct Asset, Email Provider, CDN/Edge, DNS Provider, SPF-Authorized Sender, or CT Subdomain Match. Includes PTR/FCrDNS validation and ASN attribution via Team Cymru. SSRF-safe input blocking prevents abuse.
+
+### Email Header Analyzer
+URL: `https://dnstool.it-help.tech/email-header`
+Paste or upload email headers (.eml files) for instant SPF/DKIM/DMARC authentication verification, delivery route tracing, spoofing detection, and phishing pattern scanning. Includes critical thinking prompts to help users evaluate suspicious emails.
+
+### What's New (Changelog)
+URL: `https://dnstool.it-help.tech/changelog`
+Complete changelog of all improvements to analysis accuracy, transparency, and intelligence depth. Organized by category with date stamps.
 
 ### Analysis History
 URL: `https://dnstool.it-help.tech/history`

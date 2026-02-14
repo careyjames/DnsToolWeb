@@ -37,6 +37,14 @@ func GetRecentChangelog(n int) []ChangelogEntry {
 func GetChangelog() []ChangelogEntry {
         return []ChangelogEntry{
                 {
+                        Version:     "26.14.7",
+                        Date:        dateFeb14,
+                        Category:    "Performance",
+                        Title:       "High-Speed Subdomain Discovery",
+                        Description: "Subdomain probing now uses lightweight UDP DNS queries instead of DNS-over-HTTPS, with independent timeouts and 20-goroutine concurrency. Discovery completes in ~1 second instead of timing out. All subdomains found reliably.",
+                        Icon:        "fas fa-tachometer-alt",
+                },
+                {
                         Version:     "26.14.6",
                         Date:        dateFeb14,
                         Category:    "Transparency",

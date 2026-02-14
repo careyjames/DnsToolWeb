@@ -125,3 +125,26 @@ All documentation files verified accurate:
 - `TestGoldenRuleWildcardNotFalsePositive` — explicit subdomain entries don't falsely trigger wildcard detection
 
 **Result**: Subdomain discovery uses three free intelligence layers (CT + wildcard + DNS probing). No paid API calls. it-help.tech now shows www.it-help.tech via DNS probing with CNAME to CloudFront.
+
+### Session continuation: February 14, 2026 — Subdomain Discovery Performance Optimization
+
+**Root Cause**: The DNS probing layer (~140 common subdomain names) was timing out because:
+1. Each probe used DoH (DNS-over-HTTPS to dns.google) — full TLS/HTTPS connection per query
+2. Only 10 concurrent goroutines meant 14+ batches of serial HTTPS calls
+3. The shared 60-second analysis context was being consumed before all probes completed
+4. Result: `ct_subdomains` task hit 60+ seconds (timeout), only 2 of 5 known subdomains found
+
+**Fix — High-Speed UDP DNS Probing**:
+1. **New `ProbeExists()` method** in DNS client: Uses lightweight UDP queries (single packet) to 8.8.8.8 with fallback to 1.1.1.1, instead of expensive DoH HTTPS connections
+2. **Independent context**: `probeCommonSubdomains` gets its own 30-second context, independent of the shared analysis context
+3. **Higher concurrency**: Bumped from 10 to 20 goroutines for both probing and enrichment
+4. **Single query per name**: Only queries A record and extracts CNAME from the response (instead of 3 separate A/AAAA/CNAME queries)
+5. **Enrichment also independent**: `enrichSubdomainsV2` gets its own 30-second context with 20-goroutine concurrency
+
+**Performance Result**:
+- **Before**: 60+ seconds (timeout), incomplete results, only 2/5 subdomains
+- **After**: 1.2 seconds, all 5 known it-help.tech subdomains found (dnstool, schedule, screen, server, www) plus 4 DNS-related names (dmarc, sts, tls, u)
+
+**Design Lesson**: DoH is orders of magnitude more expensive than UDP DNS for bulk operations. A single UDP DNS query is one packet sent and one received (~100 bytes each). A single DoH query requires TCP handshake + TLS handshake + HTTP/2 framing + HTTPS overhead — hundreds of packets. For bulk probing 140+ names, the difference is catastrophic.
+
+**Golden Rule Tests**: 27 total, all pass. No new golden rule tests added (performance optimization, not behavior change).

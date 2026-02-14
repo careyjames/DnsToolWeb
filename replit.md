@@ -42,6 +42,25 @@ The DNS Tool is a web-based intelligence platform for comprehensive, RFC-complia
 - `TestGoldenRuleHostedProviderNoDANE`
 - `TestGoldenRuleBIMIRecommendedRegardlessOfProvider`
 
+### February 14, 2026 — Subdomain Discovery Enhancement + Performance Optimization
+
+**Three-Layer Free Subdomain Discovery**:
+- CT log scanning (crt.sh) for explicit subdomain names
+- Wildcard certificate detection (`*.domain` patterns)
+- DNS probing of ~140 common subdomain names via concurrent lookups
+- SecurityTrails NOT used in automatic pipeline (50-req/month limit, user-key-only)
+
+**Performance Optimization**:
+- Replaced DoH (DNS-over-HTTPS) probing with lightweight UDP DNS queries (`ProbeExists()` method)
+- Independent 30-second context for subdomain tasks (not sharing the 60-second analysis context)
+- Concurrency bumped from 10 to 20 goroutines for probing and enrichment
+- Single A query per name with CNAME extraction from response
+- Result: ct_subdomains task dropped from 60+ seconds (timeout) to ~1.2 seconds
+
+**Golden Rule Tests**: 27 total (25 previous + 2 wildcard tests). All pass.
+
+**Version**: 26.14.23
+
 ## System Architecture
 
 ### Core System
@@ -49,7 +68,7 @@ The application is built in Go using the Gin framework, emphasizing performance 
 
 ### Backend
 - **Technology Stack**: Go with Gin, `pgx` v5 for PostgreSQL, `sqlc` for type-safe queries, and `miekg/dns` for DNS queries.
-- **Key Features**: Multi-resolver DNS client (TTL=0 for live queries), DoH fallback, CT subdomain discovery, posture scoring with CVSS-aligned risk levels, concurrent orchestrator, SMTP transport verification, CSRF middleware, rate limiting, SSRF hardening, telemetry, confidence labeling, "Verify It Yourself" command equivalence, DMARC external reporting authorization, dangling DNS/subdomain takeover detection, HTTPS/SVCB intelligence, IP-to-ASN attribution, Edge/CDN vs origin detection, SaaS TXT footprint extraction, CDS/CDNSKEY automation, SMIMEA/OPENPGPKEY detection, `security.txt` detection, AI Surface Scanner (detects `llms.txt`, AI crawler governance, prefilled prompts, CSS-hidden prompt injection), SPF redirect chain handling with loop detection, DNS history timeline via SecurityTrails API, IP Investigation, OpenPhish integration, and Email Header Analyzer for comprehensive email security analysis.
+- **Key Features**: Multi-resolver DNS client (TTL=0 for live queries), DoH fallback, UDP fast-probe for subdomain discovery, three-layer CT+wildcard+DNS subdomain discovery, posture scoring with CVSS-aligned risk levels, concurrent orchestrator, SMTP transport verification, CSRF middleware, rate limiting, SSRF hardening, telemetry, confidence labeling, "Verify It Yourself" command equivalence, DMARC external reporting authorization, dangling DNS/subdomain takeover detection, HTTPS/SVCB intelligence, IP-to-ASN attribution, Edge/CDN vs origin detection, SaaS TXT footprint extraction, CDS/CDNSKEY automation, SMIMEA/OPENPGPKEY detection, `security.txt` detection, AI Surface Scanner (detects `llms.txt`, AI crawler governance, prefilled prompts, CSS-hidden prompt injection), SPF redirect chain handling with loop detection, DNS history timeline via SecurityTrails API, IP Investigation, OpenPhish integration, and Email Header Analyzer for comprehensive email security analysis.
 - **Enterprise DNS Detection**: Automatic identification of major enterprise-grade DNS providers and blocklisting of legacy providers to prevent false positives.
 - **SMTP Transport Status**: Live SMTP TLS validation with "All Servers", "Inferred", and "No Mail" states, providing accurate mail posture even when direct probes are blocked.
 - **Analysis Integrity**: Adherence to an "Analysis Integrity Standard" for RFC compliance and observation-based language.
@@ -61,7 +80,7 @@ The application is built in Go using the Gin framework, emphasizing performance 
 ### Frontend
 - **Technology**: Server-rendered HTML using Go `html/template`, Bootstrap dark theme, custom CSS, and client-side JavaScript.
 - **UI/UX**: PWA support, accessibility, and full mobile responsiveness.
-- **Pages**: Index, Results, History, Statistics, Compare, Sources, IP Investigate, Email Header Analyzer.
+- **Pages**: Index, Results, History, Statistics, Compare, Sources, IP Investigate, Email Header Analyzer, Changelog, Security Policy.
 - **Print/PDF Report**: Executive-grade print stylesheet with TLP:CLEAR classification and professional presentation.
 
 ## External Dependencies
