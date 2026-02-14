@@ -71,8 +71,8 @@ func (a *Analyzer) DiscoverSubdomains(ctx context.Context, domain string) map[st
                 "subdomains":        []map[string]any{},
                 "unique_subdomains": 0,
                 "total_certs":       0,
-                "source":            "Multi-Source Intelligence",
-                "caveat":            "Subdomains discovered via CT logs (RFC 6962), DNS probing of common service names, CNAME chain traversal, and SecurityTrails API.",
+                "source":            "Certificate Transparency + DNS Intelligence",
+                "caveat":            "Subdomains discovered via CT logs (RFC 6962), DNS probing of common service names, and CNAME chain traversal.",
                 "current_count":     "0",
                 "expired_count":     "0",
                 "cname_count":       0.0,
@@ -151,38 +151,6 @@ func (a *Analyzer) DiscoverSubdomains(ctx context.Context, domain string) map[st
         }
 
         dnsProbed := a.probeCommonSubdomains(ctx, domain, subdomainSet)
-
-        stSubdomains, stStatus, _ := FetchSubdomains(ctx, domain)
-        stCount := 0
-        if len(stSubdomains) > 0 {
-                for _, fqdn := range stSubdomains {
-                        fqdn = strings.TrimSpace(strings.ToLower(fqdn))
-                        if fqdn == "" || fqdn == domain || !strings.HasSuffix(fqdn, "."+domain) {
-                                continue
-                        }
-                        if _, exists := subdomainSet[fqdn]; exists {
-                                continue
-                        }
-                        subdomainSet[fqdn] = map[string]any{
-                                "name":       fqdn,
-                                "source":     "securitytrails",
-                                "is_current": true,
-                                "cert_count": "—",
-                                "first_seen": "—",
-                                "issuers":    []string{},
-                        }
-                        stCount++
-                }
-        }
-        if stStatus != nil && stStatus.RateLimited {
-                result["st_status"] = "rate_limited"
-        } else if stStatus != nil && stStatus.Errored {
-                result["st_status"] = "error"
-        } else if stCount > 0 {
-                result["st_status"] = "ok"
-                result["st_discovered"] = stCount
-        }
-
         result["cname_discovered_count"] = 0.0
 
         var subdomains []map[string]any

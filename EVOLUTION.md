@@ -104,16 +104,19 @@ All documentation files verified accurate:
 
 **Root Cause**: Domains using wildcard TLS certificates (like it-help.tech with `*.it-help.tech`) showed "0 subdomains" because CT logs only had wildcard entries which got normalized to the base domain and filtered out. The subdomain discovery relied solely on CT logs.
 
-**Fix — Four-Layer Discovery** (upgraded from three-layer):
+**Fix — Three-Layer Free Discovery** (no paid API dependencies):
 1. **CT log scanning**: Parses crt.sh Certificate Transparency entries for explicit subdomain names
 2. **Wildcard cert detection**: Detects `*.domain` patterns in CT entries, reports active/expired status with info banner
 3. **DNS probing**: Probes ~90 common subdomain names (www, mail, api, admin, etc.) via concurrent DNS lookups with 10-goroutine semaphore cap
-4. **SecurityTrails API**: Wired existing `FetchSubdomains()` into the discovery pipeline — budget-managed (50/month), cached (24h), with rate-limit cooldown. Subdomains from ST get DNS-verified during enrichment so stale entries show "Expired". Tagged with "ST Intel" badge in UI.
-5. **Rich output**: Produces all fields the template expects (name, source, is_current, cert_count, first_seen, issuers, cname_target, wildcard_certs)
+4. **Rich output**: Produces all fields the template expects (name, source, is_current, cert_count, first_seen, issuers, cname_target, wildcard_certs)
 
-**Source attribution**: Updated from "Certificate Transparency Logs" to "Multi-Source Intelligence". Caveat text now lists all four sources.
+**SecurityTrails NOT used in automatic discovery** (reverted same session):
+- SecurityTrails `FetchSubdomains()` was briefly wired into the pipeline but immediately reverted
+- Reason: The server-side SecurityTrails API key has a hard 50-request/month limit. Using it automatically on every scan would exhaust the budget within hours. Once exhausted, the key is dead for the rest of the month — no DNS history, no IP investigation, nothing.
+- Correct pattern: SecurityTrails is user-key-only. Users provide their own API key on DNS History and IP Investigation pages. The server key is reserved for features where users explicitly opt in.
+- **Rule**: Never call SecurityTrails automatically in the analysis pipeline. It's a user-provided-key feature only.
 
-**Template updates**: Added "ST Intel" badge (warning-subtle, matching SecurityTrails branding) alongside existing CT Log, DNS, and CNAME badges.
+**Source attribution**: "Certificate Transparency + DNS Intelligence". Caveat lists CT logs, DNS probing, and CNAME traversal.
 
 **Date parsing robustness**: Added `parseCertDate()` that handles multiple formats (ISO 8601, date-only, datetime) to prevent silent failures from unexpected crt.sh response formats.
 
@@ -121,4 +124,4 @@ All documentation files verified accurate:
 - `TestGoldenRuleWildcardCTDetection` — wildcard-only CT entries produce 0 explicit subdomains but trigger wildcard flag
 - `TestGoldenRuleWildcardNotFalsePositive` — explicit subdomain entries don't falsely trigger wildcard detection
 
-**Result**: Subdomain discovery now exhausts every available intelligence source before reporting. SecurityTrails finds subdomains that CT logs and DNS probing miss (especially for large enterprise domains).
+**Result**: Subdomain discovery uses three free intelligence layers (CT + wildcard + DNS probing). No paid API calls. it-help.tech now shows www.it-help.tech via DNS probing with CNAME to CloudFront.

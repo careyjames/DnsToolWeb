@@ -3170,8 +3170,6 @@
                                         <span class="badge bg-info-subtle text-info border border-info-subtle u-fs-060rem" title="Found via DNS A/AAAA record lookup of common service names">DNS</span>
                                         {{else if eq $source "cname"}}
                                         <span class="badge u-badge-ai-sm" title="Discovered via CNAME chain">CNAME</span>
-                                        {{else if eq $source "securitytrails"}}
-                                        <span class="badge bg-warning-subtle text-warning border border-warning-subtle u-fs-060rem" title="Discovered via SecurityTrails subdomain intelligence API">ST Intel</span>
                                         {{else}}
                                         <span class="badge bg-dark bg-opacity-25 text-muted u-fs-060rem" title="Found in Certificate Transparency logs (RFC 6962)">CT Log</span>
                                         {{end}}
