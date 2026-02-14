@@ -5,6 +5,9 @@
 package analyzer
 
 import (
+        "os"
+        "path/filepath"
+        "strings"
         "testing"
 )
 
@@ -336,6 +339,233 @@ func TestGoldenRuleAnalyzeDNSInfrastructureStandard(t *testing.T) {
         if tier != "standard" {
                 t.Errorf("unknown NS should have standard tier, got: %s", tier)
         }
+}
+
+func TestGoldenRuleRemediationNotStubbed(t *testing.T) {
+        a := &Analyzer{}
+        results := map[string]any{
+                "domain": "stub-test.example.com",
+                "spf_analysis": map[string]any{
+                        "status": "not_found",
+                },
+                "dmarc_analysis": map[string]any{
+                        "status": "not_found",
+                },
+                "dkim_analysis": map[string]any{
+                        "status": "info",
+                },
+                "mta_sts_analysis": map[string]any{
+                        "status": "not_found",
+                },
+                "tlsrpt_analysis": map[string]any{
+                        "status": "not_found",
+                },
+                "bimi_analysis": map[string]any{
+                        "status": "not_found",
+                },
+                "dane_analysis": map[string]any{
+                        "status": "not_found",
+                },
+                "caa_analysis": map[string]any{
+                        "status": "not_found",
+                },
+                "dnssec_analysis": map[string]any{
+                        "status": "unsigned",
+                },
+                "basic_records": map[string]any{
+                        "MX": []string{"mx.example.com."},
+                },
+        }
+
+        remediation := a.GenerateRemediation(results)
+
+        topFixes, _ := remediation["top_fixes"].([]map[string]any)
+        allFixes, _ := remediation["all_fixes"].([]map[string]any)
+        fixCount, _ := remediation["fix_count"].(float64)
+
+        if len(topFixes) == 0 {
+                t.Fatal("GenerateRemediation must produce non-empty top_fixes for a domain missing SPF, DMARC, DKIM — remediation engine is stubbed")
+        }
+        if len(allFixes) == 0 {
+                t.Fatal("GenerateRemediation must produce non-empty all_fixes — remediation engine is stubbed")
+        }
+        if fixCount == 0 {
+                t.Fatal("GenerateRemediation must produce non-zero fix_count — remediation engine is stubbed")
+        }
+
+        firstFix := topFixes[0]
+        requiredKeys := []string{"title", "fix", "severity_label", "severity_color"}
+        for _, key := range requiredKeys {
+                val, ok := firstFix[key].(string)
+                if !ok || val == "" {
+                        t.Errorf("top fix must have non-empty %q field", key)
+                }
+        }
+}
+
+func TestGoldenRuleRemediationWellConfiguredDomain(t *testing.T) {
+        a := &Analyzer{}
+        results := map[string]any{
+                "domain": "secure.example.com",
+                "spf_analysis": map[string]any{
+                        "status":    "success",
+                        "qualifier": "-all",
+                },
+                "dmarc_analysis": map[string]any{
+                        "status": "success",
+                        "policy": "reject",
+                        "pct":    100,
+                        "rua":    "mailto:dmarc@example.com",
+                },
+                "dkim_analysis": map[string]any{
+                        "status": "success",
+                },
+                "mta_sts_analysis": map[string]any{
+                        "status": "success",
+                },
+                "tlsrpt_analysis": map[string]any{
+                        "status": "success",
+                },
+                "bimi_analysis": map[string]any{
+                        "status": "success",
+                },
+                "dane_analysis": map[string]any{
+                        "status": "success",
+                },
+                "caa_analysis": map[string]any{
+                        "status": "success",
+                },
+                "dnssec_analysis": map[string]any{
+                        "status": "secure",
+                },
+                "basic_records": map[string]any{
+                        "MX": []string{"mx.example.com."},
+                },
+        }
+
+        remediation := a.GenerateRemediation(results)
+
+        allFixes, _ := remediation["all_fixes"].([]map[string]any)
+        topFixes, _ := remediation["top_fixes"].([]map[string]any)
+
+        if len(allFixes) > 3 {
+                t.Errorf("well-configured domain should have very few fixes (at most 3), got %d", len(allFixes))
+        }
+        if len(topFixes) > 3 {
+                t.Errorf("top_fixes should never exceed 3 items, got %d", len(topFixes))
+        }
+}
+
+func TestGoldenRuleMailPostureNotStubbed(t *testing.T) {
+        results := map[string]any{
+                "domain": "test.example.com",
+                "spf_analysis": map[string]any{
+                        "status": "not_found",
+                },
+                "dmarc_analysis": map[string]any{
+                        "status": "not_found",
+                },
+                "dkim_analysis": map[string]any{
+                        "status": "info",
+                },
+                "mta_sts_analysis": map[string]any{
+                        "status": "not_found",
+                },
+                "tlsrpt_analysis": map[string]any{
+                        "status": "not_found",
+                },
+                "basic_records": map[string]any{
+                        "MX": []string{"mx.example.com."},
+                },
+        }
+
+        mp := buildMailPosture(results)
+
+        classification, _ := mp["classification"].(string)
+        label, _ := mp["label"].(string)
+        color, _ := mp["color"].(string)
+
+        if classification == "" {
+                t.Fatal("buildMailPosture must return non-empty classification — mail posture engine is stubbed")
+        }
+        if label == "" {
+                t.Fatal("buildMailPosture must return non-empty label — mail posture engine is stubbed")
+        }
+        if color == "" {
+                t.Fatal("buildMailPosture must return non-empty color — mail posture engine is stubbed")
+        }
+}
+
+func TestGoldenRuleFixToMapNotEmpty(t *testing.T) {
+        f := fix{
+                Title:         "Test Fix",
+                Description:   "Test description",
+                Severity:      severityCritical,
+                SeverityColor: colorCritical,
+                SeverityOrder: 1,
+                RFC:           "RFC 7489",
+                RFCURL:        "https://example.com",
+                Section:       "SPF",
+        }
+
+        m := fixToMap(f)
+
+        if len(m) == 0 {
+                t.Fatal("fixToMap must return non-empty map — function is stubbed")
+        }
+        if m["title"] != "Test Fix" {
+                t.Errorf("fixToMap must preserve title, got %v", m["title"])
+        }
+        if m["severity_label"] != severityCritical {
+                t.Errorf("fixToMap must preserve severity_label, got %v", m["severity_label"])
+        }
+}
+
+func TestGoldenRuleStubRegistryComplete(t *testing.T) {
+        knownStubFiles := map[string]bool{
+                "ai_surface/http.go":       true,
+                "ai_surface/llms_txt.go":   true,
+                "ai_surface/poisoning.go":  true,
+                "ai_surface/robots_txt.go": true,
+                "commands.go":              true,
+                "confidence.go":            true,
+                "dkim_state.go":            true,
+                "edge_cdn.go":              true,
+                "infrastructure.go":        true,
+                "ip_investigation.go":      true,
+                "manifest.go":              true,
+                "providers.go":             true,
+                "saas_txt.go":              true,
+        }
+
+        analyzerDir := "."
+        stubMarker := "stub implementations"
+
+        err := filepath.Walk(analyzerDir, func(path string, info os.FileInfo, err error) error {
+                if err != nil || info.IsDir() || !strings.HasSuffix(path, ".go") || strings.HasSuffix(path, "_test.go") {
+                        return nil
+                }
+                data, readErr := os.ReadFile(path)
+                if readErr != nil {
+                        return nil
+                }
+                firstLines := string(data)
+                if len(firstLines) > 500 {
+                        firstLines = firstLines[:500]
+                }
+                if strings.Contains(strings.ToLower(firstLines), stubMarker) {
+                        rel := path
+                        if !knownStubFiles[rel] {
+                                t.Errorf("UNREGISTERED stub file detected: %s — add to knownStubFiles or implement it", rel)
+                        }
+                }
+                return nil
+        })
+        if err != nil {
+                t.Fatalf("failed to walk analyzer directory: %v", err)
+        }
+
+        t.Logf("Stub registry: %d files are known stubs from dnstool-intel private repo", len(knownStubFiles))
 }
 
 func TestGoldenRuleEnterpriseProvidersMapNotEmpty(t *testing.T) {
