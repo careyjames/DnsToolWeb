@@ -155,6 +155,9 @@ func main() {
         sourcesHandler := handlers.NewSourcesHandler(cfg)
         router.GET("/sources", sourcesHandler.Sources)
 
+        changelogHandler := handlers.NewChangelogHandler(cfg)
+        router.GET("/changelog", changelogHandler.Changelog)
+
         securityPolicyHandler := handlers.NewSecurityPolicyHandler(cfg)
         router.GET("/security-policy", securityPolicyHandler.SecurityPolicy)
 

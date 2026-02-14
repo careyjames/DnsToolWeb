@@ -18,6 +18,14 @@ type ChangelogEntry struct {
         IsIncident bool
 }
 
+func GetRecentChangelog(n int) []ChangelogEntry {
+        all := GetChangelog()
+        if len(all) <= n {
+                return all
+        }
+        return all[:n]
+}
+
 func GetChangelog() []ChangelogEntry {
         return []ChangelogEntry{
                 {
