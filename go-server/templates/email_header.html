@@ -183,6 +183,28 @@ You can paste the whole email — we'll separate headers from body automatically
                     </div>
                 </div>
 
+                {{if .HasBigQuestions}}
+                <div class="card bg-dark border-info mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="fas fa-circle-question me-2 text-info"></i>Big Questions <span class="badge bg-info text-dark ms-2">Critical Thinking</span></h5>
+                    </div>
+                    <div class="card-body">
+                        <p class="text-muted small mb-3">Key security questions raised by this email &mdash; the answers that matter most when deciding whether to trust it.</p>
+                        {{range .BigQuestions}}
+                        <div class="mb-3 p-3 rounded border border-{{if eq .Severity "danger"}}danger{{else if eq .Severity "warning"}}warning{{else}}info{{end}}" style="background: rgba({{if eq .Severity "danger"}}220,53,69{{else if eq .Severity "warning"}}255,193,7{{else}}13,202,240{{end}},0.05);">
+                            <div class="d-flex align-items-start">
+                                <i class="fas fa-{{.Icon}} fa-lg me-3 mt-1 text-{{if eq .Severity "danger"}}danger{{else if eq .Severity "warning"}}warning{{else}}info{{end}}"></i>
+                                <div>
+                                    <h6 class="mb-2 text-{{if eq .Severity "danger"}}danger{{else if eq .Severity "warning"}}warning{{else}}info{{end}}">{{.Question}}</h6>
+                                    <p class="mb-0 small text-light">{{.Answer}}</p>
+                                </div>
+                            </div>
+                        </div>
+                        {{end}}
+                    </div>
+                </div>
+                {{end}}
+
                 <div class="card bg-dark border-secondary mb-4">
                     <div class="card-header">
                         <h5 class="mb-0"><i class="fas fa-envelope me-2 text-info"></i>Message Identity</h5>

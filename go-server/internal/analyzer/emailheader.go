@@ -3,7 +3,10 @@
 package analyzer
 
 import (
+        "encoding/base64"
         "fmt"
+        "io"
+        "mime/quotedprintable"
         "net"
         "regexp"
         "strings"
@@ -39,6 +42,25 @@ type EmailHeaderAnalysis struct {
         BodyStripped     bool
         BodyIndicators   []PhishingIndicator
         HasBodyAnalysis  bool
+
+        BigQuestions    []BigQuestion
+        HasBigQuestions bool
+
+        SpamFlagged          bool
+        SpamFlagSources      []string
+        BCCDelivery          bool
+        BCCRecipient         string
+        OriginatingIP        string
+        DMARCPolicy          string
+        SenderBrandMismatch  bool
+        SenderBrandMismatchDetail string
+}
+
+type BigQuestion struct {
+        Question   string
+        Answer     string
+        Severity   string
+        Icon       string
 }
 
 type PhishingIndicator struct {
@@ -127,13 +149,16 @@ func AnalyzeEmailHeaders(raw string) *EmailHeaderAnalysis {
         parseARCChain(headers, result)
         parseReceivedChain(headers, result)
         checkAlignment(result)
+        detectHeaderIntelligence(headers, result)
         generateFlags(result)
 
         if hadBody && body != "" {
-                result.BodyIndicators = scanBodyForPhishingIndicators(body)
+                decodedBody := decodeEmailBody(body, headers)
+                result.BodyIndicators = scanBodyForPhishingIndicators(decodedBody)
                 result.HasBodyAnalysis = len(result.BodyIndicators) > 0
         }
 
+        generateBigQuestions(result)
         generateVerdict(result)
 
         return result
@@ -596,6 +621,38 @@ func generateFlags(result *EmailHeaderAnalysis) {
                         Message:  fmt.Sprintf("This email traversed %d hops — an unusually long delivery path. This may indicate forwarding chains or mailing list processing.", result.HopCount),
                 })
         }
+
+        if result.SpamFlagged {
+                result.Flags = append(result.Flags, HeaderFlag{
+                        Severity: "danger",
+                        Category: "Spam Detection",
+                        Message:  "The receiving mail server flagged this email as spam/junk based on automated content analysis and sender reputation checks.",
+                })
+        }
+
+        if result.BCCDelivery {
+                result.Flags = append(result.Flags, HeaderFlag{
+                        Severity: "warning",
+                        Category: "BCC Delivery",
+                        Message:  fmt.Sprintf("You (%s) were not listed in the To or CC fields — you received this via BCC. Mass scam campaigns commonly hide the full recipient list.", result.BCCRecipient),
+                })
+        }
+
+        if result.OriginatingIP != "" {
+                result.Flags = append(result.Flags, HeaderFlag{
+                        Severity: "info",
+                        Category: "Originating IP",
+                        Message:  fmt.Sprintf("The sender's originating IP was %s — this reveals where the sender was when they composed the email, which may differ from the mail server location.", result.OriginatingIP),
+                })
+        }
+
+        if result.DMARCPolicy == "none" {
+                result.Flags = append(result.Flags, HeaderFlag{
+                        Severity: "warning",
+                        Category: "DMARC Policy",
+                        Message:  "The sender's domain uses DMARC p=none — this means even if authentication fails, receiving servers take no enforcement action. This domain could be spoofed freely.",
+                })
+        }
 }
 
 func generateVerdict(result *EmailHeaderAnalysis) {
@@ -616,14 +673,23 @@ func generateVerdict(result *EmailHeaderAnalysis) {
                 }
         }
 
-        if dangerCount > 0 || phishingDanger >= 2 {
+        bigQuestionDanger := 0
+        for _, q := range result.BigQuestions {
+                if q.Severity == "danger" {
+                        bigQuestionDanger++
+                }
+        }
+
+        if dangerCount > 0 || phishingDanger >= 2 || bigQuestionDanger >= 2 || (result.SpamFlagged && phishingDanger >= 1) {
                 result.Verdict = "suspicious"
-                if phishingDanger >= 2 && dangerCount == 0 {
+                if result.SpamFlagged && phishingDanger >= 1 {
+                        result.Summary = "This email was flagged as spam by the receiving server and contains content indicators associated with scam campaigns — treat with extreme caution."
+                } else if phishingDanger >= 2 && dangerCount == 0 {
                         result.Summary = "Templated mass-mail indicators observed in the email body — this pattern is commonly associated with scam or phishing campaigns."
                 } else {
                         result.Summary = "Authentication failures observed — this email may not be from who it claims to be."
                 }
-        } else if warningCount > 0 || len(result.BodyIndicators) > 0 {
+        } else if warningCount > 0 || len(result.BodyIndicators) > 0 || result.SpamFlagged {
                 result.Verdict = "caution"
                 result.Summary = "Some findings need attention — review the details below to determine if this is expected behavior (like forwarding or mailing lists)."
         } else {
@@ -807,5 +873,353 @@ func scanBodyForPhishingIndicators(body string) []PhishingIndicator {
                 })
         }
 
+        lotteryPhrases := []string{
+                "you have won", "you won", "lottery win", "prize winner",
+                "claim your prize", "claim your winnings", "lucky winner",
+                "congratulations! you", "your email won", "your email was selected",
+                "winning notification", "award notification",
+                "ticket number", "winning number", "reference number",
+                "batch number", "lucky number",
+                "unclaimed fund", "unclaimed prize", "abandoned fund",
+                "next of kin", "beneficiary", "inheritance",
+                "send your name", "send your names", "send your address",
+                "send your full name", "send your details",
+                "verification purpose", "for verification",
+                "contact agent", "contact our agent", "claims agent",
+                "facebook lottery", "google lottery", "microsoft lottery",
+                "coca cola", "coca-cola lottery",
+                "united nations", "world bank", "imf",
+                "automated draw", "random draw", "random selection",
+        }
+        var lotteryMatches []string
+        for _, phrase := range lotteryPhrases {
+                if strings.Contains(lower, phrase) {
+                        lotteryMatches = append(lotteryMatches, phrase)
+                }
+        }
+        if len(lotteryMatches) >= 2 {
+                indicators = append(indicators, PhishingIndicator{
+                        Category:    "Lottery / Advance-Fee Fraud",
+                        Severity:    "danger",
+                        Description: "Multiple lottery/prize fraud phrases observed — this pattern matches 419-style advance-fee scams. No legitimate lottery contacts winners by unsolicited email.",
+                        Evidence:    "Phrases matched: " + strings.Join(lotteryMatches, ", "),
+                })
+        } else if len(lotteryMatches) == 1 {
+                indicators = append(indicators, PhishingIndicator{
+                        Category:    "Possible Prize Scam",
+                        Severity:    "warning",
+                        Description: "A phrase associated with lottery or prize-based scams was observed.",
+                        Evidence:    "Phrase matched: " + lotteryMatches[0],
+                })
+        }
+
+        socialEngPhrases := []string{
+                "cash flow", "financing that fits", "securing funding",
+                "no pressure to commit", "expansion", "growth potential",
+                "should i forward", "business loan", "credit line",
+                "pre-approved", "pre approved", "guaranteed approval",
+                "unsolicited offer", "investment opportunity",
+        }
+        var socialEngMatches []string
+        for _, phrase := range socialEngPhrases {
+                if strings.Contains(lower, phrase) {
+                        socialEngMatches = append(socialEngMatches, phrase)
+                }
+        }
+        if len(socialEngMatches) >= 3 {
+                indicators = append(indicators, PhishingIndicator{
+                        Category:    "Targeted Social Engineering",
+                        Severity:    "danger",
+                        Description: "Multiple business-targeted social engineering phrases observed — this pattern matches unsolicited business funding scams that use information from public web presence to appear legitimate.",
+                        Evidence:    "Phrases matched: " + strings.Join(socialEngMatches, ", "),
+                })
+        } else if len(socialEngMatches) >= 1 {
+                indicators = append(indicators, PhishingIndicator{
+                        Category:    "Unsolicited Business Contact",
+                        Severity:    "warning",
+                        Description: "Phrases associated with unsolicited business offers or funding scams observed. These emails often reference publicly available information about your company to appear credible.",
+                        Evidence:    "Phrases matched: " + strings.Join(socialEngMatches, ", "),
+                })
+        }
+
+        contactRe := regexp.MustCompile(`(?i)(?:please\s+)?contact\s*:\s*([a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,})`)
+        if m := contactRe.FindStringSubmatch(body); m != nil {
+                contactEmail := m[1]
+                indicators = append(indicators, PhishingIndicator{
+                        Category:    "Suspicious Contact Method",
+                        Severity:    "warning",
+                        Description: "A freemail or non-organizational contact address was embedded in the body — legitimate organizations use their own domains for communication.",
+                        Evidence:    "Contact email: " + contactEmail,
+                })
+        }
+
         return indicators
+}
+
+func decodeEmailBody(body string, headers []headerField) string {
+        cte := strings.ToLower(extractHeader(headers, "content-transfer-encoding"))
+        contentType := strings.ToLower(extractHeader(headers, "content-type"))
+
+        decoded := body
+
+        if strings.Contains(cte, "base64") {
+                cleaned := strings.Map(func(r rune) rune {
+                        if r == '\n' || r == '\r' || r == ' ' || r == '\t' {
+                                return -1
+                        }
+                        return r
+                }, body)
+                if b, err := base64.StdEncoding.DecodeString(cleaned); err == nil {
+                        decoded = string(b)
+                }
+        } else if strings.Contains(cte, "quoted-printable") {
+                reader := quotedprintable.NewReader(strings.NewReader(body))
+                if b, err := io.ReadAll(reader); err == nil {
+                        decoded = string(b)
+                }
+        }
+
+        if strings.Contains(contentType, "text/html") {
+                decoded = stripHTMLTags(decoded)
+        }
+
+        return decoded
+}
+
+func stripHTMLTags(html string) string {
+        scriptRe := regexp.MustCompile(`(?is)<script[^>]*>.*?</script>`)
+        html = scriptRe.ReplaceAllString(html, " ")
+        styleRe := regexp.MustCompile(`(?is)<style[^>]*>.*?</style>`)
+        html = styleRe.ReplaceAllString(html, " ")
+
+        tagRe := regexp.MustCompile(`<[^>]+>`)
+        text := tagRe.ReplaceAllString(html, " ")
+
+        entityMap := map[string]string{
+                "&nbsp;": " ", "&amp;": "&", "&lt;": "<", "&gt;": ">",
+                "&quot;": "\"", "&#39;": "'", "&apos;": "'",
+                "&mdash;": "—", "&ndash;": "–", "&rsquo;": "'",
+                "&lsquo;": "'", "&rdquo;": "\"", "&ldquo;": "\"",
+        }
+        for entity, replacement := range entityMap {
+                text = strings.ReplaceAll(text, entity, replacement)
+        }
+
+        numEntityRe := regexp.MustCompile(`&#(\d+);`)
+        text = numEntityRe.ReplaceAllStringFunc(text, func(s string) string {
+                return " "
+        })
+
+        spaceRe := regexp.MustCompile(`\s+`)
+        text = spaceRe.ReplaceAllString(text, " ")
+
+        return strings.TrimSpace(text)
+}
+
+func detectHeaderIntelligence(headers []headerField, result *EmailHeaderAnalysis) {
+        spamHeaders := map[string]string{
+                "x-spam-flag":      "yes",
+                "x-suspected-spam": "true",
+                "x-spam-status":    "yes",
+        }
+        for headerName, triggerVal := range spamHeaders {
+                val := extractHeader(headers, headerName)
+                if strings.EqualFold(strings.TrimSpace(val), triggerVal) {
+                        result.SpamFlagged = true
+                        result.SpamFlagSources = append(result.SpamFlagSources, headerName+": "+val)
+                }
+        }
+
+        appleAction := extractHeader(headers, "x-apple-action")
+        if strings.Contains(strings.ToUpper(appleAction), "JUNK") {
+                result.SpamFlagged = true
+                result.SpamFlagSources = append(result.SpamFlagSources, "X-Apple-Action: "+appleAction)
+        }
+
+        moveFolder := extractHeader(headers, "x-apple-movetofolder")
+        if strings.EqualFold(strings.TrimSpace(moveFolder), "Junk") {
+                result.SpamFlagged = true
+                result.SpamFlagSources = append(result.SpamFlagSources, "X-Apple-MoveToFolder: "+moveFolder)
+        }
+
+        origRecipient := extractHeader(headers, "original-recipient")
+        deliveredTo := extractHeader(headers, "delivered-to")
+        toField := result.To
+        if toField != "" {
+                toAddresses := extractAllEmailAddresses(toField)
+                actualRecip := ""
+                if origRecipient != "" {
+                        actualRecip = extractFirstEmailFromField(origRecipient)
+                } else if deliveredTo != "" {
+                        actualRecip = deliveredTo
+                }
+
+                if actualRecip != "" {
+                        actualLower := strings.ToLower(strings.TrimSpace(actualRecip))
+                        found := false
+                        for _, to := range toAddresses {
+                                if strings.ToLower(to) == actualLower {
+                                        found = true
+                                        break
+                                }
+                        }
+                        if !found {
+                                result.BCCDelivery = true
+                                result.BCCRecipient = actualRecip
+                        }
+                }
+        }
+
+        origIP := extractHeader(headers, "x-originating-ip")
+        if origIP != "" {
+                result.OriginatingIP = strings.Trim(strings.TrimSpace(origIP), "[]")
+        }
+
+        dmarcPolicy := extractHeader(headers, "x-dmarc-policy")
+        if dmarcPolicy != "" {
+                policyRe := regexp.MustCompile(`(?i)\bp=(none|quarantine|reject)\b`)
+                if m := policyRe.FindStringSubmatch(dmarcPolicy); m != nil {
+                        result.DMARCPolicy = strings.ToLower(m[1])
+                }
+        }
+
+        fromDomain := extractDomainFromEmailAddress(result.From)
+        subjectLower := strings.ToLower(result.Subject)
+        fromLower := strings.ToLower(result.From)
+        brandChecks := map[string][]string{
+                "Facebook/Meta": {"facebook", "meta inc", "meta lottery"},
+                "Google":        {"google", "gmail"},
+                "Microsoft":     {"microsoft", "outlook", "office 365"},
+                "Apple":         {"apple inc", "apple id", "icloud"},
+                "Amazon":        {"amazon"},
+                "PayPal":        {"paypal"},
+        }
+        for brand, keywords := range brandChecks {
+                for _, kw := range keywords {
+                        if strings.Contains(subjectLower, kw) || strings.Contains(fromLower, kw) {
+                                if !strings.Contains(strings.ToLower(fromDomain), strings.ToLower(strings.Split(brand, "/")[0])) {
+                                        result.SenderBrandMismatch = true
+                                        result.SenderBrandMismatchDetail = fmt.Sprintf("References '%s' but sent from %s", brand, fromDomain)
+                                        break
+                                }
+                        }
+                }
+                if result.SenderBrandMismatch {
+                        break
+                }
+        }
+}
+
+func extractAllEmailAddresses(s string) []string {
+        re := regexp.MustCompile(`[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}`)
+        return re.FindAllString(s, -1)
+}
+
+func extractFirstEmailFromField(s string) string {
+        re := regexp.MustCompile(`[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}`)
+        if m := re.FindString(s); m != "" {
+                return m
+        }
+        return strings.TrimSpace(s)
+}
+
+func generateBigQuestions(result *EmailHeaderAnalysis) {
+        allAuthPass := result.SPFResult.Result == "pass" && result.DMARCResult.Result == "pass"
+        hasDKIMPass := false
+        for _, d := range result.DKIMResults {
+                if d.Result == "pass" {
+                        hasDKIMPass = true
+                        break
+                }
+        }
+        allAuthPass = allAuthPass && hasDKIMPass
+
+        if allAuthPass && result.SpamFlagged {
+                result.BigQuestions = append(result.BigQuestions, BigQuestion{
+                        Question: "How can SPF, DKIM, and DMARC all pass but this still be spam?",
+                        Answer:   "Authentication only verifies the sending server was authorized by the domain — it says nothing about the content. Spammers use legitimate email services (like free mail providers) to send from real accounts that pass all checks. The content is fraudulent, not the infrastructure.",
+                        Severity: "danger",
+                        Icon:     "shield-halved",
+                })
+        }
+
+        if allAuthPass && (result.HasBodyAnalysis || result.SenderBrandMismatch) && !result.SpamFlagged {
+                result.BigQuestions = append(result.BigQuestions, BigQuestion{
+                        Question: "All authentication checks passed — does that mean this email is safe?",
+                        Answer:   "No. SPF/DKIM/DMARC verify identity, not intent. A scammer using a legitimate email provider will pass all authentication checks. Always evaluate the content independently of the authentication results.",
+                        Severity: "warning",
+                        Icon:     "shield-halved",
+                })
+        }
+
+        if result.BCCDelivery {
+                result.BigQuestions = append(result.BigQuestions, BigQuestion{
+                        Question: "Why was this email delivered to you if you're not in the To field?",
+                        Answer:   fmt.Sprintf("You received this as a BCC (blind carbon copy) recipient. The email was addressed to '%s' but delivered to %s. Mass-mail campaigns and scams commonly use BCC to send to many recipients while hiding the full list.", result.To, result.BCCRecipient),
+                        Severity: "warning",
+                        Icon:     "eye",
+                })
+        }
+
+        if result.OriginatingIP != "" {
+                fromDomain := extractDomainFromEmailAddress(result.From)
+                result.BigQuestions = append(result.BigQuestions, BigQuestion{
+                        Question: "Does the sender's actual location match who they claim to be?",
+                        Answer:   fmt.Sprintf("The X-Originating-IP header reveals the sender connected from %s when composing this email via %s. This IP may not match the organization the email claims to represent. Look up this IP to check the geographic location and ownership.", result.OriginatingIP, fromDomain),
+                        Severity: "info",
+                        Icon:     "globe",
+                })
+        }
+
+        if result.DMARCPolicy == "none" {
+                fromDomain := extractDomainFromEmailAddress(result.From)
+                result.BigQuestions = append(result.BigQuestions, BigQuestion{
+                        Question: "Is the sender's domain protected against spoofing?",
+                        Answer:   fmt.Sprintf("The DMARC policy for %s is set to p=none — this means even if authentication fails, no action is taken. Anyone could spoof this domain with no consequences. A strong DMARC policy (p=reject or p=quarantine) would prevent this.", fromDomain),
+                        Severity: "warning",
+                        Icon:     "lock-open",
+                })
+        }
+
+        if result.SenderBrandMismatch {
+                result.BigQuestions = append(result.BigQuestions, BigQuestion{
+                        Question: "Does the sender actually represent the brand mentioned?",
+                        Answer:   result.SenderBrandMismatchDetail + ". Legitimate communications from major brands come from their own domains. Using a different domain to impersonate a brand is a hallmark of phishing and scam campaigns.",
+                        Severity: "danger",
+                        Icon:     "masks-theater",
+                })
+        }
+
+        if result.SpamFlagged && len(result.SpamFlagSources) > 0 {
+                result.BigQuestions = append(result.BigQuestions, BigQuestion{
+                        Question: "Has the email provider already identified this as spam?",
+                        Answer:   "Yes. The receiving mail server or email provider flagged this email as spam or junk before you even saw it. Headers detected: " + strings.Join(result.SpamFlagSources, "; ") + ". This is an automated determination based on content analysis, sender reputation, and pattern matching.",
+                        Severity: "danger",
+                        Icon:     "flag",
+                })
+        }
+
+        if result.AlignmentFromReturnPath == "misaligned" && (result.SPFResult.Result == "pass" || result.DMARCResult.Result == "pass") {
+                fromDomain := extractDomainFromEmailAddress(result.From)
+                rpDomain := extractDomainFromEmailAddress(result.ReturnPath)
+                if fromDomain != "" && rpDomain != "" {
+                        result.BigQuestions = append(result.BigQuestions, BigQuestion{
+                                Question: "Why does the From address not match the Return-Path?",
+                                Answer:   fmt.Sprintf("The visible sender shows %s, but bounces go to %s. This sometimes indicates forwarding or mailing lists, but is also a common spoofing technique where the attacker controls the envelope sender but displays a different identity.", fromDomain, rpDomain),
+                                Severity: "info",
+                                Icon:     "arrows-left-right",
+                        })
+                }
+        }
+
+        if result.HopCount >= 5 {
+                result.BigQuestions = append(result.BigQuestions, BigQuestion{
+                        Question: "Why did this email take so many hops to reach you?",
+                        Answer:   fmt.Sprintf("This email passed through %d servers before delivery. While some hops may be normal (internal routing, spam filters, forwarding), an unusually long delivery chain can indicate the email was relayed through multiple systems to obscure its origin.", result.HopCount),
+                        Severity: "info",
+                        Icon:     "route",
+                })
+        }
+
+        result.HasBigQuestions = len(result.BigQuestions) > 0
 }
