@@ -253,10 +253,10 @@ func appendSPFFixes(fixes []fix, ps protocolState, ds DKIMState, results map[str
         if ps.spfDangerous {
                 fixes = append(fixes, fix{
                         Title:         "Remove Dangerous SPF +all",
-                        Description:   "Your SPF record uses +all which allows anyone to send mail as your domain. Change to -all or ~all immediately.",
+                        Description:   "Your SPF record uses +all which allows anyone to send mail as your domain. Change to ~all immediately.",
                         DNSHost:       domain,
                         DNSType:       "TXT",
-                        DNSValue:      "v=spf1 [your includes] -all",
+                        DNSValue:      "v=spf1 [your includes] ~all",
                         DNSPurpose:    "The +all qualifier is dangerous — it authorizes the entire internet to send as your domain.",
                         DNSHostHelp:   "(root of domain)",
                         RFC:           "RFC 7208 §5.1",
@@ -270,7 +270,7 @@ func appendSPFFixes(fixes []fix, ps protocolState, ds DKIMState, results map[str
         if ps.spfNeutral {
                 fixes = append(fixes, fix{
                         Title:         "Upgrade SPF from ?all",
-                        Description:   "Your SPF record uses ?all (neutral) which provides no protection. Upgrade to ~all (soft fail) or -all (hard fail).",
+                        Description:   "Your SPF record uses ?all (neutral) which provides no protection. Upgrade to ~all (soft fail) for proper SPF enforcement.",
                         RFC:           "RFC 7208 §5.1",
                         RFCURL:        "https://datatracker.ietf.org/doc/html/rfc7208#section-5.1",
                         Severity:      severityHigh,
@@ -301,18 +301,6 @@ func appendSPFLookupFix(fixes []fix, ps protocolState) []fix {
 }
 
 func appendSPFUpgradeFix(fixes []fix, ps protocolState, ds DKIMState, domain string, includes []string) []fix {
-        if ps.spfOK && !ps.spfHardFail && !ps.spfDangerous && !ps.spfNeutral && ps.dmarcPolicy == "reject" {
-                fixes = append(fixes, fix{
-                        Title:         "Consider Upgrading SPF to -all",
-                        Description:   "Your DMARC policy is reject but SPF uses ~all (soft fail). Consider upgrading to -all for stricter enforcement.",
-                        RFC:           "RFC 7208 §5.1",
-                        RFCURL:        "https://datatracker.ietf.org/doc/html/rfc7208#section-5.1",
-                        Severity:      severityLow,
-                        SeverityColor: colorLow,
-                        SeverityOrder: 4,
-                        Section:       "SPF",
-                })
-        }
         return fixes
 }
 
