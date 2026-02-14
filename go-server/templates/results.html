@@ -420,9 +420,9 @@
                                         <div class="text-muted mb-1" style="font-size: 0.65rem;"><i class="fas fa-info-circle me-1"></i>{{mapGetStr "dns_purpose" $fixMap}}</div>
                                         <table class="table table-dark table-sm table-borderless mb-0" style="font-size: 0.72rem;">
                                             <tbody>
-                                                <tr><td style="width: 70px; color: #8b949e;" class="py-0 fw-semibold">Type</td><td class="py-0"><code class="text-info">{{mapGetStr "dns_type" $fixMap}}</code></td></tr>
-                                                <tr><td style="color: #8b949e;" class="py-0 fw-semibold">Host</td><td class="py-0"><code class="text-info">{{mapGetStr "dns_host" $fixMap}}</code> <span class="text-muted" style="font-size: 0.62rem;">{{mapGetStr "dns_host_help" $fixMap}}</span></td></tr>
-                                                <tr><td style="color: #8b949e;" class="py-0 fw-semibold">Value</td><td class="py-0"><code class="text-warning">{{mapGetStr "dns_value" $fixMap}}</code></td></tr>
+                                                <tr><th scope="row" style="width: 70px; color: #8b949e;" class="py-0 fw-semibold">Type</th><td class="py-0"><code class="text-info">{{mapGetStr "dns_type" $fixMap}}</code></td></tr>
+                                                <tr><th scope="row" style="color: #8b949e;" class="py-0 fw-semibold">Host</th><td class="py-0"><code class="text-info">{{mapGetStr "dns_host" $fixMap}}</code> <span class="text-muted" style="font-size: 0.62rem;">{{mapGetStr "dns_host_help" $fixMap}}</span></td></tr>
+                                                <tr><th scope="row" style="color: #8b949e;" class="py-0 fw-semibold">Value</th><td class="py-0"><code class="text-warning">{{mapGetStr "dns_value" $fixMap}}</code></td></tr>
                                             </tbody>
                                         </table>
                                     </div>
@@ -465,9 +465,9 @@
                                             <div class="text-muted mb-1" style="font-size: 0.65rem;"><i class="fas fa-info-circle me-1"></i>{{mapGetStr "dns_purpose" $fixMap}}</div>
                                             <table class="table table-dark table-sm table-borderless mb-0" style="font-size: 0.72rem;">
                                                 <tbody>
-                                                    <tr><td style="width: 70px; color: #8b949e;" class="py-0 fw-semibold">Type</td><td class="py-0"><code class="text-info">{{mapGetStr "dns_type" $fixMap}}</code></td></tr>
-                                                    <tr><td style="color: #8b949e;" class="py-0 fw-semibold">Host</td><td class="py-0"><code class="text-info">{{mapGetStr "dns_host" $fixMap}}</code> <span class="text-muted" style="font-size: 0.62rem;">{{mapGetStr "dns_host_help" $fixMap}}</span></td></tr>
-                                                    <tr><td style="color: #8b949e;" class="py-0 fw-semibold">Value</td><td class="py-0"><code class="text-warning">{{mapGetStr "dns_value" $fixMap}}</code></td></tr>
+                                                    <tr><th scope="row" style="width: 70px; color: #8b949e;" class="py-0 fw-semibold">Type</th><td class="py-0"><code class="text-info">{{mapGetStr "dns_type" $fixMap}}</code></td></tr>
+                                                    <tr><th scope="row" style="color: #8b949e;" class="py-0 fw-semibold">Host</th><td class="py-0"><code class="text-info">{{mapGetStr "dns_host" $fixMap}}</code> <span class="text-muted" style="font-size: 0.62rem;">{{mapGetStr "dns_host_help" $fixMap}}</span></td></tr>
+                                                    <tr><th scope="row" style="color: #8b949e;" class="py-0 fw-semibold">Value</th><td class="py-0"><code class="text-warning">{{mapGetStr "dns_value" $fixMap}}</code></td></tr>
                                                 </tbody>
                                             </table>
                                         </div>
@@ -673,17 +673,17 @@
                                         <table class="table table-dark table-sm table-borderless mb-0" style="font-size: 0.8rem;">
                                             <tbody>
                                                 <tr>
-                                                    <td style="width: 90px; color: #8b949e;" class="fw-semibold">Host / Name</td>
+                                                    <th scope="row" style="width: 90px; color: #8b949e;" class="fw-semibold">Host / Name</th>
                                                     <td><code class="text-info">{{mapGetStr "host" $rec}}</code></td>
                                                     <td class="text-muted" style="font-size: 0.75rem;">{{mapGetStr "host_help" $rec}}</td>
                                                 </tr>
                                                 <tr>
-                                                    <td style="color: #8b949e;" class="fw-semibold">Type</td>
+                                                    <th scope="row" style="color: #8b949e;" class="fw-semibold">Type</th>
                                                     <td><code class="text-info">{{mapGetStr "record_type" $rec}}</code></td>
                                                     <td class="text-muted" style="font-size: 0.75rem;">Select this from the record type dropdown</td>
                                                 </tr>
                                                 <tr>
-                                                    <td style="color: #8b949e;" class="fw-semibold">Value</td>
+                                                    <th scope="row" style="color: #8b949e;" class="fw-semibold">Value</th>
                                                     <td colspan="2"><code class="text-warning">{{mapGetStr "value" $rec}}</code></td>
                                                 </tr>
                                             </tbody>
@@ -729,17 +729,17 @@
                                         <table class="table table-dark table-sm table-borderless mb-0" style="font-size: 0.8rem;">
                                             <tbody>
                                                 <tr>
-                                                    <td style="width: 90px; color: #8b949e;" class="fw-semibold">Host / Name</td>
+                                                    <th scope="row" style="width: 90px; color: #8b949e;" class="fw-semibold">Host / Name</th>
                                                     <td><code class="text-info">{{mapGetStr "host" $rec}}</code></td>
                                                     <td class="text-muted" style="font-size: 0.75rem;">{{mapGetStr "host_help" $rec}}</td>
                                                 </tr>
                                                 <tr>
-                                                    <td style="color: #8b949e;" class="fw-semibold">Type</td>
+                                                    <th scope="row" style="color: #8b949e;" class="fw-semibold">Type</th>
                                                     <td><code class="text-info">{{mapGetStr "record_type" $rec}}</code></td>
                                                     <td class="text-muted" style="font-size: 0.75rem;">Select this from the record type dropdown</td>
                                                 </tr>
                                                 <tr>
-                                                    <td style="color: #8b949e;" class="fw-semibold">Value</td>
+                                                    <th scope="row" style="color: #8b949e;" class="fw-semibold">Value</th>
                                                     <td colspan="2"><code class="text-warning">{{mapGetStr "value" $rec}}</code></td>
                                                 </tr>
                                             </tbody>
@@ -897,9 +897,9 @@
                                         <div class="mt-1 p-2 rounded" style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); font-size: 0.72rem;">
                                             <table class="table table-dark table-sm table-borderless mb-0" style="font-size: 0.72rem;">
                                                 <tbody>
-                                                    <tr><td style="width: 55px; color: #8b949e;" class="py-0 fw-semibold">Type</td><td class="py-0"><code class="text-info">{{mapGetStr "dns_type" $spfFix}}</code></td></tr>
-                                                    <tr><td style="color: #8b949e;" class="py-0 fw-semibold">Host</td><td class="py-0"><code class="text-info">{{mapGetStr "dns_host" $spfFix}}</code></td></tr>
-                                                    <tr><td style="color: #8b949e;" class="py-0 fw-semibold">Value</td><td class="py-0"><code class="text-warning">{{mapGetStr "dns_value" $spfFix}}</code></td></tr>
+                                                    <tr><th scope="row" style="width: 55px; color: #8b949e;" class="py-0 fw-semibold">Type</th><td class="py-0"><code class="text-info">{{mapGetStr "dns_type" $spfFix}}</code></td></tr>
+                                                    <tr><th scope="row" style="color: #8b949e;" class="py-0 fw-semibold">Host</th><td class="py-0"><code class="text-info">{{mapGetStr "dns_host" $spfFix}}</code></td></tr>
+                                                    <tr><th scope="row" style="color: #8b949e;" class="py-0 fw-semibold">Value</th><td class="py-0"><code class="text-warning">{{mapGetStr "dns_value" $spfFix}}</code></td></tr>
                                                 </tbody>
                                             </table>
                                         </div>
@@ -1031,9 +1031,9 @@
                                         <div class="mt-1 p-2 rounded" style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); font-size: 0.72rem;">
                                             <table class="table table-dark table-sm table-borderless mb-0" style="font-size: 0.72rem;">
                                                 <tbody>
-                                                    <tr><td style="width: 55px; color: #8b949e;" class="py-0 fw-semibold">Type</td><td class="py-0"><code class="text-info">{{mapGetStr "dns_type" $dmarcFix}}</code></td></tr>
-                                                    <tr><td style="color: #8b949e;" class="py-0 fw-semibold">Host</td><td class="py-0"><code class="text-info">{{mapGetStr "dns_host" $dmarcFix}}</code></td></tr>
-                                                    <tr><td style="color: #8b949e;" class="py-0 fw-semibold">Value</td><td class="py-0"><code class="text-warning">{{mapGetStr "dns_value" $dmarcFix}}</code></td></tr>
+                                                    <tr><th scope="row" style="width: 55px; color: #8b949e;" class="py-0 fw-semibold">Type</th><td class="py-0"><code class="text-info">{{mapGetStr "dns_type" $dmarcFix}}</code></td></tr>
+                                                    <tr><th scope="row" style="color: #8b949e;" class="py-0 fw-semibold">Host</th><td class="py-0"><code class="text-info">{{mapGetStr "dns_host" $dmarcFix}}</code></td></tr>
+                                                    <tr><th scope="row" style="color: #8b949e;" class="py-0 fw-semibold">Value</th><td class="py-0"><code class="text-warning">{{mapGetStr "dns_value" $dmarcFix}}</code></td></tr>
                                                 </tbody>
                                             </table>
                                         </div>

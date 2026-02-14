@@ -12,7 +12,9 @@ import (
 )
 
 const (
+        logTaskCompleted  = "Task completed"
         msgDomainNotExist = "Domain does not exist or is not delegated"
+        msgDomainNoExist  = "Domain does not exist"
 )
 
 type namedResult struct {
@@ -59,11 +61,11 @@ func (a *Analyzer) AnalyzeDomain(ctx context.Context, domain string, customDKIMS
 
         daneStart := time.Now()
         resultsMap["dane"] = a.AnalyzeDANE(ctx, domain, mxForDANE)
-        slog.Info("Task completed", "task", "dane", "domain", domain, "elapsed_ms", fmt.Sprintf("%.0f", float64(time.Since(daneStart).Milliseconds())))
+        slog.Info(logTaskCompleted, "task", "dane", "domain", domain, "elapsed_ms", fmt.Sprintf("%.0f", float64(time.Since(daneStart).Milliseconds())))
 
         smtpStart := time.Now()
         smtpResult := a.AnalyzeSMTPTransport(ctx, domain, mxForDANE)
-        slog.Info("Task completed", "task", "smtp_transport", "domain", domain, "elapsed_ms", fmt.Sprintf("%.0f", float64(time.Since(smtpStart).Milliseconds())))
+        slog.Info(logTaskCompleted, "task", "smtp_transport", "domain", domain, "elapsed_ms", fmt.Sprintf("%.0f", float64(time.Since(smtpStart).Milliseconds())))
 
         enrichBasicRecords(basic, resultsMap)
         propagationStatus := buildPropagationStatus(basic, auth)
@@ -242,7 +244,7 @@ func (a *Analyzer) runParallelAnalyses(ctx context.Context, domain string, custo
         resultsMap := make(map[string]any)
         for nr := range resultsCh {
                 resultsMap[nr.key] = nr.result
-                slog.Info("Task completed", "task", nr.key, "domain", domain, "elapsed_ms", fmt.Sprintf("%.0f", float64(nr.elapsed.Milliseconds())))
+                slog.Info(logTaskCompleted, "task", nr.key, "domain", domain, "elapsed_ms", fmt.Sprintf("%.0f", float64(nr.elapsed.Milliseconds())))
         }
         return resultsMap
 }
@@ -327,7 +329,7 @@ func (a *Analyzer) buildNonExistentResult(domain, status string, statusMessage *
                 "dnssec_analysis":        map[string]any{"status": "n/a"},
                 "ns_delegation_analysis": map[string]any{"status": "error", "delegation_ok": false, "message": msgDomainNotExist},
                 "registrar_info":         map[string]any{"status": "n/a", "registrar": nil},
-                "smtp_transport":         map[string]any{"status": "n/a", "message": "Domain does not exist"},
+                "smtp_transport":         map[string]any{"status": "n/a", "message": msgDomainNoExist},
                 "ct_subdomains":          map[string]any{"status": "success", "subdomains": []any{}, "unique_subdomains": 0, "total_certs": 0},
                 "has_null_mx":            false,
                 "is_no_mail_domain":      false,
@@ -338,8 +340,8 @@ func (a *Analyzer) buildNonExistentResult(domain, status string, statusMessage *
                 "https_svcb":             map[string]any{"status": "info", "has_https": false, "has_svcb": false, "https_records": []map[string]any{}, "svcb_records": []map[string]any{}, "supports_http3": false, "supports_ech": false, "issues": []string{}},
                 "cds_cdnskey":            map[string]any{"status": "info", "has_cds": false, "has_cdnskey": false, "cds_records": []map[string]any{}, "cdnskey_records": []map[string]any{}, "automation": "none", "issues": []string{}},
                 "smimea_openpgpkey":      map[string]any{"status": "info", "has_smimea": false, "has_openpgpkey": false, "smimea_records": []map[string]any{}, "openpgpkey_records": []map[string]any{}, "issues": []string{}},
-                "security_txt":          map[string]any{"status": "info", "found": false, "message": "Domain does not exist", "contacts": []string{}, "issues": []string{}},
-                "ai_surface":            map[string]any{"status": "info", "message": "Domain does not exist", "llms_txt": map[string]any{"found": false}, "robots_txt": map[string]any{"found": false}, "poisoning": map[string]any{"ioc_count": 0}, "hidden_prompts": map[string]any{"artifact_count": 0}, "evidence": []map[string]any{}, "summary": map[string]any{}},
+                "security_txt":          map[string]any{"status": "info", "found": false, "message": msgDomainNoExist, "contacts": []string{}, "issues": []string{}},
+                "ai_surface":            map[string]any{"status": "info", "message": msgDomainNoExist, "llms_txt": map[string]any{"found": false}, "robots_txt": map[string]any{"found": false}, "poisoning": map[string]any{"ioc_count": 0}, "hidden_prompts": map[string]any{"artifact_count": 0}, "evidence": []map[string]any{}, "summary": map[string]any{}},
                 "saas_txt":               map[string]any{"status": "success", "services": []map[string]any{}, "service_count": 0, "issues": []string{}},
                 "asn_info":               map[string]any{"status": "info", "ipv4_asn": []map[string]any{}, "ipv6_asn": []map[string]any{}, "unique_asns": []map[string]any{}, "issues": []string{}},
                 "edge_cdn":               map[string]any{"status": "success", "is_behind_cdn": false, "cdn_provider": "", "cdn_indicators": []string{}, "origin_visible": true, "issues": []string{}},

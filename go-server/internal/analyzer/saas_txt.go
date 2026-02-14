@@ -6,27 +6,27 @@ package analyzer
 import "regexp"
 
 type saasPattern struct {
-	Name    string
-	Pattern *regexp.Regexp
+        Name    string
+        Pattern *regexp.Regexp
 }
 
 var saasPatterns = []saasPattern{}
 
 func ExtractSaaSTXTFootprint(results map[string]any) map[string]any {
-	return map[string]any{
-		"status":        "success",
-		"services":      []map[string]any{},
-		"service_count": 0,
-		"issues":        []string{},
-		"message":       "No SaaS verification records detected",
-	}
+        return map[string]any{
+                "status":        "success",
+                "services":      []map[string]any{},
+                "service_count": 0,
+                "issues":        []string{},
+                "message":       "No SaaS verification records detected",
+        }
 }
 
-func matchSaaSPatterns(txt string, seen map[string]bool, services *[]map[string]any) {}
+func matchSaaSPatterns(txt string, seen map[string]bool, services *[]map[string]any) {} // Stub: pattern matching in dnstool-intel
 
 func truncateRecord(s string, maxLen int) string {
-	if len(s) <= maxLen {
-		return s
-	}
-	return s[:maxLen] + "..."
+        if len(s) <= maxLen {
+                return s
+        }
+        return s[:maxLen] + "..."
 }

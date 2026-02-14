@@ -10,6 +10,11 @@ import (
         "github.com/gin-gonic/gin"
 )
 
+const (
+        rateLimitNone   = "No rate limits."
+        methodHTTPSREST = "HTTPS REST API (no authentication required)"
+)
+
 type IntelSource struct {
         Name        string
         Icon        string
@@ -63,7 +68,7 @@ func getDNSSources() []IntelSource {
                         Category:   "Resolver",
                         Purpose:    "Primary consensus resolver. Privacy-focused, DNSSEC-validating resolver operated by Cloudflare.",
                         Method:     "UDP/TCP with DoH fallback via https://cloudflare-dns.com/dns-query",
-                        RateLimits: "No rate limits.",
+                        RateLimits: rateLimitNone,
                         VerifyCmd:  "dig @1.1.1.1 +short A example.com",
                         URL:        "https://developers.cloudflare.com/1.1.1.1/",
                         Free:       true,
@@ -74,7 +79,7 @@ func getDNSSources() []IntelSource {
                         Category:   "Resolver",
                         Purpose:    "Primary consensus resolver. Globally distributed, DNSSEC-validating resolver operated by Google.",
                         Method:     "UDP/TCP with DoH fallback via https://dns.google/resolve",
-                        RateLimits: "No rate limits.",
+                        RateLimits: rateLimitNone,
                         VerifyCmd:  "dig @8.8.8.8 +short A example.com",
                         URL:        "https://developers.google.com/speed/public-dns",
                         Free:       true,
@@ -85,7 +90,7 @@ func getDNSSources() []IntelSource {
                         Category:   "Resolver",
                         Purpose:    "Consensus resolver with threat-intelligence filtering. Swiss-based nonprofit, DNSSEC-validating.",
                         Method:     "UDP/TCP with DoH fallback via https://dns.quad9.net/dns-query",
-                        RateLimits: "No rate limits.",
+                        RateLimits: rateLimitNone,
                         VerifyCmd:  "dig @9.9.9.9 +short A example.com",
                         URL:        "https://www.quad9.net/",
                         Free:       true,
@@ -96,7 +101,7 @@ func getDNSSources() []IntelSource {
                         Category:   "Resolver",
                         Purpose:    "Consensus resolver. Enterprise-grade resolver operated by Cisco.",
                         Method:     "UDP/TCP",
-                        RateLimits: "No rate limits.",
+                        RateLimits: rateLimitNone,
                         VerifyCmd:  "dig @208.67.222.222 +short A example.com",
                         URL:        "https://www.opendns.com/",
                         Free:       true,
@@ -173,7 +178,7 @@ func getMetaSources() []IntelSource {
                         Icon:       "fas fa-building",
                         Category:   "Registry",
                         Purpose:    "Registration Data Access Protocol — the modern successor to WHOIS. Retrieves domain registrar, registration dates, status codes, and nameserver delegation from the authoritative registry.",
-                        Method:     "HTTPS REST API (no authentication required)",
+                        Method:     methodHTTPSREST,
                         RateLimits: "Varies by registry. Telemetry-based cooldown with honest unavailability messaging.",
                         VerifyCmd:  "curl -s 'https://rdap.verisign.com/com/v1/domain/example.com' | jq '.entities[0].vcardArray'",
                         URL:        "https://www.iana.org/domains/rdap",
@@ -184,7 +189,7 @@ func getMetaSources() []IntelSource {
                         Icon:       "fas fa-briefcase",
                         Category:   "Reference",
                         Purpose:    "Fetches RFC metadata (titles, status, obsoleted-by) for all cited RFCs. Ensures RFC references in remediation guidance are current and accurate.",
-                        Method:     "HTTPS REST API (no authentication required)",
+                        Method:     methodHTTPSREST,
                         RateLimits: "No published rate limits.",
                         VerifyCmd:  "curl -s 'https://datatracker.ietf.org/doc/api/rfc/?format=json&rfc=7489' | jq '.objects[0].title'",
                         URL:        "https://datatracker.ietf.org/",
@@ -195,7 +200,7 @@ func getMetaSources() []IntelSource {
                         Icon:       "fas fa-earth-americas",
                         Category:   "Supplemental",
                         Purpose:    "Visitor IP geolocation only (your location flag in the footer). Not used for any analysis data. Degrades gracefully on failure.",
-                        Method:     "HTTPS REST API (no authentication required)",
+                        Method:     methodHTTPSREST,
                         RateLimits: "45 requests/minute on free tier.",
                         URL:        "https://ip-api.com/",
                         Free:       true,

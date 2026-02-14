@@ -5,91 +5,93 @@
 package analyzer
 
 import (
-	"testing"
+        "testing"
 )
 
+const errExpectedGot = "expected %q, got %q"
+
 func TestEmailAnswerNoMailDomain(t *testing.T) {
-	ps := protocolState{isNoMailDomain: true}
-	answer := buildEmailAnswer(ps, false, false)
-	if answer != "No — null MX indicates no-mail domain" {
-		t.Errorf("no-mail domain should return 'No — null MX indicates no-mail domain', got: %s", answer)
-	}
+        ps := protocolState{isNoMailDomain: true}
+        answer := buildEmailAnswer(ps, false, false)
+        if answer != "No — null MX indicates no-mail domain" {
+                t.Errorf("no-mail domain should return 'No — null MX indicates no-mail domain', got: %s", answer)
+        }
 }
 
 func TestEmailAnswerRejectPolicy(t *testing.T) {
-	ps := protocolState{dmarcPolicy: "reject"}
-	answer := buildEmailAnswer(ps, true, true)
-	expected := "No — SPF and DMARC reject policy enforced"
-	if answer != expected {
-		t.Errorf("expected %q, got %q", expected, answer)
-	}
+        ps := protocolState{dmarcPolicy: "reject"}
+        answer := buildEmailAnswer(ps, true, true)
+        expected := "No — SPF and DMARC reject policy enforced"
+        if answer != expected {
+                t.Errorf(errExpectedGot, expected, answer)
+        }
 }
 
 func TestEmailAnswerNoProtection(t *testing.T) {
-	ps := protocolState{}
-	answer := buildEmailAnswer(ps, false, false)
-	expected := "Yes — no SPF or DMARC protection"
-	if answer != expected {
-		t.Errorf("expected %q, got %q", expected, answer)
-	}
+        ps := protocolState{}
+        answer := buildEmailAnswer(ps, false, false)
+        expected := "Yes — no SPF or DMARC protection"
+        if answer != expected {
+                t.Errorf(errExpectedGot, expected, answer)
+        }
 }
 
 func TestEmailAnswerMonitorOnly(t *testing.T) {
-	ps := protocolState{dmarcPolicy: "none"}
-	answer := buildEmailAnswer(ps, true, true)
-	expected := "Yes — DMARC is monitor-only (p=none)"
-	if answer != expected {
-		t.Errorf("expected %q, got %q", expected, answer)
-	}
+        ps := protocolState{dmarcPolicy: "none"}
+        answer := buildEmailAnswer(ps, true, true)
+        expected := "Yes — DMARC is monitor-only (p=none)"
+        if answer != expected {
+                t.Errorf(errExpectedGot, expected, answer)
+        }
 }
 
 func TestEmailAnswerQuarantineFull(t *testing.T) {
-	ps := protocolState{dmarcPolicy: "quarantine", dmarcPct: 100}
-	answer := buildEmailAnswer(ps, true, true)
-	expected := "Unlikely — SPF and DMARC quarantine policy enforced"
-	if answer != expected {
-		t.Errorf("expected %q, got %q", expected, answer)
-	}
+        ps := protocolState{dmarcPolicy: "quarantine", dmarcPct: 100}
+        answer := buildEmailAnswer(ps, true, true)
+        expected := "Unlikely — SPF and DMARC quarantine policy enforced"
+        if answer != expected {
+                t.Errorf(errExpectedGot, expected, answer)
+        }
 }
 
 func TestEmailAnswerSPFOnly(t *testing.T) {
-	ps := protocolState{}
-	answer := buildEmailAnswer(ps, true, false)
-	expected := "Likely — SPF alone cannot prevent spoofing"
-	if answer != expected {
-		t.Errorf("expected %q, got %q", expected, answer)
-	}
+        ps := protocolState{}
+        answer := buildEmailAnswer(ps, true, false)
+        expected := "Likely — SPF alone cannot prevent spoofing"
+        if answer != expected {
+                t.Errorf(errExpectedGot, expected, answer)
+        }
 }
 
 func TestGoldenRuleUSAGov(t *testing.T) {
-	ps := protocolState{
-		dmarcPolicy: "reject",
-		dmarcPct:    100,
-		dmarcHasRua: true,
-		spfOK:       true,
-	}
+        ps := protocolState{
+                dmarcPolicy: "reject",
+                dmarcPct:    100,
+                dmarcHasRua: true,
+                spfOK:       true,
+        }
 
-	answer := buildEmailAnswer(ps, true, true)
-	if answer != "No — SPF and DMARC reject policy enforced" {
-		t.Errorf("usa.gov-like domain (SPF+DMARC reject, no MX) should show 'No', got: %s", answer)
-	}
+        answer := buildEmailAnswer(ps, true, true)
+        if answer != "No — SPF and DMARC reject policy enforced" {
+                t.Errorf("usa.gov-like domain (SPF+DMARC reject, no MX) should show 'No', got: %s", answer)
+        }
 
-	verdicts := buildVerdicts(ps, DKIMProviderInferred, true, true, true)
-	emailAnswer, ok := verdicts["email_answer"].(string)
-	if !ok || emailAnswer == "" {
-		t.Error("verdicts must contain non-empty 'email_answer' string")
-	}
+        verdicts := buildVerdicts(ps, DKIMProviderInferred, true, true, true)
+        emailAnswer, ok := verdicts["email_answer"].(string)
+        if !ok || emailAnswer == "" {
+                t.Error("verdicts must contain non-empty 'email_answer' string")
+        }
 }
 
 func TestGoldenRuleNoMXDomain(t *testing.T) {
-	ps := protocolState{
-		dmarcPolicy:    "reject",
-		dmarcPct:       100,
-		isNoMailDomain: true,
-	}
+        ps := protocolState{
+                dmarcPolicy:    "reject",
+                dmarcPct:       100,
+                isNoMailDomain: true,
+        }
 
-	answer := buildEmailAnswer(ps, true, true)
-	if answer != "No — null MX indicates no-mail domain" {
-		t.Errorf("no-MX domain with null MX should show no-mail answer, got: %s", answer)
-	}
+        answer := buildEmailAnswer(ps, true, true)
+        if answer != "No — null MX indicates no-mail domain" {
+                t.Errorf("no-MX domain with null MX should show no-mail answer, got: %s", answer)
+        }
 }

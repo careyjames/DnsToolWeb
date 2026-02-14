@@ -98,6 +98,104 @@ type gradeInput struct {
         hasDKIM               bool
         dkimInconclusive      bool
         isNoMail              bool
+        monitoring            []string
+        configured            []string
+        absent                []string
+}
+
+func evaluateSPFState(spf map[string]any) (spfOK, spfWarning, spfMissing, spfHardFail, spfDangerous, spfNeutral, spfLookupExceeded bool, spfLookupCount int) {
+        if isMissingRecord(spf) {
+                spfMissing = true
+                return
+        }
+
+        status, _ := spf["status"].(string)
+        switch status {
+        case "success":
+                spfOK = true
+        case "warning":
+                spfWarning = true
+                spfOK = true
+        default:
+                spfMissing = true
+        }
+
+        mechanism, _ := spf["mechanism"].(string)
+        mechanism = strings.TrimSpace(mechanism)
+        switch mechanism {
+        case "-all":
+                spfHardFail = true
+        case "+all":
+                spfDangerous = true
+        case "?all":
+                spfNeutral = true
+        }
+
+        spfLookupCount = extractIntField(spf, "lookup_count")
+        if spfLookupCount > 10 {
+                spfLookupExceeded = true
+        }
+        return
+}
+
+func evaluateDMARCState(dmarc map[string]any) (dmarcOK, dmarcWarning, dmarcMissing bool, dmarcPolicy string, dmarcPct int, dmarcHasRua bool) {
+        if isMissingRecord(dmarc) {
+                dmarcMissing = true
+                return
+        }
+
+        status, _ := dmarc["status"].(string)
+        switch status {
+        case "success":
+                dmarcOK = true
+        case "warning":
+                dmarcWarning = true
+                dmarcOK = true
+        default:
+                dmarcMissing = true
+        }
+
+        dmarcPolicy, _ = dmarc["policy"].(string)
+        dmarcPct = extractIntFieldDefault(dmarc, "pct", 100)
+        if rua, ok := dmarc["has_rua"].(bool); ok {
+                dmarcHasRua = rua
+        }
+        return
+}
+
+func evaluateDKIMState(dkim map[string]any) (dkimOK, dkimProvider, dkimPartial, dkimWeakKeys, dkimThirdPartyOnly bool, primaryProvider string) {
+        if isMissingRecord(dkim) {
+                return
+        }
+
+        status, _ := dkim["status"].(string)
+        switch status {
+        case "success":
+                dkimOK = true
+        case "warning":
+                dkimOK = true
+        }
+
+        if pp, ok := dkim["primary_provider"].(string); ok && pp != "" {
+                primaryProvider = pp
+                dkimProvider = true
+        }
+
+        dkimWeakKeys, dkimThirdPartyOnly = evaluateDKIMIssues(dkim)
+
+        recordsFound := extractIntField(dkim, "records_found")
+        if recordsFound > 0 && !dkimOK {
+                dkimPartial = true
+        }
+        return
+}
+
+func evaluateSimpleProtocolState(analysis map[string]any, successField string) bool {
+        if isMissingRecord(analysis) {
+                return false
+        }
+        status, _ := analysis[successField].(string)
+        return status == "success"
 }
 
 func evaluateProtocolStates(results map[string]any) protocolState {
@@ -120,107 +218,14 @@ func evaluateProtocolStates(results map[string]any) protocolState {
                 ps.isNoMailDomain = true
         }
 
-        if !isMissingRecord(spf) {
-                status, _ := spf["status"].(string)
-                switch status {
-                case "success":
-                        ps.spfOK = true
-                case "warning":
-                        ps.spfWarning = true
-                        ps.spfOK = true
-                default:
-                        ps.spfMissing = true
-                }
+        ps.spfOK, ps.spfWarning, ps.spfMissing, ps.spfHardFail, ps.spfDangerous, ps.spfNeutral, ps.spfLookupExceeded, ps.spfLookupCount = evaluateSPFState(spf)
+        ps.dmarcOK, ps.dmarcWarning, ps.dmarcMissing, ps.dmarcPolicy, ps.dmarcPct, ps.dmarcHasRua = evaluateDMARCState(dmarc)
+        ps.dkimOK, ps.dkimProvider, ps.dkimPartial, ps.dkimWeakKeys, ps.dkimThirdPartyOnly, ps.primaryProvider = evaluateDKIMState(dkim)
 
-                mechanism, _ := spf["mechanism"].(string)
-                mechanism = strings.TrimSpace(mechanism)
-                switch mechanism {
-                case "-all":
-                        ps.spfHardFail = true
-                case "+all":
-                        ps.spfDangerous = true
-                case "?all":
-                        ps.spfNeutral = true
-                }
-
-                ps.spfLookupCount = extractIntField(spf, "lookup_count")
-                if ps.spfLookupCount > 10 {
-                        ps.spfLookupExceeded = true
-                }
-        } else {
-                ps.spfMissing = true
-        }
-
-        if !isMissingRecord(dmarc) {
-                status, _ := dmarc["status"].(string)
-                switch status {
-                case "success":
-                        ps.dmarcOK = true
-                case "warning":
-                        ps.dmarcWarning = true
-                        ps.dmarcOK = true
-                default:
-                        ps.dmarcMissing = true
-                }
-
-                ps.dmarcPolicy, _ = dmarc["policy"].(string)
-                ps.dmarcPct = extractIntFieldDefault(dmarc, "pct", 100)
-                if rua, ok := dmarc["has_rua"].(bool); ok {
-                        ps.dmarcHasRua = rua
-                }
-        } else {
-                ps.dmarcMissing = true
-        }
-
-        if !isMissingRecord(dkim) {
-                status, _ := dkim["status"].(string)
-                switch status {
-                case "success":
-                        ps.dkimOK = true
-                case "warning":
-                        ps.dkimOK = true
-                }
-
-                if pp, ok := dkim["primary_provider"].(string); ok && pp != "" {
-                        ps.primaryProvider = pp
-                        ps.dkimProvider = true
-                }
-
-                ps.dkimWeakKeys, ps.dkimThirdPartyOnly = evaluateDKIMIssues(dkim)
-
-                recordsFound := extractIntField(dkim, "records_found")
-                if recordsFound > 0 && !ps.dkimOK {
-                        ps.dkimPartial = true
-                }
-        }
-
-        if !isMissingRecord(caa) {
-                status, _ := caa["status"].(string)
-                if status == "success" {
-                        ps.caaOK = true
-                }
-        }
-
-        if !isMissingRecord(mtaSts) {
-                status, _ := mtaSts["status"].(string)
-                if status == "success" {
-                        ps.mtaStsOK = true
-                }
-        }
-
-        if !isMissingRecord(tlsrpt) {
-                status, _ := tlsrpt["status"].(string)
-                if status == "success" {
-                        ps.tlsrptOK = true
-                }
-        }
-
-        if !isMissingRecord(bimi) {
-                status, _ := bimi["status"].(string)
-                if status == "success" {
-                        ps.bimiOK = true
-                }
-        }
+        ps.caaOK = evaluateSimpleProtocolState(caa, "status")
+        ps.mtaStsOK = evaluateSimpleProtocolState(mtaSts, "status")
+        ps.tlsrptOK = evaluateSimpleProtocolState(tlsrpt, "status")
+        ps.bimiOK = evaluateSimpleProtocolState(bimi, "status")
 
         if !isMissingRecord(dane) {
                 if hasDane, ok := dane["has_dane"].(bool); ok && hasDane {
@@ -569,7 +574,16 @@ func (a *Analyzer) CalculatePosture(results map[string]any) map[string]any {
         hasDMARC := !ps.dmarcMissing
         hasDKIM := ds.IsPresent()
 
-        state, icon, color, message := determineGrade(ps, ds, hasSPF, hasDMARC, hasDKIM, acc.monitoring, acc.configured, acc.absent)
+        gi := gradeInput{
+                hasSPF:     hasSPF,
+                hasDMARC:   hasDMARC,
+                hasDKIM:    hasDKIM,
+                monitoring: acc.monitoring,
+                configured: acc.configured,
+                absent:     acc.absent,
+        }
+
+        state, icon, color, message := determineGrade(ps, ds, gi)
 
         score := computeInternalScore(ps, ds)
 
@@ -608,37 +622,32 @@ func (a *Analyzer) CalculatePosture(results map[string]any) map[string]any {
         }
 }
 
-func determineGrade(ps protocolState, ds DKIMState, hasSPF, hasDMARC, hasDKIM bool, monitoring, configured, absent []string) (state, icon, color, message string) {
-        gi := gradeInput{
-                corePresent:           hasSPF && hasDMARC,
-                dmarcFullEnforcing:    ps.dmarcPolicy == "reject" || (ps.dmarcPolicy == "quarantine" && ps.dmarcPct >= 100),
-                dmarcPartialEnforcing: ps.dmarcPolicy == "quarantine" && ps.dmarcPct < 100,
-                dmarcStrict:           ps.dmarcPolicy == "reject",
-                hasCAA:                ps.caaOK,
-                hasSPF:                hasSPF,
-                hasDMARC:              hasDMARC,
-                hasDKIM:               hasDKIM,
-                dkimInconclusive:      ds == DKIMInconclusive,
-                isNoMail:              ps.isNoMailDomain,
-        }
+func determineGrade(ps protocolState, ds DKIMState, gi gradeInput) (state, icon, color, message string) {
+        gi.corePresent = gi.hasSPF && gi.hasDMARC
+        gi.dmarcFullEnforcing = ps.dmarcPolicy == "reject" || (ps.dmarcPolicy == "quarantine" && ps.dmarcPct >= 100)
+        gi.dmarcPartialEnforcing = ps.dmarcPolicy == "quarantine" && ps.dmarcPct < 100
+        gi.dmarcStrict = ps.dmarcPolicy == "reject"
+        gi.hasCAA = ps.caaOK
+        gi.dkimInconclusive = ds == DKIMInconclusive
+        gi.isNoMail = ps.isNoMailDomain
 
-        state, icon, color, message = classifyGrade(ps, gi, monitoring, configured, absent)
+        state, icon, color, message = classifyGrade(ps, gi)
         return
 }
 
-func classifyGrade(ps protocolState, gi gradeInput, monitoring, configured, absent []string) (string, string, string, string) {
+func classifyGrade(ps protocolState, gi gradeInput) (string, string, string, string) {
         if ps.dnssecBroken {
                 return riskCritical, iconExclamationTriangle, "danger", "DNSSEC validation is broken — DNS responses may be tampered with"
         }
 
         if gi.isNoMail {
-                return classifyNoMailGrade(ps, gi, configured, absent)
+                return classifyNoMailGrade(ps, gi)
         }
 
-        return classifyMailGrade(ps, gi, monitoring, configured, absent)
+        return classifyMailGrade(ps, gi)
 }
 
-func classifyMailGrade(ps protocolState, gi gradeInput, monitoring, configured, absent []string) (string, string, string, string) {
+func classifyMailGrade(ps protocolState, gi gradeInput) (string, string, string, string) {
         if !gi.hasSPF && !gi.hasDMARC {
                 return riskCritical, iconExclamationTriangle, "danger", "No SPF or DMARC records — domain is unprotected against email spoofing"
         }
@@ -647,40 +656,40 @@ func classifyMailGrade(ps protocolState, gi gradeInput, monitoring, configured, 
                 return classifyMailPartial(gi)
         }
 
-        return classifyMailCorePresent(ps, gi, monitoring, configured, absent)
+        return classifyMailCorePresent(ps, gi)
 }
 
-func classifyMailCorePresent(ps protocolState, gi gradeInput, monitoring, configured, absent []string) (string, string, string, string) {
+func classifyMailCorePresent(ps protocolState, gi gradeInput) (string, string, string, string) {
         if gi.dmarcFullEnforcing && gi.hasDKIM {
                 state := riskLow
-                msg := buildDescriptiveMessage(ps, configured, absent, monitoring)
-                return applyMonitoringSuffix(state, monitoring), iconShieldAlt, "success", msg
+                msg := buildDescriptiveMessage(ps, gi.configured, gi.absent, gi.monitoring)
+                return applyMonitoringSuffix(state, gi.monitoring), iconShieldAlt, "success", msg
         }
 
         if gi.dmarcFullEnforcing && !gi.hasDKIM {
                 state := riskMedium
                 msg := "SPF and DMARC enforcing but DKIM not confirmed"
-                return applyMonitoringSuffix(state, monitoring), iconShieldAlt, "info", msg
+                return applyMonitoringSuffix(state, gi.monitoring), iconShieldAlt, "info", msg
         }
 
         if gi.dmarcPartialEnforcing {
                 state := riskMedium
                 msg := fmt.Sprintf("DMARC quarantine at %d%% — not fully enforcing", ps.dmarcPct)
-                return applyMonitoringSuffix(state, monitoring), iconShieldAlt, "info", msg
+                return applyMonitoringSuffix(state, gi.monitoring), iconShieldAlt, "info", msg
         }
 
         if ps.dmarcPolicy == "none" {
                 if ps.dmarcHasRua {
                         state := riskMedium
                         msg := "DMARC is in monitoring mode (p=none) with reporting enabled"
-                        return applyMonitoringSuffix(state, monitoring), iconShieldAlt, "info", msg
+                        return applyMonitoringSuffix(state, gi.monitoring), iconShieldAlt, "info", msg
                 }
                 return riskHigh, iconExclamationTriangle, "warning", "DMARC policy is 'none' with no reporting — no protection or visibility"
         }
 
         state := riskMedium
-        msg := buildDescriptiveMessage(ps, configured, absent, monitoring)
-        return applyMonitoringSuffix(state, monitoring), iconShieldAlt, "info", msg
+        msg := buildDescriptiveMessage(ps, gi.configured, gi.absent, gi.monitoring)
+        return applyMonitoringSuffix(state, gi.monitoring), iconShieldAlt, "info", msg
 }
 
 func classifyMailPartial(gi gradeInput) (string, string, string, string) {
@@ -690,7 +699,7 @@ func classifyMailPartial(gi gradeInput) (string, string, string, string) {
         return riskHigh, iconExclamationTriangle, "warning", "DMARC present but no SPF — mail authentication is incomplete"
 }
 
-func classifyNoMailGrade(ps protocolState, gi gradeInput, configured, absent []string) (string, string, string, string) {
+func classifyNoMailGrade(ps protocolState, gi gradeInput) (string, string, string, string) {
         if gi.hasSPF && gi.hasDMARC {
                 if gi.dmarcStrict || gi.dmarcFullEnforcing {
                         return riskLow, iconShieldAlt, "success", "No-mail domain properly configured with SPF and DMARC reject policy"

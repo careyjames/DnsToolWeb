@@ -4,26 +4,26 @@
 package analyzer
 
 type ManifestEntry struct {
-	Feature          string
-	Category         string
-	Description      string
-	SchemaKey        string
-	DetectionMethods []string
-	RFC              string
+        Feature          string
+        Category         string
+        Description      string
+        SchemaKey        string
+        DetectionMethods []string
+        RFC              string
 }
 
 var FeatureParityManifest = []ManifestEntry{}
 
 var RequiredSchemaKeys []string
 
-func init() {}
+func init() {} // Stub: populated at build time by dnstool-intel
 
 func GetManifestByCategory(category string) []ManifestEntry {
-	var result []ManifestEntry
-	for _, entry := range FeatureParityManifest {
-		if entry.Category == category {
-			result = append(result, entry)
-		}
-	}
-	return result
+        var result []ManifestEntry
+        for _, entry := range FeatureParityManifest {
+                if entry.Category == category {
+                        result = append(result, entry)
+                }
+        }
+        return result
 }

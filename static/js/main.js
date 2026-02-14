@@ -3,13 +3,13 @@ if ('serviceWorker' in navigator) {
 }
 
 function startStatusCycle(overlayEl) {
-    var timerEl = document.getElementById('loadingTimer');
-    var noteEl = document.getElementById('loadingNote');
-    var startTime = Date.now();
+    const timerEl = document.getElementById('loadingTimer');
+    const noteEl = document.getElementById('loadingNote');
+    const startTime = Date.now();
 
     if (timerEl) {
         setInterval(function() {
-            var elapsed = Math.floor((Date.now() - startTime) / 1000);
+            const elapsed = Math.floor((Date.now() - startTime) / 1000);
             timerEl.textContent = elapsed + 's';
         }, 1000);
     }
@@ -19,24 +19,24 @@ function startStatusCycle(overlayEl) {
         }, 6000);
     }
 
-    var phases = overlayEl.querySelectorAll('.scan-phase');
+    const phases = overlayEl.querySelectorAll('.scan-phase');
     if (phases.length === 0) return;
 
-    var completed = 0;
+    let completed = 0;
     phases.forEach(function(phase, idx) {
-        var delay = parseInt(phase.dataset.delay, 10) || 0;
+        const delay = Number.parseInt(phase.dataset.delay, 10) || 0;
         setTimeout(function() {
             phase.classList.add('visible', 'active-phase');
         }, delay);
 
-        var doneDelay = delay + 1800 + Math.random() * 1200;
+        const doneDelay = delay + 1800 + Math.random() * 1200; // NOSONAR — animation timing, not cryptographic
         if (idx === phases.length - 1) {
             return;
         }
         setTimeout(function() {
             phase.classList.remove('active-phase');
             phase.classList.add('done');
-            var icon = phase.querySelector('.scan-icon');
+            const icon = phase.querySelector('.scan-icon');
             if (icon) {
                 icon.className = 'fas fa-check-circle scan-icon';
             }
@@ -232,7 +232,7 @@ if (allFixesCollapse) {
 }
 
 function loadDNSHistory(domain) {
-    var btn = document.getElementById('dns-history-btn');
+    const btn = document.getElementById('dns-history-btn');
     if (!btn) return;
     btn.disabled = true;
     btn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Loading history\u2026';
@@ -244,23 +244,30 @@ function loadDNSHistory(domain) {
                 btn.closest('.dns-history-load-wrapper').style.display = 'none';
                 return;
             }
-            var section = document.getElementById('dns-history-section');
-            var body = document.getElementById('dns-history-body');
-            var source = document.getElementById('dns-history-source');
+            const section = document.getElementById('dns-history-section');
+            const body = document.getElementById('dns-history-body');
+            const source = document.getElementById('dns-history-source');
             if (!section || !body) return;
 
             source.textContent = 'Source: ' + (data.source || 'SecurityTrails');
 
-            var changes = data.changes || [];
+            const changes = data.changes || [];
             if (changes.length === 0) {
                 body.innerHTML = '<p class="text-muted mb-0"><i class="fas fa-check-circle text-success me-1"></i>No DNS record changes detected in available history. A, AAAA, MX, and NS records for this domain have remained stable.</p>';
             } else {
-                var html = '<div class="table-responsive"><table class="table table-sm table-striped mb-0"><thead><tr>' +
+                let html = '<div class="table-responsive"><table class="table table-sm table-striped mb-0"><thead><tr>' +
                     '<th style="width:80px">Date</th><th style="width:60px">Type</th><th style="width:70px">Action</th>' +
                     '<th>Value</th><th>Organization</th><th>Timeline</th></tr></thead><tbody>';
                 changes.forEach(function(ch) {
-                    var typeColor = ch.record_type === 'A' || ch.record_type === 'AAAA' ? 'primary' : ch.record_type === 'MX' ? 'success' : ch.record_type === 'NS' ? 'info' : 'secondary';
-                    var actionHtml = ch.action === 'added' ?
+                    let typeColor = 'secondary';
+                    if (ch.record_type === 'A' || ch.record_type === 'AAAA') {
+                        typeColor = 'primary';
+                    } else if (ch.record_type === 'MX') {
+                        typeColor = 'success';
+                    } else if (ch.record_type === 'NS') {
+                        typeColor = 'info';
+                    }
+                    const actionHtml = ch.action === 'added' ?
                         '<span class="text-success"><i class="fas fa-plus-circle me-1"></i>Added</span>' :
                         '<span class="text-danger"><i class="fas fa-minus-circle me-1"></i>Removed</span>';
                     html += '<tr><td><code class="text-muted" style="font-size:0.8em">' + (ch.date || '') + '</code></td>' +

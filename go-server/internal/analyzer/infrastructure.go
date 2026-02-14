@@ -22,7 +22,9 @@ const (
         featGovSecurityStandards = "Government security standards"
         detMTASTS                = "MTA-STS"
 
-        nameCloudflare   = "Cloudflare"
+        nameGoogleWorkspace = "Google Workspace"
+        nameMicrosoft365    = "Microsoft 365"
+        nameCloudflare      = "Cloudflare"
         nameCSCGlobalDNS = "CSC Global DNS"
         nameDigitalOcean = "DigitalOcean"
         nameGoDaddy      = "GoDaddy"
@@ -246,12 +248,12 @@ func (a *Analyzer) scanDynamicServiceZones(ctx context.Context, zones map[string
 func (a *Analyzer) detectDynamicServices(providers map[string]map[string]any, domain string) {}
 
 var mxProviderPatterns = map[string]string{
-        "google":             "Google Workspace",
-        "googlemail":         "Google Workspace",
-        "gmail":              "Google Workspace",
-        "outlook":            "Microsoft 365",
-        "microsoft":          "Microsoft 365",
-        "protection.outlook": "Microsoft 365",
+        "google":             nameGoogleWorkspace,
+        "googlemail":         nameGoogleWorkspace,
+        "gmail":              nameGoogleWorkspace,
+        "outlook":            nameMicrosoft365,
+        "microsoft":          nameMicrosoft365,
+        "protection.outlook": nameMicrosoft365,
         "pphosted":           "Proofpoint",
         "iphmx":              "Proofpoint",
         "mimecast":           "Mimecast",
@@ -293,8 +295,8 @@ func identifyEmailProvider(mxRecords []string) string {
 
 var nsProviderPatterns = map[string]string{
         "cloudflare":    "Cloudflare",
-        "awsdns":        "Amazon Route 53",
-        "route53":       "Amazon Route 53",
+        "awsdns":        nameAmazonRoute53,
+        "route53":       nameAmazonRoute53,
         "google":        "Google Cloud DNS",
         "azure-dns":     "Azure DNS",
         "digitalocean":  "DigitalOcean",

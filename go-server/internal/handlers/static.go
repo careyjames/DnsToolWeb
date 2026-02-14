@@ -11,6 +11,8 @@ import (
         "github.com/gin-gonic/gin"
 )
 
+const headerContentType = "Content-Type"
+
 type StaticHandler struct {
         StaticDir string
 }
@@ -20,7 +22,7 @@ func NewStaticHandler(staticDir string) *StaticHandler {
 }
 
 func (h *StaticHandler) SecurityTxt(c *gin.Context) {
-        c.Header("Content-Type", "text/plain; charset=utf-8")
+        c.Header(headerContentType, "text/plain; charset=utf-8")
         c.File(filepath.Join(h.StaticDir, ".well-known", "security.txt"))
 }
 
@@ -37,12 +39,12 @@ func (h *StaticHandler) LLMsFullTxt(c *gin.Context) {
 }
 
 func (h *StaticHandler) ManifestJSON(c *gin.Context) {
-        c.Header("Content-Type", "application/manifest+json")
+        c.Header(headerContentType, "application/manifest+json")
         c.File(filepath.Join(h.StaticDir, "manifest.json"))
 }
 
 func (h *StaticHandler) ServiceWorker(c *gin.Context) {
-        c.Header("Content-Type", "application/javascript")
+        c.Header(headerContentType, "application/javascript")
         c.File(filepath.Join(h.StaticDir, "sw.js"))
 }
 
