@@ -70,6 +70,11 @@ Before publishing or after making changes to static assets or Go code, always ve
 7. **Run live integration tests** (optional) — `cd go-server && GIT_DIR=/dev/null go test -tags=integration -run TestLive ./internal/analyzer/ -v -timeout 120s` to verify real DNS queries produce correct result shapes. Skipped tests are normal (orchestrator timeout in constrained environments).
 8. **Restart workflow** — After binary swap, restart the "Start application" workflow.
 
+## Licensing
+- **Public repo (`DnsToolWeb`)**: BSL 1.1 (Business Source License) — source-available, converts to Apache-2.0 on 2029-02-14. Changed from AGPL-3.0 on Feb 14, 2026 because AGPL created legal tension with the proprietary private companion repo and hindered acquisition/commercial potential.
+- **Private repo (`dnstool-intel`)**: Proprietary — All Rights Reserved. No change needed.
+- **Open-core model**: Public repo is the shell (visible to everyone), private repo is the intelligence (secret). BSL prevents competitors from hosting a competing service while keeping code fully visible. See `LICENSING.md` for details.
+
 ## Public Repo Safety (Secret Sauce Protection)
 The public GitHub repo (`DnsToolWeb`) must NEVER expose proprietary intelligence:
 - **Never reveal** analyzer detection methods, scoring algorithms, provider database contents, schema keys, or remediation logic in public docs (DOCS.md, FEATURE_INVENTORY.md, README)

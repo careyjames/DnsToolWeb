@@ -1,5 +1,5 @@
 // Copyright (c) 2024-2026 IT Help San Diego Inc.
-// Licensed under AGPL-3.0 — See LICENSE for terms.
+// Licensed under BUSL-1.1 — See LICENSE for terms.
 //
 // Live integration tests — these query real DNS infrastructure and HTTP endpoints.
 // Run manually: cd go-server && GIT_DIR=/dev/null go test -tags=integration -run TestLive ./internal/analyzer/ -v -timeout 120s

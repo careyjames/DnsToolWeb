@@ -1,5 +1,5 @@
 // Copyright (c) 2024-2026 IT Help San Diego Inc.
-// Licensed under AGPL-3.0 — See LICENSE for terms.
+// Licensed under BUSL-1.1 — See LICENSE for terms.
 // Remediation engine — generates actionable security fixes from scan results.
 package analyzer
 
