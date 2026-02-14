@@ -35,6 +35,17 @@ type EmailHeaderAnalysis struct {
         Flags    []HeaderFlag
         Summary  string
         Verdict  string
+
+        BodyStripped     bool
+        BodyIndicators   []PhishingIndicator
+        HasBodyAnalysis  bool
+}
+
+type PhishingIndicator struct {
+        Category    string
+        Severity    string
+        Description string
+        Evidence    string
 }
 
 type AuthResult struct {
@@ -68,12 +79,40 @@ type HeaderFlag struct {
         Message  string
 }
 
-func AnalyzeEmailHeaders(raw string) *EmailHeaderAnalysis {
-        result := &EmailHeaderAnalysis{
-                RawHeaders: raw,
+func SeparateHeadersAndBody(raw string) (headers string, body string, hadBody bool) {
+        normalized := strings.ReplaceAll(raw, "\r\n", "\n")
+
+        separators := []string{"\n\n"}
+        for _, sep := range separators {
+                idx := strings.Index(normalized, sep)
+                if idx >= 0 {
+                        candidate := strings.TrimSpace(normalized[:idx])
+                        remainder := strings.TrimSpace(normalized[idx+len(sep):])
+
+                        if hasHeaderFields(candidate) && remainder != "" {
+                                return candidate, remainder, true
+                        }
+                }
         }
 
-        unfolded := unfoldHeaders(raw)
+        return strings.TrimSpace(raw), "", false
+}
+
+func hasHeaderFields(text string) bool {
+        re := regexp.MustCompile(`(?m)^[A-Za-z][A-Za-z0-9\-]*\s*:`)
+        matches := re.FindAllString(text, -1)
+        return len(matches) >= 2
+}
+
+func AnalyzeEmailHeaders(raw string) *EmailHeaderAnalysis {
+        headerPart, body, hadBody := SeparateHeadersAndBody(raw)
+
+        result := &EmailHeaderAnalysis{
+                RawHeaders:   headerPart,
+                BodyStripped: hadBody,
+        }
+
+        unfolded := unfoldHeaders(headerPart)
         headers := parseHeaderFields(unfolded)
 
         result.From = extractHeader(headers, "from")
@@ -89,6 +128,12 @@ func AnalyzeEmailHeaders(raw string) *EmailHeaderAnalysis {
         parseReceivedChain(headers, result)
         checkAlignment(result)
         generateFlags(result)
+
+        if hadBody && body != "" {
+                result.BodyIndicators = scanBodyForPhishingIndicators(body)
+                result.HasBodyAnalysis = len(result.BodyIndicators) > 0
+        }
+
         generateVerdict(result)
 
         return result
@@ -96,8 +141,26 @@ func AnalyzeEmailHeaders(raw string) *EmailHeaderAnalysis {
 
 func unfoldHeaders(raw string) string {
         raw = strings.ReplaceAll(raw, "\r\n", "\n")
-        re := regexp.MustCompile(`\n[ \t]+`)
-        return re.ReplaceAllString(raw, " ")
+        headerFieldRe := regexp.MustCompile(`^[ \t]+([A-Za-z][A-Za-z0-9\-]*)\s*:`)
+
+        lines := strings.Split(raw, "\n")
+        var result []string
+        for i, line := range lines {
+                if i == 0 {
+                        result = append(result, line)
+                        continue
+                }
+                if len(line) > 0 && (line[0] == ' ' || line[0] == '\t') {
+                        if headerFieldRe.MatchString(line) {
+                                result = append(result, strings.TrimLeft(line, " \t"))
+                        } else {
+                                result[len(result)-1] += " " + strings.TrimLeft(line, " \t")
+                        }
+                } else {
+                        result = append(result, line)
+                }
+        }
+        return strings.Join(result, "\n")
 }
 
 func parseHeaderFields(unfolded string) []headerField {
@@ -546,14 +609,203 @@ func generateVerdict(result *EmailHeaderAnalysis) {
                 }
         }
 
-        if dangerCount > 0 {
+        phishingDanger := 0
+        for _, ind := range result.BodyIndicators {
+                if ind.Severity == "danger" {
+                        phishingDanger++
+                }
+        }
+
+        if dangerCount > 0 || phishingDanger >= 2 {
                 result.Verdict = "suspicious"
-                result.Summary = "Authentication failures observed — this email may not be from who it claims to be."
-        } else if warningCount > 0 {
+                if phishingDanger >= 2 && dangerCount == 0 {
+                        result.Summary = "Templated mass-mail indicators observed in the email body — this pattern is commonly associated with scam or phishing campaigns."
+                } else {
+                        result.Summary = "Authentication failures observed — this email may not be from who it claims to be."
+                }
+        } else if warningCount > 0 || len(result.BodyIndicators) > 0 {
                 result.Verdict = "caution"
                 result.Summary = "Some findings need attention — review the details below to determine if this is expected behavior (like forwarding or mailing lists)."
         } else {
                 result.Verdict = "clean"
                 result.Summary = "No authentication failures or suspicious indicators observed in this header."
         }
+}
+
+func scanBodyForPhishingIndicators(body string) []PhishingIndicator {
+        var indicators []PhishingIndicator
+        lower := strings.ToLower(body)
+
+        btcRe := regexp.MustCompile(`\b[13][a-km-zA-HJ-NP-Z1-9]{25,34}\b`)
+        btcBech32Re := regexp.MustCompile(`\bbc1[a-zA-HJ-NP-Z0-9]{25,90}\b`)
+        ethRe := regexp.MustCompile(`\b0x[0-9a-fA-F]{40}\b`)
+        xmrRe := regexp.MustCompile(`\b4[0-9AB][1-9A-HJ-NP-Za-km-z]{93}\b`)
+
+        var cryptoMatches []string
+        if m := btcRe.FindString(body); m != "" {
+                cryptoMatches = append(cryptoMatches, "BTC: "+m[:12]+"...")
+        }
+        if m := btcBech32Re.FindString(body); m != "" {
+                cryptoMatches = append(cryptoMatches, "BTC: "+m[:12]+"...")
+        }
+        if m := ethRe.FindString(body); m != "" {
+                cryptoMatches = append(cryptoMatches, "ETH: "+m[:12]+"...")
+        }
+        if m := xmrRe.FindString(body); m != "" {
+                cryptoMatches = append(cryptoMatches, "XMR: "+m[:12]+"...")
+        }
+        if len(cryptoMatches) > 0 {
+                indicators = append(indicators, PhishingIndicator{
+                        Category:    "Cryptocurrency Address",
+                        Severity:    "danger",
+                        Description: "Cryptocurrency wallet address observed in email body — commonly found in sextortion and ransomware emails.",
+                        Evidence:    strings.Join(cryptoMatches, ", "),
+                })
+        }
+
+        sextortionPhrases := []string{
+                "recorded you", "webcam", "compromising video", "compromising photos",
+                "intimate moments", "visited adult", "adult website", "porn",
+                "masturbat", "sexual", "nude", "naked video", "camera was activated",
+                "your device was compromised", "installed malware", "trojan",
+                "i have access to your", "i hacked", "i got access",
+        }
+        var sextortionMatches []string
+        for _, phrase := range sextortionPhrases {
+                if strings.Contains(lower, phrase) {
+                        sextortionMatches = append(sextortionMatches, phrase)
+                }
+        }
+        if len(sextortionMatches) >= 2 {
+                indicators = append(indicators, PhishingIndicator{
+                        Category:    "Sextortion Language",
+                        Severity:    "danger",
+                        Description: "Multiple sextortion/blackmail phrases observed — this pattern matches well-known mass-mail extortion templates. These emails are typically sent in bulk and contain no real personal information.",
+                        Evidence:    "Phrases matched: " + strings.Join(sextortionMatches, ", "),
+                })
+        } else if len(sextortionMatches) == 1 {
+                indicators = append(indicators, PhishingIndicator{
+                        Category:    "Suspicious Language",
+                        Severity:    "warning",
+                        Description: "A phrase commonly associated with extortion emails was observed.",
+                        Evidence:    "Phrase matched: " + sextortionMatches[0],
+                })
+        }
+
+        urgencyPhrases := []string{
+                "within 48 hours", "within 24 hours", "within 72 hours",
+                "final warning", "last chance", "time is running out",
+                "act now", "act immediately", "immediate action required",
+                "your account will be", "account will be suspended",
+                "account will be closed", "account will be terminated",
+                "failure to comply", "legal action", "law enforcement",
+                "you have been selected",
+        }
+        var urgencyMatches []string
+        for _, phrase := range urgencyPhrases {
+                if strings.Contains(lower, phrase) {
+                        urgencyMatches = append(urgencyMatches, phrase)
+                }
+        }
+        if len(urgencyMatches) >= 2 {
+                indicators = append(indicators, PhishingIndicator{
+                        Category:    "Urgency Pressure",
+                        Severity:    "danger",
+                        Description: "Multiple urgency/pressure phrases observed — a hallmark of social engineering and scam emails designed to bypass rational thinking.",
+                        Evidence:    "Phrases matched: " + strings.Join(urgencyMatches, ", "),
+                })
+        } else if len(urgencyMatches) == 1 {
+                indicators = append(indicators, PhishingIndicator{
+                        Category:    "Urgency Language",
+                        Severity:    "warning",
+                        Description: "An urgency phrase was observed — common in phishing and scam emails, though sometimes used in legitimate communications.",
+                        Evidence:    "Phrase matched: " + urgencyMatches[0],
+                })
+        }
+
+        genericGreetings := []string{
+                "dear user", "dear customer", "dear client",
+                "dear sir", "dear madam", "dear sir/madam",
+                "dear valued customer", "dear account holder",
+                "dear friend", "hello friend",
+        }
+        for _, greeting := range genericGreetings {
+                if strings.Contains(lower, greeting) {
+                        indicators = append(indicators, PhishingIndicator{
+                                Category:    "Generic Greeting",
+                                Severity:    "warning",
+                                Description: "Generic greeting with no personalization — mass-produced emails typically use generic addresses because the sender does not know the recipient's name.",
+                                Evidence:    "Greeting: " + greeting,
+                        })
+                        break
+                }
+        }
+
+        paymentPhrases := []string{
+                "send payment", "transfer funds", "wire transfer",
+                "bitcoin payment", "pay the amount", "payment of $",
+                "send $", "send the money", "pay within",
+                "payment is required", "fee of $", "pay a fine",
+        }
+        for _, phrase := range paymentPhrases {
+                if strings.Contains(lower, phrase) {
+                        indicators = append(indicators, PhishingIndicator{
+                                Category:    "Payment Demand",
+                                Severity:    "danger",
+                                Description: "Payment demand language observed in email body.",
+                                Evidence:    "Phrase matched: " + phrase,
+                        })
+                        break
+                }
+        }
+
+        impersonation := []string{
+                "microsoft support", "apple support", "apple id",
+                "google security", "paypal security", "amazon security",
+                "irs ", "internal revenue", "social security",
+                "bank of america", "wells fargo", "chase bank",
+                "tech support", "customer support team",
+                "geek squad", "norton", "mcafee",
+        }
+        for _, phrase := range impersonation {
+                if strings.Contains(lower, phrase) {
+                        indicators = append(indicators, PhishingIndicator{
+                                Category:    "Brand Impersonation",
+                                Severity:    "warning",
+                                Description: "A well-known brand or service name was mentioned in the body — verify through official channels rather than clicking links in the email.",
+                                Evidence:    "Brand reference: " + phrase,
+                        })
+                        break
+                }
+        }
+
+        urlRe := regexp.MustCompile(`https?://[^\s<>"']+`)
+        urls := urlRe.FindAllString(body, -1)
+        if len(urls) > 5 {
+                indicators = append(indicators, PhishingIndicator{
+                        Category:    "High URL Density",
+                        Severity:    "warning",
+                        Description: fmt.Sprintf("%d URLs observed in email body — high link density can indicate phishing or spam content.", len(urls)),
+                        Evidence:    fmt.Sprintf("%d unique URLs found", len(urls)),
+                })
+        }
+
+        if len(urls) > 0 {
+                phishHits := CheckURLsAgainstOpenPhish(urls)
+                indicators = append(indicators, phishHits...)
+        }
+
+        capsRe := regexp.MustCompile(`[A-Z]{5,}`)
+        capsMatches := capsRe.FindAllString(body, -1)
+        exclamationCount := strings.Count(body, "!!!")
+        if len(capsMatches) > 3 || exclamationCount > 2 {
+                indicators = append(indicators, PhishingIndicator{
+                        Category:    "Aggressive Formatting",
+                        Severity:    "info",
+                        Description: "Excessive capitalization or exclamation marks observed — often used in scam emails to create emotional urgency.",
+                        Evidence:    fmt.Sprintf("%d ALL-CAPS words, %d triple-exclamations", len(capsMatches), exclamationCount),
+                })
+        }
+
+        return indicators
 }
