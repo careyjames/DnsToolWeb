@@ -129,3 +129,158 @@ func TestGoldenRuleNoMXDomain(t *testing.T) {
                 t.Errorf("no-MX domain with null MX should show no-mail answer, got: %s", answer)
         }
 }
+
+func TestGoldenRuleEnterpriseProviderDetection(t *testing.T) {
+        tests := []struct {
+                name         string
+                nsRecords    []string
+                expectTier   string
+                expectName   string
+        }{
+                {
+                        name:       "Amazon Route 53",
+                        nsRecords:  []string{"ns-1234.awsdns-56.org.", "ns-789.awsdns-12.co.uk."},
+                        expectTier: tierEnterprise,
+                        expectName: nameAmazonRoute53,
+                },
+                {
+                        name:       "Cloudflare",
+                        nsRecords:  []string{"ns1.cloudflare.com.", "ns2.cloudflare.com."},
+                        expectTier: tierEnterprise,
+                        expectName: nameCloudflare,
+                },
+                {
+                        name:       "NS1",
+                        nsRecords:  []string{"dns1.p03.nsone.net.", "dns2.p03.nsone.net."},
+                        expectTier: tierEnterprise,
+                        expectName: "NS1",
+                },
+                {
+                        name:       "Google Cloud DNS",
+                        nsRecords:  []string{"ns-cloud-a1.googledomains.com.", "ns-cloud-a2.googledomains.com."},
+                        expectTier: tierEnterprise,
+                        expectName: "Google Cloud DNS",
+                },
+                {
+                        name:       "Azure DNS",
+                        nsRecords:  []string{"ns1-01.azure-dns.com.", "ns2-01.azure-dns.net."},
+                        expectTier: tierEnterprise,
+                        expectName: "Azure DNS",
+                },
+                {
+                        name:       "Akamai Edge DNS",
+                        nsRecords:  []string{"a1-123.akam.net.", "a2-456.akam.net."},
+                        expectTier: tierEnterprise,
+                        expectName: "Akamai Edge DNS",
+                },
+                {
+                        name:       "UltraDNS",
+                        nsRecords:  []string{"pdns1.ultradns.net.", "pdns2.ultradns.net."},
+                        expectTier: tierEnterprise,
+                        expectName: "UltraDNS",
+                },
+                {
+                        name:       "Oracle Dyn",
+                        nsRecords:  []string{"ns1.p01.dynect.net.", "ns2.p01.dynect.net."},
+                        expectTier: tierEnterprise,
+                        expectName: "Oracle Dyn",
+                },
+                {
+                        name:       "CSC Global DNS",
+                        nsRecords:  []string{"ns1.cscglobal.com.", "ns2.cscglobal.com."},
+                        expectTier: tierEnterprise,
+                        expectName: nameCSCGlobalDNS,
+                },
+        }
+
+        for _, tt := range tests {
+                t.Run(tt.name, func(t *testing.T) {
+                        im := matchEnterpriseProvider(tt.nsRecords)
+                        if im == nil {
+                                t.Fatalf("matchEnterpriseProvider returned nil for %s NS records %v", tt.name, tt.nsRecords)
+                        }
+                        if im.tier != tt.expectTier {
+                                t.Errorf(errExpectedGot, tt.expectTier, im.tier)
+                        }
+                        if im.provider == nil {
+                                t.Fatal("matched provider is nil")
+                        }
+                        if im.provider.Name != tt.expectName {
+                                t.Errorf(errExpectedGot, tt.expectName, im.provider.Name)
+                        }
+                        if len(im.provider.Features) == 0 {
+                                t.Error("enterprise provider must have at least one feature")
+                        }
+                })
+        }
+}
+
+func TestGoldenRuleStandardProviderNotEnterprise(t *testing.T) {
+        standardNS := []string{"ns1.godaddy.com.", "ns2.godaddy.com."}
+        im := matchEnterpriseProvider(standardNS)
+        if im != nil {
+                t.Errorf("GoDaddy NS should not match enterprise, got: %s", im.provider.Name)
+        }
+}
+
+func TestGoldenRuleAnalyzeDNSInfrastructureEnterprise(t *testing.T) {
+        a := &Analyzer{}
+        results := map[string]any{
+                "basic_records": map[string]any{
+                        "NS": []string{"ns-1234.awsdns-56.org.", "ns-789.awsdns-12.co.uk."},
+                },
+                "dnssec": map[string]any{
+                        "status": "unsigned",
+                },
+        }
+
+        infra := a.AnalyzeDNSInfrastructure("example.com", results)
+
+        tier, _ := infra["provider_tier"].(string)
+        if tier != tierEnterprise {
+                t.Errorf("Route 53 domain should have enterprise tier, got: %s", tier)
+        }
+
+        provider, _ := infra["provider"].(string)
+        if provider != nameAmazonRoute53 {
+                t.Errorf(errExpectedGot, nameAmazonRoute53, provider)
+        }
+
+        assessment, _ := infra["assessment"].(string)
+        if assessment != "Enterprise-grade DNS infrastructure" {
+                t.Errorf(errExpectedGot, "Enterprise-grade DNS infrastructure", assessment)
+        }
+
+        explainsDNSSEC, _ := infra["explains_no_dnssec"].(bool)
+        if !explainsDNSSEC {
+                t.Error("enterprise provider with unsigned DNSSEC should set explains_no_dnssec=true")
+        }
+}
+
+func TestGoldenRuleAnalyzeDNSInfrastructureStandard(t *testing.T) {
+        a := &Analyzer{}
+        results := map[string]any{
+                "basic_records": map[string]any{
+                        "NS": []string{"ns1.smallhost.com.", "ns2.smallhost.com."},
+                },
+        }
+
+        infra := a.AnalyzeDNSInfrastructure("smallsite.com", results)
+
+        tier, _ := infra["provider_tier"].(string)
+        if tier != "standard" {
+                t.Errorf("unknown NS should have standard tier, got: %s", tier)
+        }
+}
+
+func TestGoldenRuleEnterpriseProvidersMapNotEmpty(t *testing.T) {
+        if len(enterpriseProviders) == 0 {
+                t.Fatal("enterpriseProviders map must not be empty — enterprise detection will silently fail")
+        }
+        requiredPatterns := []string{"awsdns", "cloudflare", "nsone", "azure-dns", "ultradns", "dynect", "akamai", "google", "cscglobal"}
+        for _, pattern := range requiredPatterns {
+                if _, ok := enterpriseProviders[pattern]; !ok {
+                        t.Errorf("enterpriseProviders missing required pattern %q", pattern)
+                }
+        }
+}
