@@ -4,3 +4,6 @@ __pycache__/
 .pythonlibs/
 .cache/
 node_modules/
+dns-tool
+dns-tool-server
+go-server/server
