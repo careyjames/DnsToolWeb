@@ -85,7 +85,7 @@
                                 </summary>
                                 <div class="mt-2">
                                     <div class="api-keys-info py-2 px-3 mb-3 rounded">
-                                        <i class="fas fa-check-circle me-1 api-keys-icon"></i><strong>Without these keys</strong>, you still get a full investigation: reverse DNS, ASN ownership (via Team Cymru), SPF authorization, CDN detection, and certificate transparency matching &mdash; all free, no key required. These optional keys add extra layers of intelligence.
+                                        <i class="fas fa-check-circle me-1 api-keys-icon"></i><strong>Without these keys</strong>, you still get a full investigation: reverse DNS, ASN ownership (via <a href="https://www.team-cymru.com/ip-asn-mapping" target="_blank" rel="noopener" class="text-info">Team Cymru</a>), SPF authorization, CDN detection, and certificate transparency matching &mdash; all free, no key required. These optional keys add extra layers of intelligence.
                                     </div>
 
                                     <label class="text-muted small d-block mb-1"><i class="fas fa-building me-1"></i>SecurityTrails <span class="badge bg-dark border border-secondary" style="font-size:0.7em;">50 requests/month free</span></label>
@@ -381,6 +381,9 @@
                                 </div>
                                 {{end}}
                             {{end}}
+                            <div class="mt-2 text-muted" style="font-size:0.72em;">
+                                <i class="fas fa-heart me-1" style="color: #e74c3c;"></i>ASN data provided by <a href="https://www.team-cymru.com/ip-asn-mapping" target="_blank" rel="noopener" class="text-info">Team Cymru</a> &mdash; a free community service processing 1.5+ billion daily queries for the internet community.
+                            </div>
                         {{else}}
                             <p class="text-muted small mb-0">ASN information unavailable.</p>
                         {{end}}

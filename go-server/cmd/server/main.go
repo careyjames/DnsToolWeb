@@ -148,6 +148,10 @@ func main() {
         router.GET("/investigate", investigateHandler.InvestigatePage)
         router.POST("/investigate", middleware.AnalyzeRateLimit(rateLimiter), investigateHandler.Investigate)
 
+        emailHeaderHandler := handlers.NewEmailHeaderHandler(cfg)
+        router.GET("/email-header", emailHeaderHandler.EmailHeaderPage)
+        router.POST("/email-header", middleware.AnalyzeRateLimit(rateLimiter), emailHeaderHandler.AnalyzeEmailHeader)
+
         sourcesHandler := handlers.NewSourcesHandler(cfg)
         router.GET("/sources", sourcesHandler.Sources)
 

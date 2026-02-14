@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="dark">
+<head>
+    {{template "head" .}}
+    <title>Email Header Analyzer - DNS Tool</title>
+    <meta name="description" content="Analyze email headers for SPF, DKIM, DMARC authentication results, routing anomalies, and spoofing indicators. Paste or upload a header for instant analysis.">
+    <meta property="og:url" content="https://dnstool.it-help.tech/email-header">
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="Email Header Analyzer - DNS Tool">
+    <meta property="og:description" content="Analyze email headers for SPF, DKIM, DMARC authentication results, routing anomalies, and spoofing indicators.">
+    <meta property="og:image" content="https://dnstool.it-help.tech/static/images/og-image.png">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta property="twitter:domain" content="dnstool.it-help.tech">
+    <meta property="twitter:url" content="https://dnstool.it-help.tech/email-header">
+    <meta name="twitter:title" content="Email Header Analyzer - DNS Tool">
+    <meta name="twitter:description" content="Analyze email headers for SPF, DKIM, DMARC authentication results, routing anomalies, and spoofing indicators.">
+    <meta name="twitter:image" content="https://dnstool.it-help.tech/static/images/og-image.png">
+    {{template "critical_css" .}}
+    {{template "head_css" .}}
+</head>
+<body>
+    {{template "nav" .}}
+    <main id="main-content">
+
+    {{if .ShowForm}}
+    <section class="hero-section">
+        <div class="container">
+            <div class="text-center hero-content">
+                <div class="hero-badge mb-3">
+                    <i class="fas fa-envelope-open-text me-1"></i> Email Header Analyzer
+                    <span class="badge bg-warning text-dark ms-2" style="font-size: 0.65em; vertical-align: middle;">BETA</span>
+                </div>
+                <h1 class="hero-title mb-3">
+                    Email Header Analyzer
+                </h1>
+                <p class="hero-subtitle mx-auto mb-4" style="font-size: 1.35rem;">
+                    Did this email actually come from who it claims?
+                </p>
+                <p class="text-muted mx-auto mb-4" style="max-width: 620px;">
+                    Paste an email header and we&rsquo;ll check SPF, DKIM, and DMARC authentication, trace the delivery route, and flag anything suspicious &mdash; whether you&rsquo;re verifying your own domain&rsquo;s setup or investigating a potential phishing email
+                </p>
+            </div>
+
+            {{template "flash_messages" .}}
+
+            <div class="row justify-content-center">
+                <div class="col-lg-8 col-xl-7">
+                    <div class="search-card">
+                        <form method="POST" action="/email-header" id="emailHeaderForm" enctype="multipart/form-data">
+                            <input type="hidden" name="csrf_token" value="{{.CsrfToken}}">
+                            <label for="raw_header" class="form-label search-label">
+                                <i class="fas fa-code me-2"></i>Email Header
+                            </label>
+                            <textarea class="form-control bg-dark text-light border-secondary mb-3"
+                                      id="raw_header"
+                                      name="raw_header"
+                                      rows="10"
+                                      placeholder="Paste the full email header here...
+
+In Gmail: Open the email → ⋮ menu → Show original → Copy the headers
+In Outlook: Open the email → ⋯ menu → View message source
+In Apple Mail: View → Message → All Headers"
+                                      style="font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace; font-size: 0.82rem;"
+                                      aria-label="Paste email headers here"></textarea>
+
+                            <div class="text-center mb-3">
+                                <span class="text-muted small">or</span>
+                            </div>
+
+                            <label for="header_file" class="form-label search-label">
+                                <i class="fas fa-file-upload me-2"></i>Upload Header File
+                            </label>
+                            <input type="file"
+                                   class="form-control bg-dark text-light border-secondary mb-3"
+                                   id="header_file"
+                                   name="header_file"
+                                   accept=".txt,.eml,.msg,.headers"
+                                   aria-label="Upload an email header file">
+
+                            <button class="btn btn-primary search-btn w-100" type="submit" id="analyzeBtn" aria-label="Analyze email header">
+                                <i class="fas fa-search-plus me-2" aria-hidden="true"></i>Analyze Header
+                            </button>
+
+                            <div class="form-text search-hint mt-3">
+                                <i class="fas fa-shield-alt me-1"></i>
+                                Your email headers are analyzed in memory and never stored. Only the header metadata is processed &mdash; no email body content.
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <div class="text-center mt-4 hero-trust">
+                <span><i class="fas fa-envelope me-1"></i> SPF / DKIM / DMARC</span>
+                <span class="trust-divider"></span>
+                <span><i class="fas fa-route me-1"></i> Delivery Route</span>
+                <span class="trust-divider"></span>
+                <span><i class="fas fa-user-shield me-1"></i> Spoofing Detection</span>
+                <span class="trust-divider"></span>
+                <span><i class="fas fa-check-double me-1"></i> Alignment Check</span>
+            </div>
+        </div>
+    </section>
+
+    <div class="container">
+        <section class="features-section">
+            <h2 class="section-heading text-center mb-2">Two Ways to Use This</h2>
+            <p class="text-center text-muted mb-4">Whether you&rsquo;re testing your own setup or investigating a suspicious message</p>
+            <div class="row g-4 justify-content-center">
+                <div class="col-md-6 col-lg-5">
+                    <div class="feature-card">
+                        <div class="feature-card-icon feature-card-icon--primary">
+                            <i class="fas fa-wrench"></i>
+                        </div>
+                        <h3 class="feature-card-title">Verify Your Domain</h3>
+                        <p class="feature-card-text">Send an email from your custom domain to a Gmail or Outlook account. Copy the header and paste it here. We&rsquo;ll tell you if your SPF, DKIM, and DMARC are working correctly.</p>
+                    </div>
+                </div>
+                <div class="col-md-6 col-lg-5">
+                    <div class="feature-card">
+                        <div class="feature-card-icon feature-card-icon--danger">
+                            <i class="fas fa-user-secret"></i>
+                        </div>
+                        <h3 class="feature-card-title">Investigate Suspicious Email</h3>
+                        <p class="feature-card-text">Got an email that looks fishy? Copy its header and paste it here. We&rsquo;ll check if the sender is who they claim to be and trace the delivery path for anomalies.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    {{end}}
+
+    {{if .ShowResults}}
+    <div class="container mt-4 mb-5">
+        <div class="row justify-content-center">
+            <div class="col-lg-10">
+
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h1 class="h3 mb-0"><i class="fas fa-envelope-open-text me-2 text-info"></i>Email Header Analysis</h1>
+                    <a href="/email-header" class="btn btn-outline-info btn-sm">
+                        <i class="fas fa-arrow-left me-1"></i>Analyze Another
+                    </a>
+                </div>
+
+                {{with .Analysis}}
+
+                <div class="card bg-dark border-{{if eq .Verdict "suspicious"}}danger{{else if eq .Verdict "caution"}}warning{{else}}success{{end}} mb-4">
+                    <div class="card-body">
+                        <div class="d-flex align-items-center">
+                            {{if eq .Verdict "suspicious"}}
+                            <i class="fas fa-exclamation-triangle fa-2x text-danger me-3"></i>
+                            <div>
+                                <h5 class="mb-1 text-danger">Suspicious Indicators Observed</h5>
+                                <p class="mb-0 text-muted">{{.Summary}}</p>
+                            </div>
+                            {{else if eq .Verdict "caution"}}
+                            <i class="fas fa-exclamation-circle fa-2x text-warning me-3"></i>
+                            <div>
+                                <h5 class="mb-1 text-warning">Review Recommended</h5>
+                                <p class="mb-0 text-muted">{{.Summary}}</p>
+                            </div>
+                            {{else}}
+                            <i class="fas fa-check-circle fa-2x text-success me-3"></i>
+                            <div>
+                                <h5 class="mb-1 text-success">No Issues Observed</h5>
+                                <p class="mb-0 text-muted">{{.Summary}}</p>
+                            </div>
+                            {{end}}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card bg-dark border-secondary mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="fas fa-envelope me-2 text-info"></i>Message Identity</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <table class="table table-dark table-sm mb-0">
+                                    <tbody>
+                                        {{if .From}}<tr><td class="text-muted" style="width:35%;">From</td><td class="text-break">{{.From}}</td></tr>{{end}}
+                                        {{if .To}}<tr><td class="text-muted">To</td><td class="text-break">{{.To}}</td></tr>{{end}}
+                                        {{if .Subject}}<tr><td class="text-muted">Subject</td><td class="text-break">{{.Subject}}</td></tr>{{end}}
+                                        {{if .Date}}<tr><td class="text-muted">Date</td><td>{{.Date}}</td></tr>{{end}}
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div class="col-md-6">
+                                <table class="table table-dark table-sm mb-0">
+                                    <tbody>
+                                        {{if .ReturnPath}}<tr><td class="text-muted" style="width:35%;">Return-Path</td><td class="text-break">{{.ReturnPath}}</td></tr>{{end}}
+                                        {{if .ReplyTo}}<tr><td class="text-muted">Reply-To</td><td class="text-break">{{.ReplyTo}}</td></tr>{{end}}
+                                        {{if .MessageID}}<tr><td class="text-muted">Message-ID</td><td class="text-break" style="font-size:0.82em;">{{.MessageID}}</td></tr>{{end}}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card bg-dark border-secondary mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="fas fa-shield-alt me-2 text-info"></i>Authentication Results</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-3">
+                            <div class="col-md-4">
+                                <div class="card bg-dark border-{{if eq .SPFResult.Result "pass"}}success{{else if eq .SPFResult.Result "fail"}}danger{{else if eq .SPFResult.Result "softfail"}}warning{{else}}secondary{{end}} h-100">
+                                    <div class="card-body text-center py-3">
+                                        <div class="mb-2">
+                                            {{if eq .SPFResult.Result "pass"}}<i class="fas fa-check-circle fa-2x text-success"></i>
+                                            {{else if eq .SPFResult.Result "fail"}}<i class="fas fa-times-circle fa-2x text-danger"></i>
+                                            {{else if eq .SPFResult.Result "softfail"}}<i class="fas fa-exclamation-circle fa-2x text-warning"></i>
+                                            {{else}}<i class="fas fa-question-circle fa-2x text-muted"></i>{{end}}
+                                        </div>
+                                        <h6 class="mb-1">SPF</h6>
+                                        <span class="badge bg-{{if eq .SPFResult.Result "pass"}}success{{else if eq .SPFResult.Result "fail"}}danger{{else if eq .SPFResult.Result "softfail"}}warning text-dark{{else}}secondary{{end}}">
+                                            {{if .SPFResult.Result}}{{.SPFResult.Result}}{{else}}not observed{{end}}
+                                        </span>
+                                        {{if .SPFResult.Domain}}<div class="text-muted small mt-1">{{.SPFResult.Domain}}</div>{{end}}
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                {{$dkimResult := "not observed"}}
+                                {{$dkimClass := "secondary"}}
+                                {{$dkimIcon := "question-circle"}}
+                                {{$dkimIconColor := "muted"}}
+                                {{if .DKIMResults}}
+                                    {{$first := index .DKIMResults 0}}
+                                    {{$dkimResult = $first.Result}}
+                                    {{if eq $first.Result "pass"}}
+                                        {{$dkimClass = "success"}}
+                                        {{$dkimIcon = "check-circle"}}
+                                        {{$dkimIconColor = "success"}}
+                                    {{else}}
+                                        {{$dkimClass = "danger"}}
+                                        {{$dkimIcon = "times-circle"}}
+                                        {{$dkimIconColor = "danger"}}
+                                    {{end}}
+                                {{end}}
+                                <div class="card bg-dark border-{{$dkimClass}} h-100">
+                                    <div class="card-body text-center py-3">
+                                        <div class="mb-2"><i class="fas fa-{{$dkimIcon}} fa-2x text-{{$dkimIconColor}}"></i></div>
+                                        <h6 class="mb-1">DKIM</h6>
+                                        <span class="badge bg-{{$dkimClass}}">{{$dkimResult}}</span>
+                                        {{if .DKIMResults}}
+                                            {{range .DKIMResults}}
+                                                {{if .Domain}}<div class="text-muted small mt-1">{{.Domain}}</div>{{end}}
+                                            {{end}}
+                                        {{end}}
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="card bg-dark border-{{if eq .DMARCResult.Result "pass"}}success{{else if eq .DMARCResult.Result "fail"}}danger{{else}}secondary{{end}} h-100">
+                                    <div class="card-body text-center py-3">
+                                        <div class="mb-2">
+                                            {{if eq .DMARCResult.Result "pass"}}<i class="fas fa-check-circle fa-2x text-success"></i>
+                                            {{else if eq .DMARCResult.Result "fail"}}<i class="fas fa-times-circle fa-2x text-danger"></i>
+                                            {{else}}<i class="fas fa-question-circle fa-2x text-muted"></i>{{end}}
+                                        </div>
+                                        <h6 class="mb-1">DMARC</h6>
+                                        <span class="badge bg-{{if eq .DMARCResult.Result "pass"}}success{{else if eq .DMARCResult.Result "fail"}}danger{{else}}secondary{{end}}">
+                                            {{if .DMARCResult.Result}}{{.DMARCResult.Result}}{{else}}not observed{{end}}
+                                        </span>
+                                        {{if .DMARCResult.Domain}}<div class="text-muted small mt-1">{{.DMARCResult.Domain}}</div>{{end}}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {{if or (ne .AlignmentFromReturnPath "") (ne .AlignmentFromDKIM "")}}
+                        <div class="mt-3 pt-3 border-top border-secondary">
+                            <h6 class="text-muted mb-2"><i class="fas fa-check-double me-1"></i>Alignment</h6>
+                            <div class="row small">
+                                {{if .AlignmentFromReturnPath}}
+                                <div class="col-md-6 mb-1">
+                                    <span class="text-muted">From &harr; Return-Path:</span>
+                                    {{if eq .AlignmentFromReturnPath "aligned"}}<span class="badge bg-success ms-1">Aligned</span>
+                                    {{else if eq .AlignmentFromReturnPath "relaxed"}}<span class="badge bg-info ms-1">Relaxed Match</span>
+                                    {{else}}<span class="badge bg-warning text-dark ms-1">Misaligned</span>{{end}}
+                                </div>
+                                {{end}}
+                                {{if .AlignmentFromDKIM}}
+                                <div class="col-md-6 mb-1">
+                                    <span class="text-muted">From &harr; DKIM Domain:</span>
+                                    {{if eq .AlignmentFromDKIM "aligned"}}<span class="badge bg-success ms-1">Aligned</span>
+                                    {{else}}<span class="badge bg-warning text-dark ms-1">Misaligned</span>{{end}}
+                                </div>
+                                {{end}}
+                            </div>
+                        </div>
+                        {{end}}
+                    </div>
+                </div>
+
+                {{if .Flags}}
+                <div class="card bg-dark border-secondary mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="fas fa-flag me-2 text-info"></i>Findings</h5>
+                    </div>
+                    <div class="card-body">
+                        {{range .Flags}}
+                        <div class="alert alert-{{.Severity}} py-2 mb-2 d-flex align-items-start" role="alert">
+                            {{if eq .Severity "danger"}}<i class="fas fa-exclamation-triangle me-2 mt-1"></i>
+                            {{else if eq .Severity "warning"}}<i class="fas fa-exclamation-circle me-2 mt-1"></i>
+                            {{else if eq .Severity "success"}}<i class="fas fa-check-circle me-2 mt-1"></i>
+                            {{else}}<i class="fas fa-info-circle me-2 mt-1"></i>{{end}}
+                            <div>
+                                <strong>{{.Category}}</strong>: {{.Message}}
+                            </div>
+                        </div>
+                        {{end}}
+                    </div>
+                </div>
+                {{end}}
+
+                {{if .ReceivedHops}}
+                <div class="card bg-dark border-secondary mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="fas fa-route me-2 text-info"></i>Delivery Route <span class="badge bg-secondary ms-2">{{.HopCount}} hops</span></h5>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-dark table-sm mb-0">
+                                <thead>
+                                    <tr>
+                                        <th style="width:5%;">#</th>
+                                        <th style="width:30%;">From</th>
+                                        <th style="width:30%;">By</th>
+                                        <th style="width:10%;">Protocol</th>
+                                        <th style="width:12%;">IP</th>
+                                        <th style="width:8%;">Delay</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {{range .ReceivedHops}}
+                                    <tr>
+                                        <td>{{.Index}}</td>
+                                        <td class="text-break small">{{if .From}}{{.From}}{{else}}<span class="text-muted">—</span>{{end}}</td>
+                                        <td class="text-break small">{{if .By}}{{.By}}{{else}}<span class="text-muted">—</span>{{end}}</td>
+                                        <td class="small">{{if .With}}{{.With}}{{else}}<span class="text-muted">—</span>{{end}}</td>
+                                        <td class="small">
+                                            {{if .IP}}
+                                                {{if .IsPrivate}}<span class="text-muted">{{.IP}} <i class="fas fa-lock fa-xs" title="Private IP"></i></span>
+                                                {{else}}<span class="text-info">{{.IP}}</span>{{end}}
+                                            {{else}}<span class="text-muted">—</span>{{end}}
+                                        </td>
+                                        <td class="small">{{if .Delay}}{{.Delay}}{{else}}<span class="text-muted">—</span>{{end}}</td>
+                                    </tr>
+                                    {{end}}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                {{end}}
+
+                {{if .ARCChain}}
+                <div class="card bg-dark border-secondary mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="fas fa-link me-2 text-info"></i>ARC Chain <span class="badge bg-secondary ms-2">{{len .ARCChain}} set(s)</span></h5>
+                    </div>
+                    <div class="card-body">
+                        <p class="text-muted small mb-2">Authenticated Received Chain &mdash; preserves authentication results across forwarding hops.</p>
+                        {{range .ARCChain}}
+                        <div class="border border-secondary rounded p-2 mb-2 small">
+                            <strong class="text-info">Instance {{.Instance}}</strong>
+                            {{if .AAR}}<div class="text-muted text-break mt-1"><strong>AAR:</strong> {{.AAR}}</div>{{end}}
+                        </div>
+                        {{end}}
+                    </div>
+                </div>
+                {{end}}
+
+                <details class="mb-4">
+                    <summary class="text-muted small" style="cursor:pointer;">
+                        <i class="fas fa-code me-1"></i>View Raw Headers
+                    </summary>
+                    <pre class="bg-dark border border-secondary rounded p-3 mt-2 small text-light" style="max-height: 400px; overflow-y: auto; white-space: pre-wrap; word-break: break-all;">{{.RawHeaders}}</pre>
+                </details>
+
+                {{end}}
+            </div>
+        </div>
+    </div>
+    {{end}}
+
+    </main>
+    {{template "footer" .}}
+    {{template "scripts" .}}
+</body>
+</html>

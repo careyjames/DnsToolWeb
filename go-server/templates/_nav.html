@@ -21,6 +21,11 @@
                     </a>
                 </li>
                 <li class="nav-item">
+                    <a class="nav-link{{if eq .ActivePage "email-header"}} active{{end}}" href="/email-header">
+                        <i class="fas fa-envelope-open-text me-1"></i>Email Header
+                    </a>
+                </li>
+                <li class="nav-item">
                     <a class="nav-link{{if eq .ActivePage "history"}} active{{end}}" href="/history">
                         <i class="fas fa-history me-1"></i>History
                     </a>
