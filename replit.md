@@ -40,6 +40,16 @@ The application is implemented in Go using the Gin framework, providing high per
 ### Database
 - **PostgreSQL**: The primary database for persistent storage.
 
+## Build & Deploy Checklist
+Before publishing or after making changes to static assets or Go code, always verify:
+
+1. **CSS minification** — `static/css/custom.min.css` must be regenerated from `custom.css` using `npx csso custom.css -o custom.min.css`. Check that min file is significantly smaller than source (not a copy).
+2. **JS minification** — `static/js/main.min.js` must be regenerated from `main.js` using `npx terser main.js -o main.min.js --compress --mangle`. Verify with `node -c main.min.js` (no syntax errors).
+3. **Version bump** — After changing any static asset (CSS/JS), bump `AppVersion` in `go-server/internal/config/config.go` so browsers fetch the new files instead of cached old ones. The version appears in `?v=` query strings on static URLs.
+4. **Go binary rebuild** — After changing any `.go` file, rebuild: `GIT_DIR=/dev/null cd go-server && go build -o /tmp/dns-tool-new ./cmd/server/` then swap via `mv /tmp/dns-tool-new dns-tool-server-new && mv dns-tool-server-new dns-tool-server`.
+5. **Binary cleanup** — Only keep `dns-tool-server`. Remove stale copies (`dns-tool`, `go-server/server`). All binary names are in `.gitignore`.
+6. **Restart workflow** — After binary swap, restart the "Start application" workflow.
+
 ## GitHub Repositories
 - **`careyjames/DnsToolWeb`** (Public) — This Replit project. Set as `origin` remote. All web app code pushes here.
 - **`careyjames/dnstool-intel`** (Private) — "Secret sauce" proprietary intelligence: analyzer logic, scoring, golden rules, remediation, AI surface scanner. Never push to public repos.
