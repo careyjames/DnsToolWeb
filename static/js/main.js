@@ -231,6 +231,12 @@ if (allFixesCollapse) {
     }
 }
 
+function escapeHtml(str) {
+    var div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+}
+
 function loadDNSHistory(domain) {
     const btn = document.getElementById('dns-history-btn');
     if (!btn) return;
@@ -270,12 +276,12 @@ function loadDNSHistory(domain) {
                     const actionHtml = ch.action === 'added' ?
                         '<span class="text-success"><i class="fas fa-plus-circle me-1"></i>Added</span>' :
                         '<span class="text-danger"><i class="fas fa-minus-circle me-1"></i>Removed</span>';
-                    html += '<tr><td><code class="text-muted" style="font-size:0.8em">' + (ch.date || '') + '</code></td>' +
-                        '<td><span class="badge bg-' + typeColor + '">' + (ch.record_type || '') + '</span></td>' +
+                    html += '<tr><td><code class="text-muted" style="font-size:0.8em">' + escapeHtml(ch.date || '') + '</code></td>' +
+                        '<td><span class="badge bg-' + typeColor + '">' + escapeHtml(ch.record_type || '') + '</span></td>' +
                         '<td>' + actionHtml + '</td>' +
-                        '<td><code style="font-size:0.85em">' + (ch.value || '') + '</code></td>' +
-                        '<td><span class="text-muted">' + (ch.org || '\u2014') + '</span></td>' +
-                        '<td><span class="text-muted" style="font-size:0.85em">' + (ch.description || '') + '</span></td></tr>';
+                        '<td><code style="font-size:0.85em">' + escapeHtml(ch.value || '') + '</code></td>' +
+                        '<td><span class="text-muted">' + escapeHtml(ch.org || '\u2014') + '</span></td>' +
+                        '<td><span class="text-muted" style="font-size:0.85em">' + escapeHtml(ch.description || '') + '</span></td></tr>';
                 });
                 html += '</tbody></table></div>';
                 body.innerHTML = html;
