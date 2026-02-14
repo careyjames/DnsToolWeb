@@ -8,17 +8,31 @@ https://github.com/careyjames/DnsToolWeb
 excluding third-party components that are separately licensed.
 
 Additional Use Grant:
-You may copy, modify, create derivative works, and run the Licensed Work:
-1) for non-production purposes (development, testing, CI, research, education,
-   personal use); and
-2) in production solely for your own internal business operations to assess
-   domains you own or control.
-You may not provide the Licensed Work (or a derivative of it) as a hosted,
-managed, or API-based service to third parties where it provides material
-DNS/security audit functionality, nor sell a competing commercial service
-built on it.
 
-Change Date: 2029-02-14
+You may make production use of the Licensed Work, provided such use does not
+include offering the Licensed Work to third parties as a Competitive Offering.
+
+A "Competitive Offering" is a product or service that:
+(a) is offered to third parties on a hosted, managed, embedded, or
+    API-based basis; AND
+(b) provides DNS security audit, DNS intelligence, or domain posture
+    assessment functionality that is material to the value of the offering.
+
+For clarity, the following uses are expressly permitted and are NOT
+Competitive Offerings:
+- Running the Licensed Work to audit domains you own or control.
+- Running the Licensed Work as an internal tool within your organization
+  (including affiliates) for your own security operations.
+- Using the Licensed Work in the course of providing professional services
+  (such as security consulting, managed security, or IT administration) to
+  audit domains on behalf of your clients, provided the Licensed Work itself
+  is not offered to those clients as a standalone hosted or managed product.
+- Non-production use, including development, testing, CI, research,
+  education, and personal use.
+
+Change Date: Three years from the date each version of the Licensed Work is
+first publicly distributed by the Licensor. For versions published before
+2026-02-14, the Change Date is 2029-02-14.
 
 Change License: Apache License, Version 2.0
 

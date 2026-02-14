@@ -1,6 +1,6 @@
 # Licensing Model (Open Core)
 
-`DnsToolWeb` is licensed under **Business Source License 1.1 (BUSL-1.1)** with a Change Date of **2029-02-14**, after which it converts to **Apache-2.0**.
+`DnsToolWeb` is licensed under **Business Source License 1.1 (BUSL-1.1)** with a rolling Change Date of **three years from the publication of each version**, after which it converts to **Apache-2.0**.
 
 ## What this means
 
@@ -9,14 +9,23 @@
 - Modify the code and create derivative works
 - Use it for development, testing, research, and education
 - Run it in production to audit domains you own or control
+- Use it as a security consultant or MSP to audit domains on behalf of your clients
+- Run it as an internal tool within your organization for security operations
 - Contribute improvements back to the project
 
 ### You cannot:
-- Offer it (or a derivative) as a hosted/managed DNS audit service to third parties
-- Sell a competing commercial product built on this code
+- Offer it (or a derivative) as a hosted, managed, or API-based DNS audit service to third parties
+- Embed it in a competing commercial product where DNS security audit functionality is material to the offering
+- Sell a competing commercial service built on this code
 
-### After 2029-02-14:
-The license automatically converts to **Apache-2.0** — fully permissive, no restrictions.
+### What is a "Competitive Offering"?
+A product or service that is (a) offered to third parties on a hosted, managed, embedded, or API-based basis AND (b) provides DNS security audit, DNS intelligence, or domain posture assessment functionality that is material to the value of the offering.
+
+### Security consultants and MSPs
+Using DNS Tool to audit client domains as part of professional services (consulting, managed security, IT administration) is explicitly permitted. The restriction applies only to offering the tool itself as a standalone hosted or managed product to those clients.
+
+### After the Change Date:
+Each version automatically converts to **Apache-2.0** — fully permissive, no restrictions — three years after it is first publicly distributed. For versions published before 2026-02-14, the Change Date is 2029-02-14.
 
 ## What is open here
 
