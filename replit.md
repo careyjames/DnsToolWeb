@@ -54,6 +54,7 @@ These are minimum thresholds that must be maintained. Any proposed change that w
 - **Lighthouse Best Practices**: 100%
 - **Lighthouse SEO**: 100%
 - **Golden Rules Tests**: All must pass — `cd go-server && GIT_DIR=/dev/null go test -run TestGoldenRule ./internal/analyzer/ -v`
+- **Live Integration Tests**: Optional — `cd go-server && GIT_DIR=/dev/null go test -tags=integration -run TestLive ./internal/analyzer/ -v -timeout 120s`. Tests real DNS queries against it-help.tech with structural assertions (not exact values). Failures may indicate domain config changes, not code bugs. Never runs in default test suite.
 - **Stub Registry**: 13 known stub files from dnstool-intel private repo. Any new stub file MUST be registered in `TestGoldenRuleStubRegistryComplete` or the test fails.
 
 ## Build & Deploy Checklist
@@ -65,7 +66,8 @@ Before publishing or after making changes to static assets or Go code, always ve
 4. **Go binary rebuild** — After changing any `.go` file, rebuild: `cd go-server && GIT_DIR=/dev/null go build -buildvcs=false -o /tmp/dns-tool-new ./cmd/server/` then swap via `cd /home/runner/workspace && mv /tmp/dns-tool-new dns-tool-server-new && mv dns-tool-server-new dns-tool-server`.
 5. **Binary cleanup** — Only keep `dns-tool-server`. Remove stale copies (`dns-tool`, `go-server/server`). All binary names are in `.gitignore`.
 6. **Run golden rules tests** — `cd go-server && GIT_DIR=/dev/null go test -run TestGoldenRule ./internal/analyzer/ -v` to verify enterprise detection, legacy blocklist, and email verdicts.
-7. **Restart workflow** — After binary swap, restart the "Start application" workflow.
+7. **Run live integration tests** (optional) — `cd go-server && GIT_DIR=/dev/null go test -tags=integration -run TestLive ./internal/analyzer/ -v -timeout 120s` to verify real DNS queries produce correct result shapes. Skipped tests are normal (orchestrator timeout in constrained environments).
+8. **Restart workflow** — After binary swap, restart the "Start application" workflow.
 
 ## Public Repo Safety (Secret Sauce Protection)
 The public GitHub repo (`DnsToolWeb`) must NEVER expose proprietary intelligence:
