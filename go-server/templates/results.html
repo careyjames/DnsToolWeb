@@ -3504,23 +3504,51 @@
             <div class="loading-spinner">
                 <i class="fas fa-globe fa-spin"></i>
             </div>
-            <h4 class="mt-4 mb-2">Analyzing Domain</h4>
+            <h4 class="mt-4 mb-2">Running Multi-Source Intelligence Audit</h4>
             <p class="text-muted mb-0" id="loadingDomain">{{.Domain}}</p>
-            <div class="loading-dots mt-3">
+            <div class="loading-elapsed mt-2">
+                <span class="text-muted small" id="loadingTimer">0s</span>
+            </div>
+            <div class="loading-dots mt-2">
                 <span></span><span></span><span></span>
             </div>
-            <div class="loading-status mt-3">
-                <span>Initializing DNS resolver...</span>
-                <span>Querying authoritative nameservers...</span>
-                <span>Pulling A/AAAA records via DoH...</span>
-                <span>Fetching MX records for mail routing...</span>
-                <span>Running RDAP lookup for registrar info...</span>
-                <span>Parsing SPF record from TXT...</span>
-                <span>Validating DMARC policy...</span>
-                <span>Checking DKIM selectors...</span>
-                <span>Querying DNSSEC chain of trust...</span>
-                <span>Aggregating multi-resolver consensus...</span>
+            <div class="scan-checklist mt-3" id="scanChecklist">
+                <div class="scan-phase" data-delay="0">
+                    <i class="fas fa-circle-notch fa-spin scan-icon scan-pending"></i>
+                    <span>DNS records &mdash; Cloudflare, Google, Quad9, OpenDNS</span>
+                </div>
+                <div class="scan-phase" data-delay="1200">
+                    <i class="fas fa-circle-notch fa-spin scan-icon scan-pending"></i>
+                    <span>Email auth &mdash; SPF, DMARC, DKIM selectors</span>
+                </div>
+                <div class="scan-phase" data-delay="2500">
+                    <i class="fas fa-circle-notch fa-spin scan-icon scan-pending"></i>
+                    <span>DNSSEC chain of trust &amp; DANE/TLSA</span>
+                </div>
+                <div class="scan-phase" data-delay="3500">
+                    <i class="fas fa-circle-notch fa-spin scan-icon scan-pending"></i>
+                    <span>Certificate Transparency &amp; subdomain discovery</span>
+                </div>
+                <div class="scan-phase" data-delay="5000">
+                    <i class="fas fa-circle-notch fa-spin scan-icon scan-pending"></i>
+                    <span>SMTP transport &amp; STARTTLS verification</span>
+                </div>
+                <div class="scan-phase" data-delay="7000">
+                    <i class="fas fa-circle-notch fa-spin scan-icon scan-pending"></i>
+                    <span>MTA-STS, TLS-RPT, BIMI, CAA</span>
+                </div>
+                <div class="scan-phase" data-delay="9000">
+                    <i class="fas fa-circle-notch fa-spin scan-icon scan-pending"></i>
+                    <span>Registrar &amp; infrastructure analysis</span>
+                </div>
+                <div class="scan-phase" data-delay="12000">
+                    <i class="fas fa-circle-notch fa-spin scan-icon scan-pending"></i>
+                    <span>Posture scoring &amp; remediation</span>
+                </div>
             </div>
+            <p class="text-muted small mt-3 mb-0" id="loadingNote" style="max-width: 440px; margin: 0 auto; opacity: 0; transition: opacity 0.8s;">
+                Every result includes terminal commands you can run to independently verify the underlying data. No proprietary magic.
+            </p>
         </div>
     </div>
 
