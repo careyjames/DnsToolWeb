@@ -163,6 +163,19 @@ var enterpriseProviders = map[string]providerInfo{
                 Features: []string{featGlobalAnycast, featDDoSProtection},
         },
 }
+var legacyProviderBlocklist = map[string]bool{
+        "networksolutions": true,
+        "worldnic":         true,
+        "bluehost":         true,
+        "hostgator":        true,
+        "ipage":            true,
+        "fatcow":           true,
+        "justhost":         true,
+        "hostmonster":      true,
+        "arvixe":           true,
+        "site5":            true,
+}
+
 var selfHostedEnterprise = map[string]providerInfo{}
 var governmentDomains = map[string]providerInfo{}
 var managedProviders = map[string]providerInfo{}
@@ -244,6 +257,14 @@ func (a *Analyzer) DetectEmailSecurityManagement(spf, dmarc, tlsrpt, mtasts map[
 func enrichHostingFromEdgeCDN(results map[string]any) {}
 
 func matchEnterpriseProvider(nsList []string) *infraMatch {
+        for _, ns := range nsList {
+                nsLower := strings.ToLower(ns)
+                for blocked := range legacyProviderBlocklist {
+                        if strings.Contains(nsLower, blocked) {
+                                return nil
+                        }
+                }
+        }
         for _, ns := range nsList {
                 nsLower := strings.ToLower(ns)
                 for pattern, info := range enterpriseProviders {

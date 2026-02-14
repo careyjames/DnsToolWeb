@@ -244,6 +244,50 @@ func TestGoldenRuleUnknownProviderNotEnterprise(t *testing.T) {
         }
 }
 
+func TestGoldenRuleLegacyProvidersNeverEnterprise(t *testing.T) {
+        tests := []struct {
+                name      string
+                nsRecords []string
+        }{
+                {"Network Solutions", []string{"ns1.worldnic.com.", "ns2.worldnic.com."}},
+                {"Network Solutions alt", []string{"ns53.networksolutions.com.", "ns54.networksolutions.com."}},
+                {"Bluehost", []string{"ns1.bluehost.com.", "ns2.bluehost.com."}},
+                {"HostGator", []string{"ns1.hostgator.com.", "ns2.hostgator.com."}},
+                {"iPage", []string{"ns1.ipage.com.", "ns2.ipage.com."}},
+                {"FatCow", []string{"ns1.fatcow.com.", "ns2.fatcow.com."}},
+                {"JustHost", []string{"ns1.justhost.com.", "ns2.justhost.com."}},
+                {"HostMonster", []string{"ns1.hostmonster.com.", "ns2.hostmonster.com."}},
+        }
+        for _, tt := range tests {
+                t.Run(tt.name, func(t *testing.T) {
+                        im := matchEnterpriseProvider(tt.nsRecords)
+                        if im != nil {
+                                t.Errorf("%s should NEVER be tagged as enterprise, got: %s", tt.name, im.provider.Name)
+                        }
+                })
+        }
+}
+
+func TestGoldenRuleLegacyBlocklistNotEmpty(t *testing.T) {
+        if len(legacyProviderBlocklist) == 0 {
+                t.Fatal("legacyProviderBlocklist must not be empty — legacy providers would slip through as enterprise")
+        }
+        required := []string{"networksolutions", "worldnic", "bluehost", "hostgator"}
+        for _, pattern := range required {
+                if !legacyProviderBlocklist[pattern] {
+                        t.Errorf("legacyProviderBlocklist missing required pattern %q", pattern)
+                }
+        }
+}
+
+func TestGoldenRuleNoOverlapBlocklistAndEnterprise(t *testing.T) {
+        for pattern := range legacyProviderBlocklist {
+                if _, ok := enterpriseProviders[pattern]; ok {
+                        t.Errorf("pattern %q appears in BOTH enterpriseProviders and legacyProviderBlocklist — this is a conflict", pattern)
+                }
+        }
+}
+
 func TestGoldenRuleAnalyzeDNSInfrastructureEnterprise(t *testing.T) {
         a := &Analyzer{}
         results := map[string]any{
