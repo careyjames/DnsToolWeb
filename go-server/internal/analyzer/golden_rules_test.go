@@ -456,6 +456,64 @@ func TestGoldenRuleRemediationWellConfiguredDomain(t *testing.T) {
         }
 }
 
+func TestGoldenRuleRemediationProviderAware(t *testing.T) {
+        a := &Analyzer{}
+        results := map[string]any{
+                "domain": "example.com",
+                "spf_analysis": map[string]any{
+                        "status":  "success",
+                        "record":  "v=spf1 include:_spf.google.com ~all",
+                        "all_mechanism": "~all",
+                },
+                "dmarc_analysis": map[string]any{
+                        "status": "success",
+                        "policy": "reject",
+                        "pct":    100,
+                        "rua":    "mailto:dmarc@example.com",
+                },
+                "dkim_analysis": map[string]any{
+                        "status":           "success",
+                        "has_dkim":         true,
+                        "primary_provider": "Google Workspace",
+                },
+                "mta_sts_analysis": map[string]any{
+                        "status": "success",
+                },
+                "tlsrpt_analysis": map[string]any{
+                        "status": "success",
+                },
+                "bimi_analysis": map[string]any{
+                        "status": "success",
+                },
+                "dane_analysis": map[string]any{
+                        "status":   "info",
+                        "has_dane": false,
+                },
+                "dnssec_analysis": map[string]any{
+                        "status": "success",
+                },
+                "caa_analysis": map[string]any{
+                        "status": "success",
+                },
+                "basic_records": map[string]any{
+                        "MX": []string{"aspmx.l.google.com."},
+                },
+        }
+
+        remediation := a.GenerateRemediation(results)
+        allFixes, _ := remediation["all_fixes"].([]map[string]any)
+
+        for _, f := range allFixes {
+                title, _ := f["title"].(string)
+                if strings.Contains(title, "DANE") || strings.Contains(title, "TLSA") {
+                        t.Fatalf("Google Workspace domain must NOT receive DANE/TLSA fix — provider does not support DANE. Got: %q", title)
+                }
+                if strings.Contains(title, "Upgrading SPF to -all") {
+                        t.Fatalf("Remediation must never suggest upgrading from ~all to -all — ~all is best practice with DMARC reject. Got: %q", title)
+                }
+        }
+}
+
 func TestGoldenRuleMailPostureNotStubbed(t *testing.T) {
         results := map[string]any{
                 "domain": "test.example.com",

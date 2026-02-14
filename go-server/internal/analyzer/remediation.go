@@ -94,6 +94,37 @@ type missingStepDef struct {
         risk    string
 }
 
+func providerSupportsDANE(provider string) bool {
+        lower := strings.ToLower(provider)
+        for _, hosted := range []string{
+                "google", "microsoft", "office 365", "outlook",
+                "yahoo", "zoho", "fastmail", "proofpoint",
+                "mimecast", "barracuda", "rackspace",
+                "amazon ses", "sendgrid", "mailgun", "postmark",
+                "sparkpost", "mailchimp", "constant contact",
+        } {
+                if strings.Contains(lower, hosted) {
+                        return false
+                }
+        }
+        return true
+}
+
+func providerSupportsBIMI(provider string) bool {
+        lower := strings.ToLower(provider)
+        for _, supported := range []string{
+                "google", "yahoo", "fastmail", "apple",
+        } {
+                if strings.Contains(lower, supported) {
+                        return true
+                }
+        }
+        if provider == "" {
+                return true
+        }
+        return false
+}
+
 func (a *Analyzer) GenerateRemediation(results map[string]any) map[string]any {
         ps := evaluateProtocolStates(results)
         ds := classifyDKIMState(ps)
@@ -532,7 +563,7 @@ func appendDANEFixes(fixes []fix, ps protocolState, results map[string]any, doma
                         Section:       "DANE",
                 })
         }
-        if !ps.daneOK && ps.dnssecOK && !ps.isNoMailDomain {
+        if !ps.daneOK && ps.dnssecOK && !ps.isNoMailDomain && providerSupportsDANE(ps.primaryProvider) {
                 mxHost := extractFirstMXHost(results)
                 tlsaHost := "_25._tcp." + mxHost
                 fixes = append(fixes, fix{
@@ -578,7 +609,7 @@ func extractFirstMXHost(results map[string]any) string {
 }
 
 func appendBIMIFixes(fixes []fix, ps protocolState, domain string) []fix {
-        if !ps.bimiOK && ps.dmarcPolicy == "reject" {
+        if !ps.bimiOK && ps.dmarcPolicy == "reject" && providerSupportsBIMI(ps.primaryProvider) {
                 fixes = append(fixes, fix{
                         Title:         "Add BIMI Record",
                         Description:   "Your domain has DMARC reject — you qualify for BIMI, which displays your brand logo in supporting email clients.",
