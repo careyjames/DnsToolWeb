@@ -169,7 +169,23 @@ func (h *AnalysisHandler) Analyze(c *gin.Context) {
         customSelectors := extractCustomSelectors(c)
 
         startTime := time.Now()
-        results := h.Analyzer.AnalyzeDomain(c.Request.Context(), asciiDomain, customSelectors)
+        ctx := c.Request.Context()
+
+        historyCh := make(chan map[string]any, 1)
+        go func() {
+                defer func() {
+                        if r := recover(); r != nil {
+                                slog.Error("DNS history fetch panic", "error", r)
+                        }
+                }()
+                data := analyzer.FetchDNSHistory(ctx, asciiDomain, h.DNSHistoryCache)
+                select {
+                case historyCh <- data:
+                case <-ctx.Done():
+                }
+        }()
+
+        results := h.Analyzer.AnalyzeDomain(ctx, asciiDomain, customSelectors)
         analysisDuration := time.Since(startTime).Seconds()
 
         if success, ok := results["analysis_success"].(bool); ok && !success {
@@ -179,7 +195,14 @@ func (h *AnalysisHandler) Analyze(c *gin.Context) {
                 }
         }
 
-        h.enrichResults(c, asciiDomain, results)
+        select {
+        case historyData := <-historyCh:
+                results["dns_history"] = historyData
+        case <-ctx.Done():
+                results["dns_history"] = map[string]any{"status": "timeout"}
+        }
+
+        h.enrichResultsNoHistory(c, asciiDomain, results)
 
         countryCode, countryName := lookupCountry(c.ClientIP())
 
@@ -235,7 +258,10 @@ func extractCustomSelectors(c *gin.Context) []string {
 func (h *AnalysisHandler) enrichResults(c *gin.Context, asciiDomain string, results map[string]any) {
         dnsHistory := analyzer.FetchDNSHistory(c.Request.Context(), asciiDomain, h.DNSHistoryCache)
         results["dns_history"] = dnsHistory
+        h.enrichResultsNoHistory(c, asciiDomain, results)
+}
 
+func (h *AnalysisHandler) enrichResultsNoHistory(_ *gin.Context, _ string, results map[string]any) {
         if rem, ok := results["remediation"].(map[string]any); ok {
                 results["remediation"] = analyzer.EnrichRemediationWithRFCMeta(rem)
         }

@@ -815,6 +815,54 @@ main.container {
     opacity: 1;
 }
 
+.scan-checklist {
+    text-align: left;
+    max-width: 420px;
+    margin: 0 auto;
+    font-size: 0.88rem;
+}
+
+.scan-phase {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.3rem 0;
+    opacity: 0;
+    transform: translateY(6px);
+    transition: opacity 0.35s ease, transform 0.35s ease;
+}
+
+.scan-phase.visible {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.scan-phase.done {
+    color: #63e6be;
+}
+
+.scan-phase.done .scan-icon {
+    color: #63e6be;
+}
+
+.scan-icon {
+    width: 1.1rem;
+    text-align: center;
+    flex-shrink: 0;
+}
+
+.scan-pending {
+    color: #6ea8fe;
+}
+
+.scan-phase.active-phase span {
+    color: #fff;
+}
+
+.scan-phase:not(.visible):not(.done) span {
+    color: #8b949e;
+}
+
 /* DNS Diff Styles - Code Diff Style Layout */
 .dns-diff-container {
     font-family: 'SF Mono', SFMono-Regular, ui-monospace, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;

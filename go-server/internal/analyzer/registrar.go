@@ -414,12 +414,12 @@ func (a *Analyzer) whoisLookup(ctx context.Context, domain string) (string, bool
                 return "", false, ""
         }
 
-        conn, err := net.DialTimeout("tcp", server+":43", 5*time.Second)
+        conn, err := net.DialTimeout("tcp", server+":43", 3*time.Second)
         if err != nil {
                 return "", false, ""
         }
         defer conn.Close()
-        conn.SetDeadline(time.Now().Add(10 * time.Second))
+        conn.SetDeadline(time.Now().Add(5 * time.Second))
 
         _, err = conn.Write([]byte(domain + "\r\n"))
         if err != nil {

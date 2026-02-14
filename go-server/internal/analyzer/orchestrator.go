@@ -16,8 +16,9 @@ const (
 )
 
 type namedResult struct {
-        key    string
-        result any
+        key     string
+        result  any
+        elapsed time.Duration
 }
 
 func (a *Analyzer) AnalyzeDomain(ctx context.Context, domain string, customDKIMSelectors []string) map[string]any {
@@ -55,7 +56,14 @@ func (a *Analyzer) AnalyzeDomain(ctx context.Context, domain string, customDKIMS
         authQueryStatus := extractAndRemove(auth, "_query_status")
 
         mxForDANE, _ := basic["MX"].([]string)
+
+        daneStart := time.Now()
         resultsMap["dane"] = a.AnalyzeDANE(ctx, domain, mxForDANE)
+        slog.Info("Task completed", "task", "dane", "domain", domain, "elapsed_ms", fmt.Sprintf("%.0f", float64(time.Since(daneStart).Milliseconds())))
+
+        smtpStart := time.Now()
+        smtpResult := a.AnalyzeSMTPTransport(ctx, domain, mxForDANE)
+        slog.Info("Task completed", "task", "smtp_transport", "domain", domain, "elapsed_ms", fmt.Sprintf("%.0f", float64(time.Since(smtpStart).Milliseconds())))
 
         enrichBasicRecords(basic, resultsMap)
         propagationStatus := buildPropagationStatus(basic, auth)
@@ -91,7 +99,7 @@ func (a *Analyzer) AnalyzeDomain(ctx context.Context, domain string, customDKIMS
                 "is_no_mail_domain":      spfAnalysis["no_mail_intent"] == true,
         }
 
-        results["smtp_transport"] = a.AnalyzeSMTPTransport(ctx, domain, mxForDANE)
+        results["smtp_transport"] = smtpResult
 
         results["hosting_summary"] = a.GetHostingInfo(ctx, domain, results)
         results["dns_infrastructure"] = a.AnalyzeDNSInfrastructure(domain, results)
@@ -123,7 +131,27 @@ func (a *Analyzer) AnalyzeDomain(ctx context.Context, domain string, customDKIMS
         ctData := getMapResult(resultsMap, "ct_subdomains")
         ctSubdomains, _ := ctData["subdomains"].([]map[string]any)
 
-        ctSubdomains = mergeSecurityTrailsSubdomains(ctx, domain, ctSubdomains, ctData, results)
+        if stSubs, ok := resultsMap["st_subdomains"].([]string); ok && len(stSubs) > 0 {
+                existing := make(map[string]bool, len(ctSubdomains))
+                for _, sd := range ctSubdomains {
+                        if name, ok := sd["subdomain"].(string); ok {
+                                existing[name] = true
+                        }
+                }
+                for _, fqdn := range stSubs {
+                        if !existing[fqdn] {
+                                existing[fqdn] = true
+                                ctSubdomains = append(ctSubdomains, map[string]any{
+                                        "subdomain":  fqdn,
+                                        "source":     "securitytrails",
+                                        "cert_count": 0,
+                                })
+                        }
+                }
+                ctData["subdomains"] = ctSubdomains
+                ctData["unique_subdomains"] = len(ctSubdomains)
+                results["ct_subdomains"] = ctData
+        }
 
         results["dangling_dns"] = a.DetectDanglingDNS(ctx, domain, ctSubdomains)
 
@@ -131,39 +159,12 @@ func (a *Analyzer) AnalyzeDomain(ctx context.Context, domain string, customDKIMS
         results["remediation"] = a.GenerateRemediation(results)
         results["mail_posture"] = buildMailPosture(results)
 
+        totalElapsed := time.Since(analysisStart).Seconds()
+        slog.Info("Analysis complete", "domain", domain, "total_s", fmt.Sprintf("%.2f", totalElapsed), "parallel_s", fmt.Sprintf("%.2f", parallelElapsed))
+
         return results
 }
 
-func mergeSecurityTrailsSubdomains(ctx context.Context, domain string, ctSubdomains []map[string]any, ctData, results map[string]any) []map[string]any {
-        initSecurityTrails()
-        if !securityTrailsEnabled {
-                return ctSubdomains
-        }
-        stSubs, _, err := FetchSubdomains(ctx, domain)
-        if err != nil || len(stSubs) == 0 {
-                return ctSubdomains
-        }
-        existing := make(map[string]bool, len(ctSubdomains))
-        for _, sd := range ctSubdomains {
-                if name, ok := sd["subdomain"].(string); ok {
-                        existing[name] = true
-                }
-        }
-        for _, fqdn := range stSubs {
-                if !existing[fqdn] {
-                        existing[fqdn] = true
-                        ctSubdomains = append(ctSubdomains, map[string]any{
-                                "subdomain":  fqdn,
-                                "source":     "securitytrails",
-                                "cert_count": 0,
-                        })
-                }
-        }
-        ctData["subdomains"] = ctSubdomains
-        ctData["unique_subdomains"] = len(ctSubdomains)
-        results["ct_subdomains"] = ctData
-        return ctSubdomains
-}
 
 func (a *Analyzer) checkDomainExists(ctx context.Context, domain string) (bool, string, *string) {
         for _, rtype := range []string{"A", "TXT", "MX"} {
@@ -180,30 +181,49 @@ func (a *Analyzer) checkDomainExists(ctx context.Context, domain string) (bool, 
         return false, "undelegated", &msg
 }
 
+func timedTask(ch chan<- namedResult, key string, fn func() any) func() {
+        return func() {
+                start := time.Now()
+                result := fn()
+                ch <- namedResult{key, result, time.Since(start)}
+        }
+}
+
 func (a *Analyzer) runParallelAnalyses(ctx context.Context, domain string, customDKIMSelectors []string) map[string]any {
         resultsCh := make(chan namedResult, 26)
         var wg sync.WaitGroup
 
-        tasks := map[string]func(){
-                "basic":      func() { resultsCh <- namedResult{"basic", a.GetBasicRecords(ctx, domain)} },
-                "auth":       func() { resultsCh <- namedResult{"auth", a.GetAuthoritativeRecords(ctx, domain)} },
-                "spf":        func() { resultsCh <- namedResult{"spf", a.AnalyzeSPF(ctx, domain)} },
-                "dmarc":      func() { resultsCh <- namedResult{"dmarc", a.AnalyzeDMARC(ctx, domain)} },
-                "dkim":       func() { resultsCh <- namedResult{"dkim", a.AnalyzeDKIM(ctx, domain, nil, customDKIMSelectors)} },
-                "mta_sts":    func() { resultsCh <- namedResult{"mta_sts", a.AnalyzeMTASTS(ctx, domain)} },
-                "tlsrpt":     func() { resultsCh <- namedResult{"tlsrpt", a.AnalyzeTLSRPT(ctx, domain)} },
-                "bimi":       func() { resultsCh <- namedResult{"bimi", a.AnalyzeBIMI(ctx, domain)} },
-                "caa":        func() { resultsCh <- namedResult{"caa", a.AnalyzeCAA(ctx, domain)} },
-                "dnssec":     func() { resultsCh <- namedResult{"dnssec", a.AnalyzeDNSSEC(ctx, domain)} },
-                "ns":         func() { resultsCh <- namedResult{"ns_delegation", a.AnalyzeNSDelegation(ctx, domain)} },
-                "registrar":  func() { resultsCh <- namedResult{"registrar", a.GetRegistrarInfo(ctx, domain)} },
-                "consensus":  func() { resultsCh <- namedResult{"resolver_consensus", a.DNS.ValidateResolverConsensus(ctx, domain)} },
-                "subdomains": func() { resultsCh <- namedResult{"ct_subdomains", a.DiscoverSubdomains(ctx, domain)} },
-                "https_svcb": func() { resultsCh <- namedResult{"https_svcb", a.AnalyzeHTTPSSVCB(ctx, domain)} },
-                "cds_cdnskey": func() { resultsCh <- namedResult{"cds_cdnskey", a.AnalyzeCDSCDNSKEY(ctx, domain)} },
-                "smimea":       func() { resultsCh <- namedResult{"smimea_openpgpkey", a.AnalyzeSMIMEA(ctx, domain)} },
-                "security_txt": func() { resultsCh <- namedResult{"security_txt", a.AnalyzeSecurityTxt(ctx, domain)} },
-                "ai_surface":   func() { resultsCh <- namedResult{"ai_surface", a.AnalyzeAISurface(ctx, domain)} },
+        tasks := []func(){
+                timedTask(resultsCh, "basic", func() any { return a.GetBasicRecords(ctx, domain) }),
+                timedTask(resultsCh, "auth", func() any { return a.GetAuthoritativeRecords(ctx, domain) }),
+                timedTask(resultsCh, "spf", func() any { return a.AnalyzeSPF(ctx, domain) }),
+                timedTask(resultsCh, "dmarc", func() any { return a.AnalyzeDMARC(ctx, domain) }),
+                timedTask(resultsCh, "dkim", func() any { return a.AnalyzeDKIM(ctx, domain, nil, customDKIMSelectors) }),
+                timedTask(resultsCh, "mta_sts", func() any { return a.AnalyzeMTASTS(ctx, domain) }),
+                timedTask(resultsCh, "tlsrpt", func() any { return a.AnalyzeTLSRPT(ctx, domain) }),
+                timedTask(resultsCh, "bimi", func() any { return a.AnalyzeBIMI(ctx, domain) }),
+                timedTask(resultsCh, "caa", func() any { return a.AnalyzeCAA(ctx, domain) }),
+                timedTask(resultsCh, "dnssec", func() any { return a.AnalyzeDNSSEC(ctx, domain) }),
+                timedTask(resultsCh, "ns_delegation", func() any { return a.AnalyzeNSDelegation(ctx, domain) }),
+                timedTask(resultsCh, "registrar", func() any { return a.GetRegistrarInfo(ctx, domain) }),
+                timedTask(resultsCh, "resolver_consensus", func() any { return a.DNS.ValidateResolverConsensus(ctx, domain) }),
+                timedTask(resultsCh, "ct_subdomains", func() any { return a.DiscoverSubdomains(ctx, domain) }),
+                timedTask(resultsCh, "https_svcb", func() any { return a.AnalyzeHTTPSSVCB(ctx, domain) }),
+                timedTask(resultsCh, "cds_cdnskey", func() any { return a.AnalyzeCDSCDNSKEY(ctx, domain) }),
+                timedTask(resultsCh, "smimea_openpgpkey", func() any { return a.AnalyzeSMIMEA(ctx, domain) }),
+                timedTask(resultsCh, "security_txt", func() any { return a.AnalyzeSecurityTxt(ctx, domain) }),
+                timedTask(resultsCh, "ai_surface", func() any { return a.AnalyzeAISurface(ctx, domain) }),
+                timedTask(resultsCh, "st_subdomains", func() any {
+                        initSecurityTrails()
+                        if !securityTrailsEnabled {
+                                return []string(nil)
+                        }
+                        subs, _, err := FetchSubdomains(ctx, domain)
+                        if err != nil {
+                                return []string(nil)
+                        }
+                        return subs
+                }),
         }
 
         for _, fn := range tasks {
@@ -222,6 +242,7 @@ func (a *Analyzer) runParallelAnalyses(ctx context.Context, domain string, custo
         resultsMap := make(map[string]any)
         for nr := range resultsCh {
                 resultsMap[nr.key] = nr.result
+                slog.Info("Task completed", "task", nr.key, "domain", domain, "elapsed_ms", fmt.Sprintf("%.0f", float64(nr.elapsed.Milliseconds())))
         }
         return resultsMap
 }

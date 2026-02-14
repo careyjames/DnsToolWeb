@@ -3,33 +3,46 @@ if ('serviceWorker' in navigator) {
 }
 
 function startStatusCycle(overlayEl) {
-    const statusDiv = overlayEl.querySelector('.loading-status');
-    if (!statusDiv) return;
-    const spans = statusDiv.querySelectorAll('span');
-    if (spans.length === 0) return;
-    let current = 0;
-    spans.forEach(function(s) { s.classList.remove('active'); });
-    spans[0].classList.add('active');
-    setInterval(function() {
-        spans[current].classList.remove('active');
-        current = (current + 1) % spans.length;
-        spans[current].classList.add('active');
-    }, 2500);
+    var timerEl = document.getElementById('loadingTimer');
+    var noteEl = document.getElementById('loadingNote');
+    var startTime = Date.now();
 
-    const timerEl = document.getElementById('loadingTimer');
-    const noteEl = document.getElementById('loadingNote');
-    const startTime = Date.now();
     if (timerEl) {
         setInterval(function() {
-            const elapsed = Math.floor((Date.now() - startTime) / 1000);
+            var elapsed = Math.floor((Date.now() - startTime) / 1000);
             timerEl.textContent = elapsed + 's';
         }, 1000);
     }
     if (noteEl) {
         setTimeout(function() {
             noteEl.style.opacity = '1';
-        }, 4000);
+        }, 6000);
     }
+
+    var phases = overlayEl.querySelectorAll('.scan-phase');
+    if (phases.length === 0) return;
+
+    var completed = 0;
+    phases.forEach(function(phase, idx) {
+        var delay = parseInt(phase.dataset.delay, 10) || 0;
+        setTimeout(function() {
+            phase.classList.add('visible', 'active-phase');
+        }, delay);
+
+        var doneDelay = delay + 1800 + Math.random() * 1200;
+        if (idx === phases.length - 1) {
+            return;
+        }
+        setTimeout(function() {
+            phase.classList.remove('active-phase');
+            phase.classList.add('done');
+            var icon = phase.querySelector('.scan-icon');
+            if (icon) {
+                icon.className = 'fas fa-check-circle scan-icon';
+            }
+            completed++;
+        }, doneDelay);
+    });
 }
 
 function isValidDomain(domain) {

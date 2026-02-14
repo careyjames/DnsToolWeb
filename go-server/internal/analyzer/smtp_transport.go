@@ -214,7 +214,7 @@ func negotiateTLS(conn net.Conn, host string, result map[string]any) {
 }
 
 func verifyCert(host string, result map[string]any) {
-        verifyCtx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+        verifyCtx, cancel := context.WithTimeout(context.Background(), 4*time.Second)
         defer cancel()
 
         dialer := &net.Dialer{Timeout: 2 * time.Second}
