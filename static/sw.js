@@ -1,7 +1,8 @@
-const CACHE_NAME = 'dnstool-v1';
-const STATIC_ASSETS = [
+var CACHE_VERSION = 'SW_VERSION_PLACEHOLDER';
+var CACHE_NAME = 'dnstool-' + CACHE_VERSION;
+
+var IMMUTABLE_ASSETS = [
   '/static/css/bootstrap-dark-theme.min.css',
-  '/static/css/custom.min.css',
   '/static/css/fontawesome-subset.min.css',
   '/static/js/bootstrap.bundle.min.js',
   '/static/webfonts/fa-solid-900.woff2',
@@ -11,7 +12,7 @@ const STATIC_ASSETS = [
 globalThis.addEventListener('install', function(event) {
   event.waitUntil(
     caches.open(CACHE_NAME).then(function(cache) {
-      return cache.addAll(STATIC_ASSETS);
+      return cache.addAll(IMMUTABLE_ASSETS);
     })
   );
   globalThis.skipWaiting();
@@ -26,27 +27,13 @@ globalThis.addEventListener('activate', function(event) {
       );
     })
   );
-  event.waitUntil(clients.claim());
+  event.waitUntil(globalThis.clients.claim());
 });
 
 globalThis.addEventListener('fetch', function(event) {
-  const url = new URL(event.request.url);
-  if (url.pathname.startsWith('/static/')) {
-    event.respondWith(
-      caches.match(event.request).then(function(cached) {
-        if (cached) return cached;
-        return fetch(event.request).then(function(response) {
-          if (response.ok) {
-            const clone = response.clone();
-            caches.open(CACHE_NAME).then(function(cache) {
-              cache.put(event.request, clone);
-            });
-          }
-          return response;
-        });
-      })
-    );
-  } else {
+  var url = new URL(event.request.url);
+
+  if (!url.pathname.startsWith('/static/')) {
     event.respondWith(
       fetch(event.request).catch(function() {
         if (event.request.mode === 'navigate') {
@@ -55,6 +42,42 @@ globalThis.addEventListener('fetch', function(event) {
             {headers: {'Content-Type': 'text/html'}}
           );
         }
+      })
+    );
+    return;
+  }
+
+  var isVersioned = url.search.indexOf('v=') !== -1;
+
+  if (isVersioned) {
+    event.respondWith(
+      caches.match(event.request).then(function(cached) {
+        var networkFetch = fetch(event.request).then(function(response) {
+          if (response.ok) {
+            var clone = response.clone();
+            caches.open(CACHE_NAME).then(function(cache) {
+              cache.put(event.request, clone);
+            });
+          }
+          return response;
+        });
+
+        return cached || networkFetch;
+      })
+    );
+  } else {
+    event.respondWith(
+      caches.match(event.request).then(function(cached) {
+        if (cached) return cached;
+        return fetch(event.request).then(function(response) {
+          if (response.ok) {
+            var clone = response.clone();
+            caches.open(CACHE_NAME).then(function(cache) {
+              cache.put(event.request, clone);
+            });
+          }
+          return response;
+        });
       })
     );
   }

@@ -5,7 +5,9 @@ package handlers
 import (
         "fmt"
         "net/http"
+        "os"
         "path/filepath"
+        "strings"
         "time"
 
         "github.com/gin-gonic/gin"
@@ -14,11 +16,12 @@ import (
 const headerContentType = "Content-Type"
 
 type StaticHandler struct {
-        StaticDir string
+        StaticDir  string
+        AppVersion string
 }
 
-func NewStaticHandler(staticDir string) *StaticHandler {
-        return &StaticHandler{StaticDir: staticDir}
+func NewStaticHandler(staticDir, appVersion string) *StaticHandler {
+        return &StaticHandler{StaticDir: staticDir, AppVersion: appVersion}
 }
 
 func (h *StaticHandler) SecurityTxt(c *gin.Context) {
@@ -44,8 +47,17 @@ func (h *StaticHandler) ManifestJSON(c *gin.Context) {
 }
 
 func (h *StaticHandler) ServiceWorker(c *gin.Context) {
+        swPath := filepath.Join(h.StaticDir, "sw.js")
+        data, err := os.ReadFile(swPath)
+        if err != nil {
+                c.Status(http.StatusNotFound)
+                return
+        }
+        body := strings.Replace(string(data), "SW_VERSION_PLACEHOLDER", h.AppVersion, 1)
         c.Header(headerContentType, "application/javascript")
-        c.File(filepath.Join(h.StaticDir, "sw.js"))
+        c.Header("Cache-Control", "no-cache, no-store, must-revalidate")
+        c.Header("Service-Worker-Allowed", "/")
+        c.Data(http.StatusOK, "application/javascript", []byte(body))
 }
 
 func (h *StaticHandler) SitemapXML(c *gin.Context) {

@@ -130,7 +130,7 @@ func TestHealthCheckWithAnalyzer(t *testing.T) {
 
 func TestSitemapXML(t *testing.T) {
         router := gin.New()
-        handler := handlers.NewStaticHandler("")
+        handler := handlers.NewStaticHandler("", "test")
         router.GET("/sitemap.xml", handler.SitemapXML)
 
         w := httptest.NewRecorder()
@@ -179,7 +179,7 @@ func TestRobotsTxt(t *testing.T) {
         }
 
         router := gin.New()
-        handler := handlers.NewStaticHandler(tempDir)
+        handler := handlers.NewStaticHandler(tempDir, "test")
         router.GET("/robots.txt", handler.RobotsTxt)
 
         w := httptest.NewRecorder()
@@ -207,7 +207,7 @@ func TestLLMsTxt(t *testing.T) {
         }
 
         router := gin.New()
-        handler := handlers.NewStaticHandler(tempDir)
+        handler := handlers.NewStaticHandler(tempDir, "test")
         router.GET("/llms.txt", handler.LLMsTxt)
 
         w := httptest.NewRecorder()
@@ -235,7 +235,7 @@ func TestManifestJSON(t *testing.T) {
         }
 
         router := gin.New()
-        handler := handlers.NewStaticHandler(tempDir)
+        handler := handlers.NewStaticHandler(tempDir, "test")
         router.GET("/manifest.json", handler.ManifestJSON)
 
         w := httptest.NewRecorder()
@@ -261,14 +261,14 @@ func TestManifestJSON(t *testing.T) {
 
 func TestServiceWorker(t *testing.T) {
         tempDir := t.TempDir()
-        swContent := "self.addEventListener('install', event => { console.log('SW installed'); });"
+        swContent := "var CACHE_NAME = 'dnstool-SW_VERSION_PLACEHOLDER';"
         swPath := filepath.Join(tempDir, "sw.js")
         if err := os.WriteFile(swPath, []byte(swContent), 0644); err != nil {
                 t.Fatalf("failed to create test sw.js: %v", err)
         }
 
         router := gin.New()
-        handler := handlers.NewStaticHandler(tempDir)
+        handler := handlers.NewStaticHandler(tempDir, "26.14.6")
         router.GET("/sw.js", handler.ServiceWorker)
 
         w := httptest.NewRecorder()
@@ -283,8 +283,16 @@ func TestServiceWorker(t *testing.T) {
         }
 
         body := w.Body.String()
-        if !contains(body, "self.addEventListener") {
-                t.Error("expected service worker content in response")
+        if !contains(body, "dnstool-26.14.6") {
+                t.Error("expected version-injected cache name in service worker response")
+        }
+        if contains(body, "SW_VERSION_PLACEHOLDER") {
+                t.Error("placeholder should be replaced with actual version")
+        }
+
+        cacheControl := w.Header().Get("Cache-Control")
+        if cacheControl != "no-cache, no-store, must-revalidate" {
+                t.Errorf("expected no-cache Cache-Control for sw.js, got %s", cacheControl)
         }
 }
 

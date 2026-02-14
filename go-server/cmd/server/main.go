@@ -107,7 +107,7 @@ func main() {
         statsHandler := handlers.NewStatsHandler(database, cfg)
         compareHandler := handlers.NewCompareHandler(database, cfg)
         exportHandler := handlers.NewExportHandler(database)
-        staticHandler := handlers.NewStaticHandler(staticDir)
+        staticHandler := handlers.NewStaticHandler(staticDir, cfg.AppVersion)
         proxyHandler := handlers.NewProxyHandler()
 
         router.GET("/", homeHandler.Index)

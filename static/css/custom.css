@@ -728,6 +728,7 @@ main.container {
     z-index: 9999;
     align-items: center;
     justify-content: center;
+    -webkit-backdrop-filter: blur(4px);
     backdrop-filter: blur(4px);
 }
 .loading-overlay:not(.d-none) {
