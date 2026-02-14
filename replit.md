@@ -81,6 +81,6 @@ The public GitHub repo (`DnsToolWeb`) must NEVER expose proprietary intelligence
 
 ## GitHub Repositories
 - **`careyjames/DnsToolWeb`** (Public) — This Replit project. Set as `origin` remote. All web app code pushes here. Docs must be sanitized before pushing.
-- **`careyjames/dnstool-intel`** (Private) — "Secret sauce" proprietary intelligence: analyzer logic, scoring, golden rules, remediation, AI surface scanner. Never push to public repos.
+- **`careyjames/dnstool-intel`** (Private) — "Secret sauce" proprietary intelligence: analyzer logic, scoring, golden rules, remediation, AI surface scanner. Never push to public repos. **Agent has full push access** via the Replit GitHub integration (repo scope). Use the GitHub API (Contents API) to push files directly — no need for the user to do manual transfers. Staging directory: `dnstool-intel-staging/` (gitignored from public repo) holds files before push.
 - **`careyjames/dns-tool`** (Public, Legacy) — Original CLI version. Archived/legacy. Do NOT push to this repo — it points users to the web app now.
 - **`careyjames/it-help-tech-site`** (Public) — Main company site (www.it-help.tech). Rust/Zola static site on AWS. Separate project.
