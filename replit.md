@@ -20,8 +20,9 @@ The application is implemented in Go using the Gin framework, providing high per
 - **SMTP Transport Status**: Live SMTP TLS validation with three display states: "All Servers" (live probe succeeded), "Inferred" (port 25 blocked but DNS signals confirm security — MTA-STS, TLS-RPT, provider inference), "No Mail" (no MX records). The "Inferred" status replaced a previous bug where DNS-inferred domains showed "No Mail".
 - **SEO**: Comprehensive meta descriptions, Open Graph, and Twitter Card tags. All claims observation-based per Analysis Integrity Standard.
 - **Analysis Integrity**: Adherence to an "Analysis Integrity Standard" ensuring results align with RFCs and industry best practices, enforced by automated golden rules tests. Observation-based language throughout (e.g., "Transport encryption observed?" not "Is email encrypted?").
-- **Golden Rules Tests**: `golden_rules_test.go` guards critical behaviors: email spoofing verdicts, DMARC rua detection, enterprise provider detection (all providers + map non-empty checks), legacy provider blocklist enforcement, no overlap between enterprise and blocklist, and infrastructure tier classification.
-- **Remediation Logic**: RFC-aligned best practices for SPF (~all vs -all, lookup count), DMARC reporting, DKIM key strength, DNSSEC broken chain, DANE without DNSSEC, and CAA. Posture summary categories include "Action Required", "Monitoring", "Configured", and "Not Configured".
+- **Golden Rules Tests**: `golden_rules_test.go` guards critical behaviors: email spoofing verdicts, DMARC rua detection, enterprise provider detection (all providers + map non-empty checks), legacy provider blocklist enforcement, no overlap between enterprise and blocklist, infrastructure tier classification, remediation engine non-stubbed (GenerateRemediation returns real fixes), mail posture non-stubbed (buildMailPosture returns classification/label/color), fixToMap produces valid maps, and **stub registry scanner** that walks all .go files for "stub implementations" headers and fails if unregistered stubs appear (13 known dnstool-intel stubs allowlisted).
+- **Remediation Engine** ("Priority Actions"): Fully implemented — generates RFC-aligned fixes for SPF/DMARC/DKIM/MTA-STS/TLS-RPT/BIMI/DNSSEC/DANE/CAA with severity sorting (Critical > High > Medium > Low), DNS record examples, and per-section grouping. UI panel renamed from "Top Fixes" to "Priority Actions" to match intelligence theme.
+- **Mail Posture Labels** (observation-based): "Strongly Protected", "Moderately Protected", "Limited Protection", "Unprotected", "No Mail Observed" — aligned with NIST/CISA observation-based language.
 - **Cache Policy**: DNS client cache disabled (TTL=0) — every scan does live queries. Only defensible caches retained: RDAP (24h, rate-limit protection), DNS History (24h, 50 calls/month), CT subdomains (1h, append-only data), RFC metadata (24h, reference data).
 
 ### Frontend
@@ -43,6 +44,17 @@ The application is implemented in Go using the Gin framework, providing high per
 
 ### Database
 - **PostgreSQL**: The primary database for persistent storage. **Dev and production use separate databases** (Replit platform change, Dec 2025). The production database contains real user scan history; the dev database only has test scans. This is a platform-enforced separation — not configurable. Always verify features against the published site for real-world accuracy.
+
+## Quality Golden Standards
+These are minimum thresholds that must be maintained. Any proposed change that would drop below these must be discussed before proceeding.
+
+- **Mozilla Observatory**: 130+ (achieved Feb 2026, up from 120). CSP uses `default-src 'none'` with nonce-based `style-src` (no `unsafe-inline`). Secure cookie flag on CSRF. Target: 135 with Secure cookie fix deployed.
+- **Lighthouse Performance**: 98%+ (slight flexibility for network-dependent metrics)
+- **Lighthouse Accessibility**: 100%
+- **Lighthouse Best Practices**: 100%
+- **Lighthouse SEO**: 100%
+- **Golden Rules Tests**: All must pass — `cd go-server && GIT_DIR=/dev/null go test -run TestGoldenRule ./internal/analyzer/ -v`
+- **Stub Registry**: 13 known stub files from dnstool-intel private repo. Any new stub file MUST be registered in `TestGoldenRuleStubRegistryComplete` or the test fails.
 
 ## Build & Deploy Checklist
 Before publishing or after making changes to static assets or Go code, always verify:

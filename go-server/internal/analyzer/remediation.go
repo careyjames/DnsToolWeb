@@ -660,16 +660,16 @@ func extractMailFlags(results map[string]any, ps protocolState) mailFlags {
 
 func computeMailVerdict(mf mailFlags) (string, string) {
         if mf.hasNullMX {
-                return "no_mail", "No Mail Domain"
+                return "no_mail", "No Mail Observed"
         }
         if mf.hasSPF && mf.hasDMARC && mf.hasDKIM {
                 if mf.dmarcReject {
-                        return "protected", "Fully Protected"
+                        return "protected", "Strongly Protected"
                 }
-                return "partial", "Partially Protected"
+                return "partial", "Moderately Protected"
         }
         if mf.hasSPF || mf.hasDMARC {
-                return "minimal", "Minimally Protected"
+                return "minimal", "Limited Protection"
         }
         return "unprotected", "Unprotected"
 }
@@ -722,38 +722,38 @@ func classifyMailPosture(mf mailFlags, presentCount int, domain string, ps proto
         if mf.hasNullMX {
                 return mailClassification{
                         classification: "no_mail",
-                        label:          "No-Mail Domain",
+                        label:          "No Mail Observed",
                         color:          "secondary",
                         icon:           "fas fa-ban",
-                        summary:        "This domain is configured as a no-mail domain via null MX.",
+                        summary:        "Null MX record observed — this domain appears configured to not accept mail.",
                         isNoMail:       true,
                 }
         }
         if mf.hasSPF && mf.hasDMARC && mf.hasDKIM && mf.dmarcReject {
                 return mailClassification{
                         classification: "protected",
-                        label:          "Fully Protected",
+                        label:          "Strongly Protected",
                         color:          "success",
                         icon:           "fas fa-shield-alt",
-                        summary:        "SPF, DKIM, and DMARC reject policy are all configured — strong protection against email spoofing.",
+                        summary:        "SPF, DKIM, and DMARC reject policy observed — strong anti-spoofing controls detected.",
                 }
         }
         if mf.hasSPF && mf.hasDMARC && mf.hasDKIM {
                 return mailClassification{
                         classification: "partial",
-                        label:          "Partially Protected",
+                        label:          "Moderately Protected",
                         color:          "warning",
                         icon:           "fas fa-exclamation-triangle",
-                        summary:        "Core email authentication is in place but the DMARC policy could be strengthened.",
+                        summary:        "Core email authentication controls observed but DMARC enforcement could be strengthened.",
                 }
         }
         if mf.hasSPF || mf.hasDMARC {
                 return mailClassification{
                         classification: "minimal",
-                        label:          "Minimally Protected",
+                        label:          "Limited Protection",
                         color:          "warning",
                         icon:           "fas fa-exclamation-circle",
-                        summary:        "Some email authentication is configured but critical components are missing.",
+                        summary:        "Some email authentication controls observed but critical components are missing.",
                 }
         }
         return mailClassification{
@@ -761,7 +761,7 @@ func classifyMailPosture(mf mailFlags, presentCount int, domain string, ps proto
                 label:          "Unprotected",
                 color:          "danger",
                 icon:           "fas fa-times-circle",
-                summary:        "No email authentication controls detected — this domain is vulnerable to spoofing.",
+                summary:        "No email authentication controls observed — this domain appears vulnerable to spoofing.",
         }
 }
 

@@ -384,7 +384,7 @@
         {{end}}
         {{end}}
 
-        <!-- Top Fixes Panel - Actionable Remediation Guidance -->
+        <!-- Priority Actions Panel - Actionable Remediation Guidance -->
         {{if $remediation}}
         {{$topFixes := mapGetSlice "top_fixes" $remediation}}
         {{$allFixes := mapGetSlice "all_fixes" $remediation}}
@@ -395,7 +395,7 @@
                     <div class="card-body py-3 px-3">
                         <div class="d-flex align-items-center mb-2">
                             <i class="fas fa-wrench text-warning me-2"></i>
-                            <strong class="small text-warning">Top {{len $topFixes}} Fix{{if gt (len $topFixes) 1}}es{{end}}</strong>
+                            <strong class="small text-warning">Priority Action{{if gt (len $topFixes) 1}}s{{end}}</strong>
                             {{if gt (mapGetFloat "fix_count" $remediation) 3}}
                             <span class="badge bg-secondary bg-opacity-50 ms-2 small">{{formatFloat 0 (mapGetFloat "fix_count" $remediation)}} total</span>
                             {{end}}
