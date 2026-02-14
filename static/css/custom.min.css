@@ -2206,7 +2206,10 @@ main.container {
 
 /* ── Big Questions: The value proposition ── */
 .section-question {
-    display: block;
+    display: inline-flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.35rem;
     margin-top: 0.35rem;
     font-size: 0.95em;
     font-weight: 500;
@@ -2215,16 +2218,46 @@ main.container {
     border-left: 3px solid var(--status-info);
     padding-left: 0.6rem;
     line-height: 1.5;
+    text-align: right;
+    max-width: 55%;
 }
 .section-question .badge {
     font-size: 0.78em;
     font-weight: 600;
     vertical-align: middle;
     padding: 0.3em 0.55em;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+.card-header h5.d-flex {
+    gap: 0.5rem;
+}
+@media (max-width: 991.98px) {
+    .section-question {
+        max-width: 50%;
+        font-size: 0.88em;
+    }
 }
 @media (max-width: 767.98px) {
     .section-question {
-        font-size: 0.85em;
-        margin-top: 0.25rem;
+        font-size: 0.82em;
+        margin-top: 0.3rem;
+        max-width: 100%;
+        text-align: left;
+    }
+    .card-header h5.d-flex {
+        flex-direction: column;
+        align-items: flex-start !important;
+    }
+}
+@media (max-width: 575.98px) {
+    .section-question {
+        font-size: 0.78em;
+        padding-left: 0.45rem;
+        border-left-width: 2px;
+    }
+    .section-question .badge {
+        font-size: 0.7em;
+        padding: 0.25em 0.45em;
     }
 }

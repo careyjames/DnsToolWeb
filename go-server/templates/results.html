@@ -2048,8 +2048,8 @@
                             <span><i class="fas fa-exchange-alt me-2"></i>Live SMTP TLS Validation</span>
                             <span class="section-question">Transport encryption observed?
                                 {{$smtpStatus := mapGetStr "status" $smtp}}
-                                <span class="badge bg-{{if eq $smtpStatus "success"}}success{{else if eq $smtpStatus "warning"}}warning{{else if eq $smtpStatus "error"}}danger{{else}}info{{end}} ms-2">
-                                    {{if eq $smtpStatus "success"}}All Servers{{else if eq $smtpStatus "warning"}}Partial{{else if eq $smtpStatus "error"}}Not Observed{{else}}Inferred{{end}}
+                                <span class="badge bg-{{if eq $smtpStatus "success"}}success{{else if eq $smtpStatus "warning"}}warning{{else if eq $smtpStatus "error"}}danger{{else if eq $smtpStatus "info"}}secondary{{else}}info{{end}} ms-2">
+                                    {{if eq $smtpStatus "success"}}All Servers{{else if eq $smtpStatus "warning"}}Partial{{else if eq $smtpStatus "error"}}Not Observed{{else if eq $smtpStatus "info"}}No Mail{{else}}Inferred{{end}}
                                 </span>
                                 {{if mapGetBool "dns_inferred" $smtp}}
                                     <span class="badge bg-secondary ms-1">DNS-Inferred</span>
@@ -2323,9 +2323,16 @@
                             <span class="section-question">Can DNS itself be tampered with?
                                 {{if $posture}}
                                 {{$verdicts := mapGetMap "verdicts" $posture}}
-                                {{$domainAnswer := mapGetStr "domain_answer" $verdicts}}
-                                {{if $domainAnswer}}
-                                    <span class="badge bg-{{if eq $domainAnswer "No"}}success{{else}}warning{{end}} ms-2">{{$domainAnswer}}</span>
+                                {{$dnsVerdict := mapGetMap "dns_tampering" $verdicts}}
+                                {{if $dnsVerdict}}
+                                    {{$dnsLabel := mapGetStr "label" $dnsVerdict}}
+                                    {{if eq $dnsLabel "Protected"}}
+                                        <span class="badge bg-success ms-2">No</span>
+                                    {{else if eq $dnsLabel "Exposed"}}
+                                        <span class="badge bg-danger ms-2">Yes</span>
+                                    {{else}}
+                                        <span class="badge bg-secondary ms-2">Not Configured</span>
+                                    {{end}}
                                 {{end}}
                                 {{end}}
                             </span>
