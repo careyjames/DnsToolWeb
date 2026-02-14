@@ -132,11 +132,11 @@ var dynamicServicesZones = map[string]string{}
 var cnameProviderMap = map[string]cnameProviderInfo{}
 
 func isHostedEmailProvider(_ string) bool {
-        return false
+        return true
 }
 
 func isBIMICapableProvider(_ string) bool {
-        return true
+        return false
 }
 
 func isKnownDKIMProvider(_ interface{}) bool {
