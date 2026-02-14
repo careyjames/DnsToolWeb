@@ -62,6 +62,9 @@ The tool performs RFC-compliant parsing and validation of these protocols:
 - Email Header Analyzer (SPF/DKIM/DMARC verification, delivery route tracing, spoofing detection)
 - IP Investigation (reverse lookups, ASN attribution, geolocation)
 - Executive print/PDF report with TLP:CLEAR classification
+- Changelog page
+- Security policy page
+- Sources and methodology reference
 
 ## Security and Infrastructure
 

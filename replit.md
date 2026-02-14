@@ -9,6 +9,7 @@ The DNS Tool is a web-based intelligence platform for comprehensive, RFC-complia
 - Prioritize honest, observation-based reporting aligned with NIST/CISA standards.
 - Tool targets both technical sysadmins and non-technical executives (board-level).
 - Memory persistence is critical — `replit.md` is the single source of truth between sessions. Update it every session with decisions, changes, and rationale.
+- **IMPORTANT**: If `replit.md` appears truncated or reset, restore from `EVOLUTION.md` which is the persistent backup. Always read BOTH files at session start.
 
 ## Recent Changes (Session Log)
 
