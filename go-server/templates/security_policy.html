@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="dark">
+<head>
+    {{template "head" .}}
+    <title>Security Policy &amp; Vulnerability Disclosure - DNS Tool</title>
+    <meta name="description" content="Vulnerability Disclosure Policy for DNS Tool by IT Help San Diego Inc. How to report security issues, scope, safe harbor, and our commitment to coordinated disclosure.">
+    <meta property="og:url" content="https://dnstool.it-help.tech/security-policy">
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="Security Policy &amp; Vulnerability Disclosure - DNS Tool">
+    <meta property="og:description" content="Vulnerability Disclosure Policy for DNS Tool by IT Help San Diego Inc. How to report security issues, scope, safe harbor, and our commitment to coordinated disclosure.">
+    <meta property="og:image" content="https://dnstool.it-help.tech/static/images/og-image.png">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta property="twitter:domain" content="dnstool.it-help.tech">
+    <meta property="twitter:url" content="https://dnstool.it-help.tech/security-policy">
+    <meta name="twitter:title" content="Security Policy &amp; Vulnerability Disclosure - DNS Tool">
+    <meta name="twitter:description" content="Vulnerability Disclosure Policy for DNS Tool by IT Help San Diego Inc. How to report security issues, scope, safe harbor, and our commitment to coordinated disclosure.">
+    <meta name="twitter:image" content="https://dnstool.it-help.tech/static/images/og-image.png">
+    <link rel="canonical" href="https://dnstool.it-help.tech/security-policy">
+    {{template "critical_css" .}}
+    {{template "head_css" .}}
+</head>
+<body>
+    {{template "nav" .}}
+    <main id="main-content" class="container mt-4 mb-5">
+        <div class="row justify-content-center">
+            <div class="col-lg-10">
+
+                <div class="text-center mb-4">
+                    <h1 class="h2"><i class="fas fa-shield-halved me-2 text-info"></i>Security Policy</h1>
+                    <p class="text-muted lead">Vulnerability Disclosure Policy for DNS Tool</p>
+                    <p class="text-muted small">IT Help San Diego Inc. &mdash; Effective February 14, 2026</p>
+                </div>
+
+                <div class="card bg-dark border-info mb-4">
+                    <div class="card-body">
+                        <h5 class="card-title"><i class="fas fa-bullhorn me-2 text-info"></i>Report a Vulnerability</h5>
+                        <p class="mb-2">If you believe you have found a security vulnerability in DNS Tool or any IT Help San Diego service, please report it responsibly:</p>
+                        <div class="row">
+                            <div class="col-md-6 mb-2">
+                                <strong class="text-info">Email</strong><br>
+                                <a href="mailto:security@it-help.tech" class="text-info">security@it-help.tech</a>
+                            </div>
+                            <div class="col-md-6 mb-2">
+                                <strong class="text-info">security.txt</strong><br>
+                                <a href="/.well-known/security.txt" class="text-info">/.well-known/security.txt</a> <span class="text-muted small">(RFC 9116)</span>
+                            </div>
+                        </div>
+                        <p class="text-muted small mb-0 mt-2">Preferred language: English. We aim to acknowledge reports within 3 business days.</p>
+                    </div>
+                </div>
+
+                <div class="card bg-dark border-secondary mb-4">
+                    <div class="card-body">
+                        <h5 class="card-title"><i class="fas fa-crosshairs me-2 text-warning"></i>Scope</h5>
+                        <p>This policy applies to the following assets owned and operated by IT Help San Diego Inc.:</p>
+                        <div class="table-responsive">
+                            <table class="table table-dark table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>Asset</th>
+                                        <th>Type</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><code>dnstool.it-help.tech</code></td>
+                                        <td>Web Application</td>
+                                        <td><span class="badge bg-success">In Scope</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td><code>www.it-help.tech</code></td>
+                                        <td>Corporate Website</td>
+                                        <td><span class="badge bg-success">In Scope</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td><code>it-help.tech</code></td>
+                                        <td>Domain &amp; DNS Infrastructure</td>
+                                        <td><span class="badge bg-success">In Scope</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td><code>*.it-help.tech</code></td>
+                                        <td>All Subdomains</td>
+                                        <td><span class="badge bg-success">In Scope</span></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <h6 class="mt-3 text-warning">Out of Scope</h6>
+                        <ul class="text-muted small">
+                            <li>Third-party services we integrate with (DNS resolvers, crt.sh, ip-api.com, SecurityTrails)</li>
+                            <li>Social engineering, phishing, or physical attacks against IT Help San Diego employees</li>
+                            <li>Denial of service (DoS/DDoS) attacks</li>
+                            <li>Automated vulnerability scanning that degrades service for other users</li>
+                            <li>Findings from domains analyzed <em>by</em> the tool (those belong to their respective owners)</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="card bg-dark border-secondary mb-4">
+                    <div class="card-body">
+                        <h5 class="card-title"><i class="fas fa-handshake me-2 text-success"></i>Authorization &amp; Safe Harbor</h5>
+                        <div class="alert alert-success bg-transparent border-success small mb-3">
+                            <i class="fas fa-check-circle me-1"></i>
+                            <strong>IT Help San Diego Inc. authorizes good-faith security testing</strong> of all in-scope assets listed above, provided that testing complies with this policy. You do not need prior permission to begin testing.
+                        </div>
+                        <p>We consider security research conducted under this policy to be:</p>
+                        <ul>
+                            <li><strong>Authorized</strong> &mdash; in accordance with the Computer Fraud and Abuse Act (CFAA), and we will not initiate or support legal action against you for accidental, good-faith violations of this policy</li>
+                            <li><strong>Exempt</strong> from the Digital Millennium Copyright Act (DMCA) restrictions, and we will not bring claims against you for circumvention of security controls</li>
+                            <li><strong>Lawful, helpful, and conducted in the public interest</strong> &mdash; performed in good faith with the goal of improving security for all users</li>
+                        </ul>
+                        <p class="text-muted small mb-0">We ask that you make a good-faith effort to avoid privacy violations, data destruction, and service interruption during your research. If you accidentally access user data, stop immediately, do not store or share it, and report what happened.</p>
+                    </div>
+                </div>
+
+                <div class="card bg-dark border-secondary mb-4">
+                    <div class="card-body">
+                        <h5 class="card-title"><i class="fas fa-list-check me-2 text-info"></i>What We Ask of Researchers</h5>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h6 class="text-info">Do</h6>
+                                <ul class="small">
+                                    <li>Report vulnerabilities promptly via <a href="mailto:security@it-help.tech" class="text-info">security@it-help.tech</a></li>
+                                    <li>Provide enough detail to reproduce the issue (steps, screenshots, proof-of-concept)</li>
+                                    <li>Give us reasonable time to address the issue before public disclosure</li>
+                                    <li>Act in good faith to avoid harm to users, data, and availability</li>
+                                    <li>Test only against your own accounts or test data</li>
+                                </ul>
+                            </div>
+                            <div class="col-md-6">
+                                <h6 class="text-danger">Do Not</h6>
+                                <ul class="small">
+                                    <li>Access, modify, or delete data belonging to other users</li>
+                                    <li>Perform attacks that degrade service availability (DoS, resource exhaustion)</li>
+                                    <li>Use automated scanning tools at volumes that impact other users</li>
+                                    <li>Publicly disclose details before we have had time to remediate</li>
+                                    <li>Engage in social engineering, phishing, or physical attacks</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card bg-dark border-secondary mb-4">
+                    <div class="card-body">
+                        <h5 class="card-title"><i class="fas fa-clock me-2 text-info"></i>Our Commitment</h5>
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <div class="text-center">
+                                    <span class="d-block h3 text-info mb-1">3 days</span>
+                                    <small class="text-muted">Acknowledgment of your report</small>
+                                </div>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <div class="text-center">
+                                    <span class="d-block h3 text-info mb-1">14 days</span>
+                                    <small class="text-muted">Initial assessment and triage</small>
+                                </div>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <div class="text-center">
+                                    <span class="d-block h3 text-info mb-1">90 days</span>
+                                    <small class="text-muted">Target remediation window</small>
+                                </div>
+                            </div>
+                        </div>
+                        <ul class="small">
+                            <li>We will work with you to understand and validate the issue</li>
+                            <li>We will provide status updates at least every 14 days until the issue is resolved</li>
+                            <li>We will keep you informed about our progress toward resolution</li>
+                            <li>We will credit researchers who report valid vulnerabilities (unless you prefer to remain anonymous)</li>
+                            <li>We will not take legal action against researchers who follow this policy</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="card bg-dark border-secondary mb-4">
+                    <div class="card-body">
+                        <h5 class="card-title"><i class="fas fa-arrows-rotate me-2 text-info"></i>Coordinated Disclosure</h5>
+                        <p>We follow a coordinated disclosure process:</p>
+                        <ul class="small">
+                            <li><strong>Private reporting</strong> &mdash; vulnerabilities should be reported privately via <a href="mailto:security@it-help.tech" class="text-info">security@it-help.tech</a></li>
+                            <li><strong>Remediation period</strong> &mdash; we request a minimum of 90 days from the initial report before any public disclosure, to allow sufficient time for investigation and remediation</li>
+                            <li><strong>Mutual agreement</strong> &mdash; the timing and content of any public disclosure will be coordinated between IT Help San Diego and the researcher</li>
+                            <li><strong>Critical vulnerabilities</strong> &mdash; for issues that pose an imminent threat to users, we will prioritize an expedited fix and may request early coordination on disclosure timing</li>
+                            <li><strong>Publication</strong> &mdash; once resolved, we welcome researchers to publish their findings and will collaborate on accurate technical details</li>
+                        </ul>
+                        <p class="text-muted small mb-0">If we are unable to resolve an issue within the 90-day window, we will communicate a revised timeline and work with the researcher to agree on a responsible disclosure date.</p>
+                    </div>
+                </div>
+
+                <div class="card bg-dark border-secondary mb-4">
+                    <div class="card-body">
+                        <h5 class="card-title"><i class="fas fa-magnifying-glass me-2 text-warning"></i>Qualifying Vulnerabilities</h5>
+                        <p class="small text-muted">Examples of issues we consider in scope (not exhaustive):</p>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <ul class="small">
+                                    <li>Cross-Site Scripting (XSS)</li>
+                                    <li>Cross-Site Request Forgery (CSRF)</li>
+                                    <li>Server-Side Request Forgery (SSRF)</li>
+                                    <li>SQL Injection or other injection flaws</li>
+                                    <li>Authentication or authorization bypasses</li>
+                                </ul>
+                            </div>
+                            <div class="col-md-6">
+                                <ul class="small">
+                                    <li>Sensitive data exposure</li>
+                                    <li>Remote Code Execution (RCE)</li>
+                                    <li>Insecure Direct Object References (IDOR)</li>
+                                    <li>Significant security misconfigurations</li>
+                                    <li>Information disclosure with demonstrable impact</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card bg-dark border-secondary mb-4">
+                    <div class="card-body">
+                        <h5 class="card-title"><i class="fas fa-shield me-2 text-info"></i>Security Practices</h5>
+                        <p>DNS Tool is built with security as a core principle:</p>
+                        <ul class="small">
+                            <li><strong>No user accounts or passwords</strong> &mdash; no authentication data to compromise</li>
+                            <li><strong>No cookies or tracking</strong> &mdash; minimal data collection reduces attack surface</li>
+                            <li><strong>Content Security Policy (CSP)</strong> with per-request nonces on all pages</li>
+                            <li><strong>CSRF protection</strong> on all state-changing operations</li>
+                            <li><strong>Rate limiting</strong> to prevent abuse</li>
+                            <li><strong>SSRF hardening</strong> &mdash; internal network ranges blocked on outbound requests</li>
+                            <li><strong>Input validation</strong> &mdash; domain names validated and sanitized before processing</li>
+                            <li><strong>HTTPS enforced</strong> with HSTS and secure headers</li>
+                            <li><strong>Open source</strong> &mdash; core application code is publicly available for review on <a href="https://github.com/careyjames/DnsToolWeb" class="text-info" target="_blank" rel="noopener">GitHub</a></li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="card bg-dark border-secondary mb-4">
+                    <div class="card-body">
+                        <h5 class="card-title"><i class="fas fa-file-lines me-2 text-info"></i>Standards &amp; References</h5>
+                        <ul class="small mb-0">
+                            <li><a href="https://www.rfc-editor.org/rfc/rfc9116" class="text-info" target="_blank" rel="noopener">RFC 9116</a> &mdash; A File Format to Aid in Security Vulnerability Disclosure (security.txt)</li>
+                            <li><a href="https://www.cisa.gov/news-events/directives/bod-20-01-develop-and-publish-vulnerability-disclosure-policy" class="text-info" target="_blank" rel="noopener">CISA BOD 20-01</a> &mdash; Develop and Publish a Vulnerability Disclosure Policy</li>
+                            <li><a href="https://www.iso.org/standard/72311.html" class="text-info" target="_blank" rel="noopener">ISO/IEC 29147:2018</a> &mdash; Vulnerability Disclosure</li>
+                            <li><a href="https://disclose.io/" class="text-info" target="_blank" rel="noopener">disclose.io</a> &mdash; Open-source vulnerability disclosure framework</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="text-center text-muted small mt-4 mb-3">
+                    <p>This policy may be updated periodically. The current version is always available at this URL.</p>
+                    <p class="mb-0">
+                        <a href="/.well-known/security.txt" class="text-info me-3"><i class="fas fa-file-code me-1"></i>security.txt</a>
+                        <a href="/sources" class="text-info me-3"><i class="fas fa-diagram-project me-1"></i>Intelligence Sources</a>
+                        <a href="https://www.it-help.tech" class="text-info" target="_blank" rel="noopener"><i class="fas fa-globe me-1"></i>IT Help San Diego Inc.</a>
+                    </p>
+                </div>
+
+            </div>
+        </div>
+    </main>
+    {{template "footer" .}}
+    {{template "scripts" .}}
+</body>
+</html>

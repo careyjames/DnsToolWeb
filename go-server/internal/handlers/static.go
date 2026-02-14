@@ -74,6 +74,7 @@ func (h *StaticHandler) SitemapXML(c *gin.Context) {
                 {"https://dnstool.it-help.tech/history", "daily", "0.6"},
                 {"https://dnstool.it-help.tech/compare", "weekly", "0.5"},
                 {"https://dnstool.it-help.tech/stats", "daily", "0.5"},
+                {"https://dnstool.it-help.tech/security-policy", "monthly", "0.4"},
         }
 
         xml := `<?xml version="1.0" encoding="UTF-8"?>` + "\n"

@@ -151,6 +151,9 @@ func main() {
         sourcesHandler := handlers.NewSourcesHandler(cfg)
         router.GET("/sources", sourcesHandler.Sources)
 
+        securityPolicyHandler := handlers.NewSecurityPolicyHandler(cfg)
+        router.GET("/security-policy", securityPolicyHandler.SecurityPolicy)
+
         router.NoRoute(func(c *gin.Context) {
                 nonce, _ := c.Get("csp_nonce")
                 csrfToken, _ := c.Get("csrf_token")
