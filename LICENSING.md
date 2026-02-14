@@ -29,9 +29,9 @@ This repository contains the public web application:
 - Golden rules test suite
 - Live integration test suite
 
-## What is proprietary
+## What is in the private repo
 
-Advanced intelligence data and implementations live in a separate private repository (Proprietary, All Rights Reserved). This includes:
+Advanced intelligence data and implementations live in a separate private repository (`dnstool-intel`), also licensed under **BSL 1.1** with the same terms and Change Date. This includes:
 - Provider detection databases
 - Scoring algorithms
 - Infrastructure classification logic
@@ -40,7 +40,7 @@ Advanced intelligence data and implementations live in a separate private reposi
 
 ## How they work together
 
-The public repo runs standalone with reduced functionality. In internal builds, selected stub interfaces are replaced with proprietary implementations at compile time. The two codebases share a Go package boundary but are licensed independently.
+The public repo runs standalone with reduced functionality. In internal builds, selected stub interfaces are replaced with proprietary implementations at compile time. The two codebases share a Go package boundary and are both licensed under BSL 1.1.
 
 ## Contributing
 
