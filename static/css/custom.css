@@ -2503,6 +2503,7 @@ main.container {
 .u-opacity-70 { opacity: 0.7; }
 /* Bootstrap has .opacity-75 */
 .u-opacity-75 { opacity: 0.75; }
+.u-opacity-visible { opacity: 1; }
 
 /* --------------------------------------------
    TEXT UTILITIES

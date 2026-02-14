@@ -70,18 +70,18 @@ func SecurityHeaders() gin.HandlerFunc {
                 c.Header("X-Permitted-Cross-Domain-Policies", "none")
 
                 csp := fmt.Sprintf(
-                        "default-src 'self'; "+
+                        "default-src 'none'; "+
                                 "script-src 'self' 'nonce-%s'; "+
-                                "style-src 'self' 'unsafe-inline'; "+
+                                "style-src 'self' 'nonce-%s'; "+
                                 "font-src 'self'; "+
                                 "img-src 'self' data: https:; "+
-                                "object-src 'none'; "+
                                 "connect-src 'self'; "+
                                 "frame-ancestors 'none'; "+
                                 "base-uri 'none'; "+
                                 "form-action 'self'; "+
+                                "manifest-src 'self'; "+
                                 "upgrade-insecure-requests;",
-                        nonceStr,
+                        nonceStr, nonceStr,
                 )
                 c.Header("Content-Security-Policy", csp)
 

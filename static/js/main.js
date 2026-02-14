@@ -15,7 +15,7 @@ function startStatusCycle(overlayEl) {
     }
     if (noteEl) {
         setTimeout(function() {
-            noteEl.style.opacity = '1';
+            noteEl.classList.add('u-opacity-visible');
         }, 6000);
     }
 
@@ -192,7 +192,7 @@ document.addEventListener('DOMContentLoaded', function() {
     });
     
     document.querySelectorAll('.code-block').forEach(function(codeBlock) {
-        codeBlock.style.cursor = 'pointer';
+        codeBlock.classList.add('u-pointer');
         codeBlock.title = 'Click to copy';
 
         const btn = document.createElement('button');
@@ -247,7 +247,7 @@ function loadDNSHistory(domain) {
         .then(function(r) { return r.json(); })
         .then(function(data) {
             if (!data || data.status === 'unavailable' || data.status === 'error' || !data.available) {
-                btn.closest('.dns-history-load-wrapper').style.display = 'none';
+                btn.closest('.dns-history-load-wrapper').classList.add('d-none');
                 return;
             }
             const section = document.getElementById('dns-history-section');
@@ -262,7 +262,7 @@ function loadDNSHistory(domain) {
                 body.innerHTML = '<p class="text-muted mb-0"><i class="fas fa-check-circle text-success me-1"></i>No DNS record changes detected in available history. A, AAAA, MX, and NS records for this domain have remained stable.</p>';
             } else {
                 let html = '<div class="table-responsive"><table class="table table-sm table-striped mb-0"><thead><tr>' +
-                    '<th style="width:80px">Date</th><th style="width:60px">Type</th><th style="width:70px">Action</th>' +
+                    '<th class="u-w-80px">Date</th><th class="u-w-60px">Type</th><th class="u-w-70px">Action</th>' +
                     '<th>Value</th><th>Organization</th><th>Timeline</th></tr></thead><tbody>';
                 changes.forEach(function(ch) {
                     let typeColor = 'secondary';
@@ -276,21 +276,21 @@ function loadDNSHistory(domain) {
                     const actionHtml = ch.action === 'added' ?
                         '<span class="text-success"><i class="fas fa-plus-circle me-1"></i>Added</span>' :
                         '<span class="text-danger"><i class="fas fa-minus-circle me-1"></i>Removed</span>';
-                    html += '<tr><td><code class="text-muted" style="font-size:0.8em">' + escapeHtml(ch.date || '') + '</code></td>' +
+                    html += '<tr><td><code class="text-muted u-fs-080em">' + escapeHtml(ch.date || '') + '</code></td>' +
                         '<td><span class="badge bg-' + typeColor + '">' + escapeHtml(ch.record_type || '') + '</span></td>' +
                         '<td>' + actionHtml + '</td>' +
-                        '<td><code style="font-size:0.85em">' + escapeHtml(ch.value || '') + '</code></td>' +
+                        '<td><code class="u-fs-085em">' + escapeHtml(ch.value || '') + '</code></td>' +
                         '<td><span class="text-muted">' + escapeHtml(ch.org || '\u2014') + '</span></td>' +
-                        '<td><span class="text-muted" style="font-size:0.85em">' + escapeHtml(ch.description || '') + '</span></td></tr>';
+                        '<td><span class="text-muted u-fs-085em">' + escapeHtml(ch.description || '') + '</span></td></tr>';
                 });
                 html += '</tbody></table></div>';
                 body.innerHTML = html;
             }
 
-            btn.closest('.dns-history-load-wrapper').style.display = 'none';
-            section.style.display = '';
+            btn.closest('.dns-history-load-wrapper').classList.add('d-none');
+            section.classList.remove('d-none');
         })
         .catch(function() {
-            btn.closest('.dns-history-load-wrapper').style.display = 'none';
+            btn.closest('.dns-history-load-wrapper').classList.add('d-none');
         });
 }
