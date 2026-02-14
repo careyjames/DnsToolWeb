@@ -11,7 +11,7 @@ const (
         dateJun05 = "Jun 5, 2025"
         dateMay24 = "May 24, 2025"
         dateMay18 = "May 18, 2025"
-        dateMar02 = "Mar 2, 2025"
+        date2019  = "2019"
 )
 
 type ChangelogEntry struct {
@@ -231,11 +231,11 @@ func GetLegacyChangelog() []ChangelogEntry {
                         IsLegacy: true,
                 },
                 {
-                        Version:  "25.3.0",
-                        Date:     dateMar02,
+                        Version:  "19.0.0",
+                        Date:     date2019,
                         Category: "Origins",
-                        Title:    "DNS Tool Is Born: GitHub Repository Created",
-                        Description: "The careyjames/dns-tool repository was created on GitHub — the very first commit. The idea that became DNS Tool officially had a home. Everything that followed grew from this moment.",
+                        Title:    "DNS Tool Is Born",
+                        Description: "The original DNS Tool project began — the idea of building a transparent, RFC-compliant domain security analysis tool. The seed that grew into everything you see today.",
                         Icon:     "fas fa-birthday-cake",
                         IsLegacy: true,
                 },
