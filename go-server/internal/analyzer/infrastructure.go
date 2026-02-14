@@ -51,7 +51,68 @@ type dsDetection struct {
         capabilities []string
 }
 
-var enterpriseProviders = map[string]providerInfo{}
+var enterpriseProviders = map[string]providerInfo{
+        "awsdns": {
+                Name:     nameAmazonRoute53,
+                Tier:     tierEnterprise,
+                Features: []string{featGlobalAnycast, featDDoSProtection, featGlobalInfra},
+        },
+        "route53": {
+                Name:     nameAmazonRoute53,
+                Tier:     tierEnterprise,
+                Features: []string{featGlobalAnycast, featDDoSProtection, featGlobalInfra},
+        },
+        "cloudflare": {
+                Name:     nameCloudflare,
+                Tier:     tierEnterprise,
+                Features: []string{featGlobalAnycast, featDDoSProtection, featProtectedInfra},
+        },
+        "azure-dns": {
+                Name:     "Azure DNS",
+                Tier:     tierEnterprise,
+                Features: []string{featGlobalAnycast, featGlobalInfra, featEnterpriseSecurity},
+        },
+        "ultradns": {
+                Name:     "UltraDNS",
+                Tier:     tierEnterprise,
+                Features: []string{featGlobalAnycast, featDDoSProtection, featEnterpriseManagement},
+        },
+        "dynect": {
+                Name:     "Oracle Dyn",
+                Tier:     tierEnterprise,
+                Features: []string{featGlobalAnycast, featDDoSProtection, featEnterpriseManagement},
+        },
+        "nsone": {
+                Name:     "NS1",
+                Tier:     tierEnterprise,
+                Features: []string{featGlobalAnycast, featDDoSProtection, featEnterpriseManagement},
+        },
+        "google": {
+                Name:     "Google Cloud DNS",
+                Tier:     tierEnterprise,
+                Features: []string{featGlobalAnycast, featGlobalInfra, featEnterpriseSecurity},
+        },
+        "cscglobal": {
+                Name:     nameCSCGlobalDNS,
+                Tier:     tierEnterprise,
+                Features: []string{featBrandProtection, featEnterpriseManagement, featEnterpriseSecurity},
+        },
+        "cscdns": {
+                Name:     nameCSCGlobalDNS,
+                Tier:     tierEnterprise,
+                Features: []string{featBrandProtection, featEnterpriseManagement, featEnterpriseSecurity},
+        },
+        "akamai": {
+                Name:     "Akamai Edge DNS",
+                Tier:     tierEnterprise,
+                Features: []string{featGlobalAnycast, featDDoSProtection, featEnterpriseSecurity},
+        },
+        "akam": {
+                Name:     "Akamai Edge DNS",
+                Tier:     tierEnterprise,
+                Features: []string{featGlobalAnycast, featDDoSProtection, featEnterpriseSecurity},
+        },
+}
 var selfHostedEnterprise = map[string]providerInfo{}
 var governmentDomains = map[string]providerInfo{}
 var managedProviders = map[string]providerInfo{}
@@ -62,6 +123,31 @@ var emailHostingProviders = map[string]string{}
 var hostedMXProviders = map[string]bool{}
 
 func (a *Analyzer) AnalyzeDNSInfrastructure(domain string, results map[string]any) map[string]any {
+        basic, _ := results["basic_records"].(map[string]any)
+        nsRecords, _ := basic["NS"].([]string)
+
+        im := matchEnterpriseProvider(nsRecords)
+        if im != nil && im.provider != nil {
+                altItems := collectAltSecurityItems(results)
+                explainsDNSSEC := false
+                dnssec, _ := results["dnssec"].(map[string]any)
+                if dnssec != nil {
+                        status, _ := dnssec["status"].(string)
+                        if status != "success" {
+                                explainsDNSSEC = true
+                        }
+                }
+                return map[string]any{
+                        "provider_tier":      tierEnterprise,
+                        "provider":           im.provider.Name,
+                        "provider_features":  im.provider.Features,
+                        "is_government":      false,
+                        "alt_security_items": altItems,
+                        "explains_no_dnssec": explainsDNSSEC,
+                        "assessment":         "Enterprise-grade DNS infrastructure",
+                }
+        }
+
         return map[string]any{
                 "provider_tier":      "standard",
                 "provider_features":  []string{},
@@ -108,6 +194,15 @@ func (a *Analyzer) DetectEmailSecurityManagement(spf, dmarc, tlsrpt, mtasts map[
 func enrichHostingFromEdgeCDN(results map[string]any) {}
 
 func matchEnterpriseProvider(nsList []string) *infraMatch {
+        for _, ns := range nsList {
+                nsLower := strings.ToLower(ns)
+                for pattern, info := range enterpriseProviders {
+                        if strings.Contains(nsLower, pattern) {
+                                p := info
+                                return &infraMatch{provider: &p, tier: tierEnterprise}
+                        }
+                }
+        }
         return nil
 }
 
