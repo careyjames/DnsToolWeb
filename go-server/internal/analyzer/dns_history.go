@@ -142,13 +142,12 @@ type historyFetchResult struct {
         errored     bool
 }
 
-func FetchDNSHistory(ctx context.Context, domain string, cache *DNSHistoryCache) map[string]any {
-        initSecurityTrails()
-        if !securityTrailsEnabled {
+func FetchDNSHistoryWithKey(ctx context.Context, domain, userAPIKey string, cache *DNSHistoryCache) map[string]any {
+        if userAPIKey == "" {
                 return map[string]any{
                         "available":   false,
                         "api_enabled": false,
-                        "status":      "disabled",
+                        "status":      "no_key",
                 }
         }
 
@@ -161,15 +160,6 @@ func FetchDNSHistory(ctx context.Context, domain string, cache *DNSHistoryCache)
 
         recordTypes := []string{"a", "aaaa", "mx", "ns"}
 
-        if !stBudget.canSpend(len(recordTypes)) {
-                slog.Info("DNS history: budget exhausted, skipping", "domain", domain)
-                return map[string]any{
-                        "available":   false,
-                        "api_enabled": true,
-                        "status":      "budget_exhausted",
-                }
-        }
-
         type indexedResult struct {
                 idx    int
                 result historyFetchResult
@@ -177,7 +167,7 @@ func FetchDNSHistory(ctx context.Context, domain string, cache *DNSHistoryCache)
         resultsCh := make(chan indexedResult, len(recordTypes))
         for i, rtype := range recordTypes {
                 go func(idx int, rt string) {
-                        resultsCh <- indexedResult{idx, fetchHistoryForType(ctx, domain, rt)}
+                        resultsCh <- indexedResult{idx, fetchHistoryForTypeWithKey(ctx, domain, rt, userAPIKey)}
                 }(i, rtype)
         }
 
@@ -258,7 +248,7 @@ func determineHistoryStatus(allRateLimited, allFailed, anyFailed bool) string {
         return "success"
 }
 
-func fetchHistoryForType(ctx context.Context, domain, rtype string) historyFetchResult {
+func fetchHistoryForTypeWithKey(ctx context.Context, domain, rtype, apiKey string) historyFetchResult {
         url := fmt.Sprintf("https://api.securitytrails.com/v1/history/%s/dns/%s", domain, rtype)
 
         req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
@@ -266,10 +256,9 @@ func fetchHistoryForType(ctx context.Context, domain, rtype string) historyFetch
                 slog.Warn("SecurityTrails history: failed to create request", "domain", domain, "type", rtype, "error", err)
                 return historyFetchResult{errored: true}
         }
-        req.Header.Set("APIKEY", securityTrailsAPIKey)
+        req.Header.Set("APIKEY", apiKey)
         req.Header.Set("Accept", contentTypeJSON)
 
-        stBudget.spend(1)
         resp, err := securityTrailsHTTPClient.Do(req)
         if err != nil {
                 slog.Warn("SecurityTrails history: request failed", "domain", domain, "type", rtype, "error", err)

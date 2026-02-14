@@ -245,7 +245,14 @@ func (h *AnalysisHandler) APIDNSHistory(c *gin.Context) {
                 asciiDomain = domain
         }
 
-        result := analyzer.FetchDNSHistory(c.Request.Context(), asciiDomain, h.DNSHistoryCache)
+        userAPIKey := strings.TrimSpace(c.GetHeader("X-SecurityTrails-Key"))
+
+        if userAPIKey == "" {
+                c.JSON(http.StatusOK, gin.H{"status": "no_key", "message": "SecurityTrails API key required"})
+                return
+        }
+
+        result := analyzer.FetchDNSHistoryWithKey(c.Request.Context(), asciiDomain, userAPIKey, h.DNSHistoryCache)
 
         status, _ := result["status"].(string)
         if status == "rate_limited" || status == "error" || status == "timeout" {

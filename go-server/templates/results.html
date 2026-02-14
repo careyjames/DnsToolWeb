@@ -582,7 +582,7 @@
                                 {{$verdicts := mapGetMap "verdicts" $posture}}
                                 {{$emailAnswer := mapGetStr "email_answer" $verdicts}}
                                 {{if $emailAnswer}}
-                                    <span class="badge bg-{{if eq $emailAnswer "No"}}success{{else if or (contains $emailAnswer "Mostly") (contains $emailAnswer "Partially")}}warning{{else}}danger{{end}} ms-1">{{$emailAnswer}}</span>
+                                    <span class="badge bg-{{if hasPrefix $emailAnswer "No"}}success{{else if hasPrefix $emailAnswer "Unlikely"}}info{{else if or (hasPrefix $emailAnswer "Partially") (hasPrefix $emailAnswer "Uncertain")}}warning{{else}}danger{{end}} ms-1">{{$emailAnswer}}</span>
                                 {{end}}
                                 {{end}}
                             </small>
@@ -2961,12 +2961,25 @@
         </div>
         </div>
 
-        <!-- DNS History: on-demand load button (hidden when data already present or when viewing saved reports) -->
+        <!-- DNS History: user-provided SecurityTrails API key input -->
         {{if not $dns_history_available}}
         <div class="col-12 mb-3 dns-history-load-wrapper">
-            <button type="button" class="btn btn-sm btn-outline-secondary" id="dns-history-btn" onclick="loadDNSHistory('{{.AsciiDomain}}')">
-                <i class="fas fa-history me-1"></i>Load DNS History <span class="badge bg-warning text-dark ms-1" style="font-size:0.7em; vertical-align:middle;">BETA</span>
-            </button>
+            <div class="card bg-dark bg-opacity-25" style="border: 1px solid rgba(255,255,255,0.1);">
+                <div class="card-body py-3">
+                    <div class="d-flex align-items-center flex-wrap gap-2">
+                        <span class="text-muted small"><i class="fas fa-history me-1"></i>DNS History Timeline <span class="badge bg-warning text-dark ms-1" style="font-size:0.7em; vertical-align:middle;">BETA</span></span>
+                        <div class="d-flex align-items-center gap-2 flex-grow-1" style="max-width:500px;">
+                            <input type="password" class="form-control form-control-sm bg-dark text-light border-secondary" id="st-api-key-input" placeholder="Enter your SecurityTrails API key" autocomplete="off" style="font-size:0.85em;">
+                            <button type="button" class="btn btn-sm btn-outline-info" id="dns-history-btn" onclick="loadDNSHistory('{{.AsciiDomain}}')">
+                                <i class="fas fa-search me-1"></i>Go
+                            </button>
+                        </div>
+                    </div>
+                    <div class="mt-2 text-muted" style="font-size:0.75em;">
+                        <i class="fas fa-shield-alt me-1"></i>Your key is sent directly to SecurityTrails and is never stored on our servers. <a href="https://securitytrails.com/app/signup" target="_blank" rel="noopener" class="text-info">Get a free API key</a>
+                    </div>
+                </div>
+            </div>
         </div>
         {{end}}
 
@@ -3597,8 +3610,99 @@
             }
             setupCopyCommandButtons();
             setupCollapseKeyboardHandlers();
+
+            var stKeyInput = document.getElementById('st-api-key-input');
+            if (stKeyInput) {
+                stKeyInput.addEventListener('keydown', function(e) {
+                    if (e.key === 'Enter') {
+                        var btn = document.getElementById('dns-history-btn');
+                        if (btn) btn.click();
+                    }
+                });
+            }
         });
     })();
+
+    function loadDNSHistory(domain) {
+        var keyInput = document.getElementById('st-api-key-input');
+        var apiKey = keyInput ? keyInput.value.trim() : '';
+        if (!apiKey) {
+            if (keyInput) {
+                keyInput.classList.add('is-invalid');
+                keyInput.focus();
+                setTimeout(function() { keyInput.classList.remove('is-invalid'); }, 2000);
+            }
+            return;
+        }
+
+        var btn = document.getElementById('dns-history-btn');
+        var wrapper = document.querySelector('.dns-history-load-wrapper');
+        if (btn) {
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Loading...';
+        }
+
+        fetch('/api/dns-history?domain=' + encodeURIComponent(domain), {
+                headers: { 'X-SecurityTrails-Key': apiKey }
+            })
+            .then(function(resp) { return resp.json(); })
+            .then(function(data) {
+                if (data.status === 'unavailable' || data.status === 'no_key') {
+                    if (btn) {
+                        btn.disabled = false;
+                        btn.innerHTML = '<i class="fas fa-search me-1"></i>Go';
+                    }
+                    if (keyInput) {
+                        keyInput.classList.add('is-invalid');
+                        setTimeout(function() { keyInput.classList.remove('is-invalid'); }, 3000);
+                    }
+                    var errMsg = document.createElement('div');
+                    errMsg.className = 'text-danger small mt-1';
+                    errMsg.textContent = data.status === 'no_key' ? 'API key is required' : 'Could not fetch history — check your API key or try again later';
+                    if (wrapper) {
+                        var existing = wrapper.querySelector('.text-danger');
+                        if (existing) existing.remove();
+                        wrapper.querySelector('.card-body').appendChild(errMsg);
+                        setTimeout(function() { errMsg.remove(); }, 5000);
+                    }
+                    return;
+                }
+
+                var section = document.getElementById('dns-history-section');
+                var body = document.getElementById('dns-history-body');
+                var source = document.getElementById('dns-history-source');
+                if (section) section.style.display = '';
+                if (source) source.textContent = 'Source: SecurityTrails';
+                if (wrapper) wrapper.style.display = 'none';
+
+                if (!data.has_changes || !data.changes || data.changes.length === 0) {
+                    if (body) body.innerHTML = '<p class="text-muted mb-0"><i class="fas fa-check-circle text-success me-1"></i>No DNS record changes detected in available history. A, AAAA, MX, and NS records for this domain have remained stable.</p>';
+                    return;
+                }
+
+                var html = '<div class="table-responsive"><table class="table table-sm table-striped mb-0"><thead><tr><th style="width:80px">Date</th><th style="width:60px">Type</th><th style="width:70px">Action</th><th>Value</th><th>Organization</th><th>Timeline</th></tr></thead><tbody>';
+                data.changes.forEach(function(ch) {
+                    var typeColor = ch.record_type === 'MX' ? 'success' : ch.record_type === 'NS' ? 'info' : 'primary';
+                    var actionHtml = ch.action === 'added'
+                        ? '<span class="text-success"><i class="fas fa-plus-circle me-1"></i>Added</span>'
+                        : '<span class="text-danger"><i class="fas fa-minus-circle me-1"></i>Removed</span>';
+                    html += '<tr><td><code class="text-muted" style="font-size:0.8em">' + (ch.date || '') + '</code></td>'
+                         + '<td><span class="badge bg-' + typeColor + '">' + (ch.record_type || '') + '</span></td>'
+                         + '<td>' + actionHtml + '</td>'
+                         + '<td><code style="font-size:0.85em">' + (ch.value || '') + '</code></td>'
+                         + '<td><span class="text-muted">' + (ch.org || '&mdash;') + '</span></td>'
+                         + '<td><span class="text-muted" style="font-size:0.85em">' + (ch.description || '') + '</span></td></tr>';
+                });
+                html += '</tbody></table></div>';
+                if (body) body.innerHTML = html;
+            })
+            .catch(function(err) {
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="fas fa-search me-1"></i>Go';
+                }
+            });
+    }
     </script>
 </body>
 </html>

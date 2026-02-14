@@ -34,7 +34,7 @@ The application is implemented in Go using the Gin framework, providing high per
 - **IANA RDAP**: For registry data lookups (24h cache due to aggressive rate limits).
 - **ip-api.com**: For visitor IP-to-country lookups.
 - **crt.sh**: For Certificate Transparency logs (1h cache, append-only historical data).
-- **SecurityTrails**: For DNS history timeline (24h cache, 50 API calls/month limit).
+- **SecurityTrails**: For DNS history timeline (user-provided API key, no server-side storage; 24h result cache). Users enter their own SecurityTrails API key on the results page — key is sent directly to SecurityTrails and never stored.
 - **Team Cymru**: DNS-based IP-to-ASN attribution.
 
 ### Database
