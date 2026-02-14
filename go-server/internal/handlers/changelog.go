@@ -11,6 +11,7 @@ const (
         dateJun05 = "Jun 5, 2025"
         dateMay24 = "May 24, 2025"
         dateMay18 = "May 18, 2025"
+        dateNov23 = "Nov 5, 2023"
         date2019  = "2019"
 )
 
@@ -225,17 +226,26 @@ func GetLegacyChangelog() []ChangelogEntry {
                         Version:  "25.5.1",
                         Date:     dateMay18,
                         Category: "Origins",
-                        Title:    "Where It All Started: Python CLI",
-                        Description: "The first public release — a Python command-line script for DNS and email security analysis. Terminal output with visual indicators, interactive and batch modes, pre-compiled binaries for Linux, macOS, and Windows. Documentation, FAQ, and changelog from day one. 10 stars on GitHub.",
+                        Title:    "New Name, New Repo: DNS Tool",
+                        Description: "DNS Scout was renamed to DNS Tool and given a fresh GitHub repository. Python CLI with terminal output, visual indicators, interactive and batch modes, pre-compiled binaries for Linux, macOS, and Windows. Documentation, FAQ, and changelog from day one.",
                         Icon:     "fas fa-terminal",
+                        IsLegacy: true,
+                },
+                {
+                        Version:  "23.11.1",
+                        Date:     dateNov23,
+                        Category: "Origins",
+                        Title:    "DNS Scout: Snap & Launchpad Release",
+                        Description: "DNS Scout v6.20 published to Launchpad PPA and Snapcraft — the first packaged, installable release. A working DNS security analysis tool available as a .deb and a Snap. The earliest externally verifiable timestamp of the project.",
+                        Icon:     "fas fa-box",
                         IsLegacy: true,
                 },
                 {
                         Version:  "19.0.0",
                         Date:     date2019,
                         Category: "Origins",
-                        Title:    "DNS Tool Is Born",
-                        Description: "The original DNS Tool project began — the idea of building a transparent, RFC-compliant domain security analysis tool. The seed that grew into everything you see today.",
+                        Title:    "DNS Scout Is Born",
+                        Description: "The project that became DNS Tool started life as DNS Scout — a command-line DNS and email security analysis tool. The seed of an idea: transparent, RFC-compliant domain intelligence with no black boxes.",
                         Icon:     "fas fa-birthday-cake",
                         IsLegacy: true,
                 },
