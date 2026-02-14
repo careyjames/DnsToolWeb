@@ -135,17 +135,28 @@ func FetchDNSHistory(ctx context.Context, domain string, cache *DNSHistoryCache)
         }
 
         recordTypes := []string{"a", "mx", "ns"}
+
+        type indexedResult struct {
+                idx    int
+                result historyFetchResult
+        }
+        resultsCh := make(chan indexedResult, len(recordTypes))
+        for i, rtype := range recordTypes {
+                go func(idx int, rt string) {
+                        resultsCh <- indexedResult{idx, fetchHistoryForType(ctx, domain, rt)}
+                }(i, rtype)
+        }
+
         var allChanges []dnsChangeEvent
         rateLimitedCount := 0
         errorCount := 0
-
-        for _, rtype := range recordTypes {
-                result := fetchHistoryForType(ctx, domain, rtype)
-                allChanges = append(allChanges, result.changes...)
-                if result.rateLimited {
+        for range recordTypes {
+                ir := <-resultsCh
+                allChanges = append(allChanges, ir.result.changes...)
+                if ir.result.rateLimited {
                         rateLimitedCount++
                 }
-                if result.errored {
+                if ir.result.errored {
                         errorCount++
                 }
         }
@@ -192,9 +203,9 @@ func FetchDNSHistory(ctx context.Context, domain string, cache *DNSHistoryCache)
                 "fully_checked": fullyChecked,
         }
 
-        if cache != nil && status == "success" {
+        if cache != nil && (status == "success" || status == "partial") {
                 cache.Set(domain, result)
-                slog.Info("DNS history cached", "domain", domain, "ttl", cache.ttl)
+                slog.Info("DNS history cached", "domain", domain, "status", status, "ttl", cache.ttl)
         }
 
         return result
