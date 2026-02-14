@@ -288,18 +288,23 @@ func fetchDomainsByIPInternal(ctx context.Context, ip, apiKey string) ([]string,
         resp, err := securityTrailsHTTPClient.Do(req)
         if err != nil {
                 slog.Warn("SecurityTrails: search request failed", "ip", ip, "error", err)
-                return []string{}, nil
+                return nil, fmt.Errorf("connection_error")
         }
         defer resp.Body.Close()
 
         if resp.StatusCode == http.StatusTooManyRequests {
                 slog.Warn("SecurityTrails: rate limited (429)", "ip", ip)
-                return []string{}, nil
+                return nil, fmt.Errorf("rate_limited")
+        }
+
+        if resp.StatusCode == http.StatusForbidden || resp.StatusCode == http.StatusUnauthorized {
+                slog.Warn("SecurityTrails: auth failed", "ip", ip, "status", resp.StatusCode)
+                return nil, fmt.Errorf("auth_failed")
         }
 
         if resp.StatusCode != http.StatusOK {
                 slog.Warn("SecurityTrails: search unexpected status", "ip", ip, "status", resp.StatusCode)
-                return []string{}, nil
+                return nil, fmt.Errorf("api_error_%d", resp.StatusCode)
         }
 
         var stResp stSearchResponse

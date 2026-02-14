@@ -34,10 +34,10 @@
                     IP Investigation
                 </h1>
                 <p class="hero-subtitle mx-auto mb-4" style="font-size: 1.35rem;">
-                    What does the evidence say about this IP and your domain?
+                    Is this IP part of your infrastructure?
                 </p>
                 <p class="text-muted mx-auto mb-4" style="max-width: 620px;">
-                    Evidence-based IP attribution and authorization &mdash; correlating reverse DNS, ASN ownership, SPF policy, and certificate transparency to assess whether an IP appears to be legitimate infrastructure, an approved provider, or an external actor
+                    Evidence-based attribution &mdash; we correlate reverse DNS, ASN ownership, SPF authorization, and certificate transparency to determine whether an IP is your own server, an approved provider, or something that doesn&rsquo;t belong
                 </p>
             </div>
 
@@ -84,7 +84,11 @@
                                     <i class="fas fa-key me-1"></i>API Keys <span class="text-muted">(optional &mdash; enrich your results)</span>
                                 </summary>
                                 <div class="mt-2">
-                                    <label class="text-muted small d-block mb-1"><i class="fas fa-building me-1"></i>SecurityTrails</label>
+                                    <div class="alert alert-secondary py-2 mb-3 small" style="background: rgba(255,255,255,0.03); border-color: rgba(255,255,255,0.08);">
+                                        <i class="fas fa-info-circle me-1"></i><strong>Without these keys</strong>, you still get a full investigation: reverse DNS, ASN ownership (via Team Cymru), SPF authorization, CDN detection, and certificate transparency matching &mdash; all free, no key required. These optional keys add extra layers of intelligence.
+                                    </div>
+
+                                    <label class="text-muted small d-block mb-1"><i class="fas fa-building me-1"></i>SecurityTrails <span class="badge bg-dark border border-secondary" style="font-size:0.7em;">50 requests/month free</span></label>
                                     <div class="input-group input-group-sm mb-1">
                                         <input type="password"
                                                class="form-control bg-dark text-light border-secondary"
@@ -99,10 +103,10 @@
                                                style="font-size:0.85em;">
                                     </div>
                                     <div class="mb-3 text-muted" style="font-size:0.72em;">
-                                        IP neighborhood discovery. <a href="https://securitytrails.com/app/signup" target="_blank" rel="noopener" class="text-info">Get a free key</a>
+                                        <strong>What it adds:</strong> IP Neighborhood &mdash; shows other domains hosted on the same IP. Helps you see who else shares this server (co-tenants on shared hosting, or related properties on dedicated servers). <a href="https://securitytrails.com/app/signup" target="_blank" rel="noopener" class="text-info">Get a free key &rarr;</a>
                                     </div>
 
-                                    <label class="text-muted small d-block mb-1"><i class="fas fa-map-marker-alt me-1"></i>IPinfo.io</label>
+                                    <label class="text-muted small d-block mb-1"><i class="fas fa-map-marker-alt me-1"></i>IPinfo.io <span class="badge bg-dark border border-secondary" style="font-size:0.7em;">50,000 requests/month free</span></label>
                                     <div class="input-group input-group-sm mb-1">
                                         <input type="password"
                                                class="form-control bg-dark text-light border-secondary"
@@ -117,11 +121,11 @@
                                                style="font-size:0.85em;">
                                     </div>
                                     <div class="mb-1 text-muted" style="font-size:0.72em;">
-                                        City-level geolocation &amp; organization data. <a href="https://ipinfo.io/signup" target="_blank" rel="noopener" class="text-info">Get a free token</a>
+                                        <strong>What it adds:</strong> Physical Location &mdash; city, region, postal code, coordinates, timezone, and the organization operating this IP. Useful for verifying that a server is where you expect it to be. <a href="https://ipinfo.io/signup" target="_blank" rel="noopener" class="text-info">Get a free token &rarr;</a>
                                     </div>
 
                                     <div class="mt-2 text-muted" style="font-size:0.72em;">
-                                        <i class="fas fa-shield-alt me-1"></i>Your keys are sent directly to each service and are never stored.
+                                        <i class="fas fa-shield-alt me-1"></i>Your keys are sent directly to each service and are never stored on our servers.
                                     </div>
                                 </div>
                             </details>
@@ -386,6 +390,13 @@
         </div>
 
 
+        <!-- API Error Alerts -->
+        {{if .IPInfoError}}
+        <div class="alert alert-warning py-2 mb-4 small">
+            <i class="fas fa-exclamation-triangle me-2"></i>{{.IPInfoError}}
+        </div>
+        {{end}}
+
         <!-- ═══════════════════════════════════════════
              SECTION 2b: IPinfo.io Enrichment
              ═══════════════════════════════════════════ -->
@@ -597,6 +608,12 @@
         <!-- ═══════════════════════════════════════════
              SECTION 5: IP Neighborhood
              ═══════════════════════════════════════════ -->
+        {{if .STError}}
+        <div class="alert alert-warning py-2 mb-4 small">
+            <i class="fas fa-exclamation-triangle me-2"></i>{{.STError}}
+        </div>
+        {{end}}
+
         {{$neighborRels := toMapSlice (mapGet "neighborhood" $results)}}
         {{$neighborTotal := toInt (mapGet "neighborhood_total" $results)}}
         {{$neighborCtx := mapGetStr "neighborhood_context" $results}}
