@@ -38,7 +38,7 @@ The application is implemented in Go using the Gin framework, providing high per
 - **Team Cymru**: DNS-based IP-to-ASN attribution.
 
 ### Database
-- **PostgreSQL**: The primary database for persistent storage. Preview and published environments share the same database (via global `DATABASE_URL` secret) — scan histories and all data are identical across both.
+- **PostgreSQL**: The primary database for persistent storage. **Dev and production use separate databases** (Replit platform change, Dec 2025). The production database contains real user scan history; the dev database only has test scans. This is a platform-enforced separation — not configurable. Always verify features against the published site for real-world accuracy.
 
 ## Build & Deploy Checklist
 Before publishing or after making changes to static assets or Go code, always verify:
