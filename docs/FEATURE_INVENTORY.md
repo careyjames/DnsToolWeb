@@ -1,7 +1,7 @@
 # DNS Tool — Feature Inventory
 
-**Version:** 26.12.23
-**Last Updated:** February 12, 2026
+**Version:** 26.14.17
+**Last Updated:** February 14, 2026
 **Implementation:** Go/Gin (`go-server/`)
 
 ---
@@ -202,11 +202,13 @@ parsing and validation of a specific DNS protocol.
 - Result caching (1 hour TTL)
 
 ### 2.7 DNS Infrastructure Detection (`infrastructure.go`)
-- NS hostname matching against known provider database
+- NS hostname matching against known provider database (20 enterprise providers)
 - Provider tier classification (enterprise / professional / standard / basic)
+- Legacy provider blocklist (Network Solutions, Bluehost, HostGator, etc.) prevents false Enterprise tagging
 - Feature detection (DNSSEC support, DDoS protection, anycast, geo-routing)
 - Government domain detection (.gov, .mil, .gov.uk, .gov.au, .gc.ca)
 - 200+ CNAME-to-provider mappings
+- Golden rule tests enforce: maps not empty, blocklist entries present, no overlap between enterprise and blocklist
 
 ### 2.8 Hosting Summary (`infrastructure.go`)
 - Web hosting provider detection (A/AAAA IP mapping)
@@ -277,8 +279,29 @@ parsing and validation of a specific DNS protocol.
 | 26 | **Email Security Management Detection** | `infrastructure.go` | `email_security_mgmt` |
 | 27 | **Null MX Detection** | `posture.go` | `has_null_mx` |
 | 28 | **No-Mail Domain Detection** | `posture.go` | `is_no_mail_domain` |
+| 29a | **AI Surface Scanner** | `ai_surface/scanner.go` | `ai_surface` |
+| 29b | **DMARC External Report Auth** | `dmarc_report_auth.go` | `dmarc_external_auth` |
+| 29c | **Dangling DNS Detection** | `dangling_dns.go` | `dangling_records` |
+| 29d | **HTTPS/SVCB Records** | `https_svcb.go` | — |
+| 29e | **SaaS TXT Footprint** | `saas_txt.go` | — |
+| 29f | **CDS/CDNSKEY Automation** | `cds_cdnskey.go` | — |
+| 29g | **SMIMEA/OPENPGPKEY Detection** | `smimea_openpgpkey.go` | — |
+| 29h | **security.txt Detection** | `security_txt.go` | `security_txt` |
 
-### 4.1 Email Security Management Detection (`infrastructure.go`)
+### 4.1a AI Surface Scanner (`ai_surface/scanner.go`)
+- Detects `llms.txt` at both `/.well-known/llms.txt` and root `/llms.txt` paths
+- Detects `llms-full.txt` at both `/.well-known/` and root paths
+- AI crawler governance detection (`robots.txt` directives for AI bots)
+- Prefilled AI prompt detection (meta tags, HTML attributes)
+- CSS-hidden prompt injection artifact detection
+- HTTPS and HTTP fallback for all checks
+
+### 4.1b DMARC External Reporting Authorization (`dmarc_report_auth.go`)
+- Checks `<reported-domain>._report._dmarc.<rua-domain>` TXT records
+- Verifies domains authorize external DMARC aggregate report delivery
+- Identifies unauthorized reporting configurations
+
+### 4.2 Email Security Management Detection (`infrastructure.go`)
 - DMARC `rua` URI provider matching (30+ monitoring providers)
 - DMARC `ruf` URI provider matching
 - TLS-RPT `rua` URI provider matching
@@ -314,6 +337,9 @@ parsing and validation of a specific DNS protocol.
 | 39 | **BIMI Logo Proxy** | `proxy.go` | — |
 | 40 | **Health Check** | `health.go` | — |
 | 41 | **PWA / Service Worker** | `static.go` | `sw.js` |
+| 42a | **Email Header Analyzer** | `email_header.go` | `email_header.html` |
+| 42b | **IP Investigation** | `investigate.go` | `investigate.html` |
+| 42c | **Security Policy Page** | `security_policy.go` | `security_policy.html` |
 
 ### 6.1 Domain Analysis
 - Single-domain comprehensive audit
@@ -360,6 +386,30 @@ Professional, client-facing print layout designed for executive audiences.
 - Full analysis results as downloadable JSON
 - Structured for programmatic consumption
 
+### 6.6 Email Header Analyzer (`email_header.go`, `emailheader.go`)
+- Paste raw headers or upload .eml files
+- SPF/DKIM/DMARC authentication result extraction and verification
+- Delivery route tracing (Received header chain analysis)
+- Domain alignment checking (DKIM d= vs From, SPF envelope vs From)
+- Spoofing detection with severity assessment
+- Base64 and quoted-printable body decoding
+- Phishing pattern scanning (sextortion/blackmail phrase detection, templated mass-mail indicators)
+- Big Questions: critical thinking prompts that surface the security questions that matter most
+- Spam flag detection (X-Spam-Status, SpamAssassin scores, Barracuda headers)
+- BCC delivery detection
+- OpenPhish URL feed integration for real-time phishing URL matching
+
+### 6.7 IP Investigation (`investigate.go`, `ip_investigation.go`)
+- IP-to-domain reverse lookups
+- IP-to-ASN attribution via Team Cymru DNS
+- Geolocation data
+- Related domain discovery
+- PTR record resolution
+
+### 6.8 Security Policy Page (`security_policy.go`)
+- Responsible disclosure policy
+- Security contact information
+
 ---
 
 ## 7. Security & Infrastructure
@@ -391,13 +441,16 @@ Professional, client-facing print layout designed for executive audiences.
 | DNS Infrastructure Providers | `infrastructure.go` | Enterprise/professional/standard tiers |
 | DKIM Selector Database | `dkim.go` | 35 default selectors |
 | IANA RDAP Bootstrap | Runtime loaded | 1,196 TLDs |
+| Enterprise DNS Providers | `infrastructure.go` | 20 providers |
+| Legacy DNS Provider Blocklist | `infrastructure.go` | Prevents false Enterprise tagging |
+| OpenPhish URL Feed | `openphish.go` | Community phishing URL feed |
 
 ---
 
-## Total Feature Count: 50
+## Total Feature Count: 63+
 
 **Analysis Modules:** 11 | **Infrastructure:** 11 | **Assessment:** 3 |
-**Detection:** 3 | **Metadata:** 5 | **Platform:** 8 | **Security:** 9
+**Detection:** 11 | **Metadata:** 5 | **Platform:** 11 | **Security:** 9 | **Provider Databases:** 9
 
 ---
 

@@ -13,8 +13,7 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
-    "@octokit/rest": "^22.0.0",
     "csso-cli": "^4.0.2",
-    "lighthouse": "^12.8.2"
+    "terser": "^5.46.0"
   }
 }

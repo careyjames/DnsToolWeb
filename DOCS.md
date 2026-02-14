@@ -1,228 +1,285 @@
-# DNS Analysis Tool - Documentation
+# DNS Tool — Documentation
 
 ## Overview
 
-A comprehensive DNS intelligence and OSINT platform that provides domain security analysis for three audiences:
+A comprehensive DNS intelligence and OSINT platform for domain security analysis. Built in Go with the Gin framework. Designed for three audiences:
+
 - **Board-level executives**: Quick security posture at a glance
 - **IT professionals**: Actionable email security recommendations
 - **DNS specialists**: Deep technical record analysis
 
-## Philosophy: Symbiotic Security
+## Philosophy: No Proprietary Magic
 
-Traditional DNS security tools often treat DNSSEC as the only valid security measure, penalizing domains that don't implement it. Our tool takes a more nuanced **"symbiotic security"** approach:
+Every conclusion must be independently verifiable using standard commands. The tool operates with strict adherence to RFC standards and observation-based language—never making definitive claims beyond what the data shows.
 
-### Core Principle
-> Not all security looks the same. Enterprise providers, government entities, and modern cloud platforms implement security through multiple layers, not just DNSSEC.
+### Core Principles
 
-### What This Means
+1. **Fresh Data**: DNS records are always fetched live (TTL=0, no caching) because domains in trouble often have rapidly changing DNS records, and security incidents require up-to-the-second accuracy.
 
-1. **Enterprise DNS Providers** (Cloudflare, AWS Route53, Google Cloud DNS, Akamai, Azure)
-   - These providers offer DDoS protection, anycast networks, and 24/7 security monitoring
-   - A domain on Cloudflare without DNSSEC may be MORE secure than a self-hosted domain with DNSSEC
-   - We detect enterprise providers and explain their security measures
+2. **Verifiable Results**: All analyses include equivalent shell commands users can run themselves for verification.
 
-2. **Government Domains** (.gov, .mil, .gov.uk, etc.)
-   - Government TLDs have mandatory security requirements
-   - They operate under strict compliance frameworks
-   - We recognize these as "Government" tier with inherent trust
+3. **Observation-Based Language**: Not "Is email encrypted?" but "Transport encryption observed?"
 
-3. **Self-Hosted Enterprise**
-   - Large organizations running their own NS infrastructure
-   - Detected by multiple nameservers matching the domain
-   - Recognized as capable of implementing alternative security
+4. **Defensible Caches Only**:
+   - RDAP registry data (24h) — registrar information rarely changes
+   - DNS History (24h) — prevents excessive API calls to SecurityTrails
+   - CT subdomains (1h) — append-only historical data
+   - RFC metadata (24h) — reference data that updates slowly
 
-### Fresh Data Philosophy
+## Symbiotic Security
 
-**DNS records are ALWAYS fetched fresh** - we never cache DNS lookups because:
-- Domains in trouble often have rapidly changing DNS
-- Security incidents require up-to-the-second accuracy
-- Misconfiguration detection needs current state
+Traditional DNS security tools treat DNSSEC as the only valid security measure, penalizing domains that skip it. This tool recognizes that enterprises implement security through multiple layers:
 
-Only RDAP registry data is cached (6 hours) since registrar information rarely changes.
+### Enterprise DNS Providers
 
-### Rate Limiting & Anti-Repeat Protection
+Providers like Cloudflare, AWS Route53, Google Cloud DNS, Akamai, Azure, and NS1 offer DDoS protection, anycast networks, and 24/7 security monitoring. A domain on Cloudflare without DNSSEC may be MORE secure than a self-hosted domain with DNSSEC. These are tagged "Enterprise" in the results.
 
-To prevent abuse while honoring the "fresh data" promise:
+### Legacy Providers
 
-| Protection | Window | Purpose |
-|------------|--------|---------|
-| **Rate Limit** | 8 requests/minute per IP | Prevents abuse and network overload |
-| **Anti-Repeat** | 15 seconds per domain | Prevents accidental double-clicks |
+Network Solutions, Bluehost, HostGator, and similar legacy providers are explicitly blocklisted to prevent false "Enterprise" tagging.
 
-**Why 15 seconds for anti-repeat?**
-- A human editing DNS in GoDaddy/Cloudflare and switching tabs typically takes 20+ seconds
-- 15 seconds is short enough that real edits won't be blocked
-- Long enough to prevent rapid re-clicks that waste network resources
+### Government Domains
 
-**Note**: There is no "Force Fresh" toggle - every analysis is fresh. The anti-repeat is purely double-click protection, not caching.
+Domains using .gov, .mil, and equivalent government TLDs operate under strict compliance frameworks with mandatory security requirements. These are recognized as "Government" tier with inherent trust.
 
-**Deployment Note**: Rate limiting uses in-memory storage, which works correctly with a single Gunicorn worker (the Replit default). If running multiple workers, consider Redis-backed rate limiting.
+### Self-Hosted Enterprise
 
----
+Large organizations running their own NS infrastructure are detected by multiple nameservers matching the domain and recognized as capable of implementing alternative security.
 
-## Operator Guide
-
-### Environment Variables
+## Environment Variables
 
 | Variable | Required | Description |
 |----------|----------|-------------|
-| `DATABASE_URL` | Yes | PostgreSQL connection string |
-| `SESSION_SECRET` | Yes | Flask session encryption key |
+| `DATABASE_URL` | Yes | PostgreSQL connection string (e.g., `postgresql://user:pass@host/dbname`) |
+| `SESSION_SECRET` | Yes | Session encryption key for CSRF protection |
 
-### Running the Application
+## Running the Application
+
+The workflow executes:
 
 ```bash
-# Start the application (port 5000)
 gunicorn --bind 0.0.0.0:5000 --reuse-port --reload main:app
 ```
 
-### Running Tests
+This command imports `main.py`, which contains an `os.execvp` trampoline. The trampoline immediately replaces the gunicorn process image with the compiled Go binary (`./dns-tool-server`), so gunicorn never actually starts. The Go binary takes over and binds to port 5000.
+
+## Building
+
+Rebuild the Go binary after any changes to `.go` files:
 
 ```bash
-# Run all tests (unit + integration)
-python -m pytest tests/ -v
-
-# Run only unit tests
-python -m pytest tests/test_dns_analyzer.py -v
-
-# Run only integration tests
-python -m pytest tests/test_integration.py -v
+cd go-server && GIT_DIR=/dev/null go build -buildvcs=false -o /tmp/dns-tool-new ./cmd/server/
+mv /tmp/dns-tool-new dns-tool-server-new && mv dns-tool-server-new dns-tool-server
 ```
 
-### Expected Performance
+Then restart the "Start application" workflow to reload the binary.
 
-| Operation | Expected Time | Notes |
-|-----------|---------------|-------|
-| Domain analysis | 2-8 seconds | Depends on DNS response times |
-| RDAP lookup | 0.5-2 seconds | May be cached (6h TTL) |
-| Page load (cached) | < 100ms | Static assets served directly |
+## Running Tests
 
-### Timeout Behavior
+```bash
+cd go-server && go test ./... -v
+```
 
-Each analysis section has its own timeout handling:
-- Global analysis timeout: 20 seconds
-- Individual section timeout: 2-3 seconds per external call
-- Partial results are displayed if some sections time out
-- Failed sections show warning banners on the results page
-
-### Rate Limits
-
-External services have rate limits we respect:
-- RDAP registries: Cached for 6 hours to avoid hammering
-- DNS resolvers (Cloudflare 1.1.1.1): No practical limit
-- SMTP verification: Disabled (port 25 blocked)
-
----
-
-## Security Features Analyzed
-
-### Email Security
-
-| Feature | What We Check |
-|---------|---------------|
-| **SPF** | Record validity, lookup count, permissiveness |
-| **DMARC** | Policy (none/quarantine/reject), alignment |
-| **DKIM** | Common selectors, key strength |
-| **MTA-STS** | Policy mode, MX hosts |
-| **TLS-RPT** | Reporting URI configuration |
-| **BIMI** | Logo URL, VMC certificate validation |
-
-### DNS Security
-
-| Feature | What We Check |
-|---------|---------------|
-| **DNSSEC** | DS/DNSKEY presence, validation chain |
-| **CAA** | Certificate authority restrictions |
-| **NS Delegation** | Authoritative nameserver consistency |
-
-### Infrastructure Detection
-
-| Tier | Detection Method | Meaning |
-|------|------------------|---------|
-| **Enterprise** | Nameserver keywords (cloudflare, awsdns, etc.) | Professional DNS hosting |
-| **Government** | TLD suffix (.gov, .mil, etc.) | Policy-based security |
-| **Self-Hosted Enterprise** | Multiple NS matching domain | Large organization |
-| **Standard** | None of the above | Typical hosting |
-
----
-
-## Scorecard Interpretation
-
-### Email Spoofing
-- **Protected**: SPF + DMARC with reject/quarantine policy
-- **Monitoring**: SPF + DMARC with p=none (collecting data)
-- **Partial**: Only SPF or only DMARC configured
-- **Vulnerable**: Neither configured
-
-### Brand Impersonation
-- **Protected**: BIMI with valid VMC certificate
-- **Basic**: BIMI logo without VMC
-- **Not Setup**: No BIMI record
-
-### DNS Tampering
-- **Protected**: DNSSEC enabled and valid
-- **Enterprise**: Enterprise DNS provider (alternative security)
-- **Unsigned**: No DNSSEC, standard hosting
-
-### Certificate Control
-- **Configured**: CAA records restrict certificate issuers
-- **Open**: Any CA can issue certificates
-
----
-
-## Troubleshooting
-
-### Common Issues
-
-**Analysis times out**
-- Some DNS servers respond slowly
-- Partial results are shown with warning banner
-- Re-analyze to try again
-
-**RDAP lookup fails**
-- Registry may be rate-limiting
-- Falls back to WHOIS
-- Cached data used if available
-
-**DNSSEC shows "unsigned" for known-secure domain**
-- Domain uses enterprise DNS provider
-- Check "DNS Tampering" scorecard - should show "Enterprise"
-- This is intentional per our symbiotic security philosophy
-
-**No MX records found**
-- Domain may be intentionally non-mail
-- Check SPF for "v=spf1 -all" pattern
-- We detect and explain "no-mail domains"
-
----
+Tests include unit tests, integration tests, golden rules (golden_rules_test.go), and behavioral contract tests.
 
 ## Architecture
 
 ```
-main.py           # Entry point (imports app)
-app.py            # Flask routes, database models, CSP
-dns_analyzer.py   # Core DNS analysis engine
-dns_types.py      # Typed dataclasses for results
-templates/        # Jinja2 HTML templates
-static/           # CSS, JS, assets
-tests/            # Unit and integration tests
+main.py                        # Process trampoline (execs Go binary via os.execvp)
+dns-tool-server                # Compiled Go binary
+go-server/
+  cmd/server/
+    main.go                    # Entry point (Gin router, template setup, handlers)
+  internal/
+    config/                    # Configuration loading (env vars, defaults)
+    analyzer/                  # DNS analysis engine
+                               #   - orchestrator.go (concurrent lookups, result aggregation)
+                               #   - spf.go, dkim.go, dmarc.go, dnssec.go, etc. (analyzers)
+                               #   - infrastructure.go (enterprise provider detection, golden rules)
+                               #   - posture.go (CVSS-aligned risk scoring)
+                               #   - ai_surface/ (llms.txt detection, prompt injection)
+                               #   - email header analysis, IP investigation
+    handlers/                  # HTTP route handlers
+                               #   - analysis.go (domain analysis, results page)
+                               #   - email_header.go (paste/upload email headers)
+                               #   - investigate.go (IP-to-domain, IP-to-ASN)
+                               #   - history.go (historical analyses)
+                               #   - export.go (JSON export)
+    dnsclient/                 # DNS client with multi-resolver consensus
+                               #   - Cloudflare, Google, Quad9, OpenDNS
+                               #   - DoH fallback for censorship resistance
+    db/                        # PostgreSQL database layer (pgx v5, sqlc)
+    middleware/                # CSRF, rate limiting, SSRF hardening
+    telemetry/                 # Caching (Redis-ready), metrics collection
+    models/                    # Data structures
+  templates/                   # Go html/template server-rendered pages
+  static/                      # CSS (Bootstrap dark theme), JS, assets
 ```
 
-### Key Design Decisions
+## Key Features
 
-1. **Server-side rendering**: No client-side API calls, better SEO
-2. **Parallel DNS lookups**: ThreadPoolExecutor for speed
-3. **CSP with nonces**: Score 130, protects against XSS
-4. **Dark theme**: Modern, eye-friendly UI
+### Email Security Analysis
 
----
+- **SPF**: Record validity, lookup count, permissiveness, redirect= chain handling with loop detection
+- **DKIM**: Common selectors, key strength, signature verification
+- **DMARC**: Policy (none/quarantine/reject), alignment, external reporting authorization (DMARC ARF delegation)
+- **MTA-STS**: Policy mode, MX host validation
+- **TLS-RPT**: Reporting URI configuration
+- **BIMI**: Logo URL, VMC certificate validation
+- **Email Header Analyzer**: Paste or upload email headers for SPF/DKIM/DMARC verification, delivery route tracing, alignment checking, spoofing detection, base64/QP body decoding
+
+### DNS Security
+
+- **DNSSEC**: DS/DNSKEY presence, validation chain integrity
+- **CAA**: Certificate authority restrictions
+- **DANE/TLSA**: TLS certificate pinning records
+- **NS Delegation**: Authoritative nameserver consistency
+
+### Infrastructure & Provider Detection
+
+- **Enterprise DNS**: Automatic detection of Cloudflare, AWS Route53, Google Cloud DNS, Akamai, Azure, NS1, and others with golden rule test coverage
+- **Legacy Provider Blocklist**: Explicitly prevents false "Enterprise" tagging
+- **Government Domains**: Recognition of .gov, .mil TLDs with inherent trust
+- **Self-Hosted Enterprise**: Detection via multiple matching nameservers
+- **Edge/CDN Detection**: Identifies CDN vs origin servers
+- **HTTPS/SVCB Records**: HTTP/3 and service binding intelligence
+
+### Advanced Analysis
+
+- **AI Surface Scanner**: Detects llms.txt at both `/.well-known/` and root, AI crawler governance signals (robots.txt), CSS-hidden prompt injection artifacts
+- **CT Subdomain Discovery**: Certificate Transparency logs for comprehensive subdomain enumeration (1h cache, append-only)
+- **DNS History Timeline**: SecurityTrails API integration for historical DNS records (24h cache, 50 calls/month limit)
+- **IP Investigation**: IP-to-domain reverse lookups, IP-to-ASN attribution via Team Cymru
+- **OpenPhish Integration**: Phishing URL detection against live feeds
+- **SMTP Transport Validation**: Live SMTP TLS verification with DNS-inferred fallback
+- **SaaS TXT Footprint**: Extraction of SaaS provider indicators
+- **CDS/CDNSKEY Detection**: Automation indicators for DNS delegation signer updates
+- **SMIMEA/OPENPGPKEY**: Email encryption key discovery
+- **security.txt Detection**: RFC 9116 security contact information
+
+### Posture Scoring
+
+Scores are aligned with CVSS methodology and categorized as:
+
+- **Action Required**: Critical security gap
+- **Monitoring**: Partial implementation, data collection in progress
+- **Configured**: Best practices implemented
+- **Not Configured**: Feature not in use
+
+### Reporting & Export
+
+- **Print/PDF Executive Report**: Professional print stylesheet with TLP:CLEAR classification, domain banner, colored sections, B&W laser-safe palette, controlled page breaks
+- **JSON Export**: Machine-readable analysis results
+- **Timestamp & Duration**: Every analysis includes creation time and execution duration
+
+## Rate Limiting & Abuse Prevention
+
+| Protection | Window | Purpose |
+|------------|--------|---------|
+| **Rate Limit** | 8 requests/minute per IP | Prevents abuse and network overload |
+| **Anti-Repeat** | 15 seconds per domain | Prevents accidental double-clicks during DNS editing |
+
+**Why 15 seconds for anti-repeat?** A sysadmin editing DNS in a registrar panel and switching tabs typically needs 20+ seconds. 15 seconds blocks rapid re-clicks that waste network resources without blocking legitimate edits.
+
+**Note**: There is no "Force Fresh" toggle—every analysis is fresh. The anti-repeat protection is purely double-click prevention, not caching.
+
+## Performance
+
+| Operation | Expected Time | Notes |
+|-----------|---------------|-------|
+| Domain analysis | 5-30 seconds | Depends on DNS response times and number of queries |
+| Page load | < 100ms | Static assets cached aggressively with immutable flags |
+
+## Key Design Decisions
+
+1. **Server-Side Rendering**: All pages rendered server-side using Go `html/template`. No client-side API calls. Better SEO, simpler deployment, inherent CSRF protection.
+
+2. **Concurrent DNS Lookups**: Goroutines enable parallel queries across multiple resolvers with rapid aggregation.
+
+3. **Multi-Resolver Consensus**: Queries Cloudflare, Google, Quad9, and OpenDNS. Consensus-based results reduce resolver-specific anomalies.
+
+4. **CSP with Nonces**: Content Security Policy headers include per-request nonces for inline scripts, blocking XSS attacks while allowing necessary inline code.
+
+5. **Dark Theme UI**: Bootstrap dark theme with custom CSS. Eye-friendly, modern, professional appearance.
+
+6. **Middleware Stack**:
+   - **Recovery**: Graceful error handling with version reporting
+   - **Request Context**: CSP nonce generation, CSRF token injection
+   - **Security Headers**: HSTS, X-Content-Type-Options, X-Frame-Options, CSP
+   - **CSRF Protection**: Token validation on POST requests
+   - **Rate Limiting**: In-memory (Redis-ready for multi-worker deployments)
+   - **SSRF Hardening**: Blocks private IP ranges in external requests
+
+7. **Database**: PostgreSQL via `pgx` v5 for high performance. Queries generated by `sqlc` for type safety and SQL injection prevention.
+
+## External Integrations
+
+- **DNS Resolvers**: Cloudflare DNS, Google Public DNS, Quad9, OpenDNS (for consensus)
+- **IANA RDAP**: Registry data lookups (24h cache due to rate limits)
+- **ip-api.com**: Visitor IP-to-country lookups
+- **Certificate Transparency (crt.sh)**: Subdomain discovery (1h cache)
+- **SecurityTrails**: DNS history timeline (user-provided API key, no server-side storage)
+- **Team Cymru**: DNS-based IP-to-ASN attribution
+- **OpenPhish**: Phishing URL detection
+
+## Caching Strategy
+
+| Cache Target | TTL | Reason |
+|--------------|-----|--------|
+| DNS queries | TTL=0 (none) | Live data for security incidents |
+| RDAP data | 24h | Registrar info rarely changes; prevents rate-limit issues |
+| DNS History | 24h | SecurityTrails API quota protection (50 calls/month limit) |
+| CT subdomains | 1h | Append-only data, minimal changes |
+| RFC metadata | 24h | Reference data, infrequent updates |
+
+## Database
+
+PostgreSQL is the primary persistent store. Database schema is defined in `go-server/db/schema/schema.sql`. Queries are written in `go-server/db/queries/` and generated by `sqlc` into type-safe Go code in `go-server/internal/dbq/`.
+
+- **Development and production use separate databases** (platform change, Dec 2025)
+- Development database: Test scans only
+- Production database: Real user scan history
+
+## Troubleshooting
+
+### Analysis Times Out
+
+Some DNS servers respond slowly. Partial results are shown with a warning banner. Re-analyze to retry.
+
+### RDAP Lookup Fails
+
+Registry may be rate-limiting. Falls back to WHOIS. Cached data used if available.
+
+### DNSSEC Shows "Unsigned" for Known-Secure Domain
+
+Domain likely uses an enterprise DNS provider. Check the "DNS Tampering" scorecard—it should show "Enterprise". This is intentional per the symbiotic security philosophy.
+
+### No MX Records Found
+
+Domain may be intentionally non-mail. Check SPF for `v=spf1 -all` pattern. We detect and explain "no-mail domains".
+
+### Rate Limit Exceeded
+
+Maximum 8 requests per minute per IP. Wait 60 seconds and retry.
 
 ## Version History
 
-### v26.4.30 (Current)
-- Fixed Re-analyze button race condition
-- Fixed Brand Impersonation scorecard VMC detection
-- Added analysis timestamp and duration display
-- Added partial failure banners
-- Increased RDAP cache TTL to 6 hours
-- Added 53 unit + integration tests
+### v26.4.30+
+
+- Go/Gin rewrite (complete backend replacement)
+- Concurrent DNS analyzer with goroutines
+- Enterprise provider golden rules with test coverage
+- CSRF protection via middleware
+- In-memory rate limiting (Redis-ready)
+- Server-rendered Go templates
+- Multi-resolver consensus (Cloudflare, Google, Quad9, OpenDNS)
+- AI Surface Scanner with prompt injection detection
+- Email Header Analyzer with RFC parsing
+- CT subdomain discovery with caching
+- SecurityTrails DNS history integration
+- IP Investigation with IP-to-ASN attribution
+- Posture scoring with CVSS alignment
+- Print/PDF executive reports
+- OpenPhish integration
+- SMTP TLS transport validation
+- CSP with nonces for XSS protection

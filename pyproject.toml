@@ -1,7 +1,7 @@
 [project]
-name = "repl-nix-workspace"
+name = "dns-tool"
 version = "0.1.0"
-description = "Add your description here"
+description = "Process trampoline for DNS Tool Go server"
 requires-python = ">=3.11"
 dependencies = [
     "gunicorn>=25.0.3",
