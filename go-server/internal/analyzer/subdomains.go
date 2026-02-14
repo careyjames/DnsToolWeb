@@ -71,8 +71,8 @@ func (a *Analyzer) DiscoverSubdomains(ctx context.Context, domain string) map[st
                 "subdomains":        []map[string]any{},
                 "unique_subdomains": 0,
                 "total_certs":       0,
-                "source":            "Certificate Transparency Logs",
-                "caveat":            "Subdomains discovered via CT logs (RFC 6962), DNS probing of common service names, and CNAME chain traversal.",
+                "source":            "Multi-Source Intelligence",
+                "caveat":            "Subdomains discovered via CT logs (RFC 6962), DNS probing of common service names, CNAME chain traversal, and SecurityTrails API.",
                 "current_count":     "0",
                 "expired_count":     "0",
                 "cname_count":       0.0,
@@ -83,6 +83,23 @@ func (a *Analyzer) DiscoverSubdomains(ctx context.Context, domain string) map[st
                 result["subdomains"] = cached
                 result["unique_subdomains"] = len(cached)
                 result["ct_source"] = "cache"
+
+                currentCount := 0
+                expiredCount := 0
+                cnameCount := 0
+                for _, sd := range cached {
+                        if isCurrent, ok := sd["is_current"].(bool); ok && isCurrent {
+                                currentCount++
+                        } else {
+                                expiredCount++
+                        }
+                        if _, hasCname := sd["cname_target"]; hasCname {
+                                cnameCount++
+                        }
+                }
+                result["current_count"] = fmt.Sprintf("%d", currentCount)
+                result["expired_count"] = fmt.Sprintf("%d", expiredCount)
+                result["cname_count"] = float64(cnameCount)
                 return result
         }
 
@@ -134,6 +151,38 @@ func (a *Analyzer) DiscoverSubdomains(ctx context.Context, domain string) map[st
         }
 
         dnsProbed := a.probeCommonSubdomains(ctx, domain, subdomainSet)
+
+        stSubdomains, stStatus, _ := FetchSubdomains(ctx, domain)
+        stCount := 0
+        if len(stSubdomains) > 0 {
+                for _, fqdn := range stSubdomains {
+                        fqdn = strings.TrimSpace(strings.ToLower(fqdn))
+                        if fqdn == "" || fqdn == domain || !strings.HasSuffix(fqdn, "."+domain) {
+                                continue
+                        }
+                        if _, exists := subdomainSet[fqdn]; exists {
+                                continue
+                        }
+                        subdomainSet[fqdn] = map[string]any{
+                                "name":       fqdn,
+                                "source":     "securitytrails",
+                                "is_current": true,
+                                "cert_count": "—",
+                                "first_seen": "—",
+                                "issuers":    []string{},
+                        }
+                        stCount++
+                }
+        }
+        if stStatus != nil && stStatus.RateLimited {
+                result["st_status"] = "rate_limited"
+        } else if stStatus != nil && stStatus.Errored {
+                result["st_status"] = "error"
+        } else if stCount > 0 {
+                result["st_status"] = "ok"
+                result["st_discovered"] = stCount
+        }
+
         result["cname_discovered_count"] = 0.0
 
         var subdomains []map[string]any

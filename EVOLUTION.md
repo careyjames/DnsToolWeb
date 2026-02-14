@@ -104,10 +104,16 @@ All documentation files verified accurate:
 
 **Root Cause**: Domains using wildcard TLS certificates (like it-help.tech with `*.it-help.tech`) showed "0 subdomains" because CT logs only had wildcard entries which got normalized to the base domain and filtered out. The subdomain discovery relied solely on CT logs.
 
-**Fix — Three-Layer Discovery**:
-1. **Wildcard cert detection**: Scans CT entries for `*.domain` patterns, reports them with active/expired status and shows info banner in UI
-2. **DNS probing**: Probes ~90 common subdomain names (www, mail, api, admin, etc.) via concurrent DNS lookups with 10-goroutine semaphore cap
-3. **Rich output**: Produces all fields the template expects (name, source, is_current, cert_count, first_seen, issuers, cname_target, wildcard_certs) — template already had full UI built
+**Fix — Four-Layer Discovery** (upgraded from three-layer):
+1. **CT log scanning**: Parses crt.sh Certificate Transparency entries for explicit subdomain names
+2. **Wildcard cert detection**: Detects `*.domain` patterns in CT entries, reports active/expired status with info banner
+3. **DNS probing**: Probes ~90 common subdomain names (www, mail, api, admin, etc.) via concurrent DNS lookups with 10-goroutine semaphore cap
+4. **SecurityTrails API**: Wired existing `FetchSubdomains()` into the discovery pipeline — budget-managed (50/month), cached (24h), with rate-limit cooldown. Subdomains from ST get DNS-verified during enrichment so stale entries show "Expired". Tagged with "ST Intel" badge in UI.
+5. **Rich output**: Produces all fields the template expects (name, source, is_current, cert_count, first_seen, issuers, cname_target, wildcard_certs)
+
+**Source attribution**: Updated from "Certificate Transparency Logs" to "Multi-Source Intelligence". Caveat text now lists all four sources.
+
+**Template updates**: Added "ST Intel" badge (warning-subtle, matching SecurityTrails branding) alongside existing CT Log, DNS, and CNAME badges.
 
 **Date parsing robustness**: Added `parseCertDate()` that handles multiple formats (ISO 8601, date-only, datetime) to prevent silent failures from unexpected crt.sh response formats.
 
@@ -115,4 +121,4 @@ All documentation files verified accurate:
 - `TestGoldenRuleWildcardCTDetection` — wildcard-only CT entries produce 0 explicit subdomains but trigger wildcard flag
 - `TestGoldenRuleWildcardNotFalsePositive` — explicit subdomain entries don't falsely trigger wildcard detection
 
-**Result**: it-help.tech now shows www.it-help.tech (found via DNS probing with CNAME to CloudFront). When crt.sh is available, wildcard banner shows too.
+**Result**: Subdomain discovery now exhausts every available intelligence source before reporting. SecurityTrails finds subdomains that CT logs and DNS probing miss (especially for large enterprise domains).
