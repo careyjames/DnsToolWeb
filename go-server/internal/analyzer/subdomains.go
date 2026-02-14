@@ -300,11 +300,14 @@ func processCTEntries(ctEntries []ctEntry, domain string, subdomainSet map[strin
 }
 
 func (a *Analyzer) probeCommonSubdomains(ctx context.Context, domain string, subdomainSet map[string]map[string]any) int {
+        probeCtx, probeCancel := context.WithTimeout(context.Background(), 30*time.Second)
+        defer probeCancel()
+
         found := 0
         var mu sync.Mutex
         var wg sync.WaitGroup
 
-        sem := make(chan struct{}, 10)
+        sem := make(chan struct{}, 20)
 
         for _, prefix := range commonSubdomainProbes {
                 fqdn := prefix + "." + domain
@@ -322,11 +325,8 @@ func (a *Analyzer) probeCommonSubdomains(ctx context.Context, domain string, sub
                         defer wg.Done()
                         defer func() { <-sem }()
 
-                        aRecords := a.DNS.QueryDNS(ctx, "A", name)
-                        aaaaRecords := a.DNS.QueryDNS(ctx, "AAAA", name)
-                        cnameRecords := a.DNS.QueryDNS(ctx, "CNAME", name)
-
-                        if len(aRecords) == 0 && len(aaaaRecords) == 0 && len(cnameRecords) == 0 {
+                        exists, cnameTarget := a.DNS.ProbeExists(probeCtx, name)
+                        if !exists {
                                 return
                         }
 
@@ -339,8 +339,8 @@ func (a *Analyzer) probeCommonSubdomains(ctx context.Context, domain string, sub
                                 "issuers":    []string{},
                         }
 
-                        if len(cnameRecords) > 0 {
-                                entry["cname_target"] = cnameRecords[0]
+                        if cnameTarget != "" {
+                                entry["cname_target"] = cnameTarget
                         }
 
                         mu.Lock()
@@ -355,6 +355,9 @@ func (a *Analyzer) probeCommonSubdomains(ctx context.Context, domain string, sub
 }
 
 func (a *Analyzer) enrichSubdomainsV2(ctx context.Context, baseDomain string, subdomains []map[string]any) {
+        enrichCtx, enrichCancel := context.WithTimeout(context.Background(), 30*time.Second)
+        defer enrichCancel()
+
         maxEnrich := 50
         if len(subdomains) < maxEnrich {
                 maxEnrich = len(subdomains)
@@ -362,7 +365,7 @@ func (a *Analyzer) enrichSubdomainsV2(ctx context.Context, baseDomain string, su
 
         var wg sync.WaitGroup
         var mu sync.Mutex
-        sem := make(chan struct{}, 10)
+        sem := make(chan struct{}, 20)
 
         for i := 0; i < maxEnrich; i++ {
                 wg.Add(1)
@@ -378,17 +381,22 @@ func (a *Analyzer) enrichSubdomainsV2(ctx context.Context, baseDomain string, su
                                 return
                         }
 
-                        aRecords := a.DNS.QueryDNS(ctx, "A", name)
-                        cnameRecords := a.DNS.QueryDNS(ctx, "CNAME", name)
+                        aRecords := a.DNS.QueryDNS(enrichCtx, "A", name)
 
                         mu.Lock()
-                        if len(aRecords) > 0 || len(cnameRecords) > 0 {
+                        if len(aRecords) > 0 {
                                 sd["is_current"] = true
                         }
-                        if len(cnameRecords) > 0 {
-                                sd["cname_target"] = cnameRecords[0]
-                        }
                         mu.Unlock()
+
+                        if len(aRecords) > 0 {
+                                cnameRecords := a.DNS.QueryDNS(enrichCtx, "CNAME", name)
+                                if len(cnameRecords) > 0 {
+                                        mu.Lock()
+                                        sd["cname_target"] = cnameRecords[0]
+                                        mu.Unlock()
+                                }
+                        }
                 }(i)
         }
         wg.Wait()

@@ -687,6 +687,50 @@ func parseDohResponse(body []byte, recordType string) RecordWithTTL {
         return RecordWithTTL{Records: results, TTL: ttl}
 }
 
+func (c *Client) ProbeExists(ctx context.Context, domain string) (exists bool, cname string) {
+        fqdn := dns.Fqdn(domain)
+        msg := new(dns.Msg)
+        msg.SetQuestion(fqdn, dns.TypeA)
+        msg.RecursionDesired = true
+
+        dnsClient := &dns.Client{
+                Net:     "udp",
+                Timeout: 3 * time.Second,
+        }
+
+        resolverIP := "8.8.8.8"
+        r, _, err := dnsClient.ExchangeContext(ctx, msg, net.JoinHostPort(resolverIP, "53"))
+        if err != nil {
+                resolverIP = "1.1.1.1"
+                r, _, err = dnsClient.ExchangeContext(ctx, msg, net.JoinHostPort(resolverIP, "53"))
+                if err != nil {
+                        return false, ""
+                }
+        }
+
+        if r.Rcode == dns.RcodeNameError {
+                return false, ""
+        }
+
+        hasA := false
+        cnameTarget := ""
+        for _, rr := range r.Answer {
+                switch v := rr.(type) {
+                case *dns.A:
+                        hasA = true
+                case *dns.CNAME:
+                        if cnameTarget == "" {
+                                cnameTarget = strings.TrimSuffix(v.Target, ".")
+                        }
+                }
+        }
+
+        if hasA || cnameTarget != "" {
+                return true, cnameTarget
+        }
+        return false, ""
+}
+
 func (c *Client) udpQuery(ctx context.Context, domain, recordType, resolverIP string) []string {
         result := c.udpQueryWithTTL(ctx, domain, recordType, resolverIP)
         return result.Records
