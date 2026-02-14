@@ -215,11 +215,32 @@ func TestGoldenRuleEnterpriseProviderDetection(t *testing.T) {
         }
 }
 
-func TestGoldenRuleStandardProviderNotEnterprise(t *testing.T) {
-        standardNS := []string{"ns1.godaddy.com.", "ns2.godaddy.com."}
+func TestGoldenRuleGoDaddyIsEnterprise(t *testing.T) {
+        tests := []struct {
+                name      string
+                nsRecords []string
+        }{
+                {"domaincontrol pattern", []string{"ns51.domaincontrol.com.", "ns52.domaincontrol.com."}},
+                {"godaddy pattern", []string{"ns1.godaddy.com.", "ns2.godaddy.com."}},
+        }
+        for _, tt := range tests {
+                t.Run(tt.name, func(t *testing.T) {
+                        im := matchEnterpriseProvider(tt.nsRecords)
+                        if im == nil {
+                                t.Fatalf("GoDaddy NS %v should match enterprise", tt.nsRecords)
+                        }
+                        if im.provider.Name != "GoDaddy" {
+                                t.Errorf(errExpectedGot, "GoDaddy", im.provider.Name)
+                        }
+                })
+        }
+}
+
+func TestGoldenRuleUnknownProviderNotEnterprise(t *testing.T) {
+        standardNS := []string{"ns1.obscurehost.example.", "ns2.obscurehost.example."}
         im := matchEnterpriseProvider(standardNS)
         if im != nil {
-                t.Errorf("GoDaddy NS should not match enterprise, got: %s", im.provider.Name)
+                t.Errorf("unknown NS should not match enterprise, got: %s", im.provider.Name)
         }
 }
 
@@ -277,7 +298,7 @@ func TestGoldenRuleEnterpriseProvidersMapNotEmpty(t *testing.T) {
         if len(enterpriseProviders) == 0 {
                 t.Fatal("enterpriseProviders map must not be empty — enterprise detection will silently fail")
         }
-        requiredPatterns := []string{"awsdns", "cloudflare", "nsone", "azure-dns", "ultradns", "dynect", "akamai", "google", "cscglobal"}
+        requiredPatterns := []string{"awsdns", "cloudflare", "nsone", "azure-dns", "ultradns", "dynect", "akamai", "google", "cscglobal", "domaincontrol", "godaddy", "registrar-servers", "dns.he.net", "digitalocean", "hetzner", "vultr", "dnsimple", "netlify", "vercel"}
         for _, pattern := range requiredPatterns {
                 if _, ok := enterpriseProviders[pattern]; !ok {
                         t.Errorf("enterpriseProviders missing required pattern %q", pattern)

@@ -112,6 +112,56 @@ var enterpriseProviders = map[string]providerInfo{
                 Tier:     tierEnterprise,
                 Features: []string{featGlobalAnycast, featDDoSProtection, featEnterpriseSecurity},
         },
+        "domaincontrol": {
+                Name:     "GoDaddy",
+                Tier:     tierEnterprise,
+                Features: []string{featGlobalAnycast, featDDoSProtection, featEnterpriseManagement},
+        },
+        "godaddy": {
+                Name:     "GoDaddy",
+                Tier:     tierEnterprise,
+                Features: []string{featGlobalAnycast, featDDoSProtection, featEnterpriseManagement},
+        },
+        "registrar-servers": {
+                Name:     "Namecheap",
+                Tier:     tierEnterprise,
+                Features: []string{featGlobalAnycast, featEnterpriseManagement},
+        },
+        "dns.he.net": {
+                Name:     "Hurricane Electric",
+                Tier:     tierEnterprise,
+                Features: []string{featGlobalAnycast, featGlobalInfra},
+        },
+        "hetzner": {
+                Name:     "Hetzner",
+                Tier:     tierEnterprise,
+                Features: []string{featGlobalInfra, featEnterpriseManagement},
+        },
+        "digitalocean": {
+                Name:     "DigitalOcean",
+                Tier:     tierEnterprise,
+                Features: []string{featGlobalAnycast, featGlobalInfra},
+        },
+        "vultr": {
+                Name:     "Vultr",
+                Tier:     tierEnterprise,
+                Features: []string{featGlobalAnycast, featGlobalInfra},
+        },
+        "dnsimple": {
+                Name:     "DNSimple",
+                Tier:     tierEnterprise,
+                Features: []string{featGlobalAnycast, featEnterpriseManagement},
+        },
+        "netlify": {
+                Name:     "Netlify",
+                Tier:     tierEnterprise,
+                Features: []string{featGlobalAnycast, featDDoSProtection},
+        },
+        "vercel": {
+                Name:     "Vercel",
+                Tier:     tierEnterprise,
+                Features: []string{featGlobalAnycast, featDDoSProtection},
+        },
 }
 var selfHostedEnterprise = map[string]providerInfo{}
 var governmentDomains = map[string]providerInfo{}
