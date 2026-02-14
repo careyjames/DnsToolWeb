@@ -157,8 +157,8 @@ func evaluateDMARCState(dmarc map[string]any) (dmarcOK, dmarcWarning, dmarcMissi
 
         dmarcPolicy, _ = dmarc["policy"].(string)
         dmarcPct = extractIntFieldDefault(dmarc, "pct", 100)
-        if rua, ok := dmarc["has_rua"].(bool); ok {
-                dmarcHasRua = rua
+        if rua, ok := dmarc["rua"].(string); ok && rua != "" {
+                dmarcHasRua = true
         }
         return
 }

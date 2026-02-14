@@ -83,6 +83,40 @@ func TestGoldenRuleUSAGov(t *testing.T) {
         }
 }
 
+func TestDMARCRuaDetection(t *testing.T) {
+        dmarcWithRua := map[string]any{
+                "status": "success",
+                "policy": "reject",
+                "pct":    100,
+                "rua":    "mailto:dc1e127b@inbox.ondmarc.com",
+        }
+        _, _, _, _, _, hasRua := evaluateDMARCState(dmarcWithRua)
+        if !hasRua {
+                t.Error("DMARC record with rua= should set dmarcHasRua=true")
+        }
+
+        dmarcNoRua := map[string]any{
+                "status": "success",
+                "policy": "reject",
+                "pct":    100,
+                "rua":    "",
+        }
+        _, _, _, _, _, hasRuaEmpty := evaluateDMARCState(dmarcNoRua)
+        if hasRuaEmpty {
+                t.Error("DMARC record with empty rua should set dmarcHasRua=false")
+        }
+
+        dmarcNilRua := map[string]any{
+                "status": "success",
+                "policy": "reject",
+                "pct":    100,
+        }
+        _, _, _, _, _, hasRuaNil := evaluateDMARCState(dmarcNilRua)
+        if hasRuaNil {
+                t.Error("DMARC record with no rua key should set dmarcHasRua=false")
+        }
+}
+
 func TestGoldenRuleNoMXDomain(t *testing.T) {
         ps := protocolState{
                 dmarcPolicy:    "reject",
