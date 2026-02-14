@@ -113,6 +113,8 @@ func main() {
         router.GET("/", homeHandler.Index)
         router.GET("/go/health", healthHandler.HealthCheck)
 
+        router.GET("/.well-known/security.txt", staticHandler.SecurityTxt)
+        router.GET("/security.txt", staticHandler.SecurityTxt)
         router.GET("/robots.txt", staticHandler.RobotsTxt)
         router.GET("/sitemap.xml", staticHandler.SitemapXML)
         router.GET("/llms.txt", staticHandler.LLMsTxt)

@@ -263,50 +263,50 @@
                                 Enter the raw domain (e.g., <strong>example.com</strong>) &mdash; no https://. Pro tip: <strong>www</strong> is just a subdomain, the same way DKIM selectors like <strong>google._domainkey</strong> are.
                             </div>
                             <div class="mt-2">
-                                <button type="button" class="btn btn-link small text-muted text-decoration-none p-0 border-0" data-bs-toggle="collapse" data-bs-target="#dkimSelectors" aria-expanded="{{if .DKIMExpand}}true{{else}}false{{end}}" aria-controls="dkimSelectors">
-                                    <i class="fas fa-key me-1" style="color: #d4a855;"></i>Custom DKIM Selectors <span class="text-muted">(optional)</span> <i class="fas fa-chevron-down ms-1 small"></i>
+                                <button type="button" class="btn btn-link small text-muted text-decoration-none p-0 border-0" data-bs-toggle="collapse" data-bs-target="#advancedOptions" aria-expanded="{{if .DKIMExpand}}true{{else}}false{{end}}" aria-controls="advancedOptions">
+                                    <i class="fas fa-sliders-h me-1" style="color: #8ab4f8;"></i>Advanced Options <span class="text-muted small">(optional)</span> <i class="fas fa-chevron-down ms-1 small"></i>
                                 </button>
-                                <div class="collapse{{if .DKIMExpand}} show{{end}} mt-2" id="dkimSelectors">
-                                    <div class="row g-2">
-                                        <div class="col-6">
-                                            <input type="text"
-                                                   class="form-control form-control-sm bg-dark text-light border-secondary"
-                                                   name="dkim_selector1"
-                                                   placeholder="e.g. selector1"
-                                                   autocomplete="off">
+                                <div class="collapse{{if .DKIMExpand}} show{{end}} mt-2" id="advancedOptions">
+                                    <div class="row g-3">
+                                        <div class="col-md-7">
+                                            <label class="form-label text-muted small mb-1"><i class="fas fa-key me-1" style="color: #d4a855;"></i>DKIM Selectors</label>
+                                            <div class="row g-2">
+                                                <div class="col-6">
+                                                    <input type="text"
+                                                           class="form-control form-control-sm bg-dark text-light border-secondary"
+                                                           name="dkim_selector1"
+                                                           placeholder="e.g. selector1"
+                                                           autocomplete="off">
+                                                </div>
+                                                <div class="col-6">
+                                                    <input type="text"
+                                                           class="form-control form-control-sm bg-dark text-light border-secondary"
+                                                           name="dkim_selector2"
+                                                           placeholder="e.g. 8452036334128736"
+                                                           autocomplete="off">
+                                                </div>
+                                            </div>
+                                            <div class="form-text text-muted mt-1" style="font-size:0.75em;">
+                                                Primary mail selectors only, without <code>._domainkey</code>.
+                                            </div>
                                         </div>
-                                        <div class="col-6">
-                                            <input type="text"
-                                                   class="form-control form-control-sm bg-dark text-light border-secondary"
-                                                   name="dkim_selector2"
-                                                   placeholder="e.g. 8452036334128736"
-                                                   autocomplete="off">
+                                        <div class="col-md-5">
+                                            <label class="form-label text-muted small mb-1"><i class="fas fa-history me-1" style="color: #5bc0de;"></i>DNS History Key</label>
+                                            <div class="input-group input-group-sm">
+                                                <span class="input-group-text bg-dark border-secondary text-muted"><i class="fas fa-shield-alt"></i></span>
+                                                <input type="password"
+                                                       class="form-control form-control-sm bg-dark text-light border-secondary"
+                                                       name="securitytrails_key"
+                                                       placeholder="SecurityTrails API key"
+                                                       autocomplete="off"
+                                                       spellcheck="false"
+                                                       data-lpignore="true"
+                                                       data-1p-ignore="true">
+                                            </div>
+                                            <div class="form-text text-muted mt-1" style="font-size:0.75em;">
+                                                <i class="fas fa-lock me-1"></i>Never stored. <a href="https://securitytrails.com/app/signup" target="_blank" rel="noopener" class="text-info">Get free key</a>
+                                            </div>
                                         </div>
-                                    </div>
-                                    <div class="form-text text-muted mt-1 small">
-                                        <i class="fas fa-info-circle me-1"></i>Enter your primary mail selectors if known &mdash; not CRM or newsletter selectors. Just the name, without <code>._domainkey</code>.
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="mt-2">
-                                <button type="button" class="btn btn-link small text-muted text-decoration-none p-0 border-0" data-bs-toggle="collapse" data-bs-target="#securityTrailsKey" aria-expanded="false" aria-controls="securityTrailsKey">
-                                    <i class="fas fa-history me-1" style="color: #5bc0de;"></i>DNS History Key <span class="text-muted">(optional)</span> <i class="fas fa-chevron-down ms-1 small"></i>
-                                </button>
-                                <div class="collapse mt-2" id="securityTrailsKey">
-                                    <div class="input-group input-group-sm">
-                                        <span class="input-group-text bg-dark border-secondary text-muted"><i class="fas fa-shield-alt"></i></span>
-                                        <input type="password"
-                                               class="form-control form-control-sm bg-dark text-light border-secondary"
-                                               name="securitytrails_key"
-                                               placeholder="SecurityTrails API key"
-                                               autocomplete="off"
-                                               spellcheck="false"
-                                               data-lpignore="true"
-                                               data-1p-ignore="true">
-                                    </div>
-                                    <div class="form-text text-muted mt-1 small">
-                                        <i class="fas fa-lock me-1"></i>Your key is transmitted over HTTPS, used once for this scan, and <strong>never stored</strong> on our servers.
-                                        <a href="https://securitytrails.com/app/signup" target="_blank" rel="noopener" class="text-info ms-1">Get a free API key</a>
                                     </div>
                                 </div>
                             </div>

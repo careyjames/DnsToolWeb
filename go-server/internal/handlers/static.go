@@ -19,6 +19,11 @@ func NewStaticHandler(staticDir string) *StaticHandler {
         return &StaticHandler{StaticDir: staticDir}
 }
 
+func (h *StaticHandler) SecurityTxt(c *gin.Context) {
+        c.Header("Content-Type", "text/plain; charset=utf-8")
+        c.File(filepath.Join(h.StaticDir, ".well-known", "security.txt"))
+}
+
 func (h *StaticHandler) RobotsTxt(c *gin.Context) {
         c.File(filepath.Join(h.StaticDir, "robots.txt"))
 }

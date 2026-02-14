@@ -577,15 +577,15 @@
                     <div class="card-header">
                         <h5 class="mb-0 d-flex align-items-center justify-content-between flex-wrap">
                             <span><i class="fas fa-shield-alt me-2"></i>Email Security</span>
-                            <small class="text-muted">Can this domain be impersonated by email?
+                            <span class="section-question">Can this domain be impersonated by email?
                                 {{if $posture}}
                                 {{$verdicts := mapGetMap "verdicts" $posture}}
                                 {{$emailAnswer := mapGetStr "email_answer" $verdicts}}
                                 {{if $emailAnswer}}
-                                    <span class="badge bg-{{if hasPrefix $emailAnswer "No"}}success{{else if hasPrefix $emailAnswer "Unlikely"}}info{{else if or (hasPrefix $emailAnswer "Partially") (hasPrefix $emailAnswer "Uncertain")}}warning{{else}}danger{{end}} ms-1">{{$emailAnswer}}</span>
+                                    <span class="badge bg-{{if hasPrefix $emailAnswer "No"}}success{{else if hasPrefix $emailAnswer "Unlikely"}}info{{else if or (hasPrefix $emailAnswer "Partially") (hasPrefix $emailAnswer "Uncertain")}}warning{{else}}danger{{end}} ms-2">{{$emailAnswer}}</span>
                                 {{end}}
                                 {{end}}
-                            </small>
+                            </span>
                         </h5>
                     </div>
                     <div class="card-body">
@@ -1360,19 +1360,19 @@
                     <div class="card-header">
                         <h5 class="mb-0 d-flex align-items-center justify-content-between flex-wrap">
                             <span><i class="fas fa-certificate me-2"></i>DANE / TLSA</span>
-                            <small class="text-muted">Can mail servers prove their identity without a certificate authority?
+                            <span class="section-question">Can mail servers prove their identity without a certificate authority?
                                 {{$daneStatus := mapGetStr "status" $dane}}
                                 {{$hasDane := mapGetBool "has_dane" $dane}}
                                 {{$daneDeployable := mapGetStr "dane_deployable" $dane}}
                                 {{$hasMtaStsHeader := and $mta_sts (eq (mapGetStr "status" $mta_sts) "success")}}
                                 {{if $hasDane}}
-                                    <span class="badge bg-success ms-1">Yes</span>
+                                    <span class="badge bg-success ms-2">Yes</span>
                                 {{else if $hasMtaStsHeader}}
-                                    <span class="badge bg-info ms-1" data-bs-toggle="tooltip" title="DANE (CA-free) is not available, but MTA-STS enforces TLS using CA-issued certificates">via MTA-STS (CA)</span>
+                                    <span class="badge bg-info ms-2" data-bs-toggle="tooltip" title="DANE (CA-free) is not available, but MTA-STS enforces TLS using CA-issued certificates">via MTA-STS (CA)</span>
                                 {{else}}
                                     <span class="badge bg-secondary ms-1">No</span>
                                 {{end}}
-                            </small>
+                            </span>
                         </h5>
                         <div class="mt-1">
                                 <a href="https://datatracker.ietf.org/doc/html/rfc7672#section-3" target="_blank" rel="noopener" class="me-1 text-muted rfc-link" data-bs-toggle="tooltip" data-bs-html="true" title="<strong>DANE for SMTP</strong><br>Publishes TLS certificate information in DNS (TLSA records), enabling mail servers to verify certificates without relying solely on certificate authorities. §3 covers SMTP with DANE." aria-label="Learn about DANE - RFC 7672 §3"><i class="fas fa-info-circle"></i><span class="rfc-label">RFC 7672 §3</span></a>
@@ -1522,16 +1522,16 @@
                     <div class="card-header">
                         <h5 class="mb-0 d-flex align-items-center justify-content-between flex-wrap">
                             <span><i class="fas fa-certificate me-2"></i>Brand Security</span>
-                            <small class="text-muted">Can this brand be convincingly faked?
+                            <span class="section-question">Can this brand be convincingly faked?
                                 {{if $posture}}
                                 {{$verdicts := mapGetMap "verdicts" $posture}}
                                 {{if mapGetBool "brand_secure" $verdicts}}
-                                    <span class="badge bg-success ms-1">No</span>
+                                    <span class="badge bg-success ms-2">No</span>
                                 {{else if mapGetStr "brand" $verdicts}}
-                                    <span class="badge bg-warning ms-1">Partially</span>
+                                    <span class="badge bg-warning ms-2">Partially</span>
                                 {{end}}
                                 {{end}}
-                            </small>
+                            </span>
                         </h5>
                     </div>
                     <div class="card-body">
@@ -1724,13 +1724,13 @@
                     <div class="card-header">
                         <h5 class="mb-0 d-flex align-items-center justify-content-between flex-wrap">
                             <span><i class="fas fa-shield-alt me-2"></i>Vulnerability Disclosure Policy (security.txt)</span>
-                            <small class="text-muted">Does this domain publish a vulnerability reporting channel?
+                            <span class="section-question">Does this domain publish a vulnerability reporting channel?
                                 {{$secTxtStatus := mapGetStr "status" $security_txt}}
-                                <span class="badge bg-{{if eq $secTxtStatus "success"}}success{{else if eq $secTxtStatus "warning"}}warning{{else}}secondary{{end}} ms-1">
+                                <span class="badge bg-{{if eq $secTxtStatus "success"}}success{{else if eq $secTxtStatus "warning"}}warning{{else}}secondary{{end}} ms-2">
                                     {{if eq $secTxtStatus "success"}}Yes{{else if eq $secTxtStatus "warning"}}Partial{{else}}No{{end}}
                                 </span>
                                 <a href="https://datatracker.ietf.org/doc/html/rfc9116" target="_blank" rel="noopener" class="ms-2 text-muted rfc-link"><i class="fas fa-info-circle"></i><span class="rfc-label">RFC 9116</span></a>
-                            </small>
+                            </span>
                         </h5>
                     </div>
                     <div class="card-body">
@@ -2032,15 +2032,15 @@
                     <div class="card-header">
                         <h5 class="mb-0 d-flex align-items-center justify-content-between flex-wrap">
                             <span><i class="fas fa-exchange-alt me-2"></i>Live SMTP TLS Validation</span>
-                            <small class="text-muted">Transport encryption observed?
+                            <span class="section-question">Transport encryption observed?
                                 {{$smtpStatus := mapGetStr "status" $smtp}}
-                                <span class="badge bg-{{if eq $smtpStatus "success"}}success{{else if eq $smtpStatus "warning"}}warning{{else if eq $smtpStatus "error"}}danger{{else}}info{{end}} ms-1">
+                                <span class="badge bg-{{if eq $smtpStatus "success"}}success{{else if eq $smtpStatus "warning"}}warning{{else if eq $smtpStatus "error"}}danger{{else}}info{{end}} ms-2">
                                     {{if eq $smtpStatus "success"}}All Servers{{else if eq $smtpStatus "warning"}}Partial{{else if eq $smtpStatus "error"}}Not Observed{{else}}Inferred{{end}}
                                 </span>
                                 {{if mapGetBool "dns_inferred" $smtp}}
                                     <span class="badge bg-secondary ms-1">DNS-Inferred</span>
                                 {{end}}
-                            </small>
+                            </span>
                         </h5>
                     </div>
                     <div class="card-body">
@@ -2306,15 +2306,15 @@
                     <div class="card-header">
                         <h5 class="mb-0 d-flex align-items-center justify-content-between flex-wrap">
                             <span><i class="fas fa-shield-alt me-2"></i>Domain Security</span>
-                            <small class="text-muted">Can DNS itself be tampered with?
+                            <span class="section-question">Can DNS itself be tampered with?
                                 {{if $posture}}
                                 {{$verdicts := mapGetMap "verdicts" $posture}}
                                 {{$domainAnswer := mapGetStr "domain_answer" $verdicts}}
                                 {{if $domainAnswer}}
-                                    <span class="badge bg-{{if eq $domainAnswer "No"}}success{{else}}warning{{end}} ms-1">{{$domainAnswer}}</span>
+                                    <span class="badge bg-{{if eq $domainAnswer "No"}}success{{else}}warning{{end}} ms-2">{{$domainAnswer}}</span>
                                 {{end}}
                                 {{end}}
-                            </small>
+                            </span>
                         </h5>
                     </div>
                     <div class="card-body">
