@@ -2265,3 +2265,15 @@ main.container {
         padding: 0.25em 0.45em;
     }
 }
+.api-keys-info {
+    background: rgba(13, 202, 240, 0.08) !important;
+    border: 1px solid rgba(13, 202, 240, 0.25) !important;
+    color: #c5d0d8 !important;
+    font-size: 0.875rem;
+}
+.api-keys-info .api-keys-icon {
+    color: #0dcaf0;
+}
+.api-keys-info strong {
+    color: #e8eaed !important;
+}

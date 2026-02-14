@@ -35,7 +35,7 @@ func Load() (*Config, error) {
                 DatabaseURL:   dbURL,
                 SessionSecret: sessionSecret,
                 Port:          port,
-                AppVersion:    "26.14.11",
+                AppVersion:    "26.14.12",
                 Testing:       false,
         }, nil
 }
