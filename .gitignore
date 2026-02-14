@@ -12,3 +12,6 @@ replit.md
 docs/legacy/src/
 docs/legacy/tests/
 docs/legacy/migrations/
+
+# Private repo staging — never push to public
+dnstool-intel-staging/

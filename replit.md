@@ -56,6 +56,7 @@ These are minimum thresholds that must be maintained. Any proposed change that w
 - **Golden Rules Tests**: All must pass — `cd go-server && GIT_DIR=/dev/null go test -run TestGoldenRule ./internal/analyzer/ -v`
 - **Live Integration Tests**: Optional — `cd go-server && GIT_DIR=/dev/null go test -tags=integration -run TestLive ./internal/analyzer/ -v -timeout 120s`. Tests real DNS queries against it-help.tech with structural assertions (not exact values). Failures may indicate domain config changes, not code bugs. Never runs in default test suite.
 - **Stub Registry**: 13 known stub files from dnstool-intel private repo. Any new stub file MUST be registered in `TestGoldenRuleStubRegistryComplete` or the test fails.
+- **Private Repo Sync**: After adding/modifying stubs in the public repo, the corresponding real implementation MUST be pushed to `dnstool-intel`. Use `dnstool-intel-staging/STUB_AUDIT.md` to track what needs syncing. Boundary functions: `isHostedEmailProvider`, `isBIMICapableProvider`, `isKnownDKIMProvider`.
 
 ## Build & Deploy Checklist
 Before publishing or after making changes to static assets or Go code, always verify:
