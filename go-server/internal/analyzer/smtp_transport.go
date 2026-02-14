@@ -489,7 +489,7 @@ func enrichWithDNSInference(result map[string]any, summary *smtpSummary, a *Anal
         if len(signals) > 0 {
                 result["dns_inferred"] = true
                 result["inference_note"] = "Direct SMTP probe unavailable (port 25 blocked). Transport security inferred from DNS policy records and provider capabilities."
-                result["status"] = "info"
+                result["status"] = "inferred"
                 result["message"] = fmt.Sprintf("Transport security inferred from %d DNS signal(s)", len(signals))
                 result["inference_signals"] = signals
         }
