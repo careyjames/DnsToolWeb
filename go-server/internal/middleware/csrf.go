@@ -131,7 +131,7 @@ func (m *CSRFMiddleware) ensureToken(c *gin.Context) string {
                 Path:     "/",
                 MaxAge:   csrfMaxAge,
                 HttpOnly: true,
-                Secure:   c.Request.TLS != nil || c.GetHeader("X-Forwarded-Proto") == "https",
+                Secure:   true,
                 SameSite: http.SameSiteStrictMode,
         })
 
