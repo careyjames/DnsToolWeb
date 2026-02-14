@@ -19,7 +19,13 @@
 - Sell a competing commercial service built on this code
 
 ### What is a "Competitive Offering"?
-A product or service that is (a) offered to third parties on a hosted, managed, embedded, or API-based basis AND (b) provides DNS security audit, DNS intelligence, or domain posture assessment functionality that is material to the value of the offering.
+A product or service that is (a) offered to third parties on a Hosted, Managed, Embedded, or API-based basis AND (b) provides DNS security audit, DNS intelligence, or domain posture assessment functionality that is material to the value of the offering.
+
+**Formal definitions:**
+
+- **Hosted** — Making the functionality of the Licensed Work available to third parties as a service, where the service operator (not the end user) controls the infrastructure.
+- **Managed** — Offering the Licensed Work to third parties as a managed service where the operator handles deployment, maintenance, upgrades, or operational responsibility on behalf of the end user.
+- **Embedded** — Including the Licensed Work (in whole or in substantial part) in source code, executable code, or packaged form within another product, or packaging a product such that the Licensed Work must be accessed, downloaded, or invoked for it to operate.
 
 ### Security consultants and MSPs
 Using DNS Tool to audit client domains as part of professional services (consulting, managed security, IT administration) is explicitly permitted. The restriction applies only to offering the tool itself as a standalone hosted or managed product to those clients.
@@ -54,6 +60,42 @@ The public repo runs standalone with reduced functionality. In internal builds, 
 ## Contributing
 
 By contributing code to this repository, you agree that your contributions may be used under the terms of the BSL 1.1 (and the Apache-2.0 license after the Change Date). A Contributor License Agreement (CLA) may be required for substantial contributions.
+
+## Commercial Licensing
+
+For organizations that need capabilities beyond the BSL-permitted uses, commercial licenses are available. A commercial license includes:
+
+### Full Platform
+- All public repo capabilities (DNS security analysis, remediation engine, scoring)
+- Complete provider intelligence databases (email, DNS, hosting, CDN/edge detection)
+- Advanced scoring algorithms and infrastructure classification
+- AI Surface Scanner with full detection pattern library
+- White-label and custom branding options
+
+### Enterprise Intelligence
+- Provider-aware DKIM selector detection and credit
+- Hosted email provider identification (automatic DANE suppression)
+- BIMI capability detection per provider
+- Enterprise DNS provider recognition and legacy provider blocklisting
+- SaaS TXT footprint extraction and classification
+
+### Deployment Options
+- Self-hosted (on-premises or private cloud)
+- Dedicated managed instance
+- API access for integration into existing security workflows
+- Volume licensing for MSP and multi-tenant deployments
+
+### Support and Maintenance
+- Priority support and SLA
+- Custom feature development
+- Early access to new protocol analyzers and detection capabilities
+- Training and onboarding for security teams
+
+### Who Should Contact Us
+- Security vendors who want to embed DNS audit capabilities in their platform
+- Managed service providers who want to offer DNS Tool as a branded service
+- Enterprises requiring a dedicated instance with custom integrations
+- Organizations needing features beyond the public open-core release
 
 ## Questions
 

@@ -80,3 +80,22 @@ All documentation files verified accurate:
 - `docs/FEATURE_INVENTORY.md` — Feature list accurate
 - `dnstool-intel-staging/STUB_AUDIT.md` — Stub defaults corrected (isHostedEmailProvider→true, isBIMICapableProvider→false)
 - Private repo: LICENSE and LICENSING.md pushed and in sync with public repo
+
+### Session continuation: February 14, 2026 — License Definition Hardening + Commercial Features
+
+**License Definition Hardening**:
+- Added formal definitions for "Hosted", "Managed", and "Embedded" to LICENSE
+- Modeled on HashiCorp's BSL approach for legal precision
+- "Hosted": service operator controls infrastructure, makes functionality available to third parties
+- "Managed": operator handles deployment/maintenance/upgrades on behalf of end user
+- "Embedded": including Licensed Work in source/executable/packaged form, or requiring it for product operation
+- LICENSING.md updated with matching plain-language definitions
+
+**Commercial Features Section**:
+- Added "Commercial Licensing" section to LICENSING.md
+- Lists features available under commercial license: Full Platform, Enterprise Intelligence, Deployment Options, Support
+- Includes "Who Should Contact Us" guidance for potential buyers
+- Contact: licensing@it-help.tech
+
+**Repo Sync**:
+- Both LICENSE and LICENSING.md pushed to private repo (dnstool-intel) and verified byte-identical
