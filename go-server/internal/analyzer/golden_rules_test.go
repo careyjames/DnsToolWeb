@@ -587,70 +587,68 @@ func TestGoldenRuleHostedProviderNoDANE(t *testing.T) {
         }
 }
 
-func TestGoldenRuleNonBIMIProviderNoBIMI(t *testing.T) {
-        a := &Analyzer{}
-        results := map[string]any{
-                "domain": "example.com",
-                "spf_analysis": map[string]any{
-                        "status":        "success",
-                        "record":        "v=spf1 include:_spf.google.com ~all",
-                        "all_mechanism": "~all",
-                },
-                "dmarc_analysis": map[string]any{
-                        "status": "success",
-                        "policy": "reject",
-                        "pct":    100,
-                        "rua":    "mailto:dmarc@example.com",
-                },
-                "dkim_analysis": map[string]any{
-                        "status":           "success",
-                        "has_dkim":         true,
-                        "primary_provider": "Zoho Mail",
-                },
-                "mta_sts_analysis": map[string]any{
-                        "status": "success",
-                },
-                "tlsrpt_analysis": map[string]any{
-                        "status": "success",
-                },
-                "bimi_analysis": map[string]any{
-                        "status":   "info",
-                        "has_bimi": false,
-                },
-                "dane_analysis": map[string]any{
-                        "status":   "info",
-                        "has_dane": false,
-                },
-                "dnssec_analysis": map[string]any{
-                        "status": "secure",
-                },
-                "caa_analysis": map[string]any{
-                        "status": "success",
-                },
-                "basic_records": map[string]any{
-                        "MX": []string{"mx.zoho.com."},
-                },
-        }
+func TestGoldenRuleBIMIRecommendedRegardlessOfProvider(t *testing.T) {
+        providers := []string{"Google Workspace", "Microsoft 365", "Zoho Mail", "Fastmail", "ProtonMail", "Self-hosted"}
+        for _, provider := range providers {
+                t.Run(provider, func(t *testing.T) {
+                        a := &Analyzer{}
+                        results := map[string]any{
+                                "domain": "example.com",
+                                "spf_analysis": map[string]any{
+                                        "status":        "success",
+                                        "record":        "v=spf1 include:example.com ~all",
+                                        "all_mechanism": "~all",
+                                },
+                                "dmarc_analysis": map[string]any{
+                                        "status": "success",
+                                        "policy": "reject",
+                                        "pct":    100,
+                                        "rua":    "mailto:dmarc@example.com",
+                                },
+                                "dkim_analysis": map[string]any{
+                                        "status":           "success",
+                                        "has_dkim":         true,
+                                        "primary_provider": provider,
+                                },
+                                "mta_sts_analysis": map[string]any{
+                                        "status": "success",
+                                },
+                                "tlsrpt_analysis": map[string]any{
+                                        "status": "success",
+                                },
+                                "bimi_analysis": map[string]any{
+                                        "status":   "info",
+                                        "has_bimi": false,
+                                },
+                                "dane_analysis": map[string]any{
+                                        "status":   "info",
+                                        "has_dane": false,
+                                },
+                                "dnssec_analysis": map[string]any{
+                                        "status": "secure",
+                                },
+                                "caa_analysis": map[string]any{
+                                        "status": "success",
+                                },
+                                "basic_records": map[string]any{
+                                        "MX": []string{"mail.example.com."},
+                                },
+                        }
 
-        remediation := a.GenerateRemediation(results)
-        allFixes, _ := remediation["all_fixes"].([]map[string]any)
+                        remediation := a.GenerateRemediation(results)
+                        allFixes, _ := remediation["all_fixes"].([]map[string]any)
 
-        for _, f := range allFixes {
-                title, _ := f["title"].(string)
-                if strings.Contains(title, "BIMI") {
-                        t.Fatalf("Remediation must NOT recommend BIMI for providers that don't support it. Got: %q", title)
-                }
-        }
-
-        if isBIMICapableProvider("Zoho Mail") {
-                t.Fatal("isBIMICapableProvider must return false for 'Zoho Mail' — it does not support BIMI")
-        }
-
-        nonBIMIProviders := []string{"Zoho Mail", "Fastmail", "ProtonMail"}
-        for _, p := range nonBIMIProviders {
-                if providerSupportsBIMI(p) {
-                        t.Fatalf("providerSupportsBIMI must return false for %q — this provider does not support BIMI", p)
-                }
+                        foundBIMI := false
+                        for _, f := range allFixes {
+                                title, _ := f["title"].(string)
+                                if strings.Contains(title, "BIMI") {
+                                        foundBIMI = true
+                                }
+                        }
+                        if !foundBIMI {
+                                t.Fatalf("BIMI must be recommended for any provider with DMARC reject — BIMI is receiver-side (Gmail, Apple Mail, Yahoo verify it), sending provider %q is irrelevant", provider)
+                        }
+                })
         }
 }
 

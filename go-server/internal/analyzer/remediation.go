@@ -592,10 +592,10 @@ func extractFirstMXHost(results map[string]any) string {
 }
 
 func appendBIMIFixes(fixes []fix, ps protocolState, domain string) []fix {
-        if !ps.bimiOK && ps.dmarcPolicy == "reject" && providerSupportsBIMI(ps.primaryProvider) {
+        if !ps.bimiOK && ps.dmarcPolicy == "reject" {
                 fixes = append(fixes, fix{
                         Title:         "Add BIMI Record",
-                        Description:   "Your domain has DMARC reject — you qualify for BIMI, which displays your brand logo in supporting email clients.",
+                        Description:   "Your domain has DMARC reject — you qualify for BIMI, which displays your brand logo in receiving email clients that support it (Gmail, Apple Mail, Yahoo).",
                         DNSHost:       "default._bimi." + domain,
                         DNSType:       "TXT",
                         DNSValue:      "v=BIMI1; l=https://" + domain + "/brand/logo.svg",
