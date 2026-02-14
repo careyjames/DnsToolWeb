@@ -171,20 +171,6 @@ func (h *AnalysisHandler) Analyze(c *gin.Context) {
         startTime := time.Now()
         ctx := c.Request.Context()
 
-        historyCh := make(chan map[string]any, 1)
-        go func() {
-                defer func() {
-                        if r := recover(); r != nil {
-                                slog.Error("DNS history fetch panic", "error", r)
-                        }
-                }()
-                data := analyzer.FetchDNSHistory(ctx, asciiDomain, h.DNSHistoryCache)
-                select {
-                case historyCh <- data:
-                case <-ctx.Done():
-                }
-        }()
-
         results := h.Analyzer.AnalyzeDomain(ctx, asciiDomain, customSelectors)
         analysisDuration := time.Since(startTime).Seconds()
 
@@ -193,13 +179,6 @@ func (h *AnalysisHandler) Analyze(c *gin.Context) {
                         h.renderIndexFlash(c, nonce, csrfToken, "warning", errMsg)
                         return
                 }
-        }
-
-        select {
-        case historyData := <-historyCh:
-                results["dns_history"] = historyData
-        case <-ctx.Done():
-                results["dns_history"] = map[string]any{"status": "timeout"}
         }
 
         h.enrichResultsNoHistory(c, asciiDomain, results)
@@ -255,10 +234,32 @@ func extractCustomSelectors(c *gin.Context) []string {
 }
 
 
-func (h *AnalysisHandler) enrichResults(c *gin.Context, asciiDomain string, results map[string]any) {
-        dnsHistory := analyzer.FetchDNSHistory(c.Request.Context(), asciiDomain, h.DNSHistoryCache)
-        results["dns_history"] = dnsHistory
-        h.enrichResultsNoHistory(c, asciiDomain, results)
+func (h *AnalysisHandler) APIDNSHistory(c *gin.Context) {
+        domain := strings.TrimSpace(c.Query("domain"))
+        if domain == "" || !dnsclient.ValidateDomain(domain) {
+                c.JSON(http.StatusBadRequest, gin.H{"status": "error", "message": "Invalid domain"})
+                return
+        }
+        asciiDomain, err := dnsclient.DomainToASCII(domain)
+        if err != nil {
+                asciiDomain = domain
+        }
+
+        result := analyzer.FetchDNSHistory(c.Request.Context(), asciiDomain, h.DNSHistoryCache)
+
+        status, _ := result["status"].(string)
+        if status == "rate_limited" || status == "error" || status == "timeout" {
+                c.JSON(http.StatusOK, gin.H{"status": "unavailable"})
+                return
+        }
+
+        available, _ := result["available"].(bool)
+        if !available {
+                c.JSON(http.StatusOK, gin.H{"status": "unavailable"})
+                return
+        }
+
+        c.JSON(http.StatusOK, result)
 }
 
 func (h *AnalysisHandler) enrichResultsNoHistory(_ *gin.Context, _ string, results map[string]any) {

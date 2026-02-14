@@ -230,3 +230,54 @@ if (allFixesCollapse) {
         });
     }
 }
+
+function loadDNSHistory(domain) {
+    var btn = document.getElementById('dns-history-btn');
+    if (!btn) return;
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Loading history\u2026';
+
+    fetch('/api/dns-history?domain=' + encodeURIComponent(domain))
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            if (!data || data.status === 'unavailable' || data.status === 'error' || !data.available) {
+                btn.closest('.dns-history-load-wrapper').style.display = 'none';
+                return;
+            }
+            var section = document.getElementById('dns-history-section');
+            var body = document.getElementById('dns-history-body');
+            var source = document.getElementById('dns-history-source');
+            if (!section || !body) return;
+
+            source.textContent = 'Source: ' + (data.source || 'SecurityTrails');
+
+            var changes = data.changes || [];
+            if (changes.length === 0) {
+                body.innerHTML = '<p class="text-muted mb-0"><i class="fas fa-check-circle text-success me-1"></i>No DNS record changes detected in available history. A, AAAA, MX, and NS records for this domain have remained stable.</p>';
+            } else {
+                var html = '<div class="table-responsive"><table class="table table-sm table-striped mb-0"><thead><tr>' +
+                    '<th style="width:80px">Date</th><th style="width:60px">Type</th><th style="width:70px">Action</th>' +
+                    '<th>Value</th><th>Organization</th><th>Timeline</th></tr></thead><tbody>';
+                changes.forEach(function(ch) {
+                    var typeColor = ch.record_type === 'A' || ch.record_type === 'AAAA' ? 'primary' : ch.record_type === 'MX' ? 'success' : ch.record_type === 'NS' ? 'info' : 'secondary';
+                    var actionHtml = ch.action === 'added' ?
+                        '<span class="text-success"><i class="fas fa-plus-circle me-1"></i>Added</span>' :
+                        '<span class="text-danger"><i class="fas fa-minus-circle me-1"></i>Removed</span>';
+                    html += '<tr><td><code class="text-muted" style="font-size:0.8em">' + (ch.date || '') + '</code></td>' +
+                        '<td><span class="badge bg-' + typeColor + '">' + (ch.record_type || '') + '</span></td>' +
+                        '<td>' + actionHtml + '</td>' +
+                        '<td><code style="font-size:0.85em">' + (ch.value || '') + '</code></td>' +
+                        '<td><span class="text-muted">' + (ch.org || '\u2014') + '</span></td>' +
+                        '<td><span class="text-muted" style="font-size:0.85em">' + (ch.description || '') + '</span></td></tr>';
+                });
+                html += '</tbody></table></div>';
+                body.innerHTML = html;
+            }
+
+            btn.closest('.dns-history-load-wrapper').style.display = 'none';
+            section.style.display = '';
+        })
+        .catch(function() {
+            btn.closest('.dns-history-load-wrapper').style.display = 'none';
+        });
+}

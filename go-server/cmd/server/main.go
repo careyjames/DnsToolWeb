@@ -137,6 +137,7 @@ func main() {
 
         router.GET("/api/analysis/:id", analysisHandler.APIAnalysis)
         router.GET("/api/subdomains/*domain", analysisHandler.APISubdomains)
+        router.GET("/api/dns-history", analysisHandler.APIDNSHistory)
         router.GET("/api/health", healthHandler.HealthCheck)
 
         router.GET("/proxy/bimi-logo", proxyHandler.BIMILogo)

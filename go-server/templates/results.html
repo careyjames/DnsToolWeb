@@ -85,6 +85,7 @@
         {{$security_txt := mapGetMap "security_txt" $results}}
         {{$ai_surface := mapGetMap "ai_surface" $results}}
         {{$dns_history := mapGetMap "dns_history" $results}}
+        {{$dns_history_available := and $dns_history (mapGetBool "has_changes" $dns_history)}}
 
         <!-- Print-Only Report Header -->
         <div class="print-report-header">
@@ -2954,40 +2955,29 @@
         </div>
         </div>
 
-        <!-- DNS History Timeline (SecurityTrails) -->
-        {{if mapGetBool "api_enabled" $dns_history}}
-        <div class="col-12 mb-4">
+        <!-- DNS History: on-demand load button (hidden when data already present or when viewing saved reports) -->
+        {{if not $dns_history_available}}
+        <div class="col-12 mb-3 dns-history-load-wrapper">
+            <button type="button" class="btn btn-sm btn-outline-secondary" id="dns-history-btn" onclick="loadDNSHistory('{{.AsciiDomain}}')">
+                <i class="fas fa-history me-1"></i>Load DNS History
+            </button>
+        </div>
+        {{end}}
+
+        <!-- DNS History Timeline (on-demand via SecurityTrails) -->
+        <div class="col-12 mb-4" id="dns-history-section" {{if not $dns_history_available}}style="display:none;"{{end}}>
             <div class="card">
                 <div class="card-header">
                     <h5 class="mb-0 d-flex align-items-center justify-content-between flex-wrap">
                         <span><i class="fas fa-history me-2"></i>DNS History Timeline</span>
-                        {{if eq (mapGetStr "status" $dns_history) "rate_limited"}}
-                        <span class="badge bg-warning-subtle text-warning border border-warning-subtle" style="font-size:0.65rem;">TEMPORARILY UNAVAILABLE</span>
-                        {{else if eq (mapGetStr "status" $dns_history) "error"}}
-                        <span class="badge bg-danger-subtle text-danger border border-danger-subtle" style="font-size:0.65rem;">UNAVAILABLE</span>
-                        {{else if eq (mapGetStr "status" $dns_history) "partial"}}
-                        <span class="badge bg-warning-subtle text-warning border border-warning-subtle" style="font-size:0.65rem;">INCOMPLETE</span>
-                        {{else}}
-                        <small class="text-muted">Source: {{mapGetStr "source" $dns_history}}</small>
-                        {{end}}
+                        <small class="text-muted" id="dns-history-source">{{if $dns_history_available}}Source: SecurityTrails{{end}}</small>
                     </h5>
-                    {{if mapGetBool "available" $dns_history}}
                     <p class="mb-0 mt-2 text-warning-emphasis" style="font-size:0.95em; font-weight:500;"><i class="fas fa-search me-1"></i>When was a record added, removed, or changed &mdash; and could that change be the problem?</p>
-                    {{end}}
                 </div>
-                <div class="card-body">
-                    {{if eq (mapGetStr "status" $dns_history) "rate_limited"}}
-                    <p class="text-warning mb-0"><i class="fas fa-exclamation-triangle me-1"></i>DNS history data is temporarily unavailable. The upstream data source is experiencing high demand. This section will return automatically &mdash; no action needed on your part.</p>
-                    {{else if eq (mapGetStr "status" $dns_history) "error"}}
-                    <p class="text-warning mb-0"><i class="fas fa-exclamation-triangle me-1"></i>DNS history data could not be retrieved at this time. The third-party data source did not respond. Try again shortly.</p>
-                    {{else}}
+                <div class="card-body" id="dns-history-body">
+                    {{if $dns_history_available}}
                     {{$changes := mapGetSlice "changes" $dns_history}}
                     {{if $changes}}
-                    {{if eq (mapGetStr "status" $dns_history) "partial"}}
-                    <div class="alert alert-warning border-0 py-2 mb-3" style="background: rgba(255,193,7,0.08); font-size: 0.8rem;">
-                        <i class="fas fa-info-circle me-1"></i>Some record types could not be retrieved from the upstream data source. The changes shown below may be incomplete.
-                    </div>
-                    {{end}}
                     <div class="table-responsive">
                         <table class="table table-sm table-striped mb-0">
                             <thead>
@@ -3030,17 +3020,12 @@
                         </table>
                     </div>
                     {{else}}
-                    {{if eq (mapGetStr "status" $dns_history) "partial"}}
-                    <p class="text-warning mb-0"><i class="fas fa-exclamation-triangle me-1"></i>Some record types could not be retrieved from the upstream data source. No changes were found in the record types that were successfully checked, but the result may be incomplete.</p>
-                    {{else}}
                     <p class="text-muted mb-0"><i class="fas fa-check-circle text-success me-1"></i>No DNS record changes detected in available history. A, AAAA, MX, and NS records for this domain have remained stable.</p>
-                    {{end}}
                     {{end}}
                     {{end}}
                 </div>
             </div>
         </div>
-        {{end}}
 
         <!-- Subdomain Discovery (Certificate Transparency) -->
         <div class="row mt-4">

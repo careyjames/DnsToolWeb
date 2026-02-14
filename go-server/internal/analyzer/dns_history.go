@@ -16,6 +16,8 @@ import (
 
 const dateFormatISO = "2006-01-02"
 
+const maxHistoryCacheEntries = 500
+
 type DNSHistoryCache struct {
         mu      sync.RWMutex
         entries map[string]*dnsHistoryCacheEntry
@@ -58,9 +60,33 @@ func (c *DNSHistoryCache) Get(domain string) (map[string]any, bool) {
 func (c *DNSHistoryCache) Set(domain string, result map[string]any) {
         c.mu.Lock()
         defer c.mu.Unlock()
+
+        if len(c.entries) >= maxHistoryCacheEntries {
+                c.evictOldest()
+        }
         c.entries[domain] = &dnsHistoryCacheEntry{
                 result:   result,
                 cachedAt: time.Now(),
+        }
+}
+
+func (c *DNSHistoryCache) evictOldest() {
+        var oldestKey string
+        var oldestTime time.Time
+        first := true
+        for k, e := range c.entries {
+                if time.Since(e.cachedAt) > c.ttl {
+                        delete(c.entries, k)
+                        continue
+                }
+                if first || e.cachedAt.Before(oldestTime) {
+                        oldestKey = k
+                        oldestTime = e.cachedAt
+                        first = false
+                }
+        }
+        if len(c.entries) >= maxHistoryCacheEntries && oldestKey != "" {
+                delete(c.entries, oldestKey)
         }
 }
 
@@ -77,6 +103,7 @@ func (c *DNSHistoryCache) Stats() map[string]any {
                 "total_entries":  len(c.entries),
                 "active_entries": active,
                 "ttl_hours":      int(c.ttl.Hours()),
+                "max_entries":    maxHistoryCacheEntries,
         }
 }
 
@@ -119,11 +146,9 @@ func FetchDNSHistory(ctx context.Context, domain string, cache *DNSHistoryCache)
         initSecurityTrails()
         if !securityTrailsEnabled {
                 return map[string]any{
-                        "available":    false,
-                        "api_enabled":  false,
-                        "changes":      []map[string]any{},
-                        "total_events": float64(0),
-                        "source":       "",
+                        "available":   false,
+                        "api_enabled": false,
+                        "status":      "disabled",
                 }
         }
 
@@ -135,6 +160,15 @@ func FetchDNSHistory(ctx context.Context, domain string, cache *DNSHistoryCache)
         }
 
         recordTypes := []string{"a", "aaaa", "mx", "ns"}
+
+        if !stBudget.canSpend(len(recordTypes)) {
+                slog.Info("DNS history: budget exhausted, skipping", "domain", domain)
+                return map[string]any{
+                        "available":   false,
+                        "api_enabled": true,
+                        "status":      "budget_exhausted",
+                }
+        }
 
         type indexedResult struct {
                 idx    int
@@ -235,6 +269,7 @@ func fetchHistoryForType(ctx context.Context, domain, rtype string) historyFetch
         req.Header.Set("APIKEY", securityTrailsAPIKey)
         req.Header.Set("Accept", contentTypeJSON)
 
+        stBudget.spend(1)
         resp, err := securityTrailsHTTPClient.Do(req)
         if err != nil {
                 slog.Warn("SecurityTrails history: request failed", "domain", domain, "type", rtype, "error", err)
@@ -244,6 +279,7 @@ func fetchHistoryForType(ctx context.Context, domain, rtype string) historyFetch
 
         if resp.StatusCode == http.StatusTooManyRequests {
                 slog.Warn("SecurityTrails history: rate limited", "domain", domain, "type", rtype)
+                stBudget.markRateLimited()
                 return historyFetchResult{rateLimited: true}
         }
 

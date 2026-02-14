@@ -153,18 +153,6 @@ func getInfraSources() []IntelSource {
 func getHistorySources() []IntelSource {
         return []IntelSource{
                 {
-                        Name:        "SecurityTrails",
-                        Icon:        "fas fa-history",
-                        Category:    "Third-party API",
-                        Purpose:     "Provides DNS record change history (A, MX, NS records over time) and subdomain enumeration. Shows when DNS records changed and what they changed from/to, enabling timeline analysis of infrastructure changes.",
-                        Method:      "HTTPS REST API with API key authentication",
-                        RateLimits:  "Free tier: 50 API calls/month (~16 unique domain scans). Cached for 24 hours on success.",
-                        VerifyCmd:   "curl -s 'https://api.securitytrails.com/v1/domain/example.com/dns/history/a' -H 'apikey: YOUR_KEY'",
-                        URL:         "https://securitytrails.com/",
-                        APIRequired: true,
-                        Free:        true,
-                },
-                {
                         Name:       "Certificate Transparency (crt.sh)",
                         Icon:       "fas fa-certificate",
                         Category:   "Public Log",
