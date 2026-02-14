@@ -28,15 +28,15 @@
             <div class="text-center hero-content">
                 <div class="hero-badge mb-3">
                     <i class="fas fa-route me-1"></i> IP Investigation
-                    <span class="badge bg-warning text-dark ms-2" style="font-size: 0.65em; vertical-align: middle;">BETA</span>
+                    <span class="badge bg-warning text-dark ms-2 u-fs-065em-vmid">BETA</span>
                 </div>
                 <h1 class="hero-title mb-3">
                     IP Investigation
                 </h1>
-                <p class="hero-subtitle mx-auto mb-4" style="font-size: 1.35rem;">
+                <p class="hero-subtitle mx-auto mb-4 u-fs-135rem">
                     Is this IP part of your infrastructure?
                 </p>
-                <p class="text-muted mx-auto mb-4" style="max-width: 620px;">
+                <p class="text-muted mx-auto mb-4 u-maxw-620">
                     Evidence-based attribution &mdash; we correlate reverse DNS, ASN ownership, SPF authorization, and certificate transparency to determine whether an IP is your own server, an approved provider, or something that doesn&rsquo;t belong
                 </p>
             </div>
@@ -80,7 +80,7 @@
                                 </button>
                             </div>
                             <details class="mb-3">
-                                <summary class="text-muted small" style="cursor:pointer;">
+                                <summary class="text-muted small u-pointer">
                                     <i class="fas fa-key me-1"></i>API Keys <span class="text-muted">(optional &mdash; enrich your results)</span>
                                 </summary>
                                 <div class="mt-2">
@@ -88,10 +88,10 @@
                                         <i class="fas fa-check-circle me-1 api-keys-icon"></i><strong>Without these keys</strong>, you still get a full investigation: reverse DNS, ASN ownership (via <a href="https://www.team-cymru.com/ip-asn-mapping" target="_blank" rel="noopener" class="text-info">Team Cymru</a>), SPF authorization, CDN detection, and certificate transparency matching &mdash; all free, no key required. These optional keys add extra layers of intelligence.
                                     </div>
 
-                                    <label class="text-muted small d-block mb-1"><i class="fas fa-building me-1"></i>SecurityTrails <span class="badge bg-dark border border-secondary" style="font-size:0.7em;">50 requests/month free</span></label>
+                                    <label class="text-muted small d-block mb-1"><i class="fas fa-building me-1"></i>SecurityTrails <span class="badge bg-dark border border-secondary u-fs-070em">50 requests/month free</span></label>
                                     <div class="input-group input-group-sm mb-1">
                                         <input type="password"
-                                               class="form-control bg-dark text-light border-secondary"
+                                               class="form-control bg-dark text-light border-secondary u-fs-085em"
                                                id="securitytrails_key"
                                                name="securitytrails_key"
                                                placeholder="SecurityTrails API key"
@@ -99,17 +99,16 @@
                                                spellcheck="false"
                                                data-lpignore="true"
                                                data-1p-ignore="true"
-                                               aria-label="SecurityTrails API key for IP neighborhood discovery"
-                                               style="font-size:0.85em;">
+                                               aria-label="SecurityTrails API key for IP neighborhood discovery">
                                     </div>
-                                    <div class="mb-3 text-muted" style="font-size:0.72em;">
+                                    <div class="mb-3 text-muted u-fs-072em">
                                         <strong>What it adds:</strong> IP Neighborhood &mdash; shows other domains hosted on the same IP. Helps you see who else shares this server (co-tenants on shared hosting, or related properties on dedicated servers). <a href="https://securitytrails.com/app/signup" target="_blank" rel="noopener" class="text-info">Get a free key &rarr;</a>
                                     </div>
 
-                                    <label class="text-muted small d-block mb-1"><i class="fas fa-map-marker-alt me-1"></i>IPinfo.io <span class="badge bg-dark border border-secondary" style="font-size:0.7em;">50,000 requests/month free</span></label>
+                                    <label class="text-muted small d-block mb-1"><i class="fas fa-map-marker-alt me-1"></i>IPinfo.io <span class="badge bg-dark border border-secondary u-fs-070em">50,000 requests/month free</span></label>
                                     <div class="input-group input-group-sm mb-1">
                                         <input type="password"
-                                               class="form-control bg-dark text-light border-secondary"
+                                               class="form-control bg-dark text-light border-secondary u-fs-085em"
                                                id="ipinfo_token"
                                                name="ipinfo_token"
                                                placeholder="IPinfo.io token"
@@ -117,14 +116,13 @@
                                                spellcheck="false"
                                                data-lpignore="true"
                                                data-1p-ignore="true"
-                                               aria-label="IPinfo.io token for geolocation and org data"
-                                               style="font-size:0.85em;">
+                                               aria-label="IPinfo.io token for geolocation and org data">
                                     </div>
-                                    <div class="mb-1 text-muted" style="font-size:0.72em;">
+                                    <div class="mb-1 text-muted u-fs-072em">
                                         <strong>What it adds:</strong> Physical Location &mdash; city, region, postal code, coordinates, timezone, and the organization operating this IP. Useful for verifying that a server is where you expect it to be. <a href="https://ipinfo.io/signup" target="_blank" rel="noopener" class="text-info">Get a free token &rarr;</a>
                                     </div>
 
-                                    <div class="mt-2 text-muted" style="font-size:0.72em;">
+                                    <div class="mt-2 text-muted u-fs-072em">
                                         <i class="fas fa-shield-alt me-1"></i>Your keys are sent directly to each service and are never stored on our servers.
                                     </div>
                                 </div>
@@ -203,7 +201,7 @@
         <div class="d-flex align-items-center mb-4 flex-wrap gap-2">
             <h1 class="h3 mb-0">
                 <i class="fas fa-route me-2 text-info"></i>IP Investigation Report
-                <span class="badge bg-warning text-dark ms-2" style="font-size: 0.5em; vertical-align: middle;">BETA</span>
+                <span class="badge bg-warning text-dark ms-2 u-fs-050em-vmid">BETA</span>
             </h1>
             <a href="/investigate" class="btn btn-outline-secondary btn-sm ms-auto">
                 <i class="fas fa-search me-1"></i>New Investigation
@@ -270,7 +268,7 @@
                                     {{end}}
                                     <span class="badge bg-dark border border-secondary ms-2">{{mapGetStr "ip_version" $results}}</span>
                                 </div>
-                                <p class="mt-3 mb-0" style="color: #c9d1d9; font-size: 1.05rem;">{{$verdict}}</p>
+                                <p class="mt-3 mb-0 u-text-light-lg">{{$verdict}}</p>
                             </div>
                         </div>
                     </div>
@@ -302,9 +300,9 @@
         {{$asnInfoCard := mapGetMap "asn_info" $results}}
 
         <div class="card mb-4">
-            <div class="card-header" style="background: linear-gradient(135deg, rgba(13, 110, 253, 0.15), rgba(13, 110, 253, 0.05)); border-bottom: 1px solid rgba(13, 110, 253, 0.2);">
+            <div class="card-header u-header-primary">
                 <h5 class="mb-0 d-flex align-items-center justify-content-between flex-wrap">
-                    <span><i class="fas fa-id-card me-2" style="color: #58a6ff;"></i>Network Identity</span>
+                    <span><i class="fas fa-id-card me-2 u-color-info"></i>Network Identity</span>
                     <small class="text-muted">Who owns this IP, and do they claim it publicly?
                         {{if and $ptrSlice (gt (len $ptrSlice) 0)}}
                             {{if $fcrdns}}
@@ -353,7 +351,7 @@
                                 <tbody>
                                     {{$asn2 := mapGetStr "asn" $asnInfoCard}}
                                     {{if ne $asn2 ""}}
-                                    <tr><th class="text-muted" style="width:35%">ASN</th><td><code>AS{{$asn2}}</code></td></tr>
+                                    <tr><th class="text-muted u-w-35p">ASN</th><td><code>AS{{$asn2}}</code></td></tr>
                                     {{end}}
                                     {{$asName2 := mapGetStr "as_name" $asnInfoCard}}
                                     {{if ne $asName2 ""}}
@@ -381,8 +379,8 @@
                                 </div>
                                 {{end}}
                             {{end}}
-                            <div class="mt-2 text-muted" style="font-size:0.72em;">
-                                <i class="fas fa-heart me-1" style="color: #e74c3c;"></i>ASN data provided by <a href="https://www.team-cymru.com/ip-asn-mapping" target="_blank" rel="noopener" class="text-info">Team Cymru</a> &mdash; a free community service processing 1.5+ billion daily queries for the internet community.
+                            <div class="mt-2 text-muted u-fs-072em">
+                                <i class="fas fa-heart me-1 u-color-danger"></i>ASN data provided by <a href="https://www.team-cymru.com/ip-asn-mapping" target="_blank" rel="noopener" class="text-info">Team Cymru</a> &mdash; a free community service processing 1.5+ billion daily queries for the internet community.
                             </div>
                         {{else}}
                             <p class="text-muted small mb-0">ASN information unavailable.</p>
@@ -406,9 +404,9 @@
         {{if .IPInfo}}
         {{$ipinfo := .IPInfo}}
         <div class="card mb-4">
-            <div class="card-header" style="background: linear-gradient(135deg, rgba(255, 193, 7, 0.12), rgba(255, 193, 7, 0.04)); border-bottom: 1px solid rgba(255, 193, 7, 0.2);">
+            <div class="card-header u-header-warning">
                 <h5 class="mb-0 d-flex align-items-center justify-content-between flex-wrap">
-                    <span><i class="fas fa-map-marker-alt me-2" style="color: #f0ad4e;"></i>IP Geolocation &amp; Organization</span>
+                    <span><i class="fas fa-map-marker-alt me-2 u-color-warning"></i>IP Geolocation &amp; Organization</span>
                     <small class="text-muted">Where is this IP physically located?
                         <span class="badge bg-dark border border-secondary ms-1">IPinfo.io</span>
                     </small>
@@ -433,7 +431,7 @@
                         <table class="table table-dark table-sm mb-2">
                             <tbody>
                                 {{if and $ipCity (ne (printf "%v" $ipCity) "")}}
-                                <tr><th class="text-muted" style="width:35%">City</th><td>{{$ipCity}}</td></tr>
+                                <tr><th class="text-muted u-w-35p">City</th><td>{{$ipCity}}</td></tr>
                                 {{end}}
                                 {{if and $ipRegion (ne (printf "%v" $ipRegion) "")}}
                                 <tr><th class="text-muted">Region</th><td>{{$ipRegion}}</td></tr>
@@ -458,7 +456,7 @@
                         <table class="table table-dark table-sm mb-2">
                             <tbody>
                                 {{if and $ipOrg (ne (printf "%v" $ipOrg) "")}}
-                                <tr><th class="text-muted" style="width:35%">Org</th><td>{{$ipOrg}}</td></tr>
+                                <tr><th class="text-muted u-w-35p">Org</th><td>{{$ipOrg}}</td></tr>
                                 {{end}}
                                 {{if and $ipHostname (ne (printf "%v" $ipHostname) "")}}
                                 <tr><th class="text-muted">Hostname</th><td><code>{{$ipHostname}}</code></td></tr>
@@ -483,9 +481,9 @@
         {{$directRels := toMapSlice (mapGet "direct_relationships" $results)}}
 
         <div class="card mb-4">
-            <div class="card-header" style="background: linear-gradient(135deg, rgba(25, 135, 84, 0.15), rgba(25, 135, 84, 0.05)); border-bottom: 1px solid rgba(25, 135, 84, 0.2);">
+            <div class="card-header u-header-success">
                 <h5 class="mb-0 d-flex align-items-center justify-content-between flex-wrap">
-                    <span><i class="fas fa-project-diagram me-2" style="color: #3fb950;"></i>Domain Relationship</span>
+                    <span><i class="fas fa-project-diagram me-2 u-color-success"></i>Domain Relationship</span>
                     <small class="text-muted">Does this IP serve or send for your domain?
                         {{if gt $directCount 0}}
                             <span class="badge bg-success ms-1">{{$directCount}} match{{if gt $directCount 1}}es{{end}}</span>
@@ -502,10 +500,10 @@
                     <table class="table table-dark table-sm table-hover mb-0">
                         <thead>
                             <tr>
-                                <th style="width: 25%">Role</th>
+                                <th class="u-w-25p">Role</th>
                                 <th>Evidence</th>
-                                <th style="width: 15%">Record</th>
-                                <th style="width: 25%">Hostname</th>
+                                <th class="u-w-15p">Record</th>
+                                <th class="u-w-25p">Hostname</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -537,7 +535,7 @@
                     </table>
                 {{else}}
                     <div class="text-center py-3">
-                        <i class="fas fa-minus-circle text-muted mb-2 d-block" style="font-size: 1.5rem;"></i>
+                        <i class="fas fa-minus-circle text-muted mb-2 d-block u-fs-150rem"></i>
                         <p class="text-muted mb-1">This IP does not appear in <code>{{$.Domain}}</code>'s A, AAAA, MX, or NS records.</p>
                         <p class="text-muted small mb-0">It is also not authorized in the domain's SPF policy to send email.</p>
                     </div>
@@ -553,9 +551,9 @@
 
         {{if and $infraRels (gt (len $infraRels) 0)}}
         <div class="card mb-4">
-            <div class="card-header" style="background: linear-gradient(135deg, rgba(13, 202, 240, 0.15), rgba(13, 202, 240, 0.05)); border-bottom: 1px solid rgba(13, 202, 240, 0.2);">
+            <div class="card-header u-header-info">
                 <h5 class="mb-0 d-flex align-items-center justify-content-between flex-wrap">
-                    <span><i class="fas fa-server me-2" style="color: #58c4dc;"></i>Infrastructure Context</span>
+                    <span><i class="fas fa-server me-2 u-color-info-light"></i>Infrastructure Context</span>
                     <small class="text-muted">Is this IP part of your broader infrastructure?
                         {{$infraCount := len $infraRels}}
                         {{if gt $infraCount 0}}
@@ -572,10 +570,10 @@
                 <table class="table table-dark table-sm table-hover mb-0">
                     <thead>
                         <tr>
-                            <th style="width: 25%">Type</th>
+                            <th class="u-w-25p">Type</th>
                             <th>Evidence</th>
-                            <th style="width: 15%">Source</th>
-                            <th style="width: 25%">Hostname</th>
+                            <th class="u-w-15p">Source</th>
+                            <th class="u-w-25p">Hostname</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -623,9 +621,9 @@
 
         {{if gt $neighborTotal 0}}
         <div class="card mb-4">
-            <div class="card-header" style="background: linear-gradient(135deg, rgba(108, 117, 125, 0.15), rgba(108, 117, 125, 0.05)); border-bottom: 1px solid rgba(108, 117, 125, 0.3);">
+            <div class="card-header u-header-neutral">
                 <h5 class="mb-0 d-flex align-items-center justify-content-between flex-wrap">
-                    <span><i class="fas fa-building me-2" style="color: #8b949e;"></i>IP Neighborhood</span>
+                    <span><i class="fas fa-building me-2 u-color-muted"></i>IP Neighborhood</span>
                     <small class="text-muted">Who else lives at this address?
                         <span class="badge bg-dark border border-secondary ms-1">{{$neighborTotal}} domain{{if gt $neighborTotal 1}}s{{end}}</span>
                     </small>
@@ -664,13 +662,13 @@
             </div>
         </div>
         {{else}}
-        <div class="card mb-4 bg-dark bg-opacity-25" style="border: 1px solid rgba(255,255,255,0.1);">
+        <div class="card mb-4 bg-dark bg-opacity-25 u-border-soft">
             <div class="card-body py-3">
                 <div class="d-flex align-items-center flex-wrap gap-2">
                     <span class="text-muted small"><i class="fas fa-building me-1"></i>IP Neighborhood</span>
                     <span class="text-muted small">&mdash; Discover other domains hosted on this IP.</span>
                 </div>
-                <div class="mt-2 text-muted" style="font-size:0.8em;">
+                <div class="mt-2 text-muted u-fs-080em">
                     <i class="fas fa-key me-1"></i>Add a <a href="https://securitytrails.com/app/signup" target="_blank" rel="noopener" class="text-info">free SecurityTrails API key</a> when investigating to see which domains share this IP address.
                 </div>
             </div>
@@ -678,13 +676,13 @@
         {{end}}
 
         {{if not .IPInfo}}
-        <div class="card mb-4 bg-dark bg-opacity-25" style="border: 1px solid rgba(255,255,255,0.1);">
+        <div class="card mb-4 bg-dark bg-opacity-25 u-border-soft">
             <div class="card-body py-3">
                 <div class="d-flex align-items-center flex-wrap gap-2">
                     <span class="text-muted small"><i class="fas fa-map-marker-alt me-1"></i>IP Geolocation</span>
                     <span class="text-muted small">&mdash; City-level location and organization details.</span>
                 </div>
-                <div class="mt-2 text-muted" style="font-size:0.8em;">
+                <div class="mt-2 text-muted u-fs-080em">
                     <i class="fas fa-key me-1"></i>Add a <a href="https://ipinfo.io/signup" target="_blank" rel="noopener" class="text-info">free IPinfo.io token</a> when investigating to see geolocation and organization data for this IP.
                 </div>
             </div>
@@ -720,7 +718,7 @@
             <div class="loading-dots mt-2">
                 <span></span><span></span><span></span>
             </div>
-            <p class="text-muted small mt-3 mb-0" id="loadingNote" style="max-width: 440px; margin: 0 auto; opacity: 0; transition: opacity 0.8s;">
+            <p class="text-muted small mt-3 mb-0 u-maxw-440-fadein" id="loadingNote">
                 We're checking reverse DNS, comparing against your domain's DNS records, verifying SPF authorization, querying Certificate Transparency logs, and performing ASN attribution. This typically takes 10&ndash;20 seconds.
             </p>
             <div class="loading-status mt-3">

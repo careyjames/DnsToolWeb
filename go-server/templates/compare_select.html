@@ -46,7 +46,7 @@
                         <table class="table table-hover mb-0">
                             <thead>
                                 <tr>
-                                    <th style="width:40px;"></th>
+                                    <th class="u-w-40px"></th>
                                     <th>Date</th>
                                     <th>SPF</th>
                                     <th>DMARC</th>
@@ -57,7 +57,7 @@
                             </thead>
                             <tbody>
                                 {{range $a := .Analyses}}
-                                <tr class="compare-row" data-id="{{$a.ID}}" style="cursor:pointer;">
+                                <tr class="compare-row u-pointer" data-id="{{$a.ID}}">
                                     <td><i class="far fa-square compare-check"></i></td>
                                     <td>
                                         {{$a.CreatedAt}}
@@ -118,9 +118,9 @@
             </div>
         </div>
         {{else}}
-        <div class="card mb-3 border-0" style="background: rgba(255,255,255,0.03);">
+        <div class="card mb-3 border-0 u-bg-soft">
             <div class="card-body text-center py-5">
-                <i class="fas fa-code-compare text-muted mb-3" style="font-size: 3rem; opacity: 0.3;"></i>
+                <i class="fas fa-code-compare text-muted mb-3 u-fs-3rem-faded"></i>
                 {{if .Domain}}
                     {{if .Analyses}}
                     <h5 class="text-muted mb-2">Only 1 analysis on file for <strong class="text-light">{{.Domain}}</strong></h5>

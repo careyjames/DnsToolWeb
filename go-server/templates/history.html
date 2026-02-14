@@ -217,7 +217,7 @@
                                             {{$a.CreatedDate}}<br>
                                             <small>{{$a.CreatedTime}}</small>
                                             {{if $a.ToolVersion}}
-                                                <br><small class="text-muted" style="opacity:0.6;">v{{$a.ToolVersion}}</small>
+                                                <br><small class="text-muted u-opacity-60">v{{$a.ToolVersion}}</small>
                                             {{end}}
                                         </div>
                                     </td>
@@ -269,26 +269,26 @@
                         </div>
                         <div class="d-flex flex-wrap align-items-center gap-1 small">
                             {{if $a.AnalysisSuccess}}
-                                <span class="badge bg-success" style="font-size:0.65rem;"><i class="fas fa-check me-1"></i>OK</span>
+                                <span class="badge bg-success u-fs-065rem"><i class="fas fa-check me-1"></i>OK</span>
                             {{else}}
-                                <span class="badge bg-danger" style="font-size:0.65rem;"><i class="fas fa-times me-1"></i>Failed</span>
+                                <span class="badge bg-danger u-fs-065rem"><i class="fas fa-times me-1"></i>Failed</span>
                             {{end}}
                             {{if eq $a.SpfStatus "success"}}
-                                <span class="badge bg-success" style="font-size:0.65rem;">SPF</span>
+                                <span class="badge bg-success u-fs-065rem">SPF</span>
                             {{else if or (eq $a.SpfStatus "warning") (eq $a.SpfStatus "error")}}
-                                <span class="badge bg-danger" style="font-size:0.65rem;"><i class="fas fa-times me-1"></i>SPF</span>
+                                <span class="badge bg-danger u-fs-065rem"><i class="fas fa-times me-1"></i>SPF</span>
                             {{end}}
                             {{if eq $a.DmarcStatus "success"}}
-                                <span class="badge bg-success" style="font-size:0.65rem;">DMARC</span>
+                                <span class="badge bg-success u-fs-065rem">DMARC</span>
                             {{else if or (eq $a.DmarcStatus "warning") (eq $a.DmarcStatus "error")}}
-                                <span class="badge bg-danger" style="font-size:0.65rem;"><i class="fas fa-times me-1"></i>DMARC</span>
+                                <span class="badge bg-danger u-fs-065rem"><i class="fas fa-times me-1"></i>DMARC</span>
                             {{end}}
                             {{if or (eq $a.DkimStatus "success") (eq $a.DkimStatus "partial")}}
-                                <span class="badge bg-success" style="font-size:0.65rem;">DKIM</span>
+                                <span class="badge bg-success u-fs-065rem">DKIM</span>
                             {{else if eq $a.DkimStatus "info"}}
-                                <span class="badge bg-info" style="font-size:0.65rem;">DKIM</span>
+                                <span class="badge bg-info u-fs-065rem">DKIM</span>
                             {{end}}
-                            <span class="text-muted ms-auto" style="font-size:0.7rem;">
+                            <span class="text-muted ms-auto u-fs-070rem">
                                 {{$a.CreatedDate}} {{$a.CreatedTime}}
                                 {{if $a.AnalysisDuration}} &middot; {{formatFloat 1 $a.AnalysisDuration}}s{{end}}
                             </span>
@@ -365,7 +365,7 @@
 
     <output id="historyViewOverlay" class="loading-overlay d-none" aria-live="polite" aria-label="Loading stored results">
         <div class="loading-content">
-            <div class="spinner-border text-primary mb-3" style="width:3rem;height:3rem;"><span class="visually-hidden">Loading...</span></div>
+            <div class="spinner-border text-primary mb-3 u-icon-3rem"><span class="visually-hidden">Loading...</span></div>
             <div class="text-light fw-medium" id="historyViewText">Loading analysis results...</div>
         </div>
     </output>
@@ -417,10 +417,10 @@
                     <span>Posture scoring &amp; remediation</span>
                 </div>
             </div>
-            <p class="text-muted small mt-3 mb-0" id="loadingNote" style="max-width: 440px; margin: 0 auto; opacity: 0; transition: opacity 0.8s;">
+            <p class="text-muted small mt-3 mb-0 u-maxw-440-fadein" id="loadingNote">
                 Every result includes terminal commands you can run to independently verify the underlying data. No proprietary magic.
             </p>
-            <p class="text-warning small mt-3 mb-0 d-none" id="historyTimeoutMsg" style="max-width: 440px; margin: 0 auto;">
+            <p class="text-warning small mt-3 mb-0 d-none u-maxw-440-center" id="historyTimeoutMsg">
                 <i class="fas fa-exclamation-triangle me-1"></i>Analysis is taking longer than expected. <a href="/" class="text-info">Try from the home page</a> or refresh to retry.
             </p>
         </div>

@@ -2277,3 +2277,330 @@ main.container {
 .api-keys-info strong {
     color: #e8eaed !important;
 }
+
+/* ============================================
+   CSP-SAFE UTILITY CLASSES
+   Replacements for inline style= attributes
+   ============================================ */
+
+/* --------------------------------------------
+   FONT SIZES
+   -------------------------------------------- */
+.u-fs-050em-vmid { font-size: 0.5em; vertical-align: middle; }
+.u-fs-055em-vmid { font-size: 0.55em; vertical-align: middle; }
+.u-fs-055rem { font-size: 0.55rem; }
+.u-fs-055rem-vmid { font-size: 0.55rem; vertical-align: middle; }
+.u-fs-050rem-vmid { font-size: 0.5rem; vertical-align: middle; }
+.u-fs-060rem { font-size: 0.6rem; }
+.u-fs-062rem { font-size: 0.62rem; }
+.u-fs-065em { font-size: 0.65em; }
+.u-fs-065em-vmid { font-size: 0.65em; vertical-align: middle; }
+.u-fs-065rem { font-size: 0.65rem; }
+.u-fs-070em { font-size: 0.7em; }
+.u-fs-070em-vmid { font-size: 0.7em; vertical-align: middle; }
+.u-fs-070rem { font-size: 0.7rem; }
+.u-fs-072em { font-size: 0.72em; }
+.u-fs-072rem { font-size: 0.72rem; }
+.u-fs-075em { font-size: 0.75em; }
+.u-fs-075rem { font-size: 0.75rem; }
+.u-fs-078em { font-size: 0.78em; }
+.u-fs-080em { font-size: 0.8em; }
+.u-fs-080rem { font-size: 0.8rem; }
+.u-fs-082em { font-size: 0.82em; }
+.u-fs-085em { font-size: 0.85em; }
+.u-fs-088rem { font-size: 0.88rem; }
+.u-fs-090rem { font-size: 0.9rem; }
+.u-fs-095em-fw500 { font-size: 0.95em; font-weight: 500; }
+.u-fs-120em { font-size: 1.2em; }
+.u-fs-135rem { font-size: 1.35rem; }
+.u-fs-150rem { font-size: 1.5rem; }
+.u-fs-3rem-faded { font-size: 3rem; opacity: 0.3; }
+
+/* --------------------------------------------
+   FONT SIZE + LINE HEIGHT
+   -------------------------------------------- */
+.u-fs-075rem-lh16 { font-size: 0.75rem; line-height: 1.6; }
+
+/* --------------------------------------------
+   FONT SIZE + COLOR COMBOS (semantic)
+   -------------------------------------------- */
+.u-meta-label { font-size: 0.75rem; color: #6c757d; margin-bottom: 0.75rem; }
+.u-meta-muted { font-size: 0.7rem; color: #6c757d; }
+.u-hero-tagline { font-size: 1.5rem; font-weight: 600; color: #e9ecef; letter-spacing: 0.02em; }
+.u-text-light-lg { color: #c9d1d9; font-size: 1.05rem; }
+.u-text-muted-md { color: #8b949e; font-size: 0.9rem; }
+
+/* --------------------------------------------
+   COLORS
+   -------------------------------------------- */
+.u-color-info-mb { color: #0dcaf0; margin-bottom: 0.5rem; }
+.u-subsection-header {
+    color: #0dcaf0;
+    margin-top: 0.5rem;
+    margin-bottom: 0.25rem;
+    font-size: 0.8rem;
+    border-bottom: 1px solid #495057;
+    padding-bottom: 2px;
+    font-weight: 600;
+}
+.u-color-success { color: #3fb950; }
+.u-color-info { color: #58a6ff; }
+.u-color-info-light { color: #58c4dc; }
+.u-color-info-alt { color: #5bc0de; }
+.u-color-link { color: #79c0ff; }
+.u-color-sky { color: #7ec8e3; }
+.u-color-blue-soft { color: #8ab4f8; }
+/* Bootstrap has .text-muted but uses opacity; this sets an explicit color */
+.u-color-muted { color: #8b949e; }
+.u-color-green-soft { color: #8fd19e; }
+.u-color-purple { color: #a78bfa; }
+.u-color-text { color: #c9d1d9; }
+.u-color-gold { color: #d4a855; }
+.u-color-amber { color: #e0c97a; }
+.u-color-text-bright { color: #e6edf3; }
+.u-color-danger { color: #e74c3c; }
+.u-color-coral { color: #f08080; }
+.u-color-warning { color: #f0ad4e; }
+
+/* --------------------------------------------
+   WIDTHS (percentage)
+   -------------------------------------------- */
+.u-w-5p { width: 5%; }
+.u-w-8p { width: 8%; }
+.u-w-10p { width: 10%; }
+.u-w-12p { width: 12%; }
+.u-w-15p { width: 15%; }
+/* Bootstrap has .w-25 */
+.u-w-25p { width: 25%; }
+.u-w-30p { width: 30%; }
+.u-w-35p { width: 35%; }
+
+/* WIDTHS (fixed px) */
+.u-w-40px { width: 40px; }
+.u-w-60px { width: 60px; }
+.u-w-70px { width: 70px; }
+.u-w-80px { width: 80px; }
+
+/* ICON SIZING */
+.u-icon-48 { width: 48px; height: 48px; object-fit: contain; }
+.u-icon-3rem { width: 3rem; height: 3rem; }
+.u-icon-box-56 {
+    flex-shrink: 0;
+    width: 56px;
+    height: 56px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* COLUMN LABELS (width + muted color) */
+.u-col-label-55 { width: 55px; color: #8b949e; }
+.u-col-label-70 { width: 70px; color: #8b949e; }
+.u-col-label-90 { width: 90px; color: #8b949e; }
+
+/* --------------------------------------------
+   MAX WIDTHS
+   -------------------------------------------- */
+.u-maxw-200 { max-width: 200px; }
+.u-maxw-440-center { max-width: 440px; margin: 0 auto; }
+.u-maxw-440-fadein { max-width: 440px; margin: 0 auto; opacity: 0; transition: opacity 0.8s; }
+.u-maxw-500 { max-width: 500px; }
+.u-maxw-620 { max-width: 620px; }
+
+/* --------------------------------------------
+   MIN WIDTH
+   -------------------------------------------- */
+.u-minw-52-sm { min-width: 52px; font-size: 0.65rem; }
+
+/* --------------------------------------------
+   BACKGROUNDS
+   -------------------------------------------- */
+.u-bg-soft { background: rgba(255, 255, 255, 0.03); }
+.u-bg-soft-bordered {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+}
+.u-bg-soft-bordered-sm {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    font-size: 0.72rem;
+}
+.u-bg-secondary { background-color: var(--bg-secondary); }
+.u-bg-info-15 { background-color: rgba(13, 202, 240, 0.15); }
+.u-bg-info-subtle {
+    background: rgba(13, 202, 240, 0.06);
+    border: 1px solid rgba(13, 202, 240, 0.15);
+}
+.u-bg-info-soft { background: rgba(13, 202, 240, 0.08); }
+.u-alert-warning-soft {
+    background: rgba(255, 193, 7, 0.08);
+    border-left: 3px solid #ffc107;
+}
+.u-bg-danger-faint { background: rgba(220, 53, 69, 0.05); }
+.u-bg-warning-faint { background: rgba(255, 193, 7, 0.05); }
+.u-bg-info-faint { background: rgba(13, 202, 240, 0.05); }
+.u-bg-purple-light { background-color: #a78bfa30; }
+
+/* --------------------------------------------
+   GRADIENT HEADERS
+   -------------------------------------------- */
+.u-header-neutral {
+    background: linear-gradient(135deg, rgba(108, 117, 125, 0.15), rgba(108, 117, 125, 0.05));
+    border-bottom: 1px solid rgba(108, 117, 125, 0.3);
+}
+.u-header-primary {
+    background: linear-gradient(135deg, rgba(13, 110, 253, 0.15), rgba(13, 110, 253, 0.05));
+    border-bottom: 1px solid rgba(13, 110, 253, 0.2);
+}
+.u-header-info {
+    background: linear-gradient(135deg, rgba(13, 202, 240, 0.15), rgba(13, 202, 240, 0.05));
+    border-bottom: 1px solid rgba(13, 202, 240, 0.2);
+}
+.u-header-success {
+    background: linear-gradient(135deg, rgba(25, 135, 84, 0.15), rgba(25, 135, 84, 0.05));
+    border-bottom: 1px solid rgba(25, 135, 84, 0.2);
+}
+.u-header-warning {
+    background: linear-gradient(135deg, rgba(255, 193, 7, 0.12), rgba(255, 193, 7, 0.04));
+    border-bottom: 1px solid rgba(255, 193, 7, 0.2);
+}
+
+/* --------------------------------------------
+   BACKGROUND + INTERACTIVE
+   -------------------------------------------- */
+.u-row-clickable {
+    cursor: pointer;
+    background-color: rgba(13, 202, 240, 0.08);
+    border-bottom: 1px solid rgba(13, 202, 240, 0.2);
+}
+.u-badge-info-outline {
+    background-color: rgba(88, 166, 255, 0.2);
+    color: #a5cbff;
+    border: 1px solid rgba(88, 166, 255, 0.3);
+    font-size: 0.7rem;
+}
+
+/* --------------------------------------------
+   BORDERS
+   -------------------------------------------- */
+.u-border-soft { border: 1px solid rgba(255, 255, 255, 0.1); }
+.u-border-purple { border-color: #a78bfa40; }
+.u-border-left-warning { border-left: 3px solid var(--bs-warning) !important; }
+/* Bootstrap has .rounded-circle */
+.u-rounded-circle { border-radius: 50%; }
+
+/* --------------------------------------------
+   DISPLAY / LAYOUT
+   -------------------------------------------- */
+/* Bootstrap .d-none covers display:none */
+.u-pointer { cursor: pointer; }
+.u-page-break { page-break-before: always; }
+
+/* --------------------------------------------
+   OPACITY
+   -------------------------------------------- */
+.u-opacity-60 { opacity: 0.6; }
+.u-opacity-70 { opacity: 0.7; }
+/* Bootstrap has .opacity-75 */
+.u-opacity-75 { opacity: 0.75; }
+
+/* --------------------------------------------
+   TEXT UTILITIES
+   -------------------------------------------- */
+/* Bootstrap has .text-break (word-wrap: break-word) but this uses word-break */
+.u-break-all { word-break: break-all; }
+.u-break-all-sm { word-break: break-all; font-size: 0.7rem; }
+.u-text-footer { font-weight: 500; color: #adb5bd; }
+.u-code-font {
+    font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+    font-size: 0.82rem;
+}
+
+/* --------------------------------------------
+   COMPOUND CODE BLOCKS
+   -------------------------------------------- */
+.u-code-block {
+    font-size: 0.78rem;
+    overflow-x: auto;
+    white-space: pre-wrap;
+    word-break: break-all;
+    background-color: #0d1117;
+    color: #e6edf3;
+    border: 1px solid #21262d;
+}
+.u-code-scroll {
+    max-height: 400px;
+    overflow-y: auto;
+    white-space: pre-wrap;
+    word-break: break-all;
+}
+.u-code-inline-dark {
+    background: #1a1a2e;
+    padding: 4px 8px;
+    border-radius: 3px;
+    font-size: 0.68rem;
+    margin: 2px 0 0 0;
+    overflow-wrap: break-word;
+    white-space: pre-wrap;
+}
+
+/* --------------------------------------------
+   MARGIN / PADDING
+   -------------------------------------------- */
+.u-mb-4px { margin-bottom: 4px; }
+.u-badge-compact { padding: 2px 6px; font-size: 0.7rem; }
+
+/* --------------------------------------------
+   COMPOUND BADGE STYLES
+   -------------------------------------------- */
+.u-badge-purple {
+    font-size: 0.65rem;
+    background-color: #a78bfa30;
+    color: #a78bfa;
+}
+.u-badge-blue-outline {
+    font-size: 0.65rem;
+    background-color: rgba(88, 166, 255, 0.15);
+    color: #a5cbff;
+    border: 1px solid rgba(88, 166, 255, 0.2);
+}
+.u-badge-ai-sm {
+    font-size: 0.6rem;
+    color: #d4a0ff !important;
+    background: #241b39 !important;
+    border-color: rgba(168, 85, 247, 0.35) !important;
+}
+.u-badge-ai {
+    font-size: 0.7rem;
+    color: #d4a0ff;
+    background: #241b39;
+    border-color: rgba(168, 85, 247, 0.35) !important;
+}
+
+/* --------------------------------------------
+   DYNAMIC / TEMPLATE-DRIVEN VARIANTS
+   Transport security border colors
+   -------------------------------------------- */
+.u-transport-dane-mta {
+    background: rgba(255, 255, 255, 0.03);
+    border-left: 3px solid #198754;
+}
+.u-transport-dane {
+    background: rgba(255, 255, 255, 0.03);
+    border-left: 3px solid #198754;
+}
+.u-transport-mta {
+    background: rgba(255, 255, 255, 0.03);
+    border-left: 3px solid #0dcaf0;
+}
+.u-transport-neutral {
+    background: rgba(255, 255, 255, 0.03);
+    border-left: 3px solid #6c757d;
+}
+
+/* Severity level colors (for template conditional class switching) */
+.u-severity-critical { background: rgba(248, 81, 73, 0.15); }
+.u-severity-high { background: rgba(248, 81, 73, 0.10); }
+.u-severity-medium { background: rgba(227, 179, 65, 0.12); }
+.u-severity-low { background: rgba(88, 166, 255, 0.10); }
+.u-severity-info { background: rgba(139, 148, 158, 0.10); }

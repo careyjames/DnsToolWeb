@@ -51,7 +51,7 @@
                         <h3 class="mb-1">
                             <span class="text-success">{{.SuccessfulAnalyses}}</span>
                             {{if gt .FailedAnalyses 0}}
-                                <span class="text-danger" style="font-size: 0.65em;"> / {{.FailedAnalyses}} failed</span>
+                                <span class="text-danger u-fs-065em"> / {{.FailedAnalyses}} failed</span>
                             {{end}}
                         </h3>
                         <p class="text-muted mb-0">Successful</p>
@@ -97,9 +97,9 @@
                         <div class="row">
                             {{range $c := .CountryStats}}
                             <div class="col-md-3 col-sm-4 col-6 mb-2">
-                                <div class="d-flex justify-content-between align-items-center px-2 py-1 rounded" style="background: rgba(255,255,255,0.03);">
+                                <div class="d-flex justify-content-between align-items-center px-2 py-1 rounded u-bg-soft">
                                     <div class="d-flex align-items-center">
-                                        <span class="me-2" style="font-size: 1.2em;">{{$c.Flag}}</span>
+                                        <span class="me-2 u-fs-120em">{{$c.Flag}}</span>
                                         <span class="small fw-medium">{{$c.Name}}</span>
                                     </div>
                                     <span class="badge bg-info rounded-pill">{{$c.Count}}</span>

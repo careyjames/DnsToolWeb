@@ -28,15 +28,15 @@
             <div class="text-center hero-content">
                 <div class="hero-badge mb-3">
                     <i class="fas fa-envelope me-1"></i> Email Header Analyzer
-                    <span class="badge bg-warning text-dark ms-2" style="font-size: 0.65em; vertical-align: middle;">BETA</span>
+                    <span class="badge bg-warning text-dark ms-2 u-fs-065em-vmid">BETA</span>
                 </div>
                 <h1 class="hero-title mb-3">
                     Email Header Analyzer
                 </h1>
-                <p class="hero-subtitle mx-auto mb-4" style="font-size: 1.35rem;">
+                <p class="hero-subtitle mx-auto mb-4 u-fs-135rem">
                     Did this email actually come from who it claims?
                 </p>
-                <p class="text-muted mx-auto mb-4" style="max-width: 620px;">
+                <p class="text-muted mx-auto mb-4 u-maxw-620">
                     Paste an email header &mdash; or the entire email &mdash; and we&rsquo;ll check SPF, DKIM, and DMARC authentication, trace the delivery route, and flag anything suspicious. If you include the body, we&rsquo;ll scan it for phishing indicators and then discard it
                 </p>
             </div>
@@ -51,7 +51,7 @@
                             <label for="raw_header" class="form-label search-label">
                                 <i class="fas fa-search me-2"></i>Email Header
                             </label>
-                            <textarea class="form-control bg-dark text-light border-secondary mb-3"
+                            <textarea class="form-control bg-dark text-light border-secondary mb-3 u-code-font"
                                       id="raw_header"
                                       name="raw_header"
                                       rows="10"
@@ -62,7 +62,6 @@ In Outlook: Open the email → ⋯ menu → View message source
 In Apple Mail: View → Message → All Headers
 
 You can paste the whole email — we'll separate headers from body automatically."
-                                      style="font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace; font-size: 0.82rem;"
                                       aria-label="Paste email headers here"></textarea>
 
                             <div class="text-center mb-3">
@@ -191,7 +190,7 @@ You can paste the whole email — we'll separate headers from body automatically
                     <div class="card-body">
                         <p class="text-muted small mb-3">Key security questions raised by this email &mdash; the answers that matter most when deciding whether to trust it.</p>
                         {{range .BigQuestions}}
-                        <div class="mb-3 p-3 rounded border border-{{if eq .Severity "danger"}}danger{{else if eq .Severity "warning"}}warning{{else}}info{{end}}" style="background: rgba({{if eq .Severity "danger"}}220,53,69{{else if eq .Severity "warning"}}255,193,7{{else}}13,202,240{{end}},0.05);">
+                        <div class="mb-3 p-3 rounded border border-{{if eq .Severity "danger"}}danger{{else if eq .Severity "warning"}}warning{{else}}info{{end}} u-bg-{{if eq .Severity "danger"}}danger{{else if eq .Severity "warning"}}warning{{else}}info{{end}}-faint">
                             <div class="d-flex align-items-start">
                                 <i class="fas fa-{{.Icon}} fa-lg me-3 mt-1 text-{{if eq .Severity "danger"}}danger{{else if eq .Severity "warning"}}warning{{else}}info{{end}}"></i>
                                 <div>
@@ -214,7 +213,7 @@ You can paste the whole email — we'll separate headers from body automatically
                             <div class="col-md-6">
                                 <table class="table table-dark table-sm mb-0">
                                     <tbody>
-                                        {{if .From}}<tr><td class="text-muted" style="width:35%;">From</td><td class="text-break">{{.From}}</td></tr>{{end}}
+                                        {{if .From}}<tr><td class="text-muted u-w-35p">From</td><td class="text-break">{{.From}}</td></tr>{{end}}
                                         {{if .To}}<tr><td class="text-muted">To</td><td class="text-break">{{.To}}</td></tr>{{end}}
                                         {{if .Subject}}<tr><td class="text-muted">Subject</td><td class="text-break">{{.Subject}}</td></tr>{{end}}
                                         {{if .Date}}<tr><td class="text-muted">Date</td><td>{{.Date}}</td></tr>{{end}}
@@ -224,9 +223,9 @@ You can paste the whole email — we'll separate headers from body automatically
                             <div class="col-md-6">
                                 <table class="table table-dark table-sm mb-0">
                                     <tbody>
-                                        {{if .ReturnPath}}<tr><td class="text-muted" style="width:35%;">Return-Path</td><td class="text-break">{{.ReturnPath}}</td></tr>{{end}}
+                                        {{if .ReturnPath}}<tr><td class="text-muted u-w-35p">Return-Path</td><td class="text-break">{{.ReturnPath}}</td></tr>{{end}}
                                         {{if .ReplyTo}}<tr><td class="text-muted">Reply-To</td><td class="text-break">{{.ReplyTo}}</td></tr>{{end}}
-                                        {{if .MessageID}}<tr><td class="text-muted">Message-ID</td><td class="text-break" style="font-size:0.82em;">{{.MessageID}}</td></tr>{{end}}
+                                        {{if .MessageID}}<tr><td class="text-muted">Message-ID</td><td class="text-break u-fs-082em">{{.MessageID}}</td></tr>{{end}}
                                     </tbody>
                                 </table>
                             </div>
@@ -387,12 +386,12 @@ You can paste the whole email — we'll separate headers from body automatically
                             <table class="table table-dark table-sm mb-0">
                                 <thead>
                                     <tr>
-                                        <th style="width:5%;">#</th>
-                                        <th style="width:30%;">From</th>
-                                        <th style="width:30%;">By</th>
-                                        <th style="width:10%;">Protocol</th>
-                                        <th style="width:12%;">IP</th>
-                                        <th style="width:8%;">Delay</th>
+                                        <th class="u-w-5p">#</th>
+                                        <th class="u-w-30p">From</th>
+                                        <th class="u-w-30p">By</th>
+                                        <th class="u-w-10p">Protocol</th>
+                                        <th class="u-w-12p">IP</th>
+                                        <th class="u-w-8p">Delay</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -436,10 +435,10 @@ You can paste the whole email — we'll separate headers from body automatically
                 {{end}}
 
                 <details class="mb-4">
-                    <summary class="text-muted small" style="cursor:pointer;">
+                    <summary class="text-muted small u-pointer">
                         <i class="fas fa-search me-1"></i>View Raw Headers
                     </summary>
-                    <pre class="bg-dark border border-secondary rounded p-3 mt-2 small text-light" style="max-height: 400px; overflow-y: auto; white-space: pre-wrap; word-break: break-all;">{{.RawHeaders}}</pre>
+                    <pre class="bg-dark border border-secondary rounded p-3 mt-2 small text-light u-code-scroll">{{.RawHeaders}}</pre>
                 </details>
 
                 {{end}}

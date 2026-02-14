@@ -216,7 +216,7 @@
                 <h1 class="hero-title mb-3">
                     Domain Security Audit
                 </h1>
-                <p class="hero-tagline mx-auto mb-2" style="font-size: 1.5rem; font-weight: 600; color: #e9ecef; letter-spacing: 0.02em;">
+                <p class="hero-tagline mx-auto mb-2 u-hero-tagline">
                     We answer the <span class="text-info">BIG</span> questions.
                 </p>
                 <p class="hero-subtitle mx-auto mb-2">
@@ -264,12 +264,12 @@
                             </div>
                             <div class="mt-2">
                                 <button type="button" class="btn btn-link small text-muted text-decoration-none p-0 border-0" data-bs-toggle="collapse" data-bs-target="#advancedOptions" aria-expanded="{{if .DKIMExpand}}true{{else}}false{{end}}" aria-controls="advancedOptions">
-                                    <i class="fas fa-sliders-h me-1" style="color: #8ab4f8;"></i>Advanced Options <span class="text-muted small">(optional)</span> <i class="fas fa-chevron-down ms-1 small"></i>
+                                    <i class="fas fa-sliders-h me-1 u-color-blue-soft"></i>Advanced Options <span class="text-muted small">(optional)</span> <i class="fas fa-chevron-down ms-1 small"></i>
                                 </button>
                                 <div class="collapse{{if .DKIMExpand}} show{{end}} mt-2" id="advancedOptions">
                                     <div class="row g-3">
                                         <div class="col-md-7">
-                                            <label class="form-label text-muted small mb-1"><i class="fas fa-key me-1" style="color: #d4a855;"></i>DKIM Selectors</label>
+                                            <label class="form-label text-muted small mb-1"><i class="fas fa-key me-1 u-color-gold"></i>DKIM Selectors</label>
                                             <div class="row g-2">
                                                 <div class="col-6">
                                                     <input type="text"
@@ -290,12 +290,12 @@
                                                            autocomplete="off">
                                                 </div>
                                             </div>
-                                            <div class="form-text text-muted mt-1" style="font-size:0.75em;">
+                                            <div class="form-text text-muted mt-1 u-fs-075em">
                                                 Primary mail selectors only, without <code>._domainkey</code>.
                                             </div>
                                         </div>
                                         <div class="col-md-5">
-                                            <label for="securitytrails_key" class="form-label text-muted small mb-1"><i class="fas fa-history me-1" style="color: #5bc0de;"></i>DNS History Key</label>
+                                            <label for="securitytrails_key" class="form-label text-muted small mb-1"><i class="fas fa-history me-1 u-color-info-alt"></i>DNS History Key</label>
                                             <div class="input-group input-group-sm">
                                                 <span class="input-group-text bg-dark border-secondary text-muted"><i class="fas fa-shield-alt"></i></span>
                                                 <input type="password"
@@ -308,7 +308,7 @@
                                                        data-lpignore="true"
                                                        data-1p-ignore="true">
                                             </div>
-                                            <div class="form-text text-muted mt-1" style="font-size:0.75em;">
+                                            <div class="form-text text-muted mt-1 u-fs-075em">
                                                 <i class="fas fa-lock me-1"></i>Never stored. <a href="https://securitytrails.com/app/signup" target="_blank" rel="noopener" class="text-info">Get free key</a>
                                             </div>
                                         </div>
@@ -349,7 +349,7 @@
                                 </div>
                                 <div class="ms-3">
                                     <a href="/investigate" class="btn btn-outline-info btn-sm text-nowrap">
-                                        <i class="fas fa-route me-1"></i>Investigate IP <span class="badge bg-warning text-dark ms-1" style="font-size:0.65em; vertical-align:middle;">BETA</span>
+                                        <i class="fas fa-route me-1"></i>Investigate IP <span class="badge bg-warning text-dark ms-1 u-fs-065em-vmid">BETA</span>
                                     </a>
                                 </div>
                             </div>
@@ -450,7 +450,7 @@
                         <div class="card-body">
                             <div class="d-flex align-items-center mb-2">
                                 <i class="{{.Icon}} {{if .IsIncident}}text-warning{{else}}text-info{{end}} me-2"></i>
-                                <span class="badge changelog-badge changelog-badge-{{.Category | lower}} me-2" style="font-size:0.65rem;">{{.Category}}</span>
+                                <span class="badge changelog-badge changelog-badge-{{.Category | lower}} me-2 u-fs-065rem">{{.Category}}</span>
                                 <span class="text-muted small ms-auto">{{.Date}}</span>
                             </div>
                             <p class="card-title mb-1 fw-semibold">{{.Title}}</p>
@@ -690,7 +690,7 @@
                     <span>Posture scoring &amp; remediation</span>
                 </div>
             </div>
-            <p class="text-muted small mt-3 mb-0" id="loadingNote" style="max-width: 440px; margin: 0 auto; opacity: 0; transition: opacity 0.8s;">
+            <p class="text-muted small mt-3 mb-0 u-maxw-440-fadein" id="loadingNote">
                 Every result includes terminal commands you can run to independently verify the underlying data. No proprietary magic.
             </p>
         </div>
