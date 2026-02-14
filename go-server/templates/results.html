@@ -3006,7 +3006,7 @@
                                 {{if $ch}}
                                 <tr>
                                     <td><code class="text-muted" style="font-size:0.8em">{{mapGetStr "date" $ch}}</code></td>
-                                    <td><span class="badge bg-{{if eq (mapGetStr "record_type" $ch) "A"}}primary{{else if eq (mapGetStr "record_type" $ch) "MX"}}success{{else if eq (mapGetStr "record_type" $ch) "NS"}}info{{else}}secondary{{end}}">{{mapGetStr "record_type" $ch}}</span></td>
+                                    <td><span class="badge bg-{{if eq (mapGetStr "record_type" $ch) "A"}}primary{{else if eq (mapGetStr "record_type" $ch) "AAAA"}}primary{{else if eq (mapGetStr "record_type" $ch) "MX"}}success{{else if eq (mapGetStr "record_type" $ch) "NS"}}info{{else}}secondary{{end}}">{{mapGetStr "record_type" $ch}}</span></td>
                                     <td>
                                         {{if eq (mapGetStr "action" $ch) "added"}}
                                         <span class="text-success"><i class="fas fa-plus-circle me-1"></i>Added</span>
@@ -3033,7 +3033,7 @@
                     {{if eq (mapGetStr "status" $dns_history) "partial"}}
                     <p class="text-warning mb-0"><i class="fas fa-exclamation-triangle me-1"></i>Some record types could not be retrieved from the upstream data source. No changes were found in the record types that were successfully checked, but the result may be incomplete.</p>
                     {{else}}
-                    <p class="text-muted mb-0"><i class="fas fa-check-circle text-success me-1"></i>No DNS record changes detected in available history. A, MX, and NS records for this domain have remained stable.</p>
+                    <p class="text-muted mb-0"><i class="fas fa-check-circle text-success me-1"></i>No DNS record changes detected in available history. A, AAAA, MX, and NS records for this domain have remained stable.</p>
                     {{end}}
                     {{end}}
                     {{end}}

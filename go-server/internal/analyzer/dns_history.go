@@ -134,7 +134,7 @@ func FetchDNSHistory(ctx context.Context, domain string, cache *DNSHistoryCache)
                 }
         }
 
-        recordTypes := []string{"a", "mx", "ns"}
+        recordTypes := []string{"a", "aaaa", "mx", "ns"}
 
         type indexedResult struct {
                 idx    int
