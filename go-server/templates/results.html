@@ -136,7 +136,7 @@
                         <span class="mx-1">·</span><i class="fas fa-tag me-1"></i><span>v{{.ToolVersion}}</span>
                     {{end}}
                     {{if .IntegrityHash}}
-                        <span class="mx-1">·</span><a href="#report-integrity" class="text-decoration-none text-muted" title="Report integrity fingerprint — click to view full SHA-256 hash"><i class="fas fa-fingerprint me-1"></i><span class="font-monospace">{{substr 0 8 .IntegrityHash}}&hellip;</span></a>
+                        <span class="mx-1">·</span><a href="#report-integrity" class="text-decoration-none text-muted" title="Report integrity fingerprint — click to view full SHA-256 hash"><i class="fas fa-fingerprint me-1"></i><span class="font-monospace">SHA-256: {{substr 0 4 .IntegrityHash}}<span style="letter-spacing:-0.5px;">&#x2731;&#x2731;&#x2731;&#x2731;</span></span> <span class="text-info" style="font-size:0.72rem;">Report Integrity <i class="fas fa-arrow-down" style="font-size:0.6rem;"></i></span></a>
                     {{end}}
                 </div>
                 {{end}}
@@ -2152,6 +2152,10 @@
                             </details>
                         </div>
                         {{end}}
+                        <div class="mt-2 small text-muted" style="font-size: 0.7rem;">
+                            <i class="fas fa-info-circle me-1"></i>
+                            These checks are informational reconnaissance of publicly accessible resources &mdash; not a PCI DSS ASV scan, penetration test, or compliance attestation. For PCI compliance, engage a <a href="https://listings.pcisecuritystandards.org/assessors_and_solutions/approved_scanning_vendors" target="_blank" rel="noopener" class="text-info">PCI SSC Approved Scanning Vendor</a>.
+                        </div>
                     </div>
                 </div>
             </div>
