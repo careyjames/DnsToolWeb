@@ -357,3 +357,59 @@ Gin's `c.SetCookie()` replaced everywhere — it doesn't support SameSite.
 Added `hostedrt.com` → "Best Practical RT" to `spfAncillarySenders` map. IETF.org uses `include:spf.hostedrt.com` for their Request Tracker ticketing system — similar to Zendesk/Freshdesk pattern already tracked.
 
 **Version**: 26.15.29
+
+---
+
+## Failures & Lessons Learned Timeline
+
+This section tracks recurring issues and failed approaches so future sessions avoid repeating them. **Always read this before starting work.**
+
+### CSP Inline Handler Failures (Recurring — v26.14 through v26.16)
+
+**Problem**: Content Security Policy `script-src 'self' 'nonce-...'` blocks ALL inline event handlers (`onclick`, `onchange`, `onsubmit`). Every session that adds or modifies buttons must use `addEventListener` in a `<script nonce="{{.CspNonce}}">` block instead.
+
+**Failed approaches**:
+- Adding `onclick="window.print()"` to buttons — blocked by CSP
+- Adding `onclick="loadDNSHistory()"` — blocked by CSP
+- Any inline `on*` attribute — always blocked
+
+**Correct pattern**: Use `id="myButton"` + `document.getElementById('myButton').addEventListener('click', fn)` inside a nonce'd script block.
+
+**Files affected**: `results.html`, `results_executive.html`
+
+### Font Awesome Subset — Missing Glyph False Alarm (v26.15–v26.16)
+
+**Problem**: Icons like `fa-print` appeared to not render. Investigation showed the glyph IS in the woff2 subset (confirmed via fonttools). The real issue was **browser caching** of older versions.
+
+**Lesson**: Always check the woff2 font file with `fonttools` before regenerating subsets. Force-refresh or version-bump the CSS query string to bust browser caches (`?v=XX.YY.ZZ`).
+
+**Files**: `static/webfonts/fa-solid-900.woff2` (110 glyphs), `static/css/fontawesome-subset.min.css`
+
+### PDF Title / Filename (v26.16)
+
+**Problem**: Browser uses `<title>` as the PDF filename when printing to PDF. Engineer report had `<title>{{.Domain}} - DNS Tool</title>` → saved as "DNS Tool - Replit.pdf" which is wrong.
+
+**Fix**: Changed to `<title>Engineer Report — {{.Domain}} - DNS Tool</title>` to match Executive format: "Executive Report — {{.Domain}} - DNS Tool".
+
+**Lesson**: Always format `<title>` as "Report Type — domain - DNS Tool" for consistent PDF naming.
+
+### Executive Print Readability (Recurring — v26.15 through v26.16)
+
+**Problem**: Executive PDF print output has very small text. "Fine print" items (metadata, TLP notes, footer, finding labels, code blocks) are hard to read, especially for board-level executives.
+
+**Root cause**: Print CSS used very small font sizes (6pt–7.5pt for metadata, 8pt for small text, 9.5pt body). Colors were too light for print (e.g., `#9ca3af` for text-muted).
+
+**Fix applied in v26.16.1**:
+- Body: 9.5pt → 10.5pt
+- Small/fine print: 8pt → 9pt
+- Badge text: 8pt → 9pt
+- Finding labels: 9pt → 10pt
+- Big Questions labels: 9.5pt → 10.5pt
+- Section titles: 12pt → 13pt
+- Footer text: 7.5pt → 8.5pt
+- TLP badge: 7.5pt → 8.5pt
+- Text-muted: #6b7280 → #4b5563 (darker for print)
+- Footer disclaimer: #9ca3af → #6b7280 (darker)
+- Card header icons: #94d1e8 → #b8e6f5 (brighter against gradient)
+
+**Lesson**: Executive PDF print sizes should target minimum 8pt for ANY text element, 9pt+ for content the reader needs to actually read. Colors should be at least #4b5563 darkness for print.

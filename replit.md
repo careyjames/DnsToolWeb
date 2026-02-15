@@ -10,6 +10,13 @@ The DNS Tool is a web-based intelligence platform designed for comprehensive, RF
 - Tool targets both technical sysadmins and non-technical executives (board-level).
 - Memory persistence is critical — `replit.md` is the single source of truth between sessions. Update it every session with decisions, changes, and rationale.
 - **IMPORTANT**: If `replit.md` appears truncated or reset, restore from `EVOLUTION.md` which is the persistent backup. Always read BOTH files at session start.
+- **CRITICAL**: Read the "Failures & Lessons Learned Timeline" section at the bottom of `EVOLUTION.md` before making any changes. It documents recurring mistakes (CSP inline handlers, font subset issues, PDF title format, print readability) with correct solutions.
+
+## Known Constraints (Read Before Coding)
+- **CSP blocks ALL inline handlers**: Never use `onclick`, `onchange`, etc. Use `id` + `addEventListener` in `<script nonce="{{.CspNonce}}">` blocks.
+- **PDF filename = `<title>` tag**: Format as "Report Type — domain - DNS Tool" (e.g., "Engineer Report — example.com - DNS Tool").
+- **Executive print minimum sizes**: Body 10.5pt, small text 9pt, badges 9pt, labels 10pt, metadata 8.5pt. Text-muted color minimum #4b5563.
+- **Font Awesome subset**: 110 glyphs in `static/webfonts/fa-solid-900.woff2`. Verify with fonttools before regenerating. CSS refs in `fontawesome-subset.min.css`.
 
 ## System Architecture
 
