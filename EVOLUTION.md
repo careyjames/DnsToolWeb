@@ -666,6 +666,30 @@ Changes:
 
 **Version**: 26.17.1 (template-only changes, no version bump needed)
 
+### CSP Compliance & XSS Hardening (Feb 15, 2026)
+
+**Problem**: Lighthouse/PageSpeed Insights flagged CSP violations — inline `style` attributes in report templates were blocked by the nonce-based `style-src 'self' 'nonce-...'` Content Security Policy. Static code analysis also flagged `innerHTML` usage in DNS history table rendering as an XSS anti-pattern.
+
+**Changes (v26.17.2)**:
+
+1. **Inline style elimination**: Removed all `style=""` attributes from `results.html` (7 occurrences) and `results_executive.html` (7 occurrences). Each replaced with CSS utility classes:
+   - `u-print-hash` — monospace 6pt word-break for print integrity hash
+   - `u-ls-tight` — letter-spacing -0.5px for star mask characters
+   - `u-fs-072rem-lh15` — compound font-size + line-height for scan-type details
+   - `u-fs-078rem-break` / `u-fs-075rem-break` — font-size + word-break for hash display
+   - `u-hash-label` — SHA-256 badge styling (border, color, background)
+   - `u-color-heading-light`, `u-color-gray-400`, `u-color-gray-500` — text colors for integrity section
+   - Existing classes reused where available: `u-fs-075rem`, `u-fs-060rem`
+
+2. **DOM-safe DNS history rendering**: Refactored `static/js/main.js` `loadDNSHistory()` from innerHTML string concatenation to `createElement()` + `textContent` + `appendChild()`. All dynamic data now assigned via `textContent` (inherently XSS-safe). The `escapeHtml()` helper is no longer called but retained for potential use.
+
+3. **Protocol navigation fix**: Corrected `protocolSectionMap` in results.html JavaScript:
+   - `MTA-STS`: `#section-dane` → `#section-email` (MTA-STS lives in Email Security section)
+   - `TLS-RPT`: `#section-dane` → `#section-email` (TLS-RPT lives in Email Security section)
+   - `CAA`: `#section-dnssec` → `#section-brand` (CAA lives in Brand Security section)
+
+**Version**: 26.17.2
+
 ---
 
 ## Failures & Lessons Learned Timeline
@@ -687,3 +711,6 @@ Changes:
 | 2026-02-15 | TLP dropdown stays open after selection | `e.preventDefault()` in click handler prevents Bootstrap auto-close | Call `bootstrap.Dropdown.getInstance(btn).hide()` after updating UI state. |
 | 2026-02-15 | CSS edits not visible despite minify+restart | `AppVersion` unchanged so `staticVersionURL` cache-buster serves stale CSS | MUST bump `AppVersion` in config.go after CSS changes (triggers new `?v=` query string). |
 | 2026-02-15 | AppVersion bump didn't take effect | Changed config.go but didn't rebuild Go binary. `main.py` does `os.execvp("./dns-tool-server")` — it runs a pre-compiled binary, not `go run`. | After ANY Go code change: `cd go-server/cmd/server && go build -o /home/runner/workspace/dns-tool-server .` then restart workflow. |
+| 2026-02-15 | CSP blocked inline style attributes | Used `style=""` in HTML templates with nonce-based `style-src` CSP | Move all inline styles to CSS utility classes. Inline `style` attributes cannot carry nonces. |
+| 2026-02-15 | innerHTML XSS anti-pattern in DNS history | Built HTML via string concatenation + innerHTML | Use createElement() + textContent + appendChild() for DOM-safe rendering |
+| 2026-02-15 | Protocol links navigated to wrong sections | protocolSectionMap had incorrect mappings for MTA-STS, TLS-RPT, CAA | Verify section IDs match actual template structure: MTA-STS/TLS-RPT → #section-email, CAA → #section-brand |

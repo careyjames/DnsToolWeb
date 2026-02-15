@@ -63,6 +63,14 @@ func GetRecentChangelog(n int) []ChangelogEntry {
 func GetChangelog() []ChangelogEntry {
         return []ChangelogEntry{
                 {
+                        Version:     "26.17.2",
+                        Date:        dateFeb15,
+                        Category:    "Security",
+                        Title:       "CSP Compliance & XSS Hardening",
+                        Description: "Eliminated all inline style attributes from Engineer and Executive report templates to resolve Content Security Policy violations flagged by Lighthouse/PageSpeed Insights. All styles moved to CSS utility classes (u-print-hash, u-ls-tight, u-fs-072rem-lh15, u-fs-078rem-break, u-hash-label, etc.). DNS history table rendering refactored from innerHTML string concatenation to safe DOM methods (createElement + textContent + appendChild), eliminating XSS anti-pattern. Fixed protocol navigation links: MTA-STS and TLS-RPT now correctly scroll to Email Security section, CAA scrolls to Brand Security section.",
+                        Icon:        "fas fa-shield-alt",
+                },
+                {
                         Version:     "26.17.1",
                         Date:        dateFeb15,
                         Category:    "Security",
