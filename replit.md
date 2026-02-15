@@ -42,7 +42,7 @@ The DNS Tool is a web-based intelligence platform for comprehensive, RFC-complia
 - `TestGoldenRuleHostedProviderNoDANE`
 - `TestGoldenRuleBIMIRecommendedRegardlessOfProvider`
 
-### February 15, 2026 — Performance Hardening + PWA Best Practices
+### February 15, 2026 — Performance Hardening + PWA + Changelog Date Audit
 
 **Critical Performance Fixes (Analysis Time: 60s → ~27s)**:
 - crt.sh CT query: independent 10-second context (was inheriting parent 60s context)
@@ -57,8 +57,16 @@ The DNS Tool is a web-based intelligence platform for comprehensive, RFC-complia
 - Added `id` and `scope` fields per web.dev best practices
 - Maskable icons have proper safe-zone padding (inner 80%)
 
-**Changelog Date Fix**:
-- Email Header Analyzer (v26.12.E) and Enterprise DNS Detection (v26.12.D) corrected from Feb 14 → Feb 12
+**Changelog Date Audit (Full Correction)**:
+- Multiple changelog entries had incorrect dates — version numbers (26.14.x, 26.13.x) were mistakenly treated as date indicators
+- Corrected dates verified with user:
+  - Feb 14: High-Speed Subdomain Discovery (only entry that actually shipped today)
+  - Feb 13: DNS History Cache (was Feb 14)
+  - Feb 12: Intelligence Sources Inventory, PTR Hosting Detection, IP-to-ASN Attribution (all were Feb 14)
+  - Feb 12: Email Header Analyzer, Enterprise DNS Detection (were Feb 14)
+  - Feb 11: Incident Disclosure, Honest Data Reporting (were Feb 14; incident was Feb 10-11)
+- Added CHANGELOG DATE POLICY comment block to `changelog.go` with canonical date mapping
+- **Rule**: Version numbers are feature counters, NOT date encodings. Always use actual ship/event dates.
 
 **New Golden Rule Test** (28 total, 27 previous + 1 new):
 - `TestGoldenRuleSubdomainDiscoveryUnder60s`: Integration test — runs real subdomain discovery against it-help.tech, asserts completion under 60s and finds required subdomains (dnstool, www)
@@ -80,7 +88,7 @@ The DNS Tool is a web-based intelligence platform for comprehensive, RFC-complia
 
 **Golden Rule Tests**: 27 total (25 previous + 2 wildcard tests). All pass.
 
-**Version**: 26.14.23
+**Version**: 26.15.24
 
 ## System Architecture
 

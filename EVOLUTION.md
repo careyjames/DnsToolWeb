@@ -176,3 +176,30 @@ All documentation files verified accurate:
 **Manifest Improvements**: Added `id`, `scope`, and maskable icon entries.
 
 **Files changed**: `static/manifest.json`, `static/icons/icon-maskable-*.png`, `go-server/internal/analyzer/subdomains.go`, `go-server/internal/analyzer/asn_lookup.go`
+
+### Changelog Date Audit (Full Correction)
+
+**Problem**: Multiple changelog entries had incorrect dates. The version numbering scheme (26.14.x, 26.13.x, 26.12.x) was misinterpreted as encoding dates (Feb 14, Feb 13, Feb 12). In reality, version numbers are feature-level counters with no date significance.
+
+**Corrected dates** (verified by user on Feb 15, 2026):
+
+| Entry | Old Date | Correct Date | Reason |
+|-------|----------|--------------|--------|
+| High-Speed Subdomain Discovery | Feb 14 | Feb 14 | Actually shipped Feb 14 |
+| Intelligence Sources Inventory | Feb 14 | Feb 12 | Shipped days before Feb 14 |
+| PTR-Based Hosting Detection | Feb 14 | Feb 12 | Shipped days before Feb 14 |
+| IP-to-ASN Attribution | Feb 14 | Feb 12 | Shipped days before Feb 14 |
+| Incident Disclosure | Feb 14 | Feb 11 | Incident occurred Feb 10-11 |
+| Honest Data Reporting | Feb 14 | Feb 11 | Response to incident |
+| DNS History Cache | Feb 14 | Feb 13 | Shipped Feb 13 |
+| Email Header Analyzer | Feb 14→Feb 12 | Feb 12 | Fixed in prior session |
+| Enterprise DNS Detection | Feb 14→Feb 12 | Feb 12 | Fixed in prior session |
+
+**Prevention**: Added `CHANGELOG DATE POLICY` comment block at top of `changelog.go` with:
+- Explicit rule: version numbers ≠ dates
+- Canonical date mapping for every entry
+- Instruction to use named date constants, never inline strings
+
+**New golden rule test**: `TestGoldenRuleSubdomainDiscoveryUnder60s` — integration test runs live subdomain discovery against it-help.tech, asserts <60s completion and finds required subdomains (dnstool, www). 28 golden rule tests total, all pass.
+
+**Version**: 26.15.24

@@ -1,5 +1,27 @@
 // Copyright (c) 2024-2026 IT Help San Diego Inc.
 // Licensed under BUSL-1.1 — See LICENSE for terms.
+//
+// CHANGELOG DATE POLICY
+// =====================
+// Each entry's Date field must reflect the ACTUAL date the feature shipped or
+// the incident occurred — NOT the version number prefix, NOT "today", and NOT
+// the date the changelog entry was written. Version numbers (26.14.x, 26.13.x)
+// are feature-level counters and do NOT encode dates.
+//
+// When adding a new entry:
+//   1. Determine the real ship/event date.
+//   2. Use (or create) a named date constant below.
+//   3. Reference the constant — never inline a date string.
+//
+// Canonical date mapping (verified Feb 15, 2026):
+//   dateFeb14 — High-Speed Subdomain Discovery
+//   dateFeb13 — DNS History Cache, Verify It Yourself, Confidence Indicators,
+//               SMTP Transport Verification, AI Surface Scanner, DNS History
+//               Timeline, Enhanced Remediation Engine, Email Security Mgmt
+//   dateFeb12 — Intelligence Sources Inventory, PTR-Based Hosting Detection,
+//               IP-to-ASN Attribution, DANE/TLSA, Go Rewrite, IP Investigation,
+//               Email Header Analyzer, Enterprise DNS Detection
+//   dateFeb11 — Incident Disclosure, Honest Data Reporting
 package handlers
 
 const (
