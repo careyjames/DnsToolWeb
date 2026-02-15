@@ -720,19 +720,23 @@ func buildVerdicts(ps protocolState, ds DKIMState, hasSPF, hasDMARC, hasDKIM boo
 
         if ps.caaOK {
                 verdicts["certificate_control"] = map[string]any{
-                        "label": "Configured",
-                        "color": "success",
-                        "icon":  iconShieldAlt,
+                        "label":  "Configured",
+                        "color":  "success",
+                        "icon":   iconShieldAlt,
+                        "reason": "CAA records restrict which certificate authorities may issue certificates",
                 }
         } else {
                 verdicts["certificate_control"] = map[string]any{
-                        "label": "Not Configured",
-                        "color": "secondary",
-                        "icon":  iconShieldAlt,
+                        "label":  "Not Configured",
+                        "color":  "secondary",
+                        "icon":   iconShieldAlt,
+                        "reason": "No CAA records — any certificate authority may issue certificates for this domain",
                 }
         }
 
         verdicts["email_answer"] = buildEmailAnswer(ps, hasSPF, hasDMARC)
+
+        buildTransportVerdict(ps, verdicts)
 
         return verdicts
 }
@@ -816,47 +820,93 @@ func buildEnforcingEmailVerdict(ps protocolState, ds DKIMState, verdicts map[str
 func buildBrandVerdict(ps protocolState, verdicts map[string]any) {
         if ps.dmarcMissing {
                 verdicts["brand_impersonation"] = map[string]any{
-                        "label": "Exposed",
-                        "color": "danger",
-                        "icon":  iconExclamationTriangle,
+                        "label":  "Exposed",
+                        "color":  "danger",
+                        "icon":   iconExclamationTriangle,
+                        "reason": "No DMARC policy — attackers can send email appearing to be from this domain",
                 }
                 return
         }
 
         if ps.dmarcPolicy == "reject" {
                 verdicts["brand_impersonation"] = map[string]any{
-                        "label": "Protected",
-                        "color": "success",
-                        "icon":  iconShieldAlt,
+                        "label":  "Protected",
+                        "color":  "success",
+                        "icon":   iconShieldAlt,
+                        "reason": "DMARC reject policy prevents unauthorized use of this domain in email",
                 }
                 return
         }
 
+        reason := "DMARC policy is not set to reject — partial protection only"
+        if ps.dmarcPolicy == "quarantine" {
+                reason = "DMARC quarantine policy provides moderate protection but does not fully reject spoofed mail"
+        } else if ps.dmarcPolicy == "none" {
+                reason = "DMARC is monitor-only (p=none) — spoofed mail is not blocked"
+        }
         verdicts["brand_impersonation"] = map[string]any{
-                "label": "Basic",
-                "color": "warning",
-                "icon":  iconShieldAlt,
+                "label":  "Basic",
+                "color":  "warning",
+                "icon":   iconShieldAlt,
+                "reason": reason,
         }
 }
 
 func buildDNSVerdict(ps protocolState, verdicts map[string]any) {
         if ps.dnssecOK {
                 verdicts["dns_tampering"] = map[string]any{
-                        "label": "Protected",
-                        "color": "success",
-                        "icon":  iconShieldAlt,
+                        "label":  "Protected",
+                        "color":  "success",
+                        "icon":   iconShieldAlt,
+                        "reason": "No — DNSSEC signed and validated, cryptographic chain of trust verified",
                 }
         } else if ps.dnssecBroken {
                 verdicts["dns_tampering"] = map[string]any{
-                        "label": "Exposed",
-                        "color": "danger",
-                        "icon":  iconExclamationTriangle,
+                        "label":  "Exposed",
+                        "color":  "danger",
+                        "icon":   iconExclamationTriangle,
+                        "reason": "Yes — DNSSEC validation is failing, DNS responses cannot be trusted",
                 }
         } else {
                 verdicts["dns_tampering"] = map[string]any{
-                        "label": "Not Configured",
-                        "color": "secondary",
-                        "icon":  iconShieldAlt,
+                        "label":  "Not Configured",
+                        "color":  "secondary",
+                        "icon":   iconShieldAlt,
+                        "reason": "Possible — DNSSEC is not deployed, DNS responses are not cryptographically verified",
+                }
+        }
+}
+
+func buildTransportVerdict(ps protocolState, verdicts map[string]any) {
+        if ps.mtaStsOK && ps.daneOK {
+                verdicts["transport"] = map[string]any{
+                        "label":  "Fully Protected",
+                        "color":  "success",
+                        "reason": "Both MTA-STS and DANE enforce encrypted mail delivery",
+                }
+        } else if ps.mtaStsOK {
+                verdicts["transport"] = map[string]any{
+                        "label":  "Protected",
+                        "color":  "success",
+                        "reason": "MTA-STS enforces TLS for all inbound mail delivery",
+                }
+        } else if ps.daneOK {
+                verdicts["transport"] = map[string]any{
+                        "label":  "Protected",
+                        "color":  "success",
+                        "reason": "DANE/TLSA provides cryptographic transport verification",
+                }
+        } else if ps.tlsrptOK {
+                verdicts["transport"] = map[string]any{
+                        "label":  "Monitoring",
+                        "color":  "info",
+                        "reason": "TLS reporting is configured but no transport enforcement policy is active",
+                }
+        } else {
+                verdicts["transport"] = map[string]any{
+                        "label":  "Not Enforced",
+                        "color":  "secondary",
+                        "reason": "No MTA-STS or DANE — mail transport encryption is opportunistic only",
                 }
         }
 }

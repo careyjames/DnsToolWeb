@@ -2585,6 +2585,8 @@ main.container {
 /* Bootstrap has .rounded-circle */
 .u-rounded-circle { border-radius: 50%; }
 .u-valign-n3 { vertical-align: -3px; }
+.u-fs-xs { font-size: 0.7rem; }
+.u-fs-xxs { font-size: 0.75rem; }
 
 /* --------------------------------------------
    DISPLAY / LAYOUT

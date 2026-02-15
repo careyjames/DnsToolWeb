@@ -63,6 +63,27 @@
         .exec-big-questions .badge {
             font-size: 0.8rem;
         }
+        .exec-inline-question {
+            background: linear-gradient(135deg, rgba(30, 58, 95, 0.12), rgba(14, 116, 144, 0.06));
+            border: 1px solid rgba(30, 58, 95, 0.2);
+            border-radius: 0.375rem;
+            padding: 0.5rem 0.75rem;
+            margin-bottom: 0.75rem;
+            display: flex;
+            align-items: baseline;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+        .exec-inline-question .exec-q-label {
+            font-weight: 700;
+            font-style: italic;
+            color: #e6edf3;
+            font-size: 0.85rem;
+        }
+        .exec-inline-question .exec-q-reason {
+            font-size: 0.8rem;
+            color: #8b949e;
+        }
 
         @media print {
             .print-only { display: block !important; }
@@ -470,6 +491,26 @@
                 background-color: #ecfeff !important;
             }
 
+            .exec-inline-question {
+                background-color: #eef2f7 !important;
+                border: 1.5pt solid #1e3a5f !important;
+                border-radius: 3pt !important;
+                padding: 7pt 10pt !important;
+                margin-bottom: 10pt !important;
+            }
+            .exec-inline-question .exec-q-label {
+                color: #1a1a2e !important;
+                font-size: 10pt !important;
+            }
+            .exec-inline-question .exec-q-reason {
+                color: #374151 !important;
+                font-size: 9pt !important;
+            }
+            .exec-inline-question .badge {
+                font-size: 9pt !important;
+                padding: 3pt 8pt !important;
+            }
+
             .section-technical-findings { page-break-before: always; }
             .section-appendix { page-break-before: always; }
 
@@ -736,7 +777,8 @@
                                 {{$dnsVerdict := mapGetMap "dns_tampering" $verdicts}}
                                 {{if $dnsVerdict}}
                                 {{$dnsLabel := mapGetStr "label" $dnsVerdict}}
-                                <span class="badge bg-{{if eq $dnsLabel "Protected"}}success{{else if eq $dnsLabel "Enterprise Managed"}}info{{else if eq $dnsLabel "Unsigned"}}warning{{else}}secondary{{end}} px-3 py-2">{{$dnsLabel}}</span>
+                                <span class="badge bg-{{if eq $dnsLabel "Protected"}}success{{else if eq $dnsLabel "Enterprise Managed"}}info{{else if eq $dnsLabel "Unsigned"}}warning{{else if eq $dnsLabel "Exposed"}}danger{{else}}secondary{{end}} px-3 py-2">{{$dnsLabel}}</span>
+                                {{if mapGetStr "reason" $dnsVerdict}}<span class="text-muted small ms-2">{{mapGetStr "reason" $dnsVerdict}}</span>{{end}}
                                 {{else}}<span class="badge bg-secondary px-3 py-2">Not Assessed</span>{{end}}
                             </span>
                         </div>
@@ -746,18 +788,19 @@
                                 {{$brandVerdict := mapGetMap "brand_impersonation" $verdicts}}
                                 {{if $brandVerdict}}
                                 {{$brandLabel := mapGetStr "label" $brandVerdict}}
-                                <span class="badge bg-{{if eq $brandLabel "Protected"}}success{{else if or (eq $brandLabel "Basic Protection") (eq $brandLabel "Basic")}}info{{else if eq $brandLabel "Not Protected"}}warning{{else}}secondary{{end}} px-3 py-2">{{$brandLabel}}</span>
+                                <span class="badge bg-{{if eq $brandLabel "Protected"}}success{{else if or (eq $brandLabel "Basic Protection") (eq $brandLabel "Basic")}}info{{else if eq $brandLabel "Not Protected"}}warning{{else if eq $brandLabel "Exposed"}}danger{{else}}secondary{{end}} px-3 py-2">{{$brandLabel}}</span>
+                                {{if mapGetStr "reason" $brandVerdict}}<span class="text-muted small ms-2">{{mapGetStr "reason" $brandVerdict}}</span>{{end}}
                                 {{else}}<span class="badge bg-secondary px-3 py-2">Not Assessed</span>{{end}}
                             </span>
                         </div>
                         <div class="exec-finding-row">
-                            <span class="exec-finding-label">Transport encryption observed?</span>
+                            <span class="exec-finding-label">Transport encryption enforced?</span>
                             <span class="exec-finding-value">
-                                {{if $smtp}}
-                                {{$smtpStatus := mapGetStr "status" $smtp}}
-                                <span class="badge bg-{{if eq $smtpStatus "success"}}success{{else if eq $smtpStatus "warning"}}warning{{else if eq $smtpStatus "error"}}danger{{else if eq $smtpStatus "info"}}secondary{{else}}info{{end}} px-3 py-2">
-                                    {{if eq $smtpStatus "success"}}All Servers{{else if eq $smtpStatus "warning"}}Partial{{else if eq $smtpStatus "error"}}Not Observed{{else if eq $smtpStatus "info"}}No Mail{{else}}Inferred{{end}}
-                                </span>
+                                {{$transportVerdict := mapGetMap "transport" $verdicts}}
+                                {{if $transportVerdict}}
+                                {{$transportLabel := mapGetStr "label" $transportVerdict}}
+                                <span class="badge bg-{{mapGetStr "color" $transportVerdict}} px-3 py-2">{{$transportLabel}}</span>
+                                {{if mapGetStr "reason" $transportVerdict}}<span class="text-muted small ms-2">{{mapGetStr "reason" $transportVerdict}}</span>{{end}}
                                 {{else}}<span class="badge bg-secondary px-3 py-2">Not Assessed</span>{{end}}
                             </span>
                         </div>
@@ -768,6 +811,7 @@
                                 {{if $certVerdict}}
                                 {{$certLabel := mapGetStr "label" $certVerdict}}
                                 <span class="badge bg-{{if eq $certLabel "Configured"}}success{{else}}secondary{{end}} px-3 py-2">{{$certLabel}}</span>
+                                {{if mapGetStr "reason" $certVerdict}}<span class="text-muted small ms-2">{{mapGetStr "reason" $certVerdict}}</span>{{end}}
                                 {{else}}<span class="badge bg-secondary px-3 py-2">Not Assessed</span>{{end}}
                             </span>
                         </div>
@@ -785,19 +829,19 @@
                     <div class="card-body py-3">
                         <div class="row g-3">
                             <div class="col-6 col-md-3">
-                                <small class="text-uppercase text-muted fw-bold d-block" style="font-size:0.7rem">Registrar</small>
+                                <small class="text-uppercase text-muted fw-bold d-block u-fs-xs">Registrar</small>
                                 <strong>{{if and $registrar (mapGetStr "registrar" $registrar)}}{{mapGetStr "registrar" $registrar}}{{else}}Unknown{{end}}</strong>
                             </div>
                             <div class="col-6 col-md-3">
-                                <small class="text-uppercase text-muted fw-bold d-block" style="font-size:0.7rem">Email Provider</small>
+                                <small class="text-uppercase text-muted fw-bold d-block u-fs-xs">Email Provider</small>
                                 <strong>{{if and $hosting (mapGetStr "email_hosting" $hosting)}}{{mapGetStr "email_hosting" $hosting}}{{else}}Unknown{{end}}</strong>
                             </div>
                             <div class="col-6 col-md-3">
-                                <small class="text-uppercase text-muted fw-bold d-block" style="font-size:0.7rem">Web Hosting</small>
+                                <small class="text-uppercase text-muted fw-bold d-block u-fs-xs">Web Hosting</small>
                                 <strong>{{if $hosting}}{{default "Unknown" (mapGetStr "hosting" $hosting)}}{{else}}Unknown{{end}}</strong>
                             </div>
                             <div class="col-6 col-md-3">
-                                <small class="text-uppercase text-muted fw-bold d-block" style="font-size:0.7rem">DNS Hosting</small>
+                                <small class="text-uppercase text-muted fw-bold d-block u-fs-xs">DNS Hosting</small>
                                 <strong>{{if $hosting}}{{default "Standard" (mapGetStr "dns_hosting" $hosting)}}{{else}}Standard{{end}}</strong>
                             </div>
                         </div>
@@ -819,6 +863,16 @@
                     <h5 class="mb-0"><i class="fas fa-shield-alt me-2"></i>Email Authentication</h5>
                 </div>
                 <div class="card-body">
+                    {{if $posture}}
+                    {{$verdicts := mapGetMap "verdicts" $posture}}
+                    {{$emailAnswer := mapGetStr "email_answer" $verdicts}}
+                    {{if $emailAnswer}}
+                    <div class="exec-inline-question">
+                        <span class="exec-q-label">Can this domain be impersonated by email?</span>
+                        <span class="badge bg-{{if hasPrefix $emailAnswer "No"}}success{{else if hasPrefix $emailAnswer "Unlikely"}}info{{else if or (hasPrefix $emailAnswer "Partially") (hasPrefix $emailAnswer "Uncertain")}}warning{{else}}danger{{end}}">{{$emailAnswer}}</span>
+                    </div>
+                    {{end}}
+                    {{end}}
                     <div class="exec-finding-row">
                         <span class="exec-finding-label">SPF (Sender Policy)</span>
                         <span class="exec-finding-value">
@@ -890,6 +944,18 @@
                     <h5 class="mb-0"><i class="fas fa-lock me-2"></i>Transport Security</h5>
                 </div>
                 <div class="card-body">
+                    {{if $posture}}
+                    {{$verdicts := mapGetMap "verdicts" $posture}}
+                    {{$transportVerdict := mapGetMap "transport" $verdicts}}
+                    {{if $transportVerdict}}
+                    <div class="exec-inline-question">
+                        <span class="exec-q-label">Transport encryption enforced?</span>
+                        {{$transportLabel := mapGetStr "label" $transportVerdict}}
+                        <span class="badge bg-{{mapGetStr "color" $transportVerdict}}">{{$transportLabel}}</span>
+                        {{if mapGetStr "reason" $transportVerdict}}<span class="exec-q-reason">— {{mapGetStr "reason" $transportVerdict}}</span>{{end}}
+                    </div>
+                    {{end}}
+                    {{end}}
                     <div class="exec-finding-row">
                         <span class="exec-finding-label">MTA-STS</span>
                         <span class="exec-finding-value">
@@ -963,6 +1029,18 @@
                     <h5 class="mb-0"><i class="fas fa-network-wired me-2"></i>DNS Security</h5>
                 </div>
                 <div class="card-body">
+                    {{if $posture}}
+                    {{$verdicts := mapGetMap "verdicts" $posture}}
+                    {{$dnsVerdict := mapGetMap "dns_tampering" $verdicts}}
+                    {{if $dnsVerdict}}
+                    <div class="exec-inline-question">
+                        <span class="exec-q-label">Can DNS itself be tampered with?</span>
+                        {{$dnsLabel := mapGetStr "label" $dnsVerdict}}
+                        <span class="badge bg-{{mapGetStr "color" $dnsVerdict}}">{{$dnsLabel}}</span>
+                        {{if mapGetStr "reason" $dnsVerdict}}<span class="exec-q-reason">— {{mapGetStr "reason" $dnsVerdict}}</span>{{end}}
+                    </div>
+                    {{end}}
+                    {{end}}
                     <div class="exec-finding-row">
                         <span class="exec-finding-label">DNSSEC</span>
                         <span class="exec-finding-value">
@@ -1007,6 +1085,29 @@
                     <h5 class="mb-0"><i class="fas fa-certificate me-2"></i>Brand &amp; Certificate Controls</h5>
                 </div>
                 <div class="card-body">
+                    {{if $posture}}
+                    {{$verdicts := mapGetMap "verdicts" $posture}}
+                    {{$brandVerdict := mapGetMap "brand_impersonation" $verdicts}}
+                    {{$certVerdict := mapGetMap "certificate_control" $verdicts}}
+                    {{if or $brandVerdict $certVerdict}}
+                    <div class="exec-inline-question">
+                        {{if $brandVerdict}}
+                        <span class="exec-q-label">Can this brand be convincingly faked?</span>
+                        {{$brandLabel := mapGetStr "label" $brandVerdict}}
+                        <span class="badge bg-{{mapGetStr "color" $brandVerdict}}">{{$brandLabel}}</span>
+                        {{if mapGetStr "reason" $brandVerdict}}<span class="exec-q-reason">— {{mapGetStr "reason" $brandVerdict}}</span>{{end}}
+                        {{end}}
+                    </div>
+                    {{if $certVerdict}}
+                    <div class="exec-inline-question">
+                        <span class="exec-q-label">Certificate issuance controlled?</span>
+                        {{$certLabel := mapGetStr "label" $certVerdict}}
+                        <span class="badge bg-{{mapGetStr "color" $certVerdict}}">{{$certLabel}}</span>
+                        {{if mapGetStr "reason" $certVerdict}}<span class="exec-q-reason">— {{mapGetStr "reason" $certVerdict}}</span>{{end}}
+                    </div>
+                    {{end}}
+                    {{end}}
+                    {{end}}
                     <div class="exec-finding-row">
                         <span class="exec-finding-label">BIMI (Brand Logo)</span>
                         <span class="exec-finding-value">
@@ -1176,7 +1277,7 @@
                         </div>
                         <p class="text-muted mb-0 small">{{mapGetStr "fix" $fixMap}}</p>
                         {{if mapGetStr "dns_record" $fixMap}}
-                        <div class="code-block small mt-1" style="font-size:0.75rem">{{mapGetStr "dns_record" $fixMap}}</div>
+                        <div class="code-block small mt-1 u-fs-xxs">{{mapGetStr "dns_record" $fixMap}}</div>
                         {{end}}
                     </div>
                     {{end}}
@@ -1193,7 +1294,7 @@
                         </div>
                         <p class="text-muted mb-0 small">{{mapGetStr "fix" $fixMap}}</p>
                         {{if mapGetStr "dns_record" $fixMap}}
-                        <div class="code-block small mt-1" style="font-size:0.75rem">{{mapGetStr "dns_record" $fixMap}}</div>
+                        <div class="code-block small mt-1 u-fs-xxs">{{mapGetStr "dns_record" $fixMap}}</div>
                         {{end}}
                     </div>
                     {{end}}
