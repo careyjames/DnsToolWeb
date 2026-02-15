@@ -14,7 +14,7 @@
 //   3. Reference the constant — never inline a date string.
 //
 // Canonical date mapping (verified Feb 15, 2026):
-//   dateFeb15 — Dual Intelligence Products (Engineer's Report & Executive's Brief), OpenPhish Threat
+//   dateFeb15 — Dual Intelligence Products (Engineer's DNS Intelligence Report & Executive's DNS Intelligence Brief), OpenPhish Threat
 //               Intelligence Attribution, Email Header Analyzer Homepage Promotion
 //   dateFeb14 — High-Speed Subdomain Discovery
 //   dateFeb13 — DNS History Cache, Verify It Yourself, Confidence Indicators,
