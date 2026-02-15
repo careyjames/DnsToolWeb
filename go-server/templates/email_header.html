@@ -3,7 +3,7 @@
 <head>
     {{template "head" .}}
     <title>Email Header Analyzer - DNS Tool</title>
-    <meta name="description" content="Analyze email headers for SPF, DKIM, DMARC authentication results, routing anomalies, and spoofing indicators. Paste or upload a header for instant analysis.">
+    <meta name="description" content="Analyze email headers for SPF, DKIM, DMARC authentication results, routing anomalies, and spoofing indicators. Paste headers, upload .eml files, or import JSON from Gmail API, Microsoft Graph, Postmark, SendGrid, and Mailgun.">
     <meta property="og:url" content="https://dnstool.it-help.tech/email-header">
     <meta property="og:type" content="website">
     <meta property="og:title" content="Email Header Analyzer - DNS Tool">
@@ -37,7 +37,7 @@
                     Did this email actually come from who it claims?
                 </p>
                 <p class="text-muted mx-auto mb-4 u-maxw-620">
-                    Paste an email header &mdash; or the entire email &mdash; and we&rsquo;ll check SPF, DKIM, and DMARC authentication, trace the delivery route, and flag anything suspicious. If you include the body, we&rsquo;ll scan it for phishing indicators and then discard it
+                    Paste a header, upload an .eml, or drop a JSON export from any major email API &mdash; we auto-detect the format, check SPF, DKIM, and DMARC authentication, trace the delivery route, and flag anything suspicious. If you include the body, we&rsquo;ll scan it for phishing indicators and then discard it
                 </p>
             </div>
 
@@ -75,9 +75,9 @@ You can paste the whole email — we'll separate headers from body automatically
                                    class="form-control bg-dark text-light border-secondary mb-3"
                                    id="header_file"
                                    name="header_file"
-                                   accept=".txt,.eml,.msg,.headers"
-                                   aria-label="Upload an email file (.eml, .txt, or header export)">
-                            <div class="form-text text-muted small mb-3">Accepts .eml files (full emails), header exports, or plain text. We&rsquo;ll separate headers from body automatically.</div>
+                                   accept=".eml,.txt,.msg,.mbox,.json,.headers,.log"
+                                   aria-label="Upload an email file">
+                            <div class="form-text text-muted small mb-3">Accepts .eml (full emails), .json (Gmail API, Microsoft Graph, Postmark, SendGrid, Mailgun), .mbox, .txt, and header exports. We&rsquo;ll auto-detect the format and extract headers.</div>
 
                             <button class="btn btn-primary search-btn w-100" type="submit" id="analyzeBtn" aria-label="Analyze email header">
                                 <i class="fas fa-search me-2" aria-hidden="true"></i>Analyze Header

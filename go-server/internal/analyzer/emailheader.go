@@ -46,6 +46,8 @@ type EmailHeaderAnalysis struct {
         BigQuestions    []BigQuestion
         HasBigQuestions bool
 
+        SourceFormat         string
+
         SpamFlagged          bool
         SpamFlagSources      []string
         BCCDelivery          bool
