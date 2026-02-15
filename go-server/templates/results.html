@@ -137,7 +137,7 @@
             </div>
             <div class="results-header-actions">
                 <div class="btn-group me-2">
-                    <button type="button" onclick="window.print()" class="btn btn-outline-info" title="Full technical report for engineers and sysadmins">
+                    <button type="button" id="engineerPrintBtn" class="btn btn-outline-info" title="Full technical report for engineers and sysadmins">
                         <i class="fas fa-print me-1"></i>Engineer
                     </button>
                     <a href="/analysis/{{.AnalysisID}}/executive" class="btn btn-outline-warning" title="Condensed board-ready report for executives" target="_blank">
@@ -388,13 +388,13 @@
                             {{if $postureConfigured}}
                             <div class="col-6 col-lg-3">
                                 <span class="text-success fw-bold"><i class="fas fa-check-circle me-1"></i>Configured</span>
-                                <div class="mt-1 u-color-green-soft">{{range $i, $item := $postureConfigured}}{{if $i}}, {{end}}{{$item}}{{end}}</div>
+                                <div class="mt-1 u-color-green-soft posture-protocol-list">{{range $i, $item := $postureConfigured}}{{if $i}}, {{end}}<span class="protocol-link" data-protocol="{{$item}}">{{$item}}</span>{{end}}</div>
                             </div>
                             {{end}}
                             {{if $postureAbsent}}
                             <div class="col-6 col-lg-3">
                                 <span class="text-muted fw-bold"><i class="fas fa-minus-circle me-1"></i>Not Configured</span>
-                                <div class="mt-1 text-muted">{{range $i, $item := $postureAbsent}}{{if $i}}, {{end}}{{$item}}{{end}}</div>
+                                <div class="mt-1 text-muted posture-protocol-list">{{range $i, $item := $postureAbsent}}{{if $i}}, {{end}}<span class="protocol-link" data-protocol="{{$item}}">{{$item}}</span>{{end}}</div>
                             </div>
                             {{end}}
                         </div>
@@ -591,7 +591,7 @@
             </div>
         </div>
 
-        <div class="row section-email-security">
+        <div class="row section-email-security" id="section-email">
             <!-- Email Security Section -->
             <div class="col-12 mb-4">
                 <div class="card">
@@ -1382,7 +1382,7 @@
 
         <!-- DANE/TLSA & Email Transport Security Section -->
         {{if $dane}}
-        <div class="row section-dane-transport">
+        <div class="row section-dane-transport" id="section-dane">
             <div class="col-12 mb-4">
                 <div class="card">
                     <div class="card-header">
@@ -1544,7 +1544,7 @@
         {{end}}
 
         <!-- Brand Security Section -->
-        <div class="row section-brand-security">
+        <div class="row section-brand-security" id="section-brand">
             <div class="col-12 mb-4">
                 <div class="card">
                     <div class="card-header">
@@ -1752,7 +1752,7 @@
 
         <!-- security.txt Section (RFC 9116) -->
         {{if $security_txt}}
-        <div class="row section-security-txt">
+        <div class="row section-security-txt" id="section-securitytxt">
             <div class="col-12 mb-4">
                 <div class="card">
                     <div class="card-header">
@@ -1881,7 +1881,7 @@
 
         <!-- AI Surface Scanner Section -->
         {{if $ai_surface}}
-        <div class="row section-ai-surface">
+        <div class="row section-ai-surface" id="section-ai">
             <div class="col-12 mb-4">
                 <div class="card">
                     <div class="card-header">
@@ -2067,7 +2067,7 @@
 
         <!-- Live SMTP TLS Validation Section -->
         {{if and $smtp (ne (mapGetStr "status" $smtp) "n/a")}}
-        <div class="row section-smtp-transport">
+        <div class="row section-smtp-transport" id="section-smtp">
             <div class="col-12 mb-4">
                 <div class="card">
                     <div class="card-header">
@@ -2202,7 +2202,7 @@
 
         <!-- Infrastructure Intelligence Section -->
         {{if or $asn_info $edge_cdn $saas_txt}}
-        <div class="row section-infrastructure-intel">
+        <div class="row section-infrastructure-intel" id="section-infra">
             <div class="col-12 mb-4">
                 <div class="card">
                     <div class="card-header">
@@ -2341,7 +2341,7 @@
         {{end}}
 
         <!-- Domain Security Section (DNSSEC + NS Delegation) -->
-        <div class="row section-domain-security">
+        <div class="row section-domain-security" id="section-dnssec">
             <div class="col-12 mb-4">
                 <div class="card">
                     <div class="card-header">
@@ -2700,7 +2700,7 @@
         </div>
 
         <!-- Traffic & Routing Section -->
-        <div class="row section-traffic-routing">
+        <div class="row section-traffic-routing" id="section-traffic">
             <div class="col-12 mb-4">
                 <div class="card">
                     <div class="card-header">
@@ -3018,7 +3018,7 @@
                         <span class="text-muted small"><i class="fas fa-history me-1"></i>DNS History Timeline <span class="badge bg-warning text-dark ms-1 u-fs-070em-vmid">BETA</span></span>
                         <div class="d-flex align-items-center gap-2 flex-grow-1 u-maxw-500">
                             <input type="password" class="form-control form-control-sm bg-dark text-light border-secondary u-fs-085em" id="st-api-key-input" placeholder="Enter your SecurityTrails API key" autocomplete="off" spellcheck="false" data-lpignore="true" data-1p-ignore="true">
-                            <button type="button" class="btn btn-sm btn-outline-info" id="dns-history-btn" onclick="loadDNSHistory('{{.AsciiDomain}}')">
+                            <button type="button" class="btn btn-sm btn-outline-info" id="dns-history-btn" data-domain="{{.AsciiDomain}}">
                                 <i class="fas fa-search me-1"></i>Go
                             </button>
                         </div>
@@ -3617,6 +3617,32 @@
         });
 
         document.addEventListener('DOMContentLoaded', function() {
+            var printBtn = document.getElementById('engineerPrintBtn');
+            if (printBtn) printBtn.addEventListener('click', function() { window.print(); });
+
+            var histBtn = document.getElementById('dns-history-btn');
+            if (histBtn) histBtn.addEventListener('click', function() { loadDNSHistory(this.dataset.domain); });
+
+            var protocolSectionMap = {
+                'SPF': '#section-email', 'DMARC': '#section-email', 'DKIM': '#section-email',
+                'DANE': '#section-dane', 'MTA-STS': '#section-dane', 'TLS-RPT': '#section-dane',
+                'BIMI': '#section-brand', 'CAA': '#section-dnssec', 'DNSSEC': '#section-dnssec'
+            };
+            document.querySelectorAll('.protocol-link').forEach(function(el) {
+                var proto = el.dataset.protocol;
+                var cleaned = proto.replace(/\s*\(.*\)/, '');
+                var target = protocolSectionMap[cleaned];
+                if (target) {
+                    el.style.cursor = 'pointer';
+                    el.style.textDecoration = 'underline';
+                    el.style.textDecorationStyle = 'dotted';
+                    el.addEventListener('click', function() {
+                        var section = document.querySelector(target);
+                        if (section) section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    });
+                }
+            });
+
             var tlpConfig = {
                 amber: { label: 'TLP:AMBER', note: 'Limited disclosure \u2014 recipients may share within their organization only', cls: 'tlp-amber',
                     footer: '<strong>TLP:AMBER</strong> \u2014 This report contains security posture information that may reveal actionable vulnerabilities. Recipients may share within their organization and with clients/customers who need the information to protect themselves, but not via publicly accessible channels.' },

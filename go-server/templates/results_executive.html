@@ -45,8 +45,23 @@
             padding: 0.5rem 0.75rem;
             background: rgba(255,255,255,0.03);
             border: 1px solid rgba(255,255,255,0.06);
+            border-left: 3px solid #d97706;
             border-radius: 0.375rem;
             margin-bottom: 0.5rem;
+        }
+        .exec-big-questions {
+            background: linear-gradient(135deg, rgba(30, 58, 95, 0.15), rgba(14, 116, 144, 0.08)) !important;
+            border: 1px solid rgba(30, 58, 95, 0.3) !important;
+        }
+        .exec-big-questions .exec-finding-label {
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: #e6edf3;
+            font-style: italic;
+            min-width: 280px;
+        }
+        .exec-big-questions .badge {
+            font-size: 0.8rem;
         }
 
         @media print {
@@ -372,16 +387,74 @@
                 font-weight: 800 !important; letter-spacing: 0.08em;
             }
 
-            .exec-finding-row { border-bottom-color: #e5e7eb !important; }
-            .exec-finding-label { color: #4b5563 !important; }
+            .exec-finding-row { border-bottom-color: #e5e7eb !important; padding: 6pt 0 !important; }
+            .exec-finding-label { color: #1e3a5f !important; font-weight: 700 !important; font-size: 9pt !important; min-width: 200pt !important; }
             .exec-finding-value { color: #1a1a2e !important; }
             .exec-fix-item {
                 background-color: #f5f7fa !important;
                 border: 1pt solid #e5e7eb !important;
+                border-left: 3pt solid #d97706 !important;
             }
             .exec-section-title {
                 color: #1e3a5f !important;
-                border-bottom-color: #1e3a5f !important;
+                border-bottom: 2.5pt solid #1e3a5f !important;
+                font-size: 12pt !important;
+                padding-bottom: 4pt !important;
+                margin-bottom: 10pt !important;
+            }
+
+            .exec-big-questions {
+                background-color: #f0f4f8 !important;
+                border: 1.5pt solid #1e3a5f !important;
+                border-radius: 4pt !important;
+            }
+            .exec-big-questions .exec-finding-label {
+                font-size: 9.5pt !important;
+                font-style: italic !important;
+                color: #1a1a2e !important;
+            }
+            .exec-big-questions .badge {
+                font-size: 9pt !important;
+                padding: 3pt 10pt !important;
+            }
+
+            .card-header {
+                background: linear-gradient(135deg, #1e3a5f 0%, #0e7490 100%) !important;
+                color: #ffffff !important;
+                border-bottom: none !important;
+                padding: 8pt 12pt !important;
+            }
+            .card-header h5, .card-header .h5, .card-header .mb-0 {
+                color: #ffffff !important;
+            }
+            .card-header .fas, .card-header .fa {
+                color: #94d1e8 !important;
+            }
+
+            .card.bg-dark.bg-opacity-25 {
+                background-color: #f0f4f8 !important;
+                border: 1.5pt solid #1e3a5f !important;
+            }
+
+            .card.border-success.bg-opacity-10,
+            .card.border-success.bg-success {
+                border-left: 4pt solid #166534 !important;
+                background-color: #f0fdf4 !important;
+            }
+            .card.border-warning.bg-opacity-10,
+            .card.border-warning.bg-warning {
+                border-left: 4pt solid #d97706 !important;
+                background-color: #fffbeb !important;
+            }
+            .card.border-danger.bg-opacity-10,
+            .card.border-danger.bg-danger {
+                border-left: 4pt solid #991b1b !important;
+                background-color: #fef2f2 !important;
+            }
+            .card.border-info.bg-opacity-10,
+            .card.border-info.bg-info {
+                border-left: 4pt solid #0e7490 !important;
+                background-color: #ecfeff !important;
             }
 
             .section-technical-findings { page-break-before: always; }
@@ -482,7 +555,7 @@
                             <li><span class="dropdown-item-text small text-muted pe-3">TLP (Traffic Light Protocol) controls who may receive this report. Default: AMBER per FIRST/CISA standards for security posture reports.</span></li>
                         </ul>
                     </div>
-                    <button type="button" onclick="window.print()" class="btn btn-warning">
+                    <button type="button" id="execPrintBtn" class="btn btn-warning">
                         <i class="fas fa-print me-1"></i>Print Report
                     </button>
                     <a href="/analysis/{{.AnalysisID}}" class="btn btn-outline-info">
@@ -623,6 +696,70 @@
                     <i class="fas fa-check-circle me-2"></i>No urgent actions detected. Domain security posture is well-maintained.
                 </div>
                 {{end}}
+            </div>
+        </div>
+        {{end}}
+
+        <!-- BIG QUESTIONS - Board-Ready Answers -->
+        {{if $posture}}
+        {{$verdicts := mapGetMap "verdicts" $posture}}
+        <div class="row mb-4">
+            <div class="col-12">
+                <h5 class="exec-section-title"><i class="fas fa-question-circle text-warning me-2"></i>The BIG Questions</h5>
+                <div class="card border-0 bg-dark bg-opacity-25 exec-big-questions">
+                    <div class="card-body py-3">
+                        <div class="exec-finding-row">
+                            <span class="exec-finding-label">Can this domain be impersonated by email?</span>
+                            <span class="exec-finding-value">
+                                {{$emailAnswer := mapGetStr "email_answer" $verdicts}}
+                                {{if $emailAnswer}}
+                                <span class="badge bg-{{if hasPrefix $emailAnswer "No"}}success{{else if hasPrefix $emailAnswer "Unlikely"}}info{{else if or (hasPrefix $emailAnswer "Partially") (hasPrefix $emailAnswer "Uncertain")}}warning{{else}}danger{{end}} px-3 py-2">{{$emailAnswer}}</span>
+                                {{else}}<span class="badge bg-secondary px-3 py-2">Not Assessed</span>{{end}}
+                            </span>
+                        </div>
+                        <div class="exec-finding-row">
+                            <span class="exec-finding-label">Can DNS itself be tampered with?</span>
+                            <span class="exec-finding-value">
+                                {{$dnsVerdict := mapGetMap "dns_tampering" $verdicts}}
+                                {{if $dnsVerdict}}
+                                {{$dnsLabel := mapGetStr "label" $dnsVerdict}}
+                                <span class="badge bg-{{if eq $dnsLabel "Protected"}}success{{else if eq $dnsLabel "Enterprise Managed"}}info{{else if eq $dnsLabel "Unsigned"}}warning{{else}}secondary{{end}} px-3 py-2">{{$dnsLabel}}</span>
+                                {{else}}<span class="badge bg-secondary px-3 py-2">Not Assessed</span>{{end}}
+                            </span>
+                        </div>
+                        <div class="exec-finding-row">
+                            <span class="exec-finding-label">Can this brand be convincingly faked?</span>
+                            <span class="exec-finding-value">
+                                {{$brandVerdict := mapGetMap "brand_impersonation" $verdicts}}
+                                {{if $brandVerdict}}
+                                {{$brandLabel := mapGetStr "label" $brandVerdict}}
+                                <span class="badge bg-{{if eq $brandLabel "Protected"}}success{{else if or (eq $brandLabel "Basic Protection") (eq $brandLabel "Basic")}}info{{else if eq $brandLabel "Not Protected"}}warning{{else}}secondary{{end}} px-3 py-2">{{$brandLabel}}</span>
+                                {{else}}<span class="badge bg-secondary px-3 py-2">Not Assessed</span>{{end}}
+                            </span>
+                        </div>
+                        <div class="exec-finding-row">
+                            <span class="exec-finding-label">Transport encryption observed?</span>
+                            <span class="exec-finding-value">
+                                {{if $smtp}}
+                                {{$smtpStatus := mapGetStr "status" $smtp}}
+                                <span class="badge bg-{{if eq $smtpStatus "success"}}success{{else if eq $smtpStatus "warning"}}warning{{else if eq $smtpStatus "error"}}danger{{else if eq $smtpStatus "info"}}secondary{{else}}info{{end}} px-3 py-2">
+                                    {{if eq $smtpStatus "success"}}All Servers{{else if eq $smtpStatus "warning"}}Partial{{else if eq $smtpStatus "error"}}Not Observed{{else if eq $smtpStatus "info"}}No Mail{{else}}Inferred{{end}}
+                                </span>
+                                {{else}}<span class="badge bg-secondary px-3 py-2">Not Assessed</span>{{end}}
+                            </span>
+                        </div>
+                        <div class="exec-finding-row">
+                            <span class="exec-finding-label">Certificate issuance controlled?</span>
+                            <span class="exec-finding-value">
+                                {{$certVerdict := mapGetMap "certificate_control" $verdicts}}
+                                {{if $certVerdict}}
+                                {{$certLabel := mapGetStr "label" $certVerdict}}
+                                <span class="badge bg-{{if eq $certLabel "Configured"}}success{{else}}secondary{{end}} px-3 py-2">{{$certLabel}}</span>
+                                {{else}}<span class="badge bg-secondary px-3 py-2">Not Assessed</span>{{end}}
+                            </span>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
         {{end}}
@@ -1102,6 +1239,9 @@
     <script nonce="{{.CspNonce}}" src="/static/js/bootstrap.bundle.min.js" defer></script>
     <script nonce="{{.CspNonce}}">
     document.addEventListener('DOMContentLoaded', function() {
+        var execPrintBtn = document.getElementById('execPrintBtn');
+        if (execPrintBtn) execPrintBtn.addEventListener('click', function() { window.print(); });
+
         var tlpConfig = {
             amber: { label: 'TLP:AMBER', note: 'Limited disclosure \u2014 recipients may share within their organization only', cls: 'tlp-amber',
                 footer: '<strong>TLP:AMBER</strong> \u2014 This report contains security posture information that may reveal actionable vulnerabilities. Recipients may share within their organization and with clients/customers who need the information to protect themselves, but not via publicly accessible channels.' },
