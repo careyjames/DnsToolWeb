@@ -112,8 +112,8 @@ All documentation files verified accurate:
 
 **SecurityTrails NOT used in automatic discovery** (reverted same session):
 - SecurityTrails `FetchSubdomains()` was briefly wired into the pipeline but immediately reverted
-- Reason: The server-side SecurityTrails API key has a hard 50-request/month limit. Using it automatically on every scan would exhaust the budget within hours. Once exhausted, the key is dead for the rest of the month — no DNS history, no IP investigation, nothing.
-- Correct pattern: SecurityTrails is user-key-only. Users provide their own API key on DNS History and IP Investigation pages. The server key is reserved for features where users explicitly opt in.
+- Reason: The server-side SecurityTrails API key has a hard 50-request/month limit. Using it automatically on every scan would exhaust the budget within hours. Once exhausted, the key is dead for the rest of the month — no DNS history, no IP Intelligence, nothing.
+- Correct pattern: SecurityTrails is user-key-only. Users provide their own API key on DNS History and IP Intelligence pages. The server key is reserved for features where users explicitly opt in.
 - **Rule**: Never call SecurityTrails automatically in the analysis pipeline. It's a user-provided-key feature only.
 
 **Source attribution**: "Certificate Transparency + DNS Intelligence". Caveat lists CT logs, DNS probing, and CNAME traversal.
@@ -213,7 +213,7 @@ All documentation files verified accurate:
 - Verify command shortened to `openphish.com/feed.txt` to prevent card layout overflow
 
 **Email Header Analyzer Homepage Promotion**:
-- Promotional banner added to homepage (`index.html`) below IP Investigate card
+- Promotional banner added to homepage (`index.html`) below IP Intelligence card
 - Matching card style with warning/gold color scheme: "Did this email actually come from who it claims?"
 - Links to `/email-header` with BETA badge
 

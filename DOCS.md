@@ -113,7 +113,7 @@ DNSSEC chain-of-trust verification, CAA certificate authority restrictions, DANE
 Automatic enterprise DNS provider recognition, government domain tier classification, edge/CDN detection, SMTP transport validation.
 
 ### Intelligence
-AI Surface Scanner, CT subdomain discovery, DNS history timeline (SecurityTrails), IP investigation, phishing detection.
+AI Surface Scanner, CT subdomain discovery, DNS history timeline (SecurityTrails), IP Intelligence, phishing detection.
 
 ### Posture Scoring
 CVSS-aligned risk assessment with actionable remediation recommendations.
