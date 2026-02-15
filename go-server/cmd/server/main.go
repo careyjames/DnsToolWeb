@@ -15,6 +15,7 @@ import (
         "dnstool/go-server/internal/analyzer"
         "dnstool/go-server/internal/config"
         "dnstool/go-server/internal/db"
+        "dnstool/go-server/internal/dnsclient"
         "dnstool/go-server/internal/handlers"
         "dnstool/go-server/internal/middleware"
         tmplFuncs "dnstool/go-server/internal/templates"
@@ -35,6 +36,8 @@ func main() {
                 slog.Error("Failed to load config", "error", err)
                 os.Exit(1)
         }
+
+        dnsclient.SetUserAgentVersion(cfg.AppVersion)
 
         database, err := db.Connect(cfg.DatabaseURL)
         if err != nil {

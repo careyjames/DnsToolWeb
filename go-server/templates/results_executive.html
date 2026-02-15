@@ -550,6 +550,7 @@
         {{$smtp := mapGetMap "smtp_transport" $results}}
         {{$ai_surface := mapGetMap "ai_surface" $results}}
         {{$secret_exposure := mapGetMap "secret_exposure" $results}}
+        {{$web_exposure := mapGetMap "web_exposure" $results}}
 
         {{$spfStatus := mapGetStr "status" $spf}}
         {{$dmarcStatus := mapGetStr "status" $dmarc}}
@@ -1375,6 +1376,51 @@
                 <span class="exec-finding-value">
                     <span class="badge bg-success">Clear</span>
                     <span class="text-muted ms-2 small">No secrets detected in publicly accessible source</span>
+                </span>
+            </div>
+            {{end}}
+            {{end}}
+
+            <!-- Web Exposure Checks (Tier 2) -->
+            {{if $web_exposure}}
+            {{$webExpStatus := mapGetStr "status" $web_exposure}}
+            {{$webExpCount := mapGetFloat "finding_count" $web_exposure}}
+            {{if or (eq $webExpStatus "critical") (eq $webExpStatus "exposed")}}
+            <div class="card mb-3">
+                <div class="card-header">
+                    <h5 class="mb-0 d-flex align-items-center justify-content-between flex-wrap">
+                        <span><i class="fas fa-search me-2 text-warning"></i>Expanded Exposure Checks</span>
+                        <span class="badge bg-{{if eq $webExpStatus "critical"}}danger{{else}}warning text-dark{{end}}">{{formatFloat 0 $webExpCount}} Exposure{{if ne $webExpCount 1}}s{{end}}</span>
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-{{if eq $webExpStatus "critical"}}danger{{else}}warning{{end}} py-2 mb-3 small">
+                        <i class="fas fa-exclamation-triangle me-1"></i>
+                        <strong>Action required.</strong> Sensitive files or server configuration pages were found at well-known paths, potentially exposing credentials or internal details.
+                    </div>
+                    {{$webFindings := mapGetSlice "findings" $web_exposure}}
+                    {{if $webFindings}}
+                    {{range $webFindings}}
+                    <div class="exec-finding-row">
+                        <span class="exec-finding-label">
+                            <span class="badge bg-{{if eq (mapGetStr "severity" .) "critical"}}danger{{else if eq (mapGetStr "severity" .) "high"}}warning text-dark{{else}}info{{end}} me-1">{{mapGetStr "severity" .}}</span>
+                            {{mapGetStr "category" .}}
+                        </span>
+                        <span class="exec-finding-value">
+                            <code class="small">{{mapGetStr "path" .}}</code>
+                            <span class="text-muted ms-2 small">{{mapGetStr "risk" .}}</span>
+                        </span>
+                    </div>
+                    {{end}}
+                    {{end}}
+                </div>
+            </div>
+            {{else if ne $webExpStatus "unreachable"}}
+            <div class="exec-finding-row mb-3">
+                <span class="exec-finding-label"><i class="fas fa-search me-1"></i>Expanded Exposure</span>
+                <span class="exec-finding-value">
+                    <span class="badge bg-success">Clear</span>
+                    <span class="text-muted ms-2 small">No exposed configuration files or server information pages detected</span>
                 </span>
             </div>
             {{end}}

@@ -85,6 +85,7 @@
         {{$security_txt := mapGetMap "security_txt" $results}}
         {{$ai_surface := mapGetMap "ai_surface" $results}}
         {{$secret_exposure := mapGetMap "secret_exposure" $results}}
+        {{$web_exposure := mapGetMap "web_exposure" $results}}
         {{$dns_history := mapGetMap "dns_history" $results}}
         {{$dns_history_available := and $dns_history (mapGetBool "has_changes" $dns_history)}}
 
@@ -2142,6 +2143,92 @@
                                 <summary class="text-muted cursor-pointer">Sources scanned ({{len $scannedURLs}})</summary>
                                 <ul class="list-unstyled mt-1 mb-0 ms-3">
                                     {{range $scannedURLs}}
+                                    <li class="text-muted font-monospace small">{{.}}</li>
+                                    {{end}}
+                                </ul>
+                            </details>
+                        </div>
+                        {{end}}
+                    </div>
+                </div>
+            </div>
+        </div>
+        {{end}}
+
+        <!-- Web Exposure Checks Section (Tier 2 — opt-in) -->
+        {{if $web_exposure}}
+        <div class="row section-web-exposure" id="section-web-exposure">
+            <div class="col-12 mb-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0 d-flex align-items-center justify-content-between flex-wrap">
+                            <span><i class="fas fa-search me-2"></i>Expanded Exposure Checks</span>
+                            {{$webExpStatus := mapGetStr "status" $web_exposure}}
+                            {{$webExpCount := mapGetFloat "finding_count" $web_exposure}}
+                            <span class="badge bg-{{if eq $webExpStatus "critical"}}danger{{else if eq $webExpStatus "exposed"}}warning text-dark{{else if eq $webExpStatus "unreachable"}}secondary{{else}}success{{end}}">
+                                {{if eq $webExpStatus "critical"}}{{formatFloat 0 $webExpCount}} Critical{{else if eq $webExpStatus "exposed"}}{{formatFloat 0 $webExpCount}} Exposure{{if ne $webExpCount 1}}s{{end}}{{else if eq $webExpStatus "unreachable"}}Unreachable{{else}}No Exposures{{end}}
+                            </span>
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <p class="text-muted mb-3 small">{{mapGetStr "message" $web_exposure}} <span class="text-muted">&mdash; checks well-known misconfiguration paths for exposed files, backup configs, and server information leaks.</span></p>
+
+                        {{if or (eq $webExpStatus "critical") (eq $webExpStatus "exposed")}}
+                        <div class="alert alert-{{if eq $webExpStatus "critical"}}danger{{else}}warning{{end}} py-2 mb-3">
+                            <i class="fas fa-exclamation-triangle me-1"></i>
+                            <strong>Action Required:</strong> Sensitive files or server configuration pages were found accessible at well-known paths. These exposures may reveal credentials, source code, or internal server details to anyone who visits the URL.
+                        </div>
+                        {{$webFindings := mapGetSlice "findings" $web_exposure}}
+                        {{if $webFindings}}
+                        <div class="table-responsive">
+                            <table class="table table-sm table-hover align-middle mb-0">
+                                <thead>
+                                    <tr>
+                                        <th class="small">Severity</th>
+                                        <th class="small">Category</th>
+                                        <th class="small">Path</th>
+                                        <th class="small">Risk</th>
+                                        <th class="small">Remediation</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {{range $webFindings}}
+                                    {{$wfSeverity := mapGetStr "severity" .}}
+                                    <tr>
+                                        <td>
+                                            <span class="badge bg-{{if eq $wfSeverity "critical"}}danger{{else if eq $wfSeverity "high"}}warning text-dark{{else if eq $wfSeverity "medium"}}info{{else}}secondary{{end}}">
+                                                {{$wfSeverity}}
+                                            </span>
+                                        </td>
+                                        <td class="small fw-semibold">{{mapGetStr "category" .}}</td>
+                                        <td class="small font-monospace text-info">{{mapGetStr "path" .}}</td>
+                                        <td class="small">{{mapGetStr "risk" .}}</td>
+                                        <td class="small text-muted">{{mapGetStr "remediation" .}}</td>
+                                    </tr>
+                                    {{end}}
+                                </tbody>
+                            </table>
+                        </div>
+                        {{end}}
+                        {{else if eq $webExpStatus "unreachable"}}
+                        <div class="d-flex align-items-center py-2">
+                            <i class="fas fa-globe text-muted me-2 fs-5"></i>
+                            <span class="text-muted">The domain's web server was not reachable. Exposure checks could not be performed.</span>
+                        </div>
+                        {{else}}
+                        <div class="d-flex align-items-center py-2">
+                            <i class="fas fa-check-circle text-success me-2 fs-5"></i>
+                            <span>No exposed configuration files, backup files, or server information pages were detected at well-known paths.</span>
+                        </div>
+                        {{end}}
+
+                        {{$checkedPaths := mapGetSlice "checked_paths" $web_exposure}}
+                        {{if $checkedPaths}}
+                        <div class="mt-3 pt-2 border-top">
+                            <details class="small">
+                                <summary class="text-muted cursor-pointer">Paths checked ({{len $checkedPaths}})</summary>
+                                <ul class="list-unstyled mt-1 mb-0 ms-3">
+                                    {{range $checkedPaths}}
                                     <li class="text-muted font-monospace small">{{.}}</li>
                                     {{end}}
                                 </ul>

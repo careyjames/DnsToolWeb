@@ -17,13 +17,22 @@ const (
         msgDomainNoExist  = "Domain does not exist"
 )
 
+type AnalysisOptions struct {
+        ExposureChecks bool
+}
+
 type namedResult struct {
         key     string
         result  any
         elapsed time.Duration
 }
 
-func (a *Analyzer) AnalyzeDomain(ctx context.Context, domain string, customDKIMSelectors []string) map[string]any {
+func (a *Analyzer) AnalyzeDomain(ctx context.Context, domain string, customDKIMSelectors []string, opts ...AnalysisOptions) map[string]any {
+        var options AnalysisOptions
+        if len(opts) > 0 {
+                options = opts[0]
+        }
+        _ = options
         select {
         case a.semaphore <- struct{}{}:
                 defer func() { <-a.semaphore }()
@@ -122,6 +131,12 @@ func (a *Analyzer) AnalyzeDomain(ctx context.Context, domain string, customDKIMS
         results["security_txt"] = getOrDefault(resultsMap, "security_txt", map[string]any{"status": "info", "found": false, "message": "Not checked", "contacts": []string{}, "issues": []string{}})
         results["ai_surface"] = getOrDefault(resultsMap, "ai_surface", map[string]any{"status": "info", "message": "Not checked"})
         results["secret_exposure"] = getOrDefault(resultsMap, "secret_exposure", map[string]any{"status": "clear", "message": "Not checked", "finding_count": 0, "findings": []map[string]any{}, "scanned_urls": []string{}})
+
+        if options.ExposureChecks {
+                exposureStart := time.Now()
+                results["web_exposure"] = a.ScanWebExposure(ctx, domain)
+                slog.Info(logTaskCompleted, "task", "web_exposure", "domain", domain, "elapsed_ms", fmt.Sprintf("%.0f", float64(time.Since(exposureStart).Milliseconds())))
+        }
 
         results["saas_txt"] = ExtractSaaSTXTFootprint(results)
 

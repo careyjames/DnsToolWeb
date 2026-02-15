@@ -32,8 +32,13 @@ var DefaultResolvers = []ResolverConfig{
         {Name: "OpenDNS", IP: "208.67.222.222"},
 }
 
+var UserAgent = "DNSTool-DomainSecurityAudit/1.0 (+https://dnstool.it-help.tech)"
+
+func SetUserAgentVersion(version string) {
+        UserAgent = fmt.Sprintf("DNSTool-DomainSecurityAudit/%s (+https://dnstool.it-help.tech)", version)
+}
+
 const (
-        UserAgent       = "DNSTool-DomainSecurityAudit/1.0 (+https://dnstool.it-help.tech)"
         dohGoogleURL    = "https://dns.google/resolve"
         defaultTimeout  = 2 * time.Second
         defaultLifetime = 4 * time.Second

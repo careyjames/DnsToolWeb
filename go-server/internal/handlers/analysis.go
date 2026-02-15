@@ -276,11 +276,15 @@ func (h *AnalysisHandler) Analyze(c *gin.Context) {
         }
 
         customSelectors := extractCustomSelectors(c)
+        exposureChecks := c.PostForm("exposure_checks") == "1"
 
         startTime := time.Now()
         ctx := c.Request.Context()
 
-        results := h.Analyzer.AnalyzeDomain(ctx, asciiDomain, customSelectors)
+        opts := analyzer.AnalysisOptions{
+                ExposureChecks: exposureChecks,
+        }
+        results := h.Analyzer.AnalyzeDomain(ctx, asciiDomain, customSelectors, opts)
         analysisDuration := time.Since(startTime).Seconds()
 
         if success, ok := results["analysis_success"].(bool); ok && !success {
@@ -324,6 +328,7 @@ func (h *AnalysisHandler) Analyze(c *gin.Context) {
                 "SecurityTrailsKey":    "",
                 "IntegrityHash":        integrityHash,
                 "RFCCount":             rfcCount,
+                "ExposureChecks":       exposureChecks,
         })
 }
 
