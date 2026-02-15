@@ -2584,6 +2584,7 @@ main.container {
 .u-border-left-warning { border-left: 3px solid var(--bs-warning) !important; }
 /* Bootstrap has .rounded-circle */
 .u-rounded-circle { border-radius: 50%; }
+.u-valign-n3 { vertical-align: -3px; }
 
 /* --------------------------------------------
    DISPLAY / LAYOUT
@@ -2608,6 +2609,13 @@ main.container {
 .u-break-all { word-break: break-all; }
 .u-break-all-sm { word-break: break-all; font-size: 0.7rem; }
 .u-text-footer { font-weight: 500; color: #adb5bd; }
+.btn-outline-warning {
+    --bs-btn-color: #b89700;
+    --bs-btn-border-color: #b89700;
+    --bs-btn-hover-border-color: #b89700;
+    --bs-btn-disabled-color: #b89700;
+    --bs-btn-disabled-border-color: #b89700;
+}
 .u-code-font {
     font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
     font-size: 0.82rem;
