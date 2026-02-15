@@ -573,7 +573,7 @@
                         {{if .AnalysisTimestamp}}<span class="print-meta-label">Generated</span> {{.AnalysisTimestamp}}{{end}}
                         {{if gt .AnalysisDuration 0}}<br><span class="print-meta-label">Duration</span> {{formatFloat 1 .AnalysisDuration}}s{{end}}
                         {{if .ToolVersion}}<br><span class="print-meta-label">Version</span> v{{.ToolVersion}}{{end}}
-                        {{if .IntegrityHash}}<br><span class="print-meta-label">Integrity</span> <span style="font-family: monospace; font-size: 6pt; word-break: break-all;">{{.IntegrityHash}}</span>{{end}}
+                        {{if .IntegrityHash}}<br><span class="print-meta-label">Integrity</span> <span class="u-print-hash">{{.IntegrityHash}}</span>{{end}}
                     </div>
                     <div class="print-tlp-badge" id="printTlpBadge">TLP:AMBER</div>
                     <div class="print-tlp-note" id="printTlpNote">Limited disclosure — recipients may share within their organization only</div>
@@ -597,7 +597,7 @@
                         {{if and .AnalysisTimestamp (gt .AnalysisDuration 0)}}<span class="mx-1">&middot;</span>{{end}}
                         {{if gt .AnalysisDuration 0}}<i class="fas fa-stopwatch me-1"></i>{{formatFloat 1 .AnalysisDuration}}s{{end}}
                         {{if .IntegrityHash}}
-                            <span class="mx-1">&middot;</span><a href="#report-integrity" class="text-decoration-none text-muted" title="Report integrity fingerprint — click to view full SHA-256 hash"><i class="fas fa-fingerprint me-1"></i><span class="font-monospace">SHA-256: {{substr 0 4 .IntegrityHash}}<span style="letter-spacing:-0.5px;">&#x2731;&#x2731;&#x2731;&#x2731;</span></span> <span class="text-warning" style="font-size:0.75rem;opacity:1;">Report Integrity <i class="fas fa-arrow-down" style="font-size:0.6rem;"></i></span></a>
+                            <span class="mx-1">&middot;</span><a href="#report-integrity" class="text-decoration-none text-muted" title="Report integrity fingerprint — click to view full SHA-256 hash"><i class="fas fa-fingerprint me-1"></i><span class="font-monospace">SHA-256: {{substr 0 4 .IntegrityHash}}<span class="u-ls-tight">&#x2731;&#x2731;&#x2731;&#x2731;</span></span> <span class="text-warning u-fs-075rem">Report Integrity <i class="fas fa-arrow-down u-fs-060rem"></i></span></a>
                         {{end}}
                     </div>
                     {{end}}
@@ -1509,17 +1509,17 @@
         {{if .IntegrityHash}}
         <div class="card border-warning border-opacity-25 mt-4 u-bg-secondary" id="report-integrity">
             <div class="card-header">
-                <h5 class="mb-0" style="color: #e5e7eb;">
+                <h5 class="mb-0 u-color-heading-light">
                     <i class="fas fa-fingerprint me-2 text-warning"></i>Report Integrity
-                    <span class="badge ms-2" style="border: 1px solid rgba(255,193,7,0.4); color: #ffc107; background: transparent; font-size: 0.7rem;">SHA-256</span>
+                    <span class="badge ms-2 u-hash-label">SHA-256</span>
                 </h5>
             </div>
             <div class="card-body">
-                <p class="small mb-2" style="color: #9ca3af;">
+                <p class="small mb-2 u-color-gray-400">
                     Tamper-evident fingerprint binding this analysis to its data, domain, timestamp, and tool version.
                 </p>
-                <code class="text-warning user-select-all" style="font-size: 0.75rem; word-break: break-all;">{{.IntegrityHash}}</code>
-                <div class="small mt-2" style="color: #6b7280;">
+                <code class="text-warning user-select-all u-fs-075rem-break">{{.IntegrityHash}}</code>
+                <div class="small mt-2 u-color-gray-500">
                     <i class="fas fa-shield-alt me-1"></i>
                     {{.RFCCount}} RFCs evaluated &middot; DNS state at {{.AnalysisTimestamp}}
                 </div>

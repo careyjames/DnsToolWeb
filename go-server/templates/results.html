@@ -105,7 +105,7 @@
                         {{if .AnalysisTimestamp}}<span class="print-meta-label">Generated</span> {{.AnalysisTimestamp}}{{end}}
                         {{if gt .AnalysisDuration 0}}<br><span class="print-meta-label">Duration</span> {{formatFloat 1 .AnalysisDuration}}s{{end}}
                         {{if .ToolVersion}}<br><span class="print-meta-label">Version</span> v{{.ToolVersion}}{{end}}
-                        {{if .IntegrityHash}}<br><span class="print-meta-label">Integrity</span> <span style="font-family: monospace; font-size: 6pt; word-break: break-all;">{{.IntegrityHash}}</span>{{end}}
+                        {{if .IntegrityHash}}<br><span class="print-meta-label">Integrity</span> <span class="u-print-hash">{{.IntegrityHash}}</span>{{end}}
                     </div>
                     <div class="print-tlp-badge" id="printTlpBadge">TLP:AMBER</div>
                     <div class="print-tlp-note" id="printTlpNote">Limited disclosure — recipients may share within their organization only</div>
@@ -136,7 +136,7 @@
                         <span class="mx-1">·</span><i class="fas fa-tag me-1"></i><span>v{{.ToolVersion}}</span>
                     {{end}}
                     {{if .IntegrityHash}}
-                        <span class="mx-1">·</span><a href="#report-integrity" class="text-decoration-none text-muted" title="Report integrity fingerprint — click to view full SHA-256 hash"><i class="fas fa-fingerprint me-1"></i><span class="font-monospace">SHA-256: {{substr 0 4 .IntegrityHash}}<span style="letter-spacing:-0.5px;">&#x2731;&#x2731;&#x2731;&#x2731;</span></span> <span class="text-info" style="font-size:0.75rem;opacity:1;">Report Integrity <i class="fas fa-arrow-down" style="font-size:0.6rem;"></i></span></a>
+                        <span class="mx-1">·</span><a href="#report-integrity" class="text-decoration-none text-muted" title="Report integrity fingerprint — click to view full SHA-256 hash"><i class="fas fa-fingerprint me-1"></i><span class="font-monospace">SHA-256: {{substr 0 4 .IntegrityHash}}<span class="u-ls-tight">&#x2731;&#x2731;&#x2731;&#x2731;</span></span> <span class="text-info u-fs-075rem">Report Integrity <i class="fas fa-arrow-down u-fs-060rem"></i></span></a>
                     {{end}}
                 </div>
                 {{end}}
@@ -2154,8 +2154,8 @@
                         {{end}}
                         <div class="mt-3 pt-2 border-top">
                             <details class="small">
-                                <summary class="text-muted cursor-pointer" style="font-size: 0.75rem;"><i class="fas fa-question-circle me-1"></i>What type of scan is this?</summary>
-                                <div class="mt-2 text-muted" style="font-size: 0.72rem; line-height: 1.5;">
+                                <summary class="text-muted cursor-pointer u-fs-075rem"><i class="fas fa-question-circle me-1"></i>What type of scan is this?</summary>
+                                <div class="mt-2 text-muted u-fs-072rem-lh15">
                                     <p class="mb-2"><strong>This is OSINT (Open Source Intelligence) collection</strong> &mdash; we check the same publicly accessible URLs that any web browser could visit. No authentication is bypassed, no ports are probed, no vulnerabilities are exploited.</p>
                                     <p class="mb-2"><strong>Is this a PCI compliance scan?</strong> No. PCI DSS requires scans performed by an <a href="https://listings.pcisecuritystandards.org/assessors_and_solutions/approved_scanning_vendors" target="_blank" rel="noopener" class="text-info">Approved Scanning Vendor (ASV)</a> certified by the PCI Security Standards Council. DNS Tool is not an ASV. If you need PCI compliance scanning, engage a certified ASV such as Qualys, Tenable, or Trustwave.</p>
                                     <p class="mb-0"><strong>Is this a penetration test?</strong> No. Penetration testing involves active exploitation attempts against systems with authorization. Our checks are passive observation of publicly accessible resources &mdash; the same methodology used by Shodan, Mozilla Observatory, and other OSINT platforms.</p>
@@ -2250,8 +2250,8 @@
                         {{end}}
                         <div class="mt-3 pt-2 border-top">
                             <details class="small">
-                                <summary class="text-muted cursor-pointer" style="font-size: 0.75rem;"><i class="fas fa-question-circle me-1"></i>What type of scan is this?</summary>
-                                <div class="mt-2 text-muted" style="font-size: 0.72rem; line-height: 1.5;">
+                                <summary class="text-muted cursor-pointer u-fs-075rem"><i class="fas fa-question-circle me-1"></i>What type of scan is this?</summary>
+                                <div class="mt-2 text-muted u-fs-072rem-lh15">
                                     <p class="mb-2"><strong>This is OSINT (Open Source Intelligence) collection</strong> &mdash; we check the same publicly accessible URLs that any web browser could visit. No authentication is bypassed, no ports are probed, no vulnerabilities are exploited.</p>
                                     <p class="mb-2"><strong>Is this a PCI compliance scan?</strong> No. PCI DSS requires scans performed by an <a href="https://listings.pcisecuritystandards.org/assessors_and_solutions/approved_scanning_vendors" target="_blank" rel="noopener" class="text-info">Approved Scanning Vendor (ASV)</a> certified by the PCI Security Standards Council. DNS Tool is not an ASV. If you need PCI compliance scanning, engage a certified ASV such as Qualys, Tenable, or Trustwave.</p>
                                     <p class="mb-0"><strong>Is this a penetration test?</strong> No. Penetration testing involves active exploitation attempts against systems with authorization. Our checks are passive observation of publicly accessible resources &mdash; the same methodology used by Shodan, Mozilla Observatory, and other OSINT platforms.</p>
@@ -3643,7 +3643,7 @@
                     This cryptographic hash seals the analysis data, domain, timestamp, and tool version into a tamper-evident fingerprint. Any modification to the report data will produce a different hash. This is distinct from the posture hash (used for drift detection) &mdash; the integrity hash uniquely identifies this specific report instance.
                 </p>
                 <div class="d-flex align-items-center mb-2">
-                    <code class="text-info me-2 user-select-all" style="font-size: 0.78rem; word-break: break-all;">{{.IntegrityHash}}</code>
+                    <code class="text-info me-2 user-select-all u-fs-078rem-break">{{.IntegrityHash}}</code>
                     <button class="btn btn-sm btn-outline-info border-0" id="copyIntegrityHash" title="Copy integrity hash" data-hash="{{.IntegrityHash}}">
                         <i class="fas fa-copy"></i>
                     </button>
