@@ -389,9 +389,39 @@ This section tracks recurring issues and failed approaches so future sessions av
 
 **Problem**: Browser uses `<title>` as the PDF filename when printing to PDF. Engineer report had `<title>{{.Domain}} - DNS Tool</title>` → saved as "DNS Tool - Replit.pdf" which is wrong.
 
-**Fix**: Changed to `<title>Engineer Report — {{.Domain}} - DNS Tool</title>` to match Executive format: "Executive Report — {{.Domain}} - DNS Tool".
+**Fix**: Changed to `<title>Engineer's DNS Intelligence Report — {{.Domain}} - DNS Tool</title>` and `<title>Executive's DNS Intelligence Brief — {{.Domain}} - DNS Tool</title>`.
 
 **Lesson**: Always format `<title>` as "Report Type — domain - DNS Tool" for consistent PDF naming.
+
+### Intelligence Document Naming Convention (v26.16.11)
+
+**Decision**: Adopted IC (Intelligence Community) document naming conventions for the two report types.
+
+**Naming hierarchy** (grounded in real IC conventions):
+- **Engineer's DNS Intelligence Report** — Comprehensive technical document. "Report" = detailed, all-source analysis (like a National Intelligence Estimate). For the person who has to fix things.
+- **Executive's DNS Intelligence Brief** — Concise decision-maker version. "Brief" = short, actionable, executive-level (like the Presidential Daily Brief / Senior Executive Intelligence Brief). For board members and leadership.
+
+**Why possessive form**: "Engineer's" / "Executive's" signals "this was prepared for you" — personal ownership of the deliverable.
+
+**Why "DNS Intelligence" not "Security"**: The tool is DNS Tool. The outputs are DNS intelligence products. "Security Intelligence" is literally MI5's name (UK Security Intelligence Service) — avoid unintentional identity borrowing.
+
+**Locations where names appear** (must stay in sync):
+1. `<title>` tag (becomes PDF filename): `Engineer's DNS Intelligence Report — {{.Domain}} - DNS Tool`
+2. Print header (`.print-report-title`): `Engineer's DNS Intelligence Report`
+3. Screen header (`<h1>`): `Engineer's DNS Intelligence Report`
+4. OG/Twitter meta tags: Match `<title>`
+5. Same pattern for Executive with "Brief" instead of "Report"
+
+**Homepage hero hierarchy** (audit-produces-intelligence narrative):
+1. Badge: "DNS Security Intelligence" (brand/discipline label)
+2. H1: "Domain Security Audit" (SEO anchor — what the tool DOES)
+3. Tagline: "We answer the BIG questions."
+4. Subtitle: References both Engineer's Reports and Executive's Briefs (what the tool PRODUCES)
+5. Protocol tags: SPF · DKIM · DMARC · etc. (what it checks)
+
+**Rule**: The audit is the process. The intelligence products are the output. Never conflate the two. The homepage sells the audit; the results pages deliver the intelligence.
+
+**Version**: 26.16.11
 
 ### Executive Print Readability (Recurring — v26.15 through v26.16)
 
@@ -507,7 +537,8 @@ Also applied smooth transition to `.btn-outline-executive` for consistency.
 |------|---------|------------|------------------|
 | 2026-02-14 | CSP blocked inline onclick handlers | Used `onclick` in HTML | Use `id` + `addEventListener` in `<script nonce>` blocks |
 | 2026-02-14 | Font Awesome icons missing after subset | Regenerated woff2 without verifying glyphs | Always verify with fonttools before regenerating |
-| 2026-02-14 | PDF title wrong format | `<title>` tag didn't follow naming convention | Format: "Report Type — domain - DNS Tool" |
+| 2026-02-14 | PDF title wrong format | `<title>` tag didn't follow naming convention | Format: "Report Type — domain - DNS Tool" (e.g., "Engineer's DNS Intelligence Report — example.com - DNS Tool") |
+| 2026-02-15 | Intelligence naming convention established | IC document types: Report (long) vs Brief (short). Possessive form. "DNS Intelligence" not "Security Intelligence" (MI5's name). | See EVOLUTION.md "Intelligence Document Naming Convention (v26.16.11)" section |
 | 2026-02-14 | Executive print text too small | Font sizes below 8pt | Minimum: body 11pt, small 9pt, code 8.5pt, footer 8.5pt |
 | 2026-02-14 | Executive button too bright (btn-outline-light) | White text/border on dark theme | Use custom `btn-outline-executive` with muted gray #9ca3af |
 | 2026-02-14 | Engineer button solid hover fill | Bootstrap default btn-outline-info hover | Override `--bs-btn-hover-bg` CSS variable (NOT direct `background-color`) |

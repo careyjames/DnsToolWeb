@@ -63,6 +63,22 @@ func GetRecentChangelog(n int) []ChangelogEntry {
 func GetChangelog() []ChangelogEntry {
         return []ChangelogEntry{
                 {
+                        Version:     "26.16.11",
+                        Date:        dateFeb15,
+                        Category:    "Brand",
+                        Title:       "Intelligence Document Naming Convention",
+                        Description: "Adopted IC (Intelligence Community) document naming: Engineer's DNS Intelligence Report (comprehensive, like a National Intelligence Estimate) and Executive's DNS Intelligence Brief (concise, like a Presidential Daily Brief). Possessive form signals personal ownership. 'DNS Intelligence' avoids MI5 brand conflict. Updated all title tags, print headers, screen headers, OG/Twitter meta, and JSON-LD schema. Homepage hero subtitle now explicitly references both intelligence products.",
+                        Icon:        "fas fa-file-alt",
+                },
+                {
+                        Version:     "26.16.10",
+                        Date:        dateFeb15,
+                        Category:    "Brand",
+                        Title:       "Sophistication Accent Tokens & Color Flow",
+                        Description: "Added steel-blue (#7d8ea8) and deep navy (#1e3a5f) brand accent tokens for premium intelligence aesthetic. Color flow continuity from homepage through results pages via gradients, borders, and card hover effects. Hero typography upgraded to 3.5rem/800 weight with tighter tracking. All non-status visual elements use brand accents while RFC/CVSS status colors remain untouched.",
+                        Icon:        "fas fa-palette",
+                },
+                {
                         Version:     "26.15.30",
                         Date:        dateFeb15,
                         Category:    "Reporting",
