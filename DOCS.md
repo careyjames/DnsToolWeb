@@ -210,7 +210,7 @@ Maximum 8 requests per minute per IP. Wait 60 seconds and retry.
 - Email Header Analyzer with RFC parsing
 - Three-layer subdomain discovery (CT logs + wildcard detection + UDP DNS probing) with caching
 - SecurityTrails DNS history integration
-- IP Investigation with IP-to-ASN attribution
+- IP Intelligence with IP-to-ASN attribution
 - Posture scoring with CVSS alignment
 - Dual intelligence products (Engineer's DNS Intelligence Report + Executive's DNS Intelligence Brief)
 - OpenPhish integration

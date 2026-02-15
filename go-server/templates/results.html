@@ -118,8 +118,8 @@
         <div class="results-header mb-4 screen-only">
             <div class="results-header-info">
                 <h1 class="h3 mb-1">Engineer's DNS Intelligence Report</h1>
-                <div class="text-muted">
-                    <strong>{{.Domain}}</strong>
+                <div class="domain-display">
+                    <span class="domain-name-prominent">{{.Domain}}</span>
                     {{if ne .AsciiDomain .Domain}}
                         <span class="badge bg-secondary ms-2">ASCII: {{.AsciiDomain}}</span>
                     {{end}}
@@ -150,11 +150,12 @@
                     </button>
                     <ul class="dropdown-menu dropdown-menu-dark">
                         <li><h6 class="dropdown-header">Report Distribution</h6></li>
+                        <li><a class="dropdown-item tlp-option" href="#" data-tlp="amber-strict" data-class="tlp-amber-strict" data-btn-class="btn-tlp-amber-strict"><span class="badge tlp-badge-amber-strict me-2">AMBER+STRICT</span> Named recipients only</a></li>
                         <li><a class="dropdown-item tlp-option" href="#" data-tlp="amber" data-class="tlp-amber" data-btn-class="btn-tlp-amber"><span class="badge tlp-badge-amber me-2">AMBER</span> Share within organization only</a></li>
                         <li><a class="dropdown-item tlp-option" href="#" data-tlp="green" data-class="tlp-green" data-btn-class="btn-tlp-green"><span class="badge tlp-badge-green me-2">GREEN</span> Share within community</a></li>
                         <li><a class="dropdown-item tlp-option" href="#" data-tlp="clear" data-class="tlp-clear" data-btn-class="btn-tlp-clear"><span class="badge tlp-badge-clear me-2">CLEAR</span> Unlimited distribution</a></li>
                         <li><hr class="dropdown-divider"></li>
-                        <li><span class="dropdown-item-text small text-muted pe-3" data-bs-toggle="tooltip" title="FIRST TLP v2.0 standard">TLP (Traffic Light Protocol) controls who may receive this report. Default: AMBER per FIRST/CISA standards for security posture reports.</span></li>
+                        <li><span class="dropdown-item-text small text-muted pe-3" data-bs-toggle="tooltip" title="FIRST TLP v2.0 standard">TLP (Traffic Light Protocol) controls who may receive this report. Default: AMBER per FIRST/CISA standards for security posture reports. AMBER+STRICT restricts sharing to named recipients only (FIRST TLP v2.0 §5).</span></li>
                     </ul>
                 </div>
                 <a href="/analyze?domain={{.AsciiDomain}}" id="reanalyzeBtn" class="btn btn-primary" data-domain="{{.AsciiDomain}}"
@@ -3644,6 +3645,8 @@
             });
 
             var tlpConfig = {
+                'amber-strict': { label: 'TLP:AMBER+STRICT', note: 'Restricted \u2014 named recipients only, no further sharing permitted', cls: 'tlp-amber-strict',
+                    footer: '<strong>TLP:AMBER+STRICT</strong> \u2014 This report is restricted to named recipients only. No further sharing is permitted without explicit authorization from the originator. Contains security posture information that may reveal actionable vulnerabilities (FIRST TLP v2.0 \u00a75).' },
                 amber: { label: 'TLP:AMBER', note: 'Limited disclosure \u2014 recipients may share within their organization only', cls: 'tlp-amber',
                     footer: '<strong>TLP:AMBER</strong> \u2014 This report contains security posture information that may reveal actionable vulnerabilities. Recipients may share within their organization and with clients/customers who need the information to protect themselves, but not via publicly accessible channels.' },
                 green: { label: 'TLP:GREEN', note: 'Community sharing \u2014 recipients may share within their community', cls: 'tlp-green',
@@ -3755,6 +3758,63 @@
                 {{end}}
             }
         });
+    })();
+
+    (function() {
+        var deferredPrompt = null;
+        var dismissed = sessionStorage.getItem('pwa-nudge-dismissed');
+
+        window.addEventListener('beforeinstallprompt', function(e) {
+            e.preventDefault();
+            deferredPrompt = e;
+            if (dismissed) return;
+            setTimeout(showInstallNudge, 8000);
+        });
+
+        function showInstallNudge() {
+            if (document.getElementById('pwaInstallNudge')) return;
+            var nudge = document.createElement('div');
+            nudge.id = 'pwaInstallNudge';
+            nudge.className = 'pwa-install-nudge';
+            nudge.innerHTML = '<div class="pwa-nudge-content"><i class="fas fa-mobile-alt me-2 text-info"></i><span>Add DNS Tool to your device for quick access</span><button type="button" class="btn btn-sm btn-outline-info ms-3 pwa-install-btn" id="pwaInstallBtn">Install</button><button type="button" class="btn-close btn-close-white ms-2" id="pwaDismissBtn" aria-label="Dismiss"></button></div>';
+            document.body.appendChild(nudge);
+            requestAnimationFrame(function() { nudge.classList.add('show'); });
+
+            document.getElementById('pwaInstallBtn').addEventListener('click', function() {
+                if (deferredPrompt) {
+                    deferredPrompt.prompt();
+                    deferredPrompt.userChoice.then(function() { deferredPrompt = null; });
+                }
+                nudge.classList.remove('show');
+                setTimeout(function() { nudge.remove(); }, 300);
+                sessionStorage.setItem('pwa-nudge-dismissed', '1');
+            });
+            document.getElementById('pwaDismissBtn').addEventListener('click', function() {
+                nudge.classList.remove('show');
+                setTimeout(function() { nudge.remove(); }, 300);
+                sessionStorage.setItem('pwa-nudge-dismissed', '1');
+            });
+        }
+
+        if (!window.matchMedia('(display-mode: standalone)').matches) {
+            var isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+            if (isIOS && !dismissed) {
+                setTimeout(function() {
+                    if (document.getElementById('pwaInstallNudge')) return;
+                    var nudge = document.createElement('div');
+                    nudge.id = 'pwaInstallNudge';
+                    nudge.className = 'pwa-install-nudge';
+                    nudge.innerHTML = '<div class="pwa-nudge-content"><i class="fas fa-mobile-alt me-2 text-info"></i><span>Add to Home Screen: tap <i class="fas fa-share-square text-info"></i> then &ldquo;Add to Home Screen&rdquo;</span><button type="button" class="btn-close btn-close-white ms-2" id="pwaDismissBtn" aria-label="Dismiss"></button></div>';
+                    document.body.appendChild(nudge);
+                    requestAnimationFrame(function() { nudge.classList.add('show'); });
+                    document.getElementById('pwaDismissBtn').addEventListener('click', function() {
+                        nudge.classList.remove('show');
+                        setTimeout(function() { nudge.remove(); }, 300);
+                        sessionStorage.setItem('pwa-nudge-dismissed', '1');
+                    });
+                }, 10000);
+            }
+        }
     })();
 
     function loadDNSHistory(domain) {

@@ -41,7 +41,7 @@ This repository contains the public web application:
 - SMTP transport probes
 - Frontend (Bootstrap dark theme, PWA, dual intelligence products with TLP classification)
 - Email Header Analyzer (SPF/DKIM/DMARC verification, spoofing detection, OpenPhish integration)
-- IP Investigation (reverse lookups, ASN attribution, geolocation)
+- IP Intelligence (reverse lookups, ASN attribution, geolocation)
 - AI Surface Scanner (llms.txt, AI crawler governance, prompt injection detection)
 - Posture drift detection foundation (canonical SHA-256 hashing)
 - Analyzer stub interfaces (13 files)

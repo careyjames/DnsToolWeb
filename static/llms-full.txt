@@ -189,7 +189,7 @@ Each analysis always fetches fresh DNS data — there is no caching.
 URL: `https://dnstool.it-help.tech/sources`
 Complete transparency page documenting every intelligence source used by DNS Tool: DNS resolvers, reverse DNS (PTR), Team Cymru ASN attribution, SMTP probing, SecurityTrails, crt.sh, IANA RDAP, ip-api.com (visitor geolocation only), and OpenPhish (community phishing URL feed). Organized by category: DNS Resolution, Infrastructure Intelligence, Threat Intelligence, Historical & Discovery, and Registry & Reference. Each source includes methodology, rate limits, and verification commands. This page embodies the principle: "No proprietary scanners. No black boxes. Just DNS."
 
-### IP Investigation
+### IP Intelligence
 URL: `https://dnstool.it-help.tech/investigate`
 Standalone investigative workflow for determining IP-to-domain relationships. Enter any IP address and a domain to discover the relationship: Direct Asset, Email Provider, CDN/Edge, DNS Provider, SPF-Authorized Sender, or CT Subdomain Match. Includes PTR/FCrDNS validation and ASN attribution via Team Cymru. SSRF-safe input blocking prevents abuse.
 

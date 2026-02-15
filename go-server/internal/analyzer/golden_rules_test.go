@@ -86,6 +86,67 @@ func TestGoldenRuleUSAGov(t *testing.T) {
         if !ok || emailAnswer == "" {
                 t.Error("verdicts must contain non-empty 'email_answer' string")
         }
+
+        brandVerdict, ok := verdicts["brand_impersonation"].(map[string]any)
+        if !ok {
+                t.Fatal("verdicts must contain brand_impersonation map")
+        }
+        brandAnswer, _ := brandVerdict["answer"].(string)
+        if brandAnswer == "No" {
+                t.Errorf("usa.gov-like domain (DMARC reject, no BIMI, no CAA) brand verdict should NOT be 'No', got: %s — BIMI and CAA gaps must be reflected", brandAnswer)
+        }
+        if brandAnswer != "Unlikely" {
+                t.Errorf("usa.gov-like domain (DMARC reject, no BIMI, no CAA) brand verdict should be 'Unlikely', got: %s", brandAnswer)
+        }
+}
+
+func TestBrandVerdictFullProtection(t *testing.T) {
+        ps := protocolState{
+                dmarcPolicy: "reject",
+                bimiOK:      true,
+                caaOK:       true,
+        }
+        verdicts := make(map[string]any)
+        buildBrandVerdict(ps, verdicts)
+        brand := verdicts["brand_impersonation"].(map[string]any)
+        if brand["answer"] != "No" {
+                t.Errorf("DMARC reject + BIMI + CAA should be 'No', got: %s", brand["answer"])
+        }
+}
+
+func TestBrandVerdictPartialGaps(t *testing.T) {
+        ps := protocolState{
+                dmarcPolicy: "reject",
+                bimiOK:      true,
+                caaOK:       false,
+        }
+        verdicts := make(map[string]any)
+        buildBrandVerdict(ps, verdicts)
+        brand := verdicts["brand_impersonation"].(map[string]any)
+        if brand["answer"] != "Unlikely" {
+                t.Errorf("DMARC reject + BIMI - CAA should be 'Unlikely', got: %s", brand["answer"])
+        }
+        if brand["label"] != "Mostly Protected" {
+                t.Errorf("expected 'Mostly Protected', got: %s", brand["label"])
+        }
+}
+
+func TestProbableNoMailDetection(t *testing.T) {
+        results := map[string]any{
+                "basic_records": map[string]any{},
+        }
+        if !detectProbableNoMail(results) {
+                t.Error("domain with no MX in basic_records should be detected as probable no-mail")
+        }
+
+        resultsWithMX := map[string]any{
+                "basic_records": map[string]any{
+                        "MX": []string{"10 mail.example.com."},
+                },
+        }
+        if detectProbableNoMail(resultsWithMX) {
+                t.Error("domain with MX records should NOT be detected as probable no-mail")
+        }
 }
 
 func TestDMARCRuaDetection(t *testing.T) {

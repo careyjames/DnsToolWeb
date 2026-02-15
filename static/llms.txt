@@ -41,7 +41,7 @@ To get fresh data for the same domain, click the "Re-Analyze" button on any resu
 
 ### Other Pages
 - `/sources` — Complete inventory of all intelligence sources, methodologies, rate limits, and verification commands
-- `/investigate` — IP Investigation: determine how an IP address relates to a domain (Direct Asset, Email Provider, CDN/Edge, DNS Provider, SPF-Authorized Sender)
+- `/investigate` — IP Intelligence: determine how an IP address relates to a domain (Direct Asset, Email Provider, CDN/Edge, DNS Provider, SPF-Authorized Sender)
 - `/email-header` — Email Header Analyzer: paste or upload email headers for SPF/DKIM/DMARC verification, delivery route tracing, spoofing detection
 - `/changelog` — What's New: complete changelog of improvements and new features
 - `/history` — List of recently analyzed domains
@@ -90,7 +90,7 @@ Every attribution includes a confidence label:
 - Multi-resolver consensus verification (Cloudflare, Google, Quad9, OpenDNS)
 - PTR-based hosting/CDN detection (reverse DNS provider identification)
 - IP-to-ASN attribution via Team Cymru DNS (network ownership identification)
-- IP Investigation workflow (IP-to-domain relationship determination)
+- IP Intelligence workflow (IP-to-domain relationship determination)
 - Domain registrar information via RDAP
 - DNS history timeline via SecurityTrails (A, MX, NS record changes over time)
 - Security posture scoring with executive-level verdicts
