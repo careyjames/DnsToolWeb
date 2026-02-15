@@ -1173,6 +1173,11 @@ main.container {
     border-color: #6c757d !important;
 }
 
+.bimi-logo-box {
+    background-color: transparent;
+    border: 1px solid var(--bg-elevated, #30363d);
+}
+
 .btn-outline-executive {
     color: #9ca3af;
     border: 1px solid #9ca3af;
@@ -1191,6 +1196,11 @@ main.container {
    Colors chosen for distinct grayscale mapping
    ============================================ */
 @media print {
+
+    .bimi-logo-box {
+        background-color: #ffffff !important;
+        border-color: #d1d5db !important;
+    }
 
     .print-only {
         display: block !important;
