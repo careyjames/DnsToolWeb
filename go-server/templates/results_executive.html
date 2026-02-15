@@ -618,12 +618,14 @@
                             <li><span class="dropdown-item-text small text-muted pe-3">TLP (Traffic Light Protocol) controls who may receive this report. Default: AMBER per FIRST/CISA standards for security posture reports. Full hierarchy: RED (recipient only) → AMBER+STRICT (organisation only) → AMBER (organisation and clients) → GREEN (community) → CLEAR (public). Per FIRST TLP v2.0.</span></li>
                         </ul>
                     </div>
-                    <button type="button" id="execPrintBtn" class="btn btn-warning">
-                        <i class="fas fa-print me-1"></i>Print Report
-                    </button>
-                    <a href="/analysis/{{.AnalysisID}}" class="btn btn-outline-info">
-                        <i class="fas fa-tools me-1"></i>View Engineer's DNS Intelligence Report
-                    </a>
+                    <div class="btn-group">
+                        <a href="/analysis/{{.AnalysisID}}/view?print=1" class="btn btn-outline-info" title="Engineer's DNS Intelligence Report — view and print">
+                            <i class="fas fa-file-lines me-1"></i>Engineer
+                        </a>
+                        <button type="button" id="execPrintBtn" class="btn btn-warning active" title="Executive's DNS Intelligence Brief — print this page">
+                            <i class="fas fa-print me-1"></i>Executive
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -1611,12 +1613,17 @@
             });
         });
     });
-    if (window.self === window.top && (window.opener || window.history.length <= 1)) {
+    (function() {
         var params = new URLSearchParams(window.location.search);
-        if (!params.has('print')) {
-            window.addEventListener('load', function() { setTimeout(function() { window.print(); }, 500); });
+        if (params.has('print')) {
+            history.replaceState(null, '', window.location.pathname + window.location.hash);
+            window.addEventListener('load', function() {
+                requestAnimationFrame(function() {
+                    setTimeout(function() { window.print(); }, 600);
+                });
+            });
         }
-    }
+    })();
     </script>
 </body>
 </html>
