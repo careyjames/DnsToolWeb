@@ -555,6 +555,40 @@ Also applied smooth transition to `.btn-outline-executive` for consistency.
 
 ---
 
+## Multi-Format Email Header Analyzer & Password Manager Compatibility (v26.16.14)
+
+**Date**: 2026-02-15
+
+### Email Header Analyzer: Multi-Format Support
+Added automatic format detection and extraction for the Email Header Analyzer. Previously only accepted raw pasted text and .eml uploads. Now supports:
+- **Paste**: Raw headers or full emails (unchanged)
+- **.eml**: Standard RFC 5322 email format (unchanged)
+- **JSON**: Gmail API (`payload.headers`), Microsoft Graph API (`internetMessageHeaders`), Postmark (`Headers` array), SendGrid (`headers` map), Mailgun (`message-headers` pairs), generic (`headers` key)
+- **.mbox**: Unix mailbox archives (first message extracted)
+- **.txt / .headers / .log**: Plain text header exports
+- **.msg**: Detected as Outlook binary with guidance to re-save as .eml
+
+New file: `go-server/internal/analyzer/emailformat.go` — `DetectAndExtractHeaders()` function routes input through format-specific extractors. Handler updated to call this before `AnalyzeEmailHeaders()`.
+
+### Password Manager Compatibility (1Password Focus)
+Standardized all API key form fields across homepage, IP Intelligence, and results page for 1Password save/fill support:
+
+**Changes**:
+- **Removed** `data-1p-ignore` and `data-lpignore` attributes (these were blocking 1Password from saving keys)
+- **Standardized field names** across all pages: `securitytrails_api_key` (was `securitytrails_key` / `st-api-key-input`), `ipinfo_access_token` (was `ipinfo_token`)
+- **Labels match provider terminology**: "SecurityTrails API Key" (what SecurityTrails calls it), "IPinfo.io Access Token" (what IPinfo calls it)
+- **Custom autocomplete tokens**: `autocomplete="section-dnstool securitytrails-api-key"` — prevents browser password autofill but allows 1Password to save and recognize the field
+- **Proper `for` attributes** on all labels pointing to field IDs
+- **Consistent `type="password"`** across all pages (homepage was inconsistent)
+
+**Go handler updates**: `analysis.go` and `investigate.go` updated to read `securitytrails_api_key` and `ipinfo_access_token` form field names.
+
+**JS selector updates**: `results.html` JavaScript updated from `getElementById('st-api-key-input')` to `getElementById('securitytrails_api_key')`.
+
+**Version**: 26.16.14
+
+---
+
 ## Failures & Lessons Learned Timeline
 
 | Date | Mistake | Root Cause | Correct Solution |

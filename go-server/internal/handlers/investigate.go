@@ -105,8 +105,8 @@ func (h *InvestigateHandler) Investigate(c *gin.Context) {
                 asciiDomain = domain
         }
 
-        securityTrailsKey := strings.TrimSpace(c.PostForm("securitytrails_key"))
-        ipInfoToken := strings.TrimSpace(c.PostForm("ipinfo_token"))
+        securityTrailsKey := strings.TrimSpace(c.PostForm("securitytrails_api_key"))
+        ipInfoToken := strings.TrimSpace(c.PostForm("ipinfo_access_token"))
 
         results := h.Analyzer.InvestigateIP(c.Request.Context(), asciiDomain, ip)
 

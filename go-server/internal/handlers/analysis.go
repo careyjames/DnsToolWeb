@@ -258,7 +258,7 @@ func (h *AnalysisHandler) Analyze(c *gin.Context) {
         }
 
         customSelectors := extractCustomSelectors(c)
-        securityTrailsKey := strings.TrimSpace(c.PostForm("securitytrails_key"))
+        securityTrailsKey := strings.TrimSpace(c.PostForm("securitytrails_api_key"))
 
         startTime := time.Now()
         ctx := c.Request.Context()

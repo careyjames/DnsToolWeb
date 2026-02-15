@@ -195,7 +195,15 @@ Standalone investigative workflow for determining IP-to-domain relationships. En
 
 ### Email Header Analyzer
 URL: `https://dnstool.it-help.tech/email-header`
-Paste or upload email headers (.eml files) for instant SPF/DKIM/DMARC authentication verification, delivery route tracing, spoofing detection, and phishing pattern scanning. If you include the email body, it's scanned against the OpenPhish community phishing URL feed and checked for sextortion/scam indicators, then immediately discarded. Includes critical thinking prompts ("Big Questions") to help users evaluate suspicious emails.
+Multi-format email header analysis with automatic format detection. Accepts:
+- **Paste**: Raw email headers or full emails (headers + body)
+- **.eml files**: Standard RFC 5322 email format
+- **JSON**: Gmail API (`payload.headers`), Microsoft Graph API (`internetMessageHeaders`), Postmark (`Headers` array), SendGrid (`headers` map), Mailgun (`message-headers` pairs), or any JSON with a generic `headers` key
+- **.mbox files**: Unix mailbox archives (first message extracted)
+- **.txt / .headers / .log**: Plain text header exports
+- **.msg files**: Detected as Outlook binary format with guidance to re-save as .eml
+
+Headers are parsed for SPF/DKIM/DMARC authentication verification, delivery route tracing, spoofing detection, and phishing pattern scanning. If you include the email body, it's scanned against the OpenPhish community phishing URL feed and checked for sextortion/scam indicators, then immediately discarded. Includes critical thinking prompts ("Big Questions") to help users evaluate suspicious emails.
 
 ### Dual Intelligence Products
 From any analysis results page, two intelligence products are available:

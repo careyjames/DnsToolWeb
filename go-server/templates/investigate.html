@@ -88,35 +88,31 @@
                                         <i class="fas fa-check-circle me-1 api-keys-icon"></i><strong>Without these keys</strong>, you still get a full investigation: reverse DNS, ASN ownership (via <a href="https://www.team-cymru.com/ip-asn-mapping" target="_blank" rel="noopener" class="text-info">Team Cymru</a>), SPF authorization, CDN detection, and certificate transparency matching &mdash; all free, no key required. These optional keys add extra layers of intelligence.
                                     </div>
 
-                                    <label class="text-muted small d-block mb-1"><i class="fas fa-building me-1"></i>SecurityTrails <span class="badge bg-dark border border-secondary u-fs-070em">50 requests/month free</span></label>
+                                    <label for="securitytrails_api_key" class="text-muted small d-block mb-1"><i class="fas fa-building me-1"></i>SecurityTrails <span class="badge bg-dark border border-secondary u-fs-070em">50 requests/month free</span></label>
                                     <div class="input-group input-group-sm mb-1">
                                         <input type="password"
                                                class="form-control bg-dark text-light border-secondary u-fs-085em"
-                                               id="securitytrails_key"
-                                               name="securitytrails_key"
-                                               placeholder="SecurityTrails API key"
-                                               autocomplete="off"
+                                               id="securitytrails_api_key"
+                                               name="securitytrails_api_key"
+                                               placeholder="SecurityTrails API Key"
+                                               autocomplete="section-dnstool securitytrails-api-key"
                                                spellcheck="false"
-                                               data-lpignore="true"
-                                               data-1p-ignore="true"
-                                               aria-label="SecurityTrails API key for IP neighborhood discovery">
+                                               aria-label="SecurityTrails API Key for IP neighborhood discovery">
                                     </div>
                                     <div class="mb-3 text-muted u-fs-072em">
                                         <strong>What it adds:</strong> IP Neighborhood &mdash; shows other domains hosted on the same IP. Helps you see who else shares this server (co-tenants on shared hosting, or related properties on dedicated servers). <a href="https://securitytrails.com/app/signup" target="_blank" rel="noopener" class="text-info">Get a free key &rarr;</a>
                                     </div>
 
-                                    <label class="text-muted small d-block mb-1"><i class="fas fa-map-marker-alt me-1"></i>IPinfo.io <span class="badge bg-dark border border-secondary u-fs-070em">50,000 requests/month free</span></label>
+                                    <label for="ipinfo_access_token" class="text-muted small d-block mb-1"><i class="fas fa-map-marker-alt me-1"></i>IPinfo.io <span class="badge bg-dark border border-secondary u-fs-070em">50,000 requests/month free</span></label>
                                     <div class="input-group input-group-sm mb-1">
                                         <input type="password"
                                                class="form-control bg-dark text-light border-secondary u-fs-085em"
-                                               id="ipinfo_token"
-                                               name="ipinfo_token"
-                                               placeholder="IPinfo.io token"
-                                               autocomplete="off"
+                                               id="ipinfo_access_token"
+                                               name="ipinfo_access_token"
+                                               placeholder="IPinfo.io Access Token"
+                                               autocomplete="section-dnstool ipinfo-access-token"
                                                spellcheck="false"
-                                               data-lpignore="true"
-                                               data-1p-ignore="true"
-                                               aria-label="IPinfo.io token for geolocation and org data">
+                                               aria-label="IPinfo.io Access Token for geolocation and org data">
                                     </div>
                                     <div class="mb-1 text-muted u-fs-072em">
                                         <strong>What it adds:</strong> Physical Location &mdash; city, region, postal code, coordinates, timezone, and the organization operating this IP. Useful for verifying that a server is where you expect it to be. <a href="https://ipinfo.io/signup" target="_blank" rel="noopener" class="text-info">Get a free token &rarr;</a>

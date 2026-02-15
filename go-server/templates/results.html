@@ -3019,7 +3019,7 @@
                     <div class="d-flex align-items-center flex-wrap gap-2">
                         <span class="text-muted small"><i class="fas fa-history me-1"></i>DNS History Timeline <span class="badge bg-warning text-dark ms-1 u-fs-070em-vmid">BETA</span></span>
                         <div class="d-flex align-items-center gap-2 flex-grow-1 u-maxw-500">
-                            <input type="password" class="form-control form-control-sm bg-dark text-light border-secondary u-fs-085em" id="st-api-key-input" placeholder="Enter your SecurityTrails API key" autocomplete="off" spellcheck="false" data-lpignore="true" data-1p-ignore="true">
+                            <input type="password" class="form-control form-control-sm bg-dark text-light border-secondary u-fs-085em" id="securitytrails_api_key" name="securitytrails_api_key" placeholder="SecurityTrails API Key" autocomplete="section-dnstool securitytrails-api-key" spellcheck="false" aria-label="SecurityTrails API Key for DNS history">
                             <button type="button" class="btn btn-sm btn-outline-info" id="dns-history-btn" data-domain="{{.AsciiDomain}}">
                                 <i class="fas fa-search me-1"></i>Go
                             </button>
@@ -3749,7 +3749,7 @@
             setupCopyCommandButtons();
             setupCollapseKeyboardHandlers();
 
-            var stKeyInput = document.getElementById('st-api-key-input');
+            var stKeyInput = document.getElementById('securitytrails_api_key');
             if (stKeyInput) {
                 stKeyInput.addEventListener('keydown', function(e) {
                     if (e.key === 'Enter') {
@@ -3823,7 +3823,7 @@
     })();
 
     function loadDNSHistory(domain) {
-        var keyInput = document.getElementById('st-api-key-input');
+        var keyInput = document.getElementById('securitytrails_api_key');
         var apiKey = keyInput ? keyInput.value.trim() : '';
         if (!apiKey) {
             if (keyInput) {
