@@ -42,6 +42,21 @@ The DNS Tool is a web-based intelligence platform for comprehensive, RFC-complia
 - `TestGoldenRuleHostedProviderNoDANE`
 - `TestGoldenRuleBIMIRecommendedRegardlessOfProvider`
 
+### February 15, 2026 — Performance Hardening + PWA Best Practices
+
+**Critical Performance Fixes (Analysis Time: 60s → ~27s)**:
+- crt.sh CT query: independent 10-second context (was inheriting parent 60s context)
+- Subdomain enrichment: switched from DoH (`QueryDNS`) to UDP (`ProbeExists`) — single fast query instead of two slow DoH calls
+- ASN lookup (Team Cymru): independent 8-second context (was blocking until parent 60s timeout)
+- DNS probing context: tightened from 30s to 15s
+- Enrichment context: tightened from 30s to 10s
+- Result: total analysis ~27s (was 60s), ct_subdomains ~1s when crt.sh responsive
+
+**PWA Manifest Improvements**:
+- Added maskable icons (192x192 and 512x512) for Android adaptive icon support
+- Added `id` and `scope` fields per web.dev best practices
+- Maskable icons have proper safe-zone padding (inner 80%)
+
 ### February 14, 2026 — Subdomain Discovery Enhancement + Performance Optimization
 
 **Three-Layer Free Subdomain Discovery**:

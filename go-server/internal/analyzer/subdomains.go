@@ -118,12 +118,14 @@ func (a *Analyzer) DiscoverSubdomains(ctx context.Context, domain string) map[st
                 slog.Info("CT provider in cooldown, skipping", "domain", domain)
                 ctAvailable = false
         } else {
+                ctCtx, ctCancel := context.WithTimeout(context.Background(), 10*time.Second)
+                defer ctCancel()
                 ctURL := fmt.Sprintf("https://crt.sh/?q=%%25.%s&output=json", domain)
                 start := time.Now()
-                resp, err := a.SlowHTTP.Get(ctx, ctURL)
+                resp, err := a.SlowHTTP.Get(ctCtx, ctURL)
                 if err != nil {
                         a.Telemetry.RecordFailure(ctProvider, err.Error())
-                        slog.Warn("CT log query failed", "domain", domain, "error", err)
+                        slog.Warn("CT log query failed", "domain", domain, "error", err, "elapsed_ms", time.Since(start).Milliseconds())
                         ctAvailable = false
                 } else {
                         body, err := a.HTTP.ReadBody(resp, 2<<20)
@@ -300,7 +302,7 @@ func processCTEntries(ctEntries []ctEntry, domain string, subdomainSet map[strin
 }
 
 func (a *Analyzer) probeCommonSubdomains(ctx context.Context, domain string, subdomainSet map[string]map[string]any) int {
-        probeCtx, probeCancel := context.WithTimeout(context.Background(), 30*time.Second)
+        probeCtx, probeCancel := context.WithTimeout(context.Background(), 15*time.Second)
         defer probeCancel()
 
         found := 0
@@ -355,7 +357,7 @@ func (a *Analyzer) probeCommonSubdomains(ctx context.Context, domain string, sub
 }
 
 func (a *Analyzer) enrichSubdomainsV2(ctx context.Context, baseDomain string, subdomains []map[string]any) {
-        enrichCtx, enrichCancel := context.WithTimeout(context.Background(), 30*time.Second)
+        enrichCtx, enrichCancel := context.WithTimeout(context.Background(), 10*time.Second)
         defer enrichCancel()
 
         maxEnrich := 50
@@ -381,22 +383,16 @@ func (a *Analyzer) enrichSubdomainsV2(ctx context.Context, baseDomain string, su
                                 return
                         }
 
-                        aRecords := a.DNS.QueryDNS(enrichCtx, "A", name)
+                        exists, cnameTarget := a.DNS.ProbeExists(enrichCtx, name)
 
                         mu.Lock()
-                        if len(aRecords) > 0 {
+                        if exists {
                                 sd["is_current"] = true
-                        }
-                        mu.Unlock()
-
-                        if len(aRecords) > 0 {
-                                cnameRecords := a.DNS.QueryDNS(enrichCtx, "CNAME", name)
-                                if len(cnameRecords) > 0 {
-                                        mu.Lock()
-                                        sd["cname_target"] = cnameRecords[0]
-                                        mu.Unlock()
+                                if cnameTarget != "" {
+                                        sd["cname_target"] = cnameTarget
                                 }
                         }
+                        mu.Unlock()
                 }(i)
         }
         wg.Wait()

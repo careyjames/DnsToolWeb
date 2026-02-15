@@ -148,3 +148,31 @@ All documentation files verified accurate:
 **Design Lesson**: DoH is orders of magnitude more expensive than UDP DNS for bulk operations. A single UDP DNS query is one packet sent and one received (~100 bytes each). A single DoH query requires TCP handshake + TLS handshake + HTTP/2 framing + HTTPS overhead — hundreds of packets. For bulk probing 140+ names, the difference is catastrophic.
 
 **Golden Rule Tests**: 27 total, all pass. No new golden rule tests added (performance optimization, not behavior change).
+
+---
+
+## Session: February 15, 2026 — Performance Hardening + PWA Best Practices
+
+### Performance Hardening (Total Analysis: 60s → ~27s)
+
+**Problem**: While ct_subdomains probing was fixed with UDP, three critical bottlenecks remained:
+1. crt.sh CT query inherited the parent 60-second context — if crt.sh was slow (common), it consumed the entire timeout
+2. Subdomain enrichment (`enrichSubdomainsV2`) still used DoH (`QueryDNS`) instead of UDP (`ProbeExists`)
+3. ASN lookup (Team Cymru) ran sequentially in the post-parallel phase, each DoH query timing out against the parent 60s context
+
+**Fixes Applied**:
+1. **crt.sh CT query**: Independent 10-second context via `context.Background()` — crt.sh can no longer block the analysis
+2. **Subdomain enrichment**: Switched from `QueryDNS` (DoH-first → UDP fallback, two queries per subdomain) to `ProbeExists` (single UDP query with CNAME extraction) — matches the probing method
+3. **ASN lookup**: Independent 8-second context — Team Cymru queries capped at 8s instead of consuming remaining parent context
+4. **Probing timeout**: Tightened from 30s to 15s (UDP queries are fast, 3s timeout per query)
+5. **Enrichment timeout**: Tightened from 30s to 10s
+
+**Result**: Total analysis time dropped from 60s to ~27s.
+
+### PWA Best Practices
+
+**Maskable Icons**: Created 192x192 and 512x512 maskable variants with proper safe-zone padding (inner 80%).
+
+**Manifest Improvements**: Added `id`, `scope`, and maskable icon entries.
+
+**Files changed**: `static/manifest.json`, `static/icons/icon-maskable-*.png`, `go-server/internal/analyzer/subdomains.go`, `go-server/internal/analyzer/asn_lookup.go`
