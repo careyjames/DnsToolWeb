@@ -203,3 +203,21 @@ All documentation files verified accurate:
 **New golden rule test**: `TestGoldenRuleSubdomainDiscoveryUnder60s` — integration test runs live subdomain discovery against it-help.tech, asserts <60s completion and finds required subdomains (dnstool, www). 28 golden rule tests total, all pass.
 
 **Version**: 26.15.24
+
+### OpenPhish Attribution + Email Header Promotion (Feb 15, 2026)
+
+**OpenPhish Threat Intelligence Attribution**:
+- Added OpenPhish Community Feed to Sources page (`sources.go`, `sources.html`) with new "Threat Intelligence" category
+- `getThreatSources()` function returns OpenPhish entry with Community badge, Free badge, verify command, and documentation link
+- Attribution added to Email Header Analyzer: trust bar on form page, body analysis section on results page
+- Verify command shortened to `openphish.com/feed.txt` to prevent card layout overflow
+
+**Email Header Analyzer Homepage Promotion**:
+- Promotional banner added to homepage (`index.html`) below IP Investigate card
+- Matching card style with warning/gold color scheme: "Did this email actually come from who it claims?"
+- Links to `/email-header` with BETA badge
+
+**Files changed**: `go-server/internal/handlers/sources.go`, `go-server/templates/sources.html`, `go-server/templates/email_header.html`, `go-server/templates/index.html`, `go-server/internal/handlers/changelog.go`, `go-server/internal/config/config.go`
+
+**Golden Rule Tests**: All 50 sub-tests pass, zero regressions
+**Version**: 26.15.25

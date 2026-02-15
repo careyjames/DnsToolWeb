@@ -90,6 +90,23 @@ The DNS Tool is a web-based intelligence platform for comprehensive, RFC-complia
 
 **Version**: 26.15.24
 
+### February 15, 2026 — OpenPhish Attribution + Email Header Promotion
+
+**OpenPhish Threat Intelligence Attribution**:
+- Added OpenPhish Community Feed to Sources page with new "Threat Intelligence" category
+- New `getThreatSources()` function in `sources.go`, new template section in `sources.html`
+- OpenPhish attribution added to Email Header Analyzer trust bar (form page) and body analysis section (results page)
+- Shortened verify command from long GitHub raw URL to `openphish.com/feed.txt` to prevent card overflow
+
+**Email Header Analyzer Homepage Promotion**:
+- Added promotional banner on homepage (`index.html`) below IP Investigate card
+- Matching card style: "Did this email actually come from who it claims?" with warning/gold color scheme
+- Links to `/email-header` with BETA badge
+
+**Changelog Entries**: Two new entries added (26.15.25, 26.15.24) with `dateFeb15` constant
+**Golden Rule Tests**: All 50 sub-tests pass, zero regressions
+**Version**: 26.15.25
+
 ## System Architecture
 
 ### Core System

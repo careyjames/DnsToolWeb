@@ -14,6 +14,8 @@
 //   3. Reference the constant — never inline a date string.
 //
 // Canonical date mapping (verified Feb 15, 2026):
+//   dateFeb15 — OpenPhish Threat Intelligence Attribution, Email Header Analyzer
+//               Homepage Promotion
 //   dateFeb14 — High-Speed Subdomain Discovery
 //   dateFeb13 — DNS History Cache, Verify It Yourself, Confidence Indicators,
 //               SMTP Transport Verification, AI Surface Scanner, DNS History
@@ -25,6 +27,7 @@
 package handlers
 
 const (
+        dateFeb15 = "Feb 15, 2026"
         dateFeb14 = "Feb 14, 2026"
         dateFeb13 = "Feb 13, 2026"
         dateFeb12 = "Feb 12, 2026"
@@ -59,6 +62,22 @@ func GetRecentChangelog(n int) []ChangelogEntry {
 
 func GetChangelog() []ChangelogEntry {
         return []ChangelogEntry{
+                {
+                        Version:     "26.15.25",
+                        Date:        dateFeb15,
+                        Category:    "Transparency",
+                        Title:       "OpenPhish Threat Intelligence Attribution",
+                        Description: "Added OpenPhish Community Feed to the Intelligence Sources page with its own Threat Intelligence category. Added OpenPhish attribution to the Email Header Analyzer trust bar and body analysis results. Proper credit for the free community phishing URL feed that powers our phishing detection.",
+                        Icon:        "fas fa-fish",
+                },
+                {
+                        Version:     "26.15.24",
+                        Date:        dateFeb15,
+                        Category:    "UX",
+                        Title:       "Email Header Analyzer Homepage Promotion",
+                        Description: "Added a promotional banner for the Email Header Analyzer on the homepage, matching the IP Investigate card style. Makes the feature more discoverable for users landing on the main page.",
+                        Icon:        "fas fa-envelope",
+                },
                 {
                         Version:     "26.14.7",
                         Date:        dateFeb14,
