@@ -2,7 +2,7 @@
 <html lang="en" data-bs-theme="dark">
 <head>
     {{template "head" .}}
-    <title>Executive Intelligence Brief — {{.Domain}} - DNS Tool</title>
+    <title>Executive DNS Intelligence Brief — {{.Domain}} - DNS Tool</title>
     <meta name="description" content="Executive domain security report for {{.Domain}}. Board-ready summary of email authentication, DNS security, and risk posture.">
     <meta name="robots" content="noindex, nofollow">
     {{template "head_css" .}}
@@ -564,7 +564,7 @@
                         <img src="/static/images/owl-of-athena.png" alt="DNS Tool" class="print-brand-logo">
                         <span class="print-brand-name">DNS Tool</span>
                     </div>
-                    <div class="print-report-title">Executive Security Intelligence Brief</div>
+                    <div class="print-report-title">Executive DNS Intelligence Brief</div>
                 </div>
                 <div class="print-header-right">
                     <div class="print-report-meta">
@@ -586,7 +586,7 @@
         <div class="screen-only mb-4">
             <div class="exec-banner d-flex align-items-center justify-content-between flex-wrap gap-2">
                 <div>
-                    <h1 class="h4 mb-1"><i class="fas fa-file-alt text-warning me-2"></i>Executive Security Intelligence Brief</h1>
+                    <h1 class="h4 mb-1"><i class="fas fa-file-alt text-warning me-2"></i>Executive DNS Intelligence Brief</h1>
                     <p class="text-muted mb-0 small">Board-level domain security assessment &mdash; <strong>{{.Domain}}</strong></p>
                     {{if or .AnalysisTimestamp (gt .AnalysisDuration 0)}}
                     <div class="small text-muted mt-1">
