@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="dark">
+<head>
+    {{template "head" .}}
+    <title>Brand Colors - DNS Tool</title>
+    <meta name="robots" content="noindex, nofollow">
+    <meta name="description" content="Brand palette and standards-aligned color reference for DNS Tool by IT Help San Diego Inc.">
+    <link rel="canonical" href="https://dnstool.it-help.tech/brand-colors">
+    {{template "critical_css" .}}
+    {{template "head_css" .}}
+    <style nonce="{{.CspNonce}}">
+        .color-swatch {
+            width: 100%;
+            height: 72px;
+            border-radius: 8px 8px 0 0;
+            border: 1px solid var(--border-default);
+            border-bottom: none;
+            position: relative;
+            transition: transform 0.15s ease;
+        }
+        .color-swatch:hover {
+            transform: scale(1.02);
+        }
+        .color-swatch-clear {
+            background: repeating-conic-gradient(#30363d 0% 25%, #21262d 0% 50%) 50% / 16px 16px;
+            position: relative;
+        }
+        .color-swatch-clear::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: #ffffff;
+            opacity: 0.85;
+            border-radius: 8px 8px 0 0;
+        }
+        .color-card {
+            border: 1px solid var(--border-default);
+            border-radius: 0 0 8px 8px;
+            padding: 0.75rem;
+            background: var(--bg-secondary);
+        }
+        .color-card .color-name {
+            font-weight: 600;
+            font-size: 0.9rem;
+            color: var(--text-primary);
+        }
+        .color-card .color-token {
+            font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+            font-size: 0.75rem;
+            color: var(--status-info);
+            word-break: break-all;
+        }
+        .color-card .color-value {
+            font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: color 0.15s ease;
+        }
+        .color-card .color-value:hover {
+            color: var(--text-primary);
+        }
+        .color-card .color-notes {
+            font-size: 0.78rem;
+            color: var(--text-secondary);
+            margin-top: 0.35rem;
+        }
+        .color-card .color-source {
+            font-size: 0.72rem;
+            margin-top: 0.25rem;
+        }
+        .color-card .color-source a {
+            color: var(--status-info);
+            text-decoration: none;
+        }
+        .color-card .color-source a:hover {
+            text-decoration: underline;
+        }
+        .section-divider {
+            border-top: 1px solid var(--border-default);
+            margin: 2.5rem 0;
+        }
+        .section-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1rem;
+            flex-shrink: 0;
+        }
+        .copy-toast {
+            position: fixed;
+            bottom: 2rem;
+            left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+            padding: 0.5rem 1.25rem;
+            border-radius: 8px;
+            border: 1px solid var(--border-default);
+            font-size: 0.85rem;
+            z-index: 9999;
+            opacity: 0;
+            transition: all 0.3s ease;
+            pointer-events: none;
+        }
+        .copy-toast.show {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+        .brand-header {
+            background: linear-gradient(170deg, #0a1628 0%, #0d1117 40%, #111a2e 70%, #0d1117 100%);
+            border: 1px solid var(--border-default);
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+        .standard-badge {
+            display: inline-block;
+            padding: 0.2rem 0.6rem;
+            border-radius: 4px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            letter-spacing: 0.03em;
+            text-transform: uppercase;
+            border: 1px solid;
+        }
+        .standard-badge-first {
+            color: #58a6ff;
+            border-color: rgba(88, 166, 255, 0.3);
+            background: rgba(88, 166, 255, 0.1);
+        }
+        .standard-badge-nist {
+            color: #3fb950;
+            border-color: rgba(63, 185, 80, 0.3);
+            background: rgba(63, 185, 80, 0.1);
+        }
+        .standard-badge-cisa {
+            color: #e3b341;
+            border-color: rgba(227, 179, 65, 0.3);
+            background: rgba(227, 179, 65, 0.1);
+        }
+    </style>
+</head>
+<body>
+    {{template "nav" .}}
+    <main id="main-content" class="container mt-4 mb-5">
+        <div class="row justify-content-center">
+            <div class="col-lg-10">
+
+                <div class="brand-header text-center">
+                    <h1 class="h2 mb-2"><i class="fas fa-palette me-2 text-info"></i>Brand Colors</h1>
+                    <p class="text-muted mb-1">DNS Tool by IT Help San Diego Inc.</p>
+                    <p class="text-muted small mb-0">Canonical palette and standards-aligned color reference for design, engineering, and vendor handoff.</p>
+                </div>
+
+                <div class="d-flex align-items-start gap-3 mb-4 p-3 rounded" style="background: var(--bg-secondary); border: 1px solid var(--border-default);">
+                    <div class="section-icon" style="background: rgba(88, 166, 255, 0.1); color: var(--status-info);">
+                        <i class="fas fa-info-circle"></i>
+                    </div>
+                    <div>
+                        <strong class="d-block mb-1" style="font-size: 0.9rem;">Standards Alignment</strong>
+                        <p class="text-muted small mb-0">This page documents both our brand identity palette and the scientifically specified colors mandated by cybersecurity standards bodies. Every color used for classification in DNS Tool traces to a published specification from FIRST, NIST, or CISA — ensuring reports are independently verifiable and interoperable across the security ecosystem.</p>
+                    </div>
+                </div>
+
+                <!-- ===================== BRAND PALETTE ===================== -->
+                <div class="d-flex align-items-center gap-2 mb-3">
+                    <div class="section-icon" style="background: rgba(88, 166, 255, 0.1); color: var(--status-info);">
+                        <i class="fas fa-droplet"></i>
+                    </div>
+                    <div>
+                        <h2 class="h5 mb-0">Brand Palette</h2>
+                        <span class="text-muted small">Core identity colors and surface tokens.</span>
+                    </div>
+                </div>
+
+                <div class="row g-3 mb-3">
+                    {{range .BrandPalette}}
+                    <div class="col-6 col-md-4 col-lg-3">
+                        <div class="color-swatch" style="background: {{.Value}};"></div>
+                        <div class="color-card">
+                            <div class="color-name">{{.Name}}</div>
+                            <div class="color-token">{{.Token}}</div>
+                            <div class="color-value" data-copy="{{.Value}}">{{.Value}}</div>
+                            {{if .Notes}}<div class="color-notes">{{.Notes}}</div>{{end}}
+                        </div>
+                    </div>
+                    {{end}}
+                </div>
+
+                <!-- ===================== STATUS COLORS ===================== -->
+                <div class="section-divider"></div>
+                <div class="d-flex align-items-center gap-2 mb-3">
+                    <div class="section-icon" style="background: rgba(63, 185, 80, 0.1); color: var(--status-success);">
+                        <i class="fas fa-circle-check"></i>
+                    </div>
+                    <div>
+                        <h2 class="h5 mb-0">Status &amp; Severity Colors</h2>
+                        <span class="text-muted small">Analysis indicators across all reports.</span>
+                    </div>
+                </div>
+
+                <div class="row g-3 mb-3">
+                    {{range .StatusColors}}
+                    <div class="col-6 col-md-4 col-lg-3">
+                        <div class="color-swatch" style="background: {{.Value}};"></div>
+                        <div class="color-card">
+                            <div class="color-name">{{.Name}}</div>
+                            <div class="color-token">{{.Token}}</div>
+                            <div class="color-value" data-copy="{{.Value}}">{{.Value}}</div>
+                            {{if .Notes}}<div class="color-notes">{{.Notes}}</div>{{end}}
+                        </div>
+                    </div>
+                    {{end}}
+                </div>
+
+                <!-- ===================== STATUS SURFACES ===================== -->
+                <div class="d-flex align-items-center gap-2 mb-3 mt-4">
+                    <div class="section-icon" style="background: rgba(139, 148, 158, 0.1); color: var(--status-neutral);">
+                        <i class="fas fa-layer-group"></i>
+                    </div>
+                    <div>
+                        <h2 class="h5 mb-0">Surface Tints</h2>
+                        <span class="text-muted small">Background tints at 15% opacity for severity rows and badges.</span>
+                    </div>
+                </div>
+
+                <div class="row g-3 mb-3">
+                    {{range .SurfaceColors}}
+                    <div class="col-6 col-md-4 col-lg-3">
+                        <div class="color-swatch" style="background: {{.Value}};"></div>
+                        <div class="color-card">
+                            <div class="color-name">{{.Name}}</div>
+                            <div class="color-token">{{.Token}}</div>
+                            <div class="color-value" data-copy="{{.Value}}">{{.Value}}</div>
+                            {{if .Notes}}<div class="color-notes">{{.Notes}}</div>{{end}}
+                        </div>
+                    </div>
+                    {{end}}
+                </div>
+
+                <!-- ===================== TLP v2.0 ===================== -->
+                <div class="section-divider"></div>
+                <div class="d-flex align-items-center gap-2 mb-2">
+                    <div class="section-icon" style="background: rgba(255, 192, 0, 0.1); color: #ffc000;">
+                        <i class="fas fa-traffic-light"></i>
+                    </div>
+                    <div>
+                        <h2 class="h5 mb-0">Traffic Light Protocol (TLP) v2.0</h2>
+                        <span class="text-muted small">Information sharing classification.</span>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <span class="standard-badge standard-badge-first">FIRST</span>
+                    <span class="standard-badge standard-badge-cisa">CISA</span>
+                </div>
+                <p class="text-muted small mb-3">Colors specified by <a href="https://www.first.org/tlp/" target="_blank" rel="noopener" class="text-info">FIRST (Forum of Incident Response and Security Teams)</a>. Adopted by <a href="https://www.cisa.gov/news-events/news/traffic-light-protocol-tlp-definitions-and-usage" target="_blank" rel="noopener" class="text-info">CISA</a> on November 1, 2022. DNS Tool defaults to <strong style="color: #ffc000;">TLP:AMBER</strong> for all reports — security posture data may reveal actionable vulnerabilities.</p>
+
+                <div class="row g-3 mb-3">
+                    {{range .TLPColors}}
+                    <div class="col-6 col-md-4 col-lg-3">
+                        {{if eq .Name "TLP:CLEAR"}}
+                        <div class="color-swatch color-swatch-clear"></div>
+                        {{else}}
+                        <div class="color-swatch" style="background: {{.Value}};"></div>
+                        {{end}}
+                        <div class="color-card">
+                            <div class="color-name">{{.Name}}</div>
+                            <div class="color-token">{{.Token}}</div>
+                            <div class="color-value" data-copy="{{.Value}}">{{.Value}}</div>
+                            {{if .Notes}}<div class="color-notes">{{.Notes}}</div>{{end}}
+                            {{if .Source}}<div class="color-source"><a href="{{.SourceURL}}" target="_blank" rel="noopener"><i class="fas fa-external-link-alt"></i> {{.Source}}</a></div>{{end}}
+                        </div>
+                    </div>
+                    {{end}}
+                </div>
+
+                <!-- ===================== CVSS v3.1 ===================== -->
+                <div class="section-divider"></div>
+                <div class="d-flex align-items-center gap-2 mb-2">
+                    <div class="section-icon" style="background: rgba(248, 81, 73, 0.1); color: var(--status-danger);">
+                        <i class="fas fa-gauge-high"></i>
+                    </div>
+                    <div>
+                        <h2 class="h5 mb-0">CVSS v3.1 Severity Scale</h2>
+                        <span class="text-muted small">Vulnerability scoring color alignment.</span>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <span class="standard-badge standard-badge-first">FIRST</span>
+                    <span class="standard-badge standard-badge-nist">NIST NVD</span>
+                </div>
+                <p class="text-muted small mb-3">Severity color scale aligned with <a href="https://www.first.org/cvss/v3-1/specification-document" target="_blank" rel="noopener" class="text-info">FIRST CVSS v3.1</a> and the <a href="https://nvd.nist.gov/vuln-metrics/cvss" target="_blank" rel="noopener" class="text-info">NIST National Vulnerability Database</a>. Used for posture scoring and risk-level badges throughout reports.</p>
+
+                <div class="row g-3 mb-3">
+                    {{range .CVSSColors}}
+                    <div class="col-6 col-md-4 col-lg-3">
+                        <div class="color-swatch" style="background: {{.Value}};"></div>
+                        <div class="color-card">
+                            <div class="color-name">{{.Name}}</div>
+                            <div class="color-token">{{.Token}}</div>
+                            <div class="color-value" data-copy="{{.Value}}">{{.Value}}</div>
+                            {{if .Notes}}<div class="color-notes">{{.Notes}}</div>{{end}}
+                            {{if .Source}}<div class="color-source"><a href="{{.SourceURL}}" target="_blank" rel="noopener"><i class="fas fa-external-link-alt"></i> {{.Source}}</a></div>{{end}}
+                        </div>
+                    </div>
+                    {{end}}
+                </div>
+
+                <!-- ===================== USAGE RULES ===================== -->
+                <div class="section-divider"></div>
+                <div class="d-flex align-items-center gap-2 mb-3">
+                    <div class="section-icon" style="background: rgba(139, 148, 158, 0.1); color: var(--status-neutral);">
+                        <i class="fas fa-book"></i>
+                    </div>
+                    <div>
+                        <h2 class="h5 mb-0">Usage Rules</h2>
+                        <span class="text-muted small">Palette governance for consistent output.</span>
+                    </div>
+                </div>
+
+                <div class="card bg-dark border-secondary">
+                    <div class="card-body">
+                        <ol class="small mb-0" style="color: var(--text-secondary); line-height: 1.8;">
+                            <li><strong class="text-info">Standards-specified colors are non-negotiable.</strong> TLP and CVSS colors must match published specifications exactly. They are not brand choices — they are protocol requirements.</li>
+                            <li><strong>Status colors follow GitHub-dark conventions</strong> with 20% desaturation for professional appearance on dark backgrounds.</li>
+                            <li><strong>Surface tints use 15% opacity</strong> of their parent color to maintain readability while providing visual grouping.</li>
+                            <li><strong>WCAG AA minimum contrast</strong> is maintained across all text/background combinations. Executive print reports use minimum 11pt body text.</li>
+                            <li><strong>No ad-hoc colors.</strong> All new colors must be documented here with their token name before use in production.</li>
+                            <li><strong>TLP:AMBER is the default report classification</strong> per CISA Cyber Hygiene practice — security posture data may reveal actionable vulnerabilities.</li>
+                        </ol>
+                    </div>
+                </div>
+
+                <p class="text-center text-muted small mt-4 mb-0">DNS Tool v{{.AppVersion}} &middot; IT Help San Diego Inc. &middot; Colors last verified February 2026</p>
+
+            </div>
+        </div>
+    </main>
+
+    {{template "footer" .}}
+    {{template "scripts" .}}
+
+    <div class="copy-toast" id="copyToast">Copied!</div>
+
+    <script nonce="{{.CspNonce}}">
+    document.addEventListener('DOMContentLoaded', function() {
+        var values = document.querySelectorAll('.color-value[data-copy]');
+        var toast = document.getElementById('copyToast');
+        var toastTimeout;
+
+        values.forEach(function(el) {
+            el.addEventListener('click', function() {
+                var text = el.getAttribute('data-copy');
+                if (navigator.clipboard && navigator.clipboard.writeText) {
+                    navigator.clipboard.writeText(text).then(function() {
+                        showToast('Copied ' + text);
+                    });
+                } else {
+                    var ta = document.createElement('textarea');
+                    ta.value = text;
+                    ta.style.position = 'fixed';
+                    ta.style.opacity = '0';
+                    document.body.appendChild(ta);
+                    ta.select();
+                    document.execCommand('copy');
+                    document.body.removeChild(ta);
+                    showToast('Copied ' + text);
+                }
+            });
+        });
+
+        function showToast(msg) {
+            toast.textContent = msg;
+            toast.classList.add('show');
+            clearTimeout(toastTimeout);
+            toastTimeout = setTimeout(function() {
+                toast.classList.remove('show');
+            }, 1800);
+        }
+    });
+    </script>
+</body>
+</html>

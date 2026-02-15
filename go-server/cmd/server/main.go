@@ -162,6 +162,9 @@ func main() {
         securityPolicyHandler := handlers.NewSecurityPolicyHandler(cfg)
         router.GET("/security-policy", securityPolicyHandler.SecurityPolicy)
 
+        brandColorsHandler := handlers.NewBrandColorsHandler(cfg)
+        router.GET("/brand-colors", brandColorsHandler.BrandColors)
+
         router.NoRoute(func(c *gin.Context) {
                 nonce, _ := c.Get("csp_nonce")
                 csrfToken, _ := c.Get("csrf_token")
