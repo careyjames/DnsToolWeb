@@ -166,6 +166,15 @@ var securityGateways = map[string]bool{
         providerHornetsecurity: true, providerSpamExperts: true,
 }
 
+var mailboxProviders = map[string]bool{
+        providerMicrosoft365:    true,
+        providerGoogleWS:        true,
+        providerZohoMail:        true,
+        providerFastmail:        true,
+        providerProtonMail:      true,
+        providerCloudflareEmail: true,
+}
+
 var primaryProviderSelectors = map[string][]string{
         providerMicrosoft365:    {selSelector1, selSelector2},
         providerGoogleWS:        {selGoogle, selGoogle2048},
@@ -633,6 +642,37 @@ func collectFoundProviders(foundSelectors map[string]map[string]any) map[string]
         return providers
 }
 
+func inferMailboxBehindGateway(primaryProvider string, gateway interface{}, foundProviders map[string]bool) (string, interface{}, string) {
+        if !securityGateways[primaryProvider] {
+                return primaryProvider, gateway, ""
+        }
+
+        var mailboxCandidates []string
+        for p := range foundProviders {
+                if mailboxProviders[p] {
+                        mailboxCandidates = append(mailboxCandidates, p)
+                }
+        }
+
+        if len(mailboxCandidates) == 1 {
+                inferred := mailboxCandidates[0]
+                return inferred, primaryProvider, fmt.Sprintf(
+                        "Primary mailbox provider inferred as %s from DKIM selectors (mail routed through %s security gateway).",
+                        inferred, primaryProvider,
+                )
+        }
+
+        if len(mailboxCandidates) > 1 {
+                sort.Strings(mailboxCandidates)
+                return primaryProvider, gateway, fmt.Sprintf(
+                        "Multiple mailbox providers detected behind %s gateway (%s) — cannot determine single primary from DKIM alone.",
+                        primaryProvider, strings.Join(mailboxCandidates, ", "),
+                )
+        }
+
+        return primaryProvider, gateway, ""
+}
+
 func (a *Analyzer) AnalyzeDKIM(ctx context.Context, domain string, mxRecords []string, customSelectors []string) map[string]any {
         selectors := buildSelectorList(customSelectors)
 
@@ -671,7 +711,20 @@ func (a *Analyzer) AnalyzeDKIM(ctx context.Context, domain string, mxRecords []s
         wg.Wait()
 
         foundProviders := collectFoundProviders(foundSelectors)
+
+        inferredPrimary, inferredGateway, gatewayNote := inferMailboxBehindGateway(primaryProvider, gateway, foundProviders)
+        if inferredPrimary != primaryProvider {
+                primaryProvider = inferredPrimary
+                gateway = inferredGateway
+        }
+
         primaryHasDKIM, primaryDKIMNote, thirdPartyOnly := attributeSelectors(foundSelectors, primaryProvider, foundProviders)
+        if gatewayNote != "" && primaryDKIMNote == "" {
+                primaryDKIMNote = gatewayNote
+        } else if gatewayNote != "" {
+                primaryDKIMNote = gatewayNote + " " + primaryDKIMNote
+        }
+
         status, message := buildDKIMVerdict(foundSelectors, keyIssues, keyStrengths, primaryProvider, primaryHasDKIM, thirdPartyOnly)
 
         var sortedProviders []string
