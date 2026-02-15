@@ -49,6 +49,7 @@ type protocolState struct {
         dnssecBroken       bool
         primaryProvider    string
         isNoMailDomain     bool
+        probableNoMail     bool
 }
 
 type postureAccumulator struct {
@@ -189,6 +190,9 @@ func evaluateProtocolStates(results map[string]any) protocolState {
         if noMail, ok := results["is_no_mail_domain"].(bool); ok && noMail {
                 ps.isNoMailDomain = true
         }
+        if !ps.isNoMailDomain {
+                ps.probableNoMail = detectProbableNoMail(results)
+        }
 
         ps.spfOK, ps.spfWarning, ps.spfMissing, ps.spfHardFail, ps.spfDangerous, ps.spfNeutral, ps.spfLookupExceeded, ps.spfLookupCount = evaluateSPFState(spf)
         ps.dmarcOK, ps.dmarcWarning, ps.dmarcMissing, ps.dmarcPolicy, ps.dmarcPct, ps.dmarcHasRua = evaluateDMARCState(dmarc)
@@ -216,6 +220,22 @@ func evaluateProtocolStates(results map[string]any) protocolState {
         }
 
         return ps
+}
+
+func detectProbableNoMail(results map[string]any) bool {
+        basic, _ := results["basic_records"].(map[string]any)
+        if basic == nil {
+                return false
+        }
+        mxRecords, _ := basic["MX"].([]string)
+        if len(mxRecords) > 0 {
+                return false
+        }
+        mxAny, _ := results["mx_records"].([]any)
+        if len(mxAny) > 0 {
+                return false
+        }
+        return true
 }
 
 func isMissingRecord(m map[string]any) bool {
@@ -865,12 +885,37 @@ func buildBrandVerdict(ps protocolState, verdicts map[string]any) {
         }
 
         if ps.dmarcPolicy == "reject" {
-                verdicts["brand_impersonation"] = map[string]any{
-                        "label":  "Protected",
-                        "color":  "success",
-                        "icon":   iconShieldAlt,
-                        "answer": "No",
-                        "reason": "DMARC reject policy prevents unauthorized use of this domain in email",
+                if ps.bimiOK && ps.caaOK {
+                        verdicts["brand_impersonation"] = map[string]any{
+                                "label":  "Protected",
+                                "color":  "success",
+                                "icon":   iconShieldAlt,
+                                "answer": "No",
+                                "reason": "DMARC reject policy enforced, BIMI brand verification active, and certificate issuance restricted by CAA",
+                        }
+                } else if ps.bimiOK || ps.caaOK {
+                        gaps := []string{}
+                        if !ps.bimiOK {
+                                gaps = append(gaps, "no BIMI brand verification")
+                        }
+                        if !ps.caaOK {
+                                gaps = append(gaps, "no CAA certificate restriction")
+                        }
+                        verdicts["brand_impersonation"] = map[string]any{
+                                "label":  "Mostly Protected",
+                                "color":  "info",
+                                "icon":   iconShieldAlt,
+                                "answer": "Unlikely",
+                                "reason": "DMARC reject policy blocks email spoofing, but " + strings.Join(gaps, " and ") + " — brand faking via other vectors remains possible",
+                        }
+                } else {
+                        verdicts["brand_impersonation"] = map[string]any{
+                                "label":  "Partially Protected",
+                                "color":  "info",
+                                "icon":   iconShieldAlt,
+                                "answer": "Unlikely",
+                                "reason": "DMARC reject policy blocks email spoofing, but no BIMI brand verification and no CAA certificate restriction — visual and certificate-based brand faking remains possible",
+                        }
                 }
                 return
         }

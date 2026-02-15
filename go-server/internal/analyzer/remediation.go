@@ -116,12 +116,16 @@ func (a *Analyzer) GenerateRemediation(results map[string]any) map[string]any {
         var fixes []fix
 
         if !ps.isNoMailDomain {
-                fixes = appendSPFFixes(fixes, ps, ds, results, domain)
-                fixes = appendDMARCFixes(fixes, ps, results, domain)
-                fixes = appendDKIMFixes(fixes, ps, ds, results, domain)
-                fixes = appendMTASTSFixes(fixes, ps, domain)
-                fixes = appendTLSRPTFixes(fixes, ps, domain)
-                fixes = appendBIMIFixes(fixes, ps, domain)
+                if ps.probableNoMail {
+                        fixes = appendProbableNoMailFixes(fixes, ps, domain)
+                } else {
+                        fixes = appendSPFFixes(fixes, ps, ds, results, domain)
+                        fixes = appendDMARCFixes(fixes, ps, results, domain)
+                        fixes = appendDKIMFixes(fixes, ps, ds, results, domain)
+                        fixes = appendMTASTSFixes(fixes, ps, domain)
+                        fixes = appendTLSRPTFixes(fixes, ps, domain)
+                        fixes = appendBIMIFixes(fixes, ps, domain)
+                }
         }
         fixes = appendDNSSECFixes(fixes, ps)
         fixes = appendDANEFixes(fixes, ps, results, domain)
@@ -589,6 +593,36 @@ func extractFirstMXHost(results map[string]any) string {
                 }
         }
         return "mail.yourdomain.com"
+}
+
+func appendProbableNoMailFixes(fixes []fix, ps protocolState, domain string) []fix {
+        if !ps.spfHardFail {
+                fixes = append(fixes, fix{
+                        Title:       "Lock Down SPF for No-Mail Domain",
+                        Description: "This domain has no MX records and appears to be a website-only domain. Publishing a strict SPF record explicitly declares that no servers are authorized to send email, preventing attackers from spoofing your domain.",
+                        Severity:    "high",
+                        DNSHost:     domain,
+                        DNSType:     "TXT",
+                        DNSValue:    "v=spf1 -all",
+                        DNSPurpose:  "Explicitly declares no servers are authorized to send email from this domain.",
+                        RFC:         "RFC 7208",
+                        Section:     "SPF",
+                })
+        }
+        if ps.dmarcMissing || (ps.dmarcPolicy != "reject") {
+                fixes = append(fixes, fix{
+                        Title:       "Add DMARC Reject for No-Mail Domain",
+                        Description: "This domain has no MX records and appears to be a website-only domain. A DMARC reject policy tells receiving mail servers to reject any email claiming to be from your domain.",
+                        Severity:    "high",
+                        DNSHost:     "_dmarc." + domain,
+                        DNSType:     "TXT",
+                        DNSValue:    "v=DMARC1; p=reject; sp=reject; adkim=s; aspf=s;",
+                        DNSPurpose:  "Instructs receiving servers to reject all email from this domain — no legitimate mail is expected.",
+                        RFC:         "RFC 7489",
+                        Section:     "DMARC",
+                })
+        }
+        return fixes
 }
 
 func appendBIMIFixes(fixes []fix, ps protocolState, domain string) []fix {
