@@ -560,6 +560,7 @@ func (a *Analyzer) CalculatePosture(results map[string]any) map[string]any {
         score := computeInternalScore(ps, ds)
 
         verdicts := buildVerdicts(ps, ds, hasSPF, hasDMARC, hasDKIM)
+        buildAISurfaceVerdicts(results, verdicts)
 
         deliberate, deliberateNote := evaluateDeliberateMonitoring(ps, len(acc.configured))
 
@@ -723,6 +724,7 @@ func buildVerdicts(ps protocolState, ds DKIMState, hasSPF, hasDMARC, hasDKIM boo
                         "label":  "Configured",
                         "color":  "success",
                         "icon":   iconShieldAlt,
+                        "answer": "Yes",
                         "reason": "CAA records restrict which certificate authorities may issue certificates",
                 }
         } else {
@@ -730,11 +732,16 @@ func buildVerdicts(ps protocolState, ds DKIMState, hasSPF, hasDMARC, hasDKIM boo
                         "label":  "Not Configured",
                         "color":  "secondary",
                         "icon":   iconShieldAlt,
+                        "answer": "No",
                         "reason": "No CAA records — any certificate authority may issue certificates for this domain",
                 }
         }
 
         verdicts["email_answer"] = buildEmailAnswer(ps, hasSPF, hasDMARC)
+        ea := buildEmailAnswerStructured(ps, hasSPF, hasDMARC)
+        verdicts["email_answer_short"] = ea["answer"]
+        verdicts["email_answer_reason"] = ea["reason"]
+        verdicts["email_answer_color"] = ea["color"]
 
         buildTransportVerdict(ps, verdicts)
 
@@ -767,6 +774,34 @@ func buildEmailAnswer(ps protocolState, hasSPF, hasDMARC bool) string {
                 return "Partially — DMARC present but no SPF"
         }
         return "Uncertain — incomplete configuration"
+}
+
+func buildEmailAnswerStructured(ps protocolState, hasSPF, hasDMARC bool) map[string]string {
+        if ps.isNoMailDomain {
+                return map[string]string{"answer": "No", "reason": "null MX indicates no-mail domain", "color": "success"}
+        }
+        if !hasSPF && !hasDMARC {
+                return map[string]string{"answer": "Yes", "reason": "no SPF or DMARC protection", "color": "danger"}
+        }
+        if hasSPF && hasDMARC && ps.dmarcPolicy == "reject" {
+                return map[string]string{"answer": "No", "reason": "SPF and DMARC reject policy enforced", "color": "success"}
+        }
+        if hasSPF && hasDMARC && ps.dmarcPolicy == "quarantine" && ps.dmarcPct >= 100 {
+                return map[string]string{"answer": "Unlikely", "reason": "SPF and DMARC quarantine policy enforced", "color": "info"}
+        }
+        if hasSPF && hasDMARC && ps.dmarcPolicy == "quarantine" {
+                return map[string]string{"answer": "Partially", "reason": "DMARC quarantine at limited percentage", "color": "warning"}
+        }
+        if hasSPF && hasDMARC && ps.dmarcPolicy == "none" {
+                return map[string]string{"answer": "Yes", "reason": "DMARC is monitor-only (p=none)", "color": "danger"}
+        }
+        if hasSPF && !hasDMARC {
+                return map[string]string{"answer": "Likely", "reason": "SPF alone cannot prevent spoofing", "color": "danger"}
+        }
+        if !hasSPF && hasDMARC {
+                return map[string]string{"answer": "Partially", "reason": "DMARC present but no SPF", "color": "warning"}
+        }
+        return map[string]string{"answer": "Uncertain", "reason": "incomplete configuration", "color": "warning"}
 }
 
 func buildEmailVerdict(ps protocolState, ds DKIMState, hasSPF, hasDMARC, hasDKIM bool, verdicts map[string]any) {
@@ -823,6 +858,7 @@ func buildBrandVerdict(ps protocolState, verdicts map[string]any) {
                         "label":  "Exposed",
                         "color":  "danger",
                         "icon":   iconExclamationTriangle,
+                        "answer": "Yes",
                         "reason": "No DMARC policy — attackers can send email appearing to be from this domain",
                 }
                 return
@@ -833,21 +869,25 @@ func buildBrandVerdict(ps protocolState, verdicts map[string]any) {
                         "label":  "Protected",
                         "color":  "success",
                         "icon":   iconShieldAlt,
+                        "answer": "No",
                         "reason": "DMARC reject policy prevents unauthorized use of this domain in email",
                 }
                 return
         }
 
         reason := "DMARC policy is not set to reject — partial protection only"
+        answer := "Partially"
         if ps.dmarcPolicy == "quarantine" {
                 reason = "DMARC quarantine policy provides moderate protection but does not fully reject spoofed mail"
         } else if ps.dmarcPolicy == "none" {
                 reason = "DMARC is monitor-only (p=none) — spoofed mail is not blocked"
+                answer = "Likely"
         }
         verdicts["brand_impersonation"] = map[string]any{
                 "label":  "Basic",
                 "color":  "warning",
                 "icon":   iconShieldAlt,
+                "answer": answer,
                 "reason": reason,
         }
 }
@@ -858,21 +898,24 @@ func buildDNSVerdict(ps protocolState, verdicts map[string]any) {
                         "label":  "Protected",
                         "color":  "success",
                         "icon":   iconShieldAlt,
-                        "reason": "No — DNSSEC signed and validated, cryptographic chain of trust verified",
+                        "answer": "No",
+                        "reason": "DNSSEC signed and validated, cryptographic chain of trust verified",
                 }
         } else if ps.dnssecBroken {
                 verdicts["dns_tampering"] = map[string]any{
                         "label":  "Exposed",
                         "color":  "danger",
                         "icon":   iconExclamationTriangle,
-                        "reason": "Yes — DNSSEC validation is failing, DNS responses cannot be trusted",
+                        "answer": "Yes",
+                        "reason": "DNSSEC validation is failing, DNS responses cannot be trusted",
                 }
         } else {
                 verdicts["dns_tampering"] = map[string]any{
                         "label":  "Not Configured",
                         "color":  "secondary",
                         "icon":   iconShieldAlt,
-                        "reason": "Possible — DNSSEC is not deployed, DNS responses are not cryptographically verified",
+                        "answer": "Possible",
+                        "reason": "DNSSEC is not deployed, DNS responses are not cryptographically verified",
                 }
         }
 }
@@ -882,31 +925,146 @@ func buildTransportVerdict(ps protocolState, verdicts map[string]any) {
                 verdicts["transport"] = map[string]any{
                         "label":  "Fully Protected",
                         "color":  "success",
+                        "answer": "Yes",
                         "reason": "Both MTA-STS and DANE enforce encrypted mail delivery",
                 }
         } else if ps.mtaStsOK {
                 verdicts["transport"] = map[string]any{
                         "label":  "Protected",
                         "color":  "success",
+                        "answer": "Yes",
                         "reason": "MTA-STS enforces TLS for all inbound mail delivery",
                 }
         } else if ps.daneOK {
                 verdicts["transport"] = map[string]any{
                         "label":  "Protected",
                         "color":  "success",
+                        "answer": "Yes",
                         "reason": "DANE/TLSA provides cryptographic transport verification",
                 }
         } else if ps.tlsrptOK {
                 verdicts["transport"] = map[string]any{
                         "label":  "Monitoring",
                         "color":  "info",
+                        "answer": "Partially",
                         "reason": "TLS reporting is configured but no transport enforcement policy is active",
                 }
         } else {
                 verdicts["transport"] = map[string]any{
                         "label":  "Not Enforced",
                         "color":  "secondary",
+                        "answer": "No",
                         "reason": "No MTA-STS or DANE — mail transport encryption is opportunistic only",
+                }
+        }
+}
+
+func getNumericValue(m map[string]any, key string) float64 {
+        v, ok := m[key]
+        if !ok {
+                return 0
+        }
+        switch n := v.(type) {
+        case float64:
+                return n
+        case int:
+                return float64(n)
+        case int64:
+                return float64(n)
+        }
+        return 0
+}
+
+func buildAISurfaceVerdicts(results map[string]any, verdicts map[string]any) {
+        aiSurface, ok := results["ai_surface"].(map[string]any)
+        if !ok {
+                return
+        }
+
+        llmsTxt, _ := aiSurface["llms_txt"].(map[string]any)
+        robotsTxt, _ := aiSurface["robots_txt"].(map[string]any)
+        poisoning, _ := aiSurface["poisoning"].(map[string]any)
+        hiddenPrompts, _ := aiSurface["hidden_prompts"].(map[string]any)
+
+        if llmsTxt != nil {
+                found, _ := llmsTxt["found"].(bool)
+                fullFound, _ := llmsTxt["full_found"].(bool)
+                if found && fullFound {
+                        verdicts["ai_llms_txt"] = map[string]any{
+                                "answer": "Yes",
+                                "color":  "success",
+                                "reason": "llms.txt and llms-full.txt published — AI models receive structured context about this domain",
+                        }
+                } else if found {
+                        verdicts["ai_llms_txt"] = map[string]any{
+                                "answer": "Yes",
+                                "color":  "success",
+                                "reason": "llms.txt published — AI models receive structured context about this domain",
+                        }
+                } else {
+                        verdicts["ai_llms_txt"] = map[string]any{
+                                "answer": "No",
+                                "color":  "secondary",
+                                "reason": "No llms.txt file detected — AI models have no structured instructions for this domain",
+                        }
+                }
+        }
+
+        if robotsTxt != nil {
+                found, _ := robotsTxt["found"].(bool)
+                blocksAI, _ := robotsTxt["blocks_ai_crawlers"].(bool)
+                if found && blocksAI {
+                        verdicts["ai_crawler_governance"] = map[string]any{
+                                "answer": "Yes",
+                                "color":  "success",
+                                "reason": "robots.txt actively blocks AI crawlers from scraping site content",
+                        }
+                } else if found {
+                        verdicts["ai_crawler_governance"] = map[string]any{
+                                "answer": "No",
+                                "color":  "warning",
+                                "reason": "robots.txt present but does not block AI crawlers — content may be freely scraped",
+                        }
+                } else {
+                        verdicts["ai_crawler_governance"] = map[string]any{
+                                "answer": "No",
+                                "color":  "secondary",
+                                "reason": "No robots.txt found — AI crawlers have unrestricted access",
+                        }
+                }
+        }
+
+        if poisoning != nil {
+                iocCount := getNumericValue(poisoning, "ioc_count")
+                if iocCount > 0 {
+                        verdicts["ai_poisoning"] = map[string]any{
+                                "answer": "Yes",
+                                "color":  "danger",
+                                "reason": fmt.Sprintf("%.0f indicator(s) of AI recommendation manipulation detected on homepage", iocCount),
+                        }
+                } else {
+                        verdicts["ai_poisoning"] = map[string]any{
+                                "answer": "No",
+                                "color":  "success",
+                                "reason": "No indicators of AI recommendation manipulation found",
+                        }
+                }
+        }
+
+        if hiddenPrompts != nil {
+                artifactCount := getNumericValue(hiddenPrompts, "artifact_count")
+                if artifactCount > 0 {
+                        verdicts["ai_hidden_prompts"] = map[string]any{
+                                "answer": "Yes",
+                                "color":  "danger",
+                                "reason": fmt.Sprintf("%.0f hidden prompt-like artifact(s) detected in page source", artifactCount),
+                        }
+                } else {
+                        verdicts["ai_hidden_prompts"] = map[string]any{
+                                "answer": "No",
+                                "color":  "success",
+                                "reason": "No hidden prompt artifacts found in page source",
+                        }
                 }
         }
 }

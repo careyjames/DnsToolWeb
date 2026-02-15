@@ -4,6 +4,7 @@ package handlers
 
 import (
         "encoding/json"
+        "fmt"
         "math"
         "sort"
         "strings"
@@ -111,9 +112,169 @@ func NormalizeResults(fullResults json.RawMessage) map[string]interface{} {
                                 posture["icon"] = "shield-alt"
                         }
                 }
+                normalizeVerdicts(results, posture)
         }
 
         return results
+}
+
+func normalizeVerdicts(results, posture map[string]interface{}) {
+        verdicts, ok := posture["verdicts"].(map[string]interface{})
+        if !ok {
+                return
+        }
+
+        normalizeVerdictAnswers(verdicts)
+        normalizeAIVerdicts(results, verdicts)
+        normalizeEmailAnswer(verdicts)
+}
+
+func normalizeEmailAnswer(verdicts map[string]interface{}) {
+        if _, has := verdicts["email_answer_short"]; has {
+                return
+        }
+        emailAnswer, ok := verdicts["email_answer"].(string)
+        if !ok || emailAnswer == "" {
+                return
+        }
+        parts := strings.SplitN(emailAnswer, " — ", 2)
+        if len(parts) == 2 {
+                answer := parts[0]
+                reason := parts[1]
+                color := "warning"
+                switch {
+                case answer == "No" || answer == "Unlikely":
+                        color = "success"
+                        if answer == "Unlikely" {
+                                color = "info"
+                        }
+                case answer == "Yes" || answer == "Likely":
+                        color = "danger"
+                case answer == "Partially" || answer == "Uncertain":
+                        color = "warning"
+                }
+                verdicts["email_answer_short"] = answer
+                verdicts["email_answer_reason"] = reason
+                verdicts["email_answer_color"] = color
+        }
+}
+
+func normalizeVerdictAnswers(verdicts map[string]interface{}) {
+        answerMap := map[string]map[string]string{
+                "dns_tampering": {
+                        "Protected":      "No",
+                        "Exposed":        "Yes",
+                        "Not Configured": "Possible",
+                },
+                "brand_impersonation": {
+                        "Protected": "No",
+                        "Exposed":   "Yes",
+                        "Basic":     "Partially",
+                },
+                "certificate_control": {
+                        "Configured":     "Yes",
+                        "Not Configured": "No",
+                },
+                "transport": {
+                        "Fully Protected": "Yes",
+                        "Protected":       "Yes",
+                        "Monitoring":      "Partially",
+                        "Not Enforced":    "No",
+                },
+        }
+
+        reasonPrefixes := []string{"No — ", "Yes — ", "Possible — "}
+
+        for key, labelToAnswer := range answerMap {
+                v, ok := verdicts[key].(map[string]interface{})
+                if !ok {
+                        continue
+                }
+                if _, hasAnswer := v["answer"]; hasAnswer {
+                        continue
+                }
+                label, _ := v["label"].(string)
+                if ans, found := labelToAnswer[label]; found {
+                        v["answer"] = ans
+                }
+                if reason, ok := v["reason"].(string); ok {
+                        for _, prefix := range reasonPrefixes {
+                                if strings.HasPrefix(reason, prefix) {
+                                        v["reason"] = strings.TrimPrefix(reason, prefix)
+                                        break
+                                }
+                        }
+                }
+        }
+}
+
+func normalizeAIVerdicts(results, verdicts map[string]interface{}) {
+        if _, has := verdicts["ai_llms_txt"]; has {
+                return
+        }
+
+        aiSurface, ok := results["ai_surface"].(map[string]interface{})
+        if !ok {
+                return
+        }
+
+        if llmsTxt, ok := aiSurface["llms_txt"].(map[string]interface{}); ok {
+                found, _ := llmsTxt["found"].(bool)
+                fullFound, _ := llmsTxt["full_found"].(bool)
+                if found && fullFound {
+                        verdicts["ai_llms_txt"] = map[string]interface{}{"answer": "Yes", "color": "success", "reason": "llms.txt and llms-full.txt published — AI models receive structured context about this domain"}
+                } else if found {
+                        verdicts["ai_llms_txt"] = map[string]interface{}{"answer": "Yes", "color": "success", "reason": "llms.txt published — AI models receive structured context about this domain"}
+                } else {
+                        verdicts["ai_llms_txt"] = map[string]interface{}{"answer": "No", "color": "secondary", "reason": "No llms.txt file detected — AI models have no structured instructions for this domain"}
+                }
+        }
+
+        if robotsTxt, ok := aiSurface["robots_txt"].(map[string]interface{}); ok {
+                found, _ := robotsTxt["found"].(bool)
+                blocksAI, _ := robotsTxt["blocks_ai_crawlers"].(bool)
+                if found && blocksAI {
+                        verdicts["ai_crawler_governance"] = map[string]interface{}{"answer": "Yes", "color": "success", "reason": "robots.txt actively blocks AI crawlers from scraping site content"}
+                } else if found {
+                        verdicts["ai_crawler_governance"] = map[string]interface{}{"answer": "No", "color": "warning", "reason": "robots.txt present but does not block AI crawlers — content may be freely scraped"}
+                } else {
+                        verdicts["ai_crawler_governance"] = map[string]interface{}{"answer": "No", "color": "secondary", "reason": "No robots.txt found — AI crawlers have unrestricted access"}
+                }
+        }
+
+        if poisoning, ok := aiSurface["poisoning"].(map[string]interface{}); ok {
+                iocCount := getNumValue(poisoning, "ioc_count")
+                if iocCount > 0 {
+                        verdicts["ai_poisoning"] = map[string]interface{}{"answer": "Yes", "color": "danger", "reason": fmt.Sprintf("%.0f indicator(s) of AI recommendation manipulation detected on homepage", iocCount)}
+                } else {
+                        verdicts["ai_poisoning"] = map[string]interface{}{"answer": "No", "color": "success", "reason": "No indicators of AI recommendation manipulation found"}
+                }
+        }
+
+        if hidden, ok := aiSurface["hidden_prompts"].(map[string]interface{}); ok {
+                count := getNumValue(hidden, "artifact_count")
+                if count > 0 {
+                        verdicts["ai_hidden_prompts"] = map[string]interface{}{"answer": "Yes", "color": "danger", "reason": fmt.Sprintf("%.0f hidden prompt-like artifact(s) detected in page source", count)}
+                } else {
+                        verdicts["ai_hidden_prompts"] = map[string]interface{}{"answer": "No", "color": "success", "reason": "No hidden prompt artifacts found in page source"}
+                }
+        }
+}
+
+func getNumValue(m map[string]interface{}, key string) float64 {
+        v, ok := m[key]
+        if !ok {
+                return 0
+        }
+        switch n := v.(type) {
+        case float64:
+                return n
+        case int:
+                return float64(n)
+        case int64:
+                return float64(n)
+        }
+        return 0
 }
 
 type CompareSectionDef struct {

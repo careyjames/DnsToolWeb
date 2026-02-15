@@ -762,59 +762,106 @@
                 <h5 class="exec-section-title"><i class="fas fa-question-circle text-warning me-2"></i>The BIG Questions</h5>
                 <div class="card border-0 bg-dark bg-opacity-25 exec-big-questions">
                     <div class="card-body py-3">
+                        {{$emailShort := mapGetStr "email_answer_short" $verdicts}}
+                        {{$emailReason := mapGetStr "email_answer_reason" $verdicts}}
+                        {{$emailColor := mapGetStr "email_answer_color" $verdicts}}
                         <div class="exec-finding-row">
                             <span class="exec-finding-label">Can this domain be impersonated by email?</span>
                             <span class="exec-finding-value">
-                                {{$emailAnswer := mapGetStr "email_answer" $verdicts}}
-                                {{if $emailAnswer}}
-                                <span class="badge bg-{{if hasPrefix $emailAnswer "No"}}success{{else if hasPrefix $emailAnswer "Unlikely"}}info{{else if or (hasPrefix $emailAnswer "Partially") (hasPrefix $emailAnswer "Uncertain")}}warning{{else}}danger{{end}} px-3 py-2">{{$emailAnswer}}</span>
+                                {{if $emailShort}}
+                                <span class="badge bg-{{$emailColor}} px-3 py-2">{{$emailShort}}</span>
+                                {{if $emailReason}}<span class="text-muted small ms-2">{{$emailReason}}</span>{{end}}
                                 {{else}}<span class="badge bg-secondary px-3 py-2">Not Assessed</span>{{end}}
                             </span>
                         </div>
+                        {{$dnsVerdict := mapGetMap "dns_tampering" $verdicts}}
                         <div class="exec-finding-row">
                             <span class="exec-finding-label">Can DNS itself be tampered with?</span>
                             <span class="exec-finding-value">
-                                {{$dnsVerdict := mapGetMap "dns_tampering" $verdicts}}
                                 {{if $dnsVerdict}}
-                                {{$dnsLabel := mapGetStr "label" $dnsVerdict}}
-                                <span class="badge bg-{{if eq $dnsLabel "Protected"}}success{{else if eq $dnsLabel "Enterprise Managed"}}info{{else if eq $dnsLabel "Unsigned"}}warning{{else if eq $dnsLabel "Exposed"}}danger{{else}}secondary{{end}} px-3 py-2">{{$dnsLabel}}</span>
+                                {{$dnsAnswer := mapGetStr "answer" $dnsVerdict}}
+                                <span class="badge bg-{{mapGetStr "color" $dnsVerdict}} px-3 py-2">{{if $dnsAnswer}}{{$dnsAnswer}}{{else}}{{mapGetStr "label" $dnsVerdict}}{{end}}</span>
                                 {{if mapGetStr "reason" $dnsVerdict}}<span class="text-muted small ms-2">{{mapGetStr "reason" $dnsVerdict}}</span>{{end}}
                                 {{else}}<span class="badge bg-secondary px-3 py-2">Not Assessed</span>{{end}}
                             </span>
                         </div>
+                        {{$brandVerdict := mapGetMap "brand_impersonation" $verdicts}}
                         <div class="exec-finding-row">
                             <span class="exec-finding-label">Can this brand be convincingly faked?</span>
                             <span class="exec-finding-value">
-                                {{$brandVerdict := mapGetMap "brand_impersonation" $verdicts}}
                                 {{if $brandVerdict}}
-                                {{$brandLabel := mapGetStr "label" $brandVerdict}}
-                                <span class="badge bg-{{if eq $brandLabel "Protected"}}success{{else if or (eq $brandLabel "Basic Protection") (eq $brandLabel "Basic")}}info{{else if eq $brandLabel "Not Protected"}}warning{{else if eq $brandLabel "Exposed"}}danger{{else}}secondary{{end}} px-3 py-2">{{$brandLabel}}</span>
+                                {{$brandAnswer := mapGetStr "answer" $brandVerdict}}
+                                <span class="badge bg-{{mapGetStr "color" $brandVerdict}} px-3 py-2">{{if $brandAnswer}}{{$brandAnswer}}{{else}}{{mapGetStr "label" $brandVerdict}}{{end}}</span>
                                 {{if mapGetStr "reason" $brandVerdict}}<span class="text-muted small ms-2">{{mapGetStr "reason" $brandVerdict}}</span>{{end}}
                                 {{else}}<span class="badge bg-secondary px-3 py-2">Not Assessed</span>{{end}}
                             </span>
                         </div>
+                        {{$transportVerdict := mapGetMap "transport" $verdicts}}
                         <div class="exec-finding-row">
-                            <span class="exec-finding-label">Transport encryption enforced?</span>
+                            <span class="exec-finding-label">Is mail transport encryption enforced?</span>
                             <span class="exec-finding-value">
-                                {{$transportVerdict := mapGetMap "transport" $verdicts}}
                                 {{if $transportVerdict}}
-                                {{$transportLabel := mapGetStr "label" $transportVerdict}}
-                                <span class="badge bg-{{mapGetStr "color" $transportVerdict}} px-3 py-2">{{$transportLabel}}</span>
+                                {{$transportAnswer := mapGetStr "answer" $transportVerdict}}
+                                <span class="badge bg-{{mapGetStr "color" $transportVerdict}} px-3 py-2">{{if $transportAnswer}}{{$transportAnswer}}{{else}}{{mapGetStr "label" $transportVerdict}}{{end}}</span>
                                 {{if mapGetStr "reason" $transportVerdict}}<span class="text-muted small ms-2">{{mapGetStr "reason" $transportVerdict}}</span>{{end}}
                                 {{else}}<span class="badge bg-secondary px-3 py-2">Not Assessed</span>{{end}}
                             </span>
                         </div>
+                        {{$certVerdict := mapGetMap "certificate_control" $verdicts}}
                         <div class="exec-finding-row">
-                            <span class="exec-finding-label">Certificate issuance controlled?</span>
+                            <span class="exec-finding-label">Is certificate issuance controlled?</span>
                             <span class="exec-finding-value">
-                                {{$certVerdict := mapGetMap "certificate_control" $verdicts}}
                                 {{if $certVerdict}}
-                                {{$certLabel := mapGetStr "label" $certVerdict}}
-                                <span class="badge bg-{{if eq $certLabel "Configured"}}success{{else}}secondary{{end}} px-3 py-2">{{$certLabel}}</span>
+                                {{$certAnswer := mapGetStr "answer" $certVerdict}}
+                                <span class="badge bg-{{mapGetStr "color" $certVerdict}} px-3 py-2">{{if $certAnswer}}{{$certAnswer}}{{else}}{{mapGetStr "label" $certVerdict}}{{end}}</span>
                                 {{if mapGetStr "reason" $certVerdict}}<span class="text-muted small ms-2">{{mapGetStr "reason" $certVerdict}}</span>{{end}}
                                 {{else}}<span class="badge bg-secondary px-3 py-2">Not Assessed</span>{{end}}
                             </span>
                         </div>
+                        {{$aiLlmsVerdict := mapGetMap "ai_llms_txt" $verdicts}}
+                        {{if $aiLlmsVerdict}}
+                        <div class="exec-finding-row">
+                            <span class="exec-finding-label">Does this domain publish AI agent instructions?</span>
+                            <span class="exec-finding-value">
+                                {{$aiLlmsAnswer := mapGetStr "answer" $aiLlmsVerdict}}
+                                <span class="badge bg-{{mapGetStr "color" $aiLlmsVerdict}} px-3 py-2">{{$aiLlmsAnswer}}</span>
+                                {{if mapGetStr "reason" $aiLlmsVerdict}}<span class="text-muted small ms-2">{{mapGetStr "reason" $aiLlmsVerdict}}</span>{{end}}
+                            </span>
+                        </div>
+                        {{end}}
+                        {{$aiCrawlerVerdict := mapGetMap "ai_crawler_governance" $verdicts}}
+                        {{if $aiCrawlerVerdict}}
+                        <div class="exec-finding-row">
+                            <span class="exec-finding-label">Is AI crawling of our content controlled?</span>
+                            <span class="exec-finding-value">
+                                {{$aiCrawlerAnswer := mapGetStr "answer" $aiCrawlerVerdict}}
+                                <span class="badge bg-{{mapGetStr "color" $aiCrawlerVerdict}} px-3 py-2">{{$aiCrawlerAnswer}}</span>
+                                {{if mapGetStr "reason" $aiCrawlerVerdict}}<span class="text-muted small ms-2">{{mapGetStr "reason" $aiCrawlerVerdict}}</span>{{end}}
+                            </span>
+                        </div>
+                        {{end}}
+                        {{$aiPoisoningVerdict := mapGetMap "ai_poisoning" $verdicts}}
+                        {{if $aiPoisoningVerdict}}
+                        <div class="exec-finding-row">
+                            <span class="exec-finding-label">Has someone manipulated AI recommendations about us?</span>
+                            <span class="exec-finding-value">
+                                {{$aiPoisoningAnswer := mapGetStr "answer" $aiPoisoningVerdict}}
+                                <span class="badge bg-{{mapGetStr "color" $aiPoisoningVerdict}} px-3 py-2">{{$aiPoisoningAnswer}}</span>
+                                {{if mapGetStr "reason" $aiPoisoningVerdict}}<span class="text-muted small ms-2">{{mapGetStr "reason" $aiPoisoningVerdict}}</span>{{end}}
+                            </span>
+                        </div>
+                        {{end}}
+                        {{$aiHiddenVerdict := mapGetMap "ai_hidden_prompts" $verdicts}}
+                        {{if $aiHiddenVerdict}}
+                        <div class="exec-finding-row">
+                            <span class="exec-finding-label">Are there hidden AI prompts on our site?</span>
+                            <span class="exec-finding-value">
+                                {{$aiHiddenAnswer := mapGetStr "answer" $aiHiddenVerdict}}
+                                <span class="badge bg-{{mapGetStr "color" $aiHiddenVerdict}} px-3 py-2">{{$aiHiddenAnswer}}</span>
+                                {{if mapGetStr "reason" $aiHiddenVerdict}}<span class="text-muted small ms-2">{{mapGetStr "reason" $aiHiddenVerdict}}</span>{{end}}
+                            </span>
+                        </div>
+                        {{end}}
                     </div>
                 </div>
             </div>
@@ -865,11 +912,14 @@
                 <div class="card-body">
                     {{if $posture}}
                     {{$verdicts := mapGetMap "verdicts" $posture}}
-                    {{$emailAnswer := mapGetStr "email_answer" $verdicts}}
-                    {{if $emailAnswer}}
+                    {{$emailShort := mapGetStr "email_answer_short" $verdicts}}
+                    {{$emailReason := mapGetStr "email_answer_reason" $verdicts}}
+                    {{$emailColor := mapGetStr "email_answer_color" $verdicts}}
+                    {{if $emailShort}}
                     <div class="exec-inline-question">
                         <span class="exec-q-label">Can this domain be impersonated by email?</span>
-                        <span class="badge bg-{{if hasPrefix $emailAnswer "No"}}success{{else if hasPrefix $emailAnswer "Unlikely"}}info{{else if or (hasPrefix $emailAnswer "Partially") (hasPrefix $emailAnswer "Uncertain")}}warning{{else}}danger{{end}}">{{$emailAnswer}}</span>
+                        <span class="badge bg-{{$emailColor}}">{{$emailShort}}</span>
+                        {{if $emailReason}}<span class="exec-q-reason">— {{$emailReason}}</span>{{end}}
                     </div>
                     {{end}}
                     {{end}}
@@ -949,9 +999,9 @@
                     {{$transportVerdict := mapGetMap "transport" $verdicts}}
                     {{if $transportVerdict}}
                     <div class="exec-inline-question">
-                        <span class="exec-q-label">Transport encryption enforced?</span>
-                        {{$transportLabel := mapGetStr "label" $transportVerdict}}
-                        <span class="badge bg-{{mapGetStr "color" $transportVerdict}}">{{$transportLabel}}</span>
+                        <span class="exec-q-label">Is mail transport encryption enforced?</span>
+                        {{$transportAnswer := mapGetStr "answer" $transportVerdict}}
+                        <span class="badge bg-{{mapGetStr "color" $transportVerdict}}">{{if $transportAnswer}}{{$transportAnswer}}{{else}}{{mapGetStr "label" $transportVerdict}}{{end}}</span>
                         {{if mapGetStr "reason" $transportVerdict}}<span class="exec-q-reason">— {{mapGetStr "reason" $transportVerdict}}</span>{{end}}
                     </div>
                     {{end}}
@@ -1035,8 +1085,8 @@
                     {{if $dnsVerdict}}
                     <div class="exec-inline-question">
                         <span class="exec-q-label">Can DNS itself be tampered with?</span>
-                        {{$dnsLabel := mapGetStr "label" $dnsVerdict}}
-                        <span class="badge bg-{{mapGetStr "color" $dnsVerdict}}">{{$dnsLabel}}</span>
+                        {{$dnsAnswer := mapGetStr "answer" $dnsVerdict}}
+                        <span class="badge bg-{{mapGetStr "color" $dnsVerdict}}">{{if $dnsAnswer}}{{$dnsAnswer}}{{else}}{{mapGetStr "label" $dnsVerdict}}{{end}}</span>
                         {{if mapGetStr "reason" $dnsVerdict}}<span class="exec-q-reason">— {{mapGetStr "reason" $dnsVerdict}}</span>{{end}}
                     </div>
                     {{end}}
@@ -1089,23 +1139,21 @@
                     {{$verdicts := mapGetMap "verdicts" $posture}}
                     {{$brandVerdict := mapGetMap "brand_impersonation" $verdicts}}
                     {{$certVerdict := mapGetMap "certificate_control" $verdicts}}
-                    {{if or $brandVerdict $certVerdict}}
+                    {{if $brandVerdict}}
                     <div class="exec-inline-question">
-                        {{if $brandVerdict}}
                         <span class="exec-q-label">Can this brand be convincingly faked?</span>
-                        {{$brandLabel := mapGetStr "label" $brandVerdict}}
-                        <span class="badge bg-{{mapGetStr "color" $brandVerdict}}">{{$brandLabel}}</span>
+                        {{$brandAnswer := mapGetStr "answer" $brandVerdict}}
+                        <span class="badge bg-{{mapGetStr "color" $brandVerdict}}">{{if $brandAnswer}}{{$brandAnswer}}{{else}}{{mapGetStr "label" $brandVerdict}}{{end}}</span>
                         {{if mapGetStr "reason" $brandVerdict}}<span class="exec-q-reason">— {{mapGetStr "reason" $brandVerdict}}</span>{{end}}
-                        {{end}}
-                    </div>
-                    {{if $certVerdict}}
-                    <div class="exec-inline-question">
-                        <span class="exec-q-label">Certificate issuance controlled?</span>
-                        {{$certLabel := mapGetStr "label" $certVerdict}}
-                        <span class="badge bg-{{mapGetStr "color" $certVerdict}}">{{$certLabel}}</span>
-                        {{if mapGetStr "reason" $certVerdict}}<span class="exec-q-reason">— {{mapGetStr "reason" $certVerdict}}</span>{{end}}
                     </div>
                     {{end}}
+                    {{if $certVerdict}}
+                    <div class="exec-inline-question">
+                        <span class="exec-q-label">Is certificate issuance controlled?</span>
+                        {{$certAnswer := mapGetStr "answer" $certVerdict}}
+                        <span class="badge bg-{{mapGetStr "color" $certVerdict}}">{{if $certAnswer}}{{$certAnswer}}{{else}}{{mapGetStr "label" $certVerdict}}{{end}}</span>
+                        {{if mapGetStr "reason" $certVerdict}}<span class="exec-q-reason">— {{mapGetStr "reason" $certVerdict}}</span>{{end}}
+                    </div>
                     {{end}}
                     {{end}}
                     <div class="exec-finding-row">
@@ -1155,7 +1203,41 @@
                     </h5>
                 </div>
                 <div class="card-body">
-                    <p class="text-muted small mb-3">This section evaluates how the domain interacts with AI systems, including large language models, AI crawlers, and potential manipulation vectors.</p>
+                    {{if $posture}}
+                    {{$verdicts := mapGetMap "verdicts" $posture}}
+                    {{$aiLlmsVerdict := mapGetMap "ai_llms_txt" $verdicts}}
+                    {{if $aiLlmsVerdict}}
+                    <div class="exec-inline-question">
+                        <span class="exec-q-label">Does this domain publish AI agent instructions?</span>
+                        <span class="badge bg-{{mapGetStr "color" $aiLlmsVerdict}}">{{mapGetStr "answer" $aiLlmsVerdict}}</span>
+                        {{if mapGetStr "reason" $aiLlmsVerdict}}<span class="exec-q-reason">— {{mapGetStr "reason" $aiLlmsVerdict}}</span>{{end}}
+                    </div>
+                    {{end}}
+                    {{$aiCrawlerVerdict := mapGetMap "ai_crawler_governance" $verdicts}}
+                    {{if $aiCrawlerVerdict}}
+                    <div class="exec-inline-question">
+                        <span class="exec-q-label">Is AI crawling of our content controlled?</span>
+                        <span class="badge bg-{{mapGetStr "color" $aiCrawlerVerdict}}">{{mapGetStr "answer" $aiCrawlerVerdict}}</span>
+                        {{if mapGetStr "reason" $aiCrawlerVerdict}}<span class="exec-q-reason">— {{mapGetStr "reason" $aiCrawlerVerdict}}</span>{{end}}
+                    </div>
+                    {{end}}
+                    {{$aiPoisoningVerdict := mapGetMap "ai_poisoning" $verdicts}}
+                    {{if $aiPoisoningVerdict}}
+                    <div class="exec-inline-question">
+                        <span class="exec-q-label">Has someone manipulated AI recommendations about us?</span>
+                        <span class="badge bg-{{mapGetStr "color" $aiPoisoningVerdict}}">{{mapGetStr "answer" $aiPoisoningVerdict}}</span>
+                        {{if mapGetStr "reason" $aiPoisoningVerdict}}<span class="exec-q-reason">— {{mapGetStr "reason" $aiPoisoningVerdict}}</span>{{end}}
+                    </div>
+                    {{end}}
+                    {{$aiHiddenVerdict := mapGetMap "ai_hidden_prompts" $verdicts}}
+                    {{if $aiHiddenVerdict}}
+                    <div class="exec-inline-question">
+                        <span class="exec-q-label">Are there hidden AI prompts on our site?</span>
+                        <span class="badge bg-{{mapGetStr "color" $aiHiddenVerdict}}">{{mapGetStr "answer" $aiHiddenVerdict}}</span>
+                        {{if mapGetStr "reason" $aiHiddenVerdict}}<span class="exec-q-reason">— {{mapGetStr "reason" $aiHiddenVerdict}}</span>{{end}}
+                    </div>
+                    {{end}}
+                    {{end}}
 
                     {{$aiLlms := mapGetMap "llms_txt" $ai_surface}}
                     {{$aiRobots := mapGetMap "robots_txt" $ai_surface}}
