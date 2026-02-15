@@ -182,6 +182,16 @@
 
             .print-tlp-note { font-size: 6pt; color: #9ca3af; margin-top: 2pt; letter-spacing: 0.03em; }
 
+            .tlp-badge-amber { background-color: #ffc000 !important; color: #000 !important; }
+            .tlp-badge-green { background-color: #33a532 !important; color: #fff !important; }
+            .tlp-badge-clear { background-color: #fff !important; color: #374151 !important; border: 1px solid #6b7280; }
+            .btn-tlp-amber { color: #ffc000 !important; border-color: #ffc000 !important; }
+            .btn-tlp-amber:hover, .btn-tlp-amber:focus { background-color: rgba(255,192,0,0.15) !important; }
+            .btn-tlp-green { color: #33a532 !important; border-color: #33a532 !important; }
+            .btn-tlp-green:hover, .btn-tlp-green:focus { background-color: rgba(51,165,50,0.15) !important; }
+            .btn-tlp-clear { color: #adb5bd !important; border-color: #6c757d !important; }
+            .btn-tlp-clear:hover, .btn-tlp-clear:focus { background-color: rgba(108,117,125,0.15) !important; }
+
             .print-domain-banner {
                 background-color: #1e3a5f !important;
                 padding: 14pt 16pt 16pt; border-radius: 4pt;
@@ -460,16 +470,16 @@
                 </div>
                 <div class="d-flex gap-2 flex-wrap">
                     <div class="dropdown">
-                        <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" title="Traffic Light Protocol — controls report distribution scope">
+                        <button class="btn btn-sm dropdown-toggle btn-tlp-amber" id="tlpSelectorBtn" type="button" data-bs-toggle="dropdown" aria-expanded="false" title="Traffic Light Protocol — controls report distribution scope">
                             <i class="fas fa-shield-alt me-1"></i><span id="tlpSelectorLabel">TLP:AMBER</span>
                         </button>
                         <ul class="dropdown-menu dropdown-menu-dark">
                             <li><h6 class="dropdown-header">Report Distribution</h6></li>
-                            <li><a class="dropdown-item tlp-option" href="#" data-tlp="amber" data-class="tlp-amber"><span class="badge me-2" style="background:#ffc000;color:#000">AMBER</span> Share within organization only</a></li>
-                            <li><a class="dropdown-item tlp-option" href="#" data-tlp="green" data-class="tlp-green"><span class="badge me-2" style="background:#33a532;color:#fff">GREEN</span> Share within community</a></li>
-                            <li><a class="dropdown-item tlp-option" href="#" data-tlp="clear" data-class="tlp-clear"><span class="badge me-2" style="background:#fff;color:#374151;border:1px solid #6b7280">CLEAR</span> Unlimited distribution</a></li>
+                            <li><a class="dropdown-item tlp-option" href="#" data-tlp="amber" data-class="tlp-amber" data-btn-class="btn-tlp-amber"><span class="badge tlp-badge-amber me-2">AMBER</span> Share within organization only</a></li>
+                            <li><a class="dropdown-item tlp-option" href="#" data-tlp="green" data-class="tlp-green" data-btn-class="btn-tlp-green"><span class="badge tlp-badge-green me-2">GREEN</span> Share within community</a></li>
+                            <li><a class="dropdown-item tlp-option" href="#" data-tlp="clear" data-class="tlp-clear" data-btn-class="btn-tlp-clear"><span class="badge tlp-badge-clear me-2">CLEAR</span> Unlimited distribution</a></li>
                             <li><hr class="dropdown-divider"></li>
-                            <li><span class="dropdown-item-text small text-muted" style="max-width:280px">TLP (Traffic Light Protocol) controls who may receive this report. Default: AMBER per FIRST/CISA standards for security posture reports.</span></li>
+                            <li><span class="dropdown-item-text small text-muted pe-3">TLP (Traffic Light Protocol) controls who may receive this report. Default: AMBER per FIRST/CISA standards for security posture reports.</span></li>
                         </ul>
                     </div>
                     <button type="button" onclick="window.print()" class="btn btn-warning">
@@ -1110,10 +1120,12 @@
                 var badge = document.getElementById('printTlpBadge');
                 var note = document.getElementById('printTlpNote');
                 var selectorLabel = document.getElementById('tlpSelectorLabel');
+                var selectorBtn = document.getElementById('tlpSelectorBtn');
                 var footerTlp = document.getElementById('printFooterTlp');
                 if (badge) { badge.textContent = cfg.label; badge.className = 'print-tlp-badge ' + cfg.cls; }
                 if (note) note.textContent = cfg.note;
                 if (selectorLabel) selectorLabel.textContent = cfg.label;
+                if (selectorBtn) { selectorBtn.className = 'btn btn-sm dropdown-toggle ' + this.dataset.btnClass; }
                 if (footerTlp) footerTlp.innerHTML = cfg.footer + copyrightSuffix;
             });
         });

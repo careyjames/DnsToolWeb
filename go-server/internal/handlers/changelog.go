@@ -63,6 +63,14 @@ func GetRecentChangelog(n int) []ChangelogEntry {
 func GetChangelog() []ChangelogEntry {
         return []ChangelogEntry{
                 {
+                        Version:     "26.15.30",
+                        Date:        dateFeb15,
+                        Category:    "Reporting",
+                        Title:       "TLP:AMBER Default & Colored Selector",
+                        Description: "Report distribution now defaults to TLP:AMBER per CISA/FIRST standards for security posture reports. TLP selector button and dropdown badges show FIRST TLP v2.0 colors (amber, green, clear). Font cache-busting ensures all icons render correctly across browsers.",
+                        Icon:        "fas fa-shield-alt",
+                },
+                {
                         Version:     "26.15.26",
                         Date:        dateFeb15,
                         Category:    "Reporting",

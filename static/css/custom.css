@@ -1125,6 +1125,55 @@ main.container {
 }
 
 /* ============================================
+   TLP SELECTOR — Dropdown badge colors & button
+   CSP-safe classes (no inline styles needed)
+   ============================================ */
+.tlp-badge-amber {
+    background-color: #ffc000 !important;
+    color: #000 !important;
+}
+.tlp-badge-green {
+    background-color: #33a532 !important;
+    color: #fff !important;
+}
+.tlp-badge-clear {
+    background-color: #fff !important;
+    color: #374151 !important;
+    border: 1px solid #6b7280;
+}
+
+.btn-tlp-amber {
+    color: #ffc000 !important;
+    border-color: #ffc000 !important;
+}
+.btn-tlp-amber:hover,
+.btn-tlp-amber:focus {
+    background-color: rgba(255, 192, 0, 0.15) !important;
+    color: #ffc000 !important;
+    border-color: #ffc000 !important;
+}
+.btn-tlp-green {
+    color: #33a532 !important;
+    border-color: #33a532 !important;
+}
+.btn-tlp-green:hover,
+.btn-tlp-green:focus {
+    background-color: rgba(51, 165, 50, 0.15) !important;
+    color: #33a532 !important;
+    border-color: #33a532 !important;
+}
+.btn-tlp-clear {
+    color: #adb5bd !important;
+    border-color: #6c757d !important;
+}
+.btn-tlp-clear:hover,
+.btn-tlp-clear:focus {
+    background-color: rgba(108, 117, 125, 0.15) !important;
+    color: #adb5bd !important;
+    border-color: #6c757d !important;
+}
+
+/* ============================================
    PRINT STYLES — Executive Intelligence Report
    Professional, colorful yet B&W laser-safe
    Colors chosen for distinct grayscale mapping
