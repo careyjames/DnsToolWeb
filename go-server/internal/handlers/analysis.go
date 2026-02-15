@@ -369,6 +369,8 @@ func (h *AnalysisHandler) saveAnalysis(ctx context.Context, domain, asciiDomain 
         dkimSelectorsJSON := getJSONFromResults(results, "dkim_analysis", "selectors")
         ctSubdomainsJSON := getJSONFromResults(results, "ct_subdomains", "")
 
+        postureHash := analyzer.CanonicalPostureHash(results)
+
         success := true
         var errorMessage *string
         if errStr, ok := results["error"].(string); ok && errStr != "" {
@@ -405,6 +407,7 @@ func (h *AnalysisHandler) saveAnalysis(ctx context.Context, domain, asciiDomain 
                 AnalysisSuccess:      &success,
                 ErrorMessage:         errorMessage,
                 AnalysisDuration:     &duration,
+                PostureHash:          &postureHash,
         }
 
         row, err := h.DB.Queries.InsertAnalysis(ctx, params)

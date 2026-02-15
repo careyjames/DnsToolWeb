@@ -46,4 +46,5 @@ type DomainAnalysis struct {
 	CountryName          *string          `db:"country_name" json:"country_name"`
 	CtSubdomains         json.RawMessage  `db:"ct_subdomains" json:"ct_subdomains"`
 	FullResults          json.RawMessage  `db:"full_results" json:"full_results"`
+	PostureHash          *string          `db:"posture_hash" json:"posture_hash"`
 }

@@ -21,7 +21,8 @@ CREATE TABLE domain_analyses (
     country_code VARCHAR(10),
     country_name VARCHAR(100),
     ct_subdomains JSON,
-    full_results JSON NOT NULL
+    full_results JSON NOT NULL,
+    posture_hash VARCHAR(64)
 );
 
 CREATE INDEX ix_domain_analyses_domain ON domain_analyses (domain);

@@ -50,9 +50,10 @@ INSERT INTO domain_analyses (
     ct_subdomains, full_results,
     country_code, country_name,
     analysis_success, error_message, analysis_duration,
+    posture_hash,
     created_at
 ) VALUES (
-    $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, NOW()
+    $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, NOW()
 ) RETURNING id, created_at;
 
 -- name: UpdateAnalysis :exec
@@ -107,3 +108,12 @@ FROM domain_analyses
 WHERE full_results IS NOT NULL AND analysis_success = TRUE
 ORDER BY created_at DESC
 LIMIT $1 OFFSET $2;
+
+-- name: GetPreviousPostureHash :one
+SELECT posture_hash, created_at FROM domain_analyses
+WHERE domain = $1
+  AND analysis_success = TRUE
+  AND posture_hash IS NOT NULL
+  AND posture_hash != ''
+ORDER BY created_at DESC
+LIMIT 1;

@@ -221,3 +221,30 @@ All documentation files verified accurate:
 
 **Golden Rule Tests**: All 50 sub-tests pass, zero regressions
 **Version**: 26.15.25
+
+### Drift Engine Foundation — Phase 1 (Feb 15, 2026)
+
+**Decision**: Begin building drift detection infrastructure — the highest-leverage feature for transitioning from episodic analysis to longitudinal monitoring. External analysis confirmed this as the critical inflection point for product maturity.
+
+**Architecture Principle**: Live results are sacred. Snapshots are a side-effect of the save path, never served as live results, never cached.
+
+**Canonical Posture Hashing** (`posture_hash.go`):
+- `CanonicalPostureHash(results map[string]any) string` — deterministic SHA-256 fingerprint of security-relevant posture
+- Posture vector covers: SPF (status, records), DMARC (status, policy, records), DKIM (status, selectors), MTA-STS (status, mode), TLS-RPT, BIMI, DANE (status, has_dane), CAA (status, tags), DNSSEC, mail posture label, MX hosts, NS servers
+- Excludes volatile/cosmetic fields: TTL, analysis duration, country, CT subdomains, ASN, timestamps
+- Order-independent: all lists sorted before hashing (MX, NS, selectors, CAA tags) to prevent false drift from DNS provider record reordering
+- 10 new golden rule sub-tests (deterministic, drift detection, order independence, empty input)
+
+**Database Extension**:
+- `posture_hash VARCHAR(64)` column added to `domain_analyses` via ALTER TABLE
+- Schema.sql updated, sqlc regenerated
+- New query: `GetPreviousPostureHash(domain)` — returns most recent hash for future drift comparison
+
+**Save Path Integration**:
+- `analysis.go` `saveAnalysis()` computes hash and stores it — one-line addition, zero changes to analysis/rendering path
+- All future analyses automatically fingerprinted
+
+**Planning Doc**: `DRIFT_ENGINE.md` created with 4-phase roadmap (Foundation → Drift Detection → Timeline UI → Alerting)
+
+**Golden Rule Tests**: All 60 sub-tests pass (50 original + 10 new posture hash), zero regressions
+**Files**: `posture_hash.go`, `posture_hash_test.go` (new), `schema.sql`, `domain_analyses.sql`, `dbq/*` (regenerated), `analysis.go`, `DRIFT_ENGINE.md` (new)
