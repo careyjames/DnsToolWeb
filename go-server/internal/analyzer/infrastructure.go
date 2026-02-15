@@ -5,6 +5,7 @@ package analyzer
 
 import (
         "context"
+        "net"
         "strings"
 )
 
@@ -498,6 +499,48 @@ func identifyDNSProvider(nsRecords []string) string {
         return ""
 }
 
+var webHostingPatterns = map[string]string{
+        "cloudflare":    "Cloudflare",
+        "amazonaws":     "AWS",
+        "cloudfront":    "AWS CloudFront",
+        "azurewebsites": "Azure",
+        "azure":         "Azure",
+        "herokuapp":     "Heroku",
+        "netlify":       "Netlify",
+        "vercel":        "Vercel",
+        "squarespace":   "Squarespace",
+        "wix":           "Wix",
+        "shopify":       "Shopify",
+        "wpengine":      "WP Engine",
+        "pantheon":      "Pantheon",
+        "github.io":     "GitHub Pages",
+        "fastly":        "Fastly",
+        "akamai":        "Akamai",
+        "digitalocean":  "DigitalOcean",
+        "linode":        "Linode",
+        "hetzner":       "Hetzner",
+        "ovh":           "OVH",
+        "googleusercontent": "Google Cloud",
+        "1e100.net":     "Google Cloud",
+}
+
+var ptrHostingPatterns = map[string]string{
+        "amazonaws.com":     "AWS",
+        "compute.amazonaws": "AWS",
+        "ec2":               "AWS",
+        "cloudfront.net":    "AWS CloudFront",
+        "azure":             "Azure",
+        "googleusercontent": "Google Cloud",
+        "1e100.net":         "Google Cloud",
+        "bc.googleusercontent": "Google Cloud",
+        "digitalocean.com":  "DigitalOcean",
+        "linode.com":        "Linode",
+        "vultr.com":         "Vultr",
+        "hetzner":           "Hetzner",
+        "ovh.net":           "OVH",
+        "rackspace":         "Rackspace",
+}
+
 func identifyWebHosting(basic map[string]any) string {
         if basic == nil {
                 return ""
@@ -505,26 +548,33 @@ func identifyWebHosting(basic map[string]any) string {
         cnames, _ := basic["CNAME"].([]string)
         joined := strings.ToLower(strings.Join(cnames, " "))
 
-        webPatterns := map[string]string{
-                "cloudflare":   "Cloudflare",
-                "amazonaws":    "AWS",
-                "cloudfront":   "AWS CloudFront",
-                "azurewebsites": "Azure",
-                "herokuapp":    "Heroku",
-                "netlify":      "Netlify",
-                "vercel":       "Vercel",
-                "squarespace":  "Squarespace",
-                "wix":          "Wix",
-                "shopify":      "Shopify",
-                "wpengine":     "WP Engine",
-                "pantheon":     "Pantheon",
-                "github.io":    "GitHub Pages",
-                "fastly":       "Fastly",
-                "akamai":       "Akamai",
-        }
-        for pattern, provider := range webPatterns {
+        for pattern, provider := range webHostingPatterns {
                 if strings.Contains(joined, pattern) {
                         return provider
+                }
+        }
+
+        aRecords, _ := basic["A"].([]string)
+        if len(aRecords) > 0 {
+                if provider := identifyHostingFromPTR(aRecords); provider != "" {
+                        return provider
+                }
+        }
+
+        return ""
+}
+
+func identifyHostingFromPTR(aRecords []string) string {
+        for _, ip := range aRecords {
+                names, err := net.LookupAddr(ip)
+                if err != nil || len(names) == 0 {
+                        continue
+                }
+                ptrLower := strings.ToLower(strings.Join(names, " "))
+                for pattern, provider := range ptrHostingPatterns {
+                        if strings.Contains(ptrLower, pattern) {
+                                return provider
+                        }
                 }
         }
         return ""

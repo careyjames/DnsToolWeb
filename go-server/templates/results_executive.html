@@ -666,7 +666,7 @@
                                         <span class="fw-semibold me-2">Risk Level:</span>
                                         <span class="badge bg-{{$postureColor}} fs-6 px-3 py-2">{{$postureState}}</span>
                                     </div>
-                                    <small class="text-muted d-block mt-1">{{$postureMsg}}</small>
+                                    <small class="d-block mt-1">{{$postureConfiguredCount := len (mapGetSlice "configured" $posture)}}{{$postureAbsentCount := len (mapGetSlice "absent" $posture)}}{{if gt $postureConfiguredCount 0}}<span class="text-success">{{$postureConfiguredCount}} protocols configured</span>{{end}}{{if and (gt $postureConfiguredCount 0) (gt $postureAbsentCount 0)}}, {{end}}{{if gt $postureAbsentCount 0}}<span class="text-warning">{{$postureAbsentCount}} not configured</span>{{end}}</small>
                                 </div>
                             </div>
                             {{if or $postureCritical $postureRecs}}

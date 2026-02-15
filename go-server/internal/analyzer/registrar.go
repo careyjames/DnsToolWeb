@@ -171,13 +171,17 @@ func (a *Analyzer) getRegistrarInfoUncached(ctx context.Context, domain string) 
 func (a *Analyzer) tryRDAPLookup(ctx context.Context, domain string) map[string]any {
         rdapResult := a.rdapLookup(ctx, domain)
         if rdapResult == nil {
+                slog.Info("RDAP lookup returned nil", "domain", domain)
                 return nil
         }
         registrar := extractRegistrarFromRDAP(rdapResult)
         if registrar == "" || isDigits(registrar) {
+                slog.Info("RDAP registrar extraction failed", "domain", domain, "raw_registrar", registrar)
                 return nil
         }
-        regStr := formatRegistrarWithRegistrant(registrar, extractRegistrantFromRDAP(rdapResult))
+        registrant := extractRegistrantFromRDAP(rdapResult)
+        regStr := formatRegistrarWithRegistrant(registrar, registrant)
+        slog.Info("RDAP lookup succeeded", "domain", domain, "registrar", regStr)
         return map[string]any{"status": "success", "source": "RDAP", "registrar": regStr, "confidence": ConfidenceObservedMap(MethodRDAP)}
 }
 
@@ -256,8 +260,11 @@ func (a *Analyzer) rdapLookup(ctx context.Context, domain string) map[string]any
         body, err := a.HTTP.ReadBody(resp, 1<<20)
         if err != nil {
                 a.Telemetry.RecordFailure(providerName, err.Error())
+                slog.Warn("RDAP body read failed", "url", rdapURL, "error", err)
                 return nil
         }
+
+        slog.Info("RDAP response received", "url", rdapURL, "status", resp.StatusCode, "body_len", len(body))
 
         if resp.StatusCode >= 400 {
                 a.Telemetry.RecordFailure(providerName, fmt.Sprintf("HTTP %d", resp.StatusCode))
@@ -267,11 +274,13 @@ func (a *Analyzer) rdapLookup(ctx context.Context, domain string) map[string]any
         var data map[string]any
         if json.Unmarshal(body, &data) != nil {
                 a.Telemetry.RecordFailure(providerName, "invalid JSON")
+                slog.Warn("RDAP JSON parse failed", "url", rdapURL, "body_preview", string(body[:min(200, len(body))]))
                 return nil
         }
 
         if _, hasError := data["errorCode"]; hasError {
                 a.Telemetry.RecordFailure(providerName, "RDAP error response")
+                slog.Warn("RDAP error in response", "url", rdapURL, "error_code", data["errorCode"])
                 return nil
         }
 
