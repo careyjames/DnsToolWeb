@@ -15,7 +15,8 @@ The DNS Tool is a web-based intelligence platform designed for comprehensive, RF
 ## Known Constraints (Read Before Coding)
 - **CSP blocks ALL inline handlers**: Never use `onclick`, `onchange`, etc. Use `id` + `addEventListener` in `<script nonce="{{.CspNonce}}">` blocks.
 - **PDF filename = `<title>` tag**: Format as "Report Type — domain - DNS Tool" (e.g., "Engineer Report — example.com - DNS Tool").
-- **Executive print minimum sizes**: Body 10.5pt, small text 9pt, badges 9pt, labels 10pt, metadata 8.5pt. Text-muted color minimum #4b5563.
+- **Executive print minimum sizes**: Body 11pt, small text 9pt, badges 9pt, labels 8.5pt, metadata 9pt, code 8.5pt, footer 8.5pt. Text-muted color minimum #4b5563. Target audience: 40-50+ year old board members.
+- **Executive button**: Uses custom `btn-outline-executive` class (muted gray #9ca3af text, #6b7280 border). NOT btn-outline-light (too bright) or btn-outline-warning (clashes with TLP:AMBER).
 - **Font Awesome subset**: 110 glyphs in `static/webfonts/fa-solid-900.woff2`. Verify with fonttools before regenerating. CSS refs in `fontawesome-subset.min.css`.
 
 ## System Architecture

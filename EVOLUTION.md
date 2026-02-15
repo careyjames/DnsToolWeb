@@ -440,7 +440,28 @@ This section tracks recurring issues and failed approaches so future sessions av
 
 **Problem**: Executive button used `btn-outline-warning` (amber/yellow) which visually clashed with the TLP:AMBER dropdown button immediately to its right — both were the same amber color.
 
-**Fix**: Changed Executive to `btn-outline-light` (white/clean border on dark theme). Now the three buttons are visually distinct: Engineer (cyan/info), Executive (white/light), TLP:AMBER (amber/gold).
+**Fix v1**: Changed to `btn-outline-light` (white/clean border). Too bright — drew eyes to it first.
+
+**Fix v2**: Created custom `btn-outline-executive` class (muted gray: #9ca3af text, #6b7280 border, subtle hover to #d1d5db). Now blends naturally with dark theme. Three buttons visually distinct: Engineer (cyan/info), Executive (muted gray), TLP:AMBER (amber/gold).
+
+### Executive Print Font Sizes — Board Readability (v26.16.3)
+
+**Problem**: Several Executive print sizes were too small for 40-50+ year old board members (7pt TLP note, 7.5pt labels, 8pt domain label/footer note, 10.5pt body).
+
+**Fix**: Bumped all Executive print font sizes to meet readability floor:
+- Body: 10.5pt → 11pt (with line-height 1.6 → 1.65)
+- Metadata: 8.5pt → 9pt
+- Labels: 7.5pt → 8.5pt
+- TLP badge: 8.5pt → 9pt
+- TLP note: 7pt → 8pt
+- Domain label: 8pt → 9pt
+- Footer: 8.5pt → 9pt
+- Footer note: 8pt → 8.5pt
+- Footer disclaimer: 7.5pt → 8.5pt
+- h6: 9pt → 9.5pt
+- Code blocks: 8pt → 8.5pt
+
+**Rule**: Executive report minimum floor: body 11pt, small text 9pt, metadata 9pt, code 8.5pt, footer 8.5pt. Nothing below 8pt.
 
 ### Owl of Athena — Copyright Risk (v26.16.2)
 

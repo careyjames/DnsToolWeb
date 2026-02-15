@@ -1173,6 +1173,18 @@ main.container {
     border-color: #6c757d !important;
 }
 
+.btn-outline-executive {
+    color: #9ca3af;
+    border-color: #6b7280;
+    background-color: transparent;
+}
+.btn-outline-executive:hover,
+.btn-outline-executive:focus {
+    background-color: rgba(156, 163, 175, 0.12);
+    color: #d1d5db;
+    border-color: #9ca3af;
+}
+
 /* ============================================
    PRINT STYLES — Executive Intelligence Report
    Professional, colorful yet B&W laser-safe
