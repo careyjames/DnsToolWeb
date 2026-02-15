@@ -1475,8 +1475,11 @@
             });
         });
     });
-    if (window.opener || window.history.length <= 1) {
-        window.addEventListener('load', function() { setTimeout(function() { window.print(); }, 500); });
+    if (window.self === window.top && (window.opener || window.history.length <= 1)) {
+        var params = new URLSearchParams(window.location.search);
+        if (!params.has('print')) {
+            window.addEventListener('load', function() { setTimeout(function() { window.print(); }, 500); });
+        }
     }
     </script>
 </body>

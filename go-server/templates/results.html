@@ -140,9 +140,9 @@
                     <button type="button" id="engineerPrintBtn" class="btn btn-outline-info" title="Engineer's DNS Intelligence Report — full technical detail">
                         <i class="fas fa-file-lines me-1"></i>Engineer
                     </button>
-                    <a href="/analysis/{{.AnalysisID}}/executive" class="btn btn-outline-executive" title="Executive's DNS Intelligence Brief — concise board-ready summary" target="_blank" rel="noopener">
+                    <button type="button" id="executivePrintBtn" class="btn btn-outline-executive" title="Executive's DNS Intelligence Brief — concise board-ready summary" data-executive-url="/analysis/{{.AnalysisID}}/executive">
                         <i class="fas fa-file-alt me-1"></i>Executive
-                    </a>
+                    </button>
                 </div>
                 <div class="dropdown me-2">
                     <button class="btn btn-sm dropdown-toggle btn-tlp-amber" id="tlpSelectorBtn" type="button" data-bs-toggle="dropdown" aria-expanded="false" title="Traffic Light Protocol — controls report distribution scope">
@@ -3622,6 +3622,32 @@
             var printBtn = document.getElementById('engineerPrintBtn');
             if (printBtn) printBtn.addEventListener('click', function() { window.print(); });
 
+            var execPrintBtn = document.getElementById('executivePrintBtn');
+            if (execPrintBtn) execPrintBtn.addEventListener('click', function() {
+                var url = this.dataset.executiveUrl;
+                if (!url) return;
+                this.disabled = true;
+                var origHTML = this.innerHTML;
+                this.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Loading\u2026';
+                var iframe = document.createElement('iframe');
+                iframe.style.cssText = 'position:fixed;left:-9999px;top:0;width:0;height:0;border:none;';
+                iframe.src = url + '?print=iframe';
+                document.body.appendChild(iframe);
+                var self = this;
+                iframe.addEventListener('load', function() {
+                    setTimeout(function() {
+                        try { iframe.contentWindow.print(); } catch(e) { window.open(url, '_blank'); }
+                        self.disabled = false;
+                        self.innerHTML = origHTML;
+                        setTimeout(function() { if (iframe.parentNode) iframe.parentNode.removeChild(iframe); }, 2000);
+                    }, 600);
+                });
+                setTimeout(function() {
+                    self.disabled = false;
+                    self.innerHTML = origHTML;
+                }, 15000);
+            });
+
             var histBtn = document.getElementById('dns-history-btn');
             if (histBtn) histBtn.addEventListener('click', function() { loadDNSHistory(this.dataset.domain); });
 
@@ -3757,10 +3783,6 @@
                         if (btn) btn.click();
                     }
                 });
-                {{if .SecurityTrailsKey}}
-                stKeyInput.value = {{.SecurityTrailsKey}};
-                setTimeout(function() { loadDNSHistory('{{.AsciiDomain}}'); }, 500);
-                {{end}}
             }
         });
     })();
