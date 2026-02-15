@@ -143,6 +143,96 @@ func (h *AnalysisHandler) ViewAnalysis(c *gin.Context) {
         h.ViewAnalysisStatic(c)
 }
 
+func (h *AnalysisHandler) ViewAnalysisExecutive(c *gin.Context) {
+        nonce, _ := c.Get("csp_nonce")
+        csrfToken, _ := c.Get("csrf_token")
+        idStr := c.Param("id")
+        analysisID, err := strconv.ParseInt(idStr, 10, 32)
+        if err != nil {
+                c.HTML(http.StatusBadRequest, templateIndex, gin.H{
+                        "AppVersion":    h.Config.AppVersion,
+                        "CspNonce":      nonce,
+                        "CsrfToken":    csrfToken,
+                        "ActivePage":    "home",
+                        "FlashMessages": []FlashMessage{{Category: "danger", Message: "Invalid analysis ID"}},
+                })
+                return
+        }
+
+        ctx := c.Request.Context()
+        analysis, err := h.DB.Queries.GetAnalysisByID(ctx, int32(analysisID))
+        if err != nil {
+                c.HTML(http.StatusNotFound, templateIndex, gin.H{
+                        "AppVersion":    h.Config.AppVersion,
+                        "CspNonce":      nonce,
+                        "CsrfToken":    csrfToken,
+                        "ActivePage":    "home",
+                        "FlashMessages": []FlashMessage{{Category: "danger", Message: "Analysis not found"}},
+                })
+                return
+        }
+
+        if len(analysis.FullResults) == 0 || string(analysis.FullResults) == "null" {
+                c.HTML(http.StatusGone, templateIndex, gin.H{
+                        "AppVersion":    h.Config.AppVersion,
+                        "CspNonce":      nonce,
+                        "CsrfToken":    csrfToken,
+                        "ActivePage":    "home",
+                        "FlashMessages": []FlashMessage{{Category: "warning", Message: "This report is no longer available. Please re-analyze the domain."}},
+                })
+                return
+        }
+
+        results := NormalizeResults(analysis.FullResults)
+        if results == nil {
+                c.HTML(http.StatusInternalServerError, templateIndex, gin.H{
+                        "AppVersion":    h.Config.AppVersion,
+                        "CspNonce":      nonce,
+                        "CsrfToken":    csrfToken,
+                        "ActivePage":    "home",
+                        "FlashMessages": []FlashMessage{{Category: "danger", Message: "Failed to parse results"}},
+                })
+                return
+        }
+
+        timestamp := formatTimestamp(analysis.CreatedAt)
+        if analysis.UpdatedAt.Valid {
+                timestamp = formatTimestamp(analysis.UpdatedAt)
+        }
+
+        dur := 0.0
+        if analysis.AnalysisDuration != nil {
+                dur = *analysis.AnalysisDuration
+        }
+
+        domainExists := true
+        if v, ok := results["domain_exists"]; ok {
+                if b, ok := v.(bool); ok {
+                        domainExists = b
+                }
+        }
+
+        toolVersion := ""
+        if tv, ok := results["_tool_version"].(string); ok {
+                toolVersion = tv
+        }
+
+        c.HTML(http.StatusOK, "results_executive.html", gin.H{
+                "AppVersion":        h.Config.AppVersion,
+                "CspNonce":          nonce,
+                "CsrfToken":        csrfToken,
+                "ActivePage":        "",
+                "Domain":            analysis.Domain,
+                "AsciiDomain":       analysis.AsciiDomain,
+                "Results":           results,
+                "AnalysisID":        analysis.ID,
+                "AnalysisDuration":  dur,
+                "AnalysisTimestamp": timestamp,
+                "DomainExists":      domainExists,
+                "ToolVersion":       toolVersion,
+        })
+}
+
 func (h *AnalysisHandler) Analyze(c *gin.Context) {
         nonce, _ := c.Get("csp_nonce")
         csrfToken, _ := c.Get("csrf_token")

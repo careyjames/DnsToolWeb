@@ -1,0 +1,1076 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="dark">
+<head>
+    {{template "head" .}}
+    <title>Executive Report — {{.Domain}} - DNS Tool</title>
+    <meta name="description" content="Executive domain security report for {{.Domain}}. Board-ready summary of email authentication, DNS security, and risk posture.">
+    <meta name="robots" content="noindex, nofollow">
+    {{template "head_css" .}}
+    {{template "critical_css" .}}
+    <style nonce="{{.CspNonce}}">
+        .print-report-header { display: none; }
+        .print-report-footer { display: none; }
+        .exec-banner {
+            background: linear-gradient(135deg, rgba(217, 119, 6, 0.15), rgba(30, 58, 95, 0.15));
+            border: 1px solid rgba(217, 119, 6, 0.3);
+            border-radius: 0.5rem;
+            padding: 1rem 1.25rem;
+        }
+        .exec-section-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #e6edf3;
+            border-bottom: 2px solid rgba(88, 166, 255, 0.2);
+            padding-bottom: 0.5rem;
+            margin-bottom: 1rem;
+        }
+        .exec-finding-row {
+            display: flex;
+            align-items: baseline;
+            gap: 0.75rem;
+            padding: 0.35rem 0;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+        .exec-finding-row:last-child { border-bottom: none; }
+        .exec-finding-label {
+            min-width: 140px;
+            font-weight: 600;
+            color: #8b949e;
+            font-size: 0.85rem;
+        }
+        .exec-finding-value {
+            font-size: 0.85rem;
+        }
+        .exec-fix-item {
+            padding: 0.5rem 0.75rem;
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.06);
+            border-radius: 0.375rem;
+            margin-bottom: 0.5rem;
+        }
+
+        @media print {
+            .print-only { display: block !important; }
+
+            @page { margin: 14mm 12mm 12mm 12mm; size: letter; }
+
+            body, .card, .card-header, .card-body, .card-footer,
+            .badge, .alert, .table, .table th, .table td,
+            .print-report-header, .print-domain-banner, .print-report-footer,
+            .print-header-accent, .print-footer-accent,
+            .print-tlp-badge, .code-block {
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+            }
+
+            :root, [data-bs-theme="dark"] {
+                --bg-primary: #ffffff !important;
+                --bg-secondary: #f5f7fa !important;
+                --bg-tertiary: #f0f4f8 !important;
+                --bg-elevated: #e5e7eb !important;
+                --text-primary: #1a1a2e !important;
+                --text-secondary: #6b7280 !important;
+                --code-bg: #f5f7fa !important;
+                --code-border: #d1d5db !important;
+                --status-success: #166534 !important;
+                --status-success-bg: #f0fdf4 !important;
+                --status-warning: #d97706 !important;
+                --status-warning-bg: #fffdf5 !important;
+                --status-danger: #991b1b !important;
+                --status-danger-bg: #fef2f2 !important;
+                --status-info: #0e7490 !important;
+                --status-info-bg: #ecfeff !important;
+                --status-neutral: #6b7280 !important;
+                --border-default: #d1d5db !important;
+                --border-muted: #e5e7eb !important;
+                --bs-body-bg: #ffffff !important;
+                --bs-body-color: #1a1a2e !important;
+                --bs-emphasis-color: #1a1a2e !important;
+                --bs-secondary-color: #6b7280 !important;
+                --bs-tertiary-color: #9ca3af !important;
+                --bs-body-bg-rgb: 255, 255, 255 !important;
+                --bs-body-color-rgb: 26, 26, 46 !important;
+                --bs-emphasis-color-rgb: 26, 26, 46 !important;
+                --bs-link-color: #1e40af !important;
+                --bs-link-color-rgb: 30, 64, 175 !important;
+                --bs-link-hover-color: #1e3a5f !important;
+                --bs-card-bg: #ffffff !important;
+                --bs-card-color: #1a1a2e !important;
+                --bs-card-border-color: #d1d5db !important;
+                --bs-card-cap-bg: #f0f4f8 !important;
+                --bs-card-cap-color: #1a1a2e !important;
+                --bs-border-color: #d1d5db !important;
+                --bs-border-color-translucent: rgba(0, 0, 0, 0.12) !important;
+                --bs-heading-color: #1a1a2e !important;
+                --bs-table-bg: #ffffff !important;
+                --bs-table-color: #1a1a2e !important;
+                --bs-table-border-color: #e5e7eb !important;
+                --bs-table-striped-bg: #f5f7fa !important;
+                --bs-table-striped-color: #1a1a2e !important;
+                --bs-tertiary-bg: #f5f7fa !important;
+                --bs-secondary-bg: #e5e7eb !important;
+            }
+
+            body {
+                background-color: #ffffff !important;
+                color: #1a1a2e !important;
+                font-family: 'Inter', 'SF Pro Text', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif !important;
+                font-size: 9.5pt !important;
+                line-height: 1.55 !important;
+                -webkit-font-smoothing: antialiased !important;
+            }
+
+            .container { max-width: 100% !important; padding: 0 !important; }
+
+            .screen-only, .navbar, .btn, button,
+            .loading-overlay, .no-print, .exec-banner {
+                display: none !important;
+            }
+
+            .print-report-header { display: block !important; margin-bottom: 20pt; }
+
+            .print-header-accent {
+                height: 5pt;
+                background: linear-gradient(90deg, #1e3a5f 0%, #0e7490 60%, #d97706 100%) !important;
+                border-radius: 2pt;
+                margin-bottom: 14pt;
+            }
+
+            .print-header-toprow {
+                display: flex;
+                justify-content: space-between;
+                align-items: flex-start;
+                margin-bottom: 14pt;
+            }
+
+            .print-header-left { flex: 1; }
+            .print-header-right { text-align: right; flex-shrink: 0; padding-left: 20pt; }
+
+            .print-report-brand { display: flex; align-items: center; margin-bottom: 4pt; }
+            .print-brand-logo { width: 24pt; height: 24pt; border-radius: 50%; margin-right: 7pt; }
+            .print-brand-name {
+                font-size: 8.5pt; font-weight: 700; color: #1e3a5f;
+                letter-spacing: 0.08em; text-transform: uppercase;
+            }
+
+            .print-report-title {
+                font-size: 15pt; font-weight: 800; color: #1a1a2e;
+                letter-spacing: -0.2pt; line-height: 1.2; margin-top: 2pt;
+            }
+
+            .print-report-meta { font-size: 7.5pt; color: #6b7280; line-height: 1.7; }
+            .print-meta-label {
+                font-weight: 600; color: #4b5563; text-transform: uppercase;
+                font-size: 6.5pt; letter-spacing: 0.05em;
+            }
+
+            .print-tlp-badge {
+                display: inline-block; margin-top: 6pt; padding: 2pt 10pt;
+                font-size: 7.5pt; font-weight: 800; letter-spacing: 0.1em;
+                color: #ffffff; background-color: #1a1a2e !important; border-radius: 2pt;
+            }
+
+            .print-tlp-note { font-size: 6pt; color: #9ca3af; margin-top: 2pt; letter-spacing: 0.03em; }
+
+            .print-domain-banner {
+                background-color: #1e3a5f !important;
+                padding: 14pt 16pt 16pt; border-radius: 4pt;
+                text-align: center; margin-bottom: 6pt;
+            }
+
+            .print-domain-label {
+                font-size: 7pt; font-weight: 700; letter-spacing: 0.12em;
+                text-transform: uppercase; color: #94a3b8 !important; margin-bottom: 3pt;
+            }
+
+            .print-domain-name {
+                font-size: 22pt; font-weight: 800; color: #ffffff !important;
+                font-family: 'SF Mono', 'Cascadia Code', 'Fira Code', Consolas, monospace !important;
+                letter-spacing: 0.5pt; line-height: 1.2;
+            }
+
+            .print-report-footer { display: block !important; margin-top: 28pt; page-break-inside: avoid; }
+
+            .print-footer-accent {
+                height: 3pt;
+                background: linear-gradient(90deg, #1e3a5f 0%, #0e7490 60%, #d97706 100%) !important;
+                border-radius: 1pt; margin-bottom: 8pt;
+            }
+
+            .print-footer-content {
+                display: flex; justify-content: space-between;
+                align-items: flex-start; font-size: 7.5pt; color: #4b5563;
+            }
+
+            .print-footer-left { display: flex; flex-direction: column; }
+            .print-footer-left strong { font-size: 8pt; color: #1e3a5f; }
+            .print-footer-left span { color: #6b7280; }
+            .print-footer-center { text-align: center; display: flex; flex-direction: column; gap: 2pt; }
+            .print-footer-tagline { font-weight: 700; font-size: 8pt; color: #1e3a5f; letter-spacing: 0.03em; }
+            .print-footer-note { font-style: italic; font-size: 7pt; color: #9ca3af; }
+            .print-footer-right { display: flex; flex-direction: column; text-align: right; }
+            .print-footer-right strong { font-size: 8pt; color: #1e3a5f; }
+            .print-footer-right span { color: #6b7280; }
+            .print-footer-disclaimer {
+                font-size: 6.5pt; color: #9ca3af; margin-top: 6pt;
+                text-align: center; line-height: 1.4;
+            }
+
+            h1, h2, h3, h4, h5, h6 { color: #1a1a2e !important; page-break-after: avoid; font-weight: 700 !important; }
+            h1, .h1 { font-size: 17pt !important; }
+            h2, .h2 { font-size: 14pt !important; }
+            h3, .h3 { font-size: 12pt !important; }
+            h4, .h4, h5, .h5 { font-size: 10.5pt !important; }
+            h6, .h6 { font-size: 9pt !important; }
+            p { orphans: 3; widows: 3; }
+            strong, b { color: #1a1a2e !important; }
+            a { color: #1e40af !important; text-decoration: none !important; }
+            .text-muted { color: #6b7280 !important; }
+            .text-light { color: #374151 !important; }
+            .text-white { color: #1a1a2e !important; }
+            .text-info { color: #0e7490 !important; }
+            .text-success { color: #166534 !important; }
+            .text-warning { color: #92400e !important; }
+            .text-danger { color: #991b1b !important; }
+            .text-primary { color: #1e3a5f !important; }
+            .text-secondary { color: #4b5563 !important; }
+            .small, small { font-size: 8pt !important; }
+            .opacity-75, .opacity-50 { opacity: 1 !important; }
+
+            .card {
+                background-color: #ffffff !important;
+                border: 1pt solid #d1d5db !important;
+                border-radius: 4pt !important;
+                box-shadow: none !important;
+                break-inside: avoid;
+                margin-bottom: 12pt;
+            }
+
+            .card-header {
+                background-color: #f0f4f8 !important;
+                color: #1a1a2e !important;
+                border-bottom: 1.5pt solid #1e3a5f !important;
+                padding: 7pt 12pt !important;
+                page-break-after: avoid;
+                break-after: avoid;
+            }
+
+            .card-header h5, .card-header .h5 { color: #1e3a5f !important; }
+
+            .card-body {
+                background-color: #ffffff !important;
+                color: #1a1a2e !important;
+                padding: 10pt 12pt !important;
+            }
+
+            .card.border-0 { border: 1pt solid #d1d5db !important; }
+
+            .bg-dark, .bg-opacity-25, .bg-opacity-50, .bg-opacity-75, .bg-opacity-10 {
+                background-color: #ffffff !important;
+            }
+
+            .card.border-success.bg-success {
+                background-color: #f0fdf4 !important;
+                border-color: #d1d5db !important;
+                border-left: 4pt solid #166534 !important;
+            }
+            .card.border-warning.bg-warning {
+                background-color: #fffbeb !important;
+                border-color: #d1d5db !important;
+                border-left: 4pt solid #d97706 !important;
+            }
+            .card.border-danger.bg-danger {
+                background-color: #fef2f2 !important;
+                border-color: #d1d5db !important;
+                border-left: 4pt solid #991b1b !important;
+            }
+            .card.border-info.bg-info {
+                background-color: #ecfeff !important;
+                border-color: #d1d5db !important;
+                border-left: 4pt solid #0e7490 !important;
+            }
+
+            .badge {
+                font-size: 8pt !important; font-weight: 700 !important;
+                padding: 2.5pt 7pt !important; border-radius: 3pt !important;
+                letter-spacing: 0.02em;
+            }
+
+            .badge.bg-success { background-color: #166534 !important; color: #ffffff !important; border: none !important; }
+            .badge.bg-warning { background-color: #92400e !important; color: #ffffff !important; border: none !important; }
+            .badge.bg-danger { background-color: #991b1b !important; color: #ffffff !important; border: none !important; }
+            .badge.bg-info { background-color: #0e7490 !important; color: #ffffff !important; border: none !important; }
+            .badge.bg-secondary { background-color: #6b7280 !important; color: #ffffff !important; border: none !important; }
+            .badge.bg-primary { background-color: #1e3a5f !important; color: #ffffff !important; }
+            .badge.fs-6 { font-size: 10pt !important; padding: 4pt 12pt !important; }
+            .badge.text-dark { color: #ffffff !important; }
+
+            .code-block {
+                background-color: #f5f7fa !important;
+                border: 1pt solid #d1d5db !important;
+                border-left: 3pt solid #0e7490 !important;
+                border-radius: 0 3pt 3pt 0 !important;
+                color: #1a1a2e !important;
+                font-family: 'SF Mono', Consolas, monospace !important;
+                font-size: 7.5pt !important;
+                line-height: 1.6 !important;
+                padding: 7pt 10pt !important;
+                page-break-inside: avoid;
+                word-break: break-all;
+            }
+
+            .alert {
+                background-color: #f9fafb !important;
+                color: #1a1a2e !important;
+                border: none !important;
+                border-left: 3.5pt solid #6b7280 !important;
+                border-radius: 0 4pt 4pt 0 !important;
+                padding: 9pt 12pt !important;
+                margin-bottom: 10pt !important;
+            }
+
+            .alert-success { border-left-color: #166534 !important; background-color: #f0fdf4 !important; }
+            .alert-warning { border-left-color: #d97706 !important; background-color: #fffdf5 !important; }
+            .alert-danger { border-left-color: #991b1b !important; background-color: #fef2f2 !important; }
+            .alert-info { border-left-color: #0e7490 !important; background-color: #ecfeff !important; }
+
+            .card.bg-dark.bg-opacity-25 {
+                background-color: #f8fafc !important;
+                border: 1.5pt solid #1e3a5f !important;
+                border-radius: 4pt !important;
+            }
+
+            .card.bg-dark.bg-opacity-25 .row.g-3 > div {
+                padding: 10pt 8pt !important;
+                border-right: 0.5pt solid #e5e7eb !important;
+            }
+
+            .card.bg-dark.bg-opacity-25 .row.g-3 > div:last-child { border-right: none !important; }
+
+            .card.bg-dark.bg-opacity-25 .text-uppercase {
+                color: #1e3a5f !important; font-size: 7pt !important;
+                font-weight: 800 !important; letter-spacing: 0.08em;
+            }
+
+            .exec-finding-row { border-bottom-color: #e5e7eb !important; }
+            .exec-finding-label { color: #4b5563 !important; }
+            .exec-finding-value { color: #1a1a2e !important; }
+            .exec-fix-item {
+                background-color: #f5f7fa !important;
+                border: 1pt solid #e5e7eb !important;
+            }
+            .exec-section-title {
+                color: #1e3a5f !important;
+                border-bottom-color: #1e3a5f !important;
+            }
+
+            .section-technical-findings { page-break-before: always; }
+            .section-appendix { page-break-before: always; }
+
+            .row > .col-md-3 {
+                flex: 0 0 25% !important; max-width: 25% !important; width: 25% !important;
+            }
+            .row > .col-md-6 {
+                flex: 0 0 50% !important; max-width: 50% !important; width: 50% !important;
+            }
+        }
+    </style>
+</head>
+<body>
+    {{template "nav" .}}
+
+    <main id="main-content" class="container my-4">
+        {{template "flash_messages" .}}
+
+        {{$results := .Results}}
+        {{$spf := mapGetMap "spf_analysis" $results}}
+        {{$dmarc := mapGetMap "dmarc_analysis" $results}}
+        {{$dkim := mapGetMap "dkim_analysis" $results}}
+        {{$bimi := mapGetMap "bimi_analysis" $results}}
+        {{$dnssec := mapGetMap "dnssec_analysis" $results}}
+        {{$caa := mapGetMap "caa_analysis" $results}}
+        {{$dane := mapGetMap "dane_analysis" $results}}
+        {{$mta_sts := mapGetMap "mta_sts_analysis" $results}}
+        {{$tlsrpt := mapGetMap "tlsrpt_analysis" $results}}
+        {{$posture := mapGetMap "posture" $results}}
+        {{$remediation := mapGetMap "remediation" $results}}
+        {{$hosting := mapGetMap "hosting_summary" $results}}
+        {{$registrar := mapGetMap "registrar_info" $results}}
+        {{$ns := mapGetMap "ns_delegation_analysis" $results}}
+        {{$dns_infra := mapGetMap "dns_infrastructure" $results}}
+        {{$mp := mapGetMap "mail_posture" $results}}
+        {{$smtp := mapGetMap "smtp_transport" $results}}
+        {{$ai_surface := mapGetMap "ai_surface" $results}}
+
+        {{$spfStatus := mapGetStr "status" $spf}}
+        {{$dmarcStatus := mapGetStr "status" $dmarc}}
+        {{$dmarcPolicy := mapGetStr "policy" $dmarc}}
+        {{$dnssecStatus := mapGetStr "status" $dnssec}}
+
+        <!-- Print-Only Report Header -->
+        <div class="print-report-header">
+            <div class="print-header-accent"></div>
+            <div class="print-header-toprow">
+                <div class="print-header-left">
+                    <div class="print-report-brand">
+                        <img src="/static/images/owl-of-athena.png" alt="DNS Tool" class="print-brand-logo">
+                        <span class="print-brand-name">DNS Tool</span>
+                    </div>
+                    <div class="print-report-title">Executive Security Summary</div>
+                </div>
+                <div class="print-header-right">
+                    <div class="print-report-meta">
+                        {{if .AnalysisTimestamp}}<span class="print-meta-label">Generated</span> {{.AnalysisTimestamp}}{{end}}
+                        {{if gt .AnalysisDuration 0}}<br><span class="print-meta-label">Duration</span> {{formatFloat 1 .AnalysisDuration}}s{{end}}
+                        {{if .ToolVersion}}<br><span class="print-meta-label">Version</span> v{{.ToolVersion}}{{end}}
+                    </div>
+                    <div class="print-tlp-badge">TLP:CLEAR</div>
+                    <div class="print-tlp-note">Unlimited distribution</div>
+                </div>
+            </div>
+            <div class="print-domain-banner">
+                <div class="print-domain-label">Subject Domain</div>
+                <div class="print-domain-name">{{.Domain}}</div>
+            </div>
+        </div>
+
+        <!-- Screen Header -->
+        <div class="screen-only mb-4">
+            <div class="exec-banner d-flex align-items-center justify-content-between flex-wrap gap-2">
+                <div>
+                    <h1 class="h4 mb-1"><i class="fas fa-file-alt text-warning me-2"></i>Executive Report</h1>
+                    <p class="text-muted mb-0 small">Optimized for board-level review &mdash; <strong>{{.Domain}}</strong></p>
+                    {{if or .AnalysisTimestamp (gt .AnalysisDuration 0)}}
+                    <div class="small text-muted mt-1">
+                        {{if .AnalysisTimestamp}}<i class="fas fa-clock me-1"></i>{{.AnalysisTimestamp}}{{end}}
+                        {{if and .AnalysisTimestamp (gt .AnalysisDuration 0)}}<span class="mx-1">&middot;</span>{{end}}
+                        {{if gt .AnalysisDuration 0}}<i class="fas fa-stopwatch me-1"></i>{{formatFloat 1 .AnalysisDuration}}s{{end}}
+                    </div>
+                    {{end}}
+                </div>
+                <div class="d-flex gap-2">
+                    <button type="button" onclick="window.print()" class="btn btn-warning">
+                        <i class="fas fa-print me-1"></i>Print Report
+                    </button>
+                    <a href="/analysis/{{.AnalysisID}}" class="btn btn-outline-info">
+                        <i class="fas fa-tools me-1"></i>View Full Engineer Report
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        {{if not .DomainExists}}
+        <div class="card border-info mb-4">
+            <div class="card-body text-center py-5">
+                <i class="fas fa-question-circle fa-3x text-info opacity-75 mb-3"></i>
+                <h2 class="h4 mb-3">Non-existent or Undelegated Domain</h2>
+                <p class="text-muted">This domain does not exist in DNS. Security posture cannot be evaluated.</p>
+                <a href="/" class="btn btn-primary"><i class="fas fa-search me-2"></i>Try Another Domain</a>
+            </div>
+        </div>
+        {{else}}
+
+        <!-- ============================================================
+             SECTION 1: EXECUTIVE SUMMARY
+             ============================================================ -->
+
+        <!-- Risk Level Card -->
+        {{if $posture}}
+        {{$postureColor := mapGetStr "color" $posture}}
+        {{$postureIcon := mapGetStr "icon" $posture}}
+        {{$postureState := mapGetStr "state" $posture}}
+        {{$postureMsg := mapGetStr "message" $posture}}
+        {{$postureCritical := mapGetSlice "critical_issues" $posture}}
+        {{$postureRecs := mapGetSlice "recommendations" $posture}}
+        <div class="row mb-3">
+            <div class="col-12">
+                <div class="card border-{{$postureColor}} bg-{{$postureColor}} bg-opacity-10">
+                    <div class="card-body py-3">
+                        <div class="d-flex align-items-center justify-content-between flex-wrap">
+                            <div class="d-flex align-items-center">
+                                <i class="fas fa-{{$postureIcon}} fa-2x text-{{$postureColor}} me-3"></i>
+                                <div>
+                                    <span class="fw-semibold">DNS Security &amp; Trust Posture</span>
+                                    <div class="d-flex align-items-center mt-1">
+                                        <span class="fw-semibold me-2">Risk Level:</span>
+                                        <span class="badge bg-{{$postureColor}} fs-6 px-3 py-2">{{$postureState}}</span>
+                                    </div>
+                                    <small class="text-muted d-block mt-1">{{$postureMsg}}</small>
+                                </div>
+                            </div>
+                            {{if or $postureCritical $postureRecs}}
+                            <div class="mt-2 mt-md-0">
+                                {{if $postureCritical}}
+                                <span class="text-danger d-block small"><i class="fas fa-times-circle me-1"></i>{{len $postureCritical}} action{{if gt (len $postureCritical) 1}}s{{end}} required</span>
+                                {{end}}
+                                {{if $postureRecs}}
+                                <span class="text-warning d-block small"><i class="fas fa-lightbulb me-1"></i>{{len $postureRecs}} recommendation{{if gt (len $postureRecs) 1}}s{{end}}</span>
+                                {{end}}
+                            </div>
+                            {{end}}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Executive Scorecard -->
+        <div class="row mb-3">
+            <div class="col-12">
+                <div class="card bg-dark bg-opacity-25 u-border-soft">
+                    <div class="card-body py-3 px-3">
+                        <div class="row g-3 text-center">
+                            <div class="col-6 col-md-3">
+                                <div class="small text-muted text-uppercase mb-1">Email Spoofing</div>
+                                {{if and (eq $spfStatus "success") (eq $dmarcStatus "success") (or (eq $dmarcPolicy "reject") (eq $dmarcPolicy "quarantine"))}}
+                                <span class="badge bg-success px-3 py-2">Protected</span>
+                                {{else if and (eq $spfStatus "success") (eq $dmarcStatus "success") (eq $dmarcPolicy "none")}}
+                                <span class="badge bg-info px-3 py-2">Monitoring</span>
+                                {{else if or (eq $spfStatus "success") (eq $dmarcStatus "success")}}
+                                <span class="badge bg-warning text-dark px-3 py-2">Partial</span>
+                                {{else}}
+                                <span class="badge bg-danger px-3 py-2">Vulnerable</span>
+                                {{end}}
+                            </div>
+                            <div class="col-6 col-md-3">
+                                <div class="small text-muted text-uppercase mb-1">Brand Impersonation</div>
+                                {{if and $bimi (eq (mapGetStr "status" $bimi) "success") (mapGetBool "vmc_valid" $bimi)}}
+                                <span class="badge bg-success px-3 py-2">Protected</span>
+                                {{else if and $bimi (eq (mapGetStr "status" $bimi) "success")}}
+                                <span class="badge bg-info px-3 py-2">Basic</span>
+                                {{else}}
+                                <span class="badge bg-secondary px-3 py-2">Not Setup</span>
+                                {{end}}
+                            </div>
+                            <div class="col-6 col-md-3">
+                                <div class="small text-muted text-uppercase mb-1">DNS Tampering</div>
+                                {{if eq $dnssecStatus "success"}}
+                                <span class="badge bg-success px-3 py-2">Protected</span>
+                                {{else if and $dns_infra (eq (mapGetStr "provider_tier" $dns_infra) "enterprise")}}
+                                <span class="badge bg-info px-3 py-2">Enterprise</span>
+                                {{else}}
+                                <span class="badge bg-warning text-dark px-3 py-2">Unsigned</span>
+                                {{end}}
+                            </div>
+                            <div class="col-6 col-md-3">
+                                <div class="small text-muted text-uppercase mb-1">Certificate Control</div>
+                                {{if and $caa (eq (mapGetStr "status" $caa) "success")}}
+                                <span class="badge bg-success px-3 py-2">Configured</span>
+                                {{else}}
+                                <span class="badge bg-secondary px-3 py-2">Open</span>
+                                {{end}}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- What Requires Attention -->
+        <div class="row mb-3">
+            <div class="col-12">
+                <h5 class="exec-section-title"><i class="fas fa-exclamation-triangle text-warning me-2"></i>What Requires Attention</h5>
+                {{if or $postureCritical $postureRecs}}
+                <div class="mb-3">
+                    {{range $postureCritical}}
+                    <div class="d-flex align-items-start mb-2">
+                        <span class="badge bg-danger me-2 mt-1">Critical</span>
+                        <span>{{.}}</span>
+                    </div>
+                    {{end}}
+                    {{range $postureRecs}}
+                    <div class="d-flex align-items-start mb-2">
+                        <span class="badge bg-warning me-2 mt-1">Recommended</span>
+                        <span>{{.}}</span>
+                    </div>
+                    {{end}}
+                </div>
+                {{else}}
+                <div class="alert alert-success py-2">
+                    <i class="fas fa-check-circle me-2"></i>No urgent actions detected. Domain security posture is well-maintained.
+                </div>
+                {{end}}
+            </div>
+        </div>
+        {{end}}
+
+        <!-- Domain Summary (condensed) -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <h5 class="exec-section-title"><i class="fas fa-globe text-info me-2"></i>Domain Overview</h5>
+                <div class="card border-0 bg-dark bg-opacity-50">
+                    <div class="card-body py-3">
+                        <div class="row g-3">
+                            <div class="col-6 col-md-3">
+                                <small class="text-uppercase text-muted fw-bold d-block" style="font-size:0.7rem">Registrar</small>
+                                <strong>{{if and $registrar (mapGetStr "registrar" $registrar)}}{{mapGetStr "registrar" $registrar}}{{else}}Unknown{{end}}</strong>
+                            </div>
+                            <div class="col-6 col-md-3">
+                                <small class="text-uppercase text-muted fw-bold d-block" style="font-size:0.7rem">Email Provider</small>
+                                <strong>{{if and $hosting (mapGetStr "email_hosting" $hosting)}}{{mapGetStr "email_hosting" $hosting}}{{else}}Unknown{{end}}</strong>
+                            </div>
+                            <div class="col-6 col-md-3">
+                                <small class="text-uppercase text-muted fw-bold d-block" style="font-size:0.7rem">Web Hosting</small>
+                                <strong>{{if $hosting}}{{default "Unknown" (mapGetStr "hosting" $hosting)}}{{else}}Unknown{{end}}</strong>
+                            </div>
+                            <div class="col-6 col-md-3">
+                                <small class="text-uppercase text-muted fw-bold d-block" style="font-size:0.7rem">DNS Hosting</small>
+                                <strong>{{if $hosting}}{{default "Standard" (mapGetStr "dns_hosting" $hosting)}}{{else}}Standard{{end}}</strong>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+        <!-- ============================================================
+             SECTION 2: TECHNICAL FINDINGS
+             ============================================================ -->
+        <div class="section-technical-findings">
+            <h4 class="mb-3"><i class="fas fa-search-plus text-info me-2"></i>Technical Findings</h4>
+
+            <!-- Email Authentication -->
+            <div class="card mb-3">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-shield-alt me-2"></i>Email Authentication</h5>
+                </div>
+                <div class="card-body">
+                    <div class="exec-finding-row">
+                        <span class="exec-finding-label">SPF (Sender Policy)</span>
+                        <span class="exec-finding-value">
+                            {{if eq $spfStatus "success"}}
+                            <span class="badge bg-success">Configured</span>
+                            {{else if eq $spfStatus "warning"}}
+                            <span class="badge bg-warning">Partial</span>
+                            {{else}}
+                            <span class="badge bg-danger">Missing</span>
+                            {{end}}
+                            {{if mapGetFloat "mechanism_count" $spf}}
+                            <span class="text-muted ms-2 small">{{formatFloat 0 (mapGetFloat "mechanism_count" $spf)}} mechanism{{if gt (mapGetFloat "mechanism_count" $spf) 1}}s{{end}}</span>
+                            {{end}}
+                        </span>
+                    </div>
+                    <div class="exec-finding-row">
+                        <span class="exec-finding-label">DMARC (Policy)</span>
+                        <span class="exec-finding-value">
+                            {{if eq $dmarcStatus "success"}}
+                            <span class="badge bg-success">Configured</span>
+                            {{else if eq $dmarcStatus "warning"}}
+                            <span class="badge bg-warning">Partial</span>
+                            {{else}}
+                            <span class="badge bg-danger">Missing</span>
+                            {{end}}
+                            {{if $dmarcPolicy}}
+                            <span class="text-muted ms-2 small">Policy: <strong>{{$dmarcPolicy}}</strong></span>
+                            {{end}}
+                            {{if mapGetBool "is_enforcing" $dmarc}}
+                            <span class="badge bg-success ms-1">Enforcing</span>
+                            {{else if eq $dmarcPolicy "none"}}
+                            <span class="badge bg-info ms-1">Monitor Only</span>
+                            {{end}}
+                        </span>
+                    </div>
+                    <div class="exec-finding-row">
+                        <span class="exec-finding-label">DKIM (Signatures)</span>
+                        <span class="exec-finding-value">
+                            {{$dikimStatus := mapGetStr "status" $dkim}}
+                            {{if eq $dikimStatus "success"}}
+                            <span class="badge bg-success">Configured</span>
+                            {{else if eq $dikimStatus "warning"}}
+                            <span class="badge bg-warning">Partial</span>
+                            {{else}}
+                            <span class="badge bg-secondary">Not Detected</span>
+                            {{end}}
+                            {{$selectors := mapGetSlice "found_selectors" $dkim}}
+                            {{if $selectors}}
+                            <span class="text-muted ms-2 small">{{len $selectors}} selector{{if gt (len $selectors) 1}}s{{end}} found</span>
+                            {{end}}
+                        </span>
+                    </div>
+                    <div class="exec-finding-row">
+                        <span class="exec-finding-label">Mail Posture</span>
+                        <span class="exec-finding-value">
+                            {{if mapGetStr "label" $mp}}
+                            <strong>{{mapGetStr "label" $mp}}</strong>
+                            {{else}}
+                            <span class="text-muted">Not determined</span>
+                            {{end}}
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Transport Security -->
+            <div class="card mb-3">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-lock me-2"></i>Transport Security</h5>
+                </div>
+                <div class="card-body">
+                    <div class="exec-finding-row">
+                        <span class="exec-finding-label">MTA-STS</span>
+                        <span class="exec-finding-value">
+                            {{$mtaStsStatus := mapGetStr "status" $mta_sts}}
+                            {{if eq $mtaStsStatus "success"}}
+                            <span class="badge bg-success">Active</span>
+                            {{$mtaStsMode := mapGetStr "mode" $mta_sts}}
+                            {{if $mtaStsMode}}<span class="text-muted ms-2 small">Mode: <strong>{{$mtaStsMode}}</strong></span>{{end}}
+                            {{else if eq $mtaStsStatus "warning"}}
+                            <span class="badge bg-warning">Partial</span>
+                            {{else}}
+                            <span class="badge bg-secondary">Not Configured</span>
+                            {{end}}
+                        </span>
+                    </div>
+                    <div class="exec-finding-row">
+                        <span class="exec-finding-label">DANE / TLSA</span>
+                        <span class="exec-finding-value">
+                            {{$daneStatus := mapGetStr "status" $dane}}
+                            {{if eq $daneStatus "success"}}
+                            <span class="badge bg-success">Active</span>
+                            {{else if eq $daneStatus "info"}}
+                            <span class="badge bg-info">Hosted Provider</span>
+                            <span class="text-muted ms-2 small">{{default "Managed by email provider" (mapGetStr "message" $dane)}}</span>
+                            {{else}}
+                            <span class="badge bg-secondary">Not Configured</span>
+                            {{end}}
+                        </span>
+                    </div>
+                    <div class="exec-finding-row">
+                        <span class="exec-finding-label">TLS-RPT (Reporting)</span>
+                        <span class="exec-finding-value">
+                            {{$tlsrptStatus := mapGetStr "status" $tlsrpt}}
+                            {{if eq $tlsrptStatus "success"}}
+                            <span class="badge bg-success">Configured</span>
+                            {{else}}
+                            <span class="badge bg-secondary">Not Configured</span>
+                            {{end}}
+                        </span>
+                    </div>
+                    <div class="exec-finding-row">
+                        <span class="exec-finding-label">SMTP TLS</span>
+                        <span class="exec-finding-value">
+                            {{if $smtp}}
+                            {{$smtpStatus := mapGetStr "status" $smtp}}
+                            {{if eq $smtpStatus "success"}}
+                            <span class="badge bg-success">All Servers</span>
+                            {{else if eq $smtpStatus "warning"}}
+                            <span class="badge bg-warning">Partial</span>
+                            {{else if eq $smtpStatus "inferred"}}
+                            <span class="badge bg-info">Inferred</span>
+                            {{else if eq $smtpStatus "info"}}
+                            <span class="badge bg-secondary">No Mail</span>
+                            {{else}}
+                            <span class="badge bg-secondary">Not Observed</span>
+                            {{end}}
+                            {{if mapGetBool "dns_inferred" $smtp}}
+                            <span class="text-muted ms-2 small">DNS-inferred</span>
+                            {{end}}
+                            {{else}}
+                            <span class="text-muted">Not assessed</span>
+                            {{end}}
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- DNS Security -->
+            <div class="card mb-3">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-network-wired me-2"></i>DNS Security</h5>
+                </div>
+                <div class="card-body">
+                    <div class="exec-finding-row">
+                        <span class="exec-finding-label">DNSSEC</span>
+                        <span class="exec-finding-value">
+                            {{if eq $dnssecStatus "success"}}
+                            <span class="badge bg-success">Signed &amp; Validated</span>
+                            {{if mapGetStr "chain_summary" $dnssec}}
+                            <span class="text-muted ms-2 small">{{mapGetStr "chain_summary" $dnssec}}</span>
+                            {{end}}
+                            {{else if eq $dnssecStatus "warning"}}
+                            <span class="badge bg-warning">Partial</span>
+                            {{else}}
+                            <span class="badge bg-secondary">Unsigned</span>
+                            {{end}}
+                            {{if mapGetStr "message" $dnssec}}
+                            <div class="text-muted small mt-1">{{mapGetStr "message" $dnssec}}</div>
+                            {{end}}
+                        </span>
+                    </div>
+                    <div class="exec-finding-row">
+                        <span class="exec-finding-label">NS Delegation</span>
+                        <span class="exec-finding-value">
+                            {{if $ns}}
+                            {{$nsStatus := mapGetStr "status" $ns}}
+                            {{if eq $nsStatus "success"}}
+                            <span class="badge bg-success">Healthy</span>
+                            {{else if eq $nsStatus "warning"}}
+                            <span class="badge bg-warning">Issues Detected</span>
+                            {{else}}
+                            <span class="badge bg-secondary">{{default "Unknown" (mapGetStr "message" $ns)}}</span>
+                            {{end}}
+                            {{else}}
+                            <span class="text-muted">Not assessed</span>
+                            {{end}}
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Brand & Certificate -->
+            <div class="card mb-3">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-certificate me-2"></i>Brand &amp; Certificate Controls</h5>
+                </div>
+                <div class="card-body">
+                    <div class="exec-finding-row">
+                        <span class="exec-finding-label">BIMI (Brand Logo)</span>
+                        <span class="exec-finding-value">
+                            {{if $bimi}}
+                            {{$bimiStatus := mapGetStr "status" $bimi}}
+                            {{if eq $bimiStatus "success"}}
+                            <span class="badge bg-success">Configured</span>
+                            {{if mapGetBool "vmc_valid" $bimi}}<span class="badge bg-success ms-1">VMC Verified</span>{{end}}
+                            {{else}}
+                            <span class="badge bg-secondary">Not Configured</span>
+                            {{end}}
+                            {{else}}
+                            <span class="badge bg-secondary">Not Configured</span>
+                            {{end}}
+                        </span>
+                    </div>
+                    <div class="exec-finding-row">
+                        <span class="exec-finding-label">CAA (Certificate)</span>
+                        <span class="exec-finding-value">
+                            {{if and $caa (eq (mapGetStr "status" $caa) "success")}}
+                            <span class="badge bg-success">Configured</span>
+                            {{$caaIssuers := mapGetSlice "allowed_issuers" $caa}}
+                            {{if $caaIssuers}}
+                            <span class="text-muted ms-2 small">{{len $caaIssuers}} allowed issuer{{if gt (len $caaIssuers) 1}}s{{end}}</span>
+                            {{end}}
+                            {{else}}
+                            <span class="badge bg-secondary">Open</span>
+                            <span class="text-muted ms-2 small">Any certificate authority may issue certificates</span>
+                            {{end}}
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- AI Surface Scanner -->
+            {{if $ai_surface}}
+            <div class="card mb-3">
+                <div class="card-header">
+                    <h5 class="mb-0 d-flex align-items-center justify-content-between flex-wrap">
+                        <span><i class="fas fa-robot me-2"></i>AI Surface Scanner</span>
+                        {{$aiStatus := mapGetStr "status" $ai_surface}}
+                        <span class="badge bg-{{if eq $aiStatus "success"}}success{{else if eq $aiStatus "warning"}}warning{{else if eq $aiStatus "error"}}danger{{else}}info{{end}}">
+                            {{if eq $aiStatus "success"}}Governance Active{{else if eq $aiStatus "warning"}}Risks Detected{{else}}Scanned{{end}}
+                        </span>
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted small mb-3">This section evaluates how the domain interacts with AI systems, including large language models, AI crawlers, and potential manipulation vectors.</p>
+
+                    {{$aiLlms := mapGetMap "llms_txt" $ai_surface}}
+                    {{$aiRobots := mapGetMap "robots_txt" $ai_surface}}
+                    {{$aiPoisoning := mapGetMap "poisoning" $ai_surface}}
+                    {{$aiHidden := mapGetMap "hidden_prompts" $ai_surface}}
+
+                    <div class="exec-finding-row">
+                        <span class="exec-finding-label">LLM Context File</span>
+                        <span class="exec-finding-value">
+                            {{if $aiLlms}}
+                                {{if mapGetBool "found" $aiLlms}}
+                                <span class="badge bg-success">llms.txt Found</span>
+                                <span class="text-muted ms-2 small">Domain provides structured context for AI models</span>
+                                {{if mapGetBool "full_found" $aiLlms}}
+                                <span class="badge bg-info ms-1">Extended</span>
+                                {{end}}
+                                {{else}}
+                                <span class="badge bg-secondary">Not Found</span>
+                                <span class="text-muted ms-2 small">No llms.txt file detected</span>
+                                {{end}}
+                            {{else}}
+                            <span class="text-muted">Not assessed</span>
+                            {{end}}
+                        </span>
+                    </div>
+
+                    <div class="exec-finding-row">
+                        <span class="exec-finding-label">AI Crawler Governance</span>
+                        <span class="exec-finding-value">
+                            {{if $aiRobots}}
+                                {{if mapGetBool "found" $aiRobots}}
+                                    {{if mapGetBool "blocks_ai_crawlers" $aiRobots}}
+                                    <span class="badge bg-success">Blocking Active</span>
+                                    {{$blocked := mapGetSlice "blocked_crawlers" $aiRobots}}
+                                    {{if $blocked}}
+                                    <span class="text-muted ms-2 small">Blocked: {{range $i, $c := $blocked}}{{if $i}}, {{end}}{{$c}}{{end}}</span>
+                                    {{end}}
+                                    {{else if mapGetBool "allows_ai_crawlers" $aiRobots}}
+                                    <span class="badge bg-warning">Not Blocking</span>
+                                    <span class="text-muted ms-2 small">No AI crawler restrictions found in robots.txt</span>
+                                    {{else}}
+                                    <span class="badge bg-info">No AI Directives</span>
+                                    <span class="text-muted ms-2 small">robots.txt present but no AI-specific rules</span>
+                                    {{end}}
+                                {{else}}
+                                <span class="badge bg-secondary">No robots.txt</span>
+                                {{end}}
+                            {{else}}
+                            <span class="text-muted">Not assessed</span>
+                            {{end}}
+                        </span>
+                    </div>
+
+                    <div class="exec-finding-row">
+                        <span class="exec-finding-label">Poisoning Indicators</span>
+                        <span class="exec-finding-value">
+                            {{if $aiPoisoning}}
+                                {{$iocCount := mapGetFloat "ioc_count" $aiPoisoning}}
+                                {{if gt $iocCount 0}}
+                                <span class="badge bg-warning">{{formatFloat 0 $iocCount}} Detected</span>
+                                <span class="text-muted ms-2 small">Indicators of AI recommendation manipulation found on homepage</span>
+                                {{else}}
+                                <span class="badge bg-success">None Found</span>
+                                <span class="text-muted ms-2 small">No AI recommendation poisoning indicators detected</span>
+                                {{end}}
+                            {{else}}
+                            <span class="text-muted">Not assessed</span>
+                            {{end}}
+                        </span>
+                    </div>
+
+                    <div class="exec-finding-row">
+                        <span class="exec-finding-label">Hidden Prompt Artifacts</span>
+                        <span class="exec-finding-value">
+                            {{if $aiHidden}}
+                                {{$hiddenCount := mapGetFloat "artifact_count" $aiHidden}}
+                                {{if gt $hiddenCount 0}}
+                                <span class="badge bg-danger">{{formatFloat 0 $hiddenCount}} Found</span>
+                                <span class="text-muted ms-2 small">Hidden prompt-like content detected in page source</span>
+                                {{else}}
+                                <span class="badge bg-success">None Found</span>
+                                <span class="text-muted ms-2 small">No hidden prompt artifacts detected</span>
+                                {{end}}
+                            {{else}}
+                            <span class="text-muted">Not assessed</span>
+                            {{end}}
+                        </span>
+                    </div>
+                </div>
+            </div>
+            {{end}}
+
+            <!-- Priority Actions -->
+            {{if $remediation}}
+            {{$topFixes := mapGetSlice "top_fixes" $remediation}}
+            {{$allFixes := mapGetSlice "all_fixes" $remediation}}
+            {{if or $topFixes $allFixes}}
+            <div class="card mb-3">
+                <div class="card-header">
+                    <h5 class="mb-0 d-flex align-items-center justify-content-between flex-wrap">
+                        <span><i class="fas fa-wrench me-2 text-warning"></i>Priority Actions</span>
+                        <span>
+                            <span class="badge bg-secondary">{{formatFloat 0 (mapGetFloat "fix_count" $remediation)}} total</span>
+                            {{$postureAchievable := mapGetStr "posture_achievable" $remediation}}
+                            {{if $postureAchievable}}
+                            <span class="badge bg-{{if or (eq $postureAchievable "Secure") (eq $postureAchievable "Informational") (eq $postureAchievable "Low Risk")}}success{{else}}warning{{end}} ms-1">Achievable: {{$postureAchievable}}</span>
+                            {{end}}
+                        </span>
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {{range $fix := $topFixes}}
+                    {{$fixMap := toMap $fix}}
+                    {{if $fixMap}}
+                    <div class="exec-fix-item">
+                        <div class="d-flex align-items-start mb-1">
+                            <span class="badge bg-{{mapGetStr "severity_color" $fixMap}} me-2">{{mapGetStr "severity_label" $fixMap}}</span>
+                            <strong class="small">{{mapGetStr "title" $fixMap}}</strong>
+                        </div>
+                        <p class="text-muted mb-0 small">{{mapGetStr "fix" $fixMap}}</p>
+                        {{if mapGetStr "dns_record" $fixMap}}
+                        <div class="code-block small mt-1" style="font-size:0.75rem">{{mapGetStr "dns_record" $fixMap}}</div>
+                        {{end}}
+                    </div>
+                    {{end}}
+                    {{end}}
+                    {{if $allFixes}}
+                    {{range $i, $fix := $allFixes}}
+                    {{if ge $i 3}}
+                    {{$fixMap := toMap $fix}}
+                    {{if $fixMap}}
+                    <div class="exec-fix-item">
+                        <div class="d-flex align-items-start mb-1">
+                            <span class="badge bg-{{mapGetStr "severity_color" $fixMap}} me-2">{{mapGetStr "severity_label" $fixMap}}</span>
+                            <strong class="small">{{mapGetStr "title" $fixMap}}</strong>
+                        </div>
+                        <p class="text-muted mb-0 small">{{mapGetStr "fix" $fixMap}}</p>
+                        {{if mapGetStr "dns_record" $fixMap}}
+                        <div class="code-block small mt-1" style="font-size:0.75rem">{{mapGetStr "dns_record" $fixMap}}</div>
+                        {{end}}
+                    </div>
+                    {{end}}
+                    {{end}}
+                    {{end}}
+                    {{end}}
+                </div>
+            </div>
+            {{end}}
+            {{end}}
+        </div>
+
+
+        <!-- ============================================================
+             SECTION 3: APPENDIX
+             ============================================================ -->
+        <div class="section-appendix">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-book me-2"></i>Appendix &mdash; Additional Resources</h5>
+                </div>
+                <div class="card-body">
+                    <p class="mb-2">Full technical details including raw DNS records, DKIM public keys, IP/ASN mappings, resolver consensus evidence, and verification commands are available in the Engineer Report.</p>
+                    <p class="mb-0">
+                        <a href="/analysis/{{.AnalysisID}}"><i class="fas fa-external-link-alt me-1"></i>View Full Engineer Report</a>
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Print Footer -->
+        <footer class="print-report-footer" aria-label="Print report footer">
+            <div class="print-footer-accent"></div>
+            <div class="print-footer-content">
+                <div class="print-footer-left">
+                    <strong>DNS Tool</strong>
+                    <span>dnstool.it-help.tech</span>
+                </div>
+                <div class="print-footer-center">
+                    <span class="print-footer-tagline">We answer the BIG questions.</span>
+                    <span class="print-footer-note">Report reflects evaluated DNS security posture at time of generation.</span>
+                </div>
+                <div class="print-footer-right">
+                    <strong>619-853-5008</strong>
+                    <span>San Diego, CA</span>
+                </div>
+            </div>
+            <div class="print-footer-disclaimer">
+                TLP:CLEAR &mdash; DNS records are public data queried via open-standard protocols. Analysis methodology, posture scoring, and remediation guidance &copy; DNS Tool. All conclusions independently verifiable &mdash; see Engineer Report for verification commands.
+            </div>
+        </footer>
+
+        {{end}}
+    </main>
+
+    <script nonce="{{.CspNonce}}" src="/static/js/bootstrap.bundle.min.js" defer></script>
+    <script nonce="{{.CspNonce}}">
+    if (window.opener || window.history.length <= 1) {
+        window.addEventListener('load', function() { setTimeout(function() { window.print(); }, 500); });
+    }
+    </script>
+</body>
+</html>

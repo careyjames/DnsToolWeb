@@ -136,6 +136,14 @@
                 {{end}}
             </div>
             <div class="results-header-actions">
+                <div class="btn-group me-2">
+                    <button type="button" onclick="window.print()" class="btn btn-outline-secondary" title="Full technical report for engineers and sysadmins">
+                        <i class="fas fa-print me-1"></i>Engineer
+                    </button>
+                    <a href="/analysis/{{.AnalysisID}}/executive" class="btn btn-outline-warning" title="Condensed board-ready report for executives" target="_blank">
+                        <i class="fas fa-file-alt me-1"></i>Executive
+                    </a>
+                </div>
                 <a href="/analyze?domain={{.AsciiDomain}}" id="reanalyzeBtn" class="btn btn-primary" data-domain="{{.AsciiDomain}}"
                     {{if gt .WaitSeconds 0}}data-wait-seconds="{{.WaitSeconds}}" data-wait-reason="{{.WaitReason}}"{{end}}>
                     <i class="fas fa-sync-alt me-2"></i>Re-analyze

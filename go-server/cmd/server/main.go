@@ -129,6 +129,7 @@ func main() {
 
         router.GET("/analysis/:id", analysisHandler.ViewAnalysis)
         router.GET("/analysis/:id/view", analysisHandler.ViewAnalysisStatic)
+        router.GET("/analysis/:id/executive", analysisHandler.ViewAnalysisExecutive)
 
         router.GET("/stats", statsHandler.Stats)
         router.GET("/statistics", statsHandler.StatisticsRedirect)
