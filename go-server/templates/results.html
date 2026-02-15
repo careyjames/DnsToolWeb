@@ -3905,8 +3905,10 @@
 
             var protocolSectionMap = {
                 'SPF': '#section-email', 'DMARC': '#section-email', 'DKIM': '#section-email',
-                'DANE': '#section-dane', 'MTA-STS': '#section-dane', 'TLS-RPT': '#section-dane',
-                'BIMI': '#section-brand', 'CAA': '#section-dnssec', 'DNSSEC': '#section-dnssec'
+                'MTA-STS': '#section-email', 'TLS-RPT': '#section-email',
+                'DANE': '#section-dane',
+                'BIMI': '#section-brand', 'CAA': '#section-brand',
+                'DNSSEC': '#section-dnssec'
             };
             document.querySelectorAll('.protocol-link').forEach(function(el) {
                 var proto = el.dataset.protocol;
