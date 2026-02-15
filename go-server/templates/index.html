@@ -516,6 +516,20 @@
                     </div>
                     <div class="accordion-item bg-dark border-secondary">
                         <h3 class="accordion-header">
+                            <button class="accordion-button collapsed bg-dark text-light" type="button" data-bs-toggle="collapse" data-bs-target="#faq14">
+                                Is this a PCI compliance scanner?
+                            </button>
+                        </h3>
+                        <div id="faq14" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                            <div class="accordion-body text-muted small">
+                                <strong>No.</strong> DNS Tool is not a PCI DSS Approved Scanning Vendor (ASV) and our reports are not PCI compliance attestations. PCI DSS requires vulnerability scans performed by vendors formally certified by the <a href="https://listings.pcisecuritystandards.org/assessors_and_solutions/approved_scanning_vendors" target="_blank" rel="noopener" class="text-info">PCI Security Standards Council</a>. Certified ASVs include Qualys, Tenable, and Trustwave, among others.
+                                <br><br><strong>What we do:</strong> We perform OSINT-based DNS security analysis &mdash; examining your domain's email authentication (SPF, DKIM, DMARC), transport security (DANE, MTA-STS), and public exposure posture using only publicly available data. This is complementary to PCI scanning, not a substitute for it.
+                                <br><br><strong>If you need PCI compliance:</strong> Engage a certified ASV from the <a href="https://listings.pcisecuritystandards.org/assessors_and_solutions/approved_scanning_vendors" target="_blank" rel="noopener" class="text-info">PCI SSC ASV listing</a>. Use DNS Tool alongside your ASV to ensure your domain's DNS and email security posture is properly configured &mdash; something ASV scans typically do not cover in depth.
+                            </div>
+                        </div>
+                    </div>
+                    <div class="accordion-item bg-dark border-secondary">
+                        <h3 class="accordion-header">
                             <button class="accordion-button collapsed bg-dark text-light" type="button" data-bs-toggle="collapse" data-bs-target="#faq2">
                                 How do I check if my email can be spoofed?
                             </button>
@@ -678,21 +692,6 @@
                                 <strong>OSINT (Open Source Intelligence)</strong> is the collection and analysis of information from publicly available sources. Intelligence agencies, law enforcement, and security researchers have used OSINT methodology for decades &mdash; it is the foundation of modern threat intelligence.
                                 <br><br>DNS Tool is an OSINT platform. Every data source we query is publicly available: DNS records (via standard resolvers), certificate transparency logs, RDAP registrar data, and publicly accessible web resources. We do not bypass authentication, probe closed ports, or exploit vulnerabilities. We observe what is already visible to anyone with a browser or a <code>dig</code> command &mdash; and we organize those observations into actionable intelligence.
                                 <br><br>This is the same methodology used by <strong>Shodan</strong>, <strong>Mozilla Observatory</strong>, <strong>Censys</strong>, and <strong>VirusTotal</strong>. The difference is our focus: we specialize in DNS security posture and email authentication, producing intelligence products modeled on the formats used by national intelligence agencies.
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="accordion-item bg-dark border-secondary">
-                        <h3 class="accordion-header">
-                            <button class="accordion-button collapsed bg-dark text-light" type="button" data-bs-toggle="collapse" data-bs-target="#faq14">
-                                Is this a PCI compliance scanner?
-                            </button>
-                        </h3>
-                        <div id="faq14" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
-                            <div class="accordion-body text-muted small">
-                                <strong>No.</strong> DNS Tool is not a PCI DSS Approved Scanning Vendor (ASV) and our reports are not PCI compliance attestations. PCI DSS requires vulnerability scans performed by vendors formally certified by the <a href="https://listings.pcisecuritystandards.org/assessors_and_solutions/approved_scanning_vendors" target="_blank" rel="noopener" class="text-info">PCI Security Standards Council</a>. Certified ASVs include Qualys, Tenable, and Trustwave, among others.
-                                <br><br><strong>What we do:</strong> We perform OSINT-based DNS security analysis &mdash; examining your domain's email authentication (SPF, DKIM, DMARC), transport security (DANE, MTA-STS), and public exposure posture using only publicly available data. This is complementary to PCI scanning, not a substitute for it.
-                                <br><br><strong>If you need PCI compliance:</strong> Engage a certified ASV from the <a href="https://listings.pcisecuritystandards.org/assessors_and_solutions/approved_scanning_vendors" target="_blank" rel="noopener" class="text-info">PCI SSC ASV listing</a>. Use DNS Tool alongside your ASV to ensure your domain's DNS and email security posture is properly configured &mdash; something ASV scans typically do not cover in depth.
                             </div>
                         </div>
                     </div>
