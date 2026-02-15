@@ -1056,24 +1056,31 @@
                         </span>
                     </div>
                     <div class="exec-finding-row">
-                        <span class="exec-finding-label">SMTP TLS</span>
+                        <span class="exec-finding-label">Mail Transport</span>
                         <span class="exec-finding-value">
                             {{if $smtp}}
                             {{$smtpStatus := mapGetStr "status" $smtp}}
-                            {{if eq $smtpStatus "success"}}
-                            <span class="badge bg-success">All Servers</span>
+                            {{$execPolicy := mapGetMap "policy" $smtp}}
+                            {{$execPolicyVerdict := ""}}
+                            {{if $execPolicy}}{{$execPolicyVerdict = mapGetStr "verdict" $execPolicy}}{{end}}
+                            {{if eq $execPolicyVerdict "enforced"}}
+                            <span class="badge bg-success">Enforced</span>
+                            {{else if eq $execPolicyVerdict "monitored"}}
+                            <span class="badge bg-info">Monitoring</span>
+                            {{else if eq $smtpStatus "success"}}
+                            <span class="badge bg-success">Verified</span>
                             {{else if eq $smtpStatus "warning"}}
                             <span class="badge bg-warning">Partial</span>
+                            {{else if eq $execPolicyVerdict "opportunistic"}}
+                            <span class="badge bg-secondary">Opportunistic</span>
                             {{else if eq $smtpStatus "inferred"}}
-                            <span class="badge bg-info">Inferred</span>
+                            <span class="badge bg-info">Opportunistic</span>
                             {{else if eq $smtpStatus "info"}}
-                            <span class="badge bg-secondary">No Mail</span>
+                            <span class="badge bg-secondary">Not Enforced</span>
                             {{else}}
-                            <span class="badge bg-secondary">Not Observed</span>
+                            <span class="badge bg-secondary">Not Assessed</span>
                             {{end}}
-                            {{if mapGetBool "dns_inferred" $smtp}}
-                            <span class="text-muted ms-2 small">DNS-inferred</span>
-                            {{end}}
+                            <span class="text-muted ms-2 small">Policy-assessed</span>
                             {{else}}
                             <span class="text-muted">Not assessed</span>
                             {{end}}

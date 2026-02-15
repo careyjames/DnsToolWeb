@@ -26,6 +26,8 @@ type Analyzer struct {
 
         maxConcurrent int
         semaphore     chan struct{}
+
+        SMTPProbeMode string
 }
 
 type ctCacheEntry struct {

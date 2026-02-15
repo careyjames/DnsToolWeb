@@ -73,7 +73,12 @@ func (a *Analyzer) AnalyzeDomain(ctx context.Context, domain string, customDKIMS
         slog.Info(logTaskCompleted, "task", "dane", "domain", domain, "elapsed_ms", fmt.Sprintf("%.0f", float64(time.Since(daneStart).Milliseconds())))
 
         smtpStart := time.Now()
-        smtpResult := a.AnalyzeSMTPTransport(ctx, domain, mxForDANE)
+        smtpInputs := AnalysisInputs{
+                MTASTSResult: getMapResult(resultsMap, "mta_sts"),
+                TLSRPTResult: getMapResult(resultsMap, "tlsrpt"),
+                DANEResult:   resultsMap["dane"].(map[string]any),
+        }
+        smtpResult := a.AnalyzeSMTPTransport(ctx, domain, mxForDANE, smtpInputs)
         slog.Info(logTaskCompleted, "task", "smtp_transport", "domain", domain, "elapsed_ms", fmt.Sprintf("%.0f", float64(time.Since(smtpStart).Milliseconds())))
 
         enrichBasicRecords(basic, resultsMap)

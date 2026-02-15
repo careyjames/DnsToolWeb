@@ -95,7 +95,8 @@ func main() {
         })
 
         dnsAnalyzer := analyzer.New()
-        slog.Info("DNS analyzer initialized with telemetry")
+        dnsAnalyzer.SMTPProbeMode = cfg.SMTPProbeMode
+        slog.Info("DNS analyzer initialized with telemetry", "smtp_probe_mode", cfg.SMTPProbeMode)
 
         analyzer.InitIETFMetadata()
         analyzer.ScheduleRFCRefresh()

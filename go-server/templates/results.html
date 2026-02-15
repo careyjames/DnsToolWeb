@@ -1238,7 +1238,7 @@
                                     {{end}}
                                 {{end}}
                                 {{end}}
-                                <p class="text-muted mb-0 mt-2 u-fs-078em"><i class="fas fa-arrow-right me-1"></i>Policy intent is validated against observed MX behavior in <strong>Live SMTP TLS Validation</strong> below.</p>
+                                <p class="text-muted mb-0 mt-2 u-fs-078em"><i class="fas fa-arrow-right me-1"></i>MTA-STS policy enforcement is evaluated in <strong>Mail Transport Security</strong> below.</p>
                             </div>
 
                             <!-- TLS-RPT Analysis -->
@@ -2264,28 +2264,142 @@
         </div>
         {{end}}
 
-        <!-- Live SMTP TLS Validation Section -->
+        <!-- Mail Transport Security Section -->
         {{if and $smtp (ne (mapGetStr "status" $smtp) "n/a")}}
         <div class="row section-smtp-transport" id="section-smtp">
             <div class="col-12 mb-4">
                 <div class="card">
                     <div class="card-header">
                         <h5 class="mb-0 d-flex align-items-center justify-content-between flex-wrap">
-                            <span><i class="fas fa-exchange-alt me-2"></i>Live SMTP TLS Validation</span>
-                            <span class="section-question">Transport encryption observed?
+                            <span><i class="fas fa-exchange-alt me-2"></i>Mail Transport Security</span>
+                            <span class="section-question">Transport encryption enforced?
                                 {{$smtpStatus := mapGetStr "status" $smtp}}
-                                <span class="badge bg-{{if eq $smtpStatus "success"}}success{{else if eq $smtpStatus "warning"}}warning{{else if eq $smtpStatus "error"}}danger{{else if eq $smtpStatus "info"}}secondary{{else}}info{{end}} ms-2">
-                                    {{if eq $smtpStatus "success"}}All Servers{{else if eq $smtpStatus "warning"}}Partial{{else if eq $smtpStatus "error"}}Not Observed{{else if eq $smtpStatus "info"}}No Mail{{else}}Inferred{{end}}
+                                {{$smtpPolicy := mapGetMap "policy" $smtp}}
+                                {{$smtpPolicyVerdict := ""}}
+                                {{if $smtpPolicy}}{{$smtpPolicyVerdict = mapGetStr "verdict" $smtpPolicy}}{{end}}
+                                <span class="badge bg-{{if eq $smtpStatus "success"}}success{{else if eq $smtpStatus "warning"}}warning{{else if eq $smtpStatus "error"}}danger{{else if eq $smtpPolicyVerdict "enforced"}}success{{else if eq $smtpPolicyVerdict "monitored"}}info{{else if eq $smtpStatus "inferred"}}info{{else}}secondary{{end}} ms-2">
+                                    {{if eq $smtpPolicyVerdict "enforced"}}Enforced{{else if eq $smtpPolicyVerdict "monitored"}}Monitoring{{else if eq $smtpStatus "success"}}Verified{{else if eq $smtpStatus "warning"}}Partial{{else if eq $smtpStatus "inferred"}}Opportunistic{{else if eq $smtpStatus "info"}}Not Enforced{{else}}Not Assessed{{end}}
                                 </span>
-                                {{if mapGetBool "dns_inferred" $smtp}}
-                                    <span class="badge bg-secondary ms-1">DNS-Inferred</span>
-                                {{end}}
                             </span>
                         </h5>
                     </div>
                     <div class="card-body">
                         <p class="text-muted mb-3">{{mapGetStr "message" $smtp}}</p>
-                        
+
+                        {{if $smtpPolicy}}
+                        <!-- Policy Assessment (Primary) -->
+                        <div class="mb-3">
+                            <h6 class="small text-uppercase text-muted mb-2"><i class="fas fa-file-contract me-1"></i>Policy Assessment <span class="badge bg-dark bg-opacity-25 text-muted fw-normal ms-1">Primary</span></h6>
+                            {{$policySignals := mapGetSlice "signals" $smtpPolicy}}
+                            {{if $policySignals}}
+                            <ul class="mb-0 mt-1 small">
+                                {{range $policySignals}}
+                                <li class="text-success"><i class="fas fa-check me-1"></i>{{.}}</li>
+                                {{end}}
+                            </ul>
+                            {{else}}
+                            <p class="small text-muted mb-0"><i class="fas fa-info-circle me-1"></i>No transport enforcement policies detected. Mail delivery relies on opportunistic STARTTLS, which is vulnerable to downgrade attacks (RFC 3207). Consider deploying MTA-STS (RFC 8461) or DANE (RFC 7672).</p>
+                            {{end}}
+                        </div>
+
+                        <!-- Telemetry Indicators -->
+                        {{$smtpTelemetry := mapGetMap "telemetry" $smtp}}
+                        {{if $smtpTelemetry}}
+                        <div class="mb-3">
+                            <h6 class="small text-uppercase text-muted mb-2"><i class="fas fa-chart-line me-1"></i>Telemetry</h6>
+                            {{if mapGetBool "tlsrpt_configured" $smtpTelemetry}}
+                            <div class="small text-success"><i class="fas fa-check me-1"></i>TLS-RPT configured — domain receives reports about TLS delivery failures from sending mail servers (RFC 8460)</div>
+                            {{$reportingURIs := mapGetSlice "reporting_uris" $smtpTelemetry}}
+                            {{if $reportingURIs}}
+                            <div class="small text-muted ms-3 mt-1">Reporting to: {{range $i, $uri := $reportingURIs}}{{if $i}}, {{end}}<code>{{$uri}}</code>{{end}}</div>
+                            {{end}}
+                            {{else}}
+                            <div class="small text-muted"><i class="fas fa-minus-circle me-1"></i>TLS-RPT not configured — domain has no visibility into TLS delivery failures from real senders</div>
+                            {{end}}
+                        </div>
+                        {{end}}
+
+                        <!-- Live Probe -->
+                        {{$smtpProbe := mapGetMap "probe" $smtp}}
+                        {{if $smtpProbe}}
+                        <div class="mb-2">
+                            <h6 class="small text-uppercase text-muted mb-2"><i class="fas fa-satellite-dish me-1"></i>Live Probe <span class="badge bg-dark bg-opacity-25 text-muted fw-normal ms-1">Supplementary</span></h6>
+                            {{$probeStatus := mapGetStr "status" $smtpProbe}}
+                            {{if eq $probeStatus "observed"}}
+                                {{$probeObs := mapGetSlice "observations" $smtpProbe}}
+                                {{if $probeObs}}
+                                <div class="table-responsive">
+                                    <table class="table table-sm table-dark mb-0">
+                                        <thead>
+                                            <tr>
+                                                <th>MX Host</th>
+                                                <th>STARTTLS</th>
+                                                <th>TLS Version</th>
+                                                <th>Cipher</th>
+                                                <th>Certificate</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {{range $probeObs}}
+                                            {{$srv := toMap .}}
+                                            <tr>
+                                                <td class="text-break"><code>{{mapGetStr "host" $srv}}</code></td>
+                                                <td>
+                                                    {{if mapGetBool "starttls" $srv}}
+                                                        <span class="text-success"><i class="fas fa-check-circle"></i></span>
+                                                    {{else if mapGetBool "reachable" $srv}}
+                                                        <span class="text-danger"><i class="fas fa-times-circle"></i></span>
+                                                    {{else}}
+                                                        <span class="text-muted"><i class="fas fa-minus-circle"></i></span>
+                                                    {{end}}
+                                                </td>
+                                                <td>
+                                                    {{$tlsVer := mapGetStr "tls_version" $srv}}
+                                                    {{if $tlsVer}}
+                                                        <span class="badge bg-{{if eq $tlsVer "TLSv1.3"}}success{{else if eq $tlsVer "TLSv1.2"}}info{{else}}warning{{end}}">{{$tlsVer}}</span>
+                                                    {{else}}
+                                                        <span class="text-muted">N/A</span>
+                                                    {{end}}
+                                                </td>
+                                                <td class="small text-break">
+                                                    {{$cipher := mapGetStr "cipher" $srv}}
+                                                    {{if $cipher}}{{$cipher}}{{else}}<span class="text-muted">N/A</span>{{end}}
+                                                </td>
+                                                <td>
+                                                    {{if mapGetBool "cert_valid" $srv}}
+                                                        <span class="text-success"><i class="fas fa-check-circle me-1"></i>Valid</span>
+                                                        {{$certExpiry := mapGetStr "cert_expiry" $srv}}
+                                                        {{$daysLeft := mapGetFloat "cert_days_remaining" $srv}}
+                                                        {{if $certExpiry}}
+                                                            <br><small class="text-muted">Expires: {{$certExpiry}}{{if gt $daysLeft 0}} ({{$daysLeft}} days){{end}}</small>
+                                                        {{end}}
+                                                        {{$certIssuer := mapGetStr "cert_issuer" $srv}}
+                                                        {{if $certIssuer}}<br><small class="text-muted">Issuer: {{$certIssuer}}</small>{{end}}
+                                                    {{else if mapGetBool "reachable" $srv}}
+                                                        <span class="text-warning"><i class="fas fa-exclamation-triangle me-1"></i>Invalid</span>
+                                                        {{$certErr := mapGetStr "error" $srv}}
+                                                        {{if $certErr}}<br><small class="text-muted">{{$certErr}}</small>{{end}}
+                                                    {{else}}
+                                                        <span class="text-muted">N/A</span>
+                                                    {{end}}
+                                                </td>
+                                            </tr>
+                                            {{end}}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            {{end}}
+                            {{else}}
+                                {{$probeReason := mapGetStr "reason" $smtpProbe}}
+                                <div class="small text-muted p-2 rounded u-bg-soft">
+                                    <i class="fas fa-forward me-1"></i><strong>Skipped</strong> — {{if $probeReason}}{{$probeReason}}{{else}}Direct SMTP probe not available from this environment.{{end}}
+                                </div>
+                            {{end}}
+                        </div>
+                        {{end}}
+
+                        {{else}}
+                        <!-- Legacy format (v1 stored scans) -->
                         {{if mapGetBool "dns_inferred" $smtp}}
                             {{$inferNote := mapGetStr "inference_note" $smtp}}
                             {{if $inferNote}}
@@ -2391,6 +2505,7 @@
                             ({{if gt $tls13 0}}{{$tls13}} TLS 1.3{{end}}{{if and (gt $tls13 0) (gt $tls12 0)}}, {{end}}{{if gt $tls12 0}}{{$tls12}} TLS 1.2{{end}})
                             {{end}}
                         </div>
+                        {{end}}
                         {{end}}
                         {{end}}
                     </div>

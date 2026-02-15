@@ -692,6 +692,35 @@ Changes:
 
 ---
 
+## Mail Transport Security Redesign (v26.18.0)
+
+**Date**: 2026-02-15
+
+**Problem**: The "Live SMTP TLS Validation" section attempted direct SMTP probes to port 25, which fails on all major cloud platforms (AWS, GCP, Azure, Replit) that block outbound SMTP. This produced misleading "connection failed" errors that were hosting constraints, not security findings.
+
+**Solution**: Redesigned to a standards-aligned three-tier architecture:
+
+1. **Policy Assessment** (Primary) — Evaluates MTA-STS and DANE/TLSA DNS policies per RFC 8461 and RFC 7672. This is the authoritative method per NIST SP 800-177 Rev. 1. Status vocabulary: `enforced` / `monitoring` / `opportunistic` / `none`.
+
+2. **Telemetry Indicators** — Reports TLS-RPT (RFC 8460) configuration status, cross-referenced from the Email Security section.
+
+3. **Live Probe** (Supplementary) — SMTP STARTTLS probe, now controlled by `SMTP_PROBE_MODE` environment variable:
+   - `skip` (default, production) — Shows "Skipped" status with explanation
+   - `force` (development/testing) — Attempts actual probe
+
+**Data model**: Versioned format (v2) with `policy`, `telemetry`, `probe` objects. Backward-compatible with stored v1 scans via template guards.
+
+**Template changes**:
+- Engineer's report: Section renamed "Mail Transport Security", three sub-sections with role badges (PRIMARY/SUPPLEMENTARY)
+- Executive brief: Row renamed "Mail Transport" with "Policy-assessed" annotation
+- MTA-STS cross-reference updated to point to "Mail Transport Security"
+
+**Design rationale**: RFC 8461 (MTA-STS) was specifically created because SMTP STARTTLS is vulnerable to downgrade attacks — the DNS policy IS the security mechanism. Direct SMTP probing is supplementary validation, not primary assessment.
+
+**Future**: Data model designed to accommodate external VPS probe nodes (Hetzner, OVH) as industry-standard multi-vantage approach.
+
+---
+
 ## Failures & Lessons Learned Timeline
 
 | Date | Mistake | Root Cause | Correct Solution |

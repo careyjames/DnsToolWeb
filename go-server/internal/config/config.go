@@ -8,11 +8,12 @@ import (
 )
 
 type Config struct {
-        DatabaseURL   string
-        SessionSecret string
-        Port          string
-        AppVersion    string
-        Testing       bool
+        DatabaseURL    string
+        SessionSecret  string
+        Port           string
+        AppVersion     string
+        Testing        bool
+        SMTPProbeMode  string
 }
 
 func Load() (*Config, error) {
@@ -31,11 +32,17 @@ func Load() (*Config, error) {
                 port = "5000"
         }
 
+        smtpProbeMode := os.Getenv("SMTP_PROBE_MODE")
+        if smtpProbeMode == "" {
+                smtpProbeMode = "skip"
+        }
+
         return &Config{
-                DatabaseURL:   dbURL,
-                SessionSecret: sessionSecret,
-                Port:          port,
-                AppVersion:    "26.17.2",
-                Testing:       false,
+                DatabaseURL:    dbURL,
+                SessionSecret:  sessionSecret,
+                Port:           port,
+                AppVersion:     "26.18.0",
+                Testing:        false,
+                SMTPProbeMode:  smtpProbeMode,
         }, nil
 }
