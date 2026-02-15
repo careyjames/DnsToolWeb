@@ -85,6 +85,75 @@
                 {{template "source_card" .}}
                 {{end}}
 
+                <h3 class="h5 mt-4 mb-3"><i class="fas fa-traffic-light me-2" style="color: #ffc000;"></i>Standards &amp; Classification Colors</h3>
+                <p class="text-muted small mb-3">Every color used for security classification in DNS Tool reports traces to a published standard. Where formal specifications exist, we cite the exact hex values. Where colors are industry convention rather than specification, we note the distinction.</p>
+
+                <div class="card bg-dark border-secondary mb-3">
+                    <div class="card-body">
+                        <div class="d-flex align-items-start">
+                            <div class="me-3 mt-1">
+                                <i class="fas fa-shield-alt fa-lg" style="color: #ffc000;"></i>
+                            </div>
+                            <div class="flex-grow-1">
+                                <div class="d-flex align-items-center flex-wrap mb-1">
+                                    <h6 class="mb-0 me-2">Traffic Light Protocol (TLP) v2.0</h6>
+                                    <span class="badge bg-secondary me-1">Standard</span>
+                                    <span class="badge bg-success">Formally Specified</span>
+                                </div>
+                                <p class="text-muted small mb-2">Information sharing classification used on all DNS Tool reports. Colors are formally specified by FIRST with exact hex values. Default classification: <strong style="color: #ffc000;">TLP:AMBER</strong>.</p>
+                                <div class="d-flex flex-wrap gap-2 mb-2">
+                                    {{range .TLPColors}}
+                                    <div class="d-flex align-items-center gap-2 px-2 py-1 rounded" style="background: var(--bg-secondary); border: 1px solid var(--border-default);">
+                                        {{if eq .Name "TLP:CLEAR"}}
+                                        <span class="d-inline-block rounded-circle border" style="width: 14px; height: 14px; background: {{.Value}};"></span>
+                                        {{else}}
+                                        <span class="d-inline-block rounded-circle" style="width: 14px; height: 14px; background: {{.Value}};"></span>
+                                        {{end}}
+                                        <span class="small text-light">{{.Name}}</span>
+                                        <code class="small text-muted">{{.Value}}</code>
+                                    </div>
+                                    {{end}}
+                                </div>
+                                <div class="mt-1">
+                                    <a href="https://www.first.org/tlp/" target="_blank" rel="noopener" class="small text-muted"><i class="fas fa-external-link-alt me-1"></i>FIRST TLP v2.0 Specification</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card bg-dark border-secondary mb-3">
+                    <div class="card-body">
+                        <div class="d-flex align-items-start">
+                            <div class="me-3 mt-1">
+                                <i class="fas fa-gauge-high fa-lg text-danger"></i>
+                            </div>
+                            <div class="flex-grow-1">
+                                <div class="d-flex align-items-center flex-wrap mb-1">
+                                    <h6 class="mb-0 me-2">CVSS v3.1 Severity Scale</h6>
+                                    <span class="badge bg-secondary me-1">Convention</span>
+                                    <span class="badge bg-warning text-dark">Industry Standard</span>
+                                </div>
+                                <p class="text-muted small mb-2">Score ranges formally specified by FIRST CVSS v3.1. Colors are <em>not</em> part of the CVSS specification &mdash; they are de facto industry convention derived from the NIST NVD implementation. Used for posture scoring and risk-level badges.</p>
+                                <div class="d-flex flex-wrap gap-2 mb-2">
+                                    {{range .CVSSColors}}
+                                    <div class="d-flex align-items-center gap-2 px-2 py-1 rounded" style="background: var(--bg-secondary); border: 1px solid var(--border-default);">
+                                        <span class="d-inline-block rounded-circle" style="width: 14px; height: 14px; background: {{.Value}};"></span>
+                                        <span class="small text-light">{{.Name}}</span>
+                                        <code class="small text-muted">{{.Value}}</code>
+                                    </div>
+                                    {{end}}
+                                </div>
+                                <div class="mt-1">
+                                    <a href="https://www.first.org/cvss/v3-1/specification-document" target="_blank" rel="noopener" class="small text-muted"><i class="fas fa-external-link-alt me-1"></i>FIRST CVSS v3.1 Specification</a>
+                                    <span class="text-muted mx-1">&middot;</span>
+                                    <a href="https://nvd.nist.gov/vuln-metrics/cvss" target="_blank" rel="noopener" class="small text-muted"><i class="fas fa-external-link-alt me-1"></i>NIST NVD Color Convention</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="card bg-dark border-info mt-4">
                     <div class="card-body">
                         <h5 class="card-title"><i class="fas fa-microchip me-2 text-info"></i>Under the Hood</h5>

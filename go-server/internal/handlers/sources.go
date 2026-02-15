@@ -47,6 +47,8 @@ func (h *SourcesHandler) Sources(c *gin.Context) {
                 "ThreatSources":   getThreatSources(),
                 "HistorySources":  getHistorySources(),
                 "MetaSources":     getMetaSources(),
+                "TLPColors":       getTLPColors(),
+                "CVSSColors":      getCVSSColors(),
         })
 }
 
