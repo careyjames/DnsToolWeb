@@ -140,7 +140,7 @@
                     <button type="button" id="engineerPrintBtn" class="btn btn-outline-info" title="Full technical report for engineers and sysadmins">
                         <i class="fas fa-file-lines me-1"></i>Engineer
                     </button>
-                    <a href="/analysis/{{.AnalysisID}}/executive" class="btn btn-outline-executive" title="Condensed board-ready report for executives" target="_blank">
+                    <a href="/analysis/{{.AnalysisID}}/executive" class="btn btn-outline-executive" title="Condensed board-ready report for executives" target="_blank" rel="noopener">
                         <i class="fas fa-file-alt me-1"></i>Executive
                     </a>
                 </div>
@@ -1640,7 +1640,7 @@
                                             {{else}}
                                                 <span class="text-success"><i class="fas fa-check-circle me-1"></i>Logo found</span>
                                             {{end}}
-                                            <a href="{{$logoUrl}}" target="_blank" class="d-block text-info text-truncate u-maxw-200" title="{{$logoUrl}}">
+                                            <a href="{{$logoUrl}}" target="_blank" rel="noopener" class="d-block text-info text-truncate u-maxw-200" title="{{$logoUrl}}">
                                                 <i class="fas fa-external-link-alt me-1"></i>View full logo
                                             </a>
                                         </div>
