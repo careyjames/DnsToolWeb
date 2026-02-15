@@ -666,6 +666,71 @@
                             </div>
                         </div>
                     </div>
+
+                    <div class="accordion-item bg-dark border-secondary">
+                        <h3 class="accordion-header">
+                            <button class="accordion-button collapsed bg-dark text-light" type="button" data-bs-toggle="collapse" data-bs-target="#faq13">
+                                What is OSINT and how does DNS Tool use it?
+                            </button>
+                        </h3>
+                        <div id="faq13" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                            <div class="accordion-body text-muted small">
+                                <strong>OSINT (Open Source Intelligence)</strong> is the collection and analysis of information from publicly available sources. Intelligence agencies, law enforcement, and security researchers have used OSINT methodology for decades &mdash; it is the foundation of modern threat intelligence.
+                                <br><br>DNS Tool is an OSINT platform. Every data source we query is publicly available: DNS records (via standard resolvers), certificate transparency logs, RDAP registrar data, and publicly accessible web resources. We do not bypass authentication, probe closed ports, or exploit vulnerabilities. We observe what is already visible to anyone with a browser or a <code>dig</code> command &mdash; and we organize those observations into actionable intelligence.
+                                <br><br>This is the same methodology used by <strong>Shodan</strong>, <strong>Mozilla Observatory</strong>, <strong>Censys</strong>, and <strong>VirusTotal</strong>. The difference is our focus: we specialize in DNS security posture and email authentication, producing intelligence products modeled on the formats used by national intelligence agencies.
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="accordion-item bg-dark border-secondary">
+                        <h3 class="accordion-header">
+                            <button class="accordion-button collapsed bg-dark text-light" type="button" data-bs-toggle="collapse" data-bs-target="#faq14">
+                                Is this a PCI compliance scanner?
+                            </button>
+                        </h3>
+                        <div id="faq14" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                            <div class="accordion-body text-muted small">
+                                <strong>No.</strong> DNS Tool is not a PCI DSS Approved Scanning Vendor (ASV) and our reports are not PCI compliance attestations. PCI DSS requires vulnerability scans performed by vendors formally certified by the <a href="https://listings.pcisecuritystandards.org/assessors_and_solutions/approved_scanning_vendors" target="_blank" rel="noopener" class="text-info">PCI Security Standards Council</a>. Certified ASVs include Qualys, Tenable, and Trustwave, among others.
+                                <br><br><strong>What we do:</strong> We perform OSINT-based DNS security analysis &mdash; examining your domain's email authentication (SPF, DKIM, DMARC), transport security (DANE, MTA-STS), and public exposure posture using only publicly available data. This is complementary to PCI scanning, not a substitute for it.
+                                <br><br><strong>If you need PCI compliance:</strong> Engage a certified ASV from the <a href="https://listings.pcisecuritystandards.org/assessors_and_solutions/approved_scanning_vendors" target="_blank" rel="noopener" class="text-info">PCI SSC ASV listing</a>. Use DNS Tool alongside your ASV to ensure your domain's DNS and email security posture is properly configured &mdash; something ASV scans typically do not cover in depth.
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="accordion-item bg-dark border-secondary">
+                        <h3 class="accordion-header">
+                            <button class="accordion-button collapsed bg-dark text-light" type="button" data-bs-toggle="collapse" data-bs-target="#faq15">
+                                What data do you collect about my domain?
+                            </button>
+                        </h3>
+                        <div id="faq15" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                            <div class="accordion-body text-muted small">
+                                We query only <strong>publicly available data</strong> that anyone can access using standard tools:
+                                <ul class="mb-2 mt-2">
+                                    <li><strong>DNS records</strong> &mdash; the same records returned by <code>dig</code> or <code>nslookup</code> (A, MX, TXT, CNAME, TLSA, DNSKEY, etc.)</li>
+                                    <li><strong>Certificate transparency logs</strong> &mdash; public logs maintained by CAs, queried via <a href="https://crt.sh" target="_blank" rel="noopener" class="text-info">crt.sh</a></li>
+                                    <li><strong>RDAP registrar data</strong> &mdash; the public successor to WHOIS, served by IANA-accredited registries</li>
+                                    <li><strong>Publicly accessible web resources</strong> &mdash; MTA-STS policy files, security.txt, robots.txt, and (if opted in) well-known misconfiguration paths that any browser can visit</li>
+                                </ul>
+                                We do not access anything behind authentication, scan closed ports, or perform any action that requires special authorization. Every query we make is one you could reproduce yourself using the verification commands provided in each report.
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="accordion-item bg-dark border-secondary">
+                        <h3 class="accordion-header">
+                            <button class="accordion-button collapsed bg-dark text-light" type="button" data-bs-toggle="collapse" data-bs-target="#faq16">
+                                Is this a penetration test?
+                            </button>
+                        </h3>
+                        <div id="faq16" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                            <div class="accordion-body text-muted small">
+                                <strong>No.</strong> Penetration testing involves active exploitation attempts against systems, typically with written authorization from the system owner. Penetration testers attempt to bypass security controls, escalate privileges, and demonstrate real-world attack paths.
+                                <br><br>DNS Tool performs <strong>passive OSINT observation</strong>. We read publicly available DNS records, check publicly accessible URLs, and analyze the data. We do not attempt to exploit any vulnerability, bypass any access control, or interact with any system in a way that requires authorization.
+                                <br><br>Think of it this way: a penetration tester tries to break into your house. We look at whether your front door is locked &mdash; from the sidewalk.
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
