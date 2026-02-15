@@ -2827,3 +2827,5 @@ main.container {
 .u-color-gray-400 { color: #9ca3af; }
 .u-color-gray-500 { color: #6b7280; }
 .u-color-heading-light { color: #e5e7eb; }
+.u-link-dotted { cursor: pointer; text-decoration: underline; text-decoration-style: dotted; }
+.u-offscreen-print { position: fixed; left: -9999px; top: 0; width: 0; height: 0; border: none; }

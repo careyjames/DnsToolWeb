@@ -18,6 +18,15 @@
     <link rel="canonical" href="https://dnstool.it-help.tech/sources">
     {{template "critical_css" .}}
     {{template "head_css" .}}
+    <style nonce="{{.CspNonce}}">
+        .u-color-amber { color: #ffc000; }
+        .src-color-chip-wrap { background: var(--bg-secondary); border: 1px solid var(--border-default); }
+        .src-color-dot { width: 14px; height: 14px; display: inline-block; border-radius: 50%; }
+        {{range $i, $c := .TLPColors}}#src-tlp-dot-{{$i}} { background: {{$c.Value}}; }
+        {{end}}
+        {{range $i, $c := .CVSSColors}}#src-cvss-dot-{{$i}} { background: {{$c.Value}}; }
+        {{end}}
+    </style>
 </head>
 <body>
     {{template "nav" .}}
@@ -85,14 +94,14 @@
                 {{template "source_card" .}}
                 {{end}}
 
-                <h3 class="h5 mt-4 mb-3"><i class="fas fa-traffic-light me-2" style="color: #ffc000;"></i>Standards &amp; Classification Colors</h3>
+                <h3 class="h5 mt-4 mb-3"><i class="fas fa-traffic-light me-2 u-color-amber"></i>Standards &amp; Classification Colors</h3>
                 <p class="text-muted small mb-3">Every color used for security classification in DNS Tool reports traces to a published standard. Where formal specifications exist, we cite the exact hex values. Where colors are industry convention rather than specification, we note the distinction.</p>
 
                 <div class="card bg-dark border-secondary mb-3">
                     <div class="card-body">
                         <div class="d-flex align-items-start">
                             <div class="me-3 mt-1">
-                                <i class="fas fa-shield-alt fa-lg" style="color: #ffc000;"></i>
+                                <i class="fas fa-shield-alt fa-lg u-color-amber"></i>
                             </div>
                             <div class="flex-grow-1">
                                 <div class="d-flex align-items-center flex-wrap mb-1">
@@ -100,17 +109,17 @@
                                     <span class="badge bg-secondary me-1">Standard</span>
                                     <span class="badge bg-success">Formally Specified</span>
                                 </div>
-                                <p class="text-muted small mb-2">Information sharing classification used on all DNS Tool reports. Colors are formally specified by FIRST with exact hex values. Default classification: <strong style="color: #ffc000;">TLP:AMBER</strong>.</p>
+                                <p class="text-muted small mb-2">Information sharing classification used on all DNS Tool reports. Colors are formally specified by FIRST with exact hex values. Default classification: <strong class="u-color-amber">TLP:AMBER</strong>.</p>
                                 <div class="d-flex flex-wrap gap-2 mb-2">
-                                    {{range .TLPColors}}
-                                    <div class="d-flex align-items-center gap-2 px-2 py-1 rounded" style="background: var(--bg-secondary); border: 1px solid var(--border-default);">
-                                        {{if eq .Name "TLP:CLEAR"}}
-                                        <span class="d-inline-block rounded-circle border" style="width: 14px; height: 14px; background: {{.Value}};"></span>
+                                    {{range $i, $c := .TLPColors}}
+                                    <div class="d-flex align-items-center gap-2 px-2 py-1 rounded src-color-chip-wrap">
+                                        {{if eq $c.Name "TLP:CLEAR"}}
+                                        <span class="src-color-dot border" id="src-tlp-dot-{{$i}}"></span>
                                         {{else}}
-                                        <span class="d-inline-block rounded-circle" style="width: 14px; height: 14px; background: {{.Value}};"></span>
+                                        <span class="src-color-dot" id="src-tlp-dot-{{$i}}"></span>
                                         {{end}}
-                                        <span class="small text-light">{{.Name}}</span>
-                                        <code class="small text-muted">{{.Value}}</code>
+                                        <span class="small text-light">{{$c.Name}}</span>
+                                        <code class="small text-muted">{{$c.Value}}</code>
                                     </div>
                                     {{end}}
                                 </div>
@@ -136,11 +145,11 @@
                                 </div>
                                 <p class="text-muted small mb-2">Score ranges formally specified by FIRST CVSS v3.1. Colors are <em>not</em> part of the CVSS specification &mdash; they are de facto industry convention derived from the NIST NVD implementation. Used for posture scoring and risk-level badges.</p>
                                 <div class="d-flex flex-wrap gap-2 mb-2">
-                                    {{range .CVSSColors}}
-                                    <div class="d-flex align-items-center gap-2 px-2 py-1 rounded" style="background: var(--bg-secondary); border: 1px solid var(--border-default);">
-                                        <span class="d-inline-block rounded-circle" style="width: 14px; height: 14px; background: {{.Value}};"></span>
-                                        <span class="small text-light">{{.Name}}</span>
-                                        <code class="small text-muted">{{.Value}}</code>
+                                    {{range $i, $c := .CVSSColors}}
+                                    <div class="d-flex align-items-center gap-2 px-2 py-1 rounded src-color-chip-wrap">
+                                        <span class="src-color-dot" id="src-cvss-dot-{{$i}}"></span>
+                                        <span class="small text-light">{{$c.Name}}</span>
+                                        <code class="small text-muted">{{$c.Value}}</code>
                                     </div>
                                     {{end}}
                                 </div>

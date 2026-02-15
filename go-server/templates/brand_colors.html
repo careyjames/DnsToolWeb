@@ -90,6 +90,26 @@
             font-size: 1.1rem;
             flex-shrink: 0;
         }
+        .section-icon-info {
+            background: rgba(88, 166, 255, 0.1);
+            color: var(--status-info);
+        }
+        .section-icon-success {
+            background: rgba(63, 185, 80, 0.1);
+            color: var(--status-success);
+        }
+        .section-icon-neutral {
+            background: rgba(139, 148, 158, 0.1);
+            color: var(--status-neutral);
+        }
+        .section-icon-amber {
+            background: rgba(255, 192, 0, 0.1);
+            color: #ffc000;
+        }
+        .section-icon-danger {
+            background: rgba(248, 81, 73, 0.1);
+            color: var(--status-danger);
+        }
         .copy-toast {
             position: fixed;
             bottom: 2rem;
@@ -142,6 +162,36 @@
             border-color: rgba(227, 179, 65, 0.3);
             background: rgba(227, 179, 65, 0.1);
         }
+        .bc-info-box {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-default);
+        }
+        .bc-standards-title {
+            font-size: 0.9rem;
+        }
+        .u-color-amber {
+            color: #ffc000;
+        }
+        .bc-usage-list {
+            color: var(--text-secondary);
+            line-height: 1.8;
+        }
+        .u-offscreen-copy {
+            position: fixed;
+            opacity: 0;
+        }
+    </style>
+    <style nonce="{{.CspNonce}}">
+        {{range $i, $c := .BrandPalette}}#swatch-bp-{{$i}} { background: {{$c.Value}}; }
+        {{end}}
+        {{range $i, $c := .StatusColors}}#swatch-sc-{{$i}} { background: {{$c.Value}}; }
+        {{end}}
+        {{range $i, $c := .SurfaceColors}}#swatch-sf-{{$i}} { background: {{$c.Value}}; }
+        {{end}}
+        {{range $i, $c := .TLPColors}}{{if ne $c.Name "TLP:CLEAR"}}#swatch-tlp-{{$i}} { background: {{$c.Value}}; }
+        {{end}}{{end}}
+        {{range $i, $c := .CVSSColors}}#swatch-cvss-{{$i}} { background: {{$c.Value}}; }
+        {{end}}
     </style>
 </head>
 <body>
@@ -156,19 +206,19 @@
                     <p class="text-muted small mb-0">Canonical palette and standards-aligned color reference for design, engineering, and vendor handoff.</p>
                 </div>
 
-                <div class="d-flex align-items-start gap-3 mb-4 p-3 rounded" style="background: var(--bg-secondary); border: 1px solid var(--border-default);">
-                    <div class="section-icon" style="background: rgba(88, 166, 255, 0.1); color: var(--status-info);">
+                <div class="d-flex align-items-start gap-3 mb-4 p-3 rounded bc-info-box">
+                    <div class="section-icon section-icon-info">
                         <i class="fas fa-info-circle"></i>
                     </div>
                     <div>
-                        <strong class="d-block mb-1" style="font-size: 0.9rem;">Standards Alignment</strong>
+                        <strong class="d-block mb-1 bc-standards-title">Standards Alignment</strong>
                         <p class="text-muted small mb-0">This page documents our brand identity palette alongside colors used for cybersecurity classification. Where formal specifications exist (e.g., FIRST TLP v2.0 defines exact hex values), we cite the standard directly. Where colors are industry convention rather than formal specification (e.g., CVSS severity colors used on NVD), we note that distinction honestly. Every claim on this page is independently verifiable via the linked sources.</p>
                     </div>
                 </div>
 
                 <!-- ===================== BRAND PALETTE ===================== -->
                 <div class="d-flex align-items-center gap-2 mb-3">
-                    <div class="section-icon" style="background: rgba(88, 166, 255, 0.1); color: var(--status-info);">
+                    <div class="section-icon section-icon-info">
                         <i class="fas fa-droplet"></i>
                     </div>
                     <div>
@@ -178,14 +228,14 @@
                 </div>
 
                 <div class="row g-3 mb-3">
-                    {{range .BrandPalette}}
+                    {{range $i, $c := .BrandPalette}}
                     <div class="col-6 col-md-4 col-lg-3">
-                        <div class="color-swatch" style="background: {{.Value}};"></div>
+                        <div class="color-swatch" id="swatch-bp-{{$i}}"></div>
                         <div class="color-card">
-                            <div class="color-name">{{.Name}}</div>
-                            <div class="color-token">{{.Token}}</div>
-                            <div class="color-value" data-copy="{{.Value}}">{{.Value}}</div>
-                            {{if .Notes}}<div class="color-notes">{{.Notes}}</div>{{end}}
+                            <div class="color-name">{{$c.Name}}</div>
+                            <div class="color-token">{{$c.Token}}</div>
+                            <div class="color-value" data-copy="{{$c.Value}}">{{$c.Value}}</div>
+                            {{if $c.Notes}}<div class="color-notes">{{$c.Notes}}</div>{{end}}
                         </div>
                     </div>
                     {{end}}
@@ -194,7 +244,7 @@
                 <!-- ===================== STATUS COLORS ===================== -->
                 <div class="section-divider"></div>
                 <div class="d-flex align-items-center gap-2 mb-3">
-                    <div class="section-icon" style="background: rgba(63, 185, 80, 0.1); color: var(--status-success);">
+                    <div class="section-icon section-icon-success">
                         <i class="fas fa-circle-check"></i>
                     </div>
                     <div>
@@ -204,14 +254,14 @@
                 </div>
 
                 <div class="row g-3 mb-3">
-                    {{range .StatusColors}}
+                    {{range $i, $c := .StatusColors}}
                     <div class="col-6 col-md-4 col-lg-3">
-                        <div class="color-swatch" style="background: {{.Value}};"></div>
+                        <div class="color-swatch" id="swatch-sc-{{$i}}"></div>
                         <div class="color-card">
-                            <div class="color-name">{{.Name}}</div>
-                            <div class="color-token">{{.Token}}</div>
-                            <div class="color-value" data-copy="{{.Value}}">{{.Value}}</div>
-                            {{if .Notes}}<div class="color-notes">{{.Notes}}</div>{{end}}
+                            <div class="color-name">{{$c.Name}}</div>
+                            <div class="color-token">{{$c.Token}}</div>
+                            <div class="color-value" data-copy="{{$c.Value}}">{{$c.Value}}</div>
+                            {{if $c.Notes}}<div class="color-notes">{{$c.Notes}}</div>{{end}}
                         </div>
                     </div>
                     {{end}}
@@ -219,7 +269,7 @@
 
                 <!-- ===================== STATUS SURFACES ===================== -->
                 <div class="d-flex align-items-center gap-2 mb-3 mt-4">
-                    <div class="section-icon" style="background: rgba(139, 148, 158, 0.1); color: var(--status-neutral);">
+                    <div class="section-icon section-icon-neutral">
                         <i class="fas fa-layer-group"></i>
                     </div>
                     <div>
@@ -229,14 +279,14 @@
                 </div>
 
                 <div class="row g-3 mb-3">
-                    {{range .SurfaceColors}}
+                    {{range $i, $c := .SurfaceColors}}
                     <div class="col-6 col-md-4 col-lg-3">
-                        <div class="color-swatch" style="background: {{.Value}};"></div>
+                        <div class="color-swatch" id="swatch-sf-{{$i}}"></div>
                         <div class="color-card">
-                            <div class="color-name">{{.Name}}</div>
-                            <div class="color-token">{{.Token}}</div>
-                            <div class="color-value" data-copy="{{.Value}}">{{.Value}}</div>
-                            {{if .Notes}}<div class="color-notes">{{.Notes}}</div>{{end}}
+                            <div class="color-name">{{$c.Name}}</div>
+                            <div class="color-token">{{$c.Token}}</div>
+                            <div class="color-value" data-copy="{{$c.Value}}">{{$c.Value}}</div>
+                            {{if $c.Notes}}<div class="color-notes">{{$c.Notes}}</div>{{end}}
                         </div>
                     </div>
                     {{end}}
@@ -245,7 +295,7 @@
                 <!-- ===================== TLP v2.0 ===================== -->
                 <div class="section-divider"></div>
                 <div class="d-flex align-items-center gap-2 mb-2">
-                    <div class="section-icon" style="background: rgba(255, 192, 0, 0.1); color: #ffc000;">
+                    <div class="section-icon section-icon-amber">
                         <i class="fas fa-traffic-light"></i>
                     </div>
                     <div>
@@ -257,22 +307,22 @@
                     <span class="standard-badge standard-badge-first">FIRST</span>
                     <span class="standard-badge standard-badge-cisa">CISA</span>
                 </div>
-                <p class="text-muted small mb-3">Colors specified by <a href="https://www.first.org/tlp/" target="_blank" rel="noopener" class="text-info">FIRST (Forum of Incident Response and Security Teams)</a>. Adopted by <a href="https://www.cisa.gov/news-events/news/traffic-light-protocol-tlp-definitions-and-usage" target="_blank" rel="noopener" class="text-info">CISA</a> on November 1, 2022. DNS Tool defaults to <strong style="color: #ffc000;">TLP:AMBER</strong> for all reports — security posture data may reveal actionable vulnerabilities.</p>
+                <p class="text-muted small mb-3">Colors specified by <a href="https://www.first.org/tlp/" target="_blank" rel="noopener" class="text-info">FIRST (Forum of Incident Response and Security Teams)</a>. Adopted by <a href="https://www.cisa.gov/news-events/news/traffic-light-protocol-tlp-definitions-and-usage" target="_blank" rel="noopener" class="text-info">CISA</a> on November 1, 2022. DNS Tool defaults to <strong class="u-color-amber">TLP:AMBER</strong> for all reports — security posture data may reveal actionable vulnerabilities.</p>
 
                 <div class="row g-3 mb-3">
-                    {{range .TLPColors}}
+                    {{range $i, $c := .TLPColors}}
                     <div class="col-6 col-md-4 col-lg-3">
-                        {{if eq .Name "TLP:CLEAR"}}
+                        {{if eq $c.Name "TLP:CLEAR"}}
                         <div class="color-swatch color-swatch-clear"></div>
                         {{else}}
-                        <div class="color-swatch" style="background: {{.Value}};"></div>
+                        <div class="color-swatch" id="swatch-tlp-{{$i}}"></div>
                         {{end}}
                         <div class="color-card">
-                            <div class="color-name">{{.Name}}</div>
-                            <div class="color-token">{{.Token}}</div>
-                            <div class="color-value" data-copy="{{.Value}}">{{.Value}}</div>
-                            {{if .Notes}}<div class="color-notes">{{.Notes}}</div>{{end}}
-                            {{if .Source}}<div class="color-source"><a href="{{.SourceURL}}" target="_blank" rel="noopener"><i class="fas fa-external-link-alt"></i> {{.Source}}</a></div>{{end}}
+                            <div class="color-name">{{$c.Name}}</div>
+                            <div class="color-token">{{$c.Token}}</div>
+                            <div class="color-value" data-copy="{{$c.Value}}">{{$c.Value}}</div>
+                            {{if $c.Notes}}<div class="color-notes">{{$c.Notes}}</div>{{end}}
+                            {{if $c.Source}}<div class="color-source"><a href="{{$c.SourceURL}}" target="_blank" rel="noopener"><i class="fas fa-external-link-alt"></i> {{$c.Source}}</a></div>{{end}}
                         </div>
                     </div>
                     {{end}}
@@ -281,7 +331,7 @@
                 <!-- ===================== CVSS v3.1 ===================== -->
                 <div class="section-divider"></div>
                 <div class="d-flex align-items-center gap-2 mb-2">
-                    <div class="section-icon" style="background: rgba(248, 81, 73, 0.1); color: var(--status-danger);">
+                    <div class="section-icon section-icon-danger">
                         <i class="fas fa-gauge-high"></i>
                     </div>
                     <div>
@@ -296,15 +346,15 @@
                 <p class="text-muted small mb-3">Score ranges formally specified by <a href="https://www.first.org/cvss/v3-1/specification-document" target="_blank" rel="noopener" class="text-info">FIRST CVSS v3.1</a>. Colors are <em>not</em> part of the CVSS specification — they are de facto industry convention derived from the <a href="https://nvd.nist.gov/vuln-metrics/cvss" target="_blank" rel="noopener" class="text-info">NIST NVD</a> implementation and widely adopted across security tooling. Used for posture scoring and risk-level badges throughout reports.</p>
 
                 <div class="row g-3 mb-3">
-                    {{range .CVSSColors}}
+                    {{range $i, $c := .CVSSColors}}
                     <div class="col-6 col-md-4 col-lg-3">
-                        <div class="color-swatch" style="background: {{.Value}};"></div>
+                        <div class="color-swatch" id="swatch-cvss-{{$i}}"></div>
                         <div class="color-card">
-                            <div class="color-name">{{.Name}}</div>
-                            <div class="color-token">{{.Token}}</div>
-                            <div class="color-value" data-copy="{{.Value}}">{{.Value}}</div>
-                            {{if .Notes}}<div class="color-notes">{{.Notes}}</div>{{end}}
-                            {{if .Source}}<div class="color-source"><a href="{{.SourceURL}}" target="_blank" rel="noopener"><i class="fas fa-external-link-alt"></i> {{.Source}}</a></div>{{end}}
+                            <div class="color-name">{{$c.Name}}</div>
+                            <div class="color-token">{{$c.Token}}</div>
+                            <div class="color-value" data-copy="{{$c.Value}}">{{$c.Value}}</div>
+                            {{if $c.Notes}}<div class="color-notes">{{$c.Notes}}</div>{{end}}
+                            {{if $c.Source}}<div class="color-source"><a href="{{$c.SourceURL}}" target="_blank" rel="noopener"><i class="fas fa-external-link-alt"></i> {{$c.Source}}</a></div>{{end}}
                         </div>
                     </div>
                     {{end}}
@@ -313,7 +363,7 @@
                 <!-- ===================== USAGE RULES ===================== -->
                 <div class="section-divider"></div>
                 <div class="d-flex align-items-center gap-2 mb-3">
-                    <div class="section-icon" style="background: rgba(139, 148, 158, 0.1); color: var(--status-neutral);">
+                    <div class="section-icon section-icon-neutral">
                         <i class="fas fa-book"></i>
                     </div>
                     <div>
@@ -324,7 +374,7 @@
 
                 <div class="card bg-dark border-secondary">
                     <div class="card-body">
-                        <ol class="small mb-0" style="color: var(--text-secondary); line-height: 1.8;">
+                        <ol class="small mb-0 bc-usage-list">
                             <li><strong class="text-info">Standards-specified colors are non-negotiable.</strong> TLP colors must match the FIRST TLP v2.0 specification exactly — they are protocol requirements, not brand choices. CVSS severity colors follow NVD convention for ecosystem consistency.</li>
                             <li><strong>Status colors follow GitHub-dark conventions</strong> with 20% desaturation for professional appearance on dark backgrounds.</li>
                             <li><strong>Surface tints use 15% opacity</strong> of their parent color to maintain readability while providing visual grouping.</li>
@@ -362,8 +412,7 @@
                 } else {
                     var ta = document.createElement('textarea');
                     ta.value = text;
-                    ta.style.position = 'fixed';
-                    ta.style.opacity = '0';
+                    ta.classList.add('u-offscreen-copy');
                     document.body.appendChild(ta);
                     ta.select();
                     document.execCommand('copy');

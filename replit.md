@@ -13,7 +13,7 @@ The DNS Tool is an OSINT (Open Source Intelligence) platform designed for compre
 - **CRITICAL**: Read the "Failures & Lessons Learned Timeline" section at the bottom of `EVOLUTION.md` before making any changes. It documents recurring mistakes (CSP inline handlers, font subset issues, PDF title format, print readability) with correct solutions.
 
 ## Known Constraints (Read Before Coding)
-- **CSP blocks ALL inline handlers**: Never use `onclick`, `onchange`, etc. Use `id` + `addEventListener` in `<script nonce="{{.CspNonce}}">` blocks.
+- **CSP blocks ALL inline handlers AND inline styles**: Never use `onclick`, `onchange`, etc. Use `id` + `addEventListener` in `<script nonce="{{.CspNonce}}">` blocks. Never use `style="..."` attributes or JS `.style.` setters — use CSS classes (in custom.css or nonced `<style>` blocks). Dynamic per-element colors use generated nonced `<style>` blocks with `#id-{{$i}}` rules via indexed template loops.
 - **PDF filename = `<title>` tag**: Format as "Report Type — domain - DNS Tool" (e.g., "Engineer's DNS Intelligence Report — example.com - DNS Tool").
 - **Intelligence document naming** (IC convention — do NOT change without deliberation):
   - Engineer's DNS Intelligence Report (comprehensive, like a National Intelligence Estimate)

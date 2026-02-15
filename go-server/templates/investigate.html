@@ -759,7 +759,7 @@
             }, 1000);
 
             setTimeout(function() {
-                if (loadingNote) loadingNote.style.opacity = '1';
+                if (loadingNote) loadingNote.classList.add('u-opacity-visible');
             }, 3000);
 
             var statusSpans = overlay.querySelectorAll('.loading-status span');

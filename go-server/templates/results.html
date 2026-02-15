@@ -3330,12 +3330,13 @@
                 <div class="card-body py-3">
                     <div class="d-flex align-items-center flex-wrap gap-2">
                         <span class="text-muted small"><i class="fas fa-history me-1"></i>DNS History Timeline <span class="badge bg-warning text-dark ms-1 u-fs-070em-vmid">BETA</span></span>
-                        <div class="d-flex align-items-center gap-2 flex-grow-1 u-maxw-500">
+                        <form class="d-flex align-items-center gap-2 flex-grow-1 u-maxw-500" id="dns-history-form" autocomplete="on">
+                            <label for="securitytrails_api_key" class="visually-hidden">SecurityTrails API Key</label>
                             <input type="password" class="form-control form-control-sm bg-dark text-light border-secondary u-fs-085em" id="securitytrails_api_key" name="securitytrails_api_key" placeholder="SecurityTrails API Key" autocomplete="section-dnstool securitytrails-api-key" spellcheck="false" aria-label="SecurityTrails API Key for DNS history">
-                            <button type="button" class="btn btn-sm btn-outline-info" id="dns-history-btn" data-domain="{{.AsciiDomain}}">
+                            <button type="submit" class="btn btn-sm btn-outline-info" id="dns-history-btn" data-domain="{{.AsciiDomain}}">
                                 <i class="fas fa-search me-1"></i>Go
                             </button>
-                        </div>
+                        </form>
                     </div>
                     <div class="mt-2 text-muted u-fs-075em">
                         <i class="fas fa-shield-alt me-1"></i>Your key is sent directly to SecurityTrails and is never stored on our servers. <a href="https://securitytrails.com/app/signup" target="_blank" rel="noopener" class="text-info">Get a free API key</a>
@@ -3997,7 +3998,7 @@
                 var origHTML = this.innerHTML;
                 this.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Loading\u2026';
                 var iframe = document.createElement('iframe');
-                iframe.style.cssText = 'position:fixed;left:-9999px;top:0;width:0;height:0;border:none;';
+                iframe.className = 'u-offscreen-print';
                 iframe.src = url + '?print=iframe';
                 document.body.appendChild(iframe);
                 var self = this;
@@ -4015,8 +4016,16 @@
                 }, 15000);
             });
 
+            var histForm = document.getElementById('dns-history-form');
             var histBtn = document.getElementById('dns-history-btn');
-            if (histBtn) histBtn.addEventListener('click', function() { loadDNSHistory(this.dataset.domain); });
+            if (histForm) {
+                histForm.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    if (histBtn) loadDNSHistory(histBtn.dataset.domain);
+                });
+            } else if (histBtn) {
+                histBtn.addEventListener('click', function() { loadDNSHistory(this.dataset.domain); });
+            }
 
             var protocolSectionMap = {
                 'SPF': '#section-email', 'DMARC': '#section-email', 'DKIM': '#section-email',
@@ -4030,9 +4039,7 @@
                 var cleaned = proto.replace(/\s*\(.*\)/, '');
                 var target = protocolSectionMap[cleaned];
                 if (target) {
-                    el.style.cursor = 'pointer';
-                    el.style.textDecoration = 'underline';
-                    el.style.textDecorationStyle = 'dotted';
+                    el.classList.add('u-link-dotted');
                     el.addEventListener('click', function() {
                         var section = document.querySelector(target);
                         if (section) section.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -4076,9 +4083,9 @@
 
             document.querySelectorAll('.bimi-logo-img').forEach(function(img) {
                 img.addEventListener('error', function() {
-                    this.style.display = 'none';
+                    this.classList.add('d-none');
                     const fallback = this.nextElementSibling;
-                    if (fallback) fallback.style.display = 'block';
+                    if (fallback) fallback.classList.remove('d-none');
                 });
             });
             const tooltipTriggerList = Array.from(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
@@ -4263,9 +4270,9 @@
                 var section = document.getElementById('dns-history-section');
                 var body = document.getElementById('dns-history-body');
                 var source = document.getElementById('dns-history-source');
-                if (section) section.style.display = '';
+                if (section) section.classList.remove('d-none');
                 if (source) source.textContent = 'Source: SecurityTrails';
-                if (wrapper) wrapper.style.display = 'none';
+                if (wrapper) wrapper.classList.add('d-none');
 
                 if (!data.has_changes || !data.changes || data.changes.length === 0) {
                     if (body) body.innerHTML = '<p class="text-muted mb-0"><i class="fas fa-check-circle text-success me-1"></i>No DNS record changes detected in available history. A, AAAA, MX, and NS records for this domain have remained stable.</p>';
