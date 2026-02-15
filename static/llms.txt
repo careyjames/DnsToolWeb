@@ -101,9 +101,12 @@ Every attribution includes a confidence label:
 - Intelligence sources inventory with full transparency
 - Email Header Analyzer (SPF/DKIM/DMARC verification, delivery route tracing, spoofing detection) — multi-format: paste, .eml, .json (Gmail API, Microsoft Graph, Postmark, SendGrid, Mailgun), .mbox, .txt
 - OpenPhish phishing URL feed integration
+- Public exposure checks (secret/credential scanning in page source and JavaScript)
+- Expanded exposure checks (opt-in): well-known misconfiguration path probing (/.env, /.git/config, /server-status, /phpinfo.php, etc.) with content validation — informational reconnaissance, not PCI ASV
+- Report integrity hash (SHA-256 tamper-evident fingerprint per analysis, preview in header, full hash at bottom)
 
 ## Common Search Terms
-Domain security audit, SPF checker, DKIM validator, DMARC lookup, DNSSEC validation tool, DANE checker, TLSA lookup, DANE TLSA email security, DMARCbis, email authentication checker, email spoofing protection, cybersecurity posture report, DNS intelligence, domain reputation check, CAA record check, MPIC, MTA-STS checker, BIMI checker, IP investigation, reverse DNS lookup, ASN attribution, DNS history, subdomain discovery, email header analyzer, phishing detection
+Domain security audit, SPF checker, DKIM validator, DMARC lookup, DNSSEC validation tool, DANE checker, TLSA lookup, DANE TLSA email security, DMARCbis, email authentication checker, email spoofing protection, cybersecurity posture report, DNS intelligence, domain reputation check, CAA record check, MPIC, MTA-STS checker, BIMI checker, IP investigation, reverse DNS lookup, ASN attribution, DNS history, subdomain discovery, email header analyzer, phishing detection, exposure scanner, misconfiguration check, report integrity hash
 
 ## Documentation
 - Full agent guide with result interpretation: /llms-full.txt

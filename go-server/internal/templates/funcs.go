@@ -190,6 +190,17 @@ func truncateStr(length int, s string) string {
         return s[:length] + "..."
 }
 
+func substrStr(start, length int, s string) string {
+        if start >= len(s) {
+                return ""
+        }
+        end := start + length
+        if end > len(s) {
+                end = len(s)
+        }
+        return s[start:end]
+}
+
 func replaceStr(old, new, s string) string {
         return strings.ReplaceAll(s, old, new)
 }
@@ -213,6 +224,7 @@ func stringFuncs() template.FuncMap {
                 "join":         strings.Join,
                 "trimSpace":    strings.TrimSpace,
                 "truncate":     truncateStr,
+                "substr":       substrStr,
                 "replace":      replaceStr,
                 "urlEncode":    urlEncode,
                 "bimiProxyURL": bimiProxyURL,

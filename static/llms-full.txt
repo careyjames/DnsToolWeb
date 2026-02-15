@@ -165,7 +165,35 @@ Compares resolver and authoritative records for A, AAAA, MX, TXT, NS, CAA, SOA, 
 - Nameserver delegation
 - Registry information
 
-### 8. Subdomain Discovery
+### 8. Public Exposure Checks
+- Automatic (always-on) scanning of publicly accessible page source and linked JavaScript for exposed secrets, API keys, and credentials
+- Severity, type, redacted value, and confidence level for each finding
+- Sources scanned listed transparently
+
+### 9. Expanded Exposure Checks (Opt-In)
+Enabled via the "Expanded Exposure Checks" checkbox in Advanced Options. Actively probes well-known misconfiguration paths:
+- `/.env` — environment files with database credentials and secrets
+- `/.git/config` and `/.git/HEAD` — exposed git repositories
+- `/.DS_Store` — macOS directory metadata
+- `/server-status` and `/server-info` — Apache information pages
+- `/wp-config.php.bak` — WordPress config backups
+- `/phpinfo.php` — PHP information exposure
+
+Each path is validated by content inspection (not just HTTP 200 status) to reduce false positives. Results include severity badges, risk descriptions, and specific remediation guidance. Sequential requests with 200ms delays and proper User-Agent identification.
+
+**Important**: These are informational reconnaissance checks of publicly accessible paths — NOT a PCI DSS ASV scan, penetration test, or compliance attestation.
+
+### 10. Report Integrity Hash
+Every analysis generates a SHA-256 integrity fingerprint that binds:
+- Domain name
+- Analysis ID
+- Timestamp
+- Tool version
+- Canonicalized results data
+
+The first 8 characters of the hash appear in the report header metadata (next to timestamp/version) as a clickable link that scrolls to the full hash section at the bottom of the report. The full hash can be copied to clipboard. This is distinct from the posture hash (used for drift detection) — the integrity hash uniquely identifies each specific report instance.
+
+### 11. Subdomain Discovery
 - Three-layer approach: Certificate Transparency logs (crt.sh, RFC 6962) + wildcard certificate detection + high-speed UDP DNS probing of ~140 common service names
 - Source attribution: "CT Log" vs "DNS" for each subdomain
 - Wildcard certificate detection and DNS wildcard filtering
@@ -331,7 +359,7 @@ These domains demonstrate various security configurations:
 - `ietf.org` — DANE/TLSA configured (the IETF's own infrastructure)
 - `nlnetlabs.nl` — DANE + DNSSEC (creators of Unbound DNS resolver)
 - `freebsd.org` — DANE configured (the FreeBSD project)
-- `cloudflare.com` — Strong email security, enterprise DNS
+- `cloudflare.com` — Strong email security, enterprise DNS (good target for exposure checks: clean results expected)
 - `google.com` — Comprehensive security controls
 - `whitehouse.gov` — Federal compliance (CISA BOD 18-01)
 

@@ -1,6 +1,6 @@
 # DNS Tool — Feature Overview
 
-**Last Updated:** February 15, 2026
+**Last Updated:** February 15, 2026 (v26.17.1)
 **Implementation:** Go/Gin
 
 ---
@@ -49,6 +49,8 @@ The tool performs RFC-compliant parsing and validation of these protocols:
 
 - Email security management provider detection
 - AI Surface Scanner (llms.txt, AI crawler governance, prompt injection detection)
+- Public exposure checks: secret/credential scanning in publicly accessible page source and JavaScript
+- Expanded exposure checks (opt-in): well-known misconfiguration path probing (/.env, /.git, /server-status, etc.) with content validation
 - Dangling DNS and subdomain takeover detection
 - DMARC external reporting authorization verification
 - OpenPhish community phishing URL feed integration (Email Header Analyzer body scanning)
@@ -64,6 +66,7 @@ The tool performs RFC-compliant parsing and validation of these protocols:
 - IP Intelligence (reverse lookups, ASN attribution, geolocation)
 - Dual intelligence products: Engineer's DNS Intelligence Report (comprehensive technical detail) and Executive's DNS Intelligence Brief (concise board-ready summary with security scorecard)
 - Configurable TLP classification (default: TLP:AMBER, with TLP:AMBER+STRICT, TLP:GREEN and TLP:CLEAR options) aligned with CISA Cyber Hygiene practice and FIRST TLP v2.0
+- Report integrity hash (SHA-256 fingerprint binding domain, analysis ID, timestamp, tool version, and results data) with copy-to-clipboard and header preview
 - Posture drift detection foundation (canonical SHA-256 hashing for longitudinal monitoring)
 - Changelog page
 - Security policy page

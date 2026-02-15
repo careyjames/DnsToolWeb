@@ -135,6 +135,9 @@
                     {{if .ToolVersion}}
                         <span class="mx-1">·</span><i class="fas fa-tag me-1"></i><span>v{{.ToolVersion}}</span>
                     {{end}}
+                    {{if .IntegrityHash}}
+                        <span class="mx-1">·</span><a href="#report-integrity" class="text-decoration-none text-muted" title="Report integrity fingerprint — click to view full SHA-256 hash"><i class="fas fa-fingerprint me-1"></i><span class="font-monospace">{{substr 0 8 .IntegrityHash}}&hellip;</span></a>
+                    {{end}}
                 </div>
                 {{end}}
             </div>
@@ -2235,6 +2238,10 @@
                             </details>
                         </div>
                         {{end}}
+                        <div class="mt-2 small text-muted" style="font-size: 0.7rem;">
+                            <i class="fas fa-info-circle me-1"></i>
+                            These checks are informational reconnaissance of publicly accessible paths &mdash; not a PCI DSS ASV scan, penetration test, or compliance attestation. For PCI compliance, engage a <a href="https://listings.pcisecuritystandards.org/assessors_and_solutions/approved_scanning_vendors" target="_blank" rel="noopener" class="text-info">PCI SSC Approved Scanning Vendor</a>.
+                        </div>
                     </div>
                 </div>
             </div>
@@ -3797,6 +3804,20 @@
         });
     }
 
+    function setupHashPreviewLink() {
+        var link = document.querySelector('a[href="#report-integrity"]');
+        if (link) {
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+                var target = document.getElementById('report-integrity');
+                if (target) {
+                    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    history.replaceState(null, '', '#report-integrity');
+                }
+            });
+        }
+    }
+
     function setupIntegrityHashCopy() {
         var btn = document.getElementById('copyIntegrityHash');
         if (btn) {
@@ -3989,6 +4010,7 @@
             }
             setupCopyCommandButtons();
             setupIntegrityHashCopy();
+            setupHashPreviewLink();
             setupCollapseKeyboardHandlers();
 
             var stKeyInput = document.getElementById('securitytrails_api_key');

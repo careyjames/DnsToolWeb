@@ -63,6 +63,22 @@ func GetRecentChangelog(n int) []ChangelogEntry {
 func GetChangelog() []ChangelogEntry {
         return []ChangelogEntry{
                 {
+                        Version:     "26.17.1",
+                        Date:        dateFeb15,
+                        Category:    "Security",
+                        Title:       "Expanded Exposure Checks (Opt-In)",
+                        Description: "New opt-in exposure scanner checks 8 well-known misconfiguration paths (/.env, /.git/config, /.git/HEAD, /.DS_Store, /server-status, /server-info, /wp-config.php.bak, /phpinfo.php) on target domains. Content validation reduces false positives — each path is checked for characteristic content, not just HTTP 200 status. Sequential requests with 200ms delays and proper User-Agent identification. Results include severity badges, risk descriptions, and specific remediation guidance. Explicit PCI DSS disclaimer: these are informational reconnaissance checks, not ASV compliance scans.",
+                        Icon:        "fas fa-search",
+                },
+                {
+                        Version:     "26.17.0",
+                        Date:        dateFeb15,
+                        Category:    "Integrity",
+                        Title:       "Report Integrity Hash & Header Preview",
+                        Description: "Every analysis now generates a SHA-256 integrity fingerprint binding domain, analysis ID, timestamp, tool version, and canonicalized results data into a tamper-evident hash. Displayed at the bottom of both Engineer's DNS Intelligence Report and Executive's DNS Intelligence Brief with copy-to-clipboard. Short hash preview (first 8 characters) shown in the report header metadata bar with anchor link to the full hash section. Distinct from posture hash (drift detection) — the integrity hash uniquely identifies each specific report instance.",
+                        Icon:        "fas fa-fingerprint",
+                },
+                {
                         Version:     "26.16.11",
                         Date:        dateFeb15,
                         Category:    "Brand",
