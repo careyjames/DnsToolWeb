@@ -9,6 +9,6 @@
 {{end}}
 
 {{define "scripts"}}
-<script nonce="{{.CspNonce}}" src="/static/js/bootstrap.bundle.min.js" defer></script>
+<script nonce="{{.CspNonce}}" src="{{staticVersionURL "js/bootstrap.bundle.min.js" .AppVersion}}" defer></script>
 <script nonce="{{.CspNonce}}" src="{{staticVersionURL "js/main.min.js" .AppVersion}}" defer></script>
 {{end}}

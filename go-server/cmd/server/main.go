@@ -89,7 +89,11 @@ func main() {
                         strings.HasSuffix(fp, ".woff2") || strings.HasSuffix(fp, ".woff") ||
                         strings.HasSuffix(fp, ".png") || strings.HasSuffix(fp, ".ico") ||
                         strings.HasSuffix(fp, ".svg") || strings.HasSuffix(fp, ".jpg") {
-                        c.Header(headerCacheControl, "public, max-age=86400")
+                        if strings.Contains(fp, "?v=") || strings.Contains(c.Request.URL.RawQuery, "v=") {
+                                c.Header(headerCacheControl, "public, max-age=31536000, immutable")
+                        } else {
+                                c.Header(headerCacheControl, "public, max-age=86400")
+                        }
                 }
                 fileServer.ServeHTTP(c.Writer, c.Request)
         })
