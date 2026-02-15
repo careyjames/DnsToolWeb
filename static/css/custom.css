@@ -1143,14 +1143,15 @@ main.container {
 }
 
 .btn-tlp-amber {
-    color: #ffc000 !important;
-    border-color: #ffc000 !important;
+    color: rgba(255, 192, 0, 0.65) !important;
+    border-color: rgba(255, 192, 0, 0.45) !important;
+    transition: all 0.2s ease;
 }
 .btn-tlp-amber:hover,
 .btn-tlp-amber:focus {
     background-color: rgba(255, 192, 0, 0.15) !important;
     color: #ffc000 !important;
-    border-color: #ffc000 !important;
+    border-color: rgba(255, 192, 0, 0.7) !important;
 }
 .btn-tlp-green {
     color: #33a532 !important;
