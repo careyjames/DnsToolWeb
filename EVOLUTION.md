@@ -510,4 +510,6 @@ Also applied smooth transition to `.btn-outline-executive` for consistency.
 | 2026-02-14 | PDF title wrong format | `<title>` tag didn't follow naming convention | Format: "Report Type — domain - DNS Tool" |
 | 2026-02-14 | Executive print text too small | Font sizes below 8pt | Minimum: body 11pt, small 9pt, code 8.5pt, footer 8.5pt |
 | 2026-02-14 | Executive button too bright (btn-outline-light) | White text/border on dark theme | Use custom `btn-outline-executive` with muted gray #9ca3af |
-| 2026-02-14 | Engineer button solid hover fill | Bootstrap default btn-outline-info hover | Override with rgba(13,202,240,0.15) translucent hover |
+| 2026-02-14 | Engineer button solid hover fill | Bootstrap default btn-outline-info hover | Override `--bs-btn-hover-bg` CSS variable (NOT direct `background-color`) |
+| 2026-02-14 | CSS changes not appearing on screen | Edited `custom.css` but server loads `custom.min.css` | MUST run `npx csso static/css/custom.css -o static/css/custom.min.css` after every CSS edit |
+| 2026-02-14 | First CSS override attempt failed | Used `background-color` property (loses to Bootstrap's CSS variable system) | Override `--bs-btn-*` CSS custom properties, not direct properties |
