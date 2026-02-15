@@ -90,7 +90,7 @@ func GetChangelog() []ChangelogEntry {
                         Version:     "26.15.26",
                         Date:        dateFeb15,
                         Category:    "Reporting",
-                        Title:       "Dual Intelligence Products: Engineer's Report & Executive's Brief",
+                        Title:       "Dual Intelligence Products: Engineer's DNS Intelligence Report & Executive's DNS Intelligence Brief",
                         Description: "Two intelligence products: Engineer's DNS Intelligence Report (comprehensive technical detail with all protocol analysis) and Executive's DNS Intelligence Brief (concise board-ready summary with security scorecard, risk posture, and priority actions). Both use the same live analysis data — different formats for different audiences. Includes posture drift detection foundation with canonical SHA-256 hashing for future longitudinal monitoring.",
                         Icon:        "fas fa-file-alt",
                 },

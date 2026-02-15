@@ -249,7 +249,7 @@ All documentation files verified accurate:
 **Golden Rule Tests**: All 60 sub-tests pass (50 original + 10 new posture hash), zero regressions
 **Files**: `posture_hash.go`, `posture_hash_test.go` (new), `schema.sql`, `domain_analyses.sql`, `dbq/*` (regenerated), `analysis.go`, `DRIFT_ENGINE.md` (new)
 
-### Dual Intelligence Products: Engineer's Report & Executive's Brief (Feb 15, 2026)
+### Dual Intelligence Products: Engineer's DNS Intelligence Report & Executive's DNS Intelligence Brief (Feb 15, 2026)
 
 **Decision**: Implement dual intelligence product system — Engineer's DNS Intelligence Report (comprehensive technical detail) and Executive's DNS Intelligence Brief (concise board-ready summary). Live results are sacred; both views use the same analysis data with different templates. Naming follows IC conventions: "Report" = comprehensive (like NIE), "Brief" = concise (like PDB/SEIB). Possessive form = "prepared for you."
 
@@ -416,7 +416,7 @@ This section tracks recurring issues and failed approaches so future sessions av
 1. Badge: "DNS Security Intelligence" (brand/discipline label)
 2. H1: "Domain Security Audit" (SEO anchor — what the tool DOES)
 3. Tagline: "We answer the BIG questions."
-4. Subtitle: References both Engineer's Reports and Executive's Briefs (what the tool PRODUCES)
+4. Subtitle: References both Engineer's DNS Intelligence Reports and Executive's DNS Intelligence Briefs (what the tool PRODUCES)
 5. Protocol tags: SPF · DKIM · DMARC · etc. (what it checks)
 
 **Rule**: The audit is the process. The intelligence products are the output. Never conflate the two. The homepage sells the audit; the results pages deliver the intelligence.
