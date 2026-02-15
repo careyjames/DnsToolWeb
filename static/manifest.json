@@ -2,7 +2,7 @@
   "id": "/",
   "name": "DNS Tool - Domain Security Audit",
   "short_name": "DNS Tool",
-  "description": "Free domain security audit tool. Check SPF, DKIM, DMARC, DNSSEC, BIMI, MTA-STS, TLS-RPT, and CAA records instantly.",
+  "description": "Free domain security audit tool. Check SPF, DKIM, DMARC, DANE/TLSA, DNSSEC, BIMI, MTA-STS, TLS-RPT, and CAA records. Email Header Analyzer, IP Investigation, AI Surface Scanner. Dual Engineer and Executive reports with TLP classification.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",

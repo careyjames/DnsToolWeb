@@ -201,7 +201,7 @@ Paste or upload email headers (.eml files) for instant SPF/DKIM/DMARC authentica
 From any analysis results page, two print-optimized report formats are available:
 - **Engineer Report** (blue print icon): Full technical detail with all protocol analysis, DNS records, and remediation guidance. Opens the browser print dialog directly.
 - **Executive Report** (amber document icon): Condensed board-ready summary with security scorecard, risk posture, priority actions, and AI surface findings. Opens in a new tab for printing.
-Both reports use the same live analysis data and include TLP:CLEAR classification headers.
+Both reports use the same live analysis data and include configurable TLP classification headers (default: TLP:AMBER, with TLP:GREEN and TLP:CLEAR options).
 
 ### What's New (Changelog)
 URL: `https://dnstool.it-help.tech/changelog`

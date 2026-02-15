@@ -4,18 +4,18 @@
     {{template "head" .}}
     <title>Engineer Report — {{.Domain}} - DNS Tool</title>
     <meta name="description" content="Domain security audit for {{.Domain}}. SPF, DKIM, DMARC, DANE/TLSA, DNSSEC, MTA-STS, TLS-RPT, BIMI, CAA analysis with posture scoring and remediation guidance.">
-    <meta property="og:url" content="https://dnstool.it-help.tech/results?domain={{.Domain}}">
+    <meta property="og:url" content="https://dnstool.it-help.tech/analysis/{{.AnalysisID}}">
     <meta property="og:type" content="website">
     <meta property="og:title" content="Engineer Report — {{.Domain}} - DNS Tool">
     <meta property="og:description" content="Domain security audit for {{.Domain}}. SPF, DKIM, DMARC, DANE/TLSA, DNSSEC, MTA-STS, TLS-RPT, BIMI, CAA analysis with posture scoring and remediation guidance.">
     <meta property="og:image" content="https://dnstool.it-help.tech/static/images/og-image.png">
     <meta name="twitter:card" content="summary_large_image">
     <meta property="twitter:domain" content="dnstool.it-help.tech">
-    <meta property="twitter:url" content="https://dnstool.it-help.tech/results?domain={{.Domain}}">
+    <meta property="twitter:url" content="https://dnstool.it-help.tech/analysis/{{.AnalysisID}}">
     <meta name="twitter:title" content="{{.Domain}} — Domain Security Audit - DNS Tool">
     <meta name="twitter:description" content="Domain security audit for {{.Domain}}. SPF, DKIM, DMARC, DANE/TLSA, DNSSEC, MTA-STS, TLS-RPT, BIMI, CAA analysis with posture scoring and remediation guidance.">
     <meta name="twitter:image" content="https://dnstool.it-help.tech/static/images/og-image.png">
-    <link rel="canonical" href="https://dnstool.it-help.tech/results?domain={{.AsciiDomain}}">
+    <link rel="canonical" href="https://dnstool.it-help.tech/analysis/{{.AnalysisID}}">
     {{template "head_css" .}}
     {{template "critical_css" .}}
     <style nonce="{{.CspNonce}}">

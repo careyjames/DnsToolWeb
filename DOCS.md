@@ -52,6 +52,7 @@ Large organizations running their own NS infrastructure are detected by multiple
 |----------|----------|-------------|
 | `DATABASE_URL` | Yes | PostgreSQL connection string (e.g., `postgresql://user:pass@host/dbname`) |
 | `SESSION_SECRET` | Yes | Session encryption key for CSRF protection |
+| `PORT` | No | HTTP listen port (default: `5000`) |
 
 ## Running the Application
 
@@ -118,7 +119,7 @@ AI Surface Scanner, CT subdomain discovery, DNS history timeline (SecurityTrails
 CVSS-aligned risk assessment with actionable remediation recommendations.
 
 ### Reporting
-Dual print reports: Engineer (full technical detail) and Executive (condensed board-ready summary with security scorecard, risk posture, and priority actions). Both use the same live analysis data — different formats for different audiences. TLP:CLEAR classification on all reports. JSON export for programmatic consumption.
+Dual print reports: Engineer (full technical detail) and Executive (condensed board-ready summary with security scorecard, risk posture, and priority actions). Both use the same live analysis data — different formats for different audiences. Configurable TLP classification (default: TLP:AMBER, aligned with CISA Cyber Hygiene practice) with TLP:GREEN and TLP:CLEAR options. JSON export for programmatic consumption.
 
 ## Rate Limiting & Abuse Prevention
 

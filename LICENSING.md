@@ -37,9 +37,13 @@ Each version automatically converts to **Apache-2.0** — fully permissive, no r
 
 This repository contains the public web application:
 - Go/Gin web server, routing, middleware, templates
-- DNS client (multi-resolver, DoH fallback)
+- DNS client (multi-resolver, DoH fallback, UDP fast-probe)
 - SMTP transport probes
-- Frontend (Bootstrap dark theme, PWA, print/PDF)
+- Frontend (Bootstrap dark theme, PWA, dual print reports with TLP classification)
+- Email Header Analyzer (SPF/DKIM/DMARC verification, spoofing detection, OpenPhish integration)
+- IP Investigation (reverse lookups, ASN attribution, geolocation)
+- AI Surface Scanner (llms.txt, AI crawler governance, prompt injection detection)
+- Posture drift detection foundation (canonical SHA-256 hashing)
 - Analyzer stub interfaces (13 files)
 - Golden rules test suite
 - Live integration test suite

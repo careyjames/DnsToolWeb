@@ -63,7 +63,7 @@ The tool performs RFC-compliant parsing and validation of these protocols:
 - Email Header Analyzer (SPF/DKIM/DMARC verification, delivery route tracing, spoofing detection)
 - IP Investigation (reverse lookups, ASN attribution, geolocation)
 - Dual print reports: Engineer (full technical detail) and Executive (condensed board-ready summary with security scorecard)
-- TLP:CLEAR classification on all print reports
+- Configurable TLP classification (default: TLP:AMBER, with TLP:GREEN and TLP:CLEAR options) aligned with CISA Cyber Hygiene practice and FIRST TLP v2.0
 - Posture drift detection foundation (canonical SHA-256 hashing for longitudinal monitoring)
 - Changelog page
 - Security policy page
