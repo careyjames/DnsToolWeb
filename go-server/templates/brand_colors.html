@@ -162,7 +162,7 @@
                     </div>
                     <div>
                         <strong class="d-block mb-1" style="font-size: 0.9rem;">Standards Alignment</strong>
-                        <p class="text-muted small mb-0">This page documents both our brand identity palette and the scientifically specified colors mandated by cybersecurity standards bodies. Every color used for classification in DNS Tool traces to a published specification from FIRST, NIST, or CISA — ensuring reports are independently verifiable and interoperable across the security ecosystem.</p>
+                        <p class="text-muted small mb-0">This page documents our brand identity palette alongside colors used for cybersecurity classification. Where formal specifications exist (e.g., FIRST TLP v2.0 defines exact hex values), we cite the standard directly. Where colors are industry convention rather than formal specification (e.g., CVSS severity colors used on NVD), we note that distinction honestly. Every claim on this page is independently verifiable via the linked sources.</p>
                     </div>
                 </div>
 
@@ -293,7 +293,7 @@
                     <span class="standard-badge standard-badge-first">FIRST</span>
                     <span class="standard-badge standard-badge-nist">NIST NVD</span>
                 </div>
-                <p class="text-muted small mb-3">Severity color scale aligned with <a href="https://www.first.org/cvss/v3-1/specification-document" target="_blank" rel="noopener" class="text-info">FIRST CVSS v3.1</a> and the <a href="https://nvd.nist.gov/vuln-metrics/cvss" target="_blank" rel="noopener" class="text-info">NIST National Vulnerability Database</a>. Used for posture scoring and risk-level badges throughout reports.</p>
+                <p class="text-muted small mb-3">Score ranges formally specified by <a href="https://www.first.org/cvss/v3-1/specification-document" target="_blank" rel="noopener" class="text-info">FIRST CVSS v3.1</a>. Colors are <em>not</em> part of the CVSS specification — they are de facto industry convention derived from the <a href="https://nvd.nist.gov/vuln-metrics/cvss" target="_blank" rel="noopener" class="text-info">NIST NVD</a> implementation and widely adopted across security tooling. Used for posture scoring and risk-level badges throughout reports.</p>
 
                 <div class="row g-3 mb-3">
                     {{range .CVSSColors}}
@@ -325,7 +325,7 @@
                 <div class="card bg-dark border-secondary">
                     <div class="card-body">
                         <ol class="small mb-0" style="color: var(--text-secondary); line-height: 1.8;">
-                            <li><strong class="text-info">Standards-specified colors are non-negotiable.</strong> TLP and CVSS colors must match published specifications exactly. They are not brand choices — they are protocol requirements.</li>
+                            <li><strong class="text-info">Standards-specified colors are non-negotiable.</strong> TLP colors must match the FIRST TLP v2.0 specification exactly — they are protocol requirements, not brand choices. CVSS severity colors follow NVD convention for ecosystem consistency.</li>
                             <li><strong>Status colors follow GitHub-dark conventions</strong> with 20% desaturation for professional appearance on dark backgrounds.</li>
                             <li><strong>Surface tints use 15% opacity</strong> of their parent color to maintain readability while providing visual grouping.</li>
                             <li><strong>WCAG AA minimum contrast</strong> is maintained across all text/background combinations. Executive print reports use minimum 11pt body text.</li>
