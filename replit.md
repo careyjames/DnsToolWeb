@@ -73,3 +73,4 @@ The application is built in Go using the Gin framework, emphasizing performance 
 
 ### Database
 - **PostgreSQL**: Primary database for persistent storage, with separate databases for development and production environments.
+- **Data Governance** (established 2026-02-15): Analysis data is **immutable and append-only** from v26.19.0 forward. No deletions or mutations of analysis records without formal governance review. Pre-v26.19.0 analyses were purged (317 records) due to known-inaccurate findings from less capable code; this is documented in `data_governance_events` table as an auditable record. The `GetNewerAnalysisForDomain` query exists in the codebase for future drift engine use. Future data corrections must be recorded as new analyses, never mutations to existing records.

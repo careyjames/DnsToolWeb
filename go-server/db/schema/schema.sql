@@ -43,3 +43,15 @@ CREATE TABLE analysis_stats (
 );
 
 CREATE INDEX ix_analysis_stats_date ON analysis_stats (date);
+
+CREATE TABLE data_governance_events (
+    id SERIAL PRIMARY KEY,
+    event_type VARCHAR(50) NOT NULL,
+    description TEXT NOT NULL,
+    scope TEXT,
+    affected_count INTEGER,
+    reason TEXT NOT NULL,
+    operator VARCHAR(100) NOT NULL DEFAULT 'system',
+    metadata JSONB,
+    created_at TIMESTAMP NOT NULL DEFAULT NOW()
+);
