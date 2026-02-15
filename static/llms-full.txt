@@ -191,7 +191,7 @@ Every analysis generates a SHA-256 integrity fingerprint that binds:
 - Tool version
 - Canonicalized results data
 
-The first 8 characters of the hash appear in the report header metadata (next to timestamp/version) as a clickable link that scrolls to the full hash section at the bottom of the report. The full hash can be copied to clipboard. This is distinct from the posture hash (used for drift detection) — the integrity hash uniquely identifies each specific report instance.
+A short hash preview appears in the report header metadata (next to timestamp/version) in the format `SHA-256: c82f✱✱✱✱ Report Integrity ↓` — 4 hex characters plus 4 star masks, as a clickable link that scrolls to the full hash section at the bottom of the report. The full hash can be copied to clipboard. This is distinct from the posture hash (used for drift detection) — the integrity hash uniquely identifies each specific report instance.
 
 ### 11. Subdomain Discovery
 - Three-layer approach: Certificate Transparency logs (crt.sh, RFC 6962) + wildcard certificate detection + high-speed UDP DNS probing of ~140 common service names

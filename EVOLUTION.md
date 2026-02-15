@@ -587,6 +587,85 @@ Standardized all API key form fields across homepage, IP Intelligence, and resul
 
 **Version**: 26.16.14
 
+### Report Integrity Hash & Header Preview (Feb 15, 2026)
+
+**Decision**: Add SHA-256 tamper-evident fingerprint to every analysis, distinct from posture hash (drift detection). Integrity hash binds domain, analysis ID, timestamp, tool version, and canonicalized results data into a unique per-report fingerprint.
+
+**Implementation**:
+- New file: `go-server/internal/analyzer/integrity_hash.go` — `ComputeIntegrityHash()` function
+- Hash stored in `domain_analyses` table (new `integrity_hash` column)
+- Full hash displayed at bottom of both Engineer and Executive templates with copy-to-clipboard
+- Header preview: `SHA-256: c82f✱✱✱✱ Report Integrity ↓` — first 4 chars + 4 star masks + anchor link to full hash section
+- Template helper `{{substr 0 4 .IntegrityHash}}` for truncated preview
+- Uses HTML entity `&#x2731;` for star masking
+
+**Version**: 26.17.0
+
+### Expanded Exposure Checks — Opt-In OSINT Scanner (Feb 15, 2026)
+
+**Decision**: Add opt-in well-known misconfiguration path probing. Checks 8 common paths (/.env, /.git/config, /.git/HEAD, /.DS_Store, /server-status, /server-info, /wp-config.php.bak, /phpinfo.php) with content validation to reduce false positives.
+
+**Implementation**:
+- New checkbox in Advanced Options on homepage
+- Sequential requests with 200ms delays, proper User-Agent identification
+- Content validation per path type (not just HTTP 200)
+- Results include severity badges, risk descriptions, and remediation guidance
+- Explicit PCI DSS disclaimer: "These are OSINT collection, not ASV compliance scans"
+- PCI disclaimers use collapsible FAQ-style `<details>` elements in both Public Exposure and Expanded Exposure sections
+
+**Version**: 26.17.1
+
+### OSINT Positioning Audit (Feb 15, 2026)
+
+**Scope**: Comprehensive audit to ensure OSINT positioning is consistent across all discovery surfaces — homepage, reports, documentation, and LLM-facing files.
+
+**Files updated**:
+- `go-server/templates/index.html` — Meta description, keywords, JSON-LD schema updated with OSINT terminology
+- `go-server/templates/results.html` — Report page meta description
+- `go-server/templates/results_executive.html` — Executive report meta description
+- `docs/FEATURE_INVENTORY.md` — Purpose section, design philosophy
+- `static/llms.txt` — Tagline and feature descriptions
+- `static/llms-full.txt` — Overview section
+- `replit.md` — Overview section
+- `go-server/internal/handlers/changelog.go` — Expanded Exposure entry
+
+**Key principle**: DNS Tool is explicitly an OSINT platform. All data comes from publicly available sources — DNS queries, CT logs, RDAP, web resources. Not a penetration test, not a PCI ASV scanner, not a vulnerability assessment tool. Every data source is openly documented at `/sources`.
+
+### Homepage FAQ Additions & Ordering (Feb 15, 2026)
+
+**Added 4 new FAQ items** to homepage accordion:
+1. "What is OSINT and how does DNS Tool use it?" — defines OSINT, explains methodology, references Shodan/Mozilla Observatory/Censys/VirusTotal
+2. "Is this a PCI compliance scanner?" — explicit "No", redirects to certified ASVs (Qualys, Tenable, Trustwave), explains complementary role
+3. "What data do you collect about my domain?" — lists all publicly available data sources, clarifies no intrusive scanning
+4. "Is this a penetration test?" — "No", explains passive observation vs active exploitation, sidewalk analogy
+
+**PCI FAQ moved to position #2** (right after "What is a domain security audit?") to catch compliance seekers early before they scroll past.
+
+### Hash Preview UX Redesign (Feb 15, 2026)
+
+**Before**: `c82faab1...` (truncated hex, unclear purpose)
+**After**: `SHA-256: c82f✱✱✱✱ Report Integrity ↓` (algorithm label, star masking, clear link text)
+
+Changes:
+- Added "SHA-256:" algorithm prefix for clarity
+- Reduced visible hex from 8 to 4 characters
+- Added 4 star masks (✱) for visual security aesthetic
+- Link text changed from bare hash to "Report Integrity ↓" with arrow indicator
+- Engineer uses `text-info` (cyan), Executive uses `text-warning` (amber) for link color
+- Both links smooth-scroll to the full hash section at bottom of report
+
+### Report Integrity Link Contrast Fix (Feb 15, 2026)
+
+**Problem**: Report header metadata bar uses `u-opacity-70` (opacity: 0.7), which reduced the "Report Integrity" link contrast below optimal levels for the target audience (40-50+ year old executives).
+
+**Fix**:
+- Added explicit `opacity: 1` on the "Report Integrity" link span to override parent opacity
+- Bumped font-size from 0.72rem to 0.75rem for slightly better readability
+- Executive: changed from `text-warning-emphasis` (muted amber) to `text-warning` (full amber) for stronger contrast
+- Engineer: keeps `text-info` (cyan, #0dcaf0) which has ~8.6:1 contrast ratio on dark backgrounds at full opacity (WCAG AAA compliant)
+
+**Version**: 26.17.1 (template-only changes, no version bump needed)
+
 ---
 
 ## Failures & Lessons Learned Timeline
