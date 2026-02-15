@@ -117,3 +117,12 @@ WHERE domain = $1
   AND posture_hash != ''
 ORDER BY created_at DESC
 LIMIT 1;
+
+-- name: GetNewerAnalysisForDomain :one
+SELECT id, created_at FROM domain_analyses
+WHERE ascii_domain = $1
+  AND id > $2
+  AND analysis_success = TRUE
+  AND full_results IS NOT NULL
+ORDER BY created_at DESC
+LIMIT 1;

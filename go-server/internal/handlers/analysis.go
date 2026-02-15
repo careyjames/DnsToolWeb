@@ -122,6 +122,15 @@ func (h *AnalysisHandler) ViewAnalysisStatic(c *gin.Context) {
         integrityHash := analyzer.ReportIntegrityHash(analysis.AsciiDomain, analysis.ID, timestamp, hashVersion, results)
         rfcCount := analyzer.CountVerifiedRFCs(results)
 
+        var supersededByID int32
+        newerRow, newerErr := h.DB.Queries.GetNewerAnalysisForDomain(ctx, dbq.GetNewerAnalysisForDomainParams{
+                AsciiDomain: analysis.AsciiDomain,
+                ID:          analysis.ID,
+        })
+        if newerErr == nil {
+                supersededByID = newerRow.ID
+        }
+
         isSub, rootDom := extractRootDomain(analysis.AsciiDomain)
         c.HTML(http.StatusOK, "results.html", gin.H{
                 "AppVersion":           h.Config.AppVersion,
@@ -145,6 +154,7 @@ func (h *AnalysisHandler) ViewAnalysisStatic(c *gin.Context) {
                 "SecurityTrailsKey":    "",
                 "IntegrityHash":        integrityHash,
                 "RFCCount":             rfcCount,
+                "SupersededByID":       supersededByID,
         })
 }
 
@@ -233,6 +243,15 @@ func (h *AnalysisHandler) ViewAnalysisExecutive(c *gin.Context) {
         integrityHash := analyzer.ReportIntegrityHash(analysis.AsciiDomain, analysis.ID, timestamp, hashVersion, results)
         rfcCount := analyzer.CountVerifiedRFCs(results)
 
+        var supersededByID int32
+        newerRow, newerErr := h.DB.Queries.GetNewerAnalysisForDomain(ctx, dbq.GetNewerAnalysisForDomainParams{
+                AsciiDomain: analysis.AsciiDomain,
+                ID:          analysis.ID,
+        })
+        if newerErr == nil {
+                supersededByID = newerRow.ID
+        }
+
         c.HTML(http.StatusOK, "results_executive.html", gin.H{
                 "AppVersion":        h.Config.AppVersion,
                 "CspNonce":          nonce,
@@ -248,6 +267,7 @@ func (h *AnalysisHandler) ViewAnalysisExecutive(c *gin.Context) {
                 "ToolVersion":       toolVersion,
                 "IntegrityHash":     integrityHash,
                 "RFCCount":          rfcCount,
+                "SupersededByID":    supersededByID,
         })
 }
 
