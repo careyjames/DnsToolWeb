@@ -115,6 +115,13 @@ func (h *AnalysisHandler) ViewAnalysisStatic(c *gin.Context) {
 
         verifyCommands := analyzer.GenerateVerificationCommands(analysis.AsciiDomain, results)
 
+        hashVersion := toolVersion
+        if hashVersion == "" {
+                hashVersion = h.Config.AppVersion
+        }
+        integrityHash := analyzer.ReportIntegrityHash(analysis.AsciiDomain, analysis.ID, timestamp, hashVersion, results)
+        rfcCount := analyzer.CountVerifiedRFCs(results)
+
         isSub, rootDom := extractRootDomain(analysis.AsciiDomain)
         c.HTML(http.StatusOK, "results.html", gin.H{
                 "AppVersion":           h.Config.AppVersion,
@@ -136,6 +143,8 @@ func (h *AnalysisHandler) ViewAnalysisStatic(c *gin.Context) {
                 "IsSubdomain":          isSub,
                 "RootDomain":           rootDom,
                 "SecurityTrailsKey":    "",
+                "IntegrityHash":        integrityHash,
+                "RFCCount":             rfcCount,
         })
 }
 
@@ -217,6 +226,13 @@ func (h *AnalysisHandler) ViewAnalysisExecutive(c *gin.Context) {
                 toolVersion = tv
         }
 
+        hashVersion := toolVersion
+        if hashVersion == "" {
+                hashVersion = h.Config.AppVersion
+        }
+        integrityHash := analyzer.ReportIntegrityHash(analysis.AsciiDomain, analysis.ID, timestamp, hashVersion, results)
+        rfcCount := analyzer.CountVerifiedRFCs(results)
+
         c.HTML(http.StatusOK, "results_executive.html", gin.H{
                 "AppVersion":        h.Config.AppVersion,
                 "CspNonce":          nonce,
@@ -230,6 +246,8 @@ func (h *AnalysisHandler) ViewAnalysisExecutive(c *gin.Context) {
                 "AnalysisTimestamp": timestamp,
                 "DomainExists":      domainExists,
                 "ToolVersion":       toolVersion,
+                "IntegrityHash":     integrityHash,
+                "RFCCount":          rfcCount,
         })
 }
 
@@ -281,6 +299,9 @@ func (h *AnalysisHandler) Analyze(c *gin.Context) {
         domainExists := resultsDomainExists(results)
         verifyCommands := analyzer.GenerateVerificationCommands(asciiDomain, results)
 
+        integrityHash := analyzer.ReportIntegrityHash(asciiDomain, analysisID, timestamp, h.Config.AppVersion, results)
+        rfcCount := analyzer.CountVerifiedRFCs(results)
+
         isSub, rootDom := extractRootDomain(asciiDomain)
         c.HTML(http.StatusOK, "results.html", gin.H{
                 "AppVersion":           h.Config.AppVersion,
@@ -301,6 +322,8 @@ func (h *AnalysisHandler) Analyze(c *gin.Context) {
                 "IsSubdomain":          isSub,
                 "RootDomain":           rootDom,
                 "SecurityTrailsKey":    "",
+                "IntegrityHash":        integrityHash,
+                "RFCCount":             rfcCount,
         })
 }
 

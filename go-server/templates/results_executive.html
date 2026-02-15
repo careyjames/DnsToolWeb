@@ -549,6 +549,7 @@
         {{$mp := mapGetMap "mail_posture" $results}}
         {{$smtp := mapGetMap "smtp_transport" $results}}
         {{$ai_surface := mapGetMap "ai_surface" $results}}
+        {{$secret_exposure := mapGetMap "secret_exposure" $results}}
 
         {{$spfStatus := mapGetStr "status" $spf}}
         {{$dmarcStatus := mapGetStr "status" $dmarc}}
@@ -571,6 +572,7 @@
                         {{if .AnalysisTimestamp}}<span class="print-meta-label">Generated</span> {{.AnalysisTimestamp}}{{end}}
                         {{if gt .AnalysisDuration 0}}<br><span class="print-meta-label">Duration</span> {{formatFloat 1 .AnalysisDuration}}s{{end}}
                         {{if .ToolVersion}}<br><span class="print-meta-label">Version</span> v{{.ToolVersion}}{{end}}
+                        {{if .IntegrityHash}}<br><span class="print-meta-label">Integrity</span> <span style="font-family: monospace; font-size: 6pt; word-break: break-all;">{{.IntegrityHash}}</span>{{end}}
                     </div>
                     <div class="print-tlp-badge" id="printTlpBadge">TLP:AMBER</div>
                     <div class="print-tlp-note" id="printTlpNote">Limited disclosure — recipients may share within their organization only</div>
@@ -1333,6 +1335,51 @@
             </div>
             {{end}}
 
+            <!-- Secret Exposure -->
+            {{if $secret_exposure}}
+            {{$secretStatus := mapGetStr "status" $secret_exposure}}
+            {{$secretCount := mapGetFloat "finding_count" $secret_exposure}}
+            {{if eq $secretStatus "exposed"}}
+            <div class="card mb-3">
+                <div class="card-header">
+                    <h5 class="mb-0 d-flex align-items-center justify-content-between flex-wrap">
+                        <span><i class="fas fa-key me-2 text-danger"></i>Public Exposure Checks</span>
+                        <span class="badge bg-danger">{{formatFloat 0 $secretCount}} Secret{{if ne $secretCount 1}}s{{end}} Exposed</span>
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-danger py-2 mb-3 small">
+                        <i class="fas fa-exclamation-triangle me-1"></i>
+                        <strong>Immediate action required.</strong> Credentials were found in publicly accessible source code. These should be rotated and removed from public-facing code.
+                    </div>
+                    {{$findings := mapGetSlice "findings" $secret_exposure}}
+                    {{if $findings}}
+                    {{range $findings}}
+                    <div class="exec-finding-row">
+                        <span class="exec-finding-label">
+                            <span class="badge bg-{{if eq (mapGetStr "severity" .) "critical"}}danger{{else if eq (mapGetStr "severity" .) "high"}}warning text-dark{{else}}info{{end}} me-1">{{mapGetStr "severity" .}}</span>
+                            {{mapGetStr "type" .}}
+                        </span>
+                        <span class="exec-finding-value">
+                            <code class="small">{{mapGetStr "redacted" .}}</code>
+                            <span class="text-muted ms-2 small">in {{mapGetStr "location" .}}</span>
+                        </span>
+                    </div>
+                    {{end}}
+                    {{end}}
+                </div>
+            </div>
+            {{else}}
+            <div class="exec-finding-row mb-3">
+                <span class="exec-finding-label"><i class="fas fa-key me-1"></i>Public Exposure</span>
+                <span class="exec-finding-value">
+                    <span class="badge bg-success">Clear</span>
+                    <span class="text-muted ms-2 small">No secrets detected in publicly accessible source</span>
+                </span>
+            </div>
+            {{end}}
+            {{end}}
+
             <!-- Priority Actions -->
             {{if $remediation}}
             {{$topFixes := mapGetSlice "top_fixes" $remediation}}
@@ -1409,6 +1456,27 @@
                 </div>
             </div>
         </div>
+
+        {{if .IntegrityHash}}
+        <div class="card border-warning border-opacity-25 mt-4 u-bg-secondary" id="report-integrity">
+            <div class="card-header">
+                <h5 class="mb-0" style="color: #e5e7eb;">
+                    <i class="fas fa-fingerprint me-2 text-warning"></i>Report Integrity
+                    <span class="badge ms-2" style="border: 1px solid rgba(255,193,7,0.4); color: #ffc107; background: transparent; font-size: 0.7rem;">SHA-256</span>
+                </h5>
+            </div>
+            <div class="card-body">
+                <p class="small mb-2" style="color: #9ca3af;">
+                    Tamper-evident fingerprint binding this analysis to its data, domain, timestamp, and tool version.
+                </p>
+                <code class="text-warning user-select-all" style="font-size: 0.75rem; word-break: break-all;">{{.IntegrityHash}}</code>
+                <div class="small mt-2" style="color: #6b7280;">
+                    <i class="fas fa-shield-alt me-1"></i>
+                    {{.RFCCount}} RFCs evaluated &middot; DNS state at {{.AnalysisTimestamp}}
+                </div>
+            </div>
+        </div>
+        {{end}}
 
         <!-- Print Footer -->
         <footer class="print-report-footer" aria-label="Print report footer">

@@ -121,6 +121,7 @@ func (a *Analyzer) AnalyzeDomain(ctx context.Context, domain string, customDKIMS
         results["smimea_openpgpkey"] = getOrDefault(resultsMap, "smimea_openpgpkey", map[string]any{"status": "info", "has_smimea": false, "has_openpgpkey": false})
         results["security_txt"] = getOrDefault(resultsMap, "security_txt", map[string]any{"status": "info", "found": false, "message": "Not checked", "contacts": []string{}, "issues": []string{}})
         results["ai_surface"] = getOrDefault(resultsMap, "ai_surface", map[string]any{"status": "info", "message": "Not checked"})
+        results["secret_exposure"] = getOrDefault(resultsMap, "secret_exposure", map[string]any{"status": "clear", "message": "Not checked", "finding_count": 0, "findings": []map[string]any{}, "scanned_urls": []string{}})
 
         results["saas_txt"] = ExtractSaaSTXTFootprint(results)
 
@@ -193,6 +194,7 @@ func (a *Analyzer) runParallelAnalyses(ctx context.Context, domain string, custo
                 timedTask(resultsCh, "smimea_openpgpkey", func() any { return a.AnalyzeSMIMEA(ctx, domain) }),
                 timedTask(resultsCh, "security_txt", func() any { return a.AnalyzeSecurityTxt(ctx, domain) }),
                 timedTask(resultsCh, "ai_surface", func() any { return a.AnalyzeAISurface(ctx, domain) }),
+                timedTask(resultsCh, "secret_exposure", func() any { return a.ScanSecretExposure(ctx, domain) }),
         }
 
         for _, fn := range tasks {
@@ -309,6 +311,7 @@ func (a *Analyzer) buildNonExistentResult(domain, status string, statusMessage *
                 "smimea_openpgpkey":      map[string]any{"status": "info", "has_smimea": false, "has_openpgpkey": false, "smimea_records": []map[string]any{}, "openpgpkey_records": []map[string]any{}, "issues": []string{}},
                 "security_txt":          map[string]any{"status": "info", "found": false, "message": msgDomainNoExist, "contacts": []string{}, "issues": []string{}},
                 "ai_surface":            map[string]any{"status": "info", "message": msgDomainNoExist, "llms_txt": map[string]any{"found": false}, "robots_txt": map[string]any{"found": false}, "poisoning": map[string]any{"ioc_count": 0}, "hidden_prompts": map[string]any{"artifact_count": 0}, "evidence": []map[string]any{}, "summary": map[string]any{}},
+                "secret_exposure":       map[string]any{"status": "clear", "message": msgDomainNoExist, "finding_count": 0, "findings": []map[string]any{}, "scanned_urls": []string{}},
                 "saas_txt":               map[string]any{"status": "success", "services": []map[string]any{}, "service_count": 0, "issues": []string{}},
                 "asn_info":               map[string]any{"status": "info", "ipv4_asn": []map[string]any{}, "ipv6_asn": []map[string]any{}, "unique_asns": []map[string]any{}, "issues": []string{}},
                 "edge_cdn":               map[string]any{"status": "success", "is_behind_cdn": false, "cdn_provider": "", "cdn_indicators": []string{}, "origin_visible": true, "issues": []string{}},
