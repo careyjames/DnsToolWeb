@@ -15,6 +15,7 @@
     --code-border: #30363d;
     
     /* Status Colors: Desaturated for professionalism (20% less saturation) */
+    /* RFC/CVSS-aligned — do NOT change these */
     --status-success: #3fb950;     /* Muted green - safe/verified */
     --status-success-bg: rgba(63, 185, 80, 0.15);
     --status-warning: #e3b341;     /* Brighter amber for better contrast */
@@ -24,6 +25,10 @@
     --status-info: #58a6ff;        /* Calm blue - informational */
     --status-info-bg: rgba(88, 166, 255, 0.15);
     --status-neutral: #8b949e;     /* Gray - inactive/secondary */
+
+    /* Sophistication Accents — non-status, brand-authority colors */
+    --accent-steel: #7d8ea8;       /* Steel blue — premium, intelligence, composure */
+    --accent-deep: #1e3a5f;        /* Deep navy — authority, depth, classified */
     
     /* Borders */
     --border-default: #30363d;
@@ -53,11 +58,11 @@ body {
    HERO SECTION
    ============================================ */
 .hero-section {
-    background: linear-gradient(170deg, #0a1628 0%, #0d1117 40%, #111a2e 70%, #0d1117 100%);
+    background: linear-gradient(170deg, #0a1628 0%, #0d1117 35%, var(--accent-deep) 70%, #0d1117 100%);
     padding: 3.5rem 0 3rem;
     position: relative;
     overflow: hidden;
-    border-bottom: 1px solid rgba(88, 166, 255, 0.08);
+    border-bottom: 1px solid rgba(125, 142, 168, 0.12);
 }
 
 .hero-section::before {
@@ -68,7 +73,7 @@ body {
     width: 140%;
     height: 200%;
     background: radial-gradient(ellipse at 30% 20%, rgba(88, 166, 255, 0.06) 0%, transparent 50%),
-                radial-gradient(ellipse at 70% 80%, rgba(63, 185, 80, 0.04) 0%, transparent 50%);
+                radial-gradient(ellipse at 70% 80%, rgba(125, 142, 168, 0.04) 0%, transparent 50%);
     pointer-events: none;
 }
 
@@ -91,10 +96,10 @@ body {
 }
 
 .hero-title {
-    font-size: 3rem;
-    font-weight: 700;
-    letter-spacing: -0.02em;
-    line-height: 1.15;
+    font-size: 3.5rem;
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    line-height: 1.1;
     color: #e6edf3;
 }
 
@@ -115,12 +120,12 @@ body {
 /* Search Card */
 .search-card {
     background: var(--bg-secondary);
-    border: 1px solid var(--border-default);
+    border: 1px solid rgba(125, 142, 168, 0.2);
     border-radius: 0.75rem;
     padding: 1.5rem;
     position: relative;
     z-index: 1;
-    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(88, 166, 255, 0.05);
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(125, 142, 168, 0.06);
 }
 
 .search-label {
@@ -196,6 +201,9 @@ body {
     font-weight: 700;
     color: var(--text-primary);
     letter-spacing: -0.01em;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid rgba(125, 142, 168, 0.15);
+    display: inline-block;
 }
 
 .features-section,
@@ -217,8 +225,9 @@ body {
 }
 
 .feature-card:hover {
-    border-color: var(--border-default);
+    border-color: rgba(125, 142, 168, 0.3);
     transform: translateY(-2px);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2), 0 0 0 1px rgba(125, 142, 168, 0.08);
 }
 
 .feature-card-icon {
@@ -279,7 +288,8 @@ body {
 }
 
 .persona-card:hover {
-    border-color: var(--border-default);
+    border-color: rgba(125, 142, 168, 0.25);
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.15);
 }
 
 .persona-card-icon {
@@ -462,6 +472,9 @@ main.container {
     justify-content: space-between;
     align-items: flex-start;
     gap: 1rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid rgba(125, 142, 168, 0.12);
+    margin-bottom: 1rem;
 }
 
 .results-header-actions {
@@ -539,7 +552,7 @@ main.container {
     }
     
     .hero-title {
-        font-size: 2rem;
+        font-size: 2.25rem;
     }
     
     .hero-subtitle {

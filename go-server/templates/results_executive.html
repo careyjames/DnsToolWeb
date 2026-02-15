@@ -2,7 +2,7 @@
 <html lang="en" data-bs-theme="dark">
 <head>
     {{template "head" .}}
-    <title>Executive Report — {{.Domain}} - DNS Tool</title>
+    <title>Executive Intelligence Brief — {{.Domain}} - DNS Tool</title>
     <meta name="description" content="Executive domain security report for {{.Domain}}. Board-ready summary of email authentication, DNS security, and risk posture.">
     <meta name="robots" content="noindex, nofollow">
     {{template "head_css" .}}
@@ -11,10 +11,11 @@
         .print-report-header { display: none; }
         .print-report-footer { display: none; }
         .exec-banner {
-            background: linear-gradient(135deg, rgba(217, 119, 6, 0.15), rgba(30, 58, 95, 0.15));
-            border: 1px solid rgba(217, 119, 6, 0.3);
+            background: linear-gradient(135deg, rgba(217, 119, 6, 0.12), rgba(30, 58, 95, 0.2));
+            border: 1px solid rgba(125, 142, 168, 0.25);
             border-radius: 0.5rem;
             padding: 1rem 1.25rem;
+            border-left: 3px solid rgba(217, 119, 6, 0.6);
         }
         .exec-section-title {
             font-size: 1.1rem;
@@ -563,7 +564,7 @@
                         <img src="/static/images/owl-of-athena.png" alt="DNS Tool" class="print-brand-logo">
                         <span class="print-brand-name">DNS Tool</span>
                     </div>
-                    <div class="print-report-title">Executive Security Summary</div>
+                    <div class="print-report-title">Executive Security Intelligence Brief</div>
                 </div>
                 <div class="print-header-right">
                     <div class="print-report-meta">
@@ -585,8 +586,8 @@
         <div class="screen-only mb-4">
             <div class="exec-banner d-flex align-items-center justify-content-between flex-wrap gap-2">
                 <div>
-                    <h1 class="h4 mb-1"><i class="fas fa-file-alt text-warning me-2"></i>Executive Report</h1>
-                    <p class="text-muted mb-0 small">Optimized for board-level review &mdash; <strong>{{.Domain}}</strong></p>
+                    <h1 class="h4 mb-1"><i class="fas fa-file-alt text-warning me-2"></i>Executive Security Intelligence Brief</h1>
+                    <p class="text-muted mb-0 small">Board-level domain security assessment &mdash; <strong>{{.Domain}}</strong></p>
                     {{if or .AnalysisTimestamp (gt .AnalysisDuration 0)}}
                     <div class="small text-muted mt-1">
                         {{if .AnalysisTimestamp}}<i class="fas fa-clock me-1"></i>{{.AnalysisTimestamp}}{{end}}
