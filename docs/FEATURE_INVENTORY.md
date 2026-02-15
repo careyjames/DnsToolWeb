@@ -1,6 +1,6 @@
 # DNS Tool — Feature Overview
 
-**Last Updated:** February 14, 2026
+**Last Updated:** February 15, 2026
 **Implementation:** Go/Gin
 
 ---
@@ -51,6 +51,7 @@ The tool performs RFC-compliant parsing and validation of these protocols:
 - AI Surface Scanner (llms.txt, AI crawler governance, prompt injection detection)
 - Dangling DNS and subdomain takeover detection
 - DMARC external reporting authorization verification
+- OpenPhish community phishing URL feed integration (Email Header Analyzer body scanning)
 
 ## Platform Features
 

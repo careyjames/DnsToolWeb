@@ -187,7 +187,7 @@ Each analysis always fetches fresh DNS data — there is no caching.
 
 ### Intelligence Sources Inventory
 URL: `https://dnstool.it-help.tech/sources`
-Complete transparency page documenting every intelligence source used by DNS Tool: DNS resolvers, reverse DNS (PTR), Team Cymru ASN attribution, SMTP probing, SecurityTrails, crt.sh, IANA RDAP, and ip-api.com (visitor geolocation only). Each source includes methodology, rate limits, and verification commands. This page embodies the principle: "No proprietary scanners. No black boxes. Just DNS."
+Complete transparency page documenting every intelligence source used by DNS Tool: DNS resolvers, reverse DNS (PTR), Team Cymru ASN attribution, SMTP probing, SecurityTrails, crt.sh, IANA RDAP, ip-api.com (visitor geolocation only), and OpenPhish (community phishing URL feed). Organized by category: DNS Resolution, Infrastructure Intelligence, Threat Intelligence, Historical & Discovery, and Registry & Reference. Each source includes methodology, rate limits, and verification commands. This page embodies the principle: "No proprietary scanners. No black boxes. Just DNS."
 
 ### IP Investigation
 URL: `https://dnstool.it-help.tech/investigate`
@@ -195,7 +195,7 @@ Standalone investigative workflow for determining IP-to-domain relationships. En
 
 ### Email Header Analyzer
 URL: `https://dnstool.it-help.tech/email-header`
-Paste or upload email headers (.eml files) for instant SPF/DKIM/DMARC authentication verification, delivery route tracing, spoofing detection, and phishing pattern scanning. Includes critical thinking prompts to help users evaluate suspicious emails.
+Paste or upload email headers (.eml files) for instant SPF/DKIM/DMARC authentication verification, delivery route tracing, spoofing detection, and phishing pattern scanning. If you include the email body, it's scanned against the OpenPhish community phishing URL feed and checked for sextortion/scam indicators, then immediately discarded. Includes critical thinking prompts ("Big Questions") to help users evaluate suspicious emails.
 
 ### What's New (Changelog)
 URL: `https://dnstool.it-help.tech/changelog`
