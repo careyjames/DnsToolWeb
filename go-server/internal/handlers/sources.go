@@ -165,7 +165,7 @@ func getThreatSources() []IntelSource {
                         Purpose:    "Community-maintained phishing URL feed used by the Email Header Analyzer to cross-reference URLs found in email bodies and headers against confirmed phishing campaigns. Cached locally with a 12-hour TTL.",
                         Method:     "HTTPS fetch of plain-text URL list from GitHub-hosted public feed",
                         RateLimits: "No published rate limits. Public GitHub-hosted feed, refreshed every 12 hours.",
-                        VerifyCmd:  "curl -s 'https://raw.githubusercontent.com/openphish/public_feed/refs/heads/main/feed.txt' | head -20",
+                        VerifyCmd:  "curl -s https://openphish.com/feed.txt | head -20",
                         URL:        "https://openphish.com/",
                         Free:       true,
                 },
