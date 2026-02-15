@@ -529,6 +529,30 @@ Also applied smooth transition to `.btn-outline-executive` for consistency.
 
 **Version**: 26.16.5
 
+### Naming Convention Comprehensive Sweep (Feb 15, 2026)
+
+**Scope**: Full codebase audit to enforce IC naming convention across ALL files — not just templates, but documentation, changelogs, meta tags, manifest, LLMs files, and agent instructions.
+
+**Files updated in sweep**:
+- `static/llms.txt` — Updated tagline and features list
+- `static/llms-full.txt` — Updated "Dual Intelligence Products" section with IC rationale
+- `static/manifest.json` — Updated PWA description
+- `go-server/templates/results_executive.html` — Fixed "View Engineer's Report" → full name, footer references, JS copyright, appendix references
+- `go-server/templates/results.html` — Fixed button title attributes
+- `go-server/templates/index.html` — Fixed "Executive's Intelligence Briefs" → "Executive's DNS Intelligence Briefs" in 5 locations (meta, OG, Twitter, JSON-LD, subtitle)
+- `go-server/internal/handlers/changelog.go` — Fixed v26.15.26 entry title
+- `EVOLUTION.md` — Fixed section headers and subtitle reference
+- `LICENSING.md` — Updated frontend description
+- `DOCS.md` — Updated reporting section
+- `docs/FEATURE_INVENTORY.md` — Updated features list
+- `replit.md` — Fixed "dual print reports" → "dual intelligence products", added naming regression check rule
+
+**Regression prevention**: Added "Naming consistency regression check" rule to `replit.md` Known Constraints — grep for shortened variants before committing any new references.
+
+**Key lesson**: Initial sweep missed homepage meta tags ("Executive's Intelligence Briefs" — missing "DNS") and the executive template button label ("View Engineer's Report"). These were caught by architect review. Future sweeps must check ALL five sync points per document plus all cross-references in meta tags.
+
+**Version**: 26.16.12
+
 ---
 
 ## Failures & Lessons Learned Timeline
@@ -544,3 +568,4 @@ Also applied smooth transition to `.btn-outline-executive` for consistency.
 | 2026-02-14 | Engineer button solid hover fill | Bootstrap default btn-outline-info hover | Override `--bs-btn-hover-bg` CSS variable (NOT direct `background-color`) |
 | 2026-02-14 | CSS changes not appearing on screen | Edited `custom.css` but server loads `custom.min.css` | MUST run `npx csso static/css/custom.css -o static/css/custom.min.css` after every CSS edit |
 | 2026-02-14 | First CSS override attempt failed | Used `background-color` property (loses to Bootstrap's CSS variable system) | Override `--bs-btn-*` CSS custom properties, not direct properties |
+| 2026-02-15 | Naming sweep missed meta tags and button labels | Checked templates but not all 5 sync points per product | Always check: `<title>`, print header, screen `<h1>`, OG/Twitter meta, AND button/link labels. Grep for shortened variants. |

@@ -26,6 +26,7 @@ The DNS Tool is a web-based intelligence platform designed for comprehensive, RF
 - **Button hover style**: ALL report header buttons use translucent hover (rgba at 15% opacity), NOT Bootstrap's default solid fill. Engineer (`btn-outline-info`) overridden with `rgba(13,202,240,0.15)` via `--bs-btn-hover-bg` CSS variable (NOT direct `background-color` — Bootstrap 5 uses CSS custom properties). Executive uses `rgba(156,163,175,0.15)`. Both have 0.2s ease transition.
 - **CSS build step**: After editing `static/css/custom.css`, MUST run `npx csso static/css/custom.css -o static/css/custom.min.css`. Server loads `custom.min.css`, not the source file.
 - **Font Awesome subset**: 110 glyphs in `static/webfonts/fa-solid-900.woff2`. Verify with fonttools before regenerating. CSS refs in `fontawesome-subset.min.css`.
+- **Naming consistency regression check**: When adding any new reference to the intelligence products, always use full canonical names ("Engineer's DNS Intelligence Report" / "Executive's DNS Intelligence Brief"). Never abbreviate to "Engineer's Report" or "Executive's Brief" — the "DNS Intelligence" qualifier is mandatory. Grep for shortened variants before committing. Generic descriptive uses like "executive print reports" (lowercase, not a proper noun) are acceptable.
 
 ## System Architecture
 
