@@ -39,13 +39,14 @@ func NewSourcesHandler(cfg *config.Config) *SourcesHandler {
 func (h *SourcesHandler) Sources(c *gin.Context) {
         nonce, _ := c.Get("csp_nonce")
         c.HTML(http.StatusOK, "sources.html", gin.H{
-                "AppVersion":     h.Config.AppVersion,
-                "CspNonce":       nonce,
-                "ActivePage":     "sources",
-                "DNSSources":     getDNSSources(),
-                "InfraSources":   getInfraSources(),
-                "HistorySources": getHistorySources(),
-                "MetaSources":    getMetaSources(),
+                "AppVersion":      h.Config.AppVersion,
+                "CspNonce":        nonce,
+                "ActivePage":      "sources",
+                "DNSSources":      getDNSSources(),
+                "InfraSources":    getInfraSources(),
+                "ThreatSources":   getThreatSources(),
+                "HistorySources":  getHistorySources(),
+                "MetaSources":     getMetaSources(),
         })
 }
 
@@ -150,6 +151,22 @@ func getInfraSources() []IntelSource {
                         Method:     "TCP connection to port 25 with STARTTLS negotiation",
                         RateLimits: "No rate limits (standard SMTP protocol).",
                         VerifyCmd:  "openssl s_client -starttls smtp -connect mx.example.com:25",
+                        Free:       true,
+                },
+        }
+}
+
+func getThreatSources() []IntelSource {
+        return []IntelSource{
+                {
+                        Name:       "OpenPhish Community Feed",
+                        Icon:       "fas fa-fish",
+                        Category:   "Community",
+                        Purpose:    "Community-maintained phishing URL feed used by the Email Header Analyzer to cross-reference URLs found in email bodies and headers against confirmed phishing campaigns. Cached locally with a 12-hour TTL.",
+                        Method:     "HTTPS fetch of plain-text URL list from GitHub-hosted public feed",
+                        RateLimits: "No published rate limits. Public GitHub-hosted feed, refreshed every 12 hours.",
+                        VerifyCmd:  "curl -s 'https://raw.githubusercontent.com/openphish/public_feed/refs/heads/main/feed.txt' | head -20",
+                        URL:        "https://openphish.com/",
                         Free:       true,
                 },
         }
