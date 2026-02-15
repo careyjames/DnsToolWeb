@@ -248,3 +248,28 @@ All documentation files verified accurate:
 
 **Golden Rule Tests**: All 60 sub-tests pass (50 original + 10 new posture hash), zero regressions
 **Files**: `posture_hash.go`, `posture_hash_test.go` (new), `schema.sql`, `domain_analyses.sql`, `dbq/*` (regenerated), `analysis.go`, `DRIFT_ENGINE.md` (new)
+
+### Dual Print Reports: Engineer & Executive (Feb 15, 2026)
+
+**Decision**: Implement dual print report system — Engineer (full technical detail) and Executive (condensed board-ready summary). Live results are sacred; both views use the same analysis data with different templates.
+
+**Executive Report** (`results_executive.html`):
+- New handler `ViewAnalysisExecutive` and route `/analysis/:id/executive`
+- 3-section structure: Executive Summary, Technical Findings, Appendix
+- Executive Scorecard with 4 at-a-glance security status badges (Email Spoofing, Brand Impersonation, DNS Tampering, Certificate Control)
+- AI Surface Scanner remains in Technical Findings section (not appendix) — it's a differentiator
+- Posture hash never displayed in executive view
+- TLP:CLEAR classification header for both print views
+- Own `@media print` block with executive-specific styling
+
+**Template Variable Scoping Fix**:
+- Go `html/template` has strict block scoping — variables defined inside `{{if}}` blocks are inaccessible outside
+- `$spfStatus`, `$dmarcStatus`, `$dmarcPolicy`, `$dnssecStatus` moved to top level (before first use) so they're available in both the scorecard section and the technical findings section
+- Root cause: these variables were initially defined inside `{{if $posture}}` but used in the unconditional Technical Findings section
+
+**Engineer Button Visibility Fix**:
+- Engineer print button changed from `btn-outline-secondary` (dark gray, nearly invisible on dark theme) to `btn-outline-info` (light blue, clearly visible)
+- Both buttons now clearly visible: Engineer (blue, printer icon) and Executive (amber, document icon)
+
+**Golden Rule Tests**: All 60 sub-tests pass, zero regressions
+**Version**: 26.15.26

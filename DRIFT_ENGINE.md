@@ -146,7 +146,7 @@ New page: `/posture-timeline?domain=example.com`
 
 | Date | Phase | Status | Notes |
 |------|-------|--------|-------|
-| Feb 15, 2026 | 1 (Foundation) | In Progress | Schema + hashing + save path |
+| Feb 15, 2026 | 1 (Foundation) | Complete | Schema + hashing + save path + 10 golden rule tests |
 
 ---
 

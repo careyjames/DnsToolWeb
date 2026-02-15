@@ -62,7 +62,9 @@ The tool performs RFC-compliant parsing and validation of these protocols:
 - JSON export
 - Email Header Analyzer (SPF/DKIM/DMARC verification, delivery route tracing, spoofing detection)
 - IP Investigation (reverse lookups, ASN attribution, geolocation)
-- Executive print/PDF report with TLP:CLEAR classification
+- Dual print reports: Engineer (full technical detail) and Executive (condensed board-ready summary with security scorecard)
+- TLP:CLEAR classification on all print reports
+- Posture drift detection foundation (canonical SHA-256 hashing for longitudinal monitoring)
 - Changelog page
 - Security policy page
 - Sources and methodology reference

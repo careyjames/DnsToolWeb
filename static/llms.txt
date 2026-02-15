@@ -94,6 +94,7 @@ Every attribution includes a confidence label:
 - Domain registrar information via RDAP
 - DNS history timeline via SecurityTrails (A, MX, NS record changes over time)
 - Security posture scoring with executive-level verdicts
+- Dual print reports: Engineer (full technical detail) and Executive (condensed board-ready summary with security scorecard)
 - Automatic subdomain discovery via Certificate Transparency logs and high-speed UDP DNS probing (~140 common names, wildcard detection)
 - Confidence taxonomy (Observed / Inferred / Third-party) for all attributions
 - "Verify It Yourself" terminal commands appendix (dig, openssl, curl)

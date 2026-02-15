@@ -29,8 +29,9 @@ The application is built in Go using the Gin framework, emphasizing performance 
 
 ### Frontend
 - **Technology**: Server-rendered HTML using Go `html/template`, Bootstrap dark theme, custom CSS, and client-side JavaScript.
-- **UI/UX**: PWA support, accessibility, full mobile responsiveness, and an executive-grade print stylesheet for reports.
-- **Pages**: Index, Results, History, Statistics, Compare, Sources, IP Investigate, Email Header Analyzer, Changelog, Security Policy.
+- **UI/UX**: PWA support, accessibility, full mobile responsiveness, and dual print reports (Engineer + Executive) with TLP:CLEAR classification.
+- **Dual Print Reports**: Engineer (full technical detail, `window.print()`) and Executive (condensed board-ready summary, `/analysis/:id/executive`). Both use same live analysis data. Executive template: `results_executive.html`. Engineer button: `btn-outline-info`. Executive button: `btn-outline-warning`.
+- **Pages**: Index, Results, Results Executive, History, Statistics, Compare, Sources, IP Investigate, Email Header Analyzer, Changelog, Security Policy.
 
 ## External Dependencies
 

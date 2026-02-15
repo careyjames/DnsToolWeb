@@ -118,7 +118,7 @@ AI Surface Scanner, CT subdomain discovery, DNS history timeline (SecurityTrails
 CVSS-aligned risk assessment with actionable remediation recommendations.
 
 ### Reporting
-Executive print/PDF reports with TLP:CLEAR classification. JSON export for programmatic consumption.
+Dual print reports: Engineer (full technical detail) and Executive (condensed board-ready summary with security scorecard, risk posture, and priority actions). Both use the same live analysis data — different formats for different audiences. TLP:CLEAR classification on all reports. JSON export for programmatic consumption.
 
 ## Rate Limiting & Abuse Prevention
 
@@ -211,7 +211,8 @@ Maximum 8 requests per minute per IP. Wait 60 seconds and retry.
 - SecurityTrails DNS history integration
 - IP Investigation with IP-to-ASN attribution
 - Posture scoring with CVSS alignment
-- Print/PDF executive reports
+- Dual print reports (Engineer + Executive)
 - OpenPhish integration
+- Posture drift detection foundation
 - SMTP TLS transport validation
 - CSP with nonces for XSS protection

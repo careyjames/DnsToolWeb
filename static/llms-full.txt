@@ -197,6 +197,12 @@ Standalone investigative workflow for determining IP-to-domain relationships. En
 URL: `https://dnstool.it-help.tech/email-header`
 Paste or upload email headers (.eml files) for instant SPF/DKIM/DMARC authentication verification, delivery route tracing, spoofing detection, and phishing pattern scanning. If you include the email body, it's scanned against the OpenPhish community phishing URL feed and checked for sextortion/scam indicators, then immediately discarded. Includes critical thinking prompts ("Big Questions") to help users evaluate suspicious emails.
 
+### Dual Print Reports
+From any analysis results page, two print-optimized report formats are available:
+- **Engineer Report** (blue print icon): Full technical detail with all protocol analysis, DNS records, and remediation guidance. Opens the browser print dialog directly.
+- **Executive Report** (amber document icon): Condensed board-ready summary with security scorecard, risk posture, priority actions, and AI surface findings. Opens in a new tab for printing.
+Both reports use the same live analysis data and include TLP:CLEAR classification headers.
+
 ### What's New (Changelog)
 URL: `https://dnstool.it-help.tech/changelog`
 Complete changelog of all improvements to analysis accuracy, transparency, and intelligence depth. Organized by category with date stamps.
