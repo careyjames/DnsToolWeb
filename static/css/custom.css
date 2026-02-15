@@ -2829,15 +2829,17 @@ main.container {
 .u-color-heading-light { color: #e5e7eb; }
 .u-link-dotted { cursor: pointer; text-decoration: underline; text-decoration-style: dotted; }
 .u-offscreen-print { position: fixed; left: -9999px; top: 0; width: 0; height: 0; border: none; }
-.u-integrity-link {
+.u-integrity-preview {
     display: inline-flex;
     align-items: center;
     gap: 0.25rem;
+    white-space: nowrap;
+}
+.u-integrity-link {
     text-decoration: underline;
     text-decoration-style: dotted;
     text-underline-offset: 3px;
-    opacity: 1;
-    transition: text-decoration-color 0.2s ease;
+    transition: text-decoration-color 0.2s ease, text-decoration-style 0.2s ease;
 }
 .u-integrity-link:hover {
     text-decoration-style: solid;
