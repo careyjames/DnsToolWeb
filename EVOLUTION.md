@@ -721,6 +721,35 @@ Changes:
 
 ---
 
+## Session: February 15, 2026 (continued — v26.19.0)
+
+### DKIM Gateway Inference & Pipeline Structural Refactor
+
+**Problem**: False "Third-Party Only" DKIM badge for domains routing all mail through a security gateway. Example: fugro.com has MX → Proofpoint, SPF → Proofpoint, but DKIM selectors `selector1`/`selector2` prove Microsoft 365 is the actual mailbox platform. The old logic couldn't see through the gateway because both MX and SPF pointed to Proofpoint, so `resolveProviderWithGateway` never triggered the gateway+mailbox split.
+
+**Fix (v26.18.1→v26.19.0)**: Two changes:
+
+1. **`inferMailboxBehindGateway`**: Post-DKIM inference step. After all selectors are scanned and `foundProviders` is built, if the primary provider is a known security gateway and DKIM selectors reveal exactly one mailbox-class provider behind it, re-attribute primary to the mailbox provider and set gateway correctly. For multiple mailbox providers, add an explanatory note but don't guess.
+
+2. **Typed `ProviderResolution` struct**: Replaced `map[string]any` return from `detectPrimaryMailProvider` and `interface{}` for gateway with a typed struct (`Primary string`, `Gateway string`, `SPFAncillaryNote string`, `DKIMInferenceNote string`). This eliminates silent type drift, makes the data flow self-documenting, and prevents future coupling errors.
+
+3. **`reclassifyAmbiguousSelectors`**: After gateway inference changes the primary, ambiguous selectors (selector1, selector2, s1, s2, default, k1, k2) are re-evaluated against the new primary. This fixes a hidden dependency where selectors were classified against the pre-inference primary and never updated.
+
+**Architectural lesson**: The pipeline had implicit ordering dependencies — selector classification happened with the MX/SPF-derived primary, then inference changed the primary, but selectors weren't re-evaluated. Adding good logic shouldn't break existing good logic. The structural fix (typed struct + reclassification pass) makes additions safe by design rather than requiring manual trace of side effects.
+
+**`mailboxProviders` map**: Microsoft 365, Google Workspace, Zoho Mail, Fastmail, ProtonMail, Cloudflare Email. These are the providers that can sit behind a security gateway.
+
+**Pipeline order (post-refactor)**:
+1. `detectPrimaryMailProvider` → `ProviderResolution` (MX + SPF signals)
+2. `processDKIMSelector` (concurrent) → classify selectors against initial primary
+3. `collectFoundProviders` → build provider set from selectors
+4. `inferMailboxBehindGateway` → if primary is gateway, infer mailbox from DKIM
+5. `reclassifyAmbiguousSelectors` → re-evaluate ambiguous selectors against final primary (only if primary changed)
+6. `collectFoundProviders` (again) → rebuild provider set with reclassified data
+7. `attributeSelectors` / `checkPrimaryHasDKIM` → final attribution with correct primary
+
+---
+
 ## Failures & Lessons Learned Timeline
 
 | Date | Mistake | Root Cause | Correct Solution |
@@ -743,3 +772,4 @@ Changes:
 | 2026-02-15 | CSP blocked inline style attributes | Used `style=""` in HTML templates with nonce-based `style-src` CSP | Move all inline styles to CSS utility classes. Inline `style` attributes cannot carry nonces. |
 | 2026-02-15 | innerHTML XSS anti-pattern in DNS history | Built HTML via string concatenation + innerHTML | Use createElement() + textContent + appendChild() for DOM-safe rendering |
 | 2026-02-15 | Protocol links navigated to wrong sections | protocolSectionMap had incorrect mappings for MTA-STS, TLS-RPT, CAA | Verify section IDs match actual template structure: MTA-STS/TLS-RPT → #section-email, CAA → #section-brand |
+| 2026-02-15 | DKIM "Third-Party Only" false positive behind gateways | Pipeline classified selectors against pre-inference primary, never re-evaluated after gateway inference changed primary. `map[string]any` and `interface{}` masked type dependencies. | Use typed `ProviderResolution` struct. Add `reclassifyAmbiguousSelectors` pass after inference. Rebuild `foundProviders` before final attribution. Pipeline stages must be idempotent to primary changes. |

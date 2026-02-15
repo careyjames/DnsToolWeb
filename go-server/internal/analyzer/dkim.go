@@ -228,6 +228,20 @@ var ambiguousSelectors = map[string]bool{
         selK2:        true,
 }
 
+type ProviderResolution struct {
+        Primary          string
+        Gateway          string
+        SPFAncillaryNote string
+        DKIMInferenceNote string
+}
+
+func (pr *ProviderResolution) GatewayOrNil() interface{} {
+        if pr.Gateway == "" {
+                return nil
+        }
+        return pr.Gateway
+}
+
 func matchProviderFromRecords(records string, providerMap map[string]string) string {
         lower := strings.ToLower(records)
         for key, provider := range providerMap {
@@ -259,22 +273,22 @@ func detectSPFAncillaryProvider(spfRecord string) string {
         return matchProviderFromRecords(spfRecord, spfAncillarySenders)
 }
 
-func resolveProviderWithGateway(mxProvider, spfMailbox string) (string, interface{}) {
+func resolveProviderWithGateway(mxProvider, spfMailbox string) (primary, gateway string) {
         if mxProvider != "" && securityGateways[mxProvider] && spfMailbox != "" && spfMailbox != mxProvider {
                 return spfMailbox, mxProvider
         }
         if mxProvider != "" {
-                return mxProvider, nil
+                return mxProvider, ""
         }
         if spfMailbox != "" {
-                return spfMailbox, nil
+                return spfMailbox, ""
         }
-        return providerUnknown, nil
+        return providerUnknown, ""
 }
 
-func detectPrimaryMailProvider(mxRecords []string, spfRecord string) map[string]any {
+func detectPrimaryMailProvider(mxRecords []string, spfRecord string) ProviderResolution {
         if len(mxRecords) == 0 && spfRecord == "" {
-                return map[string]any{"provider": providerUnknown, "gateway": nil, "spf_ancillary_note": ""}
+                return ProviderResolution{Primary: providerUnknown}
         }
 
         mxProvider := detectMXProvider(mxRecords)
@@ -306,13 +320,13 @@ func detectPrimaryMailProvider(mxRecords []string, spfRecord string) map[string]
         if spfMailbox == "" && mxProvider == "" {
                 ancillary := detectSPFAncillaryProvider(spfRecord)
                 if ancillary != "" {
-                        return map[string]any{"provider": providerUnknown, "gateway": nil, "spf_ancillary_note": ancillaryNote}
+                        return ProviderResolution{Primary: providerUnknown, SPFAncillaryNote: ancillaryNote}
                 }
         }
 
-        provider, gateway := resolveProviderWithGateway(mxProvider, spfMailbox)
+        primary, gateway := resolveProviderWithGateway(mxProvider, spfMailbox)
 
-        return map[string]any{"provider": provider, "gateway": gateway, "spf_ancillary_note": ancillaryNote}
+        return ProviderResolution{Primary: primary, Gateway: gateway, SPFAncillaryNote: ancillaryNote}
 }
 
 func classifySelectorProvider(selectorName, primaryProvider string) string {
@@ -642,9 +656,9 @@ func collectFoundProviders(foundSelectors map[string]map[string]any) map[string]
         return providers
 }
 
-func inferMailboxBehindGateway(primaryProvider string, gateway interface{}, foundProviders map[string]bool) (string, interface{}, string) {
-        if !securityGateways[primaryProvider] {
-                return primaryProvider, gateway, ""
+func inferMailboxBehindGateway(res *ProviderResolution, foundProviders map[string]bool) {
+        if !securityGateways[res.Primary] {
+                return
         }
 
         var mailboxCandidates []string
@@ -656,21 +670,37 @@ func inferMailboxBehindGateway(primaryProvider string, gateway interface{}, foun
 
         if len(mailboxCandidates) == 1 {
                 inferred := mailboxCandidates[0]
-                return inferred, primaryProvider, fmt.Sprintf(
+                res.DKIMInferenceNote = fmt.Sprintf(
                         "Primary mailbox provider inferred as %s from DKIM selectors (mail routed through %s security gateway).",
-                        inferred, primaryProvider,
+                        inferred, res.Primary,
                 )
+                res.Gateway = res.Primary
+                res.Primary = inferred
+                return
         }
 
         if len(mailboxCandidates) > 1 {
                 sort.Strings(mailboxCandidates)
-                return primaryProvider, gateway, fmt.Sprintf(
+                res.DKIMInferenceNote = fmt.Sprintf(
                         "Multiple mailbox providers detected behind %s gateway (%s) — cannot determine single primary from DKIM alone.",
-                        primaryProvider, strings.Join(mailboxCandidates, ", "),
+                        res.Primary, strings.Join(mailboxCandidates, ", "),
                 )
         }
+}
 
-        return primaryProvider, gateway, ""
+func reclassifyAmbiguousSelectors(foundSelectors map[string]map[string]any, finalPrimary string) {
+        for selName, selData := range foundSelectors {
+                if selData["provider"].(string) != providerUnknown {
+                        continue
+                }
+                if !ambiguousSelectors[selName] {
+                        continue
+                }
+                if mapped, ok := selectorProviderMap[selName]; ok && finalPrimary != providerUnknown {
+                        selData["provider"] = mapped
+                        selData["reclassified"] = true
+                }
+        }
 }
 
 func (a *Analyzer) AnalyzeDKIM(ctx context.Context, domain string, mxRecords []string, customSelectors []string) map[string]any {
@@ -682,10 +712,7 @@ func (a *Analyzer) AnalyzeDKIM(ctx context.Context, domain string, mxRecords []s
 
         spfRecord := findSPFRecord(a.DNS.QueryDNS(ctx, "TXT", domain))
 
-        providerInfo := detectPrimaryMailProvider(mxRecords, spfRecord)
-        primaryProvider := providerInfo["provider"].(string)
-        gateway := providerInfo["gateway"]
-        spfAncillaryNote, _ := providerInfo["spf_ancillary_note"].(string)
+        res := detectPrimaryMailProvider(mxRecords, spfRecord)
 
         foundSelectors := make(map[string]map[string]any)
         var keyIssues []string
@@ -697,7 +724,7 @@ func (a *Analyzer) AnalyzeDKIM(ctx context.Context, domain string, mxRecords []s
                 wg.Add(1)
                 go func(s string) {
                         defer wg.Done()
-                        result := processDKIMSelector(ctx, a.DNS, s, domain, primaryProvider, customSelectors)
+                        result := processDKIMSelector(ctx, a.DNS, s, domain, res.Primary, customSelectors)
                         if result == nil {
                                 return
                         }
@@ -712,20 +739,22 @@ func (a *Analyzer) AnalyzeDKIM(ctx context.Context, domain string, mxRecords []s
 
         foundProviders := collectFoundProviders(foundSelectors)
 
-        inferredPrimary, inferredGateway, gatewayNote := inferMailboxBehindGateway(primaryProvider, gateway, foundProviders)
-        if inferredPrimary != primaryProvider {
-                primaryProvider = inferredPrimary
-                gateway = inferredGateway
+        prePrimary := res.Primary
+        inferMailboxBehindGateway(&res, foundProviders)
+
+        if res.Primary != prePrimary {
+                reclassifyAmbiguousSelectors(foundSelectors, res.Primary)
+                foundProviders = collectFoundProviders(foundSelectors)
         }
 
-        primaryHasDKIM, primaryDKIMNote, thirdPartyOnly := attributeSelectors(foundSelectors, primaryProvider, foundProviders)
-        if gatewayNote != "" && primaryDKIMNote == "" {
-                primaryDKIMNote = gatewayNote
-        } else if gatewayNote != "" {
-                primaryDKIMNote = gatewayNote + " " + primaryDKIMNote
+        primaryHasDKIM, primaryDKIMNote, thirdPartyOnly := attributeSelectors(foundSelectors, res.Primary, foundProviders)
+        if res.DKIMInferenceNote != "" && primaryDKIMNote == "" {
+                primaryDKIMNote = res.DKIMInferenceNote
+        } else if res.DKIMInferenceNote != "" {
+                primaryDKIMNote = res.DKIMInferenceNote + " " + primaryDKIMNote
         }
 
-        status, message := buildDKIMVerdict(foundSelectors, keyIssues, keyStrengths, primaryProvider, primaryHasDKIM, thirdPartyOnly)
+        status, message := buildDKIMVerdict(foundSelectors, keyIssues, keyStrengths, res.Primary, primaryHasDKIM, thirdPartyOnly)
 
         var sortedProviders []string
         for p := range foundProviders {
@@ -744,12 +773,12 @@ func (a *Analyzer) AnalyzeDKIM(ctx context.Context, domain string, mxRecords []s
                 "selectors":           selectorMap,
                 "key_issues":          keyIssues,
                 "key_strengths":       uniqueStrings(keyStrengths),
-                "primary_provider":    primaryProvider,
-                "security_gateway":    gateway,
+                "primary_provider":    res.Primary,
+                "security_gateway":    res.GatewayOrNil(),
                 "primary_has_dkim":    primaryHasDKIM,
                 "third_party_only":    thirdPartyOnly,
                 "primary_dkim_note":   primaryDKIMNote,
                 "found_providers":     sortedProviders,
-                "spf_ancillary_note":  spfAncillaryNote,
+                "spf_ancillary_note":  res.SPFAncillaryNote,
         }
 }

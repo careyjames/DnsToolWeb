@@ -1175,8 +1175,8 @@ func TestGoldenRuleSPFAncillaryCorroboration(t *testing.T) {
         for _, tt := range tests {
                 t.Run(tt.name, func(t *testing.T) {
                         result := detectPrimaryMailProvider(tt.mx, tt.spf)
-                        provider := result["provider"].(string)
-                        note, _ := result["spf_ancillary_note"].(string)
+                        provider := result.Primary
+                        note := result.SPFAncillaryNote
 
                         if provider != tt.wantProvider {
                                 t.Errorf("provider = %q, want %q", provider, tt.wantProvider)
