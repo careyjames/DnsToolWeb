@@ -427,6 +427,21 @@ This section tracks recurring issues and failed approaches so future sessions av
 
 **Lesson**: When Font Awesome icons don't render, try using a class from the same CSS section as a working icon before deep-diving into font file analysis. Always version-bust ALL CSS files, not just custom.min.css.
 
+**Why this failure persisted across multiple sessions** (self-assessment):
+1. **Confirmation bias**: Each session ran `fonttools` to check the woff2, found the glyph present, and declared "fixed — must be browser caching." This was technically correct but practically useless. The icon never rendered for the user.
+2. **Wrong layer of investigation**: Every session analyzed the font file (the correct glyph existed) instead of asking "why does THIS icon fail while THAT icon works?" — which would have immediately revealed the CSS line separation and missing cache-busting.
+3. **Dismissing user reports**: Saying "verified, must be your browser cache" when the user reports the same bug across Chrome AND Safari is a red flag. Two browsers, same failure = the bug is real, not cached.
+4. **No visual verification**: Testing confirmed the HTML rendered correctly but never verified the icon was actually VISIBLE to a human. An end-to-end test checking icon bounding box width would have caught this immediately.
+5. **Missing the obvious**: The fontawesome CSS was the ONLY stylesheet without `staticVersionURL` cache-busting. custom.min.css had it. This should have been noticed on the first inspection.
+
+**Rule for future sessions**: When a user says an icon is invisible, check THREE things: (1) Is the CSS class defined? (2) Is it on the same CSS line/section as a KNOWN WORKING icon? (3) Is the CSS file being cache-busted? Do NOT just check the font file and declare victory.
+
+### Executive Button Color Conflict (v26.16.2)
+
+**Problem**: Executive button used `btn-outline-warning` (amber/yellow) which visually clashed with the TLP:AMBER dropdown button immediately to its right — both were the same amber color.
+
+**Fix**: Changed Executive to `btn-outline-light` (white/clean border on dark theme). Now the three buttons are visually distinct: Engineer (cyan/info), Executive (white/light), TLP:AMBER (amber/gold).
+
 ### Owl of Athena — Copyright Risk (v26.16.2)
 
 **Problem**: The Owl of Athena image might have been a photograph from Wikipedia, creating potential copyright risk for a commercial product.

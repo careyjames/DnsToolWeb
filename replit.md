@@ -37,7 +37,7 @@ The application is built in Go using the Gin framework, emphasizing performance 
 ### Frontend
 - **Technology**: Server-rendered HTML using Go `html/template`, Bootstrap dark theme, custom CSS, and client-side JavaScript.
 - **UI/UX**: PWA support, accessibility, full mobile responsiveness, and dual print reports (Engineer + Executive) with configurable TLP classification (default: TLP:AMBER, aligned with CISA Cyber Hygiene practice).
-- **Dual Print Reports**: Engineer (full technical detail, `window.print()`) and Executive (condensed board-ready summary, `/analysis/:id/executive`). Both use same live analysis data. Executive template: `results_executive.html`. Engineer button: `btn-outline-info`. Executive button: `btn-outline-warning`.
+- **Dual Print Reports**: Engineer (full technical detail, `window.print()`) and Executive (condensed board-ready summary, `/analysis/:id/executive`). Both use same live analysis data. Executive template: `results_executive.html`. Engineer button: `btn-outline-info`. Executive button: `btn-outline-light` (changed from `btn-outline-warning` to avoid color conflict with TLP:AMBER dropdown).
 - **TLP Policy**: Default TLP:AMBER for all reports (security posture data may reveal actionable vulnerabilities). Users can select TLP:GREEN (community sharing) or TLP:CLEAR (unlimited) via dropdown before printing. FIRST TLP v2.0 colors: AMBER=#ffc000, GREEN=#33a532, CLEAR=white/border.
 - **Pages**: Index, Results, Results Executive, History, Statistics, Compare, Sources, IP Investigate, Email Header Analyzer, Changelog, Security Policy.
 
