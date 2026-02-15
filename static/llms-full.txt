@@ -1,7 +1,7 @@
 # DNS Tool - Complete Agent & Technical Guide
 
 ## Overview
-DNS Tool is an authoritative DNS intelligence platform at https://dnstool.it-help.tech. It provides comprehensive domain security analysis including DNS records, email authentication (SPF, DKIM, DMARC), DANE/TLSA certificate pinning, DNSSEC, BIMI, MTA-STS, TLS-RPT, CAA with MPIC awareness, DMARCbis readiness, SMTP transport encryption, email security management provider detection, subdomain discovery, and domain registrar information via RDAP.
+DNS Tool is an OSINT (Open Source Intelligence) platform for DNS security analysis at https://dnstool.it-help.tech. All data is sourced from publicly available, open-source intelligence — DNS records, certificate transparency logs, RDAP registrar data, and publicly accessible web resources. It provides comprehensive domain security analysis including email authentication (SPF, DKIM, DMARC), DANE/TLSA certificate pinning, DNSSEC, BIMI, MTA-STS, TLS-RPT, CAA with MPIC awareness, DMARCbis readiness, SMTP transport encryption, email security management provider detection, subdomain discovery, and domain registrar information via RDAP.
 
 Every query fetches fresh data from multiple DNS resolvers — results are never cached. Every recommendation is backed by RFC citations. Accuracy above all else — truthful, transparent, and provable.
 

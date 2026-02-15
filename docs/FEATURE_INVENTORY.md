@@ -7,8 +7,10 @@
 
 ## Purpose
 
-This document provides a high-level overview of the DNS Tool's analysis
-capabilities for public reference.
+This document provides a high-level overview of the DNS Tool's OSINT-based
+domain security analysis capabilities for public reference. All data sources
+are open-source intelligence — publicly available DNS records, certificate
+transparency logs, RDAP registrar data, and web resources.
 
 ---
 
@@ -83,6 +85,7 @@ The tool performs RFC-compliant parsing and validation of these protocols:
 
 ## Design Philosophy
 
+- **OSINT methodology**: all data sourced from publicly available, open-source intelligence — DNS queries, CT logs, RDAP, publicly accessible web resources
 - **Fresh data**: DNS records always fetched live (TTL=0, no cache)
 - **Observation-based language**: no definitive claims, only observations
 - **Verify It Yourself**: every conclusion maps to a standard command

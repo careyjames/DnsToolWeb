@@ -1,7 +1,7 @@
 # DNS Tool — Domain Security Audit
 
 ## Overview
-The DNS Tool is a web-based intelligence platform designed for comprehensive, RFC-compliant domain security analysis. It provides immediate and verifiable domain state information, adhering to a "No proprietary magic" philosophy where all conclusions are independently verifiable. Key capabilities include auditing critical DNS records (SPF, DKIM, DMARC, DANE/TLSA, DNSSEC, MTA-STS, TLS-RPT, BIMI, CAA), automatic subdomain discovery, DNS history timelines, an AI Surface Scanner, IP Intelligence, and an Email Header Analyzer. The project aims for an open-source model while protecting commercial viability, targeting both technical sysadmins and non-technical executives.
+The DNS Tool is an OSINT (Open Source Intelligence) platform designed for comprehensive, RFC-compliant domain security analysis. All data is sourced from publicly available intelligence — DNS records, certificate transparency logs, RDAP registrar data, and publicly accessible web resources. It provides immediate and verifiable domain state information, adhering to a "No proprietary magic" philosophy where all conclusions are independently verifiable. Key capabilities include auditing critical DNS records (SPF, DKIM, DMARC, DANE/TLSA, DNSSEC, MTA-STS, TLS-RPT, BIMI, CAA), automatic subdomain discovery, DNS history timelines, an AI Surface Scanner, IP Intelligence, and an Email Header Analyzer. The project aims for an open-source model while protecting commercial viability, targeting both technical sysadmins and non-technical executives.
 
 ## User Preferences
 - Preferred communication style: Simple, everyday language.

@@ -67,7 +67,7 @@ func GetChangelog() []ChangelogEntry {
                         Date:        dateFeb15,
                         Category:    "Security",
                         Title:       "Expanded Exposure Checks (Opt-In)",
-                        Description: "New opt-in exposure scanner checks 8 well-known misconfiguration paths (/.env, /.git/config, /.git/HEAD, /.DS_Store, /server-status, /server-info, /wp-config.php.bak, /phpinfo.php) on target domains. Content validation reduces false positives — each path is checked for characteristic content, not just HTTP 200 status. Sequential requests with 200ms delays and proper User-Agent identification. Results include severity badges, risk descriptions, and specific remediation guidance. Explicit PCI DSS disclaimer: these are informational reconnaissance checks, not ASV compliance scans.",
+                        Description: "New opt-in OSINT exposure scanner checks 8 well-known misconfiguration paths (/.env, /.git/config, /.git/HEAD, /.DS_Store, /server-status, /server-info, /wp-config.php.bak, /phpinfo.php) on target domains. Content validation reduces false positives — each path is checked for characteristic content, not just HTTP 200 status. Sequential requests with 200ms delays and proper User-Agent identification. Results include severity badges, risk descriptions, and specific remediation guidance. Explicit PCI DSS disclaimer: these are OSINT collection, not ASV compliance scans.",
                         Icon:        "fas fa-search",
                 },
                 {

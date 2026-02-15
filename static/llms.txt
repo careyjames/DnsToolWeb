@@ -1,7 +1,7 @@
 # DNS Tool - Domain Security Audit & Email Authentication Checker
-> Free domain security audit producing Engineer's DNS Intelligence Reports and Executive's DNS Intelligence Briefs
+> Free OSINT-based domain security audit producing Engineer's DNS Intelligence Reports and Executive's DNS Intelligence Briefs
 
-DNS Tool provides instant, real-time DNS intelligence with email authentication validation (SPF, DKIM, DMARC), DANE/TLSA certificate pinning analysis, DNSSEC chain verification, BIMI brand checking, MTA-STS/TLS-RPT analysis, CAA certificate controls with MPIC awareness, DMARCbis readiness checks, IP Intelligence, and domain intelligence via RDAP. Every query fetches fresh data from multiple resolvers — never cached. Every recommendation is backed by RFC citations. Every conclusion can be independently verified using standard Unix commands.
+DNS Tool is a DNS OSINT (Open Source Intelligence) platform providing instant, real-time DNS intelligence. All analysis uses publicly available, open-source data — DNS records, certificate transparency logs, RDAP registrar data, and publicly accessible web resources. Capabilities include email authentication validation (SPF, DKIM, DMARC), DANE/TLSA certificate pinning analysis, DNSSEC chain verification, BIMI brand checking, MTA-STS/TLS-RPT analysis, CAA certificate controls with MPIC awareness, DMARCbis readiness checks, IP Intelligence, and domain intelligence via RDAP. Every query fetches fresh data from multiple resolvers — never cached. Every recommendation is backed by RFC citations. Every conclusion can be independently verified using standard Unix commands.
 
 ## How to Use This Tool (for AI Agents)
 
