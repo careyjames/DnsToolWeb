@@ -6,6 +6,7 @@ const (
         dateFeb14 = "Feb 14, 2026"
         dateFeb13 = "Feb 13, 2026"
         dateFeb12 = "Feb 12, 2026"
+        dateFeb11 = "Feb 11, 2026"
         dateJan22 = "Jan 22, 2026"
         dateNov05 = "Nov 5, 2025"
         dateJun05 = "Jun 5, 2025"
@@ -46,7 +47,7 @@ func GetChangelog() []ChangelogEntry {
                 },
                 {
                         Version:     "26.14.6",
-                        Date:        dateFeb14,
+                        Date:        dateFeb12,
                         Category:    "Transparency",
                         Title:       "Intelligence Sources Inventory",
                         Description: "New /sources page documents every intelligence source used by DNS Tool — DNS resolvers, reverse DNS, Team Cymru ASN attribution, SMTP probing, SecurityTrails, crt.sh, IANA RDAP — with methodology, rate limits, and verification commands. No black boxes.",
@@ -54,7 +55,7 @@ func GetChangelog() []ChangelogEntry {
                 },
                 {
                         Version:     "26.14.5",
-                        Date:        dateFeb14,
+                        Date:        dateFeb12,
                         Category:    "Intelligence",
                         Title:       "PTR-Based Hosting Detection",
                         Description: "Reverse DNS (PTR) lookups now identify hosting providers directly from IP addresses — the classic Unix-era technique. CloudFront, AWS, Google Cloud, Azure, and more detected without any third-party API.",
@@ -62,7 +63,7 @@ func GetChangelog() []ChangelogEntry {
                 },
                 {
                         Version:     "26.14.4",
-                        Date:        dateFeb14,
+                        Date:        dateFeb12,
                         Category:    "Intelligence",
                         Title:       "IP-to-ASN Attribution",
                         Description: "Team Cymru DNS-based IP-to-ASN mapping identifies which organization owns each IP address (AWS, Cloudflare, Google, etc.). Free community service with no API key and no rate limits.",
@@ -70,7 +71,7 @@ func GetChangelog() []ChangelogEntry {
                 },
                 {
                         Version:     "26.14.3",
-                        Date:        dateFeb14,
+                        Date:        dateFeb11,
                         Category:    "Transparency",
                         Title:       "Incident Disclosure: Inaccurate Analysis Output",
                         Description: "A data-processing issue caused some reports to display incorrect analysis results. The root cause has been identified and fixed, and safeguards have been added so incomplete or failed data retrieval can never be silently presented as valid results. We believe in full transparency — you deserve to know when we get it wrong.",
@@ -79,7 +80,7 @@ func GetChangelog() []ChangelogEntry {
                 },
                 {
                         Version:     "26.14.2",
-                        Date:        dateFeb14,
+                        Date:        dateFeb11,
                         Category:    "Transparency",
                         Title:       "Honest Data Reporting",
                         Description: "When third-party data sources are rate-limited or unavailable, reports now say exactly that — never claiming 'no changes detected' when the data simply couldn't be checked. Four clear states: success, rate-limited, error, and partial.",
@@ -87,7 +88,7 @@ func GetChangelog() []ChangelogEntry {
                 },
                 {
                         Version:     "26.14.1",
-                        Date:        dateFeb14,
+                        Date:        dateFeb13,
                         Category:    "Performance",
                         Title:       "DNS History Cache",
                         Description: "Successful DNS history lookups are now cached for 24 hours, completely isolated from live analysis. Reduces API calls while ensuring live DNS queries are never served stale data.",
