@@ -470,3 +470,26 @@ This section tracks recurring issues and failed approaches so future sessions av
 **Fix**: Generated an original AI-created Owl of Athena design — silver/gold metallic tones, geometric feather patterns, olive branch, coin-like circular composition on black background. Optimized from 932KB to 77KB (256x256 PNG). 100% original, no copyright concerns.
 
 **Version**: 26.16.2
+
+### Engineer Button Hover — Translucent Effect (v26.16.5)
+
+**Problem**: The Engineer button (`btn-outline-info`) used Bootstrap's default solid-fill hover: the entire button background turns solid cyan/info color on hover, looking like a "blue balloon." The neighboring Executive and TLP:AMBER buttons use a subtle translucent background on hover — much more refined and consistent with the dark theme.
+
+**Fix**: Added CSS override for `.btn-outline-info:hover` / `:focus` with `background-color: rgba(13, 202, 240, 0.15)` (15% opacity info color) instead of Bootstrap's default solid fill. Also set `color: #5edfff` and `border-color: #5edfff` for a brightened-but-not-solid effect. Added `transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease` for smooth animation. Applied same transition to `.btn-outline-executive` for consistency.
+
+**Design principle**: All action buttons in the report header row should use the same translucent hover pattern — subtle glow, not solid fill. This keeps the dark theme cohesive and avoids any single button visually dominating on hover.
+
+**Version**: 26.16.5
+
+---
+
+## Failures & Lessons Learned Timeline
+
+| Date | Mistake | Root Cause | Correct Solution |
+|------|---------|------------|------------------|
+| 2026-02-14 | CSP blocked inline onclick handlers | Used `onclick` in HTML | Use `id` + `addEventListener` in `<script nonce>` blocks |
+| 2026-02-14 | Font Awesome icons missing after subset | Regenerated woff2 without verifying glyphs | Always verify with fonttools before regenerating |
+| 2026-02-14 | PDF title wrong format | `<title>` tag didn't follow naming convention | Format: "Report Type — domain - DNS Tool" |
+| 2026-02-14 | Executive print text too small | Font sizes below 8pt | Minimum: body 11pt, small 9pt, code 8.5pt, footer 8.5pt |
+| 2026-02-14 | Executive button too bright (btn-outline-light) | White text/border on dark theme | Use custom `btn-outline-executive` with muted gray #9ca3af |
+| 2026-02-14 | Engineer button solid hover fill | Bootstrap default btn-outline-info hover | Override with rgba(13,202,240,0.15) translucent hover |
