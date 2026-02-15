@@ -235,39 +235,74 @@ func detectMXProvider(mxRecords []string) string {
         return matchProviderFromRecords(strings.Join(mxRecords, " "), mxToDKIMProvider)
 }
 
-func detectSPFProvider(spfRecord string) string {
+func detectSPFMailboxProvider(spfRecord string) string {
         if spfRecord == "" {
                 return ""
         }
-        if p := matchProviderFromRecords(spfRecord, spfMailboxProviders); p != "" {
-                return p
+        return matchProviderFromRecords(spfRecord, spfMailboxProviders)
+}
+
+func detectSPFAncillaryProvider(spfRecord string) string {
+        if spfRecord == "" {
+                return ""
         }
         return matchProviderFromRecords(spfRecord, spfAncillarySenders)
 }
 
-func resolveProviderWithGateway(mxProvider, spfProvider string) (string, interface{}) {
-        if mxProvider != "" && securityGateways[mxProvider] && spfProvider != "" && spfProvider != mxProvider {
-                return spfProvider, mxProvider
+func resolveProviderWithGateway(mxProvider, spfMailbox string) (string, interface{}) {
+        if mxProvider != "" && securityGateways[mxProvider] && spfMailbox != "" && spfMailbox != mxProvider {
+                return spfMailbox, mxProvider
         }
         if mxProvider != "" {
                 return mxProvider, nil
         }
-        if spfProvider != "" {
-                return spfProvider, nil
+        if spfMailbox != "" {
+                return spfMailbox, nil
         }
         return providerUnknown, nil
 }
 
 func detectPrimaryMailProvider(mxRecords []string, spfRecord string) map[string]any {
         if len(mxRecords) == 0 && spfRecord == "" {
-                return map[string]any{"provider": providerUnknown, "gateway": nil}
+                return map[string]any{"provider": providerUnknown, "gateway": nil, "spf_ancillary_note": ""}
         }
 
         mxProvider := detectMXProvider(mxRecords)
-        spfProvider := detectSPFProvider(spfRecord)
-        provider, gateway := resolveProviderWithGateway(mxProvider, spfProvider)
+        spfMailbox := detectSPFMailboxProvider(spfRecord)
 
-        return map[string]any{"provider": provider, "gateway": gateway}
+        ancillaryNote := ""
+
+        if spfMailbox != "" && mxProvider != "" && spfMailbox != mxProvider && !securityGateways[mxProvider] {
+                ancillaryNote = fmt.Sprintf(
+                        "SPF authorizes %s servers, but MX records point to %s. "+
+                                "The %s SPF include likely supports ancillary services "+
+                                "(e.g., calendar invitations, shared documents) rather than primary mailbox hosting.",
+                        spfMailbox, mxProvider, spfMailbox)
+                spfMailbox = ""
+        }
+
+        if spfMailbox != "" && mxProvider == "" && len(mxRecords) > 0 {
+                ancillaryNote = fmt.Sprintf(
+                        "SPF authorizes %s servers, but MX records point to self-hosted infrastructure. "+
+                                "The %s SPF include likely supports ancillary services "+
+                                "(e.g., calendar invitations, shared documents) rather than primary mailbox hosting.",
+                        spfMailbox, spfMailbox)
+                spfMailbox = ""
+                if detectSPFAncillaryProvider(spfRecord) == "" {
+                        mxProvider = "Self-hosted"
+                }
+        }
+
+        if spfMailbox == "" && mxProvider == "" {
+                ancillary := detectSPFAncillaryProvider(spfRecord)
+                if ancillary != "" {
+                        return map[string]any{"provider": providerUnknown, "gateway": nil, "spf_ancillary_note": ancillaryNote}
+                }
+        }
+
+        provider, gateway := resolveProviderWithGateway(mxProvider, spfMailbox)
+
+        return map[string]any{"provider": provider, "gateway": gateway, "spf_ancillary_note": ancillaryNote}
 }
 
 func classifySelectorProvider(selectorName, primaryProvider string) string {
@@ -609,6 +644,7 @@ func (a *Analyzer) AnalyzeDKIM(ctx context.Context, domain string, mxRecords []s
         providerInfo := detectPrimaryMailProvider(mxRecords, spfRecord)
         primaryProvider := providerInfo["provider"].(string)
         gateway := providerInfo["gateway"]
+        spfAncillaryNote, _ := providerInfo["spf_ancillary_note"].(string)
 
         foundSelectors := make(map[string]map[string]any)
         var keyIssues []string
@@ -649,16 +685,17 @@ func (a *Analyzer) AnalyzeDKIM(ctx context.Context, domain string, mxRecords []s
         }
 
         return map[string]any{
-                "status":            status,
-                "message":           message,
-                "selectors":         selectorMap,
-                "key_issues":        keyIssues,
-                "key_strengths":     uniqueStrings(keyStrengths),
-                "primary_provider":  primaryProvider,
-                "security_gateway":  gateway,
-                "primary_has_dkim":  primaryHasDKIM,
-                "third_party_only":  thirdPartyOnly,
-                "primary_dkim_note": primaryDKIMNote,
-                "found_providers":   sortedProviders,
+                "status":              status,
+                "message":             message,
+                "selectors":           selectorMap,
+                "key_issues":          keyIssues,
+                "key_strengths":       uniqueStrings(keyStrengths),
+                "primary_provider":    primaryProvider,
+                "security_gateway":    gateway,
+                "primary_has_dkim":    primaryHasDKIM,
+                "third_party_only":    thirdPartyOnly,
+                "primary_dkim_note":   primaryDKIMNote,
+                "found_providers":     sortedProviders,
+                "spf_ancillary_note":  spfAncillaryNote,
         }
 }

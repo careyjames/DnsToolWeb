@@ -1062,3 +1062,70 @@ func TestGoldenRuleSubdomainDiscoveryUnder60s(t *testing.T) {
 
         t.Logf("subdomain discovery completed in %s — found %d subdomains", elapsed, len(subs))
 }
+
+func TestGoldenRuleSPFAncillaryCorroboration(t *testing.T) {
+        tests := []struct {
+                name            string
+                mx              []string
+                spf             string
+                wantProvider    string
+                wantAncillary   bool
+        }{
+                {
+                        name:         "Google MX + Google SPF = Google Workspace",
+                        mx:           []string{"aspmx.l.google.com."},
+                        spf:          "v=spf1 include:_spf.google.com ~all",
+                        wantProvider: providerGoogleWS,
+                },
+                {
+                        name:          "O365 MX + Google-only SPF = Microsoft 365 with ancillary note",
+                        mx:            []string{"example-com.mail.protection.outlook.com."},
+                        spf:           "v=spf1 include:_spf.google.com ~all",
+                        wantProvider:  providerMicrosoft365,
+                        wantAncillary: true,
+                },
+                {
+                        name:          "Self-hosted MX + Google SPF = self-hosted with ancillary note",
+                        mx:            []string{"mail.example.com."},
+                        spf:           "v=spf1 include:_spf.google.com ~all",
+                        wantProvider:  "Self-hosted",
+                        wantAncillary: true,
+                },
+                {
+                        name:         "No MX + Google SPF = Google Workspace (no MX to contradict)",
+                        mx:           []string{},
+                        spf:          "v=spf1 include:_spf.google.com ~all",
+                        wantProvider: providerGoogleWS,
+                },
+                {
+                        name:         "Google MX + no SPF = Google Workspace from MX only",
+                        mx:           []string{"aspmx.l.google.com."},
+                        spf:          "",
+                        wantProvider: providerGoogleWS,
+                },
+                {
+                        name:         "Proofpoint gateway + Google SPF = Google behind gateway",
+                        mx:           []string{"mx01.example.pphosted.com."},
+                        spf:          "v=spf1 include:_spf.google.com ~all",
+                        wantProvider: providerGoogleWS,
+                },
+        }
+
+        for _, tt := range tests {
+                t.Run(tt.name, func(t *testing.T) {
+                        result := detectPrimaryMailProvider(tt.mx, tt.spf)
+                        provider := result["provider"].(string)
+                        note, _ := result["spf_ancillary_note"].(string)
+
+                        if provider != tt.wantProvider {
+                                t.Errorf("provider = %q, want %q", provider, tt.wantProvider)
+                        }
+                        if tt.wantAncillary && note == "" {
+                                t.Error("expected ancillary note but got empty string")
+                        }
+                        if !tt.wantAncillary && note != "" {
+                                t.Errorf("unexpected ancillary note: %q", note)
+                        }
+                })
+        }
+}

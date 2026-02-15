@@ -310,4 +310,22 @@ Gin's `c.SetCookie()` replaced everywhere — it doesn't support SameSite.
 - Navbar brand uses inline SVG shield (no font dependency)
 - Both survive CDN outages, missing static files, and font subset issues
 
-**Version**: 26.15.27
+### SPF Provider Detection — MX Corroboration
+
+**Problem**: `include:_spf.google.com` in SPF was being interpreted as "Google Workspace is the email provider" — even when MX records pointed elsewhere (e.g., Exchange, self-hosted mail). Many organizations add Google SPF for Calendar invitations, not email hosting.
+
+**Fix**: SPF-based mailbox provider detection now requires MX corroboration:
+- If SPF includes Google but MX points to a different provider → "SPF authorizes Google servers, but MX records point to [actual provider]. The Google SPF include likely supports ancillary services (e.g., calendar invitations)."
+- If SPF includes Google but MX is self-hosted → Same ancillary explanation, provider detected as self-hosted
+- If SPF includes Google AND MX confirms Google (aspmx.l.google.com) → "Google Workspace" label retained
+- Security gateways (Proofpoint, Mimecast, etc.) still pass through correctly to the underlying provider
+
+**Affected code**: `dkim.go` — renamed `detectSPFProvider` → `detectSPFMailboxProvider` / `detectSPFAncillaryProvider`, added MX corroboration logic in `detectPrimaryMailProvider`, added `spf_ancillary_note` to DKIM output map. Template `results.html` shows the ancillary note in an info alert.
+
+### Icon Critical CSS Fix
+
+**Problem**: Critical inline CSS set `width:1em;height:1em` on `.fas` elements without declaring `font-family`, preventing Font Awesome glyph rendering.
+
+**Fix**: Replaced with proper FA-compatible critical CSS: `font-family:"Font Awesome 6 Free";font-weight:900;line-height:1` — icons now render immediately without waiting for the external CSS to load.
+
+**Version**: 26.15.28
