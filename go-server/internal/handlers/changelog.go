@@ -175,7 +175,7 @@ func GetChangelog() []ChangelogEntry {
                 },
                 {
                         Version:     "26.12.E",
-                        Date:        dateFeb14,
+                        Date:        dateFeb12,
                         Category:    "Intelligence",
                         Title:       "Email Header Analyzer",
                         Description: "Paste or upload .eml files for SPF/DKIM/DMARC verification, delivery route tracing, spoofing detection, and phishing pattern scanning with critical thinking prompts.",
@@ -183,7 +183,7 @@ func GetChangelog() []ChangelogEntry {
                 },
                 {
                         Version:     "26.12.D",
-                        Date:        dateFeb14,
+                        Date:        dateFeb12,
                         Category:    "Security",
                         Title:       "Enterprise DNS Detection & Golden Rules",
                         Description: "Automatic identification of enterprise-grade DNS providers with test-guarded detection. Legacy provider blocklist prevents false enterprise tagging. Protected by automated golden rules tests.",

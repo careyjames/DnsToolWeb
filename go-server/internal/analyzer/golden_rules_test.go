@@ -5,10 +5,12 @@
 package analyzer
 
 import (
+        "context"
         "os"
         "path/filepath"
         "strings"
         "testing"
+        "time"
 )
 
 const errExpectedGot = "expected %q, got %q"
@@ -1015,4 +1017,48 @@ func TestGoldenRuleEnterpriseProvidersMapNotEmpty(t *testing.T) {
                         t.Errorf("enterpriseProviders missing required pattern %q", pattern)
                 }
         }
+}
+
+func TestGoldenRuleSubdomainDiscoveryUnder60s(t *testing.T) {
+        if os.Getenv("CI") != "" {
+                t.Skip("skipping network-dependent test in CI")
+        }
+
+        a := New()
+        ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
+        defer cancel()
+
+        start := time.Now()
+        result := a.DiscoverSubdomains(ctx, "it-help.tech")
+        elapsed := time.Since(start)
+
+        if elapsed >= 60*time.Second {
+                t.Fatalf("subdomain discovery took %s — must complete under 60 seconds", elapsed)
+        }
+
+        status, _ := result["status"].(string)
+        if status != "success" {
+                t.Errorf("subdomain discovery status must be 'success', got %q", status)
+        }
+
+        subs, _ := result["subdomains"].([]map[string]any)
+        if len(subs) == 0 {
+                t.Fatal("subdomain discovery must find at least one subdomain for it-help.tech")
+        }
+
+        found := make(map[string]bool)
+        for _, sd := range subs {
+                if name, ok := sd["name"].(string); ok {
+                        found[name] = true
+                }
+        }
+
+        required := []string{"dnstool.it-help.tech", "www.it-help.tech"}
+        for _, req := range required {
+                if !found[req] {
+                        t.Errorf("subdomain discovery must find %q — not found in %d results", req, len(subs))
+                }
+        }
+
+        t.Logf("subdomain discovery completed in %s — found %d subdomains", elapsed, len(subs))
 }

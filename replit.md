@@ -57,6 +57,12 @@ The DNS Tool is a web-based intelligence platform for comprehensive, RFC-complia
 - Added `id` and `scope` fields per web.dev best practices
 - Maskable icons have proper safe-zone padding (inner 80%)
 
+**Changelog Date Fix**:
+- Email Header Analyzer (v26.12.E) and Enterprise DNS Detection (v26.12.D) corrected from Feb 14 → Feb 12
+
+**New Golden Rule Test** (28 total, 27 previous + 1 new):
+- `TestGoldenRuleSubdomainDiscoveryUnder60s`: Integration test — runs real subdomain discovery against it-help.tech, asserts completion under 60s and finds required subdomains (dnstool, www)
+
 ### February 14, 2026 — Subdomain Discovery Enhancement + Performance Optimization
 
 **Three-Layer Free Subdomain Discovery**:
