@@ -257,15 +257,38 @@ function loadDNSHistory(domain) {
 
             source.textContent = 'Source: ' + (data.source || 'SecurityTrails');
 
-            const changes = data.changes || [];
+            var changes = data.changes || [];
+            body.textContent = '';
             if (changes.length === 0) {
-                body.innerHTML = '<p class="text-muted mb-0"><i class="fas fa-check-circle text-success me-1"></i>No DNS record changes detected in available history. A, AAAA, MX, and NS records for this domain have remained stable.</p>';
+                var p = document.createElement('p');
+                p.className = 'text-muted mb-0';
+                var ico = document.createElement('i');
+                ico.className = 'fas fa-check-circle text-success me-1';
+                p.appendChild(ico);
+                p.appendChild(document.createTextNode('No DNS record changes detected in available history. A, AAAA, MX, and NS records for this domain have remained stable.'));
+                body.appendChild(p);
             } else {
-                let html = '<div class="table-responsive"><table class="table table-sm table-striped mb-0"><thead><tr>' +
-                    '<th class="u-w-80px">Date</th><th class="u-w-60px">Type</th><th class="u-w-70px">Action</th>' +
-                    '<th>Value</th><th>Organization</th><th>Timeline</th></tr></thead><tbody>';
+                var wrap = document.createElement('div');
+                wrap.className = 'table-responsive';
+                var table = document.createElement('table');
+                table.className = 'table table-sm table-striped mb-0';
+                var thead = document.createElement('thead');
+                var headRow = document.createElement('tr');
+                var headers = [
+                    {text: 'Date', cls: 'u-w-80px'}, {text: 'Type', cls: 'u-w-60px'},
+                    {text: 'Action', cls: 'u-w-70px'}, {text: 'Value'}, {text: 'Organization'}, {text: 'Timeline'}
+                ];
+                headers.forEach(function(h) {
+                    var th = document.createElement('th');
+                    if (h.cls) th.className = h.cls;
+                    th.textContent = h.text;
+                    headRow.appendChild(th);
+                });
+                thead.appendChild(headRow);
+                table.appendChild(thead);
+                var tbody = document.createElement('tbody');
                 changes.forEach(function(ch) {
-                    let typeColor = 'secondary';
+                    var typeColor = 'secondary';
                     if (ch.record_type === 'A' || ch.record_type === 'AAAA') {
                         typeColor = 'primary';
                     } else if (ch.record_type === 'MX') {
@@ -273,18 +296,65 @@ function loadDNSHistory(domain) {
                     } else if (ch.record_type === 'NS') {
                         typeColor = 'info';
                     }
-                    const actionHtml = ch.action === 'added' ?
-                        '<span class="text-success"><i class="fas fa-plus-circle me-1"></i>Added</span>' :
-                        '<span class="text-danger"><i class="fas fa-minus-circle me-1"></i>Removed</span>';
-                    html += '<tr><td><code class="text-muted u-fs-080em">' + escapeHtml(ch.date || '') + '</code></td>' +
-                        '<td><span class="badge bg-' + typeColor + '">' + escapeHtml(ch.record_type || '') + '</span></td>' +
-                        '<td>' + actionHtml + '</td>' +
-                        '<td><code class="u-fs-085em">' + escapeHtml(ch.value || '') + '</code></td>' +
-                        '<td><span class="text-muted">' + escapeHtml(ch.org || '\u2014') + '</span></td>' +
-                        '<td><span class="text-muted u-fs-085em">' + escapeHtml(ch.description || '') + '</span></td></tr>';
+                    var tr = document.createElement('tr');
+
+                    var tdDate = document.createElement('td');
+                    var codeDate = document.createElement('code');
+                    codeDate.className = 'text-muted u-fs-080em';
+                    codeDate.textContent = ch.date || '';
+                    tdDate.appendChild(codeDate);
+
+                    var tdType = document.createElement('td');
+                    var badgeType = document.createElement('span');
+                    badgeType.className = 'badge bg-' + typeColor;
+                    badgeType.textContent = ch.record_type || '';
+                    tdType.appendChild(badgeType);
+
+                    var tdAction = document.createElement('td');
+                    var actionSpan = document.createElement('span');
+                    var actionIcon = document.createElement('i');
+                    if (ch.action === 'added') {
+                        actionSpan.className = 'text-success';
+                        actionIcon.className = 'fas fa-plus-circle me-1';
+                        actionSpan.appendChild(actionIcon);
+                        actionSpan.appendChild(document.createTextNode('Added'));
+                    } else {
+                        actionSpan.className = 'text-danger';
+                        actionIcon.className = 'fas fa-minus-circle me-1';
+                        actionSpan.appendChild(actionIcon);
+                        actionSpan.appendChild(document.createTextNode('Removed'));
+                    }
+                    tdAction.appendChild(actionSpan);
+
+                    var tdValue = document.createElement('td');
+                    var codeValue = document.createElement('code');
+                    codeValue.className = 'u-fs-085em';
+                    codeValue.textContent = ch.value || '';
+                    tdValue.appendChild(codeValue);
+
+                    var tdOrg = document.createElement('td');
+                    var spanOrg = document.createElement('span');
+                    spanOrg.className = 'text-muted';
+                    spanOrg.textContent = ch.org || '\u2014';
+                    tdOrg.appendChild(spanOrg);
+
+                    var tdDesc = document.createElement('td');
+                    var spanDesc = document.createElement('span');
+                    spanDesc.className = 'text-muted u-fs-085em';
+                    spanDesc.textContent = ch.description || '';
+                    tdDesc.appendChild(spanDesc);
+
+                    tr.appendChild(tdDate);
+                    tr.appendChild(tdType);
+                    tr.appendChild(tdAction);
+                    tr.appendChild(tdValue);
+                    tr.appendChild(tdOrg);
+                    tr.appendChild(tdDesc);
+                    tbody.appendChild(tr);
                 });
-                html += '</tbody></table></div>';
-                body.innerHTML = html;
+                table.appendChild(tbody);
+                wrap.appendChild(table);
+                body.appendChild(wrap);
             }
 
             btn.closest('.dns-history-load-wrapper').classList.add('d-none');
