@@ -1175,14 +1175,14 @@ main.container {
 
 .btn-outline-executive {
     color: #9ca3af;
-    border-color: #6b7280;
+    border: 1px solid #9ca3af;
     background-color: transparent;
 }
 .btn-outline-executive:hover,
 .btn-outline-executive:focus {
-    background-color: rgba(156, 163, 175, 0.12);
+    background-color: rgba(156, 163, 175, 0.15);
     color: #d1d5db;
-    border-color: #9ca3af;
+    border-color: #d1d5db;
 }
 
 /* ============================================
