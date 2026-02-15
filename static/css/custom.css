@@ -1173,33 +1173,57 @@ main.container {
     min-width: 3.2em;
 }
 
-.btn-tlp-amber {
-    color: rgba(255, 192, 0, 0.65) !important;
-    border-color: rgba(255, 192, 0, 0.45) !important;
+.btn.btn-tlp-red {
+    color: #ff2b2b !important;
+    border-color: rgba(255, 43, 43, 0.6) !important;
     transition: all 0.2s ease;
 }
-.btn-tlp-amber:hover,
-.btn-tlp-amber:focus {
+.btn.btn-tlp-red:hover,
+.btn.btn-tlp-red:focus {
+    background-color: rgba(255, 43, 43, 0.2) !important;
+    color: #ff2b2b !important;
+    border-color: rgba(255, 43, 43, 0.85) !important;
+}
+.btn.btn-tlp-amber-strict {
+    color: rgba(255, 192, 0, 0.85) !important;
+    border-color: rgba(255, 192, 0, 0.6) !important;
+    transition: all 0.2s ease;
+}
+.btn.btn-tlp-amber-strict:hover,
+.btn.btn-tlp-amber-strict:focus {
+    background-color: rgba(255, 192, 0, 0.2) !important;
+    color: #ffc000 !important;
+    border-color: rgba(255, 192, 0, 0.85) !important;
+}
+.btn.btn-tlp-amber {
+    color: rgba(255, 192, 0, 0.75) !important;
+    border-color: rgba(255, 192, 0, 0.5) !important;
+    transition: all 0.2s ease;
+}
+.btn.btn-tlp-amber:hover,
+.btn.btn-tlp-amber:focus {
     background-color: rgba(255, 192, 0, 0.15) !important;
     color: #ffc000 !important;
-    border-color: rgba(255, 192, 0, 0.7) !important;
+    border-color: rgba(255, 192, 0, 0.75) !important;
 }
-.btn-tlp-green {
+.btn.btn-tlp-green {
     color: #33a532 !important;
-    border-color: #33a532 !important;
+    border-color: rgba(51, 165, 50, 0.6) !important;
+    transition: all 0.2s ease;
 }
-.btn-tlp-green:hover,
-.btn-tlp-green:focus {
+.btn.btn-tlp-green:hover,
+.btn.btn-tlp-green:focus {
     background-color: rgba(51, 165, 50, 0.15) !important;
     color: #33a532 !important;
     border-color: #33a532 !important;
 }
-.btn-tlp-clear {
+.btn.btn-tlp-clear {
     color: #adb5bd !important;
-    border-color: #6c757d !important;
+    border-color: rgba(108, 117, 125, 0.6) !important;
+    transition: all 0.2s ease;
 }
-.btn-tlp-clear:hover,
-.btn-tlp-clear:focus {
+.btn.btn-tlp-clear:hover,
+.btn.btn-tlp-clear:focus {
     background-color: rgba(108, 117, 125, 0.15) !important;
     color: #adb5bd !important;
     border-color: #6c757d !important;
@@ -1215,28 +1239,6 @@ main.container {
     letter-spacing: -0.01em;
 }
 
-.btn-tlp-red {
-    color: rgba(255, 43, 43, 0.85) !important;
-    border-color: rgba(255, 43, 43, 0.55) !important;
-    transition: all 0.2s ease;
-}
-.btn-tlp-red:hover,
-.btn-tlp-red:focus {
-    background-color: rgba(255, 43, 43, 0.2) !important;
-    color: #ff2b2b !important;
-    border-color: rgba(255, 43, 43, 0.8) !important;
-}
-.btn-tlp-amber-strict {
-    color: rgba(255, 192, 0, 0.75) !important;
-    border-color: rgba(255, 192, 0, 0.55) !important;
-    transition: all 0.2s ease;
-}
-.btn-tlp-amber-strict:hover,
-.btn-tlp-amber-strict:focus {
-    background-color: rgba(255, 192, 0, 0.2) !important;
-    color: #ffc000 !important;
-    border-color: rgba(255, 192, 0, 0.8) !important;
-}
 
 .bimi-logo-box {
     background-color: transparent;
