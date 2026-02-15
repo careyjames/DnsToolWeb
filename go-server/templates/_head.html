@@ -17,7 +17,7 @@
 {{define "head_css"}}
 <link rel="stylesheet" href="/static/css/bootstrap-dark-theme.min.css">
 <link href="{{staticVersionURL "css/custom.min.css" .AppVersion}}" rel="stylesheet">
-<link rel="stylesheet" href="/static/css/fontawesome-subset.min.css">
+<link rel="stylesheet" href="{{staticVersionURL "css/fontawesome-subset.min.css" .AppVersion}}">
 {{end}}
 
 {{define "critical_css"}}

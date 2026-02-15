@@ -413,3 +413,24 @@ This section tracks recurring issues and failed approaches so future sessions av
 - Card header icons: #94d1e8 → #b8e6f5 (brighter against gradient)
 
 **Lesson**: Executive PDF print sizes should target minimum 8pt for ANY text element, 9pt+ for content the reader needs to actually read. Colors should be at least #4b5563 darkness for print.
+
+### Engineer Button Icon Invisible (v26.15–v26.16.1)
+
+**Problem**: The Engineer button's `fa-print` icon (U+F02F) was invisible in both Chrome and Safari, despite the glyph existing in the woff2 font file and the CSS having the correct rule. Executive's `fa-file-alt` icon worked fine.
+
+**Root cause**: The `fa-print` CSS rule was on a separate line (line 10) of the minified CSS from the icons that were working (line 9). Additionally, the fontawesome CSS was loaded WITHOUT cache-busting version (`href="/static/css/fontawesome-subset.min.css"`) while custom.min.css had versioned URLs. Combined with browser caching, this created a persistent icon rendering failure.
+
+**Fix applied in v26.16.2**:
+- Changed Engineer icon from `fa-print` to `fa-file-lines` (FA6 name, same CSS line as working `fa-file-alt`)
+- Added cache-busting version to fontawesome CSS: `{{staticVersionURL "css/fontawesome-subset.min.css" .AppVersion}}`
+- Bumped woff2 font query from `?v=2` to `?v=3`
+
+**Lesson**: When Font Awesome icons don't render, try using a class from the same CSS section as a working icon before deep-diving into font file analysis. Always version-bust ALL CSS files, not just custom.min.css.
+
+### Owl of Athena — Copyright Risk (v26.16.2)
+
+**Problem**: The Owl of Athena image might have been a photograph from Wikipedia, creating potential copyright risk for a commercial product.
+
+**Fix**: Generated an original AI-created Owl of Athena design — silver/gold metallic tones, geometric feather patterns, olive branch, coin-like circular composition on black background. Optimized from 932KB to 77KB (256x256 PNG). 100% original, no copyright concerns.
+
+**Version**: 26.16.2
