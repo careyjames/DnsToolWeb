@@ -169,8 +169,24 @@ func AnalyzeRateLimit(limiter RateLimiter) gin.HandlerFunc {
                                         "wait_seconds": result.WaitSeconds,
                                 })
                         } else {
-                                c.SetCookie("flash_message", msg, 10, "/", "", true, true)
-                                c.SetCookie("flash_category", "warning", 10, "/", "", true, true)
+                                http.SetCookie(c.Writer, &http.Cookie{
+                                        Name:     "flash_message",
+                                        Value:    msg,
+                                        Path:     "/",
+                                        MaxAge:   10,
+                                        HttpOnly: true,
+                                        Secure:   true,
+                                        SameSite: http.SameSiteStrictMode,
+                                })
+                                http.SetCookie(c.Writer, &http.Cookie{
+                                        Name:     "flash_category",
+                                        Value:    "warning",
+                                        Path:     "/",
+                                        MaxAge:   10,
+                                        HttpOnly: true,
+                                        Secure:   true,
+                                        SameSite: http.SameSiteStrictMode,
+                                })
                                 c.Redirect(http.StatusSeeOther, "/")
                         }
                         c.Abort()

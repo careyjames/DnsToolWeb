@@ -273,3 +273,41 @@ All documentation files verified accurate:
 
 **Golden Rule Tests**: All 60 sub-tests pass, zero regressions
 **Version**: 26.15.26
+
+---
+
+## Session: February 15, 2026
+
+### Font Awesome Subset — Root Cause & Prevention
+
+**Root Cause**: Icons kept disappearing because the project uses a WOFF2 font SUBSET (not the full 300KB+ Font Awesome file). When templates add new `fa-*` classes, the glyph must exist in BOTH:
+1. `static/css/fontawesome-subset.min.css` — CSS `:before` rule mapping class name to Unicode codepoint
+2. `static/webfonts/fa-solid-900.woff2` — actual glyph outline in the font binary
+
+If either is missing, the icon renders as an invisible blank space with no console error.
+
+**Prevention Script**: `python3 go-server/scripts/audit_icons.py`
+- Scans all Go templates for `fa-*` usage (found 118 icons)
+- Cross-references against CSS rules (149 rules) and font glyphs (110 glyphs)
+- Exit code 1 if any icon is missing from CSS or font
+- Run before every release to catch missing icons early
+
+**Regenerated Font**: Full FA 6.5.1 subset with all 110 needed glyphs (11KB compressed WOFF2). Added 56 missing CSS `:before` rules.
+
+### Cookie Security Hardening
+
+All application cookies now set via `http.SetCookie()` with:
+- `Secure: true` (HTTPS-only)
+- `HttpOnly: true` (no JavaScript access)
+- `SameSite: StrictMode` (CSRF protection)
+
+Locations: `ratelimit.go` (flash_message, flash_category), `csrf.go` (csrf_token).
+Gin's `c.SetCookie()` replaced everywhere — it doesn't support SameSite.
+
+### Favicon Reliability
+
+- HTML `<link rel="icon">` uses `data:` URI (zero HTTP requests, no 404 possible)
+- Navbar brand uses inline SVG shield (no font dependency)
+- Both survive CDN outages, missing static files, and font subset issues
+
+**Version**: 26.15.27
