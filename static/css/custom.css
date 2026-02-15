@@ -2829,3 +2829,30 @@ main.container {
 .u-color-heading-light { color: #e5e7eb; }
 .u-link-dotted { cursor: pointer; text-decoration: underline; text-decoration-style: dotted; }
 .u-offscreen-print { position: fixed; left: -9999px; top: 0; width: 0; height: 0; border: none; }
+.u-integrity-link {
+    text-decoration: underline;
+    text-decoration-style: dotted;
+    text-underline-offset: 3px;
+    opacity: 0.85;
+    transition: opacity 0.2s ease, text-decoration-color 0.2s ease;
+}
+.u-integrity-link:hover {
+    opacity: 1;
+    text-decoration-style: solid;
+}
+.u-integrity-link-info {
+    color: #0dcaf0;
+    text-decoration-color: rgba(13, 202, 240, 0.5);
+}
+.u-integrity-link-info:hover {
+    color: #0dcaf0;
+    text-decoration-color: #0dcaf0;
+}
+.u-integrity-link-warning {
+    color: #ffc107;
+    text-decoration-color: rgba(255, 193, 7, 0.5);
+}
+.u-integrity-link-warning:hover {
+    color: #ffc107;
+    text-decoration-color: #ffc107;
+}
