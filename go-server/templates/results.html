@@ -2,11 +2,11 @@
 <html lang="en" data-bs-theme="dark">
 <head>
     {{template "head" .}}
-    <title>Engineer DNS Intelligence Report — {{.Domain}} - DNS Tool</title>
+    <title>Engineer's DNS Intelligence Report — {{.Domain}} - DNS Tool</title>
     <meta name="description" content="Domain security audit for {{.Domain}}. SPF, DKIM, DMARC, DANE/TLSA, DNSSEC, MTA-STS, TLS-RPT, BIMI, CAA analysis with posture scoring and remediation guidance.">
     <meta property="og:url" content="https://dnstool.it-help.tech/analysis/{{.AnalysisID}}">
     <meta property="og:type" content="website">
-    <meta property="og:title" content="Engineer DNS Intelligence Report — {{.Domain}} - DNS Tool">
+    <meta property="og:title" content="Engineer's DNS Intelligence Report — {{.Domain}} - DNS Tool">
     <meta property="og:description" content="Domain security audit for {{.Domain}}. SPF, DKIM, DMARC, DANE/TLSA, DNSSEC, MTA-STS, TLS-RPT, BIMI, CAA analysis with posture scoring and remediation guidance.">
     <meta property="og:image" content="https://dnstool.it-help.tech/static/images/og-image.png">
     <meta name="twitter:card" content="summary_large_image">
@@ -96,7 +96,7 @@
                         <img src="/static/images/owl-of-athena.png" alt="DNS Tool" class="print-brand-logo">
                         <span class="print-brand-name">DNS Tool</span>
                     </div>
-                    <div class="print-report-title">Engineer DNS Intelligence Report</div>
+                    <div class="print-report-title">Engineer's DNS Intelligence Report</div>
                 </div>
                 <div class="print-header-right">
                     <div class="print-report-meta">
@@ -117,7 +117,7 @@
         <!-- Screen Header -->
         <div class="results-header mb-4 screen-only">
             <div class="results-header-info">
-                <h1 class="h3 mb-1">Engineer DNS Intelligence Report</h1>
+                <h1 class="h3 mb-1">Engineer's DNS Intelligence Report</h1>
                 <div class="text-muted">
                     <strong>{{.Domain}}</strong>
                     {{if ne .AsciiDomain .Domain}}
