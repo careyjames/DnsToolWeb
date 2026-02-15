@@ -1141,18 +1141,36 @@ main.container {
    TLP SELECTOR — Dropdown badge colors & button
    CSP-safe classes (no inline styles needed)
    ============================================ */
-.tlp-badge-amber {
+.dropdown-menu .badge.tlp-badge-red {
+    background-color: #ff2b2b !important;
+    color: #fff !important;
+    font-weight: 700;
+    min-width: 3.2em;
+}
+.dropdown-menu .badge.tlp-badge-amber {
     background-color: #ffc000 !important;
     color: #000 !important;
+    font-weight: 700;
+    min-width: 3.2em;
 }
-.tlp-badge-green {
+.dropdown-menu .badge.tlp-badge-amber-strict {
+    background: linear-gradient(135deg, #ffc000, #e6a800) !important;
+    color: #000 !important;
+    font-weight: 700;
+    min-width: 3.2em;
+}
+.dropdown-menu .badge.tlp-badge-green {
     background-color: #33a532 !important;
     color: #fff !important;
+    font-weight: 700;
+    min-width: 3.2em;
 }
-.tlp-badge-clear {
+.dropdown-menu .badge.tlp-badge-clear {
     background-color: #fff !important;
     color: #374151 !important;
     border: 1px solid #6b7280;
+    font-weight: 700;
+    min-width: 3.2em;
 }
 
 .btn-tlp-amber {
@@ -1197,11 +1215,6 @@ main.container {
     letter-spacing: -0.01em;
 }
 
-.tlp-badge-red {
-    background-color: #ff2b2b !important;
-    color: #fff !important;
-    font-weight: 700 !important;
-}
 .btn-tlp-red {
     color: rgba(255, 43, 43, 0.85) !important;
     border-color: rgba(255, 43, 43, 0.55) !important;
@@ -1212,11 +1225,6 @@ main.container {
     background-color: rgba(255, 43, 43, 0.2) !important;
     color: #ff2b2b !important;
     border-color: rgba(255, 43, 43, 0.8) !important;
-}
-.tlp-badge-amber-strict {
-    background: linear-gradient(135deg, #ffc000, #e6a800) !important;
-    color: #000 !important;
-    font-weight: 700 !important;
 }
 .btn-tlp-amber-strict {
     color: rgba(255, 192, 0, 0.75) !important;

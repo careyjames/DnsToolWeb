@@ -3674,6 +3674,8 @@
                     if (selectorLabel) selectorLabel.textContent = cfg.label;
                     if (selectorBtn) { selectorBtn.className = 'btn btn-sm dropdown-toggle ' + this.dataset.btnClass; }
                     if (footerTlp) footerTlp.innerHTML = cfg.footer + copyrightSuffix;
+                    var dd = bootstrap.Dropdown.getInstance(selectorBtn);
+                    if (dd) dd.hide();
                 });
             });
 
