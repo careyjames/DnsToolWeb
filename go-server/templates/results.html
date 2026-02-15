@@ -136,7 +136,7 @@
                         <span class="mx-1">·</span><i class="fas fa-tag me-1"></i><span>v{{.ToolVersion}}</span>
                     {{end}}
                     {{if .IntegrityHash}}
-                        <span class="mx-1">&middot;</span><span class="u-integrity-preview"><i class="fas fa-fingerprint"></i> <span class="font-monospace">SHA-256: {{substr 0 4 .IntegrityHash}}<span class="u-ls-tight">&#x2731;&#x2731;&#x2731;&#x2731;</span></span> <a href="#report-integrity" class="u-integrity-link u-integrity-link-info" title="Click to view full SHA-256 integrity hash">Verify</a></span>
+                        <span class="mx-1">&middot;</span><span class="u-integrity-preview"><i class="fas fa-lock"></i> <span class="font-monospace">SHA-256: {{substr 0 4 .IntegrityHash}}<span class="u-ls-tight">&#x2731;&#x2731;&#x2731;&#x2731;</span></span> <a href="#report-integrity" class="u-integrity-link u-integrity-link-info" title="Click to view full SHA-256 integrity hash">Verify</a></span>
                     {{end}}
                 </div>
                 {{end}}
