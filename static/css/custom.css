@@ -1341,9 +1341,22 @@ main.container {
         font-size: 7.5pt;
         font-weight: 800;
         letter-spacing: 0.1em;
-        color: #ffffff;
-        background-color: #1a1a2e !important;
+        color: #000000;
+        background-color: #ffc000 !important;
         border-radius: 2pt;
+    }
+    .print-tlp-badge.tlp-clear {
+        color: #374151;
+        background-color: #ffffff !important;
+        border: 1pt solid #6b7280;
+    }
+    .print-tlp-badge.tlp-green {
+        color: #ffffff;
+        background-color: #33a532 !important;
+    }
+    .print-tlp-badge.tlp-amber {
+        color: #000000;
+        background-color: #ffc000 !important;
     }
 
     .print-tlp-note {

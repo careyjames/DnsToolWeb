@@ -206,6 +206,7 @@ var spfAncillarySenders = map[string]string{
         "spf.postmarkapp":   providerPostmark,
         "spf.mtasv.net":     providerPostmark,
         "spf.freshdesk":     "Freshdesk",
+        "hostedrt.com":      "Best Practical RT",
 }
 
 var ambiguousSelectors = map[string]bool{

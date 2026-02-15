@@ -329,3 +329,31 @@ Gin's `c.SetCookie()` replaced everywhere — it doesn't support SameSite.
 **Fix**: Replaced with proper FA-compatible critical CSS: `font-family:"Font Awesome 6 Free";font-weight:900;line-height:1` — icons now render immediately without waiting for the external CSS to load.
 
 **Version**: 26.15.28
+
+### TLP Policy — AMBER Default (CISA-Aligned)
+
+**Date**: 2026-02-15
+
+**Problem**: Reports were marked TLP:CLEAR ("Unlimited distribution"), which is inappropriate for security posture reports that may reveal actionable vulnerabilities. CISA's own Cyber Hygiene reports (WAS, CyHy) use TLP:AMBER.
+
+**Decision**: Default TLP changed from CLEAR to AMBER for both Engineer and Executive print reports. Added a TLP selector dropdown (AMBER/GREEN/CLEAR) so users can adjust distribution scope before printing.
+
+**Rationale** (aligned with FIRST TLP v2.0 and CISA practice):
+- **TLP:AMBER** (default): Recipients may share within their organization and with clients who need to protect themselves. Appropriate for security posture reports that could expose weaknesses.
+- **TLP:GREEN**: Recipients may share within their community (peers, industry groups) but not publicly. For inter-organization sharing.
+- **TLP:CLEAR**: No restrictions. Only appropriate when the domain owner has explicitly authorized public distribution.
+
+**Implementation**:
+- Print header badge: amber-colored (#ffc000) with black text by default
+- Footer disclaimer: CISA-style language about distribution scope
+- JavaScript TLP selector: updates badge color, badge text, note text, and footer disclaimer
+- CSS classes: `.tlp-amber`, `.tlp-green`, `.tlp-clear` with FIRST-standard colors
+- Both Engineer (`results.html`) and Executive (`results_executive.html`) templates updated
+
+**Key reference**: CISA WAS report for IT Help San Diego Inc. (2026-01-20) — uses TLP:AMBER on every page, password-protected PDF, controlled recipient list.
+
+### SPF Ancillary Senders — Best Practical RT
+
+Added `hostedrt.com` → "Best Practical RT" to `spfAncillarySenders` map. IETF.org uses `include:spf.hostedrt.com` for their Request Tracker ticketing system — similar to Zendesk/Freshdesk pattern already tracked.
+
+**Version**: 26.15.29
