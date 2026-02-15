@@ -17,7 +17,8 @@ The DNS Tool is a web-based intelligence platform designed for comprehensive, RF
 - **PDF filename = `<title>` tag**: Format as "Report Type — domain - DNS Tool" (e.g., "Engineer Report — example.com - DNS Tool").
 - **Executive print minimum sizes**: Body 11pt, small text 9pt, badges 9pt, labels 8.5pt, metadata 9pt, code 8.5pt, footer 8.5pt. Text-muted color minimum #4b5563. Target audience: 40-50+ year old board members.
 - **Executive button**: Uses custom `btn-outline-executive` class (muted gray #9ca3af text, #6b7280 border). NOT btn-outline-light (too bright) or btn-outline-warning (clashes with TLP:AMBER).
-- **Button hover style**: ALL report header buttons use translucent hover (rgba at 15% opacity), NOT Bootstrap's default solid fill. Engineer (`btn-outline-info`) overridden with `rgba(13,202,240,0.15)`. Executive uses `rgba(156,163,175,0.15)`. Both have 0.2s ease transition.
+- **Button hover style**: ALL report header buttons use translucent hover (rgba at 15% opacity), NOT Bootstrap's default solid fill. Engineer (`btn-outline-info`) overridden with `rgba(13,202,240,0.15)` via `--bs-btn-hover-bg` CSS variable (NOT direct `background-color` — Bootstrap 5 uses CSS custom properties). Executive uses `rgba(156,163,175,0.15)`. Both have 0.2s ease transition.
+- **CSS build step**: After editing `static/css/custom.css`, MUST run `npx csso static/css/custom.css -o static/css/custom.min.css`. Server loads `custom.min.css`, not the source file.
 - **Font Awesome subset**: 110 glyphs in `static/webfonts/fa-solid-900.woff2`. Verify with fonttools before regenerating. CSS refs in `fontawesome-subset.min.css`.
 
 ## System Architecture

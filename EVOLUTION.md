@@ -475,7 +475,25 @@ This section tracks recurring issues and failed approaches so future sessions av
 
 **Problem**: The Engineer button (`btn-outline-info`) used Bootstrap's default solid-fill hover: the entire button background turns solid cyan/info color on hover, looking like a "blue balloon." The neighboring Executive and TLP:AMBER buttons use a subtle translucent background on hover — much more refined and consistent with the dark theme.
 
-**Fix**: Added CSS override for `.btn-outline-info:hover` / `:focus` with `background-color: rgba(13, 202, 240, 0.15)` (15% opacity info color) instead of Bootstrap's default solid fill. Also set `color: #5edfff` and `border-color: #5edfff` for a brightened-but-not-solid effect. Added `transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease` for smooth animation. Applied same transition to `.btn-outline-executive` for consistency.
+**Fix (attempt 1 — failed)**: Added CSS override for `.btn-outline-info:hover` with `background-color: rgba(...)`. Did NOT work because Bootstrap 5 dark theme uses CSS custom properties (`--bs-btn-hover-bg`, `--bs-btn-hover-color`, etc.) for button hover state, not direct `background-color` rules. A simple property override loses to Bootstrap's variable-driven system.
+
+**Fix (attempt 2 — correct)**: Override Bootstrap's CSS custom properties directly on `.btn-outline-info`:
+```css
+.btn-outline-info {
+    --bs-btn-hover-bg: rgba(13, 202, 240, 0.15);
+    --bs-btn-hover-color: #5edfff;
+    --bs-btn-hover-border-color: #5edfff;
+    --bs-btn-active-bg: rgba(13, 202, 240, 0.25);
+    --bs-btn-active-color: #5edfff;
+    --bs-btn-active-border-color: #5edfff;
+    transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+}
+```
+Also applied smooth transition to `.btn-outline-executive` for consistency.
+
+**Lesson**: When overriding Bootstrap 5 button styles, always override the CSS custom properties (`--bs-btn-*`), not direct CSS properties. Bootstrap's `.btn` base class reads from these variables.
+
+**CRITICAL**: After editing `custom.css`, must also run `npx csso static/css/custom.css -o static/css/custom.min.css` because the server loads `custom.min.css`, not `custom.css`.
 
 **Design principle**: All action buttons in the report header row should use the same translucent hover pattern — subtle glow, not solid fill. This keeps the dark theme cohesive and avoids any single button visually dominating on hover.
 

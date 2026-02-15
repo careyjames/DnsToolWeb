@@ -1192,13 +1192,13 @@ main.container {
 }
 
 .btn-outline-info {
+    --bs-btn-hover-bg: rgba(13, 202, 240, 0.15);
+    --bs-btn-hover-color: #5edfff;
+    --bs-btn-hover-border-color: #5edfff;
+    --bs-btn-active-bg: rgba(13, 202, 240, 0.25);
+    --bs-btn-active-color: #5edfff;
+    --bs-btn-active-border-color: #5edfff;
     transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
-}
-.btn-outline-info:hover,
-.btn-outline-info:focus {
-    background-color: rgba(13, 202, 240, 0.15);
-    color: #5edfff;
-    border-color: #5edfff;
 }
 
 /* ============================================
