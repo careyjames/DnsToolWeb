@@ -119,7 +119,7 @@ AI Surface Scanner, CT subdomain discovery, DNS history timeline (SecurityTrails
 CVSS-aligned risk assessment with actionable remediation recommendations.
 
 ### Reporting
-Dual print reports: Engineer (full technical detail) and Executive (condensed board-ready summary with security scorecard, risk posture, and priority actions). Both use the same live analysis data — different formats for different audiences. Configurable TLP classification (default: TLP:AMBER, aligned with CISA Cyber Hygiene practice) with TLP:GREEN and TLP:CLEAR options. JSON export for programmatic consumption.
+Dual intelligence products: Engineer's DNS Intelligence Report (comprehensive technical detail) and Executive's DNS Intelligence Brief (concise board-ready summary with security scorecard, risk posture, and priority actions). Both use the same live analysis data — different formats for different audiences. Naming follows IC conventions: "Report" = comprehensive, "Brief" = concise decision-maker version. Configurable TLP classification (default: TLP:AMBER, aligned with CISA Cyber Hygiene practice) with TLP:GREEN and TLP:CLEAR options. JSON export for programmatic consumption.
 
 ## Rate Limiting & Abuse Prevention
 
@@ -212,7 +212,7 @@ Maximum 8 requests per minute per IP. Wait 60 seconds and retry.
 - SecurityTrails DNS history integration
 - IP Investigation with IP-to-ASN attribution
 - Posture scoring with CVSS alignment
-- Dual print reports (Engineer + Executive)
+- Dual intelligence products (Engineer's DNS Intelligence Report + Executive's DNS Intelligence Brief)
 - OpenPhish integration
 - Posture drift detection foundation
 - SMTP TLS transport validation

@@ -197,11 +197,11 @@ Standalone investigative workflow for determining IP-to-domain relationships. En
 URL: `https://dnstool.it-help.tech/email-header`
 Paste or upload email headers (.eml files) for instant SPF/DKIM/DMARC authentication verification, delivery route tracing, spoofing detection, and phishing pattern scanning. If you include the email body, it's scanned against the OpenPhish community phishing URL feed and checked for sextortion/scam indicators, then immediately discarded. Includes critical thinking prompts ("Big Questions") to help users evaluate suspicious emails.
 
-### Dual Print Reports
-From any analysis results page, two print-optimized report formats are available:
-- **Engineer Report** (blue print icon): Full technical detail with all protocol analysis, DNS records, and remediation guidance. Opens the browser print dialog directly.
-- **Executive Report** (amber document icon): Condensed board-ready summary with security scorecard, risk posture, priority actions, and AI surface findings. Opens in a new tab for printing.
-Both reports use the same live analysis data and include configurable TLP classification headers (default: TLP:AMBER, with TLP:GREEN and TLP:CLEAR options).
+### Dual Intelligence Products
+From any analysis results page, two intelligence products are available:
+- **Engineer's DNS Intelligence Report** (blue icon): Comprehensive technical document with all protocol analysis, DNS records, remediation guidance, and verification commands. Opens the browser print dialog directly.
+- **Executive's DNS Intelligence Brief** (amber icon): Concise board-ready summary with security scorecard, risk posture, priority actions, and AI surface findings. Opens in a new tab for printing.
+Both products use the same live analysis data and include configurable TLP classification headers (default: TLP:AMBER, with TLP:GREEN and TLP:CLEAR options). Naming follows Intelligence Community conventions: "Report" = comprehensive (like a National Intelligence Estimate), "Brief" = concise decision-maker version (like a Presidential Daily Brief).
 
 ### What's New (Changelog)
 URL: `https://dnstool.it-help.tech/changelog`

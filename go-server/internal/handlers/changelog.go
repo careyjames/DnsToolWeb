@@ -14,7 +14,7 @@
 //   3. Reference the constant — never inline a date string.
 //
 // Canonical date mapping (verified Feb 15, 2026):
-//   dateFeb15 — Dual Print Reports (Engineer & Executive), OpenPhish Threat
+//   dateFeb15 — Dual Intelligence Products (Engineer's Report & Executive's Brief), OpenPhish Threat
 //               Intelligence Attribution, Email Header Analyzer Homepage Promotion
 //   dateFeb14 — High-Speed Subdomain Discovery
 //   dateFeb13 — DNS History Cache, Verify It Yourself, Confidence Indicators,
@@ -90,8 +90,8 @@ func GetChangelog() []ChangelogEntry {
                         Version:     "26.15.26",
                         Date:        dateFeb15,
                         Category:    "Reporting",
-                        Title:       "Dual Print Reports: Engineer & Executive",
-                        Description: "Two print-optimized report views: Engineer (full technical detail with all protocol analysis) and Executive (condensed board-ready summary with security scorecard, risk posture, and priority actions). Both use the same live analysis data — different formats for different audiences. Includes posture drift detection foundation with canonical SHA-256 hashing for future longitudinal monitoring.",
+                        Title:       "Dual Intelligence Products: Engineer's Report & Executive's Brief",
+                        Description: "Two intelligence products: Engineer's DNS Intelligence Report (comprehensive technical detail with all protocol analysis) and Executive's DNS Intelligence Brief (concise board-ready summary with security scorecard, risk posture, and priority actions). Both use the same live analysis data — different formats for different audiences. Includes posture drift detection foundation with canonical SHA-256 hashing for future longitudinal monitoring.",
                         Icon:        "fas fa-file-alt",
                 },
                 {

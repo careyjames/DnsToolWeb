@@ -614,7 +614,7 @@
                         <i class="fas fa-print me-1"></i>Print Report
                     </button>
                     <a href="/analysis/{{.AnalysisID}}" class="btn btn-outline-info">
-                        <i class="fas fa-tools me-1"></i>View Full Engineer Report
+                        <i class="fas fa-tools me-1"></i>View Engineer's DNS Intelligence Report
                     </a>
                 </div>
             </div>
@@ -1400,9 +1400,9 @@
                     <h5 class="mb-0"><i class="fas fa-book me-2"></i>Appendix &mdash; Additional Resources</h5>
                 </div>
                 <div class="card-body">
-                    <p class="mb-2">Full technical details including raw DNS records, DKIM public keys, IP/ASN mappings, resolver consensus evidence, and verification commands are available in the Engineer Report.</p>
+                    <p class="mb-2">Full technical details including raw DNS records, DKIM public keys, IP/ASN mappings, resolver consensus evidence, and verification commands are available in the Engineer's DNS Intelligence Report.</p>
                     <p class="mb-0">
-                        <a href="/analysis/{{.AnalysisID}}"><i class="fas fa-external-link-alt me-1"></i>View Full Engineer Report</a>
+                        <a href="/analysis/{{.AnalysisID}}"><i class="fas fa-external-link-alt me-1"></i>View Engineer's DNS Intelligence Report</a>
                     </p>
                 </div>
             </div>
@@ -1426,7 +1426,7 @@
                 </div>
             </div>
             <div class="print-footer-disclaimer" id="printFooterTlp">
-                <strong id="footerTlpLabel">TLP:AMBER</strong> &mdash; This report contains security posture information that may reveal actionable vulnerabilities. Recipients may share within their organization and with clients/customers who need the information to protect themselves, but not via publicly accessible channels. Analysis methodology, posture scoring, and remediation guidance &copy; DNS Tool. All conclusions independently verifiable &mdash; see Engineer Report for verification commands.
+                <strong id="footerTlpLabel">TLP:AMBER</strong> &mdash; This brief contains security posture information that may reveal actionable vulnerabilities. Recipients may share within their organization and with clients/customers who need the information to protect themselves, but not via publicly accessible channels. Analysis methodology, posture scoring, and remediation guidance &copy; DNS Tool. All conclusions independently verifiable &mdash; see Engineer's DNS Intelligence Report for verification commands.
             </div>
         </footer>
 
@@ -1447,7 +1447,7 @@
             clear: { label: 'TLP:CLEAR', note: 'Unlimited distribution \u2014 no restrictions on sharing', cls: 'tlp-clear',
                 footer: '<strong>TLP:CLEAR</strong> \u2014 No restrictions on distribution. DNS records are public data queried via open-standard protocols.' }
         };
-        var copyrightSuffix = ' Analysis methodology, posture scoring, and remediation guidance \u00a9 DNS Tool. All conclusions independently verifiable \u2014 see Engineer Report for verification commands.';
+        var copyrightSuffix = ' Analysis methodology, posture scoring, and remediation guidance \u00a9 DNS Tool. All conclusions independently verifiable \u2014 see Engineer\u2019s DNS Intelligence Report for verification commands.';
         document.querySelectorAll('.tlp-option').forEach(function(item) {
             item.addEventListener('click', function(e) {
                 e.preventDefault();

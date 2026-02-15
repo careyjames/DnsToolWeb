@@ -249,11 +249,11 @@ All documentation files verified accurate:
 **Golden Rule Tests**: All 60 sub-tests pass (50 original + 10 new posture hash), zero regressions
 **Files**: `posture_hash.go`, `posture_hash_test.go` (new), `schema.sql`, `domain_analyses.sql`, `dbq/*` (regenerated), `analysis.go`, `DRIFT_ENGINE.md` (new)
 
-### Dual Print Reports: Engineer & Executive (Feb 15, 2026)
+### Dual Intelligence Products: Engineer's Report & Executive's Brief (Feb 15, 2026)
 
-**Decision**: Implement dual print report system — Engineer (full technical detail) and Executive (condensed board-ready summary). Live results are sacred; both views use the same analysis data with different templates.
+**Decision**: Implement dual intelligence product system — Engineer's DNS Intelligence Report (comprehensive technical detail) and Executive's DNS Intelligence Brief (concise board-ready summary). Live results are sacred; both views use the same analysis data with different templates. Naming follows IC conventions: "Report" = comprehensive (like NIE), "Brief" = concise (like PDB/SEIB). Possessive form = "prepared for you."
 
-**Executive Report** (`results_executive.html`):
+**Executive's DNS Intelligence Brief** (`results_executive.html`):
 - New handler `ViewAnalysisExecutive` and route `/analysis/:id/executive`
 - 3-section structure: Executive Summary, Technical Findings, Appendix
 - Executive Scorecard with 4 at-a-glance security status badges (Email Spoofing, Brand Impersonation, DNS Tampering, Certificate Control)

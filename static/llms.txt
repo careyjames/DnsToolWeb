@@ -1,7 +1,7 @@
 # DNS Tool - Domain Security Audit & Email Authentication Checker
-> Free domain security audit tool for IT professionals, executives, DNS specialists, and business leaders
+> Free domain security audit producing Engineer's DNS Intelligence Reports and Executive's DNS Intelligence Briefs
 
-DNS Tool provides instant, real-time DNS intelligence reports with email authentication validation (SPF, DKIM, DMARC), DANE/TLSA certificate pinning analysis, DNSSEC chain verification, BIMI brand checking, MTA-STS/TLS-RPT analysis, CAA certificate controls with MPIC awareness, DMARCbis readiness checks, IP investigation, and domain intelligence via RDAP. Every query fetches fresh data from multiple resolvers — never cached. Every recommendation is backed by RFC citations. Every conclusion can be independently verified using standard Unix commands.
+DNS Tool provides instant, real-time DNS intelligence with email authentication validation (SPF, DKIM, DMARC), DANE/TLSA certificate pinning analysis, DNSSEC chain verification, BIMI brand checking, MTA-STS/TLS-RPT analysis, CAA certificate controls with MPIC awareness, DMARCbis readiness checks, IP investigation, and domain intelligence via RDAP. Every query fetches fresh data from multiple resolvers — never cached. Every recommendation is backed by RFC citations. Every conclusion can be independently verified using standard Unix commands.
 
 ## How to Use This Tool (for AI Agents)
 
@@ -94,7 +94,7 @@ Every attribution includes a confidence label:
 - Domain registrar information via RDAP
 - DNS history timeline via SecurityTrails (A, MX, NS record changes over time)
 - Security posture scoring with executive-level verdicts
-- Dual print reports: Engineer (full technical detail) and Executive (condensed board-ready summary with security scorecard)
+- Dual intelligence products: Engineer's DNS Intelligence Report (full technical detail) and Executive's DNS Intelligence Brief (condensed board-ready summary with security scorecard)
 - Automatic subdomain discovery via Certificate Transparency logs and high-speed UDP DNS probing (~140 common names, wildcard detection)
 - Confidence taxonomy (Observed / Inferred / Third-party) for all attributions
 - "Verify It Yourself" terminal commands appendix (dig, openssl, curl)
