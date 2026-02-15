@@ -4,6 +4,8 @@ version = "0.1.0"
 description = "Process trampoline for DNS Tool Go server"
 requires-python = ">=3.11"
 dependencies = [
+    "brotli>=1.2.0",
+    "fonttools>=4.61.1",
     "gunicorn>=25.0.3",
     "pillow>=12.1.1",
 ]
