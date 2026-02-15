@@ -603,12 +603,13 @@
                         </button>
                         <ul class="dropdown-menu dropdown-menu-dark">
                             <li><h6 class="dropdown-header">Report Distribution</h6></li>
-                            <li><a class="dropdown-item tlp-option" href="#" data-tlp="amber-strict" data-class="tlp-amber-strict" data-btn-class="btn-tlp-amber-strict"><span class="badge tlp-badge-amber-strict me-2">AMBER+STRICT</span> Named recipients only</a></li>
-                            <li><a class="dropdown-item tlp-option" href="#" data-tlp="amber" data-class="tlp-amber" data-btn-class="btn-tlp-amber"><span class="badge tlp-badge-amber me-2">AMBER</span> Share within organization only</a></li>
+                            <li><a class="dropdown-item tlp-option" href="#" data-tlp="red" data-class="tlp-red" data-btn-class="btn-tlp-red"><span class="badge tlp-badge-red me-2">RED</span> Recipient only</a></li>
+                            <li><a class="dropdown-item tlp-option" href="#" data-tlp="amber-strict" data-class="tlp-amber-strict" data-btn-class="btn-tlp-amber-strict"><span class="badge tlp-badge-amber-strict me-2">AMBER+STRICT</span> Organisation only</a></li>
+                            <li><a class="dropdown-item tlp-option" href="#" data-tlp="amber" data-class="tlp-amber" data-btn-class="btn-tlp-amber"><span class="badge tlp-badge-amber me-2">AMBER</span> Organisation and its clients</a></li>
                             <li><a class="dropdown-item tlp-option" href="#" data-tlp="green" data-class="tlp-green" data-btn-class="btn-tlp-green"><span class="badge tlp-badge-green me-2">GREEN</span> Share within community</a></li>
                             <li><a class="dropdown-item tlp-option" href="#" data-tlp="clear" data-class="tlp-clear" data-btn-class="btn-tlp-clear"><span class="badge tlp-badge-clear me-2">CLEAR</span> Unlimited distribution</a></li>
                             <li><hr class="dropdown-divider"></li>
-                            <li><span class="dropdown-item-text small text-muted pe-3">TLP (Traffic Light Protocol) controls who may receive this report. Default: AMBER per FIRST/CISA standards for security posture reports. AMBER+STRICT restricts sharing to named recipients only (FIRST TLP v2.0 §5).</span></li>
+                            <li><span class="dropdown-item-text small text-muted pe-3">TLP (Traffic Light Protocol) controls who may receive this report. Default: AMBER per FIRST/CISA standards for security posture reports. Full hierarchy: RED (recipient only) → AMBER+STRICT (organisation only) → AMBER (organisation and clients) → GREEN (community) → CLEAR (public). Per FIRST TLP v2.0.</span></li>
                         </ul>
                     </div>
                     <button type="button" id="execPrintBtn" class="btn btn-warning">
@@ -1441,9 +1442,11 @@
         if (execPrintBtn) execPrintBtn.addEventListener('click', function() { window.print(); });
 
         var tlpConfig = {
-            'amber-strict': { label: 'TLP:AMBER+STRICT', note: 'Restricted \u2014 named recipients only, no further sharing permitted', cls: 'tlp-amber-strict',
-                footer: '<strong>TLP:AMBER+STRICT</strong> \u2014 This report is restricted to named recipients only. No further sharing is permitted without explicit authorization from the originator. Contains security posture information that may reveal actionable vulnerabilities (FIRST TLP v2.0 \u00a75).' },
-            amber: { label: 'TLP:AMBER', note: 'Limited disclosure \u2014 recipients may share within their organization only', cls: 'tlp-amber',
+            red: { label: 'TLP:RED', note: 'Eyes only \u2014 not for disclosure, restricted to direct recipients', cls: 'tlp-red',
+                footer: '<strong>TLP:RED</strong> \u2014 This report is for individual recipients only. No further disclosure is permitted. Recipients may not share this information with any other parties (FIRST TLP v2.0).' },
+            'amber-strict': { label: 'TLP:AMBER+STRICT', note: 'Restricted \u2014 organisation only, no further sharing outside the organisation', cls: 'tlp-amber-strict',
+                footer: '<strong>TLP:AMBER+STRICT</strong> \u2014 This report is restricted to the recipient\u2019s organisation only. No sharing with clients, customers, or external parties is permitted without explicit authorization from the originator (FIRST TLP v2.0 \u00a75).' },
+            amber: { label: 'TLP:AMBER', note: 'Limited disclosure \u2014 organisation and its clients/customers', cls: 'tlp-amber',
                 footer: '<strong>TLP:AMBER</strong> \u2014 This report contains security posture information that may reveal actionable vulnerabilities. Recipients may share within their organization and with clients/customers who need the information to protect themselves, but not via publicly accessible channels.' },
             green: { label: 'TLP:GREEN', note: 'Community sharing \u2014 recipients may share within their community', cls: 'tlp-green',
                 footer: '<strong>TLP:GREEN</strong> \u2014 Recipients may share this report within their community (peers, partner organizations) but not via publicly accessible channels. Contains DNS security posture analysis that may inform remediation priorities.' },
