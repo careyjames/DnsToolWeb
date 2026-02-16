@@ -243,13 +243,13 @@ func (a *Analyzer) rdapLookup(ctx context.Context, domain string) map[string]any
         }
 
         rdapURL := fmt.Sprintf("%s/domain/%s", strings.TrimRight(endpoint, "/"), domain)
-        slog.Info("RDAP lookup", "url", rdapURL)
+        slog.Info("RDAP lookup", "url", rdapURL, "in_cooldown", inCooldown)
 
         start := time.Now()
         resp, err := a.HTTP.Get(ctx, rdapURL)
         if err != nil {
                 a.Telemetry.RecordFailure(providerName, err.Error())
-                slog.Warn("RDAP lookup failed", "error", err)
+                slog.Warn("RDAP lookup failed", "domain", domain, "url", rdapURL, "error", err, "elapsed_ms", time.Since(start).Milliseconds())
                 return nil
         }
 
