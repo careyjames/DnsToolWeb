@@ -1705,6 +1705,16 @@
                                         <span class="badge bg-success ms-1" title="Logo validated"><i class="fas fa-check"></i> {{default "Logo" (mapGetStr "logo_format" $bimi)}}</span>
                                     {{end}}
                                 </p>
+                                <div class="protocol-question mb-2">
+                                    <span class="protocol-question-text">Does this domain display a brand logo in email inboxes?</span>
+                                    {{if eq $bimiStatus "success"}}
+                                        <span class="badge bg-success">Yes</span>
+                                    {{else if eq $bimiStatus "error"}}
+                                        <span class="badge bg-danger">Misconfigured</span>
+                                    {{else}}
+                                        <span class="badge bg-warning text-dark">No</span>
+                                    {{end}}
+                                </div>
                                 <p class="text-muted mb-2 small">{{mapGetStr "message" $bimi}}</p>
                                 {{if and (eq $bimiStatus "success") (not $vmcUrl)}}
                                     <div class="small text-info mb-2">
@@ -1763,6 +1773,14 @@
                                         <span class="badge bg-info ms-1">IODEF</span>
                                     {{end}}
                                 </p>
+                                <div class="protocol-question mb-2">
+                                    <span class="protocol-question-text">Does this domain restrict which authorities can issue certificates?</span>
+                                    {{if eq $caaStatus "success"}}
+                                        <span class="badge bg-success">Yes</span>
+                                    {{else}}
+                                        <span class="badge bg-warning text-dark">No</span>
+                                    {{end}}
+                                </div>
                                 <p class="text-muted mb-2 small">{{mapGetStr "message" $caa}}</p>
                                 {{$issuers := mapGetSlice "issuers" $caa}}
                                 {{if $issuers}}
