@@ -805,6 +805,16 @@
                                     <a href="https://datatracker.ietf.org/doc/html/rfc7208#section-4" target="_blank" rel="noopener" class="ms-2 text-muted rfc-link" data-bs-toggle="tooltip" data-bs-html="true" title="<strong>Sender Policy Framework</strong><br>Specifies which mail servers can send email for your domain. §4 defines SPF record syntax." aria-label="Learn about SPF - RFC 7208 §4"><i class="fas fa-info-circle"></i><span class="rfc-label">RFC 7208 §4</span></a>
                                 </p>
                                 {{$spfStatus := mapGetStr "status" $spf}}
+                                <div class="protocol-question mb-2">
+                                    <span class="protocol-question-text">Does this domain publish who can send email on its behalf?</span>
+                                    {{if eq $spfStatus "success"}}
+                                        <span class="badge bg-success">Yes</span>
+                                    {{else if eq $spfStatus "error"}}
+                                        <span class="badge bg-danger">Misconfigured</span>
+                                    {{else}}
+                                        <span class="badge bg-warning text-dark">No</span>
+                                    {{end}}
+                                </div>
                                 <div class="mb-2">
                                     <span class="badge bg-{{if eq $spfStatus "success"}}success{{else if eq $spfStatus "error"}}danger{{else}}warning{{end}}">
                                         {{title $spfStatus}}
@@ -958,6 +968,18 @@
                                 </p>
                                 {{$dmarcStatus := mapGetStr "status" $dmarc}}
                                 {{$dmarcPolicy := mapGetStr "policy" $dmarc}}
+                                <div class="protocol-question mb-2">
+                                    <span class="protocol-question-text">Are spoofed emails rejected by receiving servers?</span>
+                                    {{if and (eq $dmarcStatus "success") (eq $dmarcPolicy "reject")}}
+                                        <span class="badge bg-success">Yes — reject policy</span>
+                                    {{else if and (eq $dmarcStatus "success") (eq $dmarcPolicy "quarantine")}}
+                                        <span class="badge bg-warning text-dark">Quarantined, not rejected</span>
+                                    {{else if eq $dmarcStatus "success"}}
+                                        <span class="badge bg-warning text-dark">Monitoring only</span>
+                                    {{else}}
+                                        <span class="badge bg-danger">No policy published</span>
+                                    {{end}}
+                                </div>
                                 <div class="mb-2">
                                     <span class="badge bg-{{if eq $dmarcStatus "success"}}success{{else if eq $dmarcStatus "error"}}danger{{else}}warning{{end}}">
                                         {{if mapGetBool "no_mail_recommendation" $dmarc}}
@@ -1107,6 +1129,19 @@
                                 </p>
                                 {{$dkimStatus := mapGetStr "status" $dkim}}
                                 {{$dkimPrimaryProvider := mapGetStr "primary_provider" $dkim}}
+                                {{$dkimIsKnownProviderQ := and (ne $dkimPrimaryProvider "") (ne $dkimPrimaryProvider "Unknown")}}
+                                <div class="protocol-question mb-2">
+                                    <span class="protocol-question-text">Are outbound emails cryptographically signed?</span>
+                                    {{if eq $dkimStatus "success"}}
+                                        <span class="badge bg-success">Yes — verified</span>
+                                    {{else if and (eq $dkimStatus "info") $dkimIsKnownProviderQ}}
+                                        <span class="badge bg-success">Provider-managed</span>
+                                    {{else if eq $dkimStatus "partial"}}
+                                        <span class="badge bg-warning text-dark">Third-party only</span>
+                                    {{else}}
+                                        <span class="badge bg-secondary">Not discoverable</span>
+                                    {{end}}
+                                </div>
                                 {{$dkimIsKnownProvider := and (ne $dkimPrimaryProvider "") (ne $dkimPrimaryProvider "Unknown")}}
                                 <div class="mb-2">
                                     <span class="badge bg-{{if eq $dkimStatus "success"}}success{{else if or (eq $dkimStatus "warning") (eq $dkimStatus "partial")}}warning{{else if and (eq $dkimStatus "info") $dkimIsKnownProvider}}success{{else}}secondary{{end}}">

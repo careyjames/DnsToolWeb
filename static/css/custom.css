@@ -2418,8 +2418,6 @@ main.container {
     font-weight: 500;
     letter-spacing: 0.01em;
     color: rgba(201, 209, 217, 0.85);
-    border-left: 3px solid var(--status-info);
-    padding-left: 0.6rem;
     line-height: 1.45;
     text-align: right;
     max-width: 60%;
@@ -2459,13 +2457,29 @@ main.container {
 @media (max-width: 575.98px) {
     .section-question {
         font-size: 0.78em;
-        padding-left: 0.45rem;
-        border-left-width: 2px;
     }
     .section-question .badge {
         font-size: 0.7em;
         padding: 0.25em 0.45em;
     }
+}
+.protocol-question {
+    display: flex;
+    align-items: baseline;
+    gap: 0.35rem;
+    flex-wrap: wrap;
+}
+.protocol-question-text {
+    font-size: 0.8em;
+    font-weight: 500;
+    color: rgba(201, 209, 217, 0.7);
+    font-style: italic;
+}
+.protocol-question .badge {
+    font-size: 0.72em;
+    font-weight: 600;
+    padding: 0.25em 0.5em;
+    white-space: nowrap;
 }
 .api-keys-info {
     background: rgba(13, 202, 240, 0.08) !important;
