@@ -130,10 +130,22 @@ func checkDMARCReportingIssues(tags dmarcTags) []string {
         if tags.rua == nil {
                 issues = append(issues, "No aggregate reporting (rua) configured — you won't receive reports about authentication results and potential abuse")
         }
-        if tags.ruf != nil {
-                issues = append(issues, "Forensic reports (ruf) configured - many providers ignore these")
-        }
         return issues
+}
+
+func buildRUFNote(tags dmarcTags) map[string]any {
+        if tags.ruf != nil {
+                return map[string]any{
+                        "status":  "present",
+                        "summary": "Forensic reporting (ruf) is configured, but most major providers do not send forensic reports.",
+                        "detail":  "RFC 7489 §7.3 warns that forensic reports can expose PII (full message headers or bodies). Google, Microsoft, and Yahoo do not honour ruf= requests. The DMARCbis draft (draft-ietf-dmarc-dmarcbis) has formally removed ruf= from the specification. Consider removing this tag to simplify your record.",
+                }
+        }
+        return map[string]any{
+                "status":  "absent",
+                "summary": "No forensic reporting (ruf) tag — this is correct.",
+                "detail":  "Many tools flag the absence of ruf= as a gap. It is not. RFC 7489 §7.3 warns that forensic reports can expose PII (full message headers or bodies). Google, Microsoft, and Yahoo do not honour ruf= requests regardless. The DMARCbis draft (draft-ietf-dmarc-dmarcbis) has formally removed ruf= from the specification, confirming its deprecation. Omitting ruf= is the recommended modern practice.",
+        }
 }
 
 func evaluateDMARCPolicy(tags dmarcTags) (string, string, []string) {
@@ -219,6 +231,7 @@ func (a *Analyzer) AnalyzeDMARC(ctx context.Context, domain string) map[string]a
                 "adkim":            "relaxed",
                 "rua":              nil,
                 "ruf":              nil,
+                "ruf_note":         map[string]any{},
                 "np_policy":        nil,
                 "t_testing":        nil,
                 "psd_flag":         nil,
@@ -246,6 +259,7 @@ func (a *Analyzer) AnalyzeDMARC(ctx context.Context, domain string) map[string]a
                 "adkim":            tags.adkim,
                 "rua":              derefStr(tags.rua),
                 "ruf":              derefStr(tags.ruf),
+                "ruf_note":         buildRUFNote(tags),
                 "np_policy":        derefStr(tags.npPolicy),
                 "t_testing":        derefStr(tags.tTesting),
                 "psd_flag":         derefStr(tags.psdFlag),

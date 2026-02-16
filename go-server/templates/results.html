@@ -1025,6 +1025,21 @@
                                         {{end}}
                                     </div>
                                 {{end}}
+                                {{$rufNote := toMap (mapGet "ruf_note" $dmarc)}}
+                                {{if $rufNote}}
+                                    {{$rufStatus := mapGetStr "status" $rufNote}}
+                                    <div class="mt-2 p-2 bg-info bg-opacity-10 border border-info border-opacity-25 rounded small">
+                                        {{if eq $rufStatus "absent"}}
+                                            <i class="fas fa-check-circle text-info me-1"></i>
+                                            <strong class="text-info">{{mapGetStr "summary" $rufNote}}</strong>
+                                        {{else}}
+                                            <i class="fas fa-info-circle text-info me-1"></i>
+                                            <strong class="text-info">{{mapGetStr "summary" $rufNote}}</strong>
+                                        {{end}}
+                                        <span class="text-muted d-block mt-1">{{mapGetStr "detail" $rufNote}}</span>
+                                        <a href="https://datatracker.ietf.org/doc/html/rfc7489#section-7.3" target="_blank" rel="noopener" class="text-info mt-1 d-inline-block">RFC 7489 §7.3 — Forensic Reports</a>
+                                    </div>
+                                {{end}}
                                 {{if and $posture (mapGetBool "deliberate_monitoring" $posture)}}
                                     <div class="mt-2 p-2 bg-info bg-opacity-10 border border-info border-opacity-25 rounded small">
                                         <i class="fas fa-flask text-info me-1"></i>
