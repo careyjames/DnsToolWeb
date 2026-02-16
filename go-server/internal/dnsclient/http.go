@@ -67,7 +67,46 @@ func NewRDAPHTTPClient() *SafeHTTPClient {
         }
 }
 
+var rdapAllowedHosts = map[string]bool{
+        "rdap.verisign.com":                true,
+        "rdap.publicinterestregistry.net":   true,
+        "rdap.nic.io":                       true,
+        "rdap.nic.google":                   true,
+        "rdap.nominet.uk":                   true,
+        "rdap.eu":                           true,
+        "rdap.sidn.nl":                      true,
+        "rdap.auda.org.au":                  true,
+        "rdap.centralnic.com":               true,
+        "rdap.nic.co":                       true,
+        "rdap.nic.me":                       true,
+        "rdap.nic.ai":                       true,
+        "rdap.afilias.net":                  true,
+        "rdap.nic.biz":                      true,
+        "rdap.nic.mobi":                     true,
+        "rdap.nic.pro":                      true,
+        "rdap.nic.top":                      true,
+        "rdap.org":                          true,
+}
+
+func IsRDAPAllowedHost(hostname string) bool {
+        return rdapAllowedHosts[hostname]
+}
+
 func (s *SafeHTTPClient) GetDirect(ctx context.Context, rawURL string) (*http.Response, error) {
+        parsed, err := url.Parse(rawURL)
+        if err != nil {
+                return nil, fmt.Errorf("invalid RDAP URL: %w", err)
+        }
+        if parsed.Scheme != "https" {
+                return nil, fmt.Errorf("RDAP requires HTTPS, got %q", parsed.Scheme)
+        }
+        hostname := parsed.Hostname()
+        if !rdapAllowedHosts[hostname] {
+                if !ValidateURLTarget(rawURL) {
+                        return nil, fmt.Errorf("RDAP host %q not in allowlist and resolves to private IP", hostname)
+                }
+        }
+
         req, err := http.NewRequestWithContext(ctx, "GET", rawURL, nil)
         if err != nil {
                 return nil, err

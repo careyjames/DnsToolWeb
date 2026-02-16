@@ -296,15 +296,23 @@ func (a *Analyzer) buildRDAPEndpoints(tld string) []string {
         seen := make(map[string]bool)
 
         if ep, ok := directRDAPEndpoints[tld]; ok && ep != "" {
-                endpoints = append(endpoints, ep)
-                seen[ep] = true
+                if isValidRDAPEndpoint(ep) {
+                        endpoints = append(endpoints, ep)
+                        seen[ep] = true
+                } else {
+                        slog.Warn("RDAP endpoint rejected (not HTTPS)", "endpoint", ep, "tld", tld)
+                }
         }
 
         if ianaEps, ok := a.IANARDAPMap[tld]; ok {
                 for _, ep := range ianaEps {
                         if ep != "" && !seen[ep] {
-                                endpoints = append(endpoints, ep)
-                                seen[ep] = true
+                                if isValidRDAPEndpoint(ep) {
+                                        endpoints = append(endpoints, ep)
+                                        seen[ep] = true
+                                } else {
+                                        slog.Warn("RDAP endpoint rejected (not HTTPS)", "endpoint", ep, "tld", tld, "source", "IANA")
+                                }
                         }
                 }
         }
@@ -315,6 +323,10 @@ func (a *Analyzer) buildRDAPEndpoints(tld string) []string {
         }
 
         return endpoints
+}
+
+func isValidRDAPEndpoint(endpoint string) bool {
+        return strings.HasPrefix(endpoint, "https://")
 }
 
 func (a *Analyzer) tryRDAPEndpoint(ctx context.Context, domain, endpoint, providerName string, attempt, total int) map[string]any {
