@@ -1240,17 +1240,29 @@
                                     <i class="fas fa-shield-alt me-2"></i>MTA-STS
                                     <a href="https://datatracker.ietf.org/doc/html/rfc8461#section-3" target="_blank" rel="noopener" class="ms-2 text-muted rfc-link" data-bs-toggle="tooltip" data-bs-html="true" title="<strong>SMTP MTA Strict Transport Security</strong><br>Forces TLS encryption between mail servers to prevent downgrade attacks. §3 covers the DNS record." aria-label="Learn about MTA-STS - RFC 8461 §3"><i class="fas fa-info-circle"></i><span class="rfc-label">RFC 8461 §3</span></a>
                                     {{$mtaStsStatus := mapGetStr "status" $mta_sts}}
-                                    <span class="badge bg-{{if eq $mtaStsStatus "success"}}success{{else if eq $mtaStsStatus "error"}}danger{{else}}warning{{end}} ms-2">
+                                </p>
+                                {{$mtaStsMode := mapGetStr "mode" $mta_sts}}
+                                <div class="protocol-question mb-2">
+                                    <span class="protocol-question-text">Can attackers downgrade mail connections to intercept messages?</span>
+                                    {{if and (eq $mtaStsStatus "success") (eq $mtaStsMode "enforce")}}
+                                        <span class="badge bg-success">No — TLS enforced</span>
+                                    {{else if and (eq $mtaStsStatus "success") (eq $mtaStsMode "testing")}}
+                                        <span class="badge bg-warning text-dark">Testing mode only</span>
+                                    {{else}}
+                                        <span class="badge bg-warning text-dark">Not prevented</span>
+                                    {{end}}
+                                </div>
+                                <div class="mb-2">
+                                    <span class="badge bg-{{if eq $mtaStsStatus "success"}}success{{else if eq $mtaStsStatus "error"}}danger{{else}}warning{{end}}">
                                         {{title $mtaStsStatus}}
                                     </span>
-                                    {{$mtaStsMode := mapGetStr "mode" $mta_sts}}
                                     {{if $mtaStsMode}}
                                         <span class="badge bg-{{if eq $mtaStsMode "enforce"}}success{{else}}warning{{end}} ms-1">{{upper $mtaStsMode}}</span>
                                     {{end}}
                                     {{if mapGetBool "policy_fetched" $mta_sts}}
                                         <span class="badge bg-info ms-1" title="Policy file fetched and validated"><i class="fas fa-check-circle"></i> Policy Verified</span>
                                     {{end}}
-                                </p>
+                                </div>
                                 <p class="text-muted mb-2 small">{{mapGetStr "message" $mta_sts}}</p>
                                 {{if mapGetStr "record" $mta_sts}}
                                     <div class="code-block small">{{mapGetStr "record" $mta_sts}}</div>
@@ -1303,11 +1315,21 @@
                                 <p class="d-flex align-items-center">
                                     <i class="fas fa-file-alt me-2"></i>TLS-RPT
                                     <a href="https://datatracker.ietf.org/doc/html/rfc8460#section-3" target="_blank" rel="noopener" class="ms-2 text-muted rfc-link" data-bs-toggle="tooltip" data-bs-html="true" title="<strong>TLS Reporting</strong><br>Sends reports about TLS connection failures to help diagnose delivery issues. §3 covers the reporting record." aria-label="Learn about TLS-RPT - RFC 8460 §3"><i class="fas fa-info-circle"></i><span class="rfc-label">RFC 8460 §3</span></a>
-                                    {{$tlsrptStatus := mapGetStr "status" $tlsrpt}}
-                                    <span class="badge bg-{{if eq $tlsrptStatus "success"}}success{{else if eq $tlsrptStatus "error"}}danger{{else}}warning{{end}} ms-2">
+                                </p>
+                                {{$tlsrptStatus := mapGetStr "status" $tlsrpt}}
+                                <div class="protocol-question mb-2">
+                                    <span class="protocol-question-text">Will you know if TLS delivery fails?</span>
+                                    {{if eq $tlsrptStatus "success"}}
+                                        <span class="badge bg-success">Yes — reports configured</span>
+                                    {{else}}
+                                        <span class="badge bg-warning text-dark">No reporting</span>
+                                    {{end}}
+                                </div>
+                                <div class="mb-2">
+                                    <span class="badge bg-{{if eq $tlsrptStatus "success"}}success{{else if eq $tlsrptStatus "error"}}danger{{else}}warning{{end}}">
                                         {{title $tlsrptStatus}}
                                     </span>
-                                </p>
+                                </div>
                                 <p class="text-muted mb-2 small">{{mapGetStr "message" $tlsrpt}}</p>
                                 {{if mapGetStr "record" $tlsrpt}}
                                     <div class="code-block small">{{mapGetStr "record" $tlsrpt}}</div>
@@ -1393,8 +1415,18 @@
                                 <p class="d-flex align-items-center">
                                     <i class="fas fa-paper-plane me-2"></i>DMARC External Reporting Authorization
                                     <a href="https://datatracker.ietf.org/doc/html/rfc7489#section-7.1" target="_blank" rel="noopener" class="ms-2 text-muted rfc-link" data-bs-toggle="tooltip" data-bs-html="true" title="<strong>DMARC External Reporting</strong><br>Verifies that external domains listed in rua/ruf tags have authorized this domain to send them reports. §7.1 covers the verification mechanism." aria-label="Learn about DMARC External Reporting - RFC 7489 §7.1"><i class="fas fa-info-circle"></i><span class="rfc-label">RFC 7489 §7.1</span></a>
-                                    <span class="badge bg-{{if eq $draStatus "success"}}success{{else}}warning{{end}} ms-2">{{title $draStatus}}</span>
                                 </p>
+                                <div class="protocol-question mb-2">
+                                    <span class="protocol-question-text">Have external reporting destinations authorized this domain?</span>
+                                    {{if eq $draStatus "success"}}
+                                        <span class="badge bg-success">Yes — all authorized</span>
+                                    {{else}}
+                                        <span class="badge bg-warning text-dark">Authorization missing</span>
+                                    {{end}}
+                                </div>
+                                <div class="mb-2">
+                                    <span class="badge bg-{{if eq $draStatus "success"}}success{{else}}warning{{end}}">{{title $draStatus}}</span>
+                                </div>
                                 <p class="text-muted mb-2 small">{{mapGetStr "message" $dmarc_report_auth}}</p>
                                 <div class="table-responsive">
                                     <table class="table table-sm table-dark small mb-2">
