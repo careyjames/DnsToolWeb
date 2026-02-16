@@ -79,6 +79,14 @@ Items identified during development, consolidated here so they're easy to find a
 ### Branding
 - **Owl of Athena image refresh**: User is preparing a cleaner, higher-quality version of the Owl of Athena in an external image editor. Once ready, replace `static/images/owl-of-athena.png` and update all references. Current usage: footer (`_footer.html`), print brand logo in Engineer's Report (`results.html`), Executive Brief (`results_executive.html`). Decision: keep the Owl of Athena in its current locations — do NOT replace with a different logo or move to new positions. Old versions (v2–v12, backups) in `static/images/` can be cleaned up after the new one is confirmed.
 
+### CLI Edition (Terminal Intelligence Product)
+- **Concept**: A beautiful, modern terminal application that delivers the same DNS security analysis with the same rules, golden rules, and ICIE logic as the web tool — but directly from a user's terminal. Inspired by modern "hacker terminal" aesthetics (rich TUI layouts, color-coded panels, structured output).
+- **Delivery options to explore**: (1) Standalone binary users download and run locally (`dnstool audit example.com`), (2) SSH-accessible service users connect to (`ssh audit@dnstool.example.com`), or (3) both.
+- **Design philosophy**: Not a bare-bones CLI dump — should be graphically well-laid-out with panels, tables, color-coded severity, and structured sections matching the web report. Think `lazygit`, `btop`, or `charm.sh` Bubble Tea style. The existing Python CLI (v1.3.0, attached in session) is the spiritual ancestor but never reached this visual quality.
+- **Technical candidates**: Go `charmbracelet/bubbletea` + `lipgloss` (stays in Go ecosystem), or Go `pterm` for simpler structured output. Could share the same analyzer package from the web tool.
+- **Licensing consideration**: CLI could be the "Core" open-source product (data collection + display) while ICIE interpretation stays BSL 1.1 — natural separation point for the open-source / commercial split.
+- **Priority**: Phase 2 — document now, build later. The Python CLI code (v1.3.0) is preserved for reference.
+
 ### Analysis Enhancements
 - **Executive template protocol questions**: Port per-protocol "Big Questions" to `results_executive.html` (currently only in Engineer's Report).
 - **DKIM selector coverage**: Expand default selector list or integrate provider-specific selector databases for better DKIM discovery.
