@@ -811,7 +811,7 @@
                                 </p>
                                 {{$spfStatus := mapGetStr "status" $spf}}
                                 <div class="protocol-question mb-2">
-                                    <span class="protocol-question-text">Does this domain publish who can send email on its behalf?</span>
+                                    <span class="protocol-question-text">Does this domain declare who may send email for it?</span>
                                     {{if eq $spfStatus "success"}}
                                         <span class="badge bg-success">Yes</span>
                                     {{else if eq $spfStatus "error"}}
@@ -974,7 +974,7 @@
                                 {{$dmarcStatus := mapGetStr "status" $dmarc}}
                                 {{$dmarcPolicy := mapGetStr "policy" $dmarc}}
                                 <div class="protocol-question mb-2">
-                                    <span class="protocol-question-text">Are spoofed emails rejected by receiving servers?</span>
+                                    <span class="protocol-question-text">Are spoofed emails rejected or quarantined?</span>
                                     {{if and (eq $dmarcStatus "success") (eq $dmarcPolicy "reject")}}
                                         <span class="badge bg-success">Yes — reject policy</span>
                                     {{else if and (eq $dmarcStatus "success") (eq $dmarcPolicy "quarantine")}}
@@ -1248,7 +1248,7 @@
                                 </p>
                                 {{$mtaStsMode := mapGetStr "mode" $mta_sts}}
                                 <div class="protocol-question mb-2">
-                                    <span class="protocol-question-text">Can attackers downgrade mail connections to intercept messages?</span>
+                                    <span class="protocol-question-text">Can attackers downgrade SMTP to intercept mail?</span>
                                     {{if and (eq $mtaStsStatus "success") (eq $mtaStsMode "enforce")}}
                                         <span class="badge bg-success">No — TLS enforced</span>
                                     {{else if and (eq $mtaStsStatus "success") (eq $mtaStsMode "testing")}}
@@ -1323,7 +1323,7 @@
                                 </p>
                                 {{$tlsrptStatus := mapGetStr "status" $tlsrpt}}
                                 <div class="protocol-question mb-2">
-                                    <span class="protocol-question-text">Will you know if TLS delivery fails?</span>
+                                    <span class="protocol-question-text">Will failures in TLS delivery be reported?</span>
                                     {{if eq $tlsrptStatus "success"}}
                                         <span class="badge bg-success">Yes — reports configured</span>
                                     {{else}}
@@ -1422,7 +1422,7 @@
                                     <a href="https://datatracker.ietf.org/doc/html/rfc7489#section-7.1" target="_blank" rel="noopener" class="ms-2 text-muted rfc-link" data-bs-toggle="tooltip" data-bs-html="true" title="<strong>DMARC External Reporting</strong><br>Verifies that external domains listed in rua/ruf tags have authorized this domain to send them reports. §7.1 covers the verification mechanism." aria-label="Learn about DMARC External Reporting - RFC 7489 §7.1"><i class="fas fa-info-circle"></i><span class="rfc-label">RFC 7489 §7.1</span></a>
                                 </p>
                                 <div class="protocol-question mb-2">
-                                    <span class="protocol-question-text">Have external reporting destinations authorized this domain?</span>
+                                    <span class="protocol-question-text">Are external report receivers authorized?</span>
                                     {{if eq $draStatus "success"}}
                                         <span class="badge bg-success">Yes — all authorized</span>
                                     {{else}}
@@ -1490,7 +1490,7 @@
                     <div class="card-header">
                         <h5 class="mb-0 d-flex align-items-center justify-content-between flex-wrap">
                             <span><i class="fas fa-certificate me-2"></i>DANE / TLSA</span>
-                            <span class="section-question">Can mail servers prove their identity without a certificate authority?
+                            <span class="section-question">Can mail servers prove identity without a public CA?
                                 {{$daneStatus := mapGetStr "status" $dane}}
                                 {{$hasDane := mapGetBool "has_dane" $dane}}
                                 {{$daneDeployable := mapGetStr "dane_deployable" $dane}}
@@ -1706,7 +1706,7 @@
                                     {{end}}
                                 </p>
                                 <div class="protocol-question mb-2">
-                                    <span class="protocol-question-text">Does this domain display a brand logo in email inboxes?</span>
+                                    <span class="protocol-question-text">Is the brand identity verified and displayed in inboxes?</span>
                                     {{if eq $bimiStatus "success"}}
                                         <span class="badge bg-success">Yes</span>
                                     {{else if eq $bimiStatus "error"}}
@@ -1774,7 +1774,7 @@
                                     {{end}}
                                 </p>
                                 <div class="protocol-question mb-2">
-                                    <span class="protocol-question-text">Does this domain restrict which authorities can issue certificates?</span>
+                                    <span class="protocol-question-text">Does this domain restrict who can issue TLS certificates?</span>
                                     {{if eq $caaStatus "success"}}
                                         <span class="badge bg-success">Yes</span>
                                     {{else}}
@@ -1878,7 +1878,7 @@
                     <div class="card-header">
                         <h5 class="mb-0 d-flex align-items-center justify-content-between flex-wrap">
                             <span><i class="fas fa-shield-alt me-2"></i>Vulnerability Disclosure Policy (security.txt)</span>
-                            <span class="section-question">Does this domain publish a vulnerability reporting channel?
+                            <span class="section-question">Is there a verified way to report security issues?
                                 {{$secTxtStatus := mapGetStr "status" $security_txt}}
                                 <span class="badge bg-{{if eq $secTxtStatus "success"}}success{{else if eq $secTxtStatus "warning"}}warning{{else}}secondary{{end}} ms-2">
                                     {{if eq $secTxtStatus "success"}}Yes{{else if eq $secTxtStatus "warning"}}Partial{{else}}No{{end}}
@@ -2007,7 +2007,7 @@
                     <div class="card-header">
                         <h5 class="mb-0 d-flex align-items-center justify-content-between flex-wrap">
                             <span><i class="fas fa-robot me-2"></i>AI Surface Scanner</span>
-                            <span class="section-question">Is this domain prepared for AI crawlers and LLMs?
+                            <span class="section-question">Is this domain discoverable by AI — and protected from abuse?
                                 {{$aiStatus := mapGetStr "status" $ai_surface}}
                                 {{if eq $aiStatus "success"}}
                                     <span class="badge bg-success ms-2">Yes</span>
@@ -2032,6 +2032,14 @@
                         {{if $aiLlms}}
                         <div class="mb-3">
                             <h6 class="text-info"><i class="fas fa-file-alt me-1"></i> llms.txt</h6>
+                            <div class="protocol-question mb-2">
+                                <span class="protocol-question-text">Is this domain publishing AI-readable brand context?</span>
+                                {{if mapGetBool "found" $aiLlms}}
+                                    <span class="badge bg-success">Yes</span>
+                                {{else}}
+                                    <span class="badge bg-warning text-dark">No</span>
+                                {{end}}
+                            </div>
                             {{if mapGetBool "found" $aiLlms}}
                             <div class="alert alert-success py-2 small">
                                 <i class="fas fa-check-circle me-1"></i> <strong>llms.txt found</strong> — domain provides structured context for LLMs
@@ -2069,6 +2077,16 @@
                         {{if $aiRobots}}
                         <div class="mb-3">
                             <h6 class="text-info"><i class="fas fa-ban me-1"></i> AI Crawler Governance (robots.txt)</h6>
+                            <div class="protocol-question mb-2">
+                                <span class="protocol-question-text">Are AI crawlers explicitly allowed or blocked?</span>
+                                {{if and (mapGetBool "found" $aiRobots) (mapGetBool "blocks_ai_crawlers" $aiRobots)}}
+                                    <span class="badge bg-success">Blocked</span>
+                                {{else if and (mapGetBool "found" $aiRobots) (mapGetBool "allows_ai_crawlers" $aiRobots)}}
+                                    <span class="badge bg-warning text-dark">Not blocked</span>
+                                {{else}}
+                                    <span class="badge bg-secondary">No directives</span>
+                                {{end}}
+                            </div>
                             {{if mapGetBool "found" $aiRobots}}
                                 {{if mapGetBool "blocks_ai_crawlers" $aiRobots}}
                                 <div class="alert alert-success py-2 small">
@@ -2104,6 +2122,14 @@
                         <div class="mb-3">
                             <h6 class="text-info"><i class="fas fa-biohazard me-1"></i> AI Recommendation Poisoning</h6>
                             {{$iocCount := mapGetFloat "ioc_count" $aiPoisoning}}
+                            <div class="protocol-question mb-2">
+                                <span class="protocol-question-text">Is this site trying to manipulate AI recommendations?</span>
+                                {{if gt $iocCount 0}}
+                                    <span class="badge bg-danger">Yes &mdash; {{formatFloat 0 $iocCount}} indicator{{if ne $iocCount 1}}s{{end}}</span>
+                                {{else}}
+                                    <span class="badge bg-success">No</span>
+                                {{end}}
+                            </div>
                             {{if gt $iocCount 0}}
                             <div class="alert alert-warning py-2 small">
                                 <i class="fas fa-exclamation-triangle me-1"></i> <strong>{{$iocCount}} indicator(s) of concern</strong> detected on homepage
@@ -2135,9 +2161,17 @@
                         <div class="mb-3">
                             <h6 class="text-info"><i class="fas fa-eye-slash me-1"></i> Hidden Prompt Artifacts</h6>
                             {{$hiddenCount := mapGetFloat "artifact_count" $aiHidden}}
+                            <div class="protocol-question mb-2">
+                                <span class="protocol-question-text">Is hidden prompt-injection text present in the source?</span>
+                                {{if gt $hiddenCount 0}}
+                                    <span class="badge bg-danger">Yes &mdash; {{formatFloat 0 $hiddenCount}} found</span>
+                                {{else}}
+                                    <span class="badge bg-success">No</span>
+                                {{end}}
+                            </div>
                             {{if gt $hiddenCount 0}}
                             <div class="alert alert-danger py-2 small">
-                                <i class="fas fa-exclamation-circle me-1"></i> <strong>{{$hiddenCount}} hidden prompt artifact(s)</strong> found
+                                <i class="fas fa-exclamation-circle me-1"></i> <strong>{{formatFloat 0 $hiddenCount}} hidden prompt artifact(s)</strong> found
                                 {{$artifacts := mapGetSlice "artifacts" $aiHidden}}
                                 {{if $artifacts}}
                                 <ul class="mt-2 mb-0">
@@ -2199,7 +2233,7 @@
                     <div class="card-header">
                         <h5 class="mb-0 d-flex align-items-center justify-content-between flex-wrap">
                             <span><i class="fas fa-key me-2"></i>Public Exposure Checks</span>
-                            <span class="section-question">Are secrets or sensitive files publicly visible?
+                            <span class="section-question">Are sensitive files or secrets exposed?
                                 {{$secretStatus := mapGetStr "status" $secret_exposure}}
                                 {{$secretCount := mapGetFloat "finding_count" $secret_exposure}}
                                 {{if eq $secretStatus "exposed"}}
@@ -2394,7 +2428,7 @@
                     <div class="card-header">
                         <h5 class="mb-0 d-flex align-items-center justify-content-between flex-wrap">
                             <span><i class="fas fa-exchange-alt me-2"></i>Mail Transport Security</span>
-                            <span class="section-question">Transport encryption enforced?
+                            <span class="section-question">Is mail transport encrypted and verified?
                                 {{$smtpStatus := mapGetStr "status" $smtp}}
                                 {{$smtpPolicy := mapGetMap "policy" $smtp}}
                                 {{$smtpPolicyVerdict := ""}}
@@ -2644,7 +2678,7 @@
                     <div class="card-header">
                         <h5 class="mb-0 d-flex align-items-center justify-content-between flex-wrap">
                             <span><i class="fas fa-network-wired me-2"></i>Infrastructure Intelligence</span>
-                            <span class="section-question">Who hosts this domain and what services does it use?
+                            <span class="section-question">Who hosts this domain and what services power it?
                                 {{if $edge_cdn}}
                                     {{$cdnProvider := mapGetStr "provider" $edge_cdn}}
                                     {{if $cdnProvider}}
@@ -2792,7 +2826,7 @@
                     <div class="card-header">
                         <h5 class="mb-0 d-flex align-items-center justify-content-between flex-wrap">
                             <span><i class="fas fa-shield-alt me-2"></i>Domain Security</span>
-                            <span class="section-question">Can DNS itself be tampered with?
+                            <span class="section-question">Can DNS responses be tampered with in transit?
                                 {{if $posture}}
                                 {{$verdicts := mapGetMap "verdicts" $posture}}
                                 {{$dnsVerdict := mapGetMap "dns_tampering" $verdicts}}
@@ -3151,7 +3185,7 @@
                     <div class="card-header">
                         <h5 class="mb-0 d-flex align-items-center justify-content-between flex-wrap">
                             <span><i class="fas fa-route me-2"></i>Traffic &amp; Routing</span>
-                            <span class="section-question">Where does this domain's traffic actually go?</span>
+                            <span class="section-question">Where does this domain's traffic actually terminate?</span>
                         </h5>
                     </div>
                     <div class="card-body">
@@ -3554,7 +3588,7 @@
                         </span>
                         {{$ctStatus := mapGetStr "status" $ct}}
                         {{$ctUnique := mapGetFloat "unique_subdomains" $ct}}
-                        <span class="section-question">What infrastructure is visible from certificate logs?
+                        <span class="section-question">What infrastructure is exposed in certificate logs?
                             {{if and (eq $ctStatus "success") (gt $ctUnique 0)}}
                                 <span class="badge bg-info ms-2">{{formatFloat 0 $ctUnique}} subdomain{{if ne $ctUnique 1}}s{{end}}</span>
                             {{else if and (eq $ctStatus "success") (eq $ctUnique 0)}}
@@ -3889,7 +3923,7 @@
                 <h5 class="mb-0 d-flex align-items-center justify-content-between flex-wrap">
                     <span><i class="fas fa-fingerprint me-2 u-color-info"></i>Verify Report Integrity
                     <span class="badge ms-2 u-badge-info-outline">SHA-256</span></span>
-                    <span class="section-question">Has this report been tampered with?
+                    <span class="section-question">Has this report been altered since generation?
                         <span class="badge bg-success ms-2">Verify below</span>
                     </span>
                 </h5>
