@@ -75,7 +75,7 @@ var whoisServers = map[string]string{
 }
 
 var nsRegistrarPatterns = map[string]string{
-        "awsdns":                "Amazon Registrar (via Route 53)",
+        "awsdns":                "Amazon Registrar",
         "gandi.net":             "Gandi SAS",
         "ovh.net":               "OVHcloud",
         "ovh.com":               "OVHcloud",
