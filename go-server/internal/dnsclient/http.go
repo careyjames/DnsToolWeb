@@ -48,13 +48,13 @@ func NewSafeHTTPClientWithTimeout(timeout time.Duration) *SafeHTTPClient {
 func NewRDAPHTTPClient() *SafeHTTPClient {
         return &SafeHTTPClient{
                 client: &http.Client{
-                        Timeout: 15 * time.Second,
+                        Timeout: 25 * time.Second,
                         Transport: &http.Transport{
                                 MaxIdleConns:        10,
                                 IdleConnTimeout:     60 * time.Second,
                                 DisableKeepAlives:   true,
                                 MaxIdleConnsPerHost: 2,
-                                ResponseHeaderTimeout: 10 * time.Second,
+                                ResponseHeaderTimeout: 20 * time.Second,
                         },
                         CheckRedirect: func(req *http.Request, via []*http.Request) error {
                                 if len(via) >= 5 {

@@ -75,6 +75,7 @@ var whoisServers = map[string]string{
 }
 
 var nsRegistrarPatterns = map[string]string{
+        "awsdns":                "Amazon Registrar (via Route 53)",
         "gandi.net":             "Gandi SAS",
         "ovh.net":               "OVHcloud",
         "ovh.com":               "OVHcloud",
@@ -97,6 +98,24 @@ var nsRegistrarPatterns = map[string]string{
         "hostpoint.ch":          "Hostpoint",
         "bluehost.com":          "Bluehost",
         "dreamhost.com":         "DreamHost",
+        "googledomains.com":     "Google Domains",
+        "google.com":            "Google Domains",
+        "cloudflare.com":        "Cloudflare Registrar",
+        "digitalocean.com":      "DigitalOcean",
+        "linode.com":            "Linode (Akamai)",
+        "vultr.com":             "Vultr",
+        "hostgator.com":         "HostGator",
+        "siteground.com":        "SiteGround",
+        "hover.com":             "Hover (Tucows)",
+        "dnsimple.com":          "DNSimple",
+        "dnsmadeeasy.com":       "DNS Made Easy",
+        "he.net":                "Hurricane Electric",
+        "nsone.net":             "NS1 (IBM)",
+        "ultradns.com":          "UltraDNS (Neustar)",
+        "azure-dns.com":         "Microsoft Azure DNS",
+        "azure-dns.net":         "Microsoft Azure DNS",
+        "azure-dns.org":         "Microsoft Azure DNS",
+        "azure-dns.info":        "Microsoft Azure DNS",
 }
 
 var whoisRestrictedIndicators = []string{
@@ -237,7 +256,7 @@ func (a *Analyzer) rdapLookup(ctx context.Context, domain string) map[string]any
         }
 
         resultCh := make(chan rdapResult, len(endpoints))
-        rdapCtx, rdapCancel := context.WithTimeout(ctx, 20*time.Second)
+        rdapCtx, rdapCancel := context.WithTimeout(ctx, 30*time.Second)
         defer rdapCancel()
 
         var wg sync.WaitGroup
