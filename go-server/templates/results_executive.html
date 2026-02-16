@@ -1518,9 +1518,12 @@
         {{if .IntegrityHash}}
         <div class="card border-warning border-opacity-25 mt-4 u-bg-secondary" id="report-integrity">
             <div class="card-header">
-                <h5 class="mb-0 u-color-heading-light">
-                    <i class="fas fa-fingerprint me-2 text-warning"></i>Verify Report Integrity
-                    <span class="badge ms-2 u-hash-label">SHA-256</span>
+                <h5 class="mb-0 d-flex align-items-center justify-content-between flex-wrap u-color-heading-light">
+                    <span><i class="fas fa-fingerprint me-2 text-warning"></i>Verify Report Integrity
+                    <span class="badge ms-2 u-hash-label">SHA-256</span></span>
+                    <span class="section-question">Has this report been tampered with?
+                        <span class="badge bg-success ms-2">Verify below</span>
+                    </span>
                 </h5>
             </div>
             <div class="card-body">
