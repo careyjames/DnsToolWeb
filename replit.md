@@ -53,3 +53,21 @@ The application is built in Go using the Gin framework, emphasizing performance 
 
 ### Database
 - **PostgreSQL**: Primary database for persistent storage, with separate databases for development and production environments. Analysis data is immutable and append-only from v26.19.0 forward, ensuring auditable records.
+
+## Phase 2 Roadmap (Deferred Items)
+Items identified during development, consolidated here so they're easy to find across sessions.
+
+### SEO
+- **FAQPage JSON-LD schema**: Protocol "Big Questions" Q&A pairs → `FAQPage` structured data for Google rich snippets. Each analysis page emits domain-specific FAQ schema via `<script type="application/ld+json">` in results template. Questions are evergreen, answers are dynamic from live data.
+
+### Drift Engine (see `DRIFT_ENGINE.md`)
+- **Phase 2 — Drift Detection**: Compare current posture hash to previous, surface "changed" / "unchanged" indicator in results. `GetPreviousPostureHash` query already exists.
+- **Phase 3 — Timeline UI**: Visual drift timeline showing posture changes over time per domain.
+- **Phase 4 — Alerting**: Notifications when posture degrades (e.g., DMARC policy weakened).
+
+### Infrastructure
+- **Multi-vantage probing**: Data model designed to accommodate external VPS probe nodes (Hetzner, OVH) for industry-standard multi-vantage SMTP probing.
+
+### Analysis Enhancements
+- **Executive template protocol questions**: Port per-protocol "Big Questions" to `results_executive.html` (currently only in Engineer's Report).
+- **DKIM selector coverage**: Expand default selector list or integrate provider-specific selector databases for better DKIM discovery.
