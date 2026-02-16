@@ -245,14 +245,14 @@ func (a *Analyzer) buildRDAPEndpoints(tld string) []string {
         var endpoints []string
         seen := make(map[string]bool)
 
-        if ep, ok := directRDAPEndpoints[tld]; ok {
+        if ep, ok := directRDAPEndpoints[tld]; ok && ep != "" {
                 endpoints = append(endpoints, ep)
                 seen[ep] = true
         }
 
         if ianaEps, ok := a.IANARDAPMap[tld]; ok {
                 for _, ep := range ianaEps {
-                        if !seen[ep] {
+                        if ep != "" && !seen[ep] {
                                 endpoints = append(endpoints, ep)
                                 seen[ep] = true
                         }

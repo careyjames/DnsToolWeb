@@ -17,6 +17,13 @@ The DNS Tool is an OSINT platform for comprehensive, RFC-compliant domain securi
 ### Core System
 The application is built in Go using the Gin framework, emphasizing performance and concurrency, following an MVC-style separation.
 
+### Build & Deploy (CRITICAL — read before ANY Go changes)
+- **Build command**: `./build.sh` (from project root). This is the ONLY correct way to build.
+- **Binary path**: `./dns-tool-server` at project root. NEVER build to `./go-server/dns-tool` or any other path.
+- **Why**: `main.py` does `os.execvp("./dns-tool-server", ...)` — gunicorn is just a trampoline, the Go binary takes over immediately.
+- **After ANY Go code change**: Run `./build.sh` then restart the workflow. Without rebuilding, the old binary runs.
+- **CSS changes**: Also require `npx csso`, bumping `AppVersion` in `config.go`, rebuilding via `./build.sh`, and restarting.
+
 ### Backend
 - **Technology Stack**: Go with Gin, `pgx` v5 for PostgreSQL, `sqlc` for type-safe queries, and `miekg/dns` for DNS queries.
 - **Key Features**: Multi-resolver DNS client, DoH fallback, three-layer CT+wildcard+DNS subdomain discovery, posture scoring with CVSS-aligned risk levels, concurrent orchestrator, Mail Transport Security assessment, CSRF middleware, rate limiting, SSRF hardening, telemetry, confidence labeling, "Verify It Yourself" command equivalence, DMARC external reporting authorization, dangling DNS/subdomain takeover detection, HTTPS/SVCB intelligence, IP-to-ASN attribution, Edge/CDN vs origin detection, SaaS TXT footprint extraction, CDS/CDNSKEY automation, SMIMEA/OPENPGPKEY detection, `security.txt` detection, AI Surface Scanner (detects `llms.txt`, AI crawler governance, prefilled prompts, CSS-hidden prompt injection), SPF redirect chain handling with loop detection, DNS history timeline, IP Intelligence, OpenPhish integration, Email Header Analyzer, public exposure checks, expanded exposure checks (probing 8 well-known misconfiguration paths), and report integrity hash (SHA-256 tamper-evident fingerprint).
