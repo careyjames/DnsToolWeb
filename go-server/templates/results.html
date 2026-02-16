@@ -811,7 +811,7 @@
                                 </p>
                                 {{$spfStatus := mapGetStr "status" $spf}}
                                 <div class="protocol-question mb-2">
-                                    <span class="protocol-question-text">Does this domain declare who may send email for it?</span>
+                                    <span class="protocol-question-text">Does this domain declare who may send email on its behalf?</span>
                                     {{if eq $spfStatus "success"}}
                                         <span class="badge bg-success">Yes</span>
                                     {{else if eq $spfStatus "error"}}
