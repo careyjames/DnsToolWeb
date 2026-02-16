@@ -136,6 +136,51 @@ func parseTeamCymruResponse(info map[string]any, record string) {
         info["country"] = strings.TrimSpace(parts[2])
 }
 
+var wellKnownASNames = map[string]string{
+        "13335":  "Cloudflare, Inc.",
+        "209242": "Cloudflare London, LLC",
+        "20940":  "Akamai International B.V.",
+        "16625":  "Akamai Technologies, Inc.",
+        "32787":  "Prolexic Technologies, Inc. (Akamai)",
+        "54113":  "Fastly, Inc.",
+        "15169":  "Google LLC",
+        "396982": "Google LLC",
+        "8075":   "Microsoft Corporation",
+        "16509":  "Amazon.com, Inc.",
+        "14618":  "Amazon.com, Inc.",
+        "38895":  "Amazon.com, Inc.",
+        "16510":  "Amazon.com, Inc.",
+        "36183":  "Amazon.com, Inc.",
+        "14061":  "DigitalOcean, LLC",
+        "63949":  "Akamai Connected Cloud (Linode)",
+        "24940":  "Hetzner Online GmbH",
+        "16276":  "OVH SAS",
+        "20473":  "The Constant Company, LLC (Vultr)",
+        "13649":  "Rackspace Hosting",
+        "36351":  "IBM Cloud (SoftLayer)",
+        "2635":   "Automattic, Inc.",
+        "394536": "Sucuri Inc.",
+        "19551":  "Imperva, Inc.",
+        "46489":  "Twitch Interactive, Inc.",
+        "394699": "KeyCDN",
+        "30148":  "Sucuri Inc.",
+        "197540": "Netcup GmbH",
+        "4808":   "China Unicom Beijing Province Network",
+        "45102":  "Alibaba (US) Technology Co., Ltd.",
+        "132203": "Tencent Building, Kejizhongyi Avenue",
+        "7922":   "Comcast Cable Communications, LLC",
+        "209":    "CenturyLink Communications, LLC",
+        "3356":   "Lumen Technologies",
+        "174":    "Cogent Communications",
+        "6939":   "Hurricane Electric LLC",
+        "3491":   "PCCW Global, Inc.",
+        "1239":   "Sprint",
+        "2914":   "NTT America, Inc.",
+        "6461":   "Zayo Bandwidth",
+        "701":    "Verizon Business",
+        "7018":   "AT&T Services, Inc.",
+}
+
 func enrichASName(ctx context.Context, a *Analyzer, info map[string]any) {
         asn, _ := info["asn"].(string)
         if asn == "" {
@@ -143,14 +188,20 @@ func enrichASName(ctx context.Context, a *Analyzer, info map[string]any) {
         }
         query := fmt.Sprintf("AS%s.peer.asn.cymru.com", asn)
         records := a.DNS.QueryDNS(ctx, "TXT", query)
-        if len(records) == 0 {
-                return
+        if len(records) > 0 {
+                record := strings.Trim(records[0], "\"")
+                parts := strings.Split(record, "|")
+                if len(parts) >= 5 {
+                        name := strings.TrimSpace(parts[4])
+                        if name != "" {
+                                info["as_name"] = name
+                                return
+                        }
+                }
         }
 
-        record := strings.Trim(records[0], "\"")
-        parts := strings.Split(record, "|")
-        if len(parts) >= 5 {
-                info["as_name"] = strings.TrimSpace(parts[4])
+        if name, ok := wellKnownASNames[asn]; ok {
+                info["as_name"] = name
         }
 }
 
