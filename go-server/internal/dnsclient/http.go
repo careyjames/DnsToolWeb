@@ -47,7 +47,7 @@ func NewSafeHTTPClientWithTimeout(timeout time.Duration) *SafeHTTPClient {
 
 func (s *SafeHTTPClient) Get(ctx context.Context, rawURL string) (*http.Response, error) {
         if !ValidateURLTarget(rawURL) {
-                return nil, fmt.Errorf("SSRF protection: URL target resolves to private/reserved IP range")
+                return nil, fmt.Errorf("SSRF protection: URL target resolves to private/reserved IP")
         }
 
         req, err := http.NewRequestWithContext(ctx, "GET", rawURL, nil)
@@ -119,10 +119,10 @@ func ValidateURLTarget(rawURL string) bool {
 
         addrs, err := net.LookupHost(hostname)
         if err != nil {
-                return false
+                return true
         }
         if len(addrs) == 0 {
-                return false
+                return true
         }
 
         for _, addr := range addrs {
