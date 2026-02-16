@@ -133,11 +133,7 @@ func buildRestrictedResult(restricted bool, restrictedTLD string) map[string]any
                 }
         }
 
-        restrictedRegistries := map[string]string{
-                "es": "Red.es (Spain)", "br": "Registro.br (Brazil)",
-                "kr": "KISA (South Korea)", "cn": "CNNIC (China)", "ru": "RIPN (Russia)",
-        }
-        registryName := restrictedRegistries[restrictedTLD]
+        registryName := knownRestrictedTLDs[restrictedTLD]
         if registryName == "" {
                 registryName = fmt.Sprintf(".%s registry", restrictedTLD)
         }
@@ -241,9 +237,9 @@ func (a *Analyzer) rdapLookup(ctx context.Context, domain string) map[string]any
         }
 
         providerName := "rdap:" + tld
-        if a.Telemetry.InCooldown(providerName) {
-                slog.Info("RDAP provider in cooldown, skipping", "provider", providerName)
-                return nil
+        inCooldown := a.Telemetry.InCooldown(providerName)
+        if inCooldown {
+                slog.Warn("RDAP provider in cooldown but attempting anyway (registrar is critical data)", "provider", providerName, "domain", domain)
         }
 
         rdapURL := fmt.Sprintf("%s/domain/%s", strings.TrimRight(endpoint, "/"), domain)
@@ -452,7 +448,12 @@ func (a *Analyzer) whoisLookup(ctx context.Context, domain string) (string, bool
 
         output := string(response)
 
-        if isWhoisRestricted(output) {
+        restricted, empty := isWhoisRestricted(output, tld)
+        if empty && !restricted {
+                slog.Info("WHOIS returned empty/minimal response (not a known restricted TLD)", "domain", domain, "tld", tld, "response_len", len(strings.TrimSpace(output)))
+                return "", false, ""
+        }
+        if restricted {
                 return "", true, tld
         }
 
@@ -462,17 +463,26 @@ func (a *Analyzer) whoisLookup(ctx context.Context, domain string) (string, bool
         return formatWhoisResult(registrar, registrant)
 }
 
-func isWhoisRestricted(output string) bool {
-        if len(strings.TrimSpace(output)) < 50 {
-                return true
+var knownRestrictedTLDs = map[string]string{
+        "es": "Red.es (Spain)", "br": "Registro.br (Brazil)",
+        "kr": "KISA (South Korea)", "cn": "CNNIC (China)", "ru": "RIPN (Russia)",
+}
+
+func isWhoisRestricted(output string, tld string) (bool, bool) {
+        trimmed := strings.TrimSpace(output)
+        if len(trimmed) < 50 {
+                if _, known := knownRestrictedTLDs[tld]; known {
+                        return true, true
+                }
+                return false, true
         }
         outputLower := strings.ToLower(output)
         for _, indicator := range whoisRestrictedIndicators {
                 if strings.Contains(outputLower, indicator) {
-                        return true
+                        return true, false
                 }
         }
-        return false
+        return false, false
 }
 
 func parseWhoisRegistrar(output string) string {
