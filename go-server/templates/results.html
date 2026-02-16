@@ -233,7 +233,7 @@
                                         <span class="fw-semibold me-2">Risk Level:</span>
                                         <span class="badge bg-{{$postureColor}} fs-6 px-3 py-2">{{$postureState}}</span>
                                     </div>
-                                    <small class="d-block mt-1">{{$postureConfiguredCount := len (mapGetSlice "configured" $posture)}}{{$postureAbsentCount := len (mapGetSlice "absent" $posture)}}{{if gt $postureConfiguredCount 0}}<span class="text-success">{{$postureConfiguredCount}} protocols configured</span>{{end}}{{if and (gt $postureConfiguredCount 0) (gt $postureAbsentCount 0)}}, {{end}}{{if gt $postureAbsentCount 0}}<a href="#findings-summary" class="text-warning text-decoration-none">{{$postureAbsentCount}} not configured</a>{{end}}</small>
+                                    <small class="d-block mt-1">{{$postureConfiguredCount := len (mapGetSlice "configured" $posture)}}{{$postureAbsentCount := len (mapGetSlice "absent" $posture)}}{{$postureProviderLimitedCount := len (mapGetSlice "provider_limited" $posture)}}{{if gt $postureConfiguredCount 0}}<span class="text-success">{{$postureConfiguredCount}} protocols configured</span>{{end}}{{if and (gt $postureConfiguredCount 0) (gt $postureAbsentCount 0)}}, {{end}}{{if gt $postureAbsentCount 0}}<a href="#findings-summary" class="text-warning text-decoration-none" id="posture-absent-link">{{$postureAbsentCount}} not configured</a>{{end}}{{if gt $postureProviderLimitedCount 0}}{{if or (gt $postureConfiguredCount 0) (gt $postureAbsentCount 0)}}, {{end}}<span class="text-muted">{{$postureProviderLimitedCount}} unavailable on provider</span>{{end}}</small>
                                     {{if mapGetBool "deliberate_monitoring" $posture}}
                                     <small class="text-info d-block mt-1"><i class="fas fa-flask me-1"></i>{{mapGetStr "deliberate_monitoring_note" $posture}}</small>
                                     {{end}}
@@ -403,6 +403,13 @@
                             <div class="col-6 col-lg-3">
                                 <span class="text-muted fw-bold"><i class="fas fa-minus-circle me-1"></i>Not Configured</span>
                                 <div class="mt-1 text-muted posture-protocol-list">{{range $i, $item := $postureAbsent}}{{if $i}}, {{end}}<span class="protocol-link" data-protocol="{{$item}}">{{$item}}</span>{{end}}</div>
+                            </div>
+                            {{end}}
+                            {{$postureProviderLimited := mapGetSlice "provider_limited" $posture}}
+                            {{if $postureProviderLimited}}
+                            <div class="col-6 col-lg-3">
+                                <span class="text-muted fw-bold"><i class="fas fa-ban me-1"></i>Unavailable on Provider</span>
+                                <div class="mt-1 text-muted posture-protocol-list">{{range $i, $item := $postureProviderLimited}}{{if $i}}, {{end}}<span class="protocol-link" data-protocol="{{$item}}">{{$item}}</span>{{end}}</div>
                             </div>
                             {{end}}
                         </div>

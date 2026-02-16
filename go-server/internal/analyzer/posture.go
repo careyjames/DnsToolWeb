@@ -45,6 +45,7 @@ type protocolState struct {
         tlsrptOK           bool
         bimiOK             bool
         daneOK             bool
+        daneProviderLimited bool
         dnssecOK           bool
         dnssecBroken       bool
         primaryProvider    string
@@ -53,11 +54,12 @@ type protocolState struct {
 }
 
 type postureAccumulator struct {
-        issues          []string
-        recommendations []string
-        monitoring      []string
-        configured      []string
-        absent          []string
+        issues           []string
+        recommendations  []string
+        monitoring       []string
+        configured       []string
+        absent           []string
+        providerLimited  []string
 }
 
 type gradeInput struct {
@@ -206,6 +208,9 @@ func evaluateProtocolStates(results map[string]any) protocolState {
         if !isMissingRecord(dane) {
                 if hasDane, ok := dane["has_dane"].(bool); ok && hasDane {
                         ps.daneOK = true
+                }
+                if deployable, ok := dane["dane_deployable"].(bool); ok && !deployable {
+                        ps.daneProviderLimited = true
                 }
         }
 
@@ -463,6 +468,8 @@ func classifySimpleProtocols(ps protocolState, acc *postureAccumulator) {
 
         if ps.daneOK {
                 acc.configured = append(acc.configured, "DANE")
+        } else if ps.daneProviderLimited {
+                acc.providerLimited = append(acc.providerLimited, "DANE")
         } else {
                 acc.absent = append(acc.absent, "DANE")
         }
@@ -553,6 +560,7 @@ func (a *Analyzer) CalculatePosture(results map[string]any) map[string]any {
                 monitoring:      []string{},
                 configured:      []string{},
                 absent:          []string{},
+                providerLimited: []string{},
         }
 
         classifySPF(ps, acc)
@@ -609,6 +617,7 @@ func (a *Analyzer) CalculatePosture(results map[string]any) map[string]any {
                 "monitoring":                 acc.monitoring,
                 "configured":                 acc.configured,
                 "absent":                     acc.absent,
+                "provider_limited":           acc.providerLimited,
                 "deliberate_monitoring":      deliberate,
                 "deliberate_monitoring_note": deliberateNote,
                 "verdicts":                   verdicts,
