@@ -34,6 +34,7 @@ The application is built in Go using the Gin framework, emphasizing performance 
 - **Mail Posture Labels**: Observation-based labels ("Strongly Protected", "Moderately Protected", etc.) aligned with NIST/CISA.
 - **Cache Policy**: DNS client cache is disabled for live queries; limited caches are used only for external services.
 - **Drift Engine Foundation**: Implements canonical posture hashing to detect configuration drift over time.
+- **Intelligence Classification and Interpretation Engine (ICIE)**: Formalized architecture for how the tool cross-references multiple intelligence sources, ranks source authority, classifies confidence levels, and interprets findings. The Core (data collection) is open source; the ICIE (classification and interpretation) is protected under BSL 1.1. See `INTELLIGENCE_ENGINE.md` for full architecture spec.
 - **Licensing**: Uses BSL 1.1 (Business Source License) for both public and private repositories, with a rolling change date to Apache-2.0, permitting internal use and client audits, while prohibiting competitive offerings.
 
 ### Frontend
