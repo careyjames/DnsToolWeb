@@ -45,6 +45,39 @@ func NewSafeHTTPClientWithTimeout(timeout time.Duration) *SafeHTTPClient {
         }
 }
 
+func NewRDAPHTTPClient() *SafeHTTPClient {
+        return &SafeHTTPClient{
+                client: &http.Client{
+                        Timeout: 15 * time.Second,
+                        Transport: &http.Transport{
+                                MaxIdleConns:        10,
+                                IdleConnTimeout:     60 * time.Second,
+                                DisableKeepAlives:   true,
+                                MaxIdleConnsPerHost: 2,
+                                ResponseHeaderTimeout: 10 * time.Second,
+                        },
+                        CheckRedirect: func(req *http.Request, via []*http.Request) error {
+                                if len(via) >= 5 {
+                                        return fmt.Errorf("too many redirects")
+                                }
+                                return nil
+                        },
+                },
+                userAgent: UserAgent,
+        }
+}
+
+func (s *SafeHTTPClient) GetDirect(ctx context.Context, rawURL string) (*http.Response, error) {
+        req, err := http.NewRequestWithContext(ctx, "GET", rawURL, nil)
+        if err != nil {
+                return nil, err
+        }
+        req.Header.Set("User-Agent", s.userAgent)
+        req.Header.Set("Accept", "application/rdap+json, application/json")
+
+        return s.client.Do(req)
+}
+
 func (s *SafeHTTPClient) Get(ctx context.Context, rawURL string) (*http.Response, error) {
         if !ValidateURLTarget(rawURL) {
                 return nil, fmt.Errorf("SSRF protection: URL target resolves to private/reserved IP")

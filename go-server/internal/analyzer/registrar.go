@@ -10,6 +10,7 @@ import (
         "net"
         "regexp"
         "strings"
+        "sync"
         "time"
 
         "dnstool/go-server/internal/dnsclient"
@@ -230,14 +231,63 @@ func (a *Analyzer) rdapLookup(ctx context.Context, domain string) map[string]any
         endpoints := a.buildRDAPEndpoints(tld)
         slog.Info("RDAP lookup starting", "domain", domain, "tld", tld, "endpoint_count", len(endpoints))
 
+        type rdapResult struct {
+                data     map[string]any
+                endpoint string
+        }
+
+        resultCh := make(chan rdapResult, len(endpoints))
+        rdapCtx, rdapCancel := context.WithTimeout(ctx, 20*time.Second)
+        defer rdapCancel()
+
+        var wg sync.WaitGroup
         for i, endpoint := range endpoints {
-                data := a.tryRDAPEndpoint(ctx, domain, endpoint, providerName, i+1, len(endpoints))
+                wg.Add(1)
+                go func(ep string, idx int) {
+                        defer wg.Done()
+                        data := a.tryRDAPEndpointWithRetry(rdapCtx, domain, ep, providerName, idx+1, len(endpoints))
+                        if data != nil {
+                                resultCh <- rdapResult{data: data, endpoint: ep}
+                        }
+                }(endpoint, i)
+        }
+
+        go func() {
+                wg.Wait()
+                close(resultCh)
+        }()
+
+        if result, ok := <-resultCh; ok {
+                rdapCancel()
+                slog.Info("RDAP parallel lookup succeeded", "domain", domain, "winning_endpoint", result.endpoint)
+                return result.data
+        }
+
+        slog.Warn("RDAP lookup exhausted all endpoints", "domain", domain, "endpoints_tried", len(endpoints))
+        a.Telemetry.RecordFailure(providerName, "all endpoints exhausted")
+        return nil
+}
+
+func (a *Analyzer) tryRDAPEndpointWithRetry(ctx context.Context, domain, endpoint, providerName string, attempt, total int) map[string]any {
+        const maxRetries = 2
+        for retry := 0; retry <= maxRetries; retry++ {
+                if ctx.Err() != nil {
+                        return nil
+                }
+                if retry > 0 {
+                        backoff := time.Duration(retry*200) * time.Millisecond
+                        select {
+                        case <-time.After(backoff):
+                        case <-ctx.Done():
+                                return nil
+                        }
+                        slog.Info("RDAP retry", "domain", domain, "endpoint", endpoint, "retry", retry)
+                }
+                data := a.tryRDAPEndpoint(ctx, domain, endpoint, providerName, attempt, total)
                 if data != nil {
                         return data
                 }
         }
-
-        slog.Warn("RDAP lookup exhausted all endpoints", "domain", domain, "endpoints_tried", len(endpoints))
         return nil
 }
 
@@ -268,51 +318,36 @@ func (a *Analyzer) buildRDAPEndpoints(tld string) []string {
 }
 
 func (a *Analyzer) tryRDAPEndpoint(ctx context.Context, domain, endpoint, providerName string, attempt, total int) map[string]any {
-        rdapURL := fmt.Sprintf("%s/domain/%s", strings.TrimRight(endpoint, "/"), domain)
+        rdapURL := fmt.Sprintf("%sdomain/%s", strings.TrimRight(endpoint, "/")+"/", domain)
         slog.Info("RDAP trying endpoint", "url", rdapURL, "attempt", fmt.Sprintf("%d/%d", attempt, total))
 
         start := time.Now()
-        resp, err := a.HTTP.Get(ctx, rdapURL)
+        resp, err := a.RDAPHTTP.GetDirect(ctx, rdapURL)
         if err != nil {
                 slog.Warn("RDAP endpoint failed", "domain", domain, "url", rdapURL, "error", err, "elapsed_ms", time.Since(start).Milliseconds(), "attempt", fmt.Sprintf("%d/%d", attempt, total))
-                if attempt == total {
-                        a.Telemetry.RecordFailure(providerName, err.Error())
-                }
                 return nil
         }
 
-        body, err := a.HTTP.ReadBody(resp, 1<<20)
+        body, err := a.RDAPHTTP.ReadBody(resp, 1<<20)
         if err != nil {
                 slog.Warn("RDAP body read failed", "url", rdapURL, "error", err)
-                if attempt == total {
-                        a.Telemetry.RecordFailure(providerName, err.Error())
-                }
                 return nil
         }
 
-        slog.Info("RDAP response received", "url", rdapURL, "status", resp.StatusCode, "body_len", len(body))
+        slog.Info("RDAP response received", "url", rdapURL, "status", resp.StatusCode, "body_len", len(body), "elapsed_ms", time.Since(start).Milliseconds())
 
         if resp.StatusCode >= 400 {
-                if attempt == total {
-                        a.Telemetry.RecordFailure(providerName, fmt.Sprintf("HTTP %d", resp.StatusCode))
-                }
                 return nil
         }
 
         var data map[string]any
         if json.Unmarshal(body, &data) != nil {
                 slog.Warn("RDAP JSON parse failed", "url", rdapURL, "body_preview", string(body[:min(200, len(body))]))
-                if attempt == total {
-                        a.Telemetry.RecordFailure(providerName, "invalid JSON")
-                }
                 return nil
         }
 
         if _, hasError := data["errorCode"]; hasError {
                 slog.Warn("RDAP error in response", "url", rdapURL, "error_code", data["errorCode"])
-                if attempt == total {
-                        a.Telemetry.RecordFailure(providerName, "RDAP error response")
-                }
                 return nil
         }
 

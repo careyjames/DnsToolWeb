@@ -273,12 +273,17 @@
         {{end}}
         {{/* Render failed sections inline since Go templates can't append to slices */}}
         {{$hasFailed := false}}
+        {{$hasContextFailed := false}}
         {{range $key, $val := $section_status}}
             {{$info := toMap $val}}
             {{if $info}}
             {{$st := mapGetStr "status" $info}}
             {{if or (eq $st "timeout") (eq $st "error")}}
+            {{if eq $key "registrar"}}
+            {{$hasContextFailed = true}}
+            {{else}}
             {{$hasFailed = true}}
+            {{end}}
             {{end}}
             {{end}}
         {{end}}
@@ -291,7 +296,7 @@
                 {{$info := toMap $val}}
                 {{if $info}}
                 {{$st := mapGetStr "status" $info}}
-                {{if or (eq $st "timeout") (eq $st "error")}}
+                {{if and (or (eq $st "timeout") (eq $st "error")) (ne $key "registrar")}}
                 <span class="badge bg-{{if eq $st "timeout"}}secondary{{else}}danger{{end}} me-1">
                     {{title (replace "_" " " $key)}} ({{$st}})
                 </span>
