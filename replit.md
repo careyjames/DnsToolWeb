@@ -68,6 +68,9 @@ Items identified during development, consolidated here so they're easy to find a
 ### Infrastructure
 - **Multi-vantage probing**: Data model designed to accommodate external VPS probe nodes (Hetzner, OVH) for industry-standard multi-vantage SMTP probing.
 
+### Branding
+- **Owl of Athena image refresh**: User is preparing a cleaner, higher-quality version of the Owl of Athena in an external image editor. Once ready, replace `static/images/owl-of-athena.png` and update all references. Current usage: footer (`_footer.html`), print brand logo in Engineer's Report (`results.html`), Executive Brief (`results_executive.html`). Decision: keep the Owl of Athena in its current locations — do NOT replace with a different logo or move to new positions. Old versions (v2–v12, backups) in `static/images/` can be cleaned up after the new one is confirmed.
+
 ### Analysis Enhancements
 - **Executive template protocol questions**: Port per-protocol "Big Questions" to `results_executive.html` (currently only in Engineer's Report).
 - **DKIM selector coverage**: Expand default selector list or integrate provider-specific selector databases for better DKIM discovery.
