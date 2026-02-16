@@ -478,7 +478,7 @@ func (h *AnalysisHandler) saveAnalysis(ctx context.Context, domain, asciiDomain 
         dmarcStatus := getStringFromResults(results, "dmarc_analysis", "status")
         dmarcPolicy := getStringFromResults(results, "dmarc_analysis", "policy")
         dkimStatus := getStringFromResults(results, "dkim_analysis", "status")
-        registrarName := getStringFromResults(results, "registrar_info", "registrar_name")
+        registrarName := getStringFromResults(results, "registrar_info", "registrar")
         registrarSource := getStringFromResults(results, "registrar_info", "source")
 
         spfRecordsJSON := getJSONFromResults(results, "spf_analysis", "records")
