@@ -2007,9 +2007,15 @@
                     <div class="card-header">
                         <h5 class="mb-0 d-flex align-items-center justify-content-between flex-wrap">
                             <span><i class="fas fa-robot me-2"></i>AI Surface Scanner</span>
-                            {{$aiStatus := mapGetStr "status" $ai_surface}}
-                            <span class="badge bg-{{if eq $aiStatus "success"}}success{{else if eq $aiStatus "warning"}}warning{{else if eq $aiStatus "error"}}danger{{else}}info{{end}}">
-                                {{if eq $aiStatus "success"}}Governance Active{{else if eq $aiStatus "warning"}}Risks Detected{{else}}Scanned{{end}}
+                            <span class="section-question">Is this domain prepared for AI crawlers and LLMs?
+                                {{$aiStatus := mapGetStr "status" $ai_surface}}
+                                {{if eq $aiStatus "success"}}
+                                    <span class="badge bg-success ms-2">Yes</span>
+                                {{else if eq $aiStatus "warning"}}
+                                    <span class="badge bg-warning ms-2">Risks Found</span>
+                                {{else}}
+                                    <span class="badge bg-secondary ms-2">No</span>
+                                {{end}}
                             </span>
                         </h5>
                     </div>
@@ -2193,10 +2199,14 @@
                     <div class="card-header">
                         <h5 class="mb-0 d-flex align-items-center justify-content-between flex-wrap">
                             <span><i class="fas fa-key me-2"></i>Public Exposure Checks</span>
-                            {{$secretStatus := mapGetStr "status" $secret_exposure}}
-                            {{$secretCount := mapGetFloat "finding_count" $secret_exposure}}
-                            <span class="badge bg-{{if eq $secretStatus "exposed"}}danger{{else}}success{{end}}">
-                                {{if eq $secretStatus "exposed"}}{{formatFloat 0 $secretCount}} Secret{{if ne $secretCount 1}}s{{end}} Found{{else}}No Secrets Exposed{{end}}
+                            <span class="section-question">Are secrets or sensitive files publicly visible?
+                                {{$secretStatus := mapGetStr "status" $secret_exposure}}
+                                {{$secretCount := mapGetFloat "finding_count" $secret_exposure}}
+                                {{if eq $secretStatus "exposed"}}
+                                    <span class="badge bg-danger ms-2">Yes &mdash; {{formatFloat 0 $secretCount}} found</span>
+                                {{else}}
+                                    <span class="badge bg-success ms-2">No</span>
+                                {{end}}
                             </span>
                         </h5>
                     </div>
@@ -2634,7 +2644,16 @@
                     <div class="card-header">
                         <h5 class="mb-0 d-flex align-items-center justify-content-between flex-wrap">
                             <span><i class="fas fa-network-wired me-2"></i>Infrastructure Intelligence</span>
-                            <small class="text-muted">Network identity, edge services &amp; SaaS footprint</small>
+                            <span class="section-question">Who hosts this domain and what services does it use?
+                                {{if $edge_cdn}}
+                                    {{$cdnProvider := mapGetStr "provider" $edge_cdn}}
+                                    {{if $cdnProvider}}
+                                        <span class="badge bg-info ms-2">{{$cdnProvider}}</span>
+                                    {{else}}
+                                        <span class="badge bg-secondary ms-2">Direct</span>
+                                    {{end}}
+                                {{end}}
+                            </span>
                         </h5>
                     </div>
                     <div class="card-body">
@@ -3132,7 +3151,7 @@
                     <div class="card-header">
                         <h5 class="mb-0 d-flex align-items-center justify-content-between flex-wrap">
                             <span><i class="fas fa-route me-2"></i>Traffic &amp; Routing</span>
-                            <small class="text-muted">Where traffic flows &amp; how services resolve</small>
+                            <span class="section-question">Where does this domain's traffic actually go?</span>
                         </h5>
                     </div>
                     <div class="card-body">
@@ -3526,19 +3545,25 @@
         <div class="col-12">
             <div class="card">
                 <div class="card-header d-flex align-items-center">
-                    <h5 class="mb-0 flex-grow-1">
-                        <i class="fas fa-sitemap me-2"></i>Subdomain Discovery
-                        <a href="https://datatracker.ietf.org/doc/html/rfc6962" target="_blank" rel="noopener" class="badge bg-dark bg-opacity-25 text-muted text-decoration-none fw-normal ms-2 u-fs-060rem" title="Certificate Transparency">RFC 6962</a>
-                        {{$ctFreshness := mapGetMap "ct_subdomains" $data_freshness}}
+                    <h5 class="mb-0 flex-grow-1 d-flex align-items-center justify-content-between flex-wrap">
+                        <span>
+                            <i class="fas fa-sitemap me-2"></i>Subdomain Discovery
+                            <a href="https://datatracker.ietf.org/doc/html/rfc6962" target="_blank" rel="noopener" class="badge bg-dark bg-opacity-25 text-muted text-decoration-none fw-normal ms-2 u-fs-060rem" title="Certificate Transparency">RFC 6962</a>
+                            {{$ctFreshness := mapGetMap "ct_subdomains" $data_freshness}}
                         {{if or (eq (mapGetStr "status" $ct) "error") (eq (mapGetStr "status" $ct) "timeout")}}<span class="badge bg-warning bg-opacity-25 border border-warning border-opacity-25 text-warning ms-1 u-fs-055rem" data-bs-toggle="tooltip" title="Certificate Transparency lookup encountered an issue">UNAVAILABLE</span>{{else if and $ctFreshness (eq (mapGetStr "source" $ctFreshness) "cache")}}<span class="badge bg-secondary bg-opacity-50 border border-secondary border-opacity-25 ms-1 u-fs-055rem" data-bs-toggle="tooltip" title="CT log data cached for 1 hour — certificate records change infrequently">CACHED</span>{{else}}<span class="badge bg-success bg-opacity-25 border border-success border-opacity-25 ms-1 u-fs-055rem" data-bs-toggle="tooltip" title="Live Certificate Transparency query">LIVE</span>{{end}}
+                        </span>
+                        {{$ctStatus := mapGetStr "status" $ct}}
+                        {{$ctUnique := mapGetFloat "unique_subdomains" $ct}}
+                        <span class="section-question">What infrastructure is visible from certificate logs?
+                            {{if and (eq $ctStatus "success") (gt $ctUnique 0)}}
+                                <span class="badge bg-info ms-2">{{formatFloat 0 $ctUnique}} subdomain{{if ne $ctUnique 1}}s{{end}}</span>
+                            {{else if and (eq $ctStatus "success") (eq $ctUnique 0)}}
+                                <span class="badge bg-secondary ms-2">None found</span>
+                            {{else}}
+                                <span class="badge bg-warning ms-2">Unavailable</span>
+                            {{end}}
+                        </span>
                     </h5>
-                    {{$ctStatus := mapGetStr "status" $ct}}
-                    {{$ctUnique := mapGetFloat "unique_subdomains" $ct}}
-                    {{if and (eq $ctStatus "success") (gt $ctUnique 0)}}
-                    <span class="badge bg-info-subtle text-info border border-info-subtle">{{if mapGetBool "was_truncated" $ct}}{{mapGetStr "display_count" $ct}} of {{end}}{{formatFloat 0 $ctUnique}} subdomain{{if ne $ctUnique 1}}s{{end}}</span>
-                    {{else if and (eq $ctStatus "success") (eq $ctUnique 0)}}
-                    <span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle">0 subdomains</span>
-                    {{end}}
                 </div>
                 <div class="card-body">
                     {{$ctSubdomains := mapGetSlice "subdomains" $ct}}
