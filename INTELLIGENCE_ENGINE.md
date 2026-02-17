@@ -1,8 +1,10 @@
 # Intelligence Classification and Interpretation Engine (ICIE)
 
-## Architecture Document — v1.0 (2026-02-16)
+## Architecture & Roadmap Document — v1.1 (2026-02-17)
 
 ---
+
+> **Implementation Status (v26.19.20)**: This document describes both the current ICIE architecture and planned enhancements. Sections marked **[CURRENT]** describe implemented, working capabilities. Sections marked **[DESIGN — NOT YET IMPLEMENTED]** describe the architectural vision for future phases. The ICIE is real and functioning — posture scoring, remediation, protocol analysis, and confidence foundations are all implemented. The cross-reference corroboration engine and extended confidence levels are planned for future phases.
 
 ## 1. What Is This?
 
@@ -37,6 +39,8 @@ Every piece of intelligence has a source. Sources have different authority level
 
 ### 3.1 Source Tiers
 
+> **[CURRENT FRAMEWORK]** — This hierarchy guides implementation decisions. Source authority ranking is applied informally in the codebase (e.g., RDAP over WHOIS in registrar.go, authoritative over recursive in records.go). Formal per-finding tagging is planned for Phase 2.
+
 | Tier | Authority Level | Sources | When Authoritative |
 |------|----------------|---------|-------------------|
 | **Tier 1: Authoritative DNS** | Highest | NS-delegated authoritative nameservers, SOA records | Always — this IS the domain's declared configuration |
@@ -49,6 +53,8 @@ Every piece of intelligence has a source. Sources have different authority level
 | **Tier 8: Web Intelligence** | Low | HTTP probes (MTA-STS policy, security.txt, robots.txt, llms.txt) | For web-layer configuration — transient, not DNS-authoritative |
 
 ### 3.2 Authority Resolution Rules
+
+> **[PARTIALLY CURRENT]** — Rules 1-6 are followed in practice throughout the codebase. Formal conflict-resolution logic with explicit tagging is planned for Phase 2.
 
 When sources conflict, apply these rules in order:
 
@@ -63,20 +69,26 @@ When sources conflict, apply these rules in order:
 
 ## 4. Confidence Classification System
 
+### [PARTIALLY IMPLEMENTED] — Foundation exists, extended levels are planned
+
 Every finding in the ICIE carries a confidence classification. This already exists in `confidence.go` — the ICIE formalizes and extends it.
 
 ### 4.1 Confidence Levels
 
+> The code currently implements THREE confidence levels: **Observed**, **Inferred**, and **Third-party** (in `confidence.go`). The additional levels (**Corroborated**, **Stale**, **Absent**) are architectural design targets for Phase 3.
+
 | Level | Label | Definition | Example |
 |-------|-------|------------|---------|
 | **Observed** | "Observed" | Directly queried and verified from authoritative sources | SPF record retrieved via DNS TXT query |
-| **Corroborated** | "Corroborated" | Observed AND confirmed by independent second source | DKIM key found via DNS AND matches SPF include pattern for same provider |
+| **Corroborated** | "Corroborated" [PLANNED] | Observed AND confirmed by independent second source | DKIM key found via DNS AND matches SPF include pattern for same provider |
 | **Inferred** | "Inferred" | Derived from patterns, not directly declared | Email provider identified from MX record patterns |
 | **Third-party** | "Third-party data" | From external intelligence sources, not domain-controlled | ASN attribution from Team Cymru, registrar from RDAP |
-| **Stale** | "Stale intelligence" | Data from cached or historical sources that may not reflect current state | SecurityTrails DNS history |
-| **Absent** | "No evidence" | Looked for but not found — absence is itself intelligence | No DKIM selectors discovered (doesn't mean DKIM isn't configured, just that we couldn't find it) |
+| **Stale** | "Stale intelligence" [PLANNED] | Data from cached or historical sources that may not reflect current state | SecurityTrails DNS history |
+| **Absent** | "No evidence" [PLANNED] | Looked for but not found — absence is itself intelligence | No DKIM selectors discovered (doesn't mean DKIM isn't configured, just that we couldn't find it) |
 
 ### 4.2 Confidence Inheritance
+
+> **[DESIGN — NOT YET IMPLEMENTED]** — This describes the planned confidence flow logic for Phase 3.
 
 When a finding depends on another finding, confidence flows downward:
 
@@ -92,6 +104,8 @@ Raw data tells you WHAT. Interpretation tells you SO WHAT. This is the layer whe
 
 ### 5.1 Protocol Interpretation Examples
 
+> **[CURRENT]** — These interpretation patterns are implemented in posture.go and remediation.go.
+
 | Raw Finding | Classification | Interpretation |
 |-------------|---------------|----------------|
 | `v=spf1 +all` | Observed, Critical | SPF record exists but permits ANY sender — equivalent to no protection (RFC 7208 §5.1) |
@@ -100,11 +114,13 @@ Raw data tells you WHAT. Interpretation tells you SO WHAT. This is the layer whe
 | DMARC `p=none` with `rua=` | Observed, Monitoring | Domain is in monitoring phase — collecting data before enforcement |
 | DMARC `p=reject` with `pct=100` | Observed, Enforcing | Full DMARC enforcement — strongest email authentication posture |
 | No DKIM selectors found | Absent | Cannot confirm DKIM signing — may use selectors not in our probe list |
-| DNSSEC AD flag set by Cloudflare | Corroborated | Validated DNSSEC chain — resolver confirmed cryptographic trust path |
+| DNSSEC AD flag set by Cloudflare | Corroborated [PLANNED label] | Validated DNSSEC chain — resolver confirmed cryptographic trust path |
 | Registrar via RDAP: "GoDaddy" | Third-party | Registry data indicates registrar — not security-relevant but contextual |
 | RDAP failed, WHOIS empty | No evidence | Registration data unavailable — do NOT label as "Registry Restricted" unless TLD is known-restricted |
 
 ### 5.2 Cross-Reference Interpretation
+
+> **[DESIGN — NOT YET IMPLEMENTED]** — Formal cross-reference rules are planned for Phase 4. Some cross-referencing occurs informally in orchestrator.go and dkim_state.go.
 
 This is where the ICIE becomes truly powerful — combining signals across protocols:
 
@@ -204,11 +220,11 @@ The ICIE doesn't replace any of this — it formalizes the architecture, names t
 │  │  Intelligence Classification & Interpretation       │ │
 │  │  Engine (ICIE) — BSL 1.1 Protected                  │ │
 │  │                                                     │ │
-│  │  • Source Authority Ranking                         │ │
-│  │  • Confidence Classification                        │ │
-│  │  • Cross-Reference Corroboration                    │ │
-│  │  • Conflict Detection & Resolution                  │ │
-│  │  • RFC-Aligned Interpretation Rules                 │ │
+│  │  • Source Authority Ranking [CURRENT — hierarchy defined]          │ │
+│  │  • Confidence Classification [PARTIAL — 3 of 6 levels]            │ │
+│  │  • Cross-Reference Corroboration [PLANNED — Phase 3]              │ │
+│  │  • Conflict Detection & Resolution [PLANNED — Phase 2-3]         │ │
+│  │  • RFC-Aligned Interpretation Rules [CURRENT — in protocol analyzers] │ │
 │  └────────────────────────┬────────────────────────────┘ │
 │                           │                              │
 │              ┌────────────┼────────────┐                 │
@@ -271,6 +287,8 @@ These classify, interpret, cross-reference, and produce assessments:
 
 ## 11. Authoritative Disagreement Handling
 
+> **[DESIGN — NOT YET IMPLEMENTED]** — Formal disagreement handling is planned. Currently, multi-resolver consensus in dnsclient validates propagation status.
+
 When authoritative sources themselves disagree, confidence must be downgraded:
 
 ### Scenarios
@@ -291,6 +309,8 @@ When authoritative sources themselves disagree, confidence must be downgraded:
 ---
 
 ## 12. How Stale and Absent Affect Scoring
+
+> **[DESIGN — NOT YET IMPLEMENTED]** — Requires extended confidence levels from Phase 3.
 
 | Confidence Level | Scoring Impact | Reporting Impact |
 |-----------------|----------------|------------------|
@@ -334,4 +354,4 @@ This boundary is clean: "How we collect" is open. "How we think" is protected.
 
 *Document created: 2026-02-16*
 *Author: DNS Tool Development*
-*Status: Architecture specification — Phase 1 complete, incorporating architect review feedback (boundary definitions, disagreement handling, stale/absent scoring impact)*
+*Status: Architecture specification & roadmap — Phase 1 complete (formalization), Phases 2-4 planned. Document updated v1.1 (2026-02-17) to clearly separate implemented vs planned capabilities.*

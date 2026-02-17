@@ -360,9 +360,9 @@ Added `hostedrt.com` → "Best Practical RT" to `spfAncillarySenders` map. IETF.
 
 ---
 
-## Failures & Lessons Learned Timeline
+## Failures & Lessons Learned — Detailed Analysis
 
-This section tracks recurring issues and failed approaches so future sessions avoid repeating them. **Always read this before starting work.**
+This section provides detailed analysis of recurring issues, failed approaches, and root causes. **Always read this before starting work.** For a quick-reference table, see "Failures & Lessons Learned — Quick Reference" at the end of this document.
 
 ### CSP Inline Handler Failures (Recurring — v26.14 through v26.16)
 
@@ -765,7 +765,9 @@ Changes:
 
 ---
 
-## Failures & Lessons Learned Timeline
+## Failures & Lessons Learned — Quick Reference
+
+This table is a compact summary of all documented failures. For detailed root cause analysis and failed approaches, see the "Failures & Lessons Learned — Detailed Analysis" section above.
 
 | Date | Mistake | Root Cause | Correct Solution |
 |------|---------|------------|------------------|

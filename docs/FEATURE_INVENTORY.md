@@ -1,6 +1,6 @@
 # DNS Tool — Feature Overview
 
-**Last Updated:** February 15, 2026 (v26.17.2)
+**Last Updated:** February 17, 2026 (v26.19.20)
 **Implementation:** Go/Gin
 
 ---
@@ -88,7 +88,7 @@ The tool performs RFC-compliant parsing and validation of these protocols:
 - **OSINT methodology**: all data sourced from publicly available, open-source intelligence — DNS queries, CT logs, RDAP, publicly accessible web resources
 - **Fresh data**: DNS records always fetched live (TTL=0, no cache)
 - **Observation-based language**: no definitive claims, only observations
-- **Verify It Yourself**: every conclusion maps to a standard command
+- **Open-Standard Protocols**: All analysis uses publicly verifiable DNS, SMTP, and HTTP protocols — results can be independently reproduced with standard tools (dig, openssl, curl)
 - **RFC-backed**: all analysis grounded in published standards
 - **Symbiotic security**: enterprise providers recognized for multi-layer security beyond DNSSEC alone
 

@@ -7,46 +7,22 @@ The DNS Tool is an OSINT platform for comprehensive, RFC-compliant domain securi
 - Preferred communication style: Simple, everyday language.
 - Philosophy: "As open-source as humanly possible while protecting ability to sell as a commercial product."
 - Prioritize honest, observation-based reporting aligned with NIST/CISA standards.
-- Tool targets both technical sysadmins and non-technical executives (board-level).
+- Tool targets technical sysadmins, non-technical executives (board-level), and the InfoSec/security research community (red teams, pen testers, bug bounty hunters).
 - Memory persistence is critical — `replit.md` is the single source of truth between sessions. Update it every session with decisions, changes, and rationale.
 - **IMPORTANT**: If `replit.md` appears truncated or reset, restore from `EVOLUTION.md` which is the persistent backup. Always read BOTH files at session start.
-- **CRITICAL**: Read the "Failures & Lessons Learned Timeline" section at the bottom of `EVOLUTION.md` before making any changes. It documents recurring mistakes (CSP inline handlers, font subset issues, PDF title format, print readability) with correct solutions.
+- **CRITICAL**: Read the "Failures & Lessons Learned — Detailed Analysis" section in `EVOLUTION.md` before making any changes. It documents recurring mistakes (CSP inline handlers, font subset issues, PDF title format, print readability) with correct solutions.
+- **REALITY CHECK RULE (v26.19.20)**: Every homepage claim, schema statement, and documentation assertion must be backed by implemented code. Do NOT claim features that are stubs or planned. Use language like "on the roadmap" for future items, "context" instead of "verification" for informational features (e.g., MPIC).
 
 ## System Architecture
 
 ### Core System
-The application is built in Go using the Gin framework, emphasizing performance and concurrency, following an MVC-style separation.
-
-### Build & Deploy (CRITICAL — read before ANY Go changes)
-- **Build command**: `./build.sh` (from project root). This is the ONLY correct way to build.
-- **Binary path**: `./dns-tool-server` at project root. NEVER build to `./go-server/dns-tool` or any other path.
-- **Why**: `main.py` does `os.execvp("./dns-tool-server", ...)` — gunicorn is just a trampoline, the Go binary takes over immediately.
-- **After ANY Go code change**: Run `./build.sh` then restart the workflow. Without rebuilding, the old binary runs.
-- **CSS changes**: Also require `npx csso`, bumping `AppVersion` in `config.go`, rebuilding via `./build.sh`, and restarting.
+The application is built in Go using the Gin framework, emphasizing performance and concurrency, following an MVC-style separation. The build process uses `./build.sh` which compiles to `./dns-tool-server`, and `main.py` acts as a gunicorn trampoline to launch the Go binary. All Go and CSS changes require rebuilding and restarting the workflow.
 
 ### Backend
-- **Technology Stack**: Go with Gin, `pgx` v5 for PostgreSQL, `sqlc` for type-safe queries, and `miekg/dns` for DNS queries.
-- **Key Features**: Multi-resolver DNS client, DoH fallback, three-layer CT+wildcard+DNS subdomain discovery, posture scoring with CVSS-aligned risk levels, concurrent orchestrator, Mail Transport Security assessment, CSRF middleware, rate limiting, SSRF hardening, telemetry, confidence labeling, "Verify It Yourself" command equivalence, DMARC external reporting authorization, dangling DNS/subdomain takeover detection, HTTPS/SVCB intelligence, IP-to-ASN attribution, Edge/CDN vs origin detection, SaaS TXT footprint extraction, CDS/CDNSKEY automation, SMIMEA/OPENPGPKEY detection, `security.txt` detection, AI Surface Scanner (detects `llms.txt`, AI crawler governance, prefilled prompts, CSS-hidden prompt injection), SPF redirect chain handling with loop detection, DNS history timeline, IP Intelligence, OpenPhish integration, Email Header Analyzer, public exposure checks, expanded exposure checks (probing 8 well-known misconfiguration paths), and report integrity hash (SHA-256 tamper-evident fingerprint).
-- **Password Manager Compatibility**: API key fields are designed for password manager save/fill support using consistent naming, `type="password"`, and proper `<label for>` attributes.
-- **Enterprise DNS Detection**: Automatic identification of major enterprise-grade DNS providers and blocklisting of legacy providers.
-- **Analysis Integrity**: Adherence to an "Analysis Integrity Standard" for RFC compliance and observation-based language.
-- **Remediation Engine**: Generates RFC-aligned "Priority Actions" (fixes) for various DNS records, categorized by severity with DNS record examples.
-- **Mail Posture Labels**: Observation-based labels ("Strongly Protected", "Moderately Protected", etc.) aligned with NIST/CISA.
-- **Cache Policy**: DNS client cache is disabled for live queries; limited caches are used only for external services.
-- **Drift Engine Foundation**: Implements canonical posture hashing to detect configuration drift over time.
-- **Intelligence Classification and Interpretation Engine (ICIE)**: Formalized architecture for how the tool cross-references multiple intelligence sources, ranks source authority, classifies confidence levels, and interprets findings. The Core (data collection) is open source; the ICIE (classification and interpretation) is protected under BSL 1.1. See `INTELLIGENCE_ENGINE.md` for full architecture spec.
-- **Licensing**: Uses BSL 1.1 (Business Source License) for both public and private repositories, with a rolling change date to Apache-2.0, permitting internal use and client audits, while prohibiting competitive offerings.
+The backend utilizes Go with Gin, `pgx` v5 for PostgreSQL, `sqlc` for type-safe queries, and `miekg/dns` for DNS queries. Key features include a multi-resolver DNS client with DoH fallback, three-layer subdomain discovery, posture scoring with CVSS-aligned risk levels, a concurrent orchestrator, Mail Transport Security assessment, CSRF middleware, rate limiting, SSRF hardening, telemetry, DMARC external reporting authorization, dangling DNS/subdomain takeover detection, HTTPS/SVCB intelligence, IP-to-ASN attribution, Edge/CDN vs origin detection, SaaS TXT footprint extraction, CDS/CDNSKEY automation, SMIMEA/OPENPGPKEY detection, `security.txt` detection, an AI Surface Scanner (detecting `llms.txt`, AI crawler governance, prefilled prompts, CSS-hidden prompt injection), SPF redirect chain handling with loop detection, DNS history timeline, IP Intelligence, OpenPhish integration, an Email Header Analyzer, public exposure checks, expanded exposure checks, and a report integrity hash. The system includes Enterprise DNS Detection and adheres to an "Analysis Integrity Standard" for RFC compliance. A Remediation Engine generates RFC-aligned "Priority Actions". The Intelligence Classification and Interpretation Engine (ICIE) formalizes how multiple intelligence sources are cross-referenced, ranked, classified, and interpreted. The project uses the BSL 1.1 license for both public and private repositories.
 
 ### Frontend
-- **Technology**: Server-rendered HTML using Go `html/template`, Bootstrap dark theme, custom CSS, and client-side JavaScript.
-- **UI/UX**: PWA support, accessibility, full mobile responsiveness, and dual intelligence products (Engineer's DNS Intelligence Report + Executive's DNS Intelligence Brief) with configurable TLP classification (default: TLP:AMBER, aligned with CISA Cyber Hygiene practice). Full FIRST TLP v2.0 hierarchy.
-- **Dual Intelligence Products**: Engineer's DNS Intelligence Report (full technical detail) and Executive's DNS Intelligence Brief (condensed board-ready summary) are generated from the same live analysis data. Executive template: `results_executive.html`.
-- **Homepage hero hierarchy**: Badge ("DNS Security Intelligence") → H1 ("Domain Security Audit") → Tagline ("We answer the BIG questions.") → Subtitle (references both intelligence products) → Protocol tags.
-- **TLP Policy**: Default TLP:AMBER for all reports. TLP v2.0 hierarchy (RED → AMBER+STRICT → AMBER → GREEN → CLEAR) is supported. CSS specificity rules are critical for badge and button colors.
-- **CSS cache-busting**: Requires `npx csso` for minification, bumping `AppVersion`, rebuilding the Go binary, and restarting the workflow.
-- **Pages**: Index, Results, Results Executive, History, Statistics, Compare, Sources, IP Intelligence, Email Header Analyzer, Changelog, Security Policy, Brand Colors (hidden, noindex).
-- **Brand Colors Page** (`/brand-colors`): Canonical color reference for design, documenting brand palette and standards-aligned cybersecurity colors (FIRST TLP v2.0, CVSS severity NVD implementation).
-- **Protocol "Big Questions"**: Every section and protocol card features a plain-language question with a data-driven badge answer (e.g., SPF "Does this domain publish who can send email on its behalf?"). These Q&A pairs are slated for `FAQPage` JSON-LD schema markup for SEO.
+The frontend uses server-rendered HTML with Go `html/template`, Bootstrap dark theme, custom CSS, and client-side JavaScript, supporting PWA, accessibility, and full mobile responsiveness. It generates dual intelligence products: an Engineer's DNS Intelligence Report (technical detail) and an Executive's DNS Intelligence Brief (board-ready summary), both with configurable FIRST TLP v2.0 classification (default: TLP:AMBER). Each section and protocol card features a plain-language question with a data-driven badge answer.
 
 ## External Dependencies
 
@@ -60,39 +36,4 @@ The application is built in Go using the Gin framework, emphasizing performance 
 - **OpenPhish**: For phishing URL feed integration.
 
 ### Database
-- **PostgreSQL**: Primary database for persistent storage, with separate databases for development and production environments. Analysis data is immutable and append-only from v26.19.0 forward, ensuring auditable records.
-
-## Phase 2 Roadmap (Deferred Items)
-Items identified during development, consolidated here so they're easy to find across sessions.
-
-### SEO
-- **FAQPage JSON-LD schema**: Protocol "Big Questions" Q&A pairs → `FAQPage` structured data for Google rich snippets. Each analysis page emits domain-specific FAQ schema via `<script type="application/ld+json">` in results template. Questions are evergreen, answers are dynamic from live data.
-
-### Drift Engine (see `DRIFT_ENGINE.md`)
-- **Phase 2 — Drift Detection**: Compare current posture hash to previous, surface "changed" / "unchanged" indicator in results. `GetPreviousPostureHash` query already exists.
-- **Phase 3 — Timeline UI**: Visual drift timeline showing posture changes over time per domain.
-- **Phase 4 — Alerting**: Notifications when posture degrades (e.g., DMARC policy weakened).
-
-### Infrastructure
-- **Multi-vantage probing**: Data model designed to accommodate external VPS probe nodes (Hetzner, OVH) for industry-standard multi-vantage SMTP probing.
-
-### Branding
-- **Owl of Athena image refresh**: User is preparing a cleaner, higher-quality version of the Owl of Athena in an external image editor. Once ready, replace `static/images/owl-of-athena.png` and update all references. Current usage: footer (`_footer.html`), print brand logo in Engineer's Report (`results.html`), Executive Brief (`results_executive.html`). Decision: keep the Owl of Athena in its current locations — do NOT replace with a different logo or move to new positions. Old versions (v2–v12, backups) in `static/images/` can be cleaned up after the new one is confirmed.
-
-### CLI Edition (Terminal Intelligence Product)
-- **Concept**: A beautiful, modern terminal application that delivers the same DNS security analysis with the same rules, golden rules, and ICIE logic as the web tool — but directly from a user's terminal. Inspired by modern "hacker terminal" aesthetics (rich TUI layouts, color-coded panels, structured output).
-- **Delivery options to explore**: (1) Standalone binary users download and run locally (`dnstool audit example.com`), (2) SSH-accessible service users connect to (`ssh audit@dnstool.example.com`), or (3) both.
-- **Design philosophy**: Not a bare-bones CLI dump — should be graphically well-laid-out with panels, tables, color-coded severity, and structured sections matching the web report. Think `lazygit`, `btop`, or `charm.sh` Bubble Tea style. The existing Python CLI (v1.3.0, attached in session) is the spiritual ancestor but never reached this visual quality.
-- **Technical candidates**: Go `charmbracelet/bubbletea` + `lipgloss` (stays in Go ecosystem), or Go `pterm` for simpler structured output. Could share the same analyzer package from the web tool.
-- **Licensing consideration**: CLI could be the "Core" open-source product (data collection + display) while ICIE interpretation stays BSL 1.1 — natural separation point for the open-source / commercial split.
-- **Priority**: Phase 2 — document now, build later. The Python CLI code (v1.3.0) is preserved for reference.
-
-### Analysis Enhancements
-- **Executive template protocol questions**: Port per-protocol "Big Questions" to `results_executive.html` (currently only in Engineer's Report).
-- **DKIM selector coverage**: Expand default selector list or integrate provider-specific selector databases for better DKIM discovery.
-- **Zone file export/import**: Allow users to export discovered DNS configuration as a standards-compliant zone file, and import zone files for offline analysis.
-- **Raw intelligence access**: Provide downloadable raw data (JSON/CSV) of all collected intelligence for integration with external tools and SIEMs.
-- **ISC recommendation path**: Surface Internet Systems Consortium best-practice recommendations alongside RFC citations where applicable.
-- **One-liner verification**: Generate single-command verification scripts (dig/curl/openssl) for every finding, copy-paste ready for terminal use.
-- **Email Header Analyzer matrix**: Cross-reference multiple email headers to build a sender reputation matrix showing authentication consistency across messages.
-- **Probe node integration**: When multi-vantage probe nodes are available, integrate their results into the main analysis for geographic diversity in SMTP and DNS testing.
+- **PostgreSQL**: Primary database for persistent storage, with analysis data being immutable and append-only to ensure auditable records.
