@@ -24,6 +24,7 @@ OSINT platform for RFC-compliant domain security analysis. Go/Gin backend, Boots
 ## Architecture Quick Reference
 - **Build tags**: `//go:build intel` (private) / `//go:build !intel` (public OSS stubs)
 - **11 stub files**: edge_cdn, saas_txt, infrastructure, providers, ip_investigation, manifest, ai_surface/{http,llms_txt,robots_txt,poisoning,scanner}
+- **Intel repo sync**: `node scripts/github-intel-sync.mjs` — reads/writes `careyjames/dnstool-intel` via GitHub API. NEVER leave `_intel.go` files in this repo — push to Intel repo and delete locally.
 - **Reports**: "Engineer's DNS Intelligence Report" (technical) / "Executive's DNS Intelligence Brief" (board-ready)
 - **TLP**: FIRST TLP v2.0, default TLP:AMBER
 

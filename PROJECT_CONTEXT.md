@@ -136,6 +136,26 @@ Two-repository design with Go build tags (`//go:build intel` / `//go:build !inte
 - **DNS Tool Web** (public, `careyjames/DnsToolWeb`): Full framework + `_oss.go` stubs (empty maps, safe defaults)
 - **dnstool-intel** (private, `careyjames/dnstool-intel`): `_intel.go` files with proprietary provider databases
 
+### Intel Repo Access from Replit
+
+The Replit GitHub integration (Octokit, full `repo` scope) provides direct read/write access to `careyjames/dnstool-intel` via the GitHub Contents API. A sync script handles all operations:
+
+```bash
+node scripts/github-intel-sync.mjs list                              # List all Intel repo files
+node scripts/github-intel-sync.mjs read <path>                       # Read a file
+node scripts/github-intel-sync.mjs push <local> <remote> [message]   # Push local file
+node scripts/github-intel-sync.mjs delete <path> [message]           # Delete file
+node scripts/github-intel-sync.mjs commits [count]                   # Show recent commits
+```
+
+**MANDATORY WORKFLOW for `_intel.go` files**:
+1. Write the `_intel.go` file locally (for testing/development)
+2. Push it to `dnstool-intel` via: `node scripts/github-intel-sync.mjs push <local-path> <remote-path> "commit message"`
+3. DELETE the local file immediately — do not leave it in DnsToolWeb
+4. Verify: `find go-server -name "*_intel*"` should return nothing
+
+**WHY**: Even with `//go:build intel` tags, source code committed to DnsToolWeb is visible in the public Git history. Build tags only affect compilation, not visibility. Proprietary provider databases, detection patterns, and intelligence test cases must NEVER exist in the public repo — not even temporarily.
+
 ### Three-File Pattern
 
 | File | Build Tag | Location | Purpose |
