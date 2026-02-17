@@ -360,6 +360,54 @@
                     {{end}}
                 </div>
 
+                <!-- ===================== DOCUMENTATION STANDARD ===================== -->
+                <div class="section-divider"></div>
+                <div class="d-flex align-items-center gap-2 mb-2">
+                    <div class="section-icon section-icon-info">
+                        <i class="fas fa-file-lines"></i>
+                    </div>
+                    <div>
+                        <h2 class="h5 mb-0">Documentation &amp; Citation Standard</h2>
+                        <span class="text-muted small">Governing style for all reports, briefs, and output.</span>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <span class="standard-badge standard-badge-nist">NIST SP 800</span>
+                    <span class="standard-badge standard-badge-first">IEEE Citations</span>
+                </div>
+                <p class="text-muted small mb-3">All DNS Tool documentation, intelligence reports, and executive briefs follow <a href="https://csrc.nist.gov/publications/sp800" target="_blank" rel="noopener" class="text-info">NIST Special Publication 800-series</a> conventions for structure and tone, augmented with <a href="https://ieee-dataport.org/sites/default/files/analysis/27/IEEE%20Citation%20Guidelines.pdf" target="_blank" rel="noopener" class="text-info">IEEE-style numbered citations</a> for RFC and protocol references.</p>
+
+                <div class="card bg-dark border-secondary mb-3">
+                    <div class="card-body">
+                        <div class="small mb-2"><strong class="text-info">Document Structure</strong> <span class="text-muted">(mirrors NIST SP 800-53, 800-171)</span></div>
+                        <ol class="small mb-3 bc-usage-list">
+                            <li>Summary</li>
+                            <li>Findings</li>
+                            <li>Evidence</li>
+                            <li>Impact</li>
+                            <li>Recommendations</li>
+                        </ol>
+                        <div class="small mb-2"><strong class="text-info">Style Rules</strong></div>
+                        <ol class="small mb-0 bc-usage-list">
+                            <li><strong>Tone:</strong> Authoritative, observation-based, factual. No hedging language. Direct statements of observed state.</li>
+                            <li><strong>Technical references:</strong> IEEE-style numbered citations for RFCs, NIST SPs, and protocol standards (e.g., [1] RFC 7489, [2] NIST SP 800-177).</li>
+                            <li><strong>Terminology:</strong> Use NIST/CISA vocabulary — "control", "finding", "observation", "recommendation", "risk level" — not academic terms like "hypothesis" or "methodology".</li>
+                            <li><strong>Report titles:</strong> Intelligence-community format: "DNS Intelligence Report" / "DNS Intelligence Brief" (not "Analysis" or "Study").</li>
+                            <li><strong>Visual identity:</strong> The NIST standard governs content structure and citation format, not visual design. Dark theme, hacker-culture fonts, and brand palette remain unchanged.</li>
+                            <li><strong>Classification:</strong> FIRST TLP v2.0 remains the information sharing framework. Default: TLP:AMBER.</li>
+                        </ol>
+                    </div>
+                </div>
+
+                <div class="d-flex align-items-start gap-3 mb-3 p-3 rounded bc-info-box">
+                    <div class="section-icon section-icon-neutral">
+                        <i class="fas fa-circle-info"></i>
+                    </div>
+                    <div>
+                        <p class="text-muted small mb-0"><strong>Why NIST over APA/Chicago?</strong> APA and Chicago are academic and publishing standards — they read as humanities or social science, not security operations. NIST SP 800-series is the native language of the cybersecurity community this tool serves: NIST, CISA, RFC authors, and enterprise security teams. IEEE citation format is adopted only for numbered protocol references within the NIST document structure.</p>
+                    </div>
+                </div>
+
                 <!-- ===================== USAGE RULES ===================== -->
                 <div class="section-divider"></div>
                 <div class="d-flex align-items-center gap-2 mb-3">
