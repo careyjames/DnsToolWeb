@@ -786,15 +786,12 @@ func TestGoldenRuleStubRegistryComplete(t *testing.T) {
                 "ai_surface/llms_txt.go":   true,
                 "ai_surface/poisoning.go":  true,
                 "ai_surface/robots_txt.go": true,
-                "commands.go":              true,
                 "confidence.go":            true,
                 "dkim_state.go":            true,
-                "edge_cdn.go":              true,
                 "infrastructure.go":        true,
                 "ip_investigation.go":      true,
                 "manifest.go":              true,
                 "providers.go":             true,
-                "saas_txt.go":              true,
         }
 
         analyzerDir := "."
@@ -833,15 +830,12 @@ func TestGoldenRuleNoProviderIntelligenceInPublicFiles(t *testing.T) {
                 "ai_surface/llms_txt.go":   true,
                 "ai_surface/poisoning.go":  true,
                 "ai_surface/robots_txt.go": true,
-                "commands.go":              true,
                 "confidence.go":            true,
                 "dkim_state.go":            true,
-                "edge_cdn.go":              true,
                 "infrastructure.go":        true,
                 "ip_investigation.go":      true,
                 "manifest.go":              true,
                 "providers.go":             true,
-                "saas_txt.go":              true,
         }
 
         forbiddenPairPatterns := []string{
@@ -959,15 +953,12 @@ func TestGoldenRuleStubBoundaryFunctionsRegistered(t *testing.T) {
                 "ai_surface/llms_txt.go":   true,
                 "ai_surface/poisoning.go":  true,
                 "ai_surface/robots_txt.go": true,
-                "commands.go":              true,
                 "confidence.go":            true,
                 "dkim_state.go":            true,
-                "edge_cdn.go":              true,
                 "infrastructure.go":        true,
                 "ip_investigation.go":      true,
                 "manifest.go":              true,
                 "providers.go":             true,
-                "saas_txt.go":              true,
         }
 
         providerFuncPattern := "func is"

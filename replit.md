@@ -37,3 +37,21 @@ The frontend uses server-rendered HTML with Go `html/template`, Bootstrap dark t
 
 ### Database
 - **PostgreSQL**: Primary database for persistent storage, with analysis data being immutable and append-only to ensure auditable records.
+
+## Two-Repo Stub Architecture
+The project uses a two-repository design:
+- **DNS Tool Web** (public): Full application with 10 stub files for private intelligence
+- **dnstool-intel** (private): Proprietary provider databases, detection patterns, advanced analysis
+
+### Stub Contract
+Every stub MUST: (1) return safe non-nil defaults, (2) never return errors, (3) maintain correct function signatures, (4) allow UI to render gracefully. The stub registry is enforced by three golden rule tests in `golden_rules_test.go`.
+
+### Current Stub Files (10)
+`ai_surface/http.go`, `ai_surface/llms_txt.go`, `ai_surface/robots_txt.go`, `ai_surface/poisoning.go`, `confidence.go`, `dkim_state.go`, `infrastructure.go`, `ip_investigation.go`, `manifest.go`, `providers.go`
+
+### Fully Implemented (removed from stub registry 2026-02-17)
+`commands.go` (19 protocol sections, 25+ verification commands), `edge_cdn.go`, `saas_txt.go`
+
+### Python Files (Not Stubs, Not Runtime)
+- `main.py` — Process trampoline only (os.execvp replaces Python with Go binary)
+- `go-server/scripts/audit_icons.py` — Dev-only Font Awesome audit helper

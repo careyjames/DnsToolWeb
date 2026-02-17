@@ -3,11 +3,8 @@
 // This file contains stub implementations. See github.com/careyjames/dnstool-intel for the full version.
 package ai_surface
 
-import (
-	"context"
-	"fmt"
-)
+import "context"
 
 func (s *Scanner) fetchTextFile(ctx context.Context, url string) (string, error) {
-	return "", fmt.Errorf("stub: fetchTextFile not implemented")
+        return "", nil
 }

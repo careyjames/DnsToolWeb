@@ -794,3 +794,55 @@ This table is a compact summary of all documented failures. For detailed root ca
 | 2026-02-16 | RDAP lookup only tried one endpoint, silently blocked by SSRF validation in production | Two bugs: (1) `rdapLookup` selected ONE endpoint and gave up on first failure — no retry. Python tool iterates ALL IANA endpoints + rdap.org fallback. (2) `ValidateURLTarget` returned false when DNS resolution for the RDAP server failed (timeout), silently blocking the HTTP request with misleading "SSRF protection" error. | **Multi-endpoint fix (v26.19.10)**: Refactored `rdapLookup` into `buildRDAPEndpoints` (deduplicates: hardcoded → IANA map → rdap.org fallback) + `tryRDAPEndpoint` (iterates all, only records telemetry failure on last attempt). Matches Python tool's resilience pattern. **SSRF fix**: `ValidateURLTarget` now returns `true` when DNS lookup fails — only blocks on positive private IP detection. DNS failure ≠ SSRF threat; let the HTTP client handle connection errors naturally. **Build path**: Binary must be built to `./dns-tool-server` (not `./go-server/dns-tool`) — `main.py` does `os.execvp("./dns-tool-server", ...)`. |
 | 2026-02-16 | Registrar name never saved to database despite RDAP success | `getStringFromResults(results, "registrar_info", "registrar_name")` used wrong key — the result map uses `"registrar"`, not `"registrar_name"`. Every scan since the field was added had empty `registrar_name` in the database. | **Fix (v26.19.11)**: Changed to `getStringFromResults(results, "registrar_info", "registrar")`. Confirmed: scan #746 now saves "Amazon Registrar, Inc." to the database. Note: production RDAP failures (scan #942) are transient networking issues in Replit's deployment environment, not code bugs. |
 | 2026-02-16 | RDAP transient production failures despite multi-endpoint — double DNS resolution, no retries, stale connections | Three root causes compared to Python CLI: (1) SSRF `ValidateURLTarget` resolves RDAP hostname via `net.LookupHost()` BEFORE the HTTP client resolves again — double DNS resolution in constrained networks. (2) Each endpoint got exactly one attempt — no retry with backoff. (3) Long-running server's connection pool had stale connections vs. Python CLI's fresh-process approach. | **Fix (v26.19.12)**: (1) Created dedicated `NewRDAPHTTPClient()` with `DisableKeepAlives: true` (fresh connections like CLI), 15s timeout, `GetDirect()` method that bypasses SSRF preflight for known-safe RDAP endpoints + sends `Accept: application/rdap+json`. (2) Parallel endpoint attempts — all endpoints fire simultaneously, first success wins, others cancelled. (3) Retry with exponential backoff per endpoint (up to 2 retries, 200ms/400ms). (4) Removed registrar from "Partial Results" error banner — contextual data failures shouldn't alarm users. Registrar box still shows "Unknown" visually for internal testing, and WARN-level logging catches failures. **ICIE alignment**: RDAP is Tier 4 contextual intelligence, not Tier 1-2 security protocol — its failure should not be presented as a security analysis error. |
+| 2026-02-17 | Stub architecture audit and DKIM selector extraction bug | commands.go DKIM extraction tried to cast selectors as `[]any` but dkim.go returns `map[string]any`; DMARC external report auth looked under `dmarc` key instead of top-level `dmarc_report_auth`; selector names include `._domainkey` suffix causing doubled paths in verification commands; stub registry listed 3 files (commands.go, edge_cdn.go, saas_txt.go) that are now fully implemented. | **Fixes**: (1) DKIM extraction handles both map and slice types, strips `._domainkey` suffix. (2) DMARC report auth checks top-level key first. (3) Stub registry cleaned to 10 actual stub files. (4) `ai_surface/http.go` fetchTextFile returns empty string instead of error for graceful degradation. (5) Maintenance badge improved: custom CSS with readable gold-on-dark styling, capitalized "Accuracy Tuning". |
+
+---
+
+## Stub Architecture — Two-Repo Design (v26.19.20)
+
+### Overview
+The project uses a two-repository architecture:
+- **DNS Tool Web** (public, open-source core): Contains the full application with stub files that stand in for private intelligence
+- **dnstool-intel** (private): Contains proprietary intelligence data — provider databases, detection patterns, advanced analysis logic
+
+### Design Contract
+Every stub file MUST:
+1. Return safe, non-nil defaults (empty maps, empty slices, false booleans)
+2. Never return errors that propagate to template rendering
+3. Maintain correct function signatures matching the orchestrator's expectations
+4. Allow the UI to render gracefully — sections may show "not found" or "standard" but must never crash or silently disappear
+
+### Current Stub Registry (10 files)
+
+| File | Purpose | Degradation Behavior |
+|------|---------|---------------------|
+| `ai_surface/http.go` | HTTP fetcher for web content | Returns empty string, no error — scanners see empty content |
+| `ai_surface/llms_txt.go` | llms.txt detection | Returns `found: false` — section renders "not found" |
+| `ai_surface/robots_txt.go` | AI crawler detection in robots.txt | Returns empty arrays — section renders "no crawlers detected" |
+| `ai_surface/poisoning.go` | AI recommendation poisoning IOCs | Returns `ioc_count: 0` — section renders "no indicators found" |
+| `confidence.go` | Confidence level constants and helpers | Fully functional — defines Observed/Inferred/ThirdParty levels |
+| `dkim_state.go` | DKIM state classification enum | Fully functional — classifies DKIM status from protocol state |
+| `infrastructure.go` | Provider detection databases | Enterprise providers detected; managed/self-hosted/government return nil |
+| `ip_investigation.go` | IP relationship analysis | Returns minimal skeleton — separate investigation page shows basic info |
+| `manifest.go` | Feature parity manifest | Returns empty — manifest-dependent features don't render |
+| `providers.go` | Provider intelligence boundaries | Empty provider maps — boundary functions return false/nil |
+
+### Files NO LONGER Stubs (removed from registry 2026-02-17)
+- `commands.go` — Fully implemented with 19 protocol sections, 25+ verification commands
+- `edge_cdn.go` — Fully implemented with CDN/edge detection patterns
+- `saas_txt.go` — Fully implemented with SaaS TXT footprint extraction
+
+### Golden Rule Tests
+- `TestGoldenRuleStubRegistryComplete` — detects unregistered stub files
+- `TestGoldenRuleNoProviderIntelligenceInPublicFiles` — prevents IP leakage into non-stub files
+- `TestGoldenRuleStubBoundaryFunctionsRegistered` — ensures boundary functions stay in providers.go
+
+### Rules for Adding New Stubs
+1. Add the "stub implementations" comment on line 3
+2. Register the file in ALL THREE `knownStubFiles` maps in `golden_rules_test.go`
+3. Return safe defaults — NEVER return errors from stub functions
+4. Write a golden rule test verifying the stub's degradation behavior
+
+### Python Files (Not Stubs)
+- `main.py` — Process trampoline only; `os.execvp` replaces Python process with Go binary. No Flask, no Python logic at runtime.
+- `go-server/scripts/audit_icons.py` — Dev-only helper for Font Awesome icon subset auditing. Never executed in production.
