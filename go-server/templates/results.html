@@ -561,7 +561,7 @@
                                     <strong>Unknown</strong>
                                     {{end}}
                                 </div>
-                                <small class="text-muted d-block u-fs-065rem">{{if mapGetBool "ns_inferred" $registrar}}Inferred from NS records{{else if mapGetBool "registry_restricted" $registrar}}.{{mapGetStr "registry_restricted_tld" $registrar}} restricts public WHOIS{{else if mapGetStr "subdomain_of" $registrar}}Registrar for {{mapGetStr "subdomain_of" $registrar}}{{else}}Where you pay to own domain{{end}}</small>
+                                <small class="text-muted d-block u-fs-065rem">{{if mapGetBool "ns_inferred" $registrar}}Inferred from NS records{{else if mapGetBool "registry_restricted" $registrar}}.{{mapGetStr "registry_restricted_tld" $registrar}} restricts public WHOIS{{else if mapGetStr "subdomain_of" $registrar}}Registrar for {{mapGetStr "subdomain_of" $registrar}}{{else}}Where domain was purchased{{end}}</small>
                             </div>
                             <div class="col-6 col-md-3 domain-summary-col mb-2 mb-md-0">
                                 <small class="text-uppercase text-muted fw-bold d-block u-fs-070rem">Email Service Provider
