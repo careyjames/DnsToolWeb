@@ -118,6 +118,13 @@ func (a *Analyzer) AnalyzeDomain(ctx context.Context, domain string, customDKIMS
         results["smtp_transport"] = smtpResult
 
         results["hosting_summary"] = a.GetHostingInfo(ctx, domain, results)
+        if results["is_no_mail_domain"] == true || results["has_null_mx"] == true {
+                if hs, ok := results["hosting_summary"].(map[string]any); ok {
+                        if hs["email_hosting"] == "Unknown" || hs["email_hosting"] == "" {
+                                hs["email_hosting"] = "No Mail Domain"
+                        }
+                }
+        }
         results["dns_infrastructure"] = a.AnalyzeDNSInfrastructure(domain, results)
         results["email_security_mgmt"] = a.DetectEmailSecurityManagement(
                 spfAnalysis,
