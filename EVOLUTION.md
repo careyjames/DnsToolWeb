@@ -846,3 +846,29 @@ Every stub file MUST:
 ### Python Files (Not Stubs)
 - `main.py` — Process trampoline only; `os.execvp` replaces Python process with Go binary. No Flask, no Python logic at runtime.
 - `go-server/scripts/audit_icons.py` — Dev-only helper for Font Awesome icon subset auditing. Never executed in production.
+
+---
+
+## Documentation & Citation Standard Decision (2026-02-17)
+
+### Decision: NIST SP 800-series Style
+After evaluating APA, Chicago/Turabian, IEEE, NIST SP 800, and ICD (Intelligence Community Directives), the project adopts **NIST SP 800-series style** as the official documentation and citation standard, augmented with IEEE-style numeric citations for RFC and protocol references.
+
+### Rationale
+| Standard | Verdict | Why |
+|----------|---------|-----|
+| APA | Rejected | Academic/social science tone undermines security credibility |
+| Chicago/Turabian | Rejected | Humanities/publishing voice, not security operations |
+| IEEE | Partial adoption | Good for numbered protocol references; too engineering-paper-style for the full document voice |
+| ICD | Rejected | Government intelligence classification handling beyond our scope; could confuse commercial positioning |
+| **NIST SP 800** | **Adopted** | Natural alignment with NIST/CISA/RFC ecosystem; authoritative for executives and technical users; matches "Decision-Ready Intelligence" framing |
+
+### Style Rules (canonical reference in replit.md)
+1. Document structure: Summary → Findings → Evidence → Impact → Recommendations
+2. Tone: Authoritative, observation-based, factual. No hedging.
+3. Technical references: IEEE numbered citations for RFCs/standards
+4. Terminology: NIST/CISA vocabulary (control, finding, observation, recommendation, risk level)
+5. Visual identity: NIST governs content structure, not visual design — dark theme and hacker fonts remain
+
+### Badge Update (same session)
+Accuracy Tuning badge restyled with amber pill-shaped outline (`border: 2px solid`, `border-radius: 999px`, subtle `box-shadow` glow) for notice/warning visual weight.

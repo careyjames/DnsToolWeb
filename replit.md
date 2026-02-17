@@ -55,3 +55,25 @@ Every stub MUST: (1) return safe non-nil defaults, (2) never return errors, (3) 
 ### Python Files (Not Stubs, Not Runtime)
 - `main.py` — Process trampoline only (os.execvp replaces Python with Go binary)
 - `go-server/scripts/audit_icons.py` — Dev-only Font Awesome audit helper
+
+## Documentation & Citation Standard (decided 2026-02-17)
+
+### Official Standard: NIST SP 800-series Style
+All documentation, reports, and output follow NIST Special Publication 800-series conventions, augmented with IEEE-style numeric citations for RFC/protocol references.
+
+### Why NIST
+- Aligns with existing NIST/CISA/RFC ecosystem the tool operates within
+- Reads authoritative for both executives and technical users
+- Matches the security operations and intelligence community voice
+- Natural fit for the "Decision-Ready Intelligence" framing
+- Avoids academic tone (APA/Chicago) and humanities feel that would undermine security credibility
+- More appropriate than ICD (Intelligence Community Directives) which implies government classification handling beyond our scope
+
+### Style Rules
+1. **Document structure**: Summary → Findings → Evidence → Impact → Recommendations (mirrors NIST SP 800-53, 800-171)
+2. **Tone**: Authoritative, observation-based, factual. No hedging language. Direct statements of observed state.
+3. **Technical references**: IEEE-style numbered citations for RFCs, NIST SPs, and protocol standards (e.g., [1] RFC 7489, [2] NIST SP 800-177)
+4. **Terminology**: Use NIST/CISA vocabulary — "control", "finding", "observation", "recommendation", "risk level" — not academic terms like "hypothesis" or "methodology"
+5. **Report titles**: Use intelligence-community format: "DNS Intelligence Report" / "DNS Intelligence Brief" (not "Analysis" or "Study")
+6. **Visual identity**: Dark theme with hacker-culture fonts is fine — the NIST standard governs content structure and citation format, not visual design
+7. **TLP classification**: Already using FIRST TLP v2.0 — this remains the classification framework

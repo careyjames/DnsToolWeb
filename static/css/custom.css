@@ -2909,7 +2909,10 @@ main.container {
     font-size: 0.65rem;
     vertical-align: middle;
     letter-spacing: 0.03em;
-    background: rgba(209, 160, 52, 0.15);
+    background: rgba(209, 160, 52, 0.13);
     color: #e8c547;
-    border: 1px solid rgba(209, 160, 52, 0.35);
+    border: 2px solid rgba(232, 197, 71, 0.55);
+    border-radius: 999px;
+    padding: 0.25em 0.7em;
+    box-shadow: 0 0 6px rgba(232, 197, 71, 0.18);
 }
