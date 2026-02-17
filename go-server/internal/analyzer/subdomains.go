@@ -121,7 +121,7 @@ func (a *Analyzer) DiscoverSubdomains(ctx context.Context, domain string) map[st
                 slog.Info("CT provider in cooldown, skipping", "domain", domain)
                 ctAvailable = false
         } else {
-                ctCtx, ctCancel := context.WithTimeout(context.Background(), 10*time.Second)
+                ctCtx, ctCancel := context.WithTimeout(context.Background(), 30*time.Second)
                 defer ctCancel()
                 ctURL := fmt.Sprintf("https://crt.sh/?q=%%25.%s&output=json", domain)
                 start := time.Now()
@@ -131,7 +131,7 @@ func (a *Analyzer) DiscoverSubdomains(ctx context.Context, domain string) map[st
                         slog.Warn("CT log query failed", "domain", domain, "error", err, "elapsed_ms", time.Since(start).Milliseconds())
                         ctAvailable = false
                 } else {
-                        body, err := a.HTTP.ReadBody(resp, 2<<20)
+                        body, err := a.HTTP.ReadBody(resp, 10<<20)
                         if err != nil {
                                 a.Telemetry.RecordFailure(ctProvider, err.Error())
                                 ctAvailable = false

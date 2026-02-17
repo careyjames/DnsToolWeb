@@ -106,7 +106,7 @@ Server-rendered HTML with Go html/template, Bootstrap dark theme, custom CSS, cl
 | **DNS Resolvers** (Cloudflare, Google, Quad9, OpenDNS/Cisco Umbrella) | Multi-resolver consensus DNS queries | Public, no API key |
 | **IANA RDAP** | Registry data lookups | Multi-endpoint, parallel attempts, exponential backoff |
 | **ip-api.com** | Visitor IP-to-country lookups | Free tier |
-| **crt.sh** | Certificate Transparency logs | Independent 10s context |
+| **crt.sh** | Certificate Transparency logs | Independent 30s context, 10MB body limit |
 | **SecurityTrails** | DNS history and IP Intelligence | **⚠️ 50 req/month HARD LIMIT. User-provided API key ONLY. NEVER call automatically.** |
 | **Team Cymru** | DNS-based IP-to-ASN attribution | Independent 8s context |
 | **OpenPhish** | Phishing URL feed (Email Header Analyzer body scanning) | Community feed |
