@@ -1113,3 +1113,50 @@ Applied `showOverlay()` to all overlay trigger points: index.html form submit, r
    - Key takeaway: authentication verifies identity, not intent
 
 **Lesson learned**: When multiple detection layers fire simultaneously, the educational response should be STRONGER (combined explanation), not weaker (showing only the first match).
+
+---
+
+## Session: February 17, 2026 (v26.19.23) — Documentation Governance & Audit
+
+### replit.md Stability Resolution
+
+**Problem**: replit.md kept being overwritten/truncated by the Replit platform. Comprehensive writes (162+ lines) would revert to a shorter platform-generated default. This happened repeatedly across sessions, wasting significant time on restoration.
+
+**Root cause**: Replit docs confirm replit.md is a platform-managed file designed to be a lightweight agent context that the platform can auto-regenerate. It's NOT intended as a comprehensive knowledge base — it's a config file.
+
+**Solution**: Created `PROJECT_CONTEXT.md` (420 lines) as the stable, canonical project context document. Slimmed replit.md down to ~35 lines (pointer + 10 critical rules + quick reference). If replit.md resets again, there is zero information loss — everything lives in PROJECT_CONTEXT.md and EVOLUTION.md.
+
+**Architecture decision**: replit.md is now a "pointer file" pattern:
+- replit.md (~35 lines): Overview + Critical Rules summary + "read PROJECT_CONTEXT.md first"
+- PROJECT_CONTEXT.md (~420 lines): Full architecture, stub tables, constraints, roadmap, naming conventions
+- EVOLUTION.md: Permanent breadcrumb trail (unchanged role)
+
+### Documentation Audit Findings (v26.19.23)
+
+Full cross-check of public-facing docs (llms.txt, llms-full.txt, FEATURE_INVENTORY.md) against Go implementation.
+
+**Critical fixes applied**:
+1. **Posture terminology mismatch**: Docs claimed SECURE/PARTIAL/INSECURE and EXCELLENT/GOOD/MODERATE/WEAK/CRITICAL — neither exists in code. Actual values: Low Risk / Medium Risk / High Risk / Critical Risk (CVSS-aligned). Fixed in all three docs.
+2. **TLP:RED omission**: FEATURE_INVENTORY.md listed TLP options but omitted TLP:RED, which IS implemented in the UI. Fixed.
+3. **SMTP probe caveat**: FEATURE_INVENTORY.md claimed "live TLS probing" without mentioning that cloud platforms block port 25 and it gracefully skips. Fixed. (llms.txt and llms-full.txt already had the caveat.)
+4. **SecurityTrails limits**: Added 50 req/month hard limit and user-key-only caveats to FEATURE_INVENTORY.md.
+5. **Version stale**: FEATURE_INVENTORY.md said v26.19.20, actual was v26.19.22. Updated to v26.19.23.
+
+**Loading screen update**: "Posture scoring & remediation" → "Intelligence classification & interpretation" on both results.html and history.html. ICIE is the engine that DOES posture scoring — it's the broader, more accurate label.
+
+### Documentation Files Updated
+| File | What Changed |
+|------|-------------|
+| `PROJECT_CONTEXT.md` | Created (420 lines, all 11 sections) |
+| `replit.md` | Slimmed to ~35 lines (pointer pattern) |
+| `static/llms.txt` | Posture terminology, SMTP caveat, Email Header Analyzer features |
+| `static/llms-full.txt` | Posture terminology (3 locations), SMTP caveat, Email Header Analyzer details |
+| `docs/FEATURE_INVENTORY.md` | Version, TLP:RED, SMTP caveat, SecurityTrails limits, Email Header Analyzer |
+| `go-server/templates/results.html` | Loading label: "Intelligence classification & interpretation" |
+| `go-server/templates/history.html` | Loading label: "Intelligence classification & interpretation" |
+| `go-server/internal/config/config.go` | AppVersion 26.19.22 → 26.19.23 |
+
+### Lesson Learned
+- **replit.md is volatile by design**. Never put comprehensive context in it. Use it as a pointer to stable files.
+- **Audit public-facing docs against actual Go code regularly**. The posture terminology drift (SECURE/PARTIAL/INSECURE vs Low Risk/etc.) was present for multiple versions without being caught.
+- **Subagent audits are effective**: Using parallel subagents for doc creation + cross-checking found 8 issues that manual review missed.

@@ -23,7 +23,7 @@ Replace `example.com` with any domain. This triggers a fresh analysis immediatel
 
 ### What You'll Get Back
 A single-page report with these sections (scroll down):
-- **Security Posture Verdict**: SECURE / PARTIAL / INSECURE at the top
+- **Security Posture Verdict**: Low Risk / Medium Risk / High Risk / Critical Risk (CVSS-aligned) at the top
 - **Email Security**: SPF, DKIM, DMARC analysis with pass/fail badges
 - **Email Security Providers**: Who manages DMARC monitoring, SPF flattening (gold badges)
 - **Brand Security**: BIMI logo, MTA-STS policy, TLS-RPT reporting
@@ -68,7 +68,7 @@ Every attribution includes a confidence label:
 - **Third-party**: Sourced from external services (SecurityTrails, crt.sh)
 
 ## Who It's For
-- **Executives & Board Members**: Clear SECURE / PARTIAL / INSECURE verdicts for cybersecurity posture at a glance
+- **Executives & Board Members**: Clear Low Risk / Medium Risk / High Risk / Critical Risk verdicts for cybersecurity posture at a glance
 - **IT Professionals**: Validate SPF, DKIM, DMARC, DANE/TLSA configurations and troubleshoot DNS records
 - **DNS Specialists**: Authoritative nameserver queries, multi-resolver consensus, DNSSEC chain validation, DANE analysis
 - **Business & Compliance**: Vendor security assessments, supply chain risk evaluation, brand protection

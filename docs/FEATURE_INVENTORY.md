@@ -1,6 +1,6 @@
 # DNS Tool — Feature Overview
 
-**Last Updated:** February 17, 2026 (v26.19.20)
+**Last Updated:** February 17, 2026 (v26.19.23)
 **Implementation:** Go/Gin
 
 ---
@@ -28,7 +28,7 @@ The tool performs RFC-compliant parsing and validation of these protocols:
 - **DNSSEC Analysis** (RFC 4035) — chain of trust verification
 - **CAA Analysis** (RFC 8659) — authorized CA parsing, MPIC awareness
 - **NS Delegation Analysis** (RFC 1034) — delegation consistency, lame delegation detection
-- **SMTP Transport Analysis** (RFC 3207) — live TLS probing with DNS-inferred fallback
+- **SMTP Transport Analysis** (RFC 3207) — live TLS probing with DNS-inferred fallback (conditional — cloud platforms may block outbound port 25; gracefully skipped when unavailable)
 
 ## Infrastructure Analysis
 
@@ -39,7 +39,7 @@ The tool performs RFC-compliant parsing and validation of these protocols:
 - Three-layer subdomain discovery: Certificate Transparency logs + wildcard detection + high-speed UDP DNS probing (~140 common names)
 - DNS infrastructure provider detection and tier classification
 - Hosting provider detection (web, DNS, email)
-- DNS history timeline via SecurityTrails API
+- DNS history timeline via SecurityTrails API (user-provided API key only; 50 req/month hard limit; never called automatically)
 
 ## Assessment and Scoring
 
@@ -67,7 +67,7 @@ The tool performs RFC-compliant parsing and validation of these protocols:
 - Email Header Analyzer — multi-format support (paste, .eml, JSON, .mbox, .txt) with SPF/DKIM/DMARC verification, delivery route tracing, spoofing detection, subject line scam analysis (phone number obfuscation, fake payment amounts, homoglyph brand impersonation), third-party spam vendor detection (Proofpoint, Barracuda, Microsoft SCL, Mimecast), brand mismatch detection, BCC delivery detection, and educational "Understanding This Attack" explainer
 - IP Intelligence (reverse lookups, ASN attribution, geolocation)
 - Dual intelligence products: Engineer's DNS Intelligence Report (comprehensive technical detail) and Executive's DNS Intelligence Brief (concise board-ready summary with security scorecard)
-- Configurable TLP classification (default: TLP:AMBER, with TLP:AMBER+STRICT, TLP:GREEN and TLP:CLEAR options) aligned with CISA Cyber Hygiene practice and FIRST TLP v2.0
+- Configurable TLP classification (default: TLP:AMBER, with TLP:RED, TLP:AMBER+STRICT, TLP:GREEN and TLP:CLEAR options) aligned with CISA Cyber Hygiene practice and FIRST TLP v2.0
 - Report integrity hash (SHA-256 fingerprint binding domain, analysis ID, timestamp, tool version, and results data) with copy-to-clipboard and header preview
 - Posture drift detection foundation (canonical SHA-256 hashing for longitudinal monitoring)
 - Changelog page

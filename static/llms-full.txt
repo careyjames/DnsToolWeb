@@ -53,10 +53,11 @@ This triggers a fresh analysis and returns the full results page. Wait 2-5 secon
 After analysis, the results page contains these sections in order. Scroll down through them.
 
 ### 1. Security Posture Verdict (Top of Page)
-The overall security rating appears prominently at the top:
-- **SECURE** (green): Strong protections across email auth, DNSSEC, and encryption
-- **PARTIAL** (yellow/amber): Some protections in place but gaps exist
-- **INSECURE** (red): Critical security controls missing
+The overall security rating appears prominently at the top using CVSS-aligned risk levels:
+- **Low Risk** (green): Strong protections across email auth, DNSSEC, and encryption
+- **Medium Risk** (yellow/amber): Some protections in place but gaps exist
+- **High Risk** (orange): Significant security controls missing
+- **Critical Risk** (red): Critical security controls absent or misconfigured
 
 A brief executive summary explains the reasoning. The posture considers: SPF, DKIM, DMARC, DNSSEC, MTA-STS, TLS-RPT, BIMI, CAA, DANE/TLSA, and NS delegation.
 
@@ -268,7 +269,7 @@ Side-by-side comparison of two domains' security configurations.
 
 When reporting results back to a user, focus on:
 
-1. **The overall security posture** (SECURE / PARTIAL / INSECURE) and why
+1. **The overall security posture** (Low Risk / Medium Risk / High Risk / Critical Risk) and why
 2. **Email authentication status**: Do they have SPF + DKIM + DMARC? Is DMARC set to reject?
 3. **Transport security**: Is DANE/TLSA configured? Is MTA-STS enforcing? Are both deployed?
 4. **Actionable gaps**: What's missing and what should they fix first?
@@ -312,12 +313,11 @@ DNS Tool detects when a domain uses a hosted email provider and adjusts DANE ana
 - SRV: Service discovery (_autodiscover, _sip, _caldavs, etc.)
 - TLSA: DANE certificate pinning records (_25._tcp.{mx_host})
 
-### Security Posture Levels
-- **EXCELLENT**: Full email security + DNSSEC + DANE + advanced protections
-- **GOOD**: Strong email security controls in place
-- **MODERATE**: Basic protections present but gaps exist
-- **WEAK**: Missing critical security records
-- **CRITICAL**: No security controls detected
+### Security Posture Levels (CVSS-Aligned)
+- **Low Risk** (green): Full email security + DNSSEC + DANE + advanced protections
+- **Medium Risk** (amber): Strong email security controls in place but some gaps
+- **High Risk** (orange): Missing critical security records
+- **Critical Risk** (red): No security controls detected or severe misconfiguration
 
 ### Infrastructure Intelligence
 - PTR-based hosting detection: Reverse DNS lookups identify hosting providers (e.g., CloudFront, AWS, Google) without third-party APIs
