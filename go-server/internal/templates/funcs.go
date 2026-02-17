@@ -262,6 +262,26 @@ func mapGetStr(key string, m map[string]interface{}) string {
         return s
 }
 
+func mapGetInt(key string, m map[string]interface{}) int {
+        if m == nil {
+                return 0
+        }
+        v, ok := m[key]
+        if !ok || v == nil {
+                return 0
+        }
+        switch n := v.(type) {
+        case int:
+                return n
+        case int64:
+                return int(n)
+        case float64:
+                return int(n)
+        default:
+                return 0
+        }
+}
+
 func mapGetFloat(key string, m map[string]interface{}) float64 {
         if m == nil {
                 return 0
@@ -370,6 +390,7 @@ func mapFuncs() template.FuncMap {
         return template.FuncMap{
                 "mapGet":      mapGet,
                 "mapGetStr":   mapGetStr,
+                "mapGetInt":   mapGetInt,
                 "mapGetFloat": mapGetFloat,
                 "mapGetBool":  mapGetBool,
                 "mapGetMap":   mapGetMap,

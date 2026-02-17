@@ -88,7 +88,6 @@ func (a *Analyzer) DiscoverSubdomains(ctx context.Context, domain string) map[st
         }
 
         if cached, ok := a.getCTCache(domain); ok {
-                result["subdomains"] = cached
                 result["unique_subdomains"] = len(cached)
                 result["ct_source"] = "cache"
 
@@ -108,6 +107,15 @@ func (a *Analyzer) DiscoverSubdomains(ctx context.Context, domain string) map[st
                 result["current_count"] = fmt.Sprintf("%d", currentCount)
                 result["expired_count"] = fmt.Sprintf("%d", expiredCount)
                 result["cname_count"] = float64(cnameCount)
+
+                const displayLimit = 100
+                if len(cached) > displayLimit {
+                        result["subdomains"] = cached[:displayLimit]
+                        result["total_subdomains_found"] = len(cached)
+                        result["display_capped"] = true
+                } else {
+                        result["subdomains"] = cached
+                }
                 return result
         }
 
@@ -145,13 +153,19 @@ func (a *Analyzer) DiscoverSubdomains(ctx context.Context, domain string) map[st
                 }
         }
 
+        dedupedEntries := deduplicateCTEntries(ctEntries)
         if ctAvailable {
                 result["total_certs"] = len(ctEntries)
+                result["unique_certs"] = len(dedupedEntries)
         }
 
-        wildcardInfo := detectWildcardCerts(ctEntries, domain)
+        wildcardInfo := detectWildcardCerts(dedupedEntries, domain)
         if wildcardInfo != nil {
                 result["wildcard_certs"] = wildcardInfo
+        }
+
+        if ctAvailable {
+                result["ca_summary"] = buildCASummary(dedupedEntries)
         }
 
         subdomainSet := make(map[string]map[string]any)
@@ -196,12 +210,34 @@ func (a *Analyzer) DiscoverSubdomains(ctx context.Context, domain string) map[st
 
         a.setCTCache(domain, subdomains)
 
-        result["subdomains"] = subdomains
         result["unique_subdomains"] = len(subdomains)
         result["ct_source"] = "live"
         _ = dnsProbed
 
+        const displayLimit = 100
+        if len(subdomains) > displayLimit {
+                result["subdomains"] = subdomains[:displayLimit]
+                result["total_subdomains_found"] = len(subdomains)
+                result["display_capped"] = true
+        } else {
+                result["subdomains"] = subdomains
+        }
+
         return result
+}
+
+func deduplicateCTEntries(entries []ctEntry) []ctEntry {
+        seen := make(map[string]bool, len(entries))
+        deduped := make([]ctEntry, 0, len(entries))
+        for _, e := range entries {
+                if e.SerialNumber == "" || !seen[e.SerialNumber] {
+                        if e.SerialNumber != "" {
+                                seen[e.SerialNumber] = true
+                        }
+                        deduped = append(deduped, e)
+                }
+        }
+        return deduped
 }
 
 func detectWildcardCerts(ctEntries []ctEntry, domain string) map[string]any {
@@ -210,14 +246,54 @@ func detectWildcardCerts(ctEntries []ctEntry, domain string) map[string]any {
         hasWildcard := false
         isCurrent := false
 
+        sanSet := make(map[string]bool)
+        var issuers []string
+        issuerSeen := make(map[string]bool)
+        certCount := 0
+        var latestNotAfter time.Time
+        var earliestNotBefore time.Time
+
         for _, entry := range ctEntries {
                 names := strings.Split(entry.NameValue, "\n")
+                isWildcardCert := false
                 for _, name := range names {
                         name = strings.TrimSpace(strings.ToLower(name))
                         if name == wildcardPattern {
-                                hasWildcard = true
-                                if parseCertDate(entry.NotAfter).After(now) {
-                                        isCurrent = true
+                                isWildcardCert = true
+                                break
+                        }
+                }
+                if !isWildcardCert {
+                        continue
+                }
+
+                hasWildcard = true
+                certCount++
+                notAfter := parseCertDate(entry.NotAfter)
+                notBefore := parseCertDate(entry.NotBefore)
+                if notAfter.After(now) {
+                        isCurrent = true
+                }
+                if notAfter.After(latestNotAfter) {
+                        latestNotAfter = notAfter
+                }
+                if earliestNotBefore.IsZero() || notBefore.Before(earliestNotBefore) {
+                        earliestNotBefore = notBefore
+                }
+
+                issuer := simplifyIssuer(entry.IssuerName)
+                if !issuerSeen[issuer] {
+                        issuerSeen[issuer] = true
+                        if len(issuers) < 10 {
+                                issuers = append(issuers, issuer)
+                        }
+                }
+
+                for _, name := range names {
+                        name = strings.TrimSpace(strings.ToLower(name))
+                        if name != "" && name != wildcardPattern && name != domain {
+                                if strings.HasSuffix(name, "."+domain) || name == domain {
+                                        sanSet[name] = true
                                 }
                         }
                 }
@@ -227,11 +303,93 @@ func detectWildcardCerts(ctEntries []ctEntry, domain string) map[string]any {
                 return nil
         }
 
-        return map[string]any{
-                "present": true,
-                "pattern": wildcardPattern,
-                "current": isCurrent,
+        var explicitSANs []string
+        for san := range sanSet {
+                explicitSANs = append(explicitSANs, san)
         }
+        sort.Strings(explicitSANs)
+
+        result := map[string]any{
+                "present":    true,
+                "pattern":    wildcardPattern,
+                "current":    isCurrent,
+                "cert_count": certCount,
+                "issuers":    issuers,
+        }
+
+        if len(explicitSANs) > 0 {
+                result["explicit_sans"] = explicitSANs
+                result["san_count"] = len(explicitSANs)
+        }
+        if !earliestNotBefore.IsZero() {
+                result["earliest"] = earliestNotBefore.Format("2006-01-02")
+        }
+        if !latestNotAfter.IsZero() {
+                result["latest_expiry"] = latestNotAfter.Format("2006-01-02")
+        }
+
+        return result
+}
+
+func buildCASummary(entries []ctEntry) []map[string]any {
+        type caStats struct {
+                name        string
+                certCount   int
+                firstSeen   time.Time
+                lastSeen    time.Time
+                hasCurrents bool
+        }
+
+        now := time.Now()
+        caMap := make(map[string]*caStats)
+        var caOrder []string
+
+        for _, entry := range entries {
+                issuer := simplifyIssuer(entry.IssuerName)
+                notBefore := parseCertDate(entry.NotBefore)
+                notAfter := parseCertDate(entry.NotAfter)
+
+                stats, exists := caMap[issuer]
+                if !exists {
+                        stats = &caStats{name: issuer, firstSeen: notBefore, lastSeen: notBefore}
+                        caMap[issuer] = stats
+                        caOrder = append(caOrder, issuer)
+                }
+                stats.certCount++
+                if !notBefore.IsZero() && notBefore.Before(stats.firstSeen) {
+                        stats.firstSeen = notBefore
+                }
+                if !notBefore.IsZero() && notBefore.After(stats.lastSeen) {
+                        stats.lastSeen = notBefore
+                }
+                if notAfter.After(now) {
+                        stats.hasCurrents = true
+                }
+        }
+
+        sort.Slice(caOrder, func(i, j int) bool {
+                return caMap[caOrder[i]].certCount > caMap[caOrder[j]].certCount
+        })
+
+        maxCAs := 8
+        if len(caOrder) < maxCAs {
+                maxCAs = len(caOrder)
+        }
+
+        summary := make([]map[string]any, 0, maxCAs)
+        for _, name := range caOrder[:maxCAs] {
+                s := caMap[name]
+                entry := map[string]any{
+                        "name":       s.name,
+                        "cert_count": s.certCount,
+                        "first_seen": s.firstSeen.Format("2006-01-02"),
+                        "last_seen":  s.lastSeen.Format("2006-01-02"),
+                        "active":     s.hasCurrents,
+                }
+                summary = append(summary, entry)
+        }
+
+        return summary
 }
 
 func parseCertDate(s string) time.Time {

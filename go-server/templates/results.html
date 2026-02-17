@@ -3623,7 +3623,12 @@
                     {{if and (eq $ctStatus "success") $ctSubdomains (gt (len $ctSubdomains) 0)}}
                     <div class="mb-3">
                         <div class="d-flex flex-wrap align-items-center gap-2 mb-2">
+                            {{$uniqueCerts := mapGetInt "unique_certs" $ct}}
+                            {{if gt $uniqueCerts 0}}
+                            <span class="badge bg-info-subtle text-info border border-info-subtle"><i class="fas fa-certificate me-1"></i>{{$uniqueCerts}} unique certificates</span>
+                            {{else}}
                             <span class="badge bg-info-subtle text-info border border-info-subtle"><i class="fas fa-certificate me-1"></i>{{mapGetStr "total_certs" $ct}} certificates analyzed</span>
+                            {{end}}
                             <span class="badge bg-success-subtle text-success border border-success-subtle"><i class="fas fa-check me-1"></i>{{mapGetStr "current_count" $ct}} current</span>
                             <span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle"><i class="fas fa-history me-1"></i>{{mapGetStr "expired_count" $ct}} expired</span>
                             {{$cnameCount := mapGetFloat "cname_count" $ct}}
@@ -3651,12 +3656,72 @@
                             {{else}}
                             <span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle ms-1 u-fs-065rem">Expired</span>
                             {{end}}
+                            <span class="badge bg-info-subtle text-info border border-info-subtle ms-1 u-fs-065rem">{{mapGetInt "cert_count" $wildcardCerts}} cert{{if gt (mapGetInt "cert_count" $wildcardCerts) 1}}s{{end}}</span>
+                            {{$wcIssuers := mapGetSlice "issuers" $wildcardCerts}}
+                            {{if $wcIssuers}}
+                            <span class="badge bg-dark bg-opacity-25 text-muted fw-normal ms-1 u-fs-065rem">{{len $wcIssuers}} CA{{if gt (len $wcIssuers) 1}}s{{end}}: {{range $i, $iss := $wcIssuers}}{{if $i}}, {{end}}{{$iss}}{{end}}</span>
+                            {{end}}
+                            {{$wcSANs := mapGetSlice "explicit_sans" $wildcardCerts}}
+                            {{if $wcSANs}}
+                            <div class="mt-2">
+                                <i class="fas fa-fingerprint me-1"></i><strong>Explicit SANs found on wildcard certificates:</strong>
+                                <span class="text-info ms-1">These hostnames were specifically listed alongside the wildcard — revealing infrastructure the operator intentionally secured.</span>
+                                <div class="d-flex flex-wrap gap-1 mt-1">
+                                    {{range $san := $wcSANs}}
+                                    <code class="badge bg-dark bg-opacity-50 text-info border border-info-subtle fw-normal">{{$san}}</code>
+                                    {{end}}
+                                </div>
+                            </div>
+                            {{else}}
                             <div class="mt-1 text-muted">
-                                Subdomains covered by this wildcard won't appear individually in CT logs (RFC 6962). DNS probing and CNAME chain traversal were used to discover additional subdomains below.
+                                No explicit SANs found on wildcard certificates. Subdomains covered by this wildcard won't appear individually in CT logs (RFC 6962).
+                            </div>
+                            {{end}}
+                            <div class="mt-1 text-muted">
+                                DNS probing and CNAME chain traversal were used to discover additional subdomains below.
                             </div>
                         </div>
                         {{end}}
                     </div>
+                    {{$caSummary := mapGetSlice "ca_summary" $ct}}
+                    {{if and $caSummary (gt (len $caSummary) 0)}}
+                    <div class="alert alert-secondary bg-secondary bg-opacity-10 border-secondary border-opacity-25 py-2 mt-2 mb-2 small">
+                        <i class="fas fa-shield-alt me-1"></i>
+                        <strong>Certificate Authority Diversity</strong>
+                        <span class="text-muted ms-1">({{len $caSummary}} CA{{if gt (len $caSummary) 1}}s{{end}} observed across CT log history)</span>
+                        <div class="table-responsive mt-2">
+                            <table class="table table-sm table-borderless mb-0">
+                                <thead><tr>
+                                    <th class="border-0 text-muted u-fs-070rem">Certificate Authority</th>
+                                    <th class="border-0 text-muted text-center u-fs-070rem">Certs</th>
+                                    <th class="border-0 text-muted u-fs-070rem">First Issued</th>
+                                    <th class="border-0 text-muted u-fs-070rem">Last Issued</th>
+                                    <th class="border-0 text-muted text-center u-fs-070rem">Status</th>
+                                </tr></thead>
+                                <tbody>
+                                {{range $ca := $caSummary}}
+                                {{$caData := toMap $ca}}
+                                {{if $caData}}
+                                <tr>
+                                    <td class="border-0"><code class="small">{{mapGetStr "name" $caData}}</code></td>
+                                    <td class="border-0 text-center text-muted small">{{mapGetInt "cert_count" $caData}}</td>
+                                    <td class="border-0 text-muted small">{{mapGetStr "first_seen" $caData}}</td>
+                                    <td class="border-0 text-muted small">{{mapGetStr "last_seen" $caData}}</td>
+                                    <td class="border-0 text-center">
+                                        {{if mapGetBool "active" $caData}}
+                                        <span class="badge bg-success-subtle text-success border border-success-subtle u-fs-060rem">Active</span>
+                                        {{else}}
+                                        <span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle u-fs-060rem">Historical</span>
+                                        {{end}}
+                                    </td>
+                                </tr>
+                                {{end}}
+                                {{end}}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    {{end}}
                     {{$providerSummary := mapGetMap "provider_summary" $ct}}
                     {{if $providerSummary}}
                     <div class="alert alert-warning bg-warning bg-opacity-10 border-warning border-opacity-25 py-2 mt-2 mb-3 small">
@@ -3671,6 +3736,13 @@
                             {{end}}
                             {{end}}
                         </div>
+                    </div>
+                    {{end}}
+                    {{if mapGetBool "display_capped" $ct}}
+                    <div class="alert alert-info bg-info bg-opacity-10 border-info border-opacity-25 py-2 mt-2 mb-2 small">
+                        <i class="fas fa-list me-1"></i>
+                        <strong>{{mapGetInt "total_subdomains_found" $ct}} subdomains discovered</strong> — showing first {{len $ctSubdomains}} below.
+                        <span class="text-muted">Full export will be available in a future release.</span>
                     </div>
                     {{end}}
                     <div class="table-responsive">
