@@ -3741,11 +3741,14 @@
                     {{if mapGetBool "display_capped" $ct}}
                     <div class="alert alert-info bg-info bg-opacity-10 border-info border-opacity-25 py-2 mt-2 mb-2 small">
                         <i class="fas fa-list me-1"></i>
-                        <strong>{{mapGetInt "total_subdomains_found" $ct}} subdomains discovered</strong> —
-                        showing all {{mapGetInt "display_current_count" $ct}} current plus recent historical ({{len $ctSubdomains}} total below).
+                        <strong>Showing {{len $ctSubdomains}} of {{mapGetInt "total_subdomains_found" $ct}} subdomains discovered</strong> —
+                        all {{mapGetInt "display_current_count" $ct}} current subdomains shown, plus recent historical entries.
                         {{$omitted := mapGetInt "display_historical_omitted" $ct}}{{if gt $omitted 0}}
-                        <span class="text-muted">{{$omitted}} older historical subdomains not shown. Full export will be available in a future release.</span>
+                        <span class="text-muted">{{$omitted}} older historical entries available via export.</span>
                         {{end}}
+                        <a href="/export/subdomains?domain={{.Domain}}" class="btn btn-sm btn-outline-info ms-2 no-print" title="Download all {{mapGetInt "total_subdomains_found" $ct}} subdomains as CSV">
+                            <i class="fas fa-download me-1"></i>Export All (CSV)
+                        </a>
                     </div>
                     {{end}}
                     <div class="table-responsive">
@@ -3822,6 +3825,9 @@
                         {{if gt $expiredCount 0}}
                         <span class="ms-1">{{formatFloat 0 $expiredCount}} expired-certificate-only subdomain{{if ne $expiredCount 1}}s{{end}} included where relevant.</span>
                         {{end}}
+                        <a href="/export/subdomains?domain={{.Domain}}" class="btn btn-sm btn-outline-secondary ms-2 no-print" title="Download all subdomains as CSV">
+                            <i class="fas fa-download me-1"></i>Export All (CSV)
+                        </a>
                     </div>
                     {{end}}
                     {{else if and (eq $ctStatus "success") (eq $ctUnique 0)}}

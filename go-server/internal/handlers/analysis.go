@@ -427,6 +427,69 @@ func (h *AnalysisHandler) APISubdomains(c *gin.Context) {
         c.JSON(http.StatusOK, result)
 }
 
+func (h *AnalysisHandler) ExportSubdomainsCSV(c *gin.Context) {
+        domain := strings.TrimSpace(strings.ToLower(c.Query("domain")))
+        if domain == "" {
+                c.String(http.StatusBadRequest, "domain parameter required")
+                return
+        }
+        if !dnsclient.ValidateDomain(domain) {
+                c.String(http.StatusBadRequest, "invalid domain")
+                return
+        }
+
+        cached, ok := h.Analyzer.GetCTCache(domain)
+        if !ok || len(cached) == 0 {
+                c.String(http.StatusNotFound, "No subdomain data available. Analyze the domain first, then export.")
+                return
+        }
+
+        timestamp := time.Now().UTC().Format("20060102_150405")
+        filename := fmt.Sprintf("%s_subdomains_%s.csv", strings.ReplaceAll(domain, ".", "_"), timestamp)
+
+        c.Header("Content-Type", "text/csv; charset=utf-8")
+        c.Header("Content-Disposition", fmt.Sprintf("attachment; filename=\"%s\"", filename))
+        c.Status(http.StatusOK)
+
+        w := c.Writer
+        w.WriteString("Subdomain,Status,Source,CNAME Target,Provider,Certificates,First Seen,Issuers\n")
+
+        for _, sd := range cached {
+                name, _ := sd["name"].(string)
+                status := "Expired"
+                if isCur, ok := sd["is_current"].(bool); ok && isCur {
+                        status = "Current"
+                }
+                source, _ := sd["source"].(string)
+                cnameTarget, _ := sd["cname_target"].(string)
+                provider, _ := sd["provider"].(string)
+                certCount, _ := sd["cert_count"].(string)
+                firstSeen, _ := sd["first_seen"].(string)
+
+                var issuerStr string
+                if issuers, ok := sd["issuers"].([]string); ok && len(issuers) > 0 {
+                        issuerStr = strings.Join(issuers, "; ")
+                }
+
+                w.WriteString(csvEscape(name) + "," +
+                        csvEscape(status) + "," +
+                        csvEscape(source) + "," +
+                        csvEscape(cnameTarget) + "," +
+                        csvEscape(provider) + "," +
+                        csvEscape(certCount) + "," +
+                        csvEscape(firstSeen) + "," +
+                        csvEscape(issuerStr) + "\n")
+        }
+        w.Flush()
+}
+
+func csvEscape(s string) string {
+        if strings.ContainsAny(s, ",\"\n\r") {
+                return "\"" + strings.ReplaceAll(s, "\"", "\"\"") + "\""
+        }
+        return s
+}
+
 func (h *AnalysisHandler) APIAnalysis(c *gin.Context) {
         idStr := c.Param("id")
         analysisID, err := strconv.ParseInt(idStr, 10, 32)

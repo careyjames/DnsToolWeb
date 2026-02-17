@@ -145,6 +145,7 @@ func main() {
         router.GET("/compare", compareHandler.Compare)
 
         router.GET("/export/json", exportHandler.ExportJSON)
+        router.GET("/export/subdomains", analysisHandler.ExportSubdomainsCSV)
 
         router.GET("/api/analysis/:id", analysisHandler.APIAnalysis)
         router.GET("/api/subdomains/*domain", analysisHandler.APISubdomains)

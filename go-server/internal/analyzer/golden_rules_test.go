@@ -1042,15 +1042,15 @@ func TestGoldenRuleSubdomainCurrentFirstOrdering(t *testing.T) {
 }
 
 func TestGoldenRuleDisplayCapNeverHidesCurrent(t *testing.T) {
-        subdomains := make([]map[string]any, 0, 150)
+        subdomains := make([]map[string]any, 0, 300)
 
-        for i := 0; i < 120; i++ {
+        for i := 0; i < 220; i++ {
                 subdomains = append(subdomains, map[string]any{
                         "name":       strings.Replace("sub-XXX.example.com", "XXX", strings.Repeat("a", i+1), 1),
                         "is_current": true,
                 })
         }
-        for i := 0; i < 30; i++ {
+        for i := 0; i < 80; i++ {
                 subdomains = append(subdomains, map[string]any{
                         "name":       strings.Replace("old-XXX.example.com", "XXX", strings.Repeat("b", i+1), 1),
                         "is_current": false,
@@ -1059,7 +1059,7 @@ func TestGoldenRuleDisplayCapNeverHidesCurrent(t *testing.T) {
         }
 
         result := map[string]any{}
-        applySubdomainDisplayCap(result, subdomains, 120)
+        applySubdomainDisplayCap(result, subdomains, 220)
 
         displayed := result["subdomains"].([]map[string]any)
 
@@ -1070,12 +1070,12 @@ func TestGoldenRuleDisplayCapNeverHidesCurrent(t *testing.T) {
                 }
         }
 
-        if currentInDisplay != 120 {
-                t.Fatalf("CRITICAL: display cap must never hide current subdomains — showed %d of 120 current", currentInDisplay)
+        if currentInDisplay != 220 {
+                t.Fatalf("CRITICAL: display cap must never hide current subdomains — showed %d of 220 current", currentInDisplay)
         }
 
-        if len(displayed) != 140 {
-                t.Errorf("expected 140 displayed (120 current + 20 historical overflow), got %d", len(displayed))
+        if len(displayed) != 245 {
+                t.Errorf("expected 245 displayed (220 current + 25 historical overflow), got %d", len(displayed))
         }
 
         if _, ok := result["display_capped"]; !ok {

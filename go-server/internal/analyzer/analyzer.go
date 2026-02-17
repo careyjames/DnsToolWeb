@@ -120,6 +120,10 @@ func (a *Analyzer) getCTCache(domain string) ([]map[string]any, bool) {
         return entry.data, true
 }
 
+func (a *Analyzer) GetCTCache(domain string) ([]map[string]any, bool) {
+        return a.getCTCache(domain)
+}
+
 func (a *Analyzer) setCTCache(domain string, data []map[string]any) {
         a.ctCacheMu.Lock()
         defer a.ctCacheMu.Unlock()

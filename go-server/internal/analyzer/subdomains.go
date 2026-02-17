@@ -246,8 +246,8 @@ func sortSubdomainsSmartOrder(subdomains []map[string]any) []map[string]any {
 }
 
 func applySubdomainDisplayCap(result map[string]any, subdomains []map[string]any, currentCount int) {
-        const softCap = 100
-        const historicalOverflow = 20
+        const softCap = 200
+        const historicalOverflow = 25
 
         total := len(subdomains)
 

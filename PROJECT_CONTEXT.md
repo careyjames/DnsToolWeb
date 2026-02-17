@@ -318,9 +318,11 @@ Pipeline sequence (order is load-bearing):
 
 Key invariants:
 - Enrichment (`enrichSubdomainsV2`) MUST happen before sort and count — it mutates `is_current` based on live DNS resolution
-- Display cap NEVER hides current/active subdomains
+- Display cap (softCap=200, historicalOverflow=25) NEVER hides current/active subdomains
 - CT unavailability is graceful fallback, not an error — DNS probing still runs
 - Golden rule tests protect: ordering, display cap, field preservation, free CA detection
+- CSV export: `/export/subdomains?domain=X` exports ALL cached subdomains (not just displayed ones)
+- CT timeout: 30s, body limit: 10MB (for large domains like apple.com)
 
 ### Data and API
 
