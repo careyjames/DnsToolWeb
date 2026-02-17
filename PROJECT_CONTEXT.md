@@ -369,14 +369,37 @@ All items below are **on the roadmap** — not yet implemented:
 
 1. **Drift Engine Phases 2-4** (compare, timeline UI, alerting) — see `DRIFT_ENGINE.md` — on the roadmap
 2. **Globalping.io** distributed DNS resolution probes (complementary to port 25 probe, NOT replacement) — on the roadmap
-3. **External VPS probe nodes** (Hetzner/OVH) for SMTP port 25 probing — on the roadmap
+3. **Probe Network (dns-observe.com)** — First node provisioned: `probe-us-01.dns-observe.com` (Feb 2026). See details below. — on the roadmap
 4. **Homebrew distribution** for macOS/Linux CLI — on the roadmap
 5. **Zone file export/import** for offline analysis — on the roadmap
 6. **Raw intelligence API access** — on the roadmap
 7. **ISC recommendation path integration** — on the roadmap
 8. **One-liner verification commands** — on the roadmap
 9. **Email Header Analyzer feature matrix** — on the roadmap
-10. **Probe node integration** in analysis pipeline — on the roadmap
+
+### Probe Network — dns-observe.com (Roadmap Detail)
+
+**Status**: Infrastructure provisioned, service not yet deployed.
+
+**Node: probe-us-01.dns-observe.com**
+- Ubuntu 24.04 LTS, 2 CPU, 8GB RAM, 96GB disk
+- Caddy reverse proxy (HTTPS → 127.0.0.1:8080), TLS automatic
+- DNS tools: dig (BIND 9.18), nslookup, host, curl, wget
+- Security: Monarx agent, UFW firewall, SSH ed25519 key auth
+- Deployment access: SSH from Replit via `PROBE_SSH_*` secrets
+
+**Planned Architecture** (architect-reviewed):
+- Lightweight Go HTTP service on port 8080 behind Caddy
+- Endpoints: `/v1/resolve` (DNS resolution), `/v1/mx-probe` (MX reachability), `/v1/smtp-probe` (port 25 probing)
+- Auth: API key in header (shared secret), rate-limited, input-validated (domain + RR type whitelist)
+- Stateless, no database — results annotated with probe location + timing
+- Main DNS Tool calls probe via HTTP with timeouts; analysis completes if probe unavailable (graceful fallback)
+- Deployment: SCP Go binary + systemd service unit via SSH
+- Multi-node ready: probe registry config with health checks, weighted selection, concurrent queries
+
+**Value proposition**: External vantage DNS resolution from a different network + SMTP port 25 probing (blocked from many cloud platforms). Strengthens subdomain discovery and adds capabilities impossible from Replit's network.
+
+**Public vs private**: Probe service framework code in public repo. Provider heuristics or enhanced intelligence in private repo. Follows existing build-tag architecture.
 
 ---
 

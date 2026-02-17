@@ -1205,3 +1205,53 @@ Full cross-check of public-facing docs (llms.txt, llms-full.txt, FEATURE_INVENTO
 | `go-server/internal/analyzer/orchestrator.go` | Email hosting fallback from DKIM primary_provider |
 | `go-server/templates/results.html` | Registrar subtitle, DMARC badge fix, AI Surface Scanner RFC citations |
 | `EVOLUTION.md` | Session breadcrumb |
+
+---
+
+## Session: February 17, 2026
+
+### Subdomain Discovery Pipeline Protection (v26.19.30)
+- **Context**: Subdomain discovery is now consistently finding subdomains where other tools fail. Was broken for a long time before being fixed. User flagged as the crown jewel of the tool — must be protected.
+- **Architect review**: Analyzed full pipeline, identified fragility points (CT single dependency, enrichment ordering, cache/live divergence, in-place mutations).
+- **Action**: Added 6 golden rule tests protecting pipeline invariants:
+  - `TestGoldenRuleSubdomainCurrentFirstOrdering` — current subdomains always before historical, alphabetical within current, date-descending within historical
+  - `TestGoldenRuleDisplayCapNeverHidesCurrent` — display cap never hides active subdomains (120 current + 30 historical → all 120 current + 20 historical shown)
+  - `TestGoldenRuleDisplayCapSmallSetUncapped` — sets under 100 never artificially capped
+  - `TestGoldenRuleCTUnavailableFallbackProducesResults` — empty CT entries gracefully produce empty results (not errors)
+  - `TestGoldenRulePipelineFieldsPreservedThroughSort` — source, first_seen, cname_target, cert_count survive sort
+  - `TestGoldenRuleFreeCertAuthorityDetection` — free vs paid CA classification (Let's Encrypt/Amazon/Cloudflare = free; DigiCert/Sectigo = paid)
+- **Documentation**: Added "DO NOT BREAK" sections to SKILL.md and PROJECT_CONTEXT.md documenting pipeline sequence, invariants, and do-not-touch zones.
+- **Key lesson**: Enrichment (`enrichSubdomainsV2`) MUST happen before sort and count — it mutates `is_current` via live DNS resolution.
+
+### Maintenance Tag Update
+- Changed MAINTENANCE_NOTE from "Accuracy Tuning · Feb 18–20" to "Accuracy Tuning · Feb 17–20" (user requested start date of today).
+
+### Probe Server Reconnaissance — dns-observe.com
+- **First probe node provisioned**: `probe-us-01.dns-observe.com`
+- **SSH access confirmed** from Replit via ed25519 key (secrets: PROBE_SSH_PRIVATE_KEY, PROBE_SSH_HOST, PROBE_SSH_USER, PROBE_API_URL)
+- **Server survey**:
+  - Ubuntu 24.04.4 LTS, kernel 6.8.0, 2 CPU, 8GB RAM, 96GB disk
+  - Caddy reverse proxy: HTTPS → 127.0.0.1:8080 (nothing on 8080 yet — ready for service)
+  - DNS tools: dig (BIND 9.18), nslookup, host, curl, wget
+  - Security: Monarx agent running, UFW firewall active
+  - No Go, no Docker — clean slate
+  - IPv6: 2a02:4780:... (European hosting provider, likely Hetzner)
+- **Architect-reviewed integration plan**:
+  - Lightweight Go HTTP service on port 8080 behind Caddy
+  - Endpoints: `/v1/resolve`, `/v1/mx-probe`, `/v1/smtp-probe`
+  - Auth: API key in header, rate-limited, input-validated (domain + RR type whitelist)
+  - Stateless, no database — results annotated with probe location + timing
+  - Graceful fallback: analysis completes if probe unavailable
+  - Deployment: SCP binary + systemd service via SSH
+  - Multi-node ready: probe registry with health checks
+- **Value**: External vantage DNS resolution + SMTP port 25 probing (blocked from cloud platforms). Strengthens subdomain discovery.
+- **Naming convention**: `probe-{region}-{number}.dns-observe.com` — designed for expansion.
+
+### Files Changed
+| File | What Changed |
+|------|-------------|
+| `go-server/internal/config/config.go` | AppVersion 26.19.29 → 26.19.30 |
+| `go-server/internal/analyzer/golden_rules_test.go` | 6 new pipeline protection tests |
+| `.agents/skills/dns-tool/SKILL.md` | Subdomain discovery "DO NOT BREAK" section |
+| `PROJECT_CONTEXT.md` | Pipeline critical infrastructure docs, probe network roadmap detail |
+| `EVOLUTION.md` | Session breadcrumb |
