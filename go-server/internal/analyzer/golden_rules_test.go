@@ -1191,3 +1191,74 @@ func TestGoldenRuleFreeCertAuthorityDetection(t *testing.T) {
                 }
         }
 }
+
+func TestGoldenRuleDKIMDelegationProviderMatching(t *testing.T) {
+        cases := []struct {
+                ns       string
+                expected string
+        }{
+                {"ns-dkim.ondmarc.com", "Red Sift OnDMARC"},
+                {"ns1.easydmarc.com", "EasyDMARC"},
+                {"dkim.valimail.com", "Valimail"},
+                {"ns.dmarcian.com", "dmarcian"},
+                {"dkim.powerdmarc.com", "PowerDMARC"},
+                {"ns.agari.com", "Agari (Fortra)"},
+                {"dkim.socketlabs.com", "SocketLabs"},
+                {"ns.proofpoint.com", "Proofpoint"},
+                {"dkim.mimecast.com", "Mimecast"},
+                {"unknown-provider.example.net", ""},
+        }
+
+        for _, tc := range cases {
+                t.Run(tc.ns, func(t *testing.T) {
+                        got := matchDKIMNSProvider([]string{tc.ns})
+                        if got != tc.expected {
+                                t.Errorf("for NS %s: expected provider %q, got %q", tc.ns, tc.expected, got)
+                        }
+                })
+        }
+}
+
+func TestGoldenRuleDKIMDelegationStructure(t *testing.T) {
+        d := DKIMDelegation{
+                Detected:    true,
+                Nameservers: []string{"ns-dkim.ondmarc.com"},
+                Provider:    "Red Sift OnDMARC",
+        }
+        if !d.Detected {
+                t.Error("Detected should be true")
+        }
+        if len(d.Nameservers) != 1 || d.Nameservers[0] != "ns-dkim.ondmarc.com" {
+                t.Errorf("unexpected nameservers: %v", d.Nameservers)
+        }
+        if d.Provider != "Red Sift OnDMARC" {
+                t.Errorf("unexpected provider: %s", d.Provider)
+        }
+
+        empty := DKIMDelegation{}
+        if empty.Detected {
+                t.Error("empty delegation should have Detected=false")
+        }
+}
+
+func TestGoldenRuleZohoSquareSelectors(t *testing.T) {
+        for _, sel := range []string{selZoho, selZohoMail, selZmail, selSquare, selSquareup, selSQ} {
+                found := false
+                for _, def := range defaultDKIMSelectors {
+                        if def == sel {
+                                found = true
+                                break
+                        }
+                }
+                if !found {
+                        t.Errorf("selector %q must be in defaultDKIMSelectors", sel)
+                }
+        }
+
+        if selectorProviderMap[selZoho] != providerZohoMail {
+                t.Errorf("zoho selector should map to %s", providerZohoMail)
+        }
+        if selectorProviderMap[selSquare] != providerSquareOnline {
+                t.Errorf("square selector should map to %s", providerSquareOnline)
+        }
+}

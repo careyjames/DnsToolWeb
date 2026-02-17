@@ -74,6 +74,15 @@ const (
         selFM1         = "fm1._domainkey"
         selFM2         = "fm2._domainkey"
         selFM3         = "fm3._domainkey"
+
+        selZoho        = "zoho._domainkey"
+        selZohoMail    = "zohomail._domainkey"
+        selZmail       = "zmail._domainkey"
+        selSquare      = "square._domainkey"
+        selSquareup    = "squareup._domainkey"
+        selSQ          = "sq._domainkey"
+
+        providerSquareOnline = "Square Online"
 )
 
 var (
@@ -96,6 +105,8 @@ var defaultDKIMSelectors = []string{
         selMX, selSMTP, selMailer,
         selProtonmail, selProtonmail2, selProtonmail3,
         selFM1, selFM2, selFM3,
+        selZoho, selZohoMail, selZmail,
+        selSquare, selSquareup, selSQ,
 }
 
 var selectorProviderMap = map[string]string{
@@ -123,6 +134,12 @@ var selectorProviderMap = map[string]string{
         selZendesk1:  providerZendesk,
         selZendesk2:  providerZendesk,
         selCM:        "Campaign Monitor",
+        selZoho:      providerZohoMail,
+        selZohoMail:  providerZohoMail,
+        selZmail:     providerZohoMail,
+        selSquare:    providerSquareOnline,
+        selSquareup:  providerSquareOnline,
+        selSQ:        providerSquareOnline,
 }
 
 var mxToDKIMProvider = map[string]string{
@@ -183,7 +200,7 @@ var primaryProviderSelectors = map[string][]string{
         providerMailgun:         {selMailgun},
         providerSendGrid:        {selS1, selS2, selSendgrid},
         providerAmazonSES:       {selAmazonSES},
-        providerZohoMail:        {selDefault},
+        providerZohoMail:        {selZoho, selZohoMail, selZmail, selDefault},
         providerFastmail:        {selFM1, selFM2, selFM3},
         providerProtonMail:      {selProtonmail, selProtonmail2, selProtonmail3},
         providerCloudflareEmail: {selDefault},
@@ -703,12 +720,73 @@ func reclassifyAmbiguousSelectors(foundSelectors map[string]map[string]any, fina
         }
 }
 
+var dkimNSProviders = map[string]string{
+        "ondmarc.com":      "Red Sift OnDMARC",
+        "easydmarc.com":    "EasyDMARC",
+        "valimail.com":     "Valimail",
+        "dmarcian.com":     "dmarcian",
+        "powerdmarc.com":   "PowerDMARC",
+        "agari.com":        "Agari (Fortra)",
+        "socketlabs.com":   "SocketLabs",
+        "proofpoint.com":   "Proofpoint",
+        "mimecast.com":     "Mimecast",
+}
+
+type DKIMDelegation struct {
+        Detected    bool
+        Nameservers []string
+        Provider    string
+}
+
+func matchDKIMNSProvider(nameservers []string) string {
+        for _, ns := range nameservers {
+                for suffix, name := range dkimNSProviders {
+                        if strings.HasSuffix(ns, suffix) {
+                                return name
+                        }
+                }
+        }
+        return ""
+}
+
+func normalizeDKIMNS(nsRecords []string) []string {
+        var nameservers []string
+        for _, ns := range nsRecords {
+                normalized := strings.ToLower(strings.TrimRight(ns, "."))
+                if normalized != "" {
+                        nameservers = append(nameservers, normalized)
+                }
+        }
+        return nameservers
+}
+
+func (a *Analyzer) detectDKIMDelegation(ctx context.Context, domain string) DKIMDelegation {
+        dkZone := "_domainkey." + domain
+        nsRecords := a.DNS.QueryDNS(ctx, "NS", dkZone)
+        if len(nsRecords) == 0 {
+                return DKIMDelegation{}
+        }
+
+        nameservers := normalizeDKIMNS(nsRecords)
+        if len(nameservers) == 0 {
+                return DKIMDelegation{}
+        }
+
+        return DKIMDelegation{
+                Detected:    true,
+                Nameservers: nameservers,
+                Provider:    matchDKIMNSProvider(nameservers),
+        }
+}
+
 func (a *Analyzer) AnalyzeDKIM(ctx context.Context, domain string, mxRecords []string, customSelectors []string) map[string]any {
         selectors := buildSelectorList(customSelectors)
 
         if len(mxRecords) == 0 {
                 mxRecords = a.DNS.QueryDNS(ctx, "MX", domain)
         }
+
+        dkimDelegation := a.detectDKIMDelegation(ctx, domain)
 
         spfRecord := findSPFRecord(a.DNS.QueryDNS(ctx, "TXT", domain))
 
@@ -767,6 +845,15 @@ func (a *Analyzer) AnalyzeDKIM(ctx context.Context, domain string, mxRecords []s
                 selectorMap[k] = v
         }
 
+        var delegationMap map[string]any
+        if dkimDelegation.Detected {
+                delegationMap = map[string]any{
+                        "detected":    true,
+                        "nameservers": dkimDelegation.Nameservers,
+                        "provider":    dkimDelegation.Provider,
+                }
+        }
+
         return map[string]any{
                 "status":              status,
                 "message":             message,
@@ -780,5 +867,6 @@ func (a *Analyzer) AnalyzeDKIM(ctx context.Context, domain string, mxRecords []s
                 "primary_dkim_note":   primaryDKIMNote,
                 "found_providers":     sortedProviders,
                 "spf_ancillary_note":  res.SPFAncillaryNote,
+                "domainkey_delegation": delegationMap,
         }
 }
