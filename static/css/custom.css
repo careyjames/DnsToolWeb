@@ -730,7 +730,7 @@ main.container {
     cursor: not-allowed;
 }
 
-/* Loading Overlay - hidden by default via d-none class */
+/* Loading Overlay - hidden via opacity/visibility for Safari animation compat */
 .loading-overlay {
     position: fixed;
     top: 0;
@@ -739,13 +739,21 @@ main.container {
     bottom: 0;
     background: rgba(0, 0, 0, 0.85);
     z-index: 9999;
+    display: flex;
     align-items: center;
     justify-content: center;
     -webkit-backdrop-filter: blur(4px);
     backdrop-filter: blur(4px);
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    -webkit-transition: opacity 0.2s ease, visibility 0.2s ease;
+    transition: opacity 0.2s ease, visibility 0.2s ease;
 }
-.loading-overlay:not(.d-none) {
-    display: flex;
+.loading-overlay.is-active {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
 }
 
 .loading-content {

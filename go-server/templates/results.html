@@ -4158,7 +4158,7 @@
     </main>
 
     <!-- Loading Overlay -->
-    <div id="loadingOverlay" class="loading-overlay d-none">
+    <div id="loadingOverlay" class="loading-overlay" role="status">
         <div class="loading-content">
             <div class="loading-spinner">
                 <i class="fas fa-globe fa-spin"></i>
@@ -4412,7 +4412,7 @@
                         if (typeof showOverlay === 'function') {
                             showOverlay(overlay);
                         } else {
-                            overlay.classList.remove('d-none');
+                            overlay.classList.add('is-active');
                         }
                         if (typeof startStatusCycle === 'function') {
                             startStatusCycle(overlay);

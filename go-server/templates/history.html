@@ -364,14 +364,14 @@
         {{template "footer" .}}
     </main>
 
-    <output id="historyViewOverlay" class="loading-overlay d-none" aria-live="polite" aria-label="Loading stored results">
+    <div id="historyViewOverlay" class="loading-overlay" role="status" aria-live="polite" aria-label="Loading stored results">
         <div class="loading-content">
             <div class="spinner-border text-primary mb-3 u-icon-3rem"><span class="visually-hidden">Loading...</span></div>
             <div class="text-light fw-medium" id="historyViewText">Loading analysis results...</div>
         </div>
-    </output>
+    </div>
 
-    <output id="historyAnalyzeOverlay" class="loading-overlay d-none" aria-live="polite" aria-busy="true" aria-label="Running domain analysis">
+    <div id="historyAnalyzeOverlay" class="loading-overlay" role="status" aria-live="polite" aria-busy="true" aria-label="Running domain analysis">
         <div class="loading-content">
             <div class="loading-spinner">
                 <i class="fas fa-globe fa-spin"></i>
@@ -425,7 +425,7 @@
                 <i class="fas fa-exclamation-triangle me-1"></i>Analysis is taking longer than expected. <a href="/" class="text-info">Try from the home page</a> or refresh to retry.
             </p>
         </div>
-    </output>
+    </div>
 
     {{template "scripts" .}}
     <script nonce="{{.CspNonce}}">
@@ -447,7 +447,7 @@
                 const overlay=document.getElementById('historyViewOverlay');
                 const txt=document.getElementById('historyViewText');
                 if(txt&&name)txt.textContent='Loading results for '+name+'...';
-                if(overlay){if(typeof showOverlay==='function'){showOverlay(overlay);}else{overlay.classList.remove('d-none');}}
+                if(overlay){if(typeof showOverlay==='function'){showOverlay(overlay);}else{overlay.classList.add('is-active');}}
                 disableAllActions();
                 btn.innerHTML='<i class="fas fa-spinner fa-spin"></i>';
             });
@@ -460,7 +460,7 @@
                 const domainEl=document.getElementById('historyAnalyzeDomain');
                 if(domainEl)domainEl.textContent=name;
                 if(overlay){
-                    if(typeof showOverlay==='function'){showOverlay(overlay);}else{overlay.classList.remove('d-none');}
+                    if(typeof showOverlay==='function'){showOverlay(overlay);}else{overlay.classList.add('is-active');}
                     if(typeof startStatusCycle==='function'){startStatusCycle(overlay);}
                     setTimeout(function(){
                         var msg=document.getElementById('historyTimeoutMsg');

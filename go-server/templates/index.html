@@ -757,7 +757,7 @@
     </div>
     </main>
 
-    <output id="loadingOverlay" class="loading-overlay d-none" aria-live="polite" aria-busy="true" aria-label="Running domain analysis">
+    <div id="loadingOverlay" class="loading-overlay" role="status" aria-live="polite" aria-busy="true" aria-label="Running domain analysis">
         <div class="loading-content">
             <div class="loading-spinner">
                 <i class="fas fa-globe fa-spin"></i>
@@ -808,7 +808,7 @@
                 Every result includes terminal commands you can run to independently verify the underlying data. No proprietary magic.
             </p>
         </div>
-    </output>
+    </div>
     <script nonce="{{.CspNonce}}">
     (function() {
         document.addEventListener('DOMContentLoaded', function() {

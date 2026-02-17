@@ -5,7 +5,7 @@ if ('serviceWorker' in navigator) {
 globalThis.addEventListener('pageshow', function(e) {
     if (e.persisted) {
         document.querySelectorAll('.loading-overlay').forEach(function(overlay) {
-            overlay.classList.add('d-none');
+            overlay.classList.remove('is-active');
         });
         document.body.classList.remove('loading');
         var reanalyzeBtn = document.getElementById('reanalyzeBtn');
@@ -26,15 +26,18 @@ globalThis.addEventListener('pageshow', function(e) {
 
 function showOverlay(overlay) {
     if (!overlay) return;
-    overlay.classList.remove('d-none');
-    void overlay.offsetWidth; // NOSONAR — Safari reflow: force animation restart after display:none→flex
-    overlay.querySelectorAll('.loading-spinner, .loading-spinner i, .loading-dots span').forEach(function(el) {
-        var anim = getComputedStyle(el).animationName;
-        if (anim && anim !== 'none') {
-            el.style.animation = 'none';
-            void el.offsetWidth; // NOSONAR — Safari reflow
-            el.style.animation = '';
-        }
+    overlay.classList.add('is-active');
+    requestAnimationFrame(function() {
+        requestAnimationFrame(function() {
+            overlay.querySelectorAll('.loading-spinner, .loading-spinner i, .loading-dots span').forEach(function(el) {
+                var anim = getComputedStyle(el).animationName;
+                if (anim && anim !== 'none') {
+                    el.style.animation = 'none';
+                    void el.offsetWidth; // NOSONAR — Safari reflow
+                    el.style.animation = '';
+                }
+            });
+        });
     });
 }
 
