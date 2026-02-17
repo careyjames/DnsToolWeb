@@ -2806,6 +2806,7 @@
                                     {{end}}
                                 </p>
                                 <p class="text-muted mb-2 small">{{mapGetStr "message" $saas_txt}}</p>
+                                <p class="text-muted mb-2 small u-opacity-70">Detects SaaS services that leave DNS TXT verification records (e.g., domain ownership proofs). Does not detect all SaaS platforms — only those indicated by DNS.</p>
                                 {{$saasServices := mapGetSlice "services" $saas_txt}}
                                 {{if $saasServices}}
                                 <div class="table-responsive">
