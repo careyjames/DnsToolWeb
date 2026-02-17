@@ -20,16 +20,15 @@ type Config struct {
 }
 
 var sectionTuningMap = map[string]string{
-        // Uncomment sections currently being tuned/maintained:
-        // "email":        "Accuracy Tuning",
+        "email": "Accuracy Tuning",
         // "dane":         "Accuracy Tuning",
-        // "brand":        "Accuracy Tuning",
+        "brand": "Accuracy Tuning",
         // "securitytxt":  "Accuracy Tuning",
-        // "ai":           "Accuracy Tuning",
+        "ai":   "Accuracy Tuning",
         // "secrets":      "Accuracy Tuning",
         // "web-exposure": "Accuracy Tuning",
-        // "smtp":         "Accuracy Tuning",
-        // "infra":        "Accuracy Tuning",
+        "smtp": "Accuracy Tuning",
+        "infra": "Accuracy Tuning",
         // "dnssec":       "Accuracy Tuning",
         // "traffic":      "Accuracy Tuning",
 }

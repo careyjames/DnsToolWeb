@@ -1010,3 +1010,28 @@ Removed leftover `dnstool-intel-staging/` directory from project root. Was a tem
 Applied `showOverlay()` to all overlay trigger points: index.html form submit, results.html re-analyze button, history.html re-analyze and view buttons, investigate.html form submit.
 **Also fixed**: "Analyze the root domain instead" link on subdomain results pages — was a plain `<a href>` with no overlay trigger. Now intercepts click, shows overlay with animation, then navigates. This fixes the "long wait with nothing happening" experience in Safari when clicking that link.
 **Lesson**: Every `classList.remove('d-none')` on an animated overlay must go through `showOverlay()` for Safari compatibility.
+
+### Per-Section Maintenance Tags System (2026-02-17)
+**Purpose**: Transparent development status badges on individual report sections. When a section is actively being tuned or has been repeatedly fixed, a small wrench badge appears in the section's card header showing "Accuracy Tuning" (or custom label).
+
+**Implementation**:
+- `sectionTuningMap` in `config.go`: Central map of section ID → label. Uncomment to activate.
+- `.u-section-tuning` CSS class in `custom.css`: Gold wrench badge, hidden in print (`@media print { display: none }`).
+- Template badges in `results.html`: All 11 section headers have conditional `{{if and .SectionTuning (index .SectionTuning "SECTION_ID")}}` guards.
+- Executive template intentionally omits badges — board-level readers don't need development status info.
+
+**Active sections** (based on EVOLUTION.md history of repeated fixes):
+| Section | Reason for Tag |
+|---------|---------------|
+| `email` | SPF provider detection (MX corroboration, ancillary senders), DKIM gateway inference, pipeline structural refactor, protocol navigation fixes — multiple rounds Feb 14-17 |
+| `brand` | BIMI recommendation logic correction, isBIMICapableProvider stub default fix, CAA protocol navigation fix |
+| `ai` | 5 boundary stub files, ongoing boundary architecture work, fetchTextFile error handling |
+| `smtp` | Complete redesign from live SMTP probes to standards-aligned three-tier architecture (v26.18.0) |
+| `infra` | RDAP failures across 3+ rounds (v26.19.10, .11, .12): multi-endpoint, SSRF bypass, parallel attempts, registrar save bug |
+
+**How to manage**: Edit `sectionTuningMap` in `config.go`, rebuild, restart. Section IDs: email, dane, brand, securitytxt, ai, secrets, web-exposure, smtp, infra, dnssec, traffic.
+
+### OG/SERP Title Update (2026-02-17)
+**Change**: "DNS Tool — Domain Security Audit | Engineer's Report & Executive's Brief" → "DNS Tool — Domain Security Intelligence | Engineer & Executive Reports"
+**Updated in**: `<title>`, OG title, Twitter title, JSON-LD schema name — all 4 sync points aligned.
+**Rationale**: Includes "Intelligence" keyword (matches report naming convention), stays within ~70 char SERP limit, drops possessives for brevity in title context (full possessive form retained in report headers).
