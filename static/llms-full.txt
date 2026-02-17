@@ -119,7 +119,7 @@ Contains cards for each email authentication protocol:
 - Complementarity with MTA-STS: best practice is to deploy both
 - Status: configured / partial / not found / timeout
 
-**SMTP Transport Encryption**
+**SMTP Transport Encryption** (conditional — cloud platforms may block outbound port 25; gracefully skipped when unavailable)
 - MX server STARTTLS support
 - TLS version (1.2 or 1.3)
 - Cipher suite and strength
@@ -231,7 +231,13 @@ Multi-format email header analysis with automatic format detection. Accepts:
 - **.txt / .headers / .log**: Plain text header exports
 - **.msg files**: Detected as Outlook binary format with guidance to re-save as .eml
 
-Headers are parsed for SPF/DKIM/DMARC authentication verification, delivery route tracing, spoofing detection, and phishing pattern scanning. If you include the email body, it's scanned against the OpenPhish community phishing URL feed and checked for sextortion/scam indicators, then immediately discarded. Includes critical thinking prompts ("Big Questions") to help users evaluate suspicious emails.
+Headers are parsed for SPF/DKIM/DMARC authentication verification, delivery route tracing, spoofing detection, and phishing pattern scanning. Advanced detection includes:
+- **Subject line scam analysis**: Detects phone numbers with letter-for-digit substitution (e.g., "O" for "0"), fake payment amounts, homoglyph-obfuscated brand names (e.g., "Pay PaI" using capital I instead of lowercase l to mimic PayPal), and known scam phrases
+- **Third-party spam vendor detection**: Reads enterprise email security headers from Proofpoint (X-CLX-Spam), Barracuda, Microsoft SCL (from X-Forefront-Antispam-Report), and Mimecast
+- **Brand mismatch detection**: Identifies when subject line references a brand (after homoglyph normalization) that doesn't match the sending domain
+- **BCC delivery detection**: Flags emails where the recipient isn't in the To/CC fields
+- **Educational callout**: When a sophisticated "authenticated scam" pattern is detected (all authentication passes but subject has scam indicators), a three-step "Understanding This Attack" explainer shows how the attack works and why authentication alone couldn't catch it
+If you include the email body, it's scanned against the OpenPhish community phishing URL feed and checked for sextortion/scam indicators, then immediately discarded. Includes critical thinking prompts ("Big Questions") to help users evaluate suspicious emails.
 
 ### Dual Intelligence Products
 From any analysis results page, two intelligence products are available:

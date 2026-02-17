@@ -1,7 +1,7 @@
 # DNS Tool — Domain Security Audit
 
 ## Overview
-The DNS Tool is an OSINT platform for comprehensive, RFC-compliant domain security analysis. It uses publicly available intelligence (DNS records, certificate transparency logs, RDAP data, web resources) to provide immediate, verifiable domain state information. Key capabilities include auditing critical DNS records (SPF, DKIM, DMARC, DANE/TLSA, DNSSEC, MTA-STS, TLS-RPT, BIMI, CAA), automatic subdomain discovery, DNS history timelines, an AI Surface Scanner, IP Intelligence, and an Email Header Analyzer. The project aims for an open-source model while protecting commercial viability, targeting both technical sysadmins and non-technical executives.
+The DNS Tool is an OSINT platform for comprehensive, RFC-compliant domain security analysis. It uses publicly available intelligence (DNS records, certificate transparency logs, RDAP data, web resources) to provide immediate, verifiable domain state information. Key capabilities include auditing critical DNS records (SPF, DKIM, DMARC, DANE/TLSA, DNSSEC, MTA-STS, TLS-RPT, BIMI, CAA), automatic subdomain discovery, DNS history timelines, an AI Surface Scanner, IP Intelligence, an Email Header Analyzer (with subject line scam detection, third-party spam vendor integration, and homoglyph analysis), and posture drift detection foundation. The project aims for an open-source model while protecting commercial viability, targeting both technical sysadmins and non-technical executives.
 
 ## User Preferences
 - Preferred communication style: Simple, everyday language.
@@ -21,44 +21,64 @@ The DNS Tool is an OSINT platform for comprehensive, RFC-compliant domain securi
 The application is built in Go using the Gin framework, emphasizing performance and concurrency, following an MVC-style separation. The build process uses `./build.sh` which compiles to `./dns-tool-server`, and `main.py` acts as a gunicorn trampoline to launch the Go binary. All Go and CSS changes require rebuilding and restarting the workflow.
 
 ### Backend
-The backend utilizes Go with Gin, `pgx` v5 for PostgreSQL, `sqlc` for type-safe queries, and `miekg/dns` for DNS queries. Key features include a multi-resolver DNS client with DoH fallback, three-layer subdomain discovery, posture scoring with CVSS-aligned risk levels, a concurrent orchestrator, Mail Transport Security assessment, CSRF middleware, rate limiting, SSRF hardening, telemetry, DMARC external reporting authorization, dangling DNS/subdomain takeover detection, HTTPS/SVCB intelligence, IP-to-ASN attribution, Edge/CDN vs origin detection, SaaS TXT footprint extraction, CDS/CDNSKEY automation, SMIMEA/OPENPGPKEY detection, `security.txt` detection, an AI Surface Scanner (detecting `llms.txt`, AI crawler governance, prefilled prompts, CSS-hidden prompt injection), SPF redirect chain handling with loop detection, DNS history timeline, IP Intelligence, OpenPhish integration, an Email Header Analyzer, public exposure checks, expanded exposure checks, and a report integrity hash. The system includes Enterprise DNS Detection and adheres to an "Analysis Integrity Standard" for RFC compliance. A Remediation Engine generates RFC-aligned "Priority Actions". The Intelligence Classification and Interpretation Engine (ICIE) formalizes how multiple intelligence sources are cross-referenced, ranked, classified, and interpreted. The project uses the BSL 1.1 license for both public and private repositories.
+The backend utilizes Go with Gin, `pgx` v5 for PostgreSQL, `sqlc` for type-safe queries, and `miekg/dns` for DNS queries. Key implemented features:
+- Multi-resolver DNS client with DoH fallback and high-speed UDP probing
+- Three-layer subdomain discovery (CT logs + wildcard detection + DNS probing ~140 common names)
+- Posture scoring with CVSS-aligned risk levels
+- Concurrent orchestrator with independent contexts per task
+- Mail Transport Security (three-tier: policy/telemetry/probe, RFC 8461/7672 aligned)
+- CSRF middleware, rate limiting, SSRF hardening, telemetry
+- DMARC external reporting authorization, dangling DNS/subdomain takeover detection
+- HTTPS/SVCB intelligence, IP-to-ASN attribution (Team Cymru), Edge/CDN vs origin detection
+- SaaS TXT footprint extraction, CDS/CDNSKEY, SMIMEA/OPENPGPKEY, security.txt detection
+- AI Surface Scanner (llms.txt, AI crawler governance, prefilled prompts, CSS-hidden prompt injection)
+- SPF redirect chain handling with loop detection, SPF provider detection with MX corroboration
+- DKIM gateway inference pipeline (detects mailbox provider behind security gateways)
+- DNS history timeline, IP Intelligence page
+- OpenPhish phishing URL feed integration
+- Email Header Analyzer: SPF/DKIM/DMARC verification, multi-format (.eml/.json/.mbox/.txt), third-party spam vendor detection (Proofpoint/Barracuda/Microsoft SCL/Mimecast), subject line scam analysis (phone numbers/payment amounts/homoglyphs/scam phrases), brand mismatch with homoglyph normalization, BCC detection, educational "Understanding This Attack" callout
+- Public exposure checks, expanded exposure checks (opt-in)
+- Report integrity hash (SHA-256), posture hash for drift detection
+- Enterprise DNS Detection, Analysis Integrity Standard, Remediation Engine ("Priority Actions")
+- ICIE (Intelligence Classification and Interpretation Engine)
+- Per-section maintenance tags system
+- BSL 1.1 license for both public and private repositories
 
 ### Frontend
-The frontend uses server-rendered HTML with Go `html/template`, Bootstrap dark theme, custom CSS, and client-side JavaScript, supporting PWA, accessibility, and full mobile responsiveness. It generates dual intelligence products: an Engineer's DNS Intelligence Report (technical detail) and an Executive's DNS Intelligence Brief (board-ready summary), both with configurable FIRST TLP v2.0 classification (default: TLP:AMBER). Each section and protocol card features a plain-language question with a data-driven badge answer.
+Server-rendered HTML with Go html/template, Bootstrap dark theme, custom CSS, client-side JavaScript. PWA, accessibility, mobile responsive. Dual intelligence products: Engineer's DNS Intelligence Report (technical) and Executive's DNS Intelligence Brief (board-ready), both with configurable FIRST TLP v2.0 (default: TLP:AMBER). Plain-language questions with data-driven badge answers. Big Questions for critical thinking.
 
 ## External Dependencies
 
 ### External Services
-- **DNS Resolvers**: Cloudflare DNS, Google Public DNS, Quad9, OpenDNS/Cisco Umbrella.
-- **IANA RDAP**: For registry data lookups.
-- **ip-api.com**: For visitor IP-to-country lookups.
-- **crt.sh**: For Certificate Transparency logs.
-- **SecurityTrails**: For DNS history timeline (user-provided API key).
-- **Team Cymru**: For DNS-based IP-to-ASN attribution.
-- **OpenPhish**: For phishing URL feed integration.
+- **DNS Resolvers**: Cloudflare DNS, Google Public DNS, Quad9, OpenDNS/Cisco Umbrella
+- **IANA RDAP**: Registry data lookups (multi-endpoint, parallel attempts, exponential backoff)
+- **ip-api.com**: Visitor IP-to-country lookups
+- **crt.sh**: Certificate Transparency logs (independent 10s context)
+- **SecurityTrails**: DNS history and IP Intelligence (user-provided API key ONLY; 50 req/month hard limit; NEVER call automatically)
+- **Team Cymru**: DNS-based IP-to-ASN attribution (independent 8s context)
+- **OpenPhish**: Phishing URL feed (Email Header Analyzer body scanning)
 
 ### Database
-- **PostgreSQL**: Primary database for persistent storage, with analysis data being immutable and append-only to ensure auditable records.
+- **PostgreSQL**: Immutable, append-only analysis data with posture_hash and integrity_hash columns
 
-## Two-Repo Build-Tag Architecture (refactored 2026-02-17)
-The project uses a two-repository design with Go build tags (`//go:build intel` / `//go:build !intel`):
-- **DNS Tool Web** (public): Full application framework + `_oss.go` stubs (empty maps, safe defaults)
-- **dnstool-intel** (private): `_intel.go` files with proprietary provider databases, detection patterns, advanced analysis
+## Two-Repo Build-Tag Architecture
+Two-repository design with Go build tags (`//go:build intel` / `//go:build !intel`):
+- **DNS Tool Web** (public): Full framework + `_oss.go` stubs (empty maps, safe defaults)
+- **dnstool-intel** (private): `_intel.go` files with proprietary provider databases
 
 ### Three-File Pattern
-Each intelligence boundary uses three files:
-- `<name>.go` — Framework (types, constants, utilities). No build tag. Always compiled.
-- `<name>_oss.go` — `//go:build !intel`. Empty stubs. Ships in public repo.
+- `<name>.go` — Framework (types, constants, utilities). No build tag.
+- `<name>_oss.go` — `//go:build !intel`. Empty stubs. Public repo.
 - `<name>_intel.go` — `//go:build intel`. Full intelligence. Private repo only.
 
 ### Build Commands
-- **OSS edition**: `go build ./go-server/cmd/server/` (default, no tag)
-- **Full edition**: `go build -tags intel ./go-server/cmd/server/` (with private repo overlaid)
+- **OSS**: `go build ./go-server/cmd/server/` (default, no tag)
+- **Full**: `go build -tags intel ./go-server/cmd/server/`
 
 ### Stub Contract
-Every `_oss.go` stub MUST: (1) return safe non-nil defaults, (2) never return errors, (3) maintain exact function signatures matching `_intel.go`, (4) allow UI to render gracefully.
+Every `_oss.go` stub MUST: (1) return safe non-nil defaults, (2) never return errors, (3) maintain exact function signatures, (4) allow UI to render gracefully.
 
-### Current Stub Files (11 boundary files, each split into 3)
+### Current Stub Files (11 boundary files)
 | File | OSS Stub | Intel Location |
 |---|---|---|
 | `edge_cdn` | `edge_cdn_oss.go` | `dnstool-intel` |
@@ -73,81 +93,70 @@ Every `_oss.go` stub MUST: (1) return safe non-nil defaults, (2) never return er
 | `ai_surface/poisoning` | `poisoning_oss.go` | `dnstool-intel` |
 | `ai_surface/scanner` | `scanner_oss.go` | `dnstool-intel` |
 
-### Pure Framework Files (no split needed)
-`confidence.go`, `dkim_state.go` — types and constants only, no intelligence data.
+### Boundary Integrity Test Suite
+- `go-server/internal/analyzer/boundary_integrity_test.go` — 6 analyzer boundaries
+- `go-server/internal/analyzer/ai_surface/boundary_integrity_test.go` — 5 ai_surface boundaries
+- Run: `go test ./go-server/... -count=1`
 
-### Fully Implemented Framework (no stubs)
-`commands.go` (19 protocol sections, 25+ verification commands)
+## Known Constraints & Critical Rules
 
-### Intel Transfer Status (completed 2026-02-17)
-All 11 `_intel.go` files have been transferred to `careyjames/dnstool-intel` private repo. `docs/intel-staging/` has been deleted from the public repo. No intelligence data remains in the public repo.
+### Build and Deploy
+- CSS minification: After editing custom.css, MUST run `npx csso static/css/custom.css -o static/css/custom.min.css`
+- AppVersion bump: After CSS/Go changes, bump `AppVersion` in `config.go` to bust caches
+- Binary path: `main.py` does `os.execvp("./dns-tool-server", ...)` — compile to `./dns-tool-server`
 
-## Boundary Integrity Test Suite (added 2026-02-17)
+### Frontend
+- CSP inline handlers: CSP blocks ALL inline onclick/onchange/onsubmit. Use id + addEventListener in nonce'd script blocks.
+- CSP inline styles: Inline style="" blocked. Use CSS utility classes.
+- Safari overlay animation: Every classList.remove('d-none') on animated overlays MUST use showOverlay() — WebKit doesn't restart CSS animations from display:none.
+- Font Awesome subset: WOFF2 subset, not full FA. Check CSS rule exists before using icons.
+- DOM safety: createElement + textContent + appendChild. Never innerHTML with dynamic data.
+- Executive print: Minimum body 11pt, small 9pt, code 8.5pt. Nothing below 8pt.
+- Bootstrap overrides: Override --bs-btn-* CSS variables, NOT direct background-color.
 
-### Purpose
-Prevents regressions in the two-repo architecture. Any change that breaks the public/private boundary, leaks intelligence data, corrupts stub contracts, or creates duplicate symbols will fail these tests immediately.
+### Data and API
+- SecurityTrails: User-key-only. NEVER call automatically. 50 req/month hard limit.
+- RDAP: Tier 4 contextual — failure is NOT a security analysis error.
+- OSINT positioning: Explicitly OSINT. NOT pen test, NOT PCI ASV, NOT vulnerability assessment.
 
-### Test Files
-- `go-server/internal/analyzer/boundary_integrity_test.go` — Tests 6 analyzer-level boundaries
-- `go-server/internal/analyzer/ai_surface/boundary_integrity_test.go` — Tests 5 ai_surface boundaries
+### Stub Architecture
+- Default principle: Stubs produce LEAST incorrect advice.
+- Key defaults: isHostedEmailProvider() -> true, isBIMICapableProvider() -> false, isKnownDKIMProvider() -> false
 
-### What the Tests Check (7 Categories)
-1. **File Presence** — Every boundary has both framework.go and _oss.go files
-2. **No Intel in Public Repo** — No `_intel.go` files exist anywhere in the public codebase
-3. **Build Tags** — Every `_oss.go` starts with `//go:build !intel`; framework files have no build tags
-4. **Stub Functions Defined** — All expected functions exist in `_oss.go` stubs
-5. **Stub Variables Defined** — All expected variables (maps, slices) are initialized in stubs
-6. **No Intelligence Leakage** — Known intel tokens (crawler names, provider domains) do not appear in public files
-7. **Safe Defaults** — All stubs return non-nil maps/slices, never return errors, never panic
-8. **No Duplicate Functions** — No function is defined in both framework and stub files
-9. **Correct Package** — All files declare the correct Go package
-10. **Boundary Inventory** — Test fails if boundary count changes without updating the inventory
-11. **No intel-staging** — Verifies `docs/intel-staging/` directory no longer exists
+### SEO
+- Analysis pages: noindex, nofollow (ephemeral). No canonical.
+- Compare pages: noindex (dynamic).
+- Only static feature pages indexable.
 
-### How to Run
-```bash
-go test ./go-server/internal/analyzer/ -run "TestBoundary" -v
-go test ./go-server/internal/analyzer/ai_surface/ -run "TestAISurface" -v
-go test ./go-server/... -count=1   # Full suite including boundary tests
-```
+## Intelligence Document Naming
+- **Engineer's DNS Intelligence Report** — Comprehensive technical. "Report" = detailed all-source.
+- **Executive's DNS Intelligence Brief** — Concise board-ready. "Brief" = decision-maker version.
+- **Possessive form**: "Engineer's"/"Executive's" = "prepared for you"
+- **"DNS Intelligence"** not "Security Intelligence" (MI5's name)
 
-### When to Update
-- **Adding a new boundary file**: Add entry to `analyzerBoundaries` or `aiSurfaceBoundaries` table, update expected count
-- **Adding a new stub function**: Add function signature to `StubFunctions` list in boundary spec
-- **Adding a new stub variable**: Add variable name to `StubVars` list in boundary spec
-- **Moving intelligence data**: Tests will catch if any _intel.go file is accidentally committed to public repo
-
-### Python Files (Not Stubs, Not Runtime)
-- `main.py` — Process trampoline only (os.execvp replaces Python with Go binary)
-- `go-server/scripts/audit_icons.py` — Dev-only Font Awesome audit helper
-
-## Documentation & Citation Standard (decided 2026-02-17)
-
-### Official Standard: NIST SP 800-series Style
-All documentation, reports, and output follow NIST Special Publication 800-series conventions, augmented with IEEE-style numeric citations for RFC/protocol references.
-
-### Why NIST
-- Aligns with existing NIST/CISA/RFC ecosystem the tool operates within
-- Reads authoritative for both executives and technical users
-- Matches the security operations and intelligence community voice
-- Natural fit for the "Decision-Ready Intelligence" framing
-- Avoids academic tone (APA/Chicago) and humanities feel that would undermine security credibility
-- More appropriate than ICD (Intelligence Community Directives) which implies government classification handling beyond our scope
-
-### Style Rules
-1. **Document structure**: Summary → Findings → Evidence → Impact → Recommendations (mirrors NIST SP 800-53, 800-171)
-2. **Tone**: Authoritative, observation-based, factual. No hedging language. Direct statements of observed state.
-3. **Technical references**: IEEE-style numbered citations for RFCs, NIST SPs, and protocol standards (e.g., [1] RFC 7489, [2] NIST SP 800-177)
-4. **Terminology**: Use NIST/CISA vocabulary — "control", "finding", "observation", "recommendation", "risk level" — not academic terms like "hypothesis" or "methodology"
-5. **Report titles**: Use intelligence-community format: "DNS Intelligence Report" / "DNS Intelligence Brief" (not "Analysis" or "Study")
-6. **Visual identity**: Dark theme with hacker-culture fonts is fine — the NIST standard governs content structure and citation format, not visual design
-7. **TLP classification**: Already using FIRST TLP v2.0 — this remains the classification framework
+## Documentation Files
+| File | Purpose |
+|------|---------|
+| `replit.md` | Agent memory / project context (may reset) |
+| `EVOLUTION.md` | Permanent breadcrumb trail — backup for replit.md |
+| `DOCS.md` | Technical documentation |
+| `DOD.md` | Definition of Done checklist |
+| `LICENSING.md` | Plain-language BSL 1.1 explanation |
+| `LICENSE` | Legal license text (BSL 1.1) |
+| `DRIFT_ENGINE.md` | Drift detection roadmap (4 phases) |
+| `INTELLIGENCE_ENGINE.md` | ICIE framework |
+| `docs/FEATURE_INVENTORY.md` | Public feature list |
+| `docs/BOUNDARY_MATRIX.md` | Symbol analysis |
+| `docs/BUILD_TAG_STRATEGY.md` | Build-tag strategy, CI matrix |
 
 ## Future Roadmap
-
-### Globalping.io Integration (on the roadmap)
-- **What**: Globally distributed DNS resolution probes from hundreds of locations/ASNs worldwide
-- **Capability**: "Is this domain resolving consistently worldwide?" — detects DNS censorship, poisoning, propagation inconsistencies
-- **Free tier**: 250 tests/hour
-- **Decision (2026-02-17)**: Complementary to the existing SMTP port 25 probe, NOT a replacement. Globalping tests DNS resolution consistency; the port 25 probe tests SMTP transport reachability and STARTTLS encryption. Different layers, both needed.
-- **Status**: Evaluated, not yet implemented
+- Drift Engine Phases 2-4 (compare, timeline UI, alerting) — see DRIFT_ENGINE.md
+- Globalping.io: Distributed DNS resolution probes (complementary to port 25 probe, NOT replacement)
+- External VPS probe nodes: Hetzner/OVH for SMTP port 25 probing
+- Homebrew distribution for macOS/Linux CLI
+- Zone file export/import for offline analysis
+- Raw intelligence API access
+- ISC recommendation path integration
+- One-liner verification commands
+- Email Header Analyzer feature matrix
+- Probe node integration in analysis pipeline

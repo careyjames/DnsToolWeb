@@ -42,7 +42,7 @@ To get fresh data for the same domain, click the "Re-Analyze" button on any resu
 ### Other Pages
 - `/sources` — Complete inventory of all intelligence sources, methodologies, rate limits, and verification commands
 - `/investigate` — IP Intelligence: determine how an IP address relates to a domain (Direct Asset, Email Provider, CDN/Edge, DNS Provider, SPF-Authorized Sender)
-- `/email-header` — Email Header Analyzer: paste headers, upload .eml files, or import JSON from Gmail API, Microsoft Graph, Postmark, SendGrid, Mailgun, and MBOX archives for SPF/DKIM/DMARC verification, delivery route tracing, spoofing detection
+- `/email-header` — Email Header Analyzer: paste headers, upload .eml files, or import JSON from Gmail API, Microsoft Graph, Postmark, SendGrid, Mailgun, and MBOX archives for SPF/DKIM/DMARC verification, delivery route tracing, spoofing detection, subject line scam analysis (phone number obfuscation, fake payment amounts, homoglyph brand impersonation), third-party spam vendor detection (Proofpoint, Barracuda, Microsoft SCL, Mimecast), and brand mismatch detection
 - `/changelog` — What's New: complete changelog of improvements and new features
 - `/history` — List of recently analyzed domains
 - `/stats` — Usage statistics and trends
@@ -53,7 +53,7 @@ DNS Tool uses only open-source Unix commands and public protocols. Every conclus
 - **4 DNS Resolvers**: Cloudflare, Google, Quad9, OpenDNS — queried in parallel with majority-agreement consensus
 - **Reverse DNS (PTR)**: Identifies hosting providers from IP addresses without any third-party API
 - **Team Cymru**: Free community DNS service for IP-to-ASN attribution (no API key, no rate limits)
-- **SMTP Probing**: Live STARTTLS verification of mail servers
+- **SMTP Probing**: Live STARTTLS verification of mail servers (conditional — cloud platforms may block outbound port 25; gracefully skipped when unavailable)
 - **SecurityTrails**: DNS history timeline (50 API calls/month free tier)
 - **crt.sh**: Certificate Transparency log searches
 - **IANA RDAP**: Domain registration data
@@ -99,8 +99,8 @@ Every attribution includes a confidence label:
 - Confidence taxonomy (Observed / Inferred / Third-party) for all attributions
 - "Verify It Yourself" terminal commands appendix (dig, openssl, curl)
 - Intelligence sources inventory with full transparency
-- Email Header Analyzer (SPF/DKIM/DMARC verification, delivery route tracing, spoofing detection) — multi-format: paste, .eml, .json (Gmail API, Microsoft Graph, Postmark, SendGrid, Mailgun), .mbox, .txt
-- OpenPhish phishing URL feed integration
+- Email Header Analyzer — multi-format support (paste, .eml, .json, .mbox, .txt) with: SPF/DKIM/DMARC verification, delivery route tracing, spoofing detection, subject line scam analysis (phone number obfuscation, fake payment amounts, homoglyph brand impersonation), third-party spam vendor detection (Proofpoint, Barracuda, Microsoft SCL, Mimecast), brand mismatch detection, BCC delivery detection, and educational "Understanding This Attack" explainer for sophisticated scam patterns
+- OpenPhish phishing URL feed integration (email body scanning)
 - Public exposure checks (secret/credential scanning in page source and JavaScript)
 - Expanded exposure checks (opt-in): well-known misconfiguration path probing (/.env, /.git/config, /server-status, /phpinfo.php, etc.) with content validation — informational reconnaissance, not PCI ASV
 - Report integrity hash (SHA-256 tamper-evident fingerprint per analysis, preview in header, full hash at bottom)

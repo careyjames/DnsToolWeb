@@ -64,7 +64,7 @@ The tool performs RFC-compliant parsing and validation of these protocols:
 - Side-by-side domain comparison
 - Statistics dashboard
 - JSON export
-- Email Header Analyzer (SPF/DKIM/DMARC verification, delivery route tracing, spoofing detection)
+- Email Header Analyzer — multi-format support (paste, .eml, JSON, .mbox, .txt) with SPF/DKIM/DMARC verification, delivery route tracing, spoofing detection, subject line scam analysis (phone number obfuscation, fake payment amounts, homoglyph brand impersonation), third-party spam vendor detection (Proofpoint, Barracuda, Microsoft SCL, Mimecast), brand mismatch detection, BCC delivery detection, and educational "Understanding This Attack" explainer
 - IP Intelligence (reverse lookups, ASN attribution, geolocation)
 - Dual intelligence products: Engineer's DNS Intelligence Report (comprehensive technical detail) and Executive's DNS Intelligence Brief (concise board-ready summary with security scorecard)
 - Configurable TLP classification (default: TLP:AMBER, with TLP:AMBER+STRICT, TLP:GREEN and TLP:CLEAR options) aligned with CISA Cyber Hygiene practice and FIRST TLP v2.0
