@@ -56,6 +56,11 @@ type EmailHeaderAnalysis struct {
         DMARCPolicy          string
         SenderBrandMismatch  bool
         SenderBrandMismatchDetail string
+
+        SubjectScamIndicators []PhishingIndicator
+        HasSubjectAnalysis    bool
+        MicrosoftSCL          int
+        MicrosoftSCLFound     bool
 }
 
 type BigQuestion struct {
@@ -152,6 +157,7 @@ func AnalyzeEmailHeaders(raw string) *EmailHeaderAnalysis {
         parseReceivedChain(headers, result)
         checkAlignment(result)
         detectHeaderIntelligence(headers, result)
+        analyzeSubjectLine(result)
         generateFlags(result)
 
         if hadBody && body != "" {
@@ -655,6 +661,22 @@ func generateFlags(result *EmailHeaderAnalysis) {
                         Message:  "The sender's domain uses DMARC p=none — this means even if authentication fails, receiving servers take no enforcement action. This domain could be spoofed freely.",
                 })
         }
+
+        for _, ind := range result.SubjectScamIndicators {
+                result.Flags = append(result.Flags, HeaderFlag{
+                        Severity: ind.Severity,
+                        Category: "Subject Line: " + ind.Category,
+                        Message:  ind.Description,
+                })
+        }
+
+        if result.SenderBrandMismatch {
+                result.Flags = append(result.Flags, HeaderFlag{
+                        Severity: "danger",
+                        Category: "Brand Mismatch",
+                        Message:  result.SenderBrandMismatchDetail + " — legitimate brand communications come from their own domains.",
+                })
+        }
 }
 
 func generateVerdict(result *EmailHeaderAnalysis) {
@@ -675,6 +697,13 @@ func generateVerdict(result *EmailHeaderAnalysis) {
                 }
         }
 
+        subjectDanger := 0
+        for _, ind := range result.SubjectScamIndicators {
+                if ind.Severity == "danger" {
+                        subjectDanger++
+                }
+        }
+
         bigQuestionDanger := 0
         for _, q := range result.BigQuestions {
                 if q.Severity == "danger" {
@@ -682,16 +711,22 @@ func generateVerdict(result *EmailHeaderAnalysis) {
                 }
         }
 
-        if dangerCount > 0 || phishingDanger >= 2 || bigQuestionDanger >= 2 || (result.SpamFlagged && phishingDanger >= 1) {
+        if dangerCount > 0 || phishingDanger >= 2 || subjectDanger >= 2 || bigQuestionDanger >= 2 || (result.SpamFlagged && (phishingDanger >= 1 || subjectDanger >= 1)) {
                 result.Verdict = "suspicious"
-                if result.SpamFlagged && phishingDanger >= 1 {
+                if result.SpamFlagged && subjectDanger >= 1 {
+                        result.Summary = "This email was flagged as spam and the subject line contains scam indicators — treat with extreme caution."
+                } else if result.SpamFlagged && phishingDanger >= 1 {
                         result.Summary = "This email was flagged as spam by the receiving server and contains content indicators associated with scam campaigns — treat with extreme caution."
+                } else if subjectDanger >= 2 {
+                        result.Summary = "Multiple scam indicators observed in the subject line — this pattern is characteristic of tech support scams, fake invoice campaigns, or phishing."
                 } else if phishingDanger >= 2 && dangerCount == 0 {
                         result.Summary = "Templated mass-mail indicators observed in the email body — this pattern is commonly associated with scam or phishing campaigns."
+                } else if result.SenderBrandMismatch {
+                        result.Summary = "The email references a brand that does not match the sending domain — this is a common impersonation technique."
                 } else {
-                        result.Summary = "Authentication failures observed — this email may not be from who it claims to be."
+                        result.Summary = "Suspicious indicators observed — review the findings below carefully before trusting this email."
                 }
-        } else if warningCount > 0 || len(result.BodyIndicators) > 0 || result.SpamFlagged {
+        } else if warningCount > 0 || len(result.BodyIndicators) > 0 || result.HasSubjectAnalysis || result.SpamFlagged {
                 result.Verdict = "caution"
                 result.Summary = "Some findings need attention — review the details below to determine if this is expected behavior (like forwarding or mailing lists)."
         } else {
@@ -1023,6 +1058,7 @@ func detectHeaderIntelligence(headers []headerField, result *EmailHeaderAnalysis
                 "x-spam-flag":      "yes",
                 "x-suspected-spam": "true",
                 "x-spam-status":    "yes",
+                "x-clx-spam":       "true",
         }
         for headerName, triggerVal := range spamHeaders {
                 val := extractHeader(headers, headerName)
@@ -1042,6 +1078,50 @@ func detectHeaderIntelligence(headers []headerField, result *EmailHeaderAnalysis
         if strings.EqualFold(strings.TrimSpace(moveFolder), "Junk") {
                 result.SpamFlagged = true
                 result.SpamFlagSources = append(result.SpamFlagSources, "X-Apple-MoveToFolder: "+moveFolder)
+        }
+
+        barracudaScore := extractHeader(headers, "x-barracuda-spam-score")
+        if barracudaScore != "" {
+                result.SpamFlagSources = append(result.SpamFlagSources, "X-Barracuda-Spam-Score: "+barracudaScore)
+        }
+        barracudaStatus := extractHeader(headers, "x-barracuda-spam-status")
+        if strings.EqualFold(strings.TrimSpace(barracudaStatus), "yes") {
+                result.SpamFlagged = true
+                result.SpamFlagSources = append(result.SpamFlagSources, "X-Barracuda-Spam-Status: "+barracudaStatus)
+        }
+
+        mimecastVerdict := extractHeader(headers, "x-mimecast-spam-score")
+        if mimecastVerdict != "" {
+                result.SpamFlagSources = append(result.SpamFlagSources, "X-Mimecast-Spam-Score: "+mimecastVerdict)
+        }
+
+        ppSpam := extractHeader(headers, "x-proofpoint-spam-details-enc")
+        if ppSpam != "" {
+                result.SpamFlagSources = append(result.SpamFlagSources, "X-Proofpoint-Spam-Details: present")
+        }
+
+        msAntispam := extractHeader(headers, "x-forefront-antispam-report")
+        if msAntispam != "" {
+                sclRe := regexp.MustCompile(`(?i)\bSCL:(\d+)`)
+                if m := sclRe.FindStringSubmatch(msAntispam); m != nil {
+                        sclVal := 0
+                        fmt.Sscanf(m[1], "%d", &sclVal)
+                        result.MicrosoftSCL = sclVal
+                        result.MicrosoftSCLFound = true
+                        if sclVal >= 5 {
+                                result.SpamFlagged = true
+                                result.SpamFlagSources = append(result.SpamFlagSources, fmt.Sprintf("Microsoft SCL: %d (5+ = spam)", sclVal))
+                        }
+                }
+        }
+
+        clxScore := extractHeader(headers, "x-clx-score")
+        if clxScore != "" {
+                clxVal := 0
+                fmt.Sscanf(strings.TrimSpace(clxScore), "%d", &clxVal)
+                if clxVal < -100 {
+                        result.SpamFlagSources = append(result.SpamFlagSources, fmt.Sprintf("Proofpoint CLX Score: %d (very negative = suspicious)", clxVal))
+                }
         }
 
         origRecipient := extractHeader(headers, "original-recipient")
@@ -1088,6 +1168,9 @@ func detectHeaderIntelligence(headers []headerField, result *EmailHeaderAnalysis
         fromDomain := extractDomainFromEmailAddress(result.From)
         subjectLower := strings.ToLower(result.Subject)
         fromLower := strings.ToLower(result.From)
+
+        subjectNormalized := normalizeHomoglyphs(subjectLower)
+
         brandChecks := map[string][]string{
                 "Facebook/Meta": {"facebook", "meta inc", "meta lottery"},
                 "Google":        {"google", "gmail"},
@@ -1095,11 +1178,22 @@ func detectHeaderIntelligence(headers []headerField, result *EmailHeaderAnalysis
                 "Apple":         {"apple inc", "apple id", "icloud"},
                 "Amazon":        {"amazon"},
                 "PayPal":        {"paypal"},
+                "Netflix":       {"netflix"},
+                "Bank of America": {"bank of america"},
+                "Wells Fargo":   {"wells fargo"},
+                "Chase":         {"chase bank"},
+                "Geek Squad":    {"geek squad"},
+                "Norton":        {"norton"},
+                "McAfee":        {"mcafee"},
         }
+
+        fromDomainLower := strings.ToLower(fromDomain)
         for brand, keywords := range brandChecks {
                 for _, kw := range keywords {
-                        if strings.Contains(subjectLower, kw) || strings.Contains(fromLower, kw) {
-                                if !strings.Contains(strings.ToLower(fromDomain), strings.ToLower(strings.Split(brand, "/")[0])) {
+                        if strings.Contains(subjectLower, kw) || strings.Contains(fromLower, kw) || strings.Contains(subjectNormalized, kw) {
+                                brandDomain := strings.ToLower(strings.Split(brand, "/")[0])
+                                brandDomain = strings.ReplaceAll(brandDomain, " ", "")
+                                if !strings.Contains(fromDomainLower, brandDomain) {
                                         result.SenderBrandMismatch = true
                                         result.SenderBrandMismatchDetail = fmt.Sprintf("References '%s' but sent from %s", brand, fromDomain)
                                         break
@@ -1110,6 +1204,136 @@ func detectHeaderIntelligence(headers []headerField, result *EmailHeaderAnalysis
                         break
                 }
         }
+}
+
+func normalizeHomoglyphs(s string) string {
+        replacements := map[rune]rune{
+                '0': 'o', '1': 'l', '3': 'e', '4': 'a', '5': 's',
+                '7': 't', '8': 'b', '9': 'g',
+                '\u0430': 'a', '\u0435': 'e', '\u043e': 'o', '\u0440': 'p',
+                '\u0441': 'c', '\u0443': 'y', '\u0445': 'x',
+                '\u00e0': 'a', '\u00e1': 'a', '\u00e8': 'e', '\u00e9': 'e',
+                '\u00f2': 'o', '\u00f3': 'o', '\u00ec': 'i', '\u00ed': 'i',
+        }
+
+        runes := []rune(s)
+        for i, r := range runes {
+                if repl, ok := replacements[r]; ok {
+                        runes[i] = repl
+                }
+        }
+
+        upperReplacements := map[rune]rune{
+                'O': 'o', 'I': 'l', 'L': 'l',
+        }
+        for i, r := range runes {
+                if repl, ok := upperReplacements[r]; ok {
+                        runes[i] = repl
+                }
+        }
+
+        return string(runes)
+}
+
+func analyzeSubjectLine(result *EmailHeaderAnalysis) {
+        if result.Subject == "" {
+                return
+        }
+
+        subject := result.Subject
+        subjectLower := strings.ToLower(subject)
+
+        phoneRe := regexp.MustCompile(`\b\d[\d\s\-\.O]{6,}\d\b`)
+        if phoneRe.MatchString(subject) {
+                hasLetterSubstitution := false
+                matches := phoneRe.FindAllString(subject, -1)
+                for _, m := range matches {
+                        if strings.ContainsAny(m, "OoIl") {
+                                hasLetterSubstitution = true
+                        }
+                }
+                severity := "warning"
+                desc := "A phone number was detected in the subject line — legitimate organizations rarely embed phone numbers in email subjects."
+                if hasLetterSubstitution {
+                        severity = "danger"
+                        desc = "A phone number with letter-for-digit substitution was detected in the subject line (e.g., 'O' instead of '0'). This is a deliberate obfuscation technique used by tech support scammers to bypass spam filters."
+                }
+                result.SubjectScamIndicators = append(result.SubjectScamIndicators, PhishingIndicator{
+                        Category:    "Phone Number in Subject",
+                        Severity:    severity,
+                        Description: desc,
+                        Evidence:    "Matched: " + strings.Join(matches, ", "),
+                })
+        }
+
+        moneyRe := regexp.MustCompile(`(?i)\$\s*[\d,]+\.?\d*\s*(?:USD|usd)?|\b[\d,]+\.?\d*\s*(?:USD|GBP|EUR)\b`)
+        if moneyMatches := moneyRe.FindAllString(subject, -1); len(moneyMatches) > 0 {
+                result.SubjectScamIndicators = append(result.SubjectScamIndicators, PhishingIndicator{
+                        Category:    "Payment Amount in Subject",
+                        Severity:    "warning",
+                        Description: "A monetary amount appears in the subject line — fake payment confirmation is a common scam trigger designed to provoke an urgent call to a fraudulent support number.",
+                        Evidence:    "Amount: " + strings.Join(moneyMatches, ", "),
+                })
+        }
+
+        normalized := normalizeHomoglyphs(subject)
+        if normalized != strings.ToLower(subject) {
+                original := strings.ToLower(subject)
+                var diffs []string
+                origRunes := []rune(original)
+                normRunes := []rune(normalized)
+                for i := 0; i < len(origRunes) && i < len(normRunes); i++ {
+                        if origRunes[i] != normRunes[i] {
+                                diffs = append(diffs, fmt.Sprintf("'%c'→'%c'", origRunes[i], normRunes[i]))
+                        }
+                }
+                if len(diffs) > 0 {
+                        result.SubjectScamIndicators = append(result.SubjectScamIndicators, PhishingIndicator{
+                                Category:    "Homoglyph Obfuscation",
+                                Severity:    "danger",
+                                Description: "Characters in the subject line appear to use look-alike substitutions (homoglyphs) — this is a deliberate technique to evade spam filters and disguise brand names. For example, capital 'I' instead of lowercase 'l', or letter 'O' instead of number '0'.",
+                                Evidence:    "Substitutions detected: " + strings.Join(diffs, ", "),
+                        })
+                }
+        }
+
+        scamSubjectPhrases := []string{
+                "you authorized", "authorized payment", "authorized a payment",
+                "your payment of", "payment confirmation",
+                "transaction id", "order confirmation",
+                "your account has been", "account suspended",
+                "verify your account", "verify your identity",
+                "unusual activity", "suspicious activity",
+                "unauthorized transaction", "unauthorized access",
+                "refund of", "refund has been",
+                "invoice", "receipt for your payment",
+                "your subscription", "renewal notice",
+                "security alert", "security notice",
+                "action required", "immediate action",
+        }
+        var subjectPhraseMatches []string
+        for _, phrase := range scamSubjectPhrases {
+                if strings.Contains(subjectLower, phrase) {
+                        subjectPhraseMatches = append(subjectPhraseMatches, phrase)
+                }
+        }
+        if len(subjectPhraseMatches) >= 2 {
+                result.SubjectScamIndicators = append(result.SubjectScamIndicators, PhishingIndicator{
+                        Category:    "Scam Subject Pattern",
+                        Severity:    "danger",
+                        Description: "Multiple scam-associated phrases observed in the subject line — this combination is characteristic of phishing, fake invoice, and tech support scam campaigns.",
+                        Evidence:    "Phrases: " + strings.Join(subjectPhraseMatches, ", "),
+                })
+        } else if len(subjectPhraseMatches) == 1 {
+                result.SubjectScamIndicators = append(result.SubjectScamIndicators, PhishingIndicator{
+                        Category:    "Suspicious Subject Phrase",
+                        Severity:    "warning",
+                        Description: "A phrase commonly associated with scam or phishing emails was observed in the subject line.",
+                        Evidence:    "Phrase: " + subjectPhraseMatches[0],
+                })
+        }
+
+        result.HasSubjectAnalysis = len(result.SubjectScamIndicators) > 0
 }
 
 func extractAllEmailAddresses(s string) []string {
@@ -1145,7 +1369,16 @@ func generateBigQuestions(result *EmailHeaderAnalysis) {
                 })
         }
 
-        if allAuthPass && (result.HasBodyAnalysis || result.SenderBrandMismatch) && !result.SpamFlagged {
+        if allAuthPass && result.HasSubjectAnalysis && !result.SpamFlagged {
+                result.BigQuestions = append(result.BigQuestions, BigQuestion{
+                        Question: "All authentication passed — so why are there scam indicators in the subject?",
+                        Answer:   "Scammers can trigger legitimate notification emails from real services (Microsoft, PayPal, etc.) as bait. The email is authentically from that service, but the subject line has been weaponized — containing fake phone numbers, payment amounts, or obfuscated brand names to lure you into calling a fraudulent support line. Never call numbers from unsolicited emails.",
+                        Severity: "danger",
+                        Icon:     "shield-halved",
+                })
+        }
+
+        if allAuthPass && (result.HasBodyAnalysis || result.SenderBrandMismatch) && !result.SpamFlagged && !result.HasSubjectAnalysis {
                 result.BigQuestions = append(result.BigQuestions, BigQuestion{
                         Question: "All authentication checks passed — does that mean this email is safe?",
                         Answer:   "No. SPF/DKIM/DMARC verify identity, not intent. A scammer using a legitimate email provider will pass all authentication checks. Always evaluate the content independently of the authentication results.",

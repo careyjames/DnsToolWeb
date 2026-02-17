@@ -1066,3 +1066,34 @@ Applied `showOverlay()` to all overlay trigger points: index.html form submit, r
 - Title too long → 0
 - Schema.org errors → Reduced (removed invalid properties)
 - Orphan pages → 0 (footer links added)
+
+### Email Header Analyzer — Subject Line & Spam Vendor Hardening (2026-02-17)
+
+**Problem**: A tech support scam email sent FROM Microsoft's own infrastructure (microsoftonline.com) passed SPF/DKIM/DMARC legitimately and was reported as "No Issues Observed" by the header analyzer. The email had clear scam signals: phone number with homoglyph obfuscation ("983 22O2 4O6" using letter O instead of zero), fake PayPal payment claim ("Pay PaI 699.99 USD" using capital I instead of lowercase l), and Proofpoint had already flagged it as spam via `X-CLX-Spam: true`.
+
+**Root cause**: The analyzer only checked authentication (SPF/DKIM/DMARC alignment) and a narrow set of spam headers (`X-Spam-Flag`, `X-Spam-Status`, Apple headers). It had no subject line analysis capability and was blind to major email security vendor headers (Proofpoint, Barracuda, Microsoft SCL, Mimecast).
+
+**Fixes applied**:
+
+1. **Expanded spam header detection**: Added detection for Proofpoint (`X-CLX-Spam`, `X-CLX-Score`, `X-Proofpoint-Spam-Details-Enc`), Barracuda (`X-Barracuda-Spam-Status`, `X-Barracuda-Spam-Score`), Microsoft (`X-Forefront-Antispam-Report` SCL score), and Mimecast (`X-Mimecast-Spam-Score`). SCL >= 5 triggers spam flag automatically.
+
+2. **Subject line scam analysis** (new capability):
+   - **Phone number detection**: Finds phone numbers in subject lines; escalates to danger if letter-for-digit substitution detected (O→0, I→1)
+   - **Payment amount detection**: Flags monetary amounts ($xxx.xx USD) — classic fake invoice/charge trigger
+   - **Homoglyph detection**: Normalizes look-alike characters (O→0, I→l, Cyrillic→Latin) and compares to original to detect obfuscation
+   - **Scam phrase detection**: Matches known subject line patterns ("you authorized", "payment confirmation", "account suspended", etc.)
+
+3. **Improved brand mismatch detection**:
+   - Now checks subject line after homoglyph normalization (catches "Pay PaI" → "paypal")
+   - Added more brands: Netflix, Bank of America, Wells Fargo, Chase, Geek Squad, Norton, McAfee
+   - Domain comparison is now whitespace-insensitive
+
+4. **New UI section**: "Subject Line Analysis" card with red border and scam indicator badges, positioned between header findings and body analysis
+
+5. **Updated verdict logic**: Subject line danger indicators now factor into suspicious/caution classification. New verdict message for spam + subject scam combo.
+
+6. **New Big Question**: "All authentication passed — so why are there scam indicators in the subject?" explains the legitimate-infrastructure-abuse attack pattern.
+
+**Lesson learned**: Authentication (SPF/DKIM/DMARC) verifies infrastructure, not intent. Scammers increasingly use legitimate services to send authenticated emails. Subject line analysis is critical for detecting weaponized notifications.
+
+**Globalping.io evaluation** (2026-02-17): Evaluated as potential intelligence source for DNS propagation verification from globally distributed probes. Offers DNS, ping, traceroute, HTTP, MTR from hundreds of locations worldwide. Free tier: 250 tests/hour. Would add "Is this domain resolving consistently worldwide?" capability. Added to roadmap — not implemented yet.

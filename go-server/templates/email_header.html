@@ -354,6 +354,28 @@ You can paste the whole email — we'll separate headers from body automatically
                 </div>
                 {{end}}
 
+                {{if .HasSubjectAnalysis}}
+                <div class="card bg-dark border-danger mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="fas fa-envelope-open-text me-2 text-danger"></i>Subject Line Analysis <span class="badge bg-danger ms-2">Scam Indicators</span></h5>
+                    </div>
+                    <div class="card-body">
+                        <p class="text-muted small mb-3">The subject line was analyzed for patterns commonly associated with tech support scams, fake invoices, phishing campaigns, and homoglyph obfuscation.</p>
+                        {{range .SubjectScamIndicators}}
+                        <div class="alert alert-{{.Severity}} py-2 mb-2 d-flex align-items-start" role="alert">
+                            {{if eq .Severity "danger"}}<i class="fas fa-exclamation-triangle me-2 mt-1"></i>
+                            {{else if eq .Severity "warning"}}<i class="fas fa-triangle-exclamation me-2 mt-1"></i>
+                            {{else}}<i class="fas fa-info-circle me-2 mt-1"></i>{{end}}
+                            <div>
+                                <strong>{{.Category}}</strong>: {{.Description}}
+                                {{if .Evidence}}<div class="small text-muted mt-1"><i class="fas fa-search me-1"></i>{{.Evidence}}</div>{{end}}
+                            </div>
+                        </div>
+                        {{end}}
+                    </div>
+                </div>
+                {{end}}
+
                 {{if .HasBodyAnalysis}}
                 <div class="card bg-dark border-warning mb-4">
                     <div class="card-header">
