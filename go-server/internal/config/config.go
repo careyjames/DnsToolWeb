@@ -8,12 +8,13 @@ import (
 )
 
 type Config struct {
-        DatabaseURL    string
-        SessionSecret  string
-        Port           string
-        AppVersion     string
-        Testing        bool
-        SMTPProbeMode  string
+        DatabaseURL     string
+        SessionSecret   string
+        Port            string
+        AppVersion      string
+        Testing         bool
+        SMTPProbeMode   string
+        MaintenanceNote string
 }
 
 func Load() (*Config, error) {
@@ -37,12 +38,15 @@ func Load() (*Config, error) {
                 smtpProbeMode = "skip"
         }
 
+        maintenanceNote := os.Getenv("MAINTENANCE_NOTE")
+
         return &Config{
-                DatabaseURL:    dbURL,
-                SessionSecret:  sessionSecret,
-                Port:           port,
-                AppVersion:     "26.19.17",
-                Testing:        false,
-                SMTPProbeMode:  smtpProbeMode,
+                DatabaseURL:     dbURL,
+                SessionSecret:   sessionSecret,
+                Port:            port,
+                AppVersion:      "26.19.18",
+                Testing:         false,
+                SMTPProbeMode:   smtpProbeMode,
+                MaintenanceNote: maintenanceNote,
         }, nil
 }

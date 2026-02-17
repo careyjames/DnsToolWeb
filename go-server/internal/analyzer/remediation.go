@@ -115,17 +115,17 @@ func (a *Analyzer) GenerateRemediation(results map[string]any) map[string]any {
 
         var fixes []fix
 
-        if !ps.isNoMailDomain {
-                if ps.probableNoMail {
-                        fixes = appendProbableNoMailFixes(fixes, ps, domain)
-                } else {
-                        fixes = appendSPFFixes(fixes, ps, ds, results, domain)
-                        fixes = appendDMARCFixes(fixes, ps, results, domain)
-                        fixes = appendDKIMFixes(fixes, ps, ds, results, domain)
-                        fixes = appendMTASTSFixes(fixes, ps, domain)
-                        fixes = appendTLSRPTFixes(fixes, ps, domain)
-                        fixes = appendBIMIFixes(fixes, ps, domain)
-                }
+        if ps.isNoMailDomain {
+                fixes = appendNoMailHardeningFixes(fixes, ps, domain)
+        } else if ps.probableNoMail {
+                fixes = appendProbableNoMailFixes(fixes, ps, domain)
+        } else {
+                fixes = appendSPFFixes(fixes, ps, ds, results, domain)
+                fixes = appendDMARCFixes(fixes, ps, results, domain)
+                fixes = appendDKIMFixes(fixes, ps, ds, results, domain)
+                fixes = appendMTASTSFixes(fixes, ps, domain)
+                fixes = appendTLSRPTFixes(fixes, ps, domain)
+                fixes = appendBIMIFixes(fixes, ps, domain)
         }
         fixes = appendDNSSECFixes(fixes, ps)
         fixes = appendDANEFixes(fixes, ps, results, domain)
@@ -593,6 +593,36 @@ func extractFirstMXHost(results map[string]any) string {
                 }
         }
         return "mail.yourdomain.com"
+}
+
+func appendNoMailHardeningFixes(fixes []fix, ps protocolState, domain string) []fix {
+        if !ps.spfHardFail {
+                fixes = append(fixes, fix{
+                        Title:       "Harden SPF for Null MX Domain",
+                        Description: "This domain publishes a Null MX record (RFC 7505) declaring it does not accept email. Complete the no-mail hardening by adding a strict SPF record that explicitly denies all senders.",
+                        Severity:    "high",
+                        DNSHost:     domain,
+                        DNSType:     "TXT",
+                        DNSValue:    "v=spf1 -all",
+                        DNSPurpose:  "Explicitly declares no servers are authorized to send email from this null MX domain.",
+                        RFC:         "RFC 7208",
+                        Section:     "SPF",
+                })
+        }
+        if ps.dmarcMissing || (ps.dmarcPolicy != "reject") {
+                fixes = append(fixes, fix{
+                        Title:       "Add DMARC Reject for Null MX Domain",
+                        Description: "This domain publishes a Null MX record (RFC 7505) but lacks a DMARC reject policy. Without it, attackers can still spoof email from this domain. Complete the no-mail hardening with a strict DMARC reject policy.",
+                        Severity:    "high",
+                        DNSHost:     "_dmarc." + domain,
+                        DNSType:     "TXT",
+                        DNSValue:    "v=DMARC1; p=reject; sp=reject; adkim=s; aspf=s;",
+                        DNSPurpose:  "Instructs receiving servers to reject all email from this null MX domain — no legitimate mail is expected.",
+                        RFC:         "RFC 7489",
+                        Section:     "DMARC",
+                })
+        }
+        return fixes
 }
 
 func appendProbableNoMailFixes(fixes []fix, ps protocolState, domain string) []fix {

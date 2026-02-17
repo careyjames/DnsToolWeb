@@ -90,3 +90,9 @@ Items identified during development, consolidated here so they're easy to find a
 ### Analysis Enhancements
 - **Executive template protocol questions**: Port per-protocol "Big Questions" to `results_executive.html` (currently only in Engineer's Report).
 - **DKIM selector coverage**: Expand default selector list or integrate provider-specific selector databases for better DKIM discovery.
+- **Zone file export/import**: Allow users to export discovered DNS configuration as a standards-compliant zone file, and import zone files for offline analysis.
+- **Raw intelligence access**: Provide downloadable raw data (JSON/CSV) of all collected intelligence for integration with external tools and SIEMs.
+- **ISC recommendation path**: Surface Internet Systems Consortium best-practice recommendations alongside RFC citations where applicable.
+- **One-liner verification**: Generate single-command verification scripts (dig/curl/openssl) for every finding, copy-paste ready for terminal use.
+- **Email Header Analyzer matrix**: Cross-reference multiple email headers to build a sender reputation matrix showing authentication consistency across messages.
+- **Probe node integration**: When multi-vantage probe nodes are available, integrate their results into the main analysis for geographic diversity in SMTP and DNS testing.

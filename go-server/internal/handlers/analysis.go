@@ -145,6 +145,7 @@ func (h *AnalysisHandler) ViewAnalysisStatic(c *gin.Context) {
                 "SecurityTrailsKey":    "",
                 "IntegrityHash":        integrityHash,
                 "RFCCount":             rfcCount,
+                "MaintenanceNote":      h.Config.MaintenanceNote,
         })
 }
 
@@ -248,6 +249,7 @@ func (h *AnalysisHandler) ViewAnalysisExecutive(c *gin.Context) {
                 "ToolVersion":       toolVersion,
                 "IntegrityHash":     integrityHash,
                 "RFCCount":          rfcCount,
+                "MaintenanceNote":   h.Config.MaintenanceNote,
         })
 }
 
@@ -329,6 +331,7 @@ func (h *AnalysisHandler) Analyze(c *gin.Context) {
                 "IntegrityHash":        integrityHash,
                 "RFCCount":             rfcCount,
                 "ExposureChecks":       exposureChecks,
+                "MaintenanceNote":      h.Config.MaintenanceNote,
         })
 }
 

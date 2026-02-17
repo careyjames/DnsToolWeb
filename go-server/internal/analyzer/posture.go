@@ -544,8 +544,14 @@ func extractExternalDomainMaps(raw any) []map[string]any {
 }
 
 func evaluateDeliberateMonitoring(ps protocolState, configuredCount int) (bool, string) {
-        if ps.dmarcOK && ps.dmarcPolicy == "none" && ps.dmarcHasRua && ps.spfOK && configuredCount >= 3 {
+        if !ps.dmarcOK || !ps.dmarcHasRua || !ps.spfOK {
+                return false, ""
+        }
+        if ps.dmarcPolicy == "none" && configuredCount >= 3 {
                 return true, "Domain appears to be in deliberate DMARC monitoring phase with aggregate reporting enabled"
+        }
+        if ps.dmarcPolicy == "quarantine" && ps.dmarcPct < 100 && configuredCount >= 3 {
+                return true, "Domain appears to be in deliberate DMARC deployment phase — quarantine at partial enforcement with reporting enabled"
         }
         return false, ""
 }

@@ -750,6 +750,21 @@ Changes:
 
 ---
 
+## Session: February 17, 2026 (v26.19.18)
+
+### Changes
+1. **Big Questions visual pop**: Enhanced CSS for `.section-question` (cyan accent, text shadow) and `.protocol-question-text` (left border, background highlight) — questions now visually stand out as the core product identity.
+2. **Loading screen rebranding**: Changed "Posture scoring & remediation" to "Classifying & interpreting intelligence" to match ICIE identity.
+3. **Report button UX fix**: Engineer/Executive buttons now show Print icon on current report and Navigate icon for other report — no unwanted print dialogs.
+4. **Null MX remediation bug**: Domains with RFC 7505 null MX were classified "High Risk" but got zero Priority Action fixes because `GenerateRemediation` skipped all email fixes when `isNoMailDomain` was true. Added `appendNoMailHardeningFixes` providing SPF `-all` and DMARC `reject` fixes specifically for null MX domains.
+5. **DMARC monitoring phase expansion**: `evaluateDeliberateMonitoring` now also covers `quarantine` at partial enforcement (`pct < 100`) with `rua` reporting, not just `p=none`.
+6. **Homepage rebranding**: "What We Analyze" → "Intelligence Collection Vectors"; subtitle reframed from checker to OSINT language.
+7. **SEO/Schema cleanup**: Page title, OG/Twitter meta, JSON-LD schema all updated to drop "Checker" and use "Domain Security Audit | OSINT DNS Intelligence Reports" identity.
+8. **Maintenance tag**: Configurable `MAINTENANCE_NOTE` env var renders a small professional badge next to version in report header. Driven by env var so it can be toggled without code changes.
+9. **Roadmap items 9-14 stored**: Zone file export/import, raw intelligence access, ISC recommendation path, one-liner verification, Email Header Analyzer matrix, probe node integration — all documented in `replit.md` Phase 2 roadmap.
+
+---
+
 ## Failures & Lessons Learned Timeline
 
 | Date | Mistake | Root Cause | Correct Solution |
