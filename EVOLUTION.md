@@ -1096,4 +1096,20 @@ Applied `showOverlay()` to all overlay trigger points: index.html form submit, r
 
 **Lesson learned**: Authentication (SPF/DKIM/DMARC) verifies infrastructure, not intent. Scammers increasingly use legitimate services to send authenticated emails. Subject line analysis is critical for detecting weaponized notifications.
 
-**Globalping.io evaluation** (2026-02-17): Evaluated as potential intelligence source for DNS propagation verification from globally distributed probes. Offers DNS, ping, traceroute, HTTP, MTR from hundreds of locations worldwide. Free tier: 250 tests/hour. Would add "Is this domain resolving consistently worldwide?" capability. Added to roadmap — not implemented yet.
+**Globalping.io evaluation** (2026-02-17): Evaluated as potential intelligence source for DNS propagation verification from globally distributed probes. Offers DNS, ping, traceroute, HTTP, MTR from hundreds of locations worldwide. Free tier: 250 tests/hour. Would add "Is this domain resolving consistently worldwide?" capability. Added to roadmap — not implemented yet. **Architect decision**: Complementary to the existing SMTP port 25 probe, NOT a replacement. Globalping tests DNS resolution consistency from distributed locations; the port 25 probe tests SMTP transport reachability and STARTTLS encryption. Different layers, both needed.
+
+### Email Header Analyzer — User Education Enhancement (2026-02-17)
+
+**Problem**: When the "authenticated scam" attack pattern was detected (auth passes, subject has scam indicators), the Big Question logic gap meant users only saw the generic spam question, not the more specific subject-line education. The combined spam + subject scam case was the most dangerous scenario but had the weakest educational response.
+
+**Fixes applied**:
+
+1. **Big Question three-way logic**: Restructured to prioritize combined case (spam + subject + all auth pass) with the strongest educational message: "How did a scam email pass every authentication check?" Falls through to spam-only or subject-only cases correctly.
+
+2. **"Understanding This Attack" educational callout**: New three-step visual card that only appears when subject scam analysis triggers a suspicious verdict. Shows the full attack chain:
+   - Step 1: Legitimate Infrastructure (why authentication passes)
+   - Step 2: Weaponized Content (how subject lines are crafted with homoglyphs)
+   - Step 3: The Trap (what the scammer wants you to do)
+   - Key takeaway: authentication verifies identity, not intent
+
+**Lesson learned**: When multiple detection layers fire simultaneously, the educational response should be STRONGER (combined explanation), not weaker (showing only the first match).

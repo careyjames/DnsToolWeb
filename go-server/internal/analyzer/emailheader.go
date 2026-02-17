@@ -1360,16 +1360,21 @@ func generateBigQuestions(result *EmailHeaderAnalysis) {
         }
         allAuthPass = allAuthPass && hasDKIMPass
 
-        if allAuthPass && result.SpamFlagged {
+        if allAuthPass && result.SpamFlagged && result.HasSubjectAnalysis {
+                result.BigQuestions = append(result.BigQuestions, BigQuestion{
+                        Question: "How did a scam email pass every authentication check?",
+                        Answer:   "This is a sophisticated attack pattern: scammers use legitimate services (Microsoft 365, Google Workspace, etc.) to send emails that genuinely pass SPF, DKIM, and DMARC — because the infrastructure IS legitimate. The fraud is in the content, not the sender. The subject line contains obfuscated phone numbers, fake payment amounts, or look-alike brand names designed to trick you into calling a fraudulent support line. Your email provider's spam filter caught it, but the authentication system alone never could — it was designed to verify identity, not intent. Never call numbers or click links from unsolicited emails, even if they appear to come from a trusted service.",
+                        Severity: "danger",
+                        Icon:     "shield-halved",
+                })
+        } else if allAuthPass && result.SpamFlagged {
                 result.BigQuestions = append(result.BigQuestions, BigQuestion{
                         Question: "How can SPF, DKIM, and DMARC all pass but this still be spam?",
                         Answer:   "Authentication only verifies the sending server was authorized by the domain — it says nothing about the content. Spammers use legitimate email services (like free mail providers) to send from real accounts that pass all checks. The content is fraudulent, not the infrastructure.",
                         Severity: "danger",
                         Icon:     "shield-halved",
                 })
-        }
-
-        if allAuthPass && result.HasSubjectAnalysis && !result.SpamFlagged {
+        } else if allAuthPass && result.HasSubjectAnalysis {
                 result.BigQuestions = append(result.BigQuestions, BigQuestion{
                         Question: "All authentication passed — so why are there scam indicators in the subject?",
                         Answer:   "Scammers can trigger legitimate notification emails from real services (Microsoft, PayPal, etc.) as bait. The email is authentically from that service, but the subject line has been weaponized — containing fake phone numbers, payment amounts, or obfuscated brand names to lure you into calling a fraudulent support line. Never call numbers from unsolicited emails.",

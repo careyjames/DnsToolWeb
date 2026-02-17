@@ -142,3 +142,12 @@ All documentation, reports, and output follow NIST Special Publication 800-serie
 5. **Report titles**: Use intelligence-community format: "DNS Intelligence Report" / "DNS Intelligence Brief" (not "Analysis" or "Study")
 6. **Visual identity**: Dark theme with hacker-culture fonts is fine — the NIST standard governs content structure and citation format, not visual design
 7. **TLP classification**: Already using FIRST TLP v2.0 — this remains the classification framework
+
+## Future Roadmap
+
+### Globalping.io Integration (on the roadmap)
+- **What**: Globally distributed DNS resolution probes from hundreds of locations/ASNs worldwide
+- **Capability**: "Is this domain resolving consistently worldwide?" — detects DNS censorship, poisoning, propagation inconsistencies
+- **Free tier**: 250 tests/hour
+- **Decision (2026-02-17)**: Complementary to the existing SMTP port 25 probe, NOT a replacement. Globalping tests DNS resolution consistency; the port 25 probe tests SMTP transport reachability and STARTTLS encryption. Different layers, both needed.
+- **Status**: Evaluated, not yet implemented

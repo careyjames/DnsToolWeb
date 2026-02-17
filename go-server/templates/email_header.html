@@ -185,6 +185,43 @@ You can paste the whole email — we'll separate headers from body automatically
                     </div>
                 </div>
 
+                {{if and .HasSubjectAnalysis (eq .Verdict "suspicious")}}
+                <div class="card bg-dark border-danger mb-4">
+                    <div class="card-header bg-danger bg-opacity-10">
+                        <h5 class="mb-0"><i class="fas fa-graduation-cap me-2 text-danger"></i>Understanding This Attack <span class="badge bg-danger ms-2">Security Education</span></h5>
+                    </div>
+                    <div class="card-body">
+                        <p class="text-light mb-3">This email demonstrates a growing attack pattern that defeats traditional email authentication. Here is how it works and why it slipped through:</p>
+                        <div class="row g-3">
+                            <div class="col-md-4">
+                                <div class="p-3 rounded border border-secondary h-100">
+                                    <div class="text-center mb-2"><i class="fas fa-check-circle fa-2x text-success"></i></div>
+                                    <h6 class="text-center text-success">Step 1: Legitimate Infrastructure</h6>
+                                    <p class="small text-muted mb-0">The attacker uses a real email service (Microsoft 365, Google Workspace, etc.) to send the email. Because it genuinely comes from that service, SPF, DKIM, and DMARC all pass. The infrastructure is authentic.</p>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="p-3 rounded border border-secondary h-100">
+                                    <div class="text-center mb-2"><i class="fas fa-mask fa-2x text-warning"></i></div>
+                                    <h6 class="text-center text-warning">Step 2: Weaponized Content</h6>
+                                    <p class="small text-muted mb-0">The subject line is crafted with obfuscated brand names (using look-alike characters), fake payment amounts, and phone numbers with letter-for-digit substitution &mdash; all designed to bypass automated filters while fooling human readers.</p>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="p-3 rounded border border-secondary h-100">
+                                    <div class="text-center mb-2"><i class="fas fa-phone-slash fa-2x text-danger"></i></div>
+                                    <h6 class="text-center text-danger">Step 3: The Trap</h6>
+                                    <p class="small text-muted mb-0">The goal is to make you panic about a fake charge and call the fraudulent phone number. The &ldquo;support&rdquo; agent will then ask for remote access to your computer or your payment details. Never call numbers from unsolicited emails.</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mt-3 p-2 rounded bg-secondary bg-opacity-25">
+                            <p class="small text-muted mb-0"><i class="fas fa-lightbulb me-1 text-warning"></i><strong>Key takeaway:</strong> Email authentication (SPF/DKIM/DMARC) was designed to verify <em>who sent it</em>, not <em>what it says</em>. When the sender IS a legitimate service, authentication will always pass. Defense requires analyzing the content &mdash; which is exactly what this tool now does.</p>
+                        </div>
+                    </div>
+                </div>
+                {{end}}
+
                 {{if .HasBigQuestions}}
                 <div class="card bg-dark border-info mb-4">
                     <div class="card-header">
