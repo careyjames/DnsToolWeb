@@ -872,3 +872,59 @@ After evaluating APA, Chicago/Turabian, IEEE, NIST SP 800, and ICD (Intelligence
 
 ### Badge Update (same session)
 Accuracy Tuning badge restyled with amber pill-shaped outline (`border: 2px solid`, `border-radius: 999px`, subtle `box-shadow` glow) for notice/warning visual weight.
+
+---
+
+## Session: February 17, 2026
+
+### Two-Repo Boundary Refactor — Build Tag Strategy
+
+**Problem**: All recent development went into the public DnsToolWeb repo. Intelligence data (CDN ASN maps, SaaS regex patterns, enterprise provider databases, AI crawler lists) was fully exposed in public stub files with zero actual stubbing. The private `dnstool-intel` repo (last updated Feb 14) had drifted completely.
+
+**Solution**: Adopted HashiCorp-style Go build-tag pattern (`//go:build intel` / `//go:build !intel`) with three-file split:
+- `<name>.go` — Framework only (types, constants, utilities). No build tag. Always compiled.
+- `<name>_oss.go` — `//go:build !intel`. Empty maps, safe stub returns. Ships in public repo.
+- `<name>_intel.go` — `//go:build intel`. Full intelligence. Lives in private `dnstool-intel` repo only.
+
+### Files Split (10 files → 30 files)
+
+| Original File | Framework | OSS Stub | Intel (staged) |
+|---|---|---|---|
+| `edge_cdn.go` | Types only | Empty CDN/cloud maps, stub detection | 22 CDN ASNs, 15 cloud ASNs, 30 PTR patterns, 36 CNAME patterns |
+| `saas_txt.go` | `saasPattern` type, `truncateRecord()` | Empty patterns, stub extraction | 48 SaaS TXT regex patterns |
+| `infrastructure.go` | `providerInfo`, `infraMatch`, `dsDetection`, utilities | Empty provider maps (14), stub functions (34) | 22 enterprise, 10 legacy, 28 MX, 24 NS, 22 web, 14 PTR providers |
+| `providers.go` | 5 types, 11 capability constants, 28 category constants | Vendor names, empty maps (6), stub functions (3) | Full provider databases |
+| `ip_investigation.go` | `IPRelationship`, regex vars, utilities | Stub investigation functions (17) | Full IP investigation |
+| `ai_surface/http.go` | Package decl | Stub `fetchTextFile()` | Full HTTP fetcher |
+| `ai_surface/llms_txt.go` | Package decl | Stub LLMs.txt detection (4 functions) | Full LLMs.txt analysis |
+| `ai_surface/robots_txt.go` | `robotsDirective` type | Empty crawler list, stub detection (4) | 15 AI crawler patterns |
+| `ai_surface/poisoning.go` | `truncate()` utility | Stub IOC/prompt detection (6) | Full poisoning detection |
+| `manifest.go` | `ManifestEntry` type, `GetManifestByCategory()` | Empty manifest, stub `init()` | Full feature parity manifest |
+
+### Files Reclassified as Pure Framework (no split needed)
+- `confidence.go` — Constants and utility functions only. Removed incorrect "stub" header.
+- `dkim_state.go` — Type definitions and classification logic. Removed incorrect "stub" header.
+
+### Test Infrastructure Changes
+- Created `golden_rules_intel_test.go` (`//go:build intel`) — 9 tests that depend on populated intelligence maps
+- Updated stub registry in 3 test functions to reflect new `_oss.go` file names
+- All remaining golden rule tests pass in OSS mode
+
+### Documentation Created
+- `docs/BOUNDARY_MATRIX.md` — Comprehensive analysis of 123 FRAMEWORK, 61 INTELLIGENCE, 26 DUAL symbols across all files
+- `docs/BUILD_TAG_STRATEGY.md` — Build-tag strategy, three-file pattern specification, CI matrix
+
+### Intel Staging
+All `_intel.go` files staged at `docs/intel-staging/` for transfer to private `dnstool-intel` repo:
+- `edge_cdn_intel.go`, `saas_txt_intel.go`, `infrastructure_intel.go`, `providers_intel.go`, `ip_investigation_intel.go`, `manifest_intel.go`
+- `ai_surface/http_intel.go`, `ai_surface/llms_txt_intel.go`, `ai_surface/robots_txt_intel.go`, `ai_surface/poisoning_intel.go`
+
+### Remaining Work (scanner.go)
+`ai_surface/scanner.go` contains `aiCrawlers` (15 names) which is intelligence, but the file is heavily intertwined with framework orchestration code. Splitting requires more significant refactoring — deferred to next session.
+
+### Sync Workflow for Private Repo
+After this session, the owner needs to:
+1. Copy all `docs/intel-staging/*.go` files to the corresponding paths in `dnstool-intel`
+2. Verify `go build -tags intel ./...` passes in the combined workspace
+3. Remove `docs/intel-staging/` from public repo after transfer
+4. Set up CI matrix: `go build ./...` (OSS) + `go build -tags intel ./...` (full edition)

@@ -38,19 +38,49 @@ The frontend uses server-rendered HTML with Go `html/template`, Bootstrap dark t
 ### Database
 - **PostgreSQL**: Primary database for persistent storage, with analysis data being immutable and append-only to ensure auditable records.
 
-## Two-Repo Stub Architecture
-The project uses a two-repository design:
-- **DNS Tool Web** (public): Full application with 10 stub files for private intelligence
-- **dnstool-intel** (private): Proprietary provider databases, detection patterns, advanced analysis
+## Two-Repo Build-Tag Architecture (refactored 2026-02-17)
+The project uses a two-repository design with Go build tags (`//go:build intel` / `//go:build !intel`):
+- **DNS Tool Web** (public): Full application framework + `_oss.go` stubs (empty maps, safe defaults)
+- **dnstool-intel** (private): `_intel.go` files with proprietary provider databases, detection patterns, advanced analysis
+
+### Three-File Pattern
+Each intelligence boundary uses three files:
+- `<name>.go` — Framework (types, constants, utilities). No build tag. Always compiled.
+- `<name>_oss.go` — `//go:build !intel`. Empty stubs. Ships in public repo.
+- `<name>_intel.go` — `//go:build intel`. Full intelligence. Private repo only.
+
+### Build Commands
+- **OSS edition**: `go build ./go-server/cmd/server/` (default, no tag)
+- **Full edition**: `go build -tags intel ./go-server/cmd/server/` (with private repo overlaid)
 
 ### Stub Contract
-Every stub MUST: (1) return safe non-nil defaults, (2) never return errors, (3) maintain correct function signatures, (4) allow UI to render gracefully. The stub registry is enforced by three golden rule tests in `golden_rules_test.go`.
+Every `_oss.go` stub MUST: (1) return safe non-nil defaults, (2) never return errors, (3) maintain exact function signatures matching `_intel.go`, (4) allow UI to render gracefully.
 
-### Current Stub Files (10)
-`ai_surface/http.go`, `ai_surface/llms_txt.go`, `ai_surface/robots_txt.go`, `ai_surface/poisoning.go`, `confidence.go`, `dkim_state.go`, `infrastructure.go`, `ip_investigation.go`, `manifest.go`, `providers.go`
+### Current Stub Files (10 boundary files, each split into 3)
+| File | OSS Stub | Intel Location |
+|---|---|---|
+| `edge_cdn` | `edge_cdn_oss.go` | `dnstool-intel` |
+| `saas_txt` | `saas_txt_oss.go` | `dnstool-intel` |
+| `infrastructure` | `infrastructure_oss.go` | `dnstool-intel` |
+| `providers` | `providers_oss.go` | `dnstool-intel` |
+| `ip_investigation` | `ip_investigation_oss.go` | `dnstool-intel` |
+| `manifest` | `manifest_oss.go` | `dnstool-intel` |
+| `ai_surface/http` | `http_oss.go` | `dnstool-intel` |
+| `ai_surface/llms_txt` | `llms_txt_oss.go` | `dnstool-intel` |
+| `ai_surface/robots_txt` | `robots_txt_oss.go` | `dnstool-intel` |
+| `ai_surface/poisoning` | `poisoning_oss.go` | `dnstool-intel` |
 
-### Fully Implemented (removed from stub registry 2026-02-17)
-`commands.go` (19 protocol sections, 25+ verification commands), `edge_cdn.go`, `saas_txt.go`
+### Pure Framework Files (no split needed)
+`confidence.go`, `dkim_state.go` — types and constants only, no intelligence data.
+
+### Fully Implemented Framework (no stubs)
+`commands.go` (19 protocol sections, 25+ verification commands)
+
+### Intel Staging
+`docs/intel-staging/` contains `_intel.go` files ready for transfer to private repo. Remove after sync.
+
+### Remaining: scanner.go
+`ai_surface/scanner.go` has `aiCrawlers` (15 names) — intelligence intertwined with framework orchestration. Needs future refactoring.
 
 ### Python Files (Not Stubs, Not Runtime)
 - `main.py` — Process trampoline only (os.execvp replaces Python with Go binary)
