@@ -1,8 +1,12 @@
-# DNS Tool — Evolution Log
+# DNS Tool — Evolution Log (Breadcrumbs)
 
-This file is the persistent record of all significant decisions, changes, and rationale across development sessions. It serves as a backup for `replit.md` (which may be reset by the platform) and as the canonical history of the project's evolution.
+This file is the project's permanent breadcrumb trail — every session's decisions, changes, lessons learned, and rationale. It serves as a backup for `replit.md` (which may be reset by the platform) and as the canonical history of the project's evolution. If anything goes wrong, this is where you trace back what happened and why.
 
-**Rule for the AI agent**: At the start of every session, read this file AND `replit.md`. At the end of every session, append new entries here. If `replit.md` has been reset/truncated, restore its content from this file.
+**Rules for the AI agent**:
+1. At the start of every session, read this file AND `replit.md`.
+2. At the end of every session, append new entries here with dates.
+3. If `replit.md` has been reset/truncated, restore its content from this file.
+4. **MANDATORY**: After ANY Go code changes, run `go test ./go-server/... -count=1` before finishing. This runs the boundary integrity tests that prevent intelligence leaks, duplicate symbols, stub contract breakage, and architecture violations.
 
 ---
 
