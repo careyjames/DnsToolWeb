@@ -976,11 +976,11 @@
                                 {{$dmarcPolicy := mapGetStr "policy" $dmarc}}
                                 <div class="protocol-question mb-2">
                                     <span class="protocol-question-text">Are spoofed emails rejected or quarantined?</span>
-                                    {{if and (eq $dmarcStatus "success") (eq $dmarcPolicy "reject")}}
+                                    {{if eq $dmarcPolicy "reject"}}
                                         <span class="badge bg-success">Yes — reject policy</span>
-                                    {{else if and (eq $dmarcStatus "success") (eq $dmarcPolicy "quarantine")}}
+                                    {{else if eq $dmarcPolicy "quarantine"}}
                                         <span class="badge bg-warning text-dark">Quarantined, not rejected</span>
-                                    {{else if eq $dmarcStatus "success"}}
+                                    {{else if eq $dmarcPolicy "none"}}
                                         <span class="badge bg-warning text-dark">Monitoring only</span>
                                     {{else}}
                                         <span class="badge bg-danger">No policy published</span>
@@ -2086,7 +2086,7 @@
                         <div class="mb-3">
                             <h6 class="text-info"><i class="fas fa-ban me-1"></i> AI Crawler Governance (robots.txt)
                                 <a href="https://datatracker.ietf.org/doc/html/rfc9309" target="_blank" rel="noopener" class="ms-2 text-muted rfc-link" data-bs-toggle="tooltip" data-bs-html="true" title="<strong>Robots Exclusion Protocol</strong><br>Formalizes robots.txt as the standard mechanism for controlling crawler access. AI-specific User-agent directives use this same protocol."><i class="fas fa-info-circle"></i><span class="rfc-label">RFC 9309</span></a>
-                                <a href="https://datatracker.ietf.org/doc/draft-ietf-aipref-attach/" target="_blank" rel="noopener" class="text-muted rfc-link" data-bs-toggle="tooltip" data-bs-html="true" title="<strong>IETF AI Preferences (AIPREF)</strong><br>IETF working group draft defining Content-Usage directives for robots.txt and HTTP headers, enabling sites to express AI training and inference preferences."><i class="fas fa-info-circle"></i><span class="rfc-label">IETF AIPREF</span></a>
+                                <a href="https://datatracker.ietf.org/doc/draft-ietf-aipref-attach/" target="_blank" rel="noopener" class="text-muted rfc-link" data-bs-toggle="tooltip" data-bs-html="true" title="<strong>IETF AI Preferences — Active Draft</strong><br>IETF working group draft (not yet ratified) defining Content-Usage directives for robots.txt and HTTP headers, enabling sites to express AI training and inference preferences."><i class="fas fa-info-circle"></i><span class="rfc-label">IETF Draft</span></a>
                             </h6>
                             <div class="protocol-question mb-2">
                                 <span class="protocol-question-text">Are AI crawlers explicitly allowed or blocked?</span>
