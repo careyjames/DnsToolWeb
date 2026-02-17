@@ -108,14 +108,8 @@ func (a *Analyzer) DiscoverSubdomains(ctx context.Context, domain string) map[st
                 result["expired_count"] = fmt.Sprintf("%d", expiredCount)
                 result["cname_count"] = float64(cnameCount)
 
-                const displayLimit = 100
-                if len(cached) > displayLimit {
-                        result["subdomains"] = cached[:displayLimit]
-                        result["total_subdomains_found"] = len(cached)
-                        result["display_capped"] = true
-                } else {
-                        result["subdomains"] = cached
-                }
+                sorted := sortSubdomainsSmartOrder(cached)
+                applySubdomainDisplayCap(result, sorted, currentCount)
                 return result
         }
 
@@ -194,19 +188,25 @@ func (a *Analyzer) DiscoverSubdomains(ctx context.Context, domain string) map[st
                 }
         }
 
-        sort.Slice(subdomains, func(i, j int) bool {
-                si := subdomains[i]["name"].(string)
-                sj := subdomains[j]["name"].(string)
-                return si < sj
-        })
-
-        result["current_count"] = fmt.Sprintf("%d", currentCount)
-        result["expired_count"] = fmt.Sprintf("%d", expiredCount)
         result["cname_count"] = float64(cnameCount)
 
         if len(subdomains) > 0 {
                 a.enrichSubdomainsV2(ctx, domain, subdomains)
         }
+
+        currentCount = 0
+        expiredCount = 0
+        for _, sd := range subdomains {
+                if isCurrent, ok := sd["is_current"].(bool); ok && isCurrent {
+                        currentCount++
+                } else {
+                        expiredCount++
+                }
+        }
+        result["current_count"] = fmt.Sprintf("%d", currentCount)
+        result["expired_count"] = fmt.Sprintf("%d", expiredCount)
+
+        subdomains = sortSubdomainsSmartOrder(subdomains)
 
         a.setCTCache(domain, subdomains)
 
@@ -214,16 +214,65 @@ func (a *Analyzer) DiscoverSubdomains(ctx context.Context, domain string) map[st
         result["ct_source"] = "live"
         _ = dnsProbed
 
-        const displayLimit = 100
-        if len(subdomains) > displayLimit {
-                result["subdomains"] = subdomains[:displayLimit]
-                result["total_subdomains_found"] = len(subdomains)
-                result["display_capped"] = true
-        } else {
-                result["subdomains"] = subdomains
-        }
+        applySubdomainDisplayCap(result, subdomains, currentCount)
 
         return result
+}
+
+func sortSubdomainsSmartOrder(subdomains []map[string]any) []map[string]any {
+        var current, historical []map[string]any
+        for _, sd := range subdomains {
+                if isCur, ok := sd["is_current"].(bool); ok && isCur {
+                        current = append(current, sd)
+                } else {
+                        historical = append(historical, sd)
+                }
+        }
+
+        sort.Slice(current, func(i, j int) bool {
+                return current[i]["name"].(string) < current[j]["name"].(string)
+        })
+
+        sort.Slice(historical, func(i, j int) bool {
+                di, _ := historical[i]["first_seen"].(string)
+                dj, _ := historical[j]["first_seen"].(string)
+                return di > dj
+        })
+
+        result := make([]map[string]any, 0, len(current)+len(historical))
+        result = append(result, current...)
+        result = append(result, historical...)
+        return result
+}
+
+func applySubdomainDisplayCap(result map[string]any, subdomains []map[string]any, currentCount int) {
+        const softCap = 100
+        const historicalOverflow = 20
+
+        total := len(subdomains)
+
+        if total <= softCap {
+                result["subdomains"] = subdomains
+                return
+        }
+
+        var displayLimit int
+        if currentCount > softCap {
+                displayLimit = currentCount + historicalOverflow
+        } else {
+                displayLimit = softCap
+        }
+
+        if displayLimit >= total {
+                result["subdomains"] = subdomains
+                return
+        }
+
+        result["subdomains"] = subdomains[:displayLimit]
+        result["total_subdomains_found"] = total
+        result["display_capped"] = true
+        result["display_current_count"] = currentCount
+        result["display_historical_omitted"] = total - displayLimit
 }
 
 func deduplicateCTEntries(entries []ctEntry) []ctEntry {

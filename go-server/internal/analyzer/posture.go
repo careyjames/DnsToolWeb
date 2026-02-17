@@ -544,6 +544,84 @@ func extractExternalDomainMaps(raw any) []map[string]any {
         return nil
 }
 
+var freeCAs = map[string]bool{
+        "Let's Encrypt":      true,
+        "ZeroSSL":            true,
+        "Buypass":            true,
+        "Google Trust":       true,
+        "E1":                 true,
+        "R3":                 true,
+        "R10":                true,
+        "R11":                true,
+        "ISRG Root":          true,
+        "WE1":                true,
+        "Amazon":             true,
+        "AWS":                true,
+        "Cloudflare":         true,
+}
+
+func matchesFreeCertAuthority(caName string) bool {
+        if freeCAs[caName] {
+                return true
+        }
+        lower := strings.ToLower(caName)
+        for free := range freeCAs {
+                if strings.Contains(lower, strings.ToLower(free)) {
+                        return true
+                }
+        }
+        return false
+}
+
+func classifyCertificateCosts(results map[string]any, acc *postureAccumulator) {
+        ct, ok := results["ct_subdomains"].(map[string]any)
+        if !ok {
+                return
+        }
+
+        caSummaryRaw, ok := ct["ca_summary"]
+        if !ok {
+                return
+        }
+
+        caSummary, ok := caSummaryRaw.([]map[string]any)
+        if !ok {
+                return
+        }
+
+        hasWildcard := false
+        if wc, ok := ct["wildcard_certs"].(map[string]any); ok {
+                if present, ok := wc["present"].(bool); ok && present {
+                        hasWildcard = true
+                }
+        }
+
+        totalPaidCerts := 0
+        paidCANames := []string{}
+        hasFreeCerts := false
+        for _, ca := range caSummary {
+                name, _ := ca["name"].(string)
+                count := extractIntField(ca, "certCount")
+                if matchesFreeCertAuthority(name) {
+                        hasFreeCerts = true
+                } else if count > 0 {
+                        totalPaidCerts += count
+                        paidCANames = append(paidCANames, name)
+                }
+        }
+
+        if totalPaidCerts >= 3 && !hasWildcard {
+                acc.recommendations = append(acc.recommendations,
+                        fmt.Sprintf("Consider a wildcard certificate (*.domain) to reduce certificate management overhead — %d individual certificates detected across %s",
+                                totalPaidCerts, strings.Join(paidCANames, ", ")))
+        }
+
+        if totalPaidCerts >= 3 && !hasFreeCerts {
+                acc.recommendations = append(acc.recommendations,
+                        "Evaluate free certificate providers (Let's Encrypt, AWS Certificate Manager) — automated issuance and renewal can reduce costs, especially with shorter certificate lifetimes ahead")
+        }
+}
+
 func evaluateDeliberateMonitoring(ps protocolState, configuredCount int) (bool, string) {
         if !ps.dmarcOK || !ps.dmarcHasRua || !ps.spfOK {
                 return false, ""
@@ -576,6 +654,7 @@ func (a *Analyzer) CalculatePosture(results map[string]any) map[string]any {
         classifySimpleProtocols(ps, acc)
         classifyDanglingDNS(results, acc)
         classifyDMARCReportAuth(results, acc)
+        classifyCertificateCosts(results, acc)
 
         hasSPF := !ps.spfMissing
         hasDMARC := !ps.dmarcMissing
