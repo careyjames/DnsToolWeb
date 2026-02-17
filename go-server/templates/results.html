@@ -3,7 +3,7 @@
 <head>
     {{template "head" .}}
     <title>Engineer's DNS Intelligence Report — {{.Domain}} - DNS Tool</title>
-    <meta name="description" content="OSINT-based domain security audit for {{.Domain}}. SPF, DKIM, DMARC, DANE/TLSA, DNSSEC, MTA-STS, TLS-RPT, BIMI, CAA analysis with posture scoring and remediation guidance.">
+    <meta name="description" content="OSINT domain security audit for {{.Domain}}. SPF, DKIM, DMARC, DANE, DNSSEC, MTA-STS, BIMI, CAA with posture scoring and remediation.">
     <meta property="og:url" content="https://dnstool.it-help.tech/analysis/{{.AnalysisID}}">
     <meta property="og:type" content="website">
     <meta property="og:title" content="Engineer's DNS Intelligence Report — {{.Domain}} - DNS Tool">
@@ -15,7 +15,7 @@
     <meta name="twitter:title" content="Engineer's DNS Intelligence Report — {{.Domain}} - DNS Tool">
     <meta name="twitter:description" content="OSINT-based domain security audit for {{.Domain}}. SPF, DKIM, DMARC, DANE/TLSA, DNSSEC, MTA-STS, TLS-RPT, BIMI, CAA analysis with posture scoring and remediation guidance.">
     <meta name="twitter:image" content="https://dnstool.it-help.tech/static/images/og-image.png">
-    <link rel="canonical" href="https://dnstool.it-help.tech/analysis/{{.AnalysisID}}">
+    <meta name="robots" content="noindex, nofollow">
     {{template "head_css" .}}
     {{template "critical_css" .}}
     <style nonce="{{.CspNonce}}">

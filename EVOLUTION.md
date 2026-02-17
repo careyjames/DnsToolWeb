@@ -1032,6 +1032,37 @@ Applied `showOverlay()` to all overlay trigger points: index.html form submit, r
 **How to manage**: Edit `sectionTuningMap` in `config.go`, rebuild, restart. Section IDs: email, dane, brand, securitytxt, ai, secrets, web-exposure, smtp, infra, dnssec, traffic.
 
 ### OG/SERP Title Update (2026-02-17)
-**Change**: "DNS Tool — Domain Security Audit | Engineer's Report & Executive's Brief" → "DNS Tool — Domain Security Intelligence | Engineer & Executive Reports"
+**Change**: "DNS Tool — Domain Security Audit | Engineer's Report & Executive's Brief" → "DNS Tool — Domain Security Intelligence | OSINT Reports"
 **Updated in**: `<title>`, OG title, Twitter title, JSON-LD schema name — all 4 sync points aligned.
-**Rationale**: Includes "Intelligence" keyword (matches report naming convention), stays within ~70 char SERP limit, drops possessives for brevity in title context (full possessive form retained in report headers).
+**Rationale**: Includes "Intelligence" keyword (matches report naming convention), stays within ~55 char SERP limit for full visibility, drops possessives for brevity in title context (full possessive form retained in report headers).
+
+### Ahrefs Site Audit Fix — SEO Hardening (2026-02-17)
+**Problem**: Ahrefs site audit (Feb 17 crawl) found 24 actual issues including 105 internal 404 pages, 105 canonical-points-to-4XX, 49 indexable pages not in sitemap, long meta descriptions, schema.org validation errors, and orphan pages.
+
+**Root cause analysis**:
+- **105 404s + canonical-to-4XX**: Old analysis result URLs (IDs that were deleted from DB) being crawled. Analysis pages had `rel=canonical` pointing to themselves and were indexable — so Ahrefs indexed them, then found them gone.
+- **49 indexable not in sitemap**: Analysis result pages were indexable but not in sitemap (correct — they're ephemeral).
+- **Meta descriptions too long**: 4 pages exceeded 160 chars (index.html 368, email_header 225, security_policy 180, results.html 171).
+- **Title too long**: index.html title was 74 chars (Google truncates at ~60).
+- **Schema.org errors**: `slogan` and `applicationSubCategory` are not valid properties for `WebApplication` type.
+- **Orphan pages**: `/security-policy` had no internal links.
+- **Compare pages**: Were indexable with canonical tags but are dynamic/user-specific content.
+
+**Fixes applied**:
+1. **Analysis pages noindex**: Added `<meta name="robots" content="noindex, nofollow">` to `results.html`, removed `rel=canonical`. These are ephemeral reports — search engines shouldn't index individual analyses. Executive template already had noindex.
+2. **Compare pages noindex**: Replaced canonical with noindex on `compare.html` and `compare_select.html` (dynamic comparison pages).
+3. **Meta descriptions trimmed**: All 4 pages trimmed to <155 chars while retaining key terms.
+4. **Title shortened**: `DNS Tool — Domain Security Intelligence | OSINT Reports` (~55 chars, within Google's display limit).
+5. **Schema.org fixed**: Removed invalid `slogan` and `applicationSubCategory` properties from JSON-LD.
+6. **Sitemap cleaned**: Removed `/compare` (now noindex). 8 indexable pages remain in sitemap.
+7. **Missing canonical tags added**: `/history`, `/stats`, `/email-header`, `/investigate` now have proper canonical tags.
+8. **Orphan page fixed**: Added footer link row (Security Policy, Changelog, Sources) to `_footer.html` — appears on every page.
+
+**Expected Ahrefs improvement on next crawl**:
+- 105 404s → Will gradually de-index (analysis pages now noindex, no new ones will be indexed)
+- Canonical-to-4XX → Eliminated (no more canonical on analysis pages)
+- Indexable not in sitemap → Should drop to ~0 (all indexable pages now in sitemap)
+- Meta descriptions → 0 "too long" issues
+- Title too long → 0
+- Schema.org errors → Reduced (removed invalid properties)
+- Orphan pages → 0 (footer links added)
