@@ -606,18 +606,41 @@ func (a *Analyzer) enrichSubdomainsV2(ctx context.Context, baseDomain string, su
         wg.Wait()
 }
 
+func parseDNAttributes(dn string) []string {
+        var parts []string
+        var current strings.Builder
+        inQuote := false
+        for i := 0; i < len(dn); i++ {
+                ch := dn[i]
+                if ch == '"' {
+                        inQuote = !inQuote
+                        continue
+                }
+                if ch == ',' && !inQuote {
+                        parts = append(parts, current.String())
+                        current.Reset()
+                        continue
+                }
+                current.WriteByte(ch)
+        }
+        if current.Len() > 0 {
+                parts = append(parts, current.String())
+        }
+        return parts
+}
+
 func simplifyIssuer(issuer string) string {
-        parts := strings.Split(issuer, ",")
+        parts := parseDNAttributes(issuer)
         for _, part := range parts {
                 part = strings.TrimSpace(part)
                 if strings.HasPrefix(part, "O=") {
-                        return part[2:]
+                        return strings.TrimSpace(part[2:])
                 }
         }
         for _, part := range parts {
                 part = strings.TrimSpace(part)
                 if strings.HasPrefix(part, "CN=") {
-                        return part[3:]
+                        return strings.TrimSpace(part[3:])
                 }
         }
         if len(issuer) > 40 {

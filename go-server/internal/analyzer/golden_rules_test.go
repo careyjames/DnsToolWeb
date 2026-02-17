@@ -1241,6 +1241,29 @@ func TestGoldenRuleDKIMDelegationStructure(t *testing.T) {
         }
 }
 
+func TestGoldenRuleSimplifyIssuer(t *testing.T) {
+        cases := []struct {
+                input    string
+                expected string
+        }{
+                {`C=US, O="GoDaddy.com, Inc.", CN=Go Daddy Secure Certificate Authority - G2`, "GoDaddy.com, Inc."},
+                {`C=US, O=Let's Encrypt, CN=R3`, "Let's Encrypt"},
+                {`C=US, O=DigiCert Inc, CN=DigiCert SHA2 Extended Validation Server CA`, "DigiCert Inc"},
+                {`CN=Some CA`, "Some CA"},
+                {`C=US, ST=Arizona, L=Scottsdale, O="GoDaddy.com, Inc.", OU=http://certs.godaddy.com/repository/, CN=Go Daddy Secure Certificate Authority - G2`, "GoDaddy.com, Inc."},
+                {``, ""},
+                {`O=Simple Org`, "Simple Org"},
+        }
+        for _, tc := range cases {
+                t.Run(tc.expected, func(t *testing.T) {
+                        got := simplifyIssuer(tc.input)
+                        if got != tc.expected {
+                                t.Errorf("simplifyIssuer(%q) = %q, want %q", tc.input, got, tc.expected)
+                        }
+                })
+        }
+}
+
 func TestGoldenRuleZohoSquareSelectors(t *testing.T) {
         for _, sel := range []string{selZoho, selZohoMail, selZmail, selSquare, selSquareup, selSQ} {
                 found := false
