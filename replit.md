@@ -80,6 +80,41 @@ Every `_oss.go` stub MUST: (1) return safe non-nil defaults, (2) never return er
 ### Intel Transfer Status (completed 2026-02-17)
 All 11 `_intel.go` files have been transferred to `careyjames/dnstool-intel` private repo. `docs/intel-staging/` has been deleted from the public repo. No intelligence data remains in the public repo.
 
+## Boundary Integrity Test Suite (added 2026-02-17)
+
+### Purpose
+Prevents regressions in the two-repo architecture. Any change that breaks the public/private boundary, leaks intelligence data, corrupts stub contracts, or creates duplicate symbols will fail these tests immediately.
+
+### Test Files
+- `go-server/internal/analyzer/boundary_integrity_test.go` — Tests 6 analyzer-level boundaries
+- `go-server/internal/analyzer/ai_surface/boundary_integrity_test.go` — Tests 5 ai_surface boundaries
+
+### What the Tests Check (7 Categories)
+1. **File Presence** — Every boundary has both framework.go and _oss.go files
+2. **No Intel in Public Repo** — No `_intel.go` files exist anywhere in the public codebase
+3. **Build Tags** — Every `_oss.go` starts with `//go:build !intel`; framework files have no build tags
+4. **Stub Functions Defined** — All expected functions exist in `_oss.go` stubs
+5. **Stub Variables Defined** — All expected variables (maps, slices) are initialized in stubs
+6. **No Intelligence Leakage** — Known intel tokens (crawler names, provider domains) do not appear in public files
+7. **Safe Defaults** — All stubs return non-nil maps/slices, never return errors, never panic
+8. **No Duplicate Functions** — No function is defined in both framework and stub files
+9. **Correct Package** — All files declare the correct Go package
+10. **Boundary Inventory** — Test fails if boundary count changes without updating the inventory
+11. **No intel-staging** — Verifies `docs/intel-staging/` directory no longer exists
+
+### How to Run
+```bash
+go test ./go-server/internal/analyzer/ -run "TestBoundary" -v
+go test ./go-server/internal/analyzer/ai_surface/ -run "TestAISurface" -v
+go test ./go-server/... -count=1   # Full suite including boundary tests
+```
+
+### When to Update
+- **Adding a new boundary file**: Add entry to `analyzerBoundaries` or `aiSurfaceBoundaries` table, update expected count
+- **Adding a new stub function**: Add function signature to `StubFunctions` list in boundary spec
+- **Adding a new stub variable**: Add variable name to `StubVars` list in boundary spec
+- **Moving intelligence data**: Tests will catch if any _intel.go file is accidentally committed to public repo
+
 ### Python Files (Not Stubs, Not Runtime)
 - `main.py` — Process trampoline only (os.execvp replaces Python with Go binary)
 - `go-server/scripts/audit_icons.py` — Dev-only Font Awesome audit helper

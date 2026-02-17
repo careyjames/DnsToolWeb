@@ -919,12 +919,51 @@ All `_intel.go` files staged at `docs/intel-staging/` for transfer to private `d
 - `edge_cdn_intel.go`, `saas_txt_intel.go`, `infrastructure_intel.go`, `providers_intel.go`, `ip_investigation_intel.go`, `manifest_intel.go`
 - `ai_surface/http_intel.go`, `ai_surface/llms_txt_intel.go`, `ai_surface/robots_txt_intel.go`, `ai_surface/poisoning_intel.go`
 
-### Remaining Work (scanner.go)
-`ai_surface/scanner.go` contains `aiCrawlers` (15 names) which is intelligence, but the file is heavily intertwined with framework orchestration code. Splitting requires more significant refactoring — deferred to next session.
+### scanner.go Split (completed 2026-02-17)
+`ai_surface/scanner.go` was refactored: `aiCrawlers` var removed, replaced with `GetAICrawlers()` function call. `scanner_oss.go` returns empty slice, `scanner_intel.go` (in private repo) returns full 15-crawler list. All 11 boundary files now fully split.
 
-### Sync Workflow for Private Repo
-After this session, the owner needs to:
-1. Copy all `docs/intel-staging/*.go` files to the corresponding paths in `dnstool-intel`
-2. Verify `go build -tags intel ./...` passes in the combined workspace
-3. Remove `docs/intel-staging/` from public repo after transfer
-4. Set up CI matrix: `go build ./...` (OSS) + `go build -tags intel ./...` (full edition)
+### Intel Transfer (completed 2026-02-17)
+All 11 `_intel.go` files transferred to `careyjames/dnstool-intel` private repo via GitHub API. `docs/intel-staging/` deleted from public repo. No intelligence data remains in public repo.
+
+### Sync Workflow for Private Repo (completed 2026-02-17)
+All files transferred via GitHub API. Manual copy no longer needed.
+
+---
+
+## Session: 2026-02-17 (continued) — Boundary Integrity Test Suite
+
+### Problem
+After major two-repo refactoring, Ahrefs SEO health dropped from 100% to 44%. Big architectural changes are risky — regressions cost $100-200/day. Need automated guardrails to prevent boundary violations, intelligence leaks, and stub contract breakage.
+
+### Solution: Comprehensive Boundary Integrity Tests
+Created two test files that enforce 11 verification categories across all 11 boundary files:
+
+**Test Files:**
+- `go-server/internal/analyzer/boundary_integrity_test.go` — 6 analyzer boundaries
+- `go-server/internal/analyzer/ai_surface/boundary_integrity_test.go` — 5 ai_surface boundaries
+
+**What They Check:**
+1. File Presence — framework.go + _oss.go exist for every boundary
+2. No Intel in Public Repo — no _intel.go files anywhere in public codebase
+3. Build Tags — _oss.go has `//go:build !intel`, framework has none
+4. Stub Functions Defined — all expected functions in _oss.go
+5. Stub Variables Defined — all expected maps/slices initialized
+6. No Intelligence Leakage — known intel tokens (crawler names, provider domains) absent from public files
+7. Safe Defaults — stubs return non-nil, never error, never panic
+8. No Duplicate Functions — no function defined in both framework and stub
+9. Correct Package — all files declare correct Go package
+10. Boundary Inventory — count check catches unregistered new boundaries
+11. No intel-staging — directory must not exist
+
+**Run Commands:**
+```bash
+go test ./go-server/internal/analyzer/ -run "TestBoundary" -v
+go test ./go-server/internal/analyzer/ai_surface/ -run "TestAISurface" -v
+go test ./go-server/... -count=1
+```
+
+### golden_rules_test.go Fix
+Updated `TestGoldenRuleStubBoundaryFunctionsRegistered` to read both `providers.go` AND `providers_oss.go` when checking for boundary functions — the three-file split moved functions from `providers.go` to `providers_oss.go`.
+
+### Lesson Learned
+When splitting a file into three-file pattern, any test that reads the original file by name must be updated to also read the new _oss.go file. Tests that hardcode filenames are fragile when architecture changes.
