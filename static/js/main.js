@@ -2,6 +2,28 @@ if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('/sw.js').catch(function() {}); // NOSONAR
 }
 
+globalThis.addEventListener('pageshow', function(e) {
+    if (e.persisted) {
+        document.querySelectorAll('.loading-overlay').forEach(function(overlay) {
+            overlay.classList.add('d-none');
+        });
+        document.body.classList.remove('loading');
+        var reanalyzeBtn = document.getElementById('reanalyzeBtn');
+        if (reanalyzeBtn && !reanalyzeBtn.classList.contains('disabled')) {
+            reanalyzeBtn.innerHTML = '<i class="fas fa-sync-alt me-2"></i>Re-analyze';
+        }
+        var analyzeBtn = document.getElementById('analyzeBtn');
+        if (analyzeBtn) {
+            analyzeBtn.innerHTML = '<i class="fas fa-search me-1"></i> Analyze';
+            analyzeBtn.disabled = false;
+        }
+        document.querySelectorAll('.history-view-btn,.history-reanalyze-btn').forEach(function(b) {
+            b.classList.remove('disabled');
+            b.removeAttribute('aria-disabled');
+        });
+    }
+});
+
 function startStatusCycle(overlayEl) {
     const timerEl = document.getElementById('loadingTimer');
     const noteEl = document.getElementById('loadingNote');
