@@ -29,11 +29,12 @@ func (h *InvestigateHandler) InvestigatePage(c *gin.Context) {
         csrfToken, _ := c.Get("csrf_token")
 
         c.HTML(http.StatusOK, investigateTemplate, gin.H{
-                "AppVersion": h.Config.AppVersion,
-                "CspNonce":   nonce,
-                "CsrfToken":  csrfToken,
-                "ActivePage": "investigate",
-                "ShowForm":   true,
+                "AppVersion":      h.Config.AppVersion,
+                "MaintenanceNote": h.Config.MaintenanceNote,
+                "CspNonce":        nonce,
+                "CsrfToken":       csrfToken,
+                "ActivePage":      "investigate",
+                "ShowForm":        true,
         })
 }
 
@@ -46,12 +47,13 @@ func (h *InvestigateHandler) Investigate(c *gin.Context) {
 
         if domain == "" || ip == "" {
                 c.HTML(http.StatusOK, investigateTemplate, gin.H{
-                        "AppVersion":    h.Config.AppVersion,
-                        "CspNonce":      nonce,
-                        "CsrfToken":     csrfToken,
-                        "ActivePage":    "investigate",
-                        "ShowForm":      true,
-                        "FlashMessages": []FlashMessage{{Category: "danger", Message: "Please enter both a domain name and an IP address."}},
+                        "AppVersion":      h.Config.AppVersion,
+                        "MaintenanceNote": h.Config.MaintenanceNote,
+                        "CspNonce":        nonce,
+                        "CsrfToken":       csrfToken,
+                        "ActivePage":      "investigate",
+                        "ShowForm":        true,
+                        "FlashMessages":   []FlashMessage{{Category: "danger", Message: "Please enter both a domain name and an IP address."}},
                         "FormDomain":    domain,
                         "FormIP":        ip,
                 })
@@ -60,12 +62,13 @@ func (h *InvestigateHandler) Investigate(c *gin.Context) {
 
         if !dnsclient.ValidateDomain(domain) {
                 c.HTML(http.StatusOK, investigateTemplate, gin.H{
-                        "AppVersion":    h.Config.AppVersion,
-                        "CspNonce":      nonce,
-                        "CsrfToken":     csrfToken,
-                        "ActivePage":    "investigate",
-                        "ShowForm":      true,
-                        "FlashMessages": []FlashMessage{{Category: "danger", Message: "Invalid domain name. Enter a domain like example.com."}},
+                        "AppVersion":      h.Config.AppVersion,
+                        "MaintenanceNote": h.Config.MaintenanceNote,
+                        "CspNonce":        nonce,
+                        "CsrfToken":       csrfToken,
+                        "ActivePage":      "investigate",
+                        "ShowForm":        true,
+                        "FlashMessages":   []FlashMessage{{Category: "danger", Message: "Invalid domain name. Enter a domain like example.com."}},
                         "FormDomain":    domain,
                         "FormIP":        ip,
                 })
@@ -74,12 +77,13 @@ func (h *InvestigateHandler) Investigate(c *gin.Context) {
 
         if !analyzer.ValidateIPAddress(ip) {
                 c.HTML(http.StatusOK, investigateTemplate, gin.H{
-                        "AppVersion":    h.Config.AppVersion,
-                        "CspNonce":      nonce,
-                        "CsrfToken":     csrfToken,
-                        "ActivePage":    "investigate",
-                        "ShowForm":      true,
-                        "FlashMessages": []FlashMessage{{Category: "danger", Message: "Invalid IP address. Enter a valid IPv4 or IPv6 address."}},
+                        "AppVersion":      h.Config.AppVersion,
+                        "MaintenanceNote": h.Config.MaintenanceNote,
+                        "CspNonce":        nonce,
+                        "CsrfToken":       csrfToken,
+                        "ActivePage":      "investigate",
+                        "ShowForm":        true,
+                        "FlashMessages":   []FlashMessage{{Category: "danger", Message: "Invalid IP address. Enter a valid IPv4 or IPv6 address."}},
                         "FormDomain":    domain,
                         "FormIP":        ip,
                 })
@@ -88,12 +92,13 @@ func (h *InvestigateHandler) Investigate(c *gin.Context) {
 
         if analyzer.IsPrivateIP(ip) {
                 c.HTML(http.StatusOK, investigateTemplate, gin.H{
-                        "AppVersion":    h.Config.AppVersion,
-                        "CspNonce":      nonce,
-                        "CsrfToken":     csrfToken,
-                        "ActivePage":    "investigate",
-                        "ShowForm":      true,
-                        "FlashMessages": []FlashMessage{{Category: "warning", Message: "Private, loopback, and link-local IP addresses cannot be investigated. Enter a public IP address."}},
+                        "AppVersion":      h.Config.AppVersion,
+                        "MaintenanceNote": h.Config.MaintenanceNote,
+                        "CspNonce":        nonce,
+                        "CsrfToken":       csrfToken,
+                        "ActivePage":      "investigate",
+                        "ShowForm":        true,
+                        "FlashMessages":   []FlashMessage{{Category: "warning", Message: "Private, loopback, and link-local IP addresses cannot be investigated. Enter a public IP address."}},
                         "FormDomain":    domain,
                         "FormIP":        ip,
                 })
@@ -176,12 +181,13 @@ func (h *InvestigateHandler) Investigate(c *gin.Context) {
         }
 
         c.HTML(http.StatusOK, investigateTemplate, gin.H{
-                "AppVersion":    h.Config.AppVersion,
-                "CspNonce":      nonce,
-                "CsrfToken":     csrfToken,
-                "ActivePage":    "investigate",
-                "ShowForm":      false,
-                "ShowResults":   true,
+                "AppVersion":      h.Config.AppVersion,
+                "MaintenanceNote": h.Config.MaintenanceNote,
+                "CspNonce":        nonce,
+                "CsrfToken":       csrfToken,
+                "ActivePage":      "investigate",
+                "ShowForm":        false,
+                "ShowResults":     true,
                 "Domain":        domain,
                 "AsciiDomain":   asciiDomain,
                 "IPAddress":     ip,

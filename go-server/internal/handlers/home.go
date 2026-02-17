@@ -22,7 +22,8 @@ func (h *HomeHandler) Index(c *gin.Context) {
         nonce, _ := c.Get("csp_nonce")
         csrfToken, _ := c.Get("csrf_token")
         c.HTML(http.StatusOK, "index.html", gin.H{
-                "AppVersion":  h.Config.AppVersion,
+                "AppVersion":      h.Config.AppVersion,
+                "MaintenanceNote": h.Config.MaintenanceNote,
                 "CspNonce":    nonce,
                 "ActivePage":  "home",
                 "CsrfToken":   csrfToken,

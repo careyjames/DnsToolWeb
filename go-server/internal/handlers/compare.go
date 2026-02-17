@@ -73,7 +73,8 @@ type compareErrorParams struct {
 
 func renderCompareError(c *gin.Context, p compareErrorParams) {
         data := gin.H{
-                "AppVersion":    p.handler.Config.AppVersion,
+                "AppVersion":      p.handler.Config.AppVersion,
+                "MaintenanceNote": p.handler.Config.MaintenanceNote,
                 "CspNonce":      p.nonce,
                 "CsrfToken":     p.csrfToken,
                 "ActivePage":    "compare",
@@ -167,7 +168,8 @@ func (h *CompareHandler) Compare(c *gin.Context) {
         diffItems, changesFound := buildDiffItems(diffs)
 
         c.HTML(http.StatusOK, templateCompare, gin.H{
-                "AppVersion":   h.Config.AppVersion,
+                "AppVersion":      h.Config.AppVersion,
+                "MaintenanceNote": h.Config.MaintenanceNote,
                 "CspNonce":     nonce,
                 "CsrfToken":   csrfToken,
                 "ActivePage":   "compare",
@@ -185,12 +187,13 @@ func (h *CompareHandler) selectDomain(c *gin.Context, domain string) {
 
         if domain == "" {
                 c.HTML(http.StatusOK, templateCompareSelect, gin.H{
-                        "AppVersion":     h.Config.AppVersion,
-                        "CspNonce":       nonce,
-                        "CsrfToken":     csrfToken,
-                        "ActivePage":     "compare",
-                        "Domain":         "",
-                        "FlashMessages":  []FlashMessage{{Category: "warning", Message: "Please provide a domain to compare analyses."}},
+                        "AppVersion":      h.Config.AppVersion,
+                        "MaintenanceNote": h.Config.MaintenanceNote,
+                        "CspNonce":        nonce,
+                        "CsrfToken":       csrfToken,
+                        "ActivePage":      "compare",
+                        "Domain":          "",
+                        "FlashMessages":   []FlashMessage{{Category: "warning", Message: "Please provide a domain to compare analyses."}},
                 })
                 return
         }
@@ -202,24 +205,26 @@ func (h *CompareHandler) selectDomain(c *gin.Context, domain string) {
         })
         if err != nil {
                 c.HTML(http.StatusInternalServerError, templateCompareSelect, gin.H{
-                        "AppVersion":     h.Config.AppVersion,
-                        "CspNonce":       nonce,
-                        "CsrfToken":     csrfToken,
-                        "ActivePage":     "compare",
-                        "Domain":         domain,
-                        "FlashMessages":  []FlashMessage{{Category: "danger", Message: "Failed to fetch analyses"}},
+                        "AppVersion":      h.Config.AppVersion,
+                        "MaintenanceNote": h.Config.MaintenanceNote,
+                        "CspNonce":        nonce,
+                        "CsrfToken":       csrfToken,
+                        "ActivePage":      "compare",
+                        "Domain":          domain,
+                        "FlashMessages":   []FlashMessage{{Category: "danger", Message: "Failed to fetch analyses"}},
                 })
                 return
         }
 
         if len(analyses) == 0 {
                 c.HTML(http.StatusOK, templateCompareSelect, gin.H{
-                        "AppVersion":     h.Config.AppVersion,
-                        "CspNonce":       nonce,
-                        "CsrfToken":     csrfToken,
-                        "ActivePage":     "compare",
-                        "Domain":         domain,
-                        "AnalysisCount":  0,
+                        "AppVersion":      h.Config.AppVersion,
+                        "MaintenanceNote": h.Config.MaintenanceNote,
+                        "CspNonce":        nonce,
+                        "CsrfToken":       csrfToken,
+                        "ActivePage":      "compare",
+                        "Domain":          domain,
+                        "AnalysisCount":   0,
                 })
                 return
         }
@@ -229,13 +234,14 @@ func (h *CompareHandler) selectDomain(c *gin.Context, domain string) {
                         items = append(items, buildSelectAnalysisItem(a))
                 }
                 c.HTML(http.StatusOK, templateCompareSelect, gin.H{
-                        "AppVersion":     h.Config.AppVersion,
-                        "CspNonce":       nonce,
-                        "CsrfToken":     csrfToken,
-                        "ActivePage":     "compare",
-                        "Domain":         domain,
-                        "Analyses":       items,
-                        "AnalysisCount":  len(analyses),
+                        "AppVersion":      h.Config.AppVersion,
+                        "MaintenanceNote": h.Config.MaintenanceNote,
+                        "CspNonce":        nonce,
+                        "CsrfToken":       csrfToken,
+                        "ActivePage":      "compare",
+                        "Domain":          domain,
+                        "Analyses":        items,
+                        "AnalysisCount":   len(analyses),
                 })
                 return
         }
@@ -246,7 +252,8 @@ func (h *CompareHandler) selectDomain(c *gin.Context, domain string) {
         }
 
         c.HTML(http.StatusOK, templateCompareSelect, gin.H{
-                "AppVersion": h.Config.AppVersion,
+                "AppVersion":      h.Config.AppVersion,
+                "MaintenanceNote": h.Config.MaintenanceNote,
                 "CspNonce":   nonce,
                 "CsrfToken":  csrfToken,
                 "ActivePage": "",

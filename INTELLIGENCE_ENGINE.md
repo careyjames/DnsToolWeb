@@ -177,6 +177,36 @@ This deserves its own section because it's been a recurring source of bugs.
 
 ---
 
+## 7.1 Confidence Engine Roadmap
+
+> **[CURRENT FOUNDATION]** — Observed/Inferred confidence badges are implemented in registrar, hosting, DNS provider, and exposure sections. The roadmap below expands this into a comprehensive Confidence Engine across all protocol sections.
+
+### CE Phase 1: Formal Per-Finding Confidence Tags
+- Every protocol finding gets a structured `confidence` metadata object: `{level, source, method, timestamp}`
+- Extend existing Observed/Inferred badges to all protocol sections (SPF, DMARC, DKIM, DNSSEC, DANE, MTA-STS, TLS-RPT, BIMI, CAA)
+- Standardize confidence badge rendering across Engineer's Report and Executive Brief
+- Source authority metadata attached to each finding (which resolver, which tier)
+
+### CE Phase 2: Corroboration Engine
+- When multiple independent signals confirm a finding, upgrade confidence from Inferred to **Corroborated**
+- Cross-protocol corroboration rules: e.g., MX records + DKIM selectors + MTA-STS policy all pointing to same provider = Corroborated provider identification
+- CT log subdomain data corroborating DNS-discovered infrastructure
+- Add explicit "Corroborated" badge with tooltip showing corroborating sources
+
+### CE Phase 3: Stale & Absent Semantics
+- **Absent**: Protocol was actively probed but no evidence found (different from "not checked")
+- **Stale**: Third-party or cached data that may not reflect current state
+- Implement time-based staleness for CT log data, RDAP cache, and SecurityTrails history
+- Absent/Stale indicators feed into posture scoring with appropriate weight reduction
+
+### CE Phase 4: Confidence-Weighted Posture Scoring
+- Posture scoring integrates confidence levels: Corroborated > Observed > Inferred > Third-party > Stale > Absent
+- High-confidence findings carry more weight in risk calculations
+- Executive Brief summary reflects confidence distribution alongside risk level
+- Report appendix: Confidence Distribution Summary showing percentage of findings at each level
+
+---
+
 ## 8. What Already Exists (Credit Where Due)
 
 The codebase already implements significant ICIE functionality, just not formalized under this name:

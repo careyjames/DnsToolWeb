@@ -32,6 +32,7 @@ func (h *BrandColorsHandler) BrandColors(c *gin.Context) {
         nonce, _ := c.Get("csp_nonce")
         c.HTML(http.StatusOK, "brand_colors.html", gin.H{
                 "AppVersion":       h.Config.AppVersion,
+                "MaintenanceNote":  h.Config.MaintenanceNote,
                 "CspNonce":         nonce,
                 "ActivePage":       "brand-colors",
                 "BrandPalette":     getBrandPalette(),

@@ -103,11 +103,12 @@ func (h *HistoryHandler) History(c *gin.Context) {
         total, err := h.countAnalyses(ctx, searchDomain)
         if err != nil {
                 c.HTML(http.StatusInternalServerError, templateHistory, gin.H{
-                        "AppVersion":     h.Config.AppVersion,
-                        "CspNonce":       nonce,
-                        "CsrfToken":     csrfToken,
-                        "ActivePage":     "history",
-                        "FlashMessages":  []FlashMessage{{Category: "danger", Message: "Failed to count analyses"}},
+                        "AppVersion":      h.Config.AppVersion,
+                        "MaintenanceNote": h.Config.MaintenanceNote,
+                        "CspNonce":        nonce,
+                        "CsrfToken":       csrfToken,
+                        "ActivePage":      "history",
+                        "FlashMessages":   []FlashMessage{{Category: "danger", Message: "Failed to count analyses"}},
                 })
                 return
         }
@@ -117,11 +118,12 @@ func (h *HistoryHandler) History(c *gin.Context) {
         items, err := h.fetchAnalyses(ctx, searchDomain, &pagination)
         if err != nil {
                 c.HTML(http.StatusInternalServerError, templateHistory, gin.H{
-                        "AppVersion":     h.Config.AppVersion,
-                        "CspNonce":       nonce,
-                        "CsrfToken":     csrfToken,
-                        "ActivePage":     "history",
-                        "FlashMessages":  []FlashMessage{{Category: "danger", Message: "Failed to fetch analyses"}},
+                        "AppVersion":      h.Config.AppVersion,
+                        "MaintenanceNote": h.Config.MaintenanceNote,
+                        "CspNonce":        nonce,
+                        "CsrfToken":       csrfToken,
+                        "ActivePage":      "history",
+                        "FlashMessages":   []FlashMessage{{Category: "danger", Message: "Failed to fetch analyses"}},
                 })
                 return
         }
@@ -129,7 +131,8 @@ func (h *HistoryHandler) History(c *gin.Context) {
         pd := BuildPagination(page, pagination.TotalPages, total)
 
         c.HTML(http.StatusOK, templateHistory, gin.H{
-                "AppVersion":   h.Config.AppVersion,
+                "AppVersion":      h.Config.AppVersion,
+                "MaintenanceNote": h.Config.MaintenanceNote,
                 "CspNonce":     nonce,
                 "CsrfToken":   csrfToken,
                 "ActivePage":   "history",

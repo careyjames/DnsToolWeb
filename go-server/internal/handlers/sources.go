@@ -40,6 +40,7 @@ func (h *SourcesHandler) Sources(c *gin.Context) {
         nonce, _ := c.Get("csp_nonce")
         c.HTML(http.StatusOK, "sources.html", gin.H{
                 "AppVersion":      h.Config.AppVersion,
+                "MaintenanceNote": h.Config.MaintenanceNote,
                 "CspNonce":        nonce,
                 "ActivePage":      "sources",
                 "DNSSources":      getDNSSources(),

@@ -30,7 +30,8 @@ func (h *StatsHandler) Stats(c *gin.Context) {
         recentStats, err := h.DB.Queries.ListRecentStats(ctx, 30)
         if err != nil {
                 c.HTML(http.StatusInternalServerError, "stats.html", gin.H{
-                        "AppVersion":     h.Config.AppVersion,
+                        "AppVersion":      h.Config.AppVersion,
+                        "MaintenanceNote": h.Config.MaintenanceNote,
                         "CspNonce":       nonce,
                         "CsrfToken":     csrfToken,
                         "ActivePage":     "stats",
@@ -73,6 +74,7 @@ func (h *StatsHandler) Stats(c *gin.Context) {
 
         c.HTML(http.StatusOK, "stats.html", gin.H{
                 "AppVersion":         h.Config.AppVersion,
+                "MaintenanceNote":    h.Config.MaintenanceNote,
                 "CspNonce":           nonce,
                 "CsrfToken":         csrfToken,
                 "ActivePage":         "stats",

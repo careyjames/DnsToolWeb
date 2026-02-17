@@ -21,7 +21,8 @@ func NewChangelogHandler(cfg *config.Config) *ChangelogHandler {
 func (h *ChangelogHandler) Changelog(c *gin.Context) {
         nonce, _ := c.Get("csp_nonce")
         c.HTML(http.StatusOK, "changelog.html", gin.H{
-                "AppVersion":     h.Config.AppVersion,
+                "AppVersion":      h.Config.AppVersion,
+                "MaintenanceNote": h.Config.MaintenanceNote,
                 "CspNonce":       nonce,
                 "ActivePage":     "changelog",
                 "Changelog":      GetChangelog(),
