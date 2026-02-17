@@ -24,8 +24,22 @@ globalThis.addEventListener('pageshow', function(e) {
     }
 });
 
+function showOverlay(overlay) {
+    if (!overlay) return;
+    overlay.classList.remove('d-none');
+    void overlay.offsetWidth; // NOSONAR — Safari reflow: force animation restart after display:none→flex
+    overlay.querySelectorAll('.loading-spinner, .loading-spinner i, .loading-dots span').forEach(function(el) {
+        var anim = getComputedStyle(el).animationName;
+        if (anim && anim !== 'none') {
+            el.style.animation = 'none';
+            void el.offsetWidth; // NOSONAR — Safari reflow
+            el.style.animation = '';
+        }
+    });
+}
+
 function startStatusCycle(overlayEl) {
-    const timerEl = document.getElementById('loadingTimer');
+    const timerEl = document.getElementById('loadingTimer') || overlayEl.querySelector('.loading-elapsed span');
     const noteEl = document.getElementById('loadingNote');
     const startTime = Date.now();
 
@@ -161,7 +175,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (loadingDomain) {
                     loadingDomain.textContent = domain;
                 }
-                overlay.classList.remove('d-none');
+                showOverlay(overlay);
                 startStatusCycle(overlay);
             }
             analyzeBtn.textContent = '';
@@ -178,6 +192,24 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
+    document.querySelectorAll('a[href^="/analyze?domain="]').forEach(function(link) {
+        if (link.id === 'reanalyzeBtn') return;
+        link.addEventListener('click', function(e) {
+            e.preventDefault();
+            var overlay = document.getElementById('loadingOverlay');
+            var loadingDomain = document.getElementById('loadingDomain');
+            var url = new URL(link.href, globalThis.location.origin);
+            var domain = url.searchParams.get('domain') || '';
+            if (overlay) {
+                if (loadingDomain) loadingDomain.textContent = domain;
+                showOverlay(overlay);
+                startStatusCycle(overlay);
+            }
+            document.body.classList.add('loading');
+            requestAnimationFrame(function() { globalThis.location.href = link.href; });
+        });
+    });
+
     document.querySelectorAll('.alert-dismissible:not(.alert-persistent)').forEach(function(alert) {
         setTimeout(function() {
             const bsAlert = bootstrap.Alert.getOrCreateInstance(alert);

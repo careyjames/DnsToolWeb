@@ -993,3 +993,20 @@ User confirmed DNS Tool will be distributed via Homebrew for macOS/Linux CLI ins
 
 ### Cleanup: dnstool-intel-staging/ (2026-02-17)
 Removed leftover `dnstool-intel-staging/` directory from project root. Was a temporary scratch folder from a previous session's work — contained duplicate provider files already transferred to private repo. Added path to boundary integrity test `TestBoundaryIntegrity_NoIntelStagingDirectory` so it gets caught automatically in the future.
+
+### Test Data Policy (decided 2026-02-17)
+**Rule**: Automated/internal test runs must NOT pollute the public analysis history. Test entries (e.g., `example.com` from Playwright) must be cleaned up before shipping.
+**Exception**: Curated showcase domains (e.g., `nlnetlabs.nl` for DANE, `ietf.org` for DNSSEC best practices) can be intentionally pushed to the top of history as educational examples — these demonstrate the tool's capabilities to new users.
+**Rationale**: Users notice inconsistent history ("10 minutes ago it looked different"), and internal test noise undermines trust. Keep history clean and intentional.
+**Action taken**: Deleted 2 `example.com` entries created by automated testing agent.
+
+### Safari Loading Overlay Animation Fix (2026-02-17)
+**Problem**: Safari's WebKit engine does not restart CSS animations when an element transitions from `display: none` (Bootstrap `d-none`) to `display: flex`. The loading overlay appeared (globe icon, text, dots visible) but all animations were frozen — no spinning, no pulsing, no bouncing dots.
+**Root cause**: WebKit optimization — animations defined on elements that start hidden are never initialized, and removing `display: none` doesn't trigger re-initialization.
+**Fix**: Created `showOverlay()` function in `main.js` that:
+1. Removes `d-none` class
+2. Forces reflow via `void overlay.offsetWidth`
+3. Resets `animation` property on all animated children (spinner, dots) to force WebKit to reinitialize
+Applied `showOverlay()` to all overlay trigger points: index.html form submit, results.html re-analyze button, history.html re-analyze and view buttons, investigate.html form submit.
+**Also fixed**: "Analyze the root domain instead" link on subdomain results pages — was a plain `<a href>` with no overlay trigger. Now intercepts click, shows overlay with animation, then navigates. This fixes the "long wait with nothing happening" experience in Safari when clicking that link.
+**Lesson**: Every `classList.remove('d-none')` on an animated overlay must go through `showOverlay()` for Safari compatibility.

@@ -4292,7 +4292,11 @@
                     document.body.classList.add('loading');
                     
                     if (overlay) {
-                        overlay.classList.remove('d-none');
+                        if (typeof showOverlay === 'function') {
+                            showOverlay(overlay);
+                        } else {
+                            overlay.classList.remove('d-none');
+                        }
                         if (typeof startStatusCycle === 'function') {
                             startStatusCycle(overlay);
                         }

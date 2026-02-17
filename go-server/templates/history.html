@@ -446,7 +446,7 @@
                 const overlay=document.getElementById('historyViewOverlay');
                 const txt=document.getElementById('historyViewText');
                 if(txt&&name)txt.textContent='Loading results for '+name+'...';
-                if(overlay)overlay.classList.remove('d-none');
+                if(overlay){if(typeof showOverlay==='function'){showOverlay(overlay);}else{overlay.classList.remove('d-none');}}
                 disableAllActions();
                 btn.innerHTML='<i class="fas fa-spinner fa-spin"></i>';
             });
@@ -459,7 +459,7 @@
                 const domainEl=document.getElementById('historyAnalyzeDomain');
                 if(domainEl)domainEl.textContent=name;
                 if(overlay){
-                    overlay.classList.remove('d-none');
+                    if(typeof showOverlay==='function'){showOverlay(overlay);}else{overlay.classList.remove('d-none');}
                     if(typeof startStatusCycle==='function'){startStatusCycle(overlay);}
                     setTimeout(function(){
                         var msg=document.getElementById('historyTimeoutMsg');

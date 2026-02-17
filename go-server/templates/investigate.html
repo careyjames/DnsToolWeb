@@ -750,7 +750,7 @@
             if (!overlay) return;
 
             if (loadingIP) loadingIP.textContent = ip.value.trim() + ' \u2194 ' + domain.value.trim();
-            overlay.classList.remove('d-none');
+            if(typeof showOverlay==='function'){showOverlay(overlay);}else{overlay.classList.remove('d-none');}
 
             var startTime = Date.now();
             setInterval(function() {
