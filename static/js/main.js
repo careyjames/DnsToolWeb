@@ -36,9 +36,11 @@ function startStatusCycle(overlayEl) {
         setTimeout(function() {
             phase.classList.remove('active-phase');
             phase.classList.add('done');
-            const icon = phase.querySelector('.scan-icon');
+            var icon = phase.querySelector('.scan-icon');
             if (icon) {
-                icon.className = 'fas fa-check-circle scan-icon';
+                icon.classList.remove('fa-circle-notch', 'fa-spin', 'scan-pending');
+                void icon.offsetWidth; // NOSONAR — Safari reflow trigger for ::before content swap
+                icon.classList.add('fa-check-circle');
             }
             completed++;
         }, doneDelay);

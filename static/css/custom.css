@@ -757,23 +757,33 @@ main.container {
 .loading-spinner {
     font-size: 4rem;
     color: var(--bs-primary);
+    -webkit-animation: pulse 1.5s ease-in-out infinite;
     animation: pulse 1.5s ease-in-out infinite;
     will-change: transform, opacity;
 }
 
 .loading-spinner i {
+    -webkit-animation: spin 2s linear infinite;
     animation: spin 2s linear infinite;
     will-change: transform;
 }
 
+@-webkit-keyframes spin {
+    from { -webkit-transform: rotate(0deg); transform: rotate(0deg); }
+    to { -webkit-transform: rotate(360deg); transform: rotate(360deg); }
+}
 @keyframes spin {
-    from { transform: rotate(0deg); }
-    to { transform: rotate(360deg); }
+    from { -webkit-transform: rotate(0deg); transform: rotate(0deg); }
+    to { -webkit-transform: rotate(360deg); transform: rotate(360deg); }
 }
 
+@-webkit-keyframes pulse {
+    0%, 100% { opacity: 1; -webkit-transform: scale(1); transform: scale(1); }
+    50% { opacity: 0.7; -webkit-transform: scale(1.1); transform: scale(1.1); }
+}
 @keyframes pulse {
-    0%, 100% { opacity: 1; transform: scale(1); }
-    50% { opacity: 0.7; transform: scale(1.1); }
+    0%, 100% { opacity: 1; -webkit-transform: scale(1); transform: scale(1); }
+    50% { opacity: 0.7; -webkit-transform: scale(1.1); transform: scale(1.1); }
 }
 
 .loading-elapsed {
@@ -794,17 +804,22 @@ main.container {
     height: 10px;
     background-color: var(--bs-primary);
     border-radius: 50%;
+    -webkit-animation: bounce 1.4s ease-in-out infinite;
     animation: bounce 1.4s ease-in-out infinite;
     will-change: transform, opacity;
 }
 
-.loading-dots span:nth-child(1) { animation-delay: 0s; }
-.loading-dots span:nth-child(2) { animation-delay: 0.2s; }
-.loading-dots span:nth-child(3) { animation-delay: 0.4s; }
+.loading-dots span:nth-child(1) { -webkit-animation-delay: 0s; animation-delay: 0s; }
+.loading-dots span:nth-child(2) { -webkit-animation-delay: 0.2s; animation-delay: 0.2s; }
+.loading-dots span:nth-child(3) { -webkit-animation-delay: 0.4s; animation-delay: 0.4s; }
 
+@-webkit-keyframes bounce {
+    0%, 80%, 100% { -webkit-transform: scale(0.6); transform: scale(0.6); opacity: 0.5; }
+    40% { -webkit-transform: scale(1); transform: scale(1); opacity: 1; }
+}
 @keyframes bounce {
-    0%, 80%, 100% { transform: scale(0.6); opacity: 0.5; }
-    40% { transform: scale(1); opacity: 1; }
+    0%, 80%, 100% { -webkit-transform: scale(0.6); transform: scale(0.6); opacity: 0.5; }
+    40% { -webkit-transform: scale(1); transform: scale(1); opacity: 1; }
 }
 
 .loading-status {
@@ -842,12 +857,16 @@ main.container {
     gap: 0.6rem;
     padding: 0.3rem 0;
     opacity: 0;
+    -webkit-transform: translateY(6px);
     transform: translateY(6px);
-    transition: opacity 0.35s ease, transform 0.35s ease;
+    -webkit-transition: opacity 0.35s ease, -webkit-transform 0.35s ease, color 0.3s ease;
+    transition: opacity 0.35s ease, transform 0.35s ease, color 0.3s ease;
+    will-change: opacity, transform;
 }
 
 .scan-phase.visible {
     opacity: 1;
+    -webkit-transform: translateY(0);
     transform: translateY(0);
 }
 
@@ -857,12 +876,16 @@ main.container {
 
 .scan-phase.done .scan-icon {
     color: #63e6be;
+    -webkit-transition: color 0.3s ease;
+    transition: color 0.3s ease;
 }
 
 .scan-icon {
     width: 1.1rem;
     text-align: center;
     flex-shrink: 0;
+    -webkit-transition: color 0.3s ease;
+    transition: color 0.3s ease;
 }
 
 .scan-pending {

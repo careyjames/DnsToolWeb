@@ -43,6 +43,7 @@ externalPort = 3000
 [userenv.shared]
 SONAR_ORG = "careyjames"
 SONAR_PROJECT = "careyjames_DnsToolWeb"
+MAINTENANCE_NOTE = "Accuracy tuning"
 
 [agent]
 integrations = ["github:1.0.0"]
