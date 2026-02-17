@@ -55,16 +55,49 @@ This repository contains the public web application:
 
 ## What is in the private repo
 
-Advanced intelligence data lives in a separate private repository (`dnstool-intel`), also licensed under **BSL 1.1** with the same terms and Change Date. This includes:
-- Extended provider detection databases (managed, self-hosted, government classification)
-- Confidence level extensions (Corroborated, Stale, Absent)
-- Advanced infrastructure classification patterns
-- AI surface detection pattern libraries
-- Extended IP investigation analysis
+The private repository (`dnstool-intel`) contains the proprietary intelligence that powers active features in the running product. Every item below is a feature users see today — the public repo provides the framework and safe defaults, while the private repo supplies the databases, patterns, and algorithms that produce real intelligence. Also licensed under **BSL 1.1** with the same terms and Change Date.
+
+### Provider Intelligence (providers.go)
+- DMARC monitoring provider detection databases (vendor identification from rua/ruf domains)
+- SPF flattening provider detection (include-pattern matching)
+- Hosted DKIM provider identification and crediting
+- Dynamic service detection (zone-based CNAME delegation scanning)
+- CNAME-based provider classification database
+
+### Infrastructure Classification (infrastructure.go)
+- Self-hosted, managed, and government DNS tier databases
+- Government domain recognition and classification
+- Managed DNS provider tier detection
+- Extended web, DNS, and email hosting detection patterns
+- Email security management detection (provider-aware analysis)
+- Alternative security posture item collection
+
+### DKIM State Enrichment (dkim_state.go)
+The DKIM state classification engine (Absent, Success, ProviderInferred, ThirdPartyOnly, Inconclusive, WeakKeysOnly, NoMailDomain) is fully implemented in the public repo. The private repo extends this with provider-aware state transitions that credit known hosted DKIM providers.
+
+### Intelligence Confidence (confidence.go)
+- Extended confidence levels beyond the base Observed/Inferred/Third-party system
+
+### IP Investigation (ip_investigation.go)
+- Full PTR record analysis and forward-confirmed reverse DNS (FCrDNS) verification
+- ASN-to-CDN correlation and CDN/edge network detection
+- Domain relationship classification (direct assets, email providers, SPF-authorized senders, CT subdomain matches)
+- IP neighborhood analysis with executive verdicts
+- SPF record deep-inspection and include-chain IP matching
+- PTR-based hosting provider detection
+
+### AI Surface Scanner (ai_surface/*.go)
+- SSRF-hardened HTTP text file fetcher
+- llms.txt detection, parsing, and structured field extraction
+- Known AI crawler database for robots.txt governance analysis
+- AI recommendation poisoning detection patterns (prefilled prompts, CSS-hidden prompt injection)
+
+### Feature Parity Manifest (manifest.go)
+- Build-time populated feature registry for internal quality assurance and coverage tracking
 
 ## How they work together
 
-The public repo runs standalone with full core functionality. In internal builds, selected stub interfaces are replaced with proprietary implementations at compile time. The two codebases share a Go package boundary and are both licensed under BSL 1.1.
+The public repo runs standalone with full core functionality. Every section renders in the UI — stub interfaces return safe, non-nil defaults so the application works end-to-end. Some sections return baseline results in the public build; the private repo's implementations produce the full intelligence output. In internal builds, the stub files are replaced with proprietary implementations at compile time. The two codebases share a Go package boundary and are both licensed under BSL 1.1.
 
 ## Contributing
 
