@@ -14,11 +14,12 @@ import (
 )
 
 type ctEntry struct {
-        NameValue  string `json:"name_value"`
-        CommonName string `json:"common_name"`
-        NotBefore  string `json:"not_before"`
-        NotAfter   string `json:"not_after"`
-        IssuerName string `json:"issuer_name"`
+        NameValue    string `json:"name_value"`
+        CommonName   string `json:"common_name"`
+        NotBefore    string `json:"not_before"`
+        NotAfter     string `json:"not_after"`
+        IssuerName   string `json:"issuer_name"`
+        SerialNumber string `json:"serial_number"`
 }
 
 var commonSubdomainProbes = []string{
