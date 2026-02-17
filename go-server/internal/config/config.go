@@ -5,6 +5,7 @@ package config
 import (
         "fmt"
         "os"
+        "strings"
 )
 
 type Config struct {
@@ -15,6 +16,22 @@ type Config struct {
         Testing         bool
         SMTPProbeMode   string
         MaintenanceNote string
+        SectionTuning   map[string]string
+}
+
+var sectionTuningMap = map[string]string{
+        // Uncomment sections currently being tuned/maintained:
+        // "email":        "Accuracy Tuning",
+        // "dane":         "Accuracy Tuning",
+        // "brand":        "Accuracy Tuning",
+        // "securitytxt":  "Accuracy Tuning",
+        // "ai":           "Accuracy Tuning",
+        // "secrets":      "Accuracy Tuning",
+        // "web-exposure": "Accuracy Tuning",
+        // "smtp":         "Accuracy Tuning",
+        // "infra":        "Accuracy Tuning",
+        // "dnssec":       "Accuracy Tuning",
+        // "traffic":      "Accuracy Tuning",
 }
 
 func Load() (*Config, error) {
@@ -40,6 +57,20 @@ func Load() (*Config, error) {
 
         maintenanceNote := os.Getenv("MAINTENANCE_NOTE")
 
+        tuning := make(map[string]string)
+        for k, v := range sectionTuningMap {
+                tuning[k] = v
+        }
+        envTuning := os.Getenv("SECTION_TUNING")
+        if envTuning != "" {
+                for _, pair := range strings.Split(envTuning, ",") {
+                        parts := strings.SplitN(strings.TrimSpace(pair), "=", 2)
+                        if len(parts) == 2 {
+                                tuning[strings.TrimSpace(parts[0])] = strings.TrimSpace(parts[1])
+                        }
+                }
+        }
+
         return &Config{
                 DatabaseURL:     dbURL,
                 SessionSecret:   sessionSecret,
@@ -48,5 +79,6 @@ func Load() (*Config, error) {
                 Testing:         false,
                 SMTPProbeMode:   smtpProbeMode,
                 MaintenanceNote: maintenanceNote,
+                SectionTuning:   tuning,
         }, nil
 }

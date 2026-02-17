@@ -146,6 +146,7 @@ func (h *AnalysisHandler) ViewAnalysisStatic(c *gin.Context) {
                 "IntegrityHash":        integrityHash,
                 "RFCCount":             rfcCount,
                 "MaintenanceNote":      h.Config.MaintenanceNote,
+                "SectionTuning":        h.Config.SectionTuning,
         })
 }
 
@@ -250,6 +251,7 @@ func (h *AnalysisHandler) ViewAnalysisExecutive(c *gin.Context) {
                 "IntegrityHash":     integrityHash,
                 "RFCCount":          rfcCount,
                 "MaintenanceNote":   h.Config.MaintenanceNote,
+                "SectionTuning":     h.Config.SectionTuning,
         })
 }
 
@@ -332,6 +334,7 @@ func (h *AnalysisHandler) Analyze(c *gin.Context) {
                 "RFCCount":             rfcCount,
                 "ExposureChecks":       exposureChecks,
                 "MaintenanceNote":      h.Config.MaintenanceNote,
+                "SectionTuning":        h.Config.SectionTuning,
         })
 }
 

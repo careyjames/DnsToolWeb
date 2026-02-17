@@ -2916,3 +2916,18 @@ main.container {
     padding: 0.25em 0.7em;
     box-shadow: 0 0 6px rgba(232, 197, 71, 0.18);
 }
+.u-section-tuning {
+    font-size: 0.6rem;
+    font-weight: 600;
+    vertical-align: middle;
+    letter-spacing: 0.02em;
+    background: rgba(209, 160, 52, 0.10);
+    color: #d4a843;
+    border: 1px solid rgba(232, 197, 71, 0.35);
+    border-radius: 999px;
+    padding: 0.15em 0.55em;
+    white-space: nowrap;
+}
+@media print {
+    .u-section-tuning { display: none; }
+}
