@@ -1491,6 +1491,7 @@
                     <div class="card-header">
                         <h5 class="mb-0 d-flex align-items-center justify-content-between flex-wrap">
                             <span><i class="fas fa-certificate me-2"></i>DANE / TLSA</span>
+                            <span class="badge u-badge-recon ms-2 no-print" data-bs-toggle="tooltip" data-bs-html="true" title="<strong>Recon Advantage</strong><br>DANE/TLSA certificate pinning analysis — a protocol most DNS tools skip entirely."><i class="fas fa-terminal me-1"></i>Recon</span>
                             {{if and .SectionTuning (index .SectionTuning "dane")}}<span class="badge u-section-tuning ms-2"><i class="fas fa-wrench me-1"></i>{{index .SectionTuning "dane"}}</span>{{end}}
                             <span class="section-question">Can mail servers prove identity without a public CA?
                                 {{$daneStatus := mapGetStr "status" $dane}}
@@ -3021,7 +3022,8 @@
                                 <div class="d-flex align-items-center small">
                                     <i class="fas fa-check-double me-2 text-{{if $consensusReached}}success{{else}}warning{{end}}"></i>
                                     <span class="text-muted">
-                                        <strong>Multi-Resolver Verification:</strong>
+                                        <strong>Multi-Resolver Verification</strong>
+                                        <span class="badge u-badge-recon ms-1 no-print" data-bs-toggle="tooltip" data-bs-html="true" title="<strong>Recon Advantage</strong><br>Four independent resolvers (Cloudflare, Google, Quad9, OpenDNS) with majority-agreement consensus. Most tools query a single resolver."><i class="fas fa-terminal me-1"></i>Recon</span>:
                                         {{if $consensusReached}}
                                             <span class="text-success">Consensus reached</span> - 
                                             {{mapGetStr "resolvers_queried" $resolver_consensus}} resolvers (Cloudflare, Google, Quad9, OpenDNS) agree on DNS records
@@ -3602,6 +3604,7 @@
                         <span>
                             <i class="fas fa-sitemap me-2"></i>Subdomain Discovery
                             <a href="https://datatracker.ietf.org/doc/html/rfc6962" target="_blank" rel="noopener" class="badge bg-dark bg-opacity-25 text-muted text-decoration-none fw-normal ms-2 u-fs-060rem" title="Certificate Transparency">RFC 6962</a>
+                            <span class="badge u-badge-recon ms-2 no-print" data-bs-toggle="tooltip" data-bs-html="true" title="<strong>Recon Advantage</strong><br>Three-layer discovery: CT logs + DNS probing of ~290 service names + CNAME chain traversal. Most tools use a single source."><i class="fas fa-terminal me-1"></i>Recon</span>
                             {{$ctFreshness := mapGetMap "ct_subdomains" $data_freshness}}
                         {{if or (eq (mapGetStr "status" $ct) "error") (eq (mapGetStr "status" $ct) "timeout")}}<span class="badge bg-warning bg-opacity-25 border border-warning border-opacity-25 text-warning ms-1 u-fs-055rem" data-bs-toggle="tooltip" title="Certificate Transparency lookup encountered an issue">UNAVAILABLE</span>{{else if and $ctFreshness (eq (mapGetStr "source" $ctFreshness) "cache")}}<span class="badge bg-secondary bg-opacity-50 border border-secondary border-opacity-25 ms-1 u-fs-055rem" data-bs-toggle="tooltip" title="CT log data cached for 1 hour — certificate records change infrequently">CACHED</span>{{else}}<span class="badge bg-success bg-opacity-25 border border-success border-opacity-25 ms-1 u-fs-055rem" data-bs-toggle="tooltip" title="Live Certificate Transparency query">LIVE</span>{{end}}
                         </span>

@@ -2916,6 +2916,20 @@ main.container {
     padding: 0.25em 0.7em;
     box-shadow: 0 0 6px rgba(232, 197, 71, 0.18);
 }
+.u-badge-recon {
+    font-size: 0.55rem;
+    font-weight: 600;
+    vertical-align: middle;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    background: rgba(220, 53, 69, 0.10);
+    color: #dc3545;
+    border: 1px solid rgba(220, 53, 69, 0.30);
+    border-radius: 999px;
+    padding: 0.15em 0.55em;
+    white-space: nowrap;
+    cursor: help;
+}
 .u-section-tuning {
     font-size: 0.6rem;
     font-weight: 600;
