@@ -971,3 +971,25 @@ Updated `TestGoldenRuleStubBoundaryFunctionsRegistered` to read both `providers.
 
 ### Lesson Learned
 When splitting a file into three-file pattern, any test that reads the original file by name must be updated to also read the new _oss.go file. Tests that hardcode filenames are fragile when architecture changes.
+
+### Version Bump Protocol (established 2026-02-17)
+When user says "version up," the version MUST be bumped BEFORE publishing. Version lives in ONE place:
+- `go-server/internal/config/config.go` → `AppVersion` field
+
+This single source propagates to:
+- Every HTML template via `AppVersion` template variable (navbar badge, footers)
+- Service worker cache name via `SW_VERSION_PLACEHOLDER` replacement in `static.go`
+- Analysis report metadata (`_tool_version`, integrity hash)
+- PWA cache busting (old caches cleared when version changes)
+
+**Missed version bump on v26.19.21 → published stale version. Cost: user frustration + republish. Never skip again.**
+
+### Homebrew Distribution (planned)
+User confirmed DNS Tool will be distributed via Homebrew for macOS/Linux CLI installation. This means:
+- Versioning must be strict semver-compatible
+- All docs, paths, and metadata must be clean and production-ready
+- The single-source version in `config.go` will need to match Homebrew formula versions
+- Build artifacts will need to be reproducible and properly tagged
+
+### Cleanup: dnstool-intel-staging/ (2026-02-17)
+Removed leftover `dnstool-intel-staging/` directory from project root. Was a temporary scratch folder from a previous session's work — contained duplicate provider files already transferred to private repo. Added path to boundary integrity test `TestBoundaryIntegrity_NoIntelStagingDirectory` so it gets caught automatically in the future.
