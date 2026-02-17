@@ -387,6 +387,7 @@ func classifyDMARCSuccess(ps protocolState, acc *postureAccumulator) {
         case "quarantine":
                 if ps.dmarcPct >= 100 {
                         acc.configured = append(acc.configured, "DMARC (quarantine, 100%)")
+                        acc.recommendations = append(acc.recommendations, "Upgrade DMARC policy from quarantine to reject (p=reject) for maximum spoofing protection")
                 } else {
                         acc.configured = append(acc.configured, fmt.Sprintf("DMARC (quarantine, %d%%)", ps.dmarcPct))
                         acc.monitoring = append(acc.monitoring, fmt.Sprintf("DMARC quarantine policy only applies to %d%% of messages", ps.dmarcPct))

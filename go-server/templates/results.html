@@ -3414,6 +3414,7 @@
                         
                         {{if $basic}}
                         {{range $record_type, $val := $basic}}
+                            {{if eq $record_type "SRV"}}{{continue}}{{end}}
                             {{$resolver_records := mapGetSlice $record_type $basic}}
                             {{$auth_recs := mapGetSlice $record_type $auth_records}}
                             {{$rLen := 0}}{{if $resolver_records}}{{$rLen = len $resolver_records}}{{end}}

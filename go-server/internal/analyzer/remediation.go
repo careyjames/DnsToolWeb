@@ -358,6 +358,23 @@ func appendDMARCFixes(fixes []fix, ps protocolState, results map[string]any, dom
                         Section:       "DMARC",
                 })
         }
+        if ps.dmarcPolicy == "quarantine" && ps.dmarcPct >= 100 {
+                fixes = append(fixes, fix{
+                        Title:         "Upgrade DMARC to Reject",
+                        Description:   "Your DMARC policy is set to quarantine. Upgrade to p=reject for maximum protection — reject instructs receivers to discard spoofed mail entirely rather than quarantining it.",
+                        DNSHost:       "_dmarc." + domain,
+                        DNSType:       "TXT",
+                        DNSValue:      "v=DMARC1; p=reject; rua=mailto:dmarc-reports@" + domain,
+                        DNSPurpose:    "A reject policy provides the strongest protection against domain spoofing.",
+                        DNSHostHelp:   "(update existing DMARC record)",
+                        RFC:           "RFC 7489 §6.3",
+                        RFCURL:        "https://datatracker.ietf.org/doc/html/rfc7489#section-6.3",
+                        Severity:      severityMedium,
+                        SeverityColor: colorMedium,
+                        SeverityOrder: 3,
+                        Section:       "DMARC",
+                })
+        }
         if ps.dmarcPolicy == "quarantine" && ps.dmarcPct < 100 && ps.dmarcPct > 0 {
                 fixes = append(fixes, fix{
                         Title:         "Increase DMARC Coverage",
