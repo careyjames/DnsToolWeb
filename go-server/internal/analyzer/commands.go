@@ -246,17 +246,20 @@ func generateSecurityTxtCommands(domain string) []VerifyCommand {
 }
 
 func extractMXHostsFromResults(results map[string]any) []string {
-        dns, ok := results["dns"]
+        basic, ok := results["basic_records"]
         if !ok {
                 return nil
         }
-        dnsMap, ok := dns.(map[string]any)
+        basicMap, ok := basic.(map[string]any)
         if !ok {
                 return nil
         }
-        mxRaw, ok := dnsMap["mx"]
+        mxRaw, ok := basicMap["mx"]
         if !ok {
-                return nil
+                mxRaw, ok = basicMap["MX"]
+                if !ok {
+                        return nil
+                }
         }
         return parseMXHostEntries(mxRaw)
 }
@@ -264,6 +267,10 @@ func extractMXHostsFromResults(results map[string]any) []string {
 func parseMXHostEntries(mxRaw any) []string {
         var hosts []string
         switch v := mxRaw.(type) {
+        case []string:
+                for _, entry := range v {
+                        hosts = appendMXHost(hosts, entry)
+                }
         case []any:
                 for _, entry := range v {
                         hosts = appendMXHost(hosts, entry)
@@ -392,21 +399,33 @@ func extractDMARCRuaTargets(results map[string]any) []string {
 }
 
 func extractIPsFromResults(results map[string]any) []string {
-        dns, ok := results["dns"]
+        basic, ok := results["basic_records"]
         if !ok {
                 return nil
         }
-        dnsMap, ok := dns.(map[string]any)
+        basicMap, ok := basic.(map[string]any)
         if !ok {
                 return nil
         }
         var ips []string
-        if aRecords, ok := dnsMap["a"]; ok {
-                if aList, ok := aRecords.([]any); ok {
-                        for _, a := range aList {
-                                if ip, ok := a.(string); ok && len(ips) < 2 {
-                                        ips = append(ips, ip)
+        for _, key := range []string{"A", "a"} {
+                if aRecords, ok := basicMap[key]; ok {
+                        switch v := aRecords.(type) {
+                        case []string:
+                                for _, ip := range v {
+                                        if len(ips) < 2 {
+                                                ips = append(ips, ip)
+                                        }
                                 }
+                        case []any:
+                                for _, a := range v {
+                                        if ip, ok := a.(string); ok && len(ips) < 2 {
+                                                ips = append(ips, ip)
+                                        }
+                                }
+                        }
+                        if len(ips) > 0 {
+                                break
                         }
                 }
         }
