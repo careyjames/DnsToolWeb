@@ -30,12 +30,13 @@
 | 8 | `ai_surface/llms_txt.go` | 27 | 4 | 1 | 0 | Parser stubs are intelligence (detection logic); `CheckLLMSTxt` return shape is framework |
 | 9 | `ai_surface/robots_txt.go` | 38 | 4 | 2 | 1 | `knownAICrawlers` is intelligence; `matchAICrawler` is intelligence; `CheckRobotsTxtAI` is dual |
 | 10 | `ai_surface/poisoning.go` | 58 | 4 | 4 | 1 | Regex patterns and selectors are intelligence; detection functions are intelligence; `truncate` is framework |
-| 11 | `edge_cdn.go` ⚠️ | 265 | 5 | 9 | 3 | **NOT STUBBED** — Full CDN/ASN/CNAME/PTR pattern maps are exposed intelligence |
-| 12 | `saas_txt.go` ⚠️ | 120 | 4 | 2 | 1 | **NOT STUBBED** — Full SaaS TXT verification pattern database exposed |
-| 13 | `commands.go` ⚠️ | 422 | 28 | 0 | 1 | Mostly framework (dig/curl command generators); extraction helpers are framework |
-| **TOTALS** | | **2,014** | **123** | **61** | **26** | |
+| 11 | `edge_cdn.go` | 265 | 5 | 9 | 3 | ✅ Split — CDN/ASN/CNAME/PTR pattern maps moved to `edge_cdn_intel.go` |
+| 12 | `saas_txt.go` | 120 | 4 | 2 | 1 | ✅ Split — SaaS TXT pattern database moved to `saas_txt_intel.go` |
+| 13 | `commands.go` | 422 | 28 | 0 | 1 | Pure framework — no action needed |
+| 14 | `ai_surface/scanner.go` | 530 | 18 | 1 | 0 | ✅ Split — `aiCrawlers` moved to `scanner_intel.go`, OSS stub returns `[]string{}` |
+| **TOTALS** | | **2,544** | **141** | **62** | **26** | |
 
-> ⚠️ = "Removed from stub registry" — these files contain **live intelligence data** in the public repo.
+> All intelligence boundaries are now protected via build tags. No live intelligence data remains in public repo.
 
 ---
 
@@ -343,14 +344,17 @@ The following competitive intelligence is currently **fully exposed** in the pub
 - 14 vendor identity constants
 - 4 provider domain fingerprints (ondmarc.com, redsift.cloud, dmarcian.com, sendmarc.com)
 
-### 🟢 Low-Risk Exposures (in scanner.go — non-stub companion file)
+### ✅ Resolved: `ai_surface/scanner.go` — Now Split (2026-02-17)
 
-#### `ai_surface/scanner.go` — AI Crawler List & Detection Logic
-- **`aiCrawlers`**: 15 AI crawler user-agent names (GPTBot, ChatGPT-User, CCBot, Google-Extended, anthropic-ai, ClaudeBot, Claude-Web, Bytespider, Diffbot, FacebookBot, Omgilibot, Applebot-Extended, PerplexityBot, YouBot, Amazonbot)
+The `aiCrawlers` list (15 AI crawler names) has been extracted into the three-file pattern:
+- **`scanner.go`** — Framework orchestration (`Scanner`, `Scan`, `parseRobotsTxtForAI` calls `GetAICrawlers()`)
+- **`scanner_oss.go`** — `//go:build !intel` — Returns empty `[]string{}` (no crawler intelligence in OSS)
+- **`scanner_intel.go`** — `//go:build intel` — Full 15-crawler list (private repo only)
+
+Remaining framework-level patterns in `scanner.go` (not intelligence — general heuristics):
 - **`prefillPatterns`** in `scanForPrefillLinks`: 5 AI chat prefill URL patterns
 - **`hiddenPatterns`** in `scanForHiddenPrompts`: 4 CSS/HTML hiding techniques
 - **`promptKeywords`** in `scanForHiddenPrompts`: 6 prompt injection keywords
-- Full working implementations of `Scan`, `checkLLMSTxt`, `checkRobotsTxt`, `checkPoisoning`, `checkHiddenPrompts`
 
 ---
 
@@ -408,9 +412,13 @@ The following minimal intelligence can safely remain in the public repo for demo
 
 ## 5. Action Items
 
-1. **Immediate**: Stub `edge_cdn.go` and `saas_txt.go` — these contain full intelligence databases with zero protection
-2. **Immediate**: Move `scanner.go`'s `aiCrawlers`, `prefillPatterns`, `hiddenPatterns`, and `promptKeywords` lists to private or reduce to commodity subset
-3. **High Priority**: Reduce `infrastructure.go` populated maps (`enterpriseProviders`, `mxProviderPatterns`, `nsProviderPatterns`, `webHostingPatterns`, `ptrHostingPatterns`) to commodity-only subsets
-4. **Medium Priority**: Move vendor name/domain constants from `providers.go` to private repo
-5. **Low Priority**: `commands.go` is safe as-is (pure framework) — no action needed
-6. **Low Priority**: `confidence.go`, `dkim_state.go`, `manifest.go` are pure framework — no action needed
+1. ~~**Immediate**: Stub `edge_cdn.go` and `saas_txt.go`~~ ✅ DONE (2026-02-17) — Split into three-file pattern
+2. ~~**Immediate**: Move `scanner.go`'s `aiCrawlers` to private~~ ✅ DONE (2026-02-17) — Split into `scanner.go` + `scanner_oss.go` + `scanner_intel.go`
+3. **Low Priority**: `prefillPatterns`, `hiddenPatterns`, `promptKeywords` in `scanner.go` are framework-level heuristics, not proprietary intelligence — no action needed
+4. **Low Priority**: `commands.go` is safe as-is (pure framework) — no action needed
+5. **Low Priority**: `confidence.go`, `dkim_state.go`, `manifest.go` are pure framework — no action needed
+
+### Intel Transfer Status (2026-02-17)
+- ✅ All 11 `_intel.go` files transferred to `careyjames/dnstool-intel` private repo
+- ✅ `docs/intel-staging/` deleted from public repo
+- ✅ OSS build (`go build ./go-server/cmd/server/`) passes cleanly

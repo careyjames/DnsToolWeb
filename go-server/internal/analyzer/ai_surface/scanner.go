@@ -39,14 +39,6 @@ type ScanResult struct {
         Summary   map[string]any `json:"summary"`
 }
 
-var aiCrawlers = []string{
-        "GPTBot", "ChatGPT-User", "CCBot", "Google-Extended",
-        "anthropic-ai", "ClaudeBot", "Claude-Web",
-        "Bytespider", "Diffbot", "FacebookBot",
-        "Omgilibot", "Applebot-Extended", "PerplexityBot",
-        "YouBot", "Amazonbot",
-}
-
 func (s *Scanner) Scan(ctx context.Context, domain string) map[string]any {
         evidence := []Evidence{}
 
@@ -282,7 +274,7 @@ func parseRobotsTxtForAI(content string) (blocked []string, allowed []string, di
         allowedSet := map[string]bool{}
 
         aiCrawlerSet := map[string]bool{}
-        for _, c := range aiCrawlers {
+        for _, c := range GetAICrawlers() {
                 aiCrawlerSet[strings.ToLower(c)] = true
         }
 

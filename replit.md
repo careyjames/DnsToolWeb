@@ -56,7 +56,7 @@ Each intelligence boundary uses three files:
 ### Stub Contract
 Every `_oss.go` stub MUST: (1) return safe non-nil defaults, (2) never return errors, (3) maintain exact function signatures matching `_intel.go`, (4) allow UI to render gracefully.
 
-### Current Stub Files (10 boundary files, each split into 3)
+### Current Stub Files (11 boundary files, each split into 3)
 | File | OSS Stub | Intel Location |
 |---|---|---|
 | `edge_cdn` | `edge_cdn_oss.go` | `dnstool-intel` |
@@ -69,6 +69,7 @@ Every `_oss.go` stub MUST: (1) return safe non-nil defaults, (2) never return er
 | `ai_surface/llms_txt` | `llms_txt_oss.go` | `dnstool-intel` |
 | `ai_surface/robots_txt` | `robots_txt_oss.go` | `dnstool-intel` |
 | `ai_surface/poisoning` | `poisoning_oss.go` | `dnstool-intel` |
+| `ai_surface/scanner` | `scanner_oss.go` | `dnstool-intel` |
 
 ### Pure Framework Files (no split needed)
 `confidence.go`, `dkim_state.go` — types and constants only, no intelligence data.
@@ -76,11 +77,8 @@ Every `_oss.go` stub MUST: (1) return safe non-nil defaults, (2) never return er
 ### Fully Implemented Framework (no stubs)
 `commands.go` (19 protocol sections, 25+ verification commands)
 
-### Intel Staging
-`docs/intel-staging/` contains `_intel.go` files ready for transfer to private repo. Remove after sync.
-
-### Remaining: scanner.go
-`ai_surface/scanner.go` has `aiCrawlers` (15 names) — intelligence intertwined with framework orchestration. Needs future refactoring.
+### Intel Transfer Status (completed 2026-02-17)
+All 11 `_intel.go` files have been transferred to `careyjames/dnstool-intel` private repo. `docs/intel-staging/` has been deleted from the public repo. No intelligence data remains in the public repo.
 
 ### Python Files (Not Stubs, Not Runtime)
 - `main.py` — Process trampoline only (os.execvp replaces Python with Go binary)

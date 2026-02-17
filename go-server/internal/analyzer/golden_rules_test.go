@@ -818,14 +818,20 @@ func TestGoldenRuleStubBoundaryFunctionsRegistered(t *testing.T) {
                 t.Fatalf("failed to walk analyzer directory: %v", err)
         }
 
-        stubData, err := os.ReadFile("providers.go")
-        if err != nil {
-                t.Fatalf("cannot read providers.go: %v", err)
+        stubFiles := []string{"providers.go", "providers_oss.go"}
+        var combinedStub strings.Builder
+        for _, sf := range stubFiles {
+                data, err := os.ReadFile(sf)
+                if err != nil {
+                        continue
+                }
+                combinedStub.Write(data)
+                combinedStub.WriteByte('\n')
         }
-        stubContent := string(stubData)
+        stubContent := combinedStub.String()
         for _, fn := range knownBoundaryFunctions {
                 if !strings.Contains(stubContent, fn) {
-                        t.Errorf("providers.go missing boundary function %s — stub must define all intelligence boundary functions", fn)
+                        t.Errorf("providers boundary missing function %s — stub must define all intelligence boundary functions", fn)
                 }
         }
 }
