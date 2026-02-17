@@ -43,23 +43,28 @@ This repository contains the public web application:
 - Email Header Analyzer (SPF/DKIM/DMARC verification, spoofing detection, OpenPhish integration)
 - IP Intelligence (reverse lookups, ASN attribution, geolocation)
 - AI Surface Scanner (llms.txt, AI crawler governance, prompt injection detection)
-- Posture drift detection foundation (canonical SHA-256 hashing)
-- Analyzer stub interfaces (13 files)
+- DKIM selector discovery and key strength analysis
+- Enterprise DNS provider detection
+- Edge/CDN vs. origin detection
+- SaaS TXT footprint extraction and classification
+- Posture drift detection (canonical SHA-256 hashing)
+- Remediation engine with RFC-aligned Priority Actions
+- Analyzer stub interfaces (10 files — see replit.md for current registry)
 - Golden rules test suite
 - Live integration test suite
 
 ## What is in the private repo
 
-Advanced intelligence data and implementations live in a separate private repository (`dnstool-intel`), also licensed under **BSL 1.1** with the same terms and Change Date. This includes:
-- Provider detection databases
-- Scoring algorithms
-- Infrastructure classification logic
-- AI surface detection patterns
-- Remediation intelligence
+Advanced intelligence data lives in a separate private repository (`dnstool-intel`), also licensed under **BSL 1.1** with the same terms and Change Date. This includes:
+- Extended provider detection databases (managed, self-hosted, government classification)
+- Confidence level extensions (Corroborated, Stale, Absent)
+- Advanced infrastructure classification patterns
+- AI surface detection pattern libraries
+- Extended IP investigation analysis
 
 ## How they work together
 
-The public repo runs standalone with reduced functionality. In internal builds, selected stub interfaces are replaced with proprietary implementations at compile time. The two codebases share a Go package boundary and are both licensed under BSL 1.1.
+The public repo runs standalone with full core functionality. In internal builds, selected stub interfaces are replaced with proprietary implementations at compile time. The two codebases share a Go package boundary and are both licensed under BSL 1.1.
 
 ## Contributing
 
@@ -67,39 +72,18 @@ By contributing code to this repository, you agree that your contributions may b
 
 ## Commercial Licensing
 
-For organizations that need capabilities beyond the BSL-permitted uses, commercial licenses are available. A commercial license includes:
+For organizations that need capabilities beyond the BSL-permitted uses, commercial licenses are available by arrangement. Contact us to discuss your specific requirements.
 
-### Full Platform
-- All public repo capabilities (DNS security analysis, remediation engine, scoring)
-- Complete provider intelligence databases (email, DNS, hosting, CDN/edge detection)
-- Advanced scoring algorithms and infrastructure classification
-- AI Surface Scanner with full detection pattern library
-- White-label and custom branding options
+### What a commercial license can include
+- All public repo capabilities plus the complete private intelligence databases
+- Self-hosted deployment (on-premises or private cloud)
+- Additional deployment and integration options as needed
 
-### Enterprise Intelligence
-- Provider-aware DKIM selector detection and credit
-- Hosted email provider identification (automatic DANE suppression)
-- BIMI capability detection per provider
-- Enterprise DNS provider recognition and legacy provider blocklisting
-- SaaS TXT footprint extraction and classification
-
-### Deployment Options
-- Self-hosted (on-premises or private cloud)
-- Dedicated managed instance
-- API access for integration into existing security workflows
-- Volume licensing for MSP and multi-tenant deployments
-
-### Support and Maintenance
-- Priority support and SLA
-- Custom feature development
-- Early access to new protocol analyzers and detection capabilities
-- Training and onboarding for security teams
-
-### Who Should Contact Us
+### Who should contact us
 - Security vendors who want to embed DNS audit capabilities in their platform
 - Managed service providers who want to offer DNS Tool as a branded service
-- Enterprises requiring a dedicated instance with custom integrations
-- Organizations needing features beyond the public open-core release
+- Enterprises requiring dedicated deployment with custom integrations
+- Organizations needing capabilities beyond the public open-core release
 
 ## Questions
 
