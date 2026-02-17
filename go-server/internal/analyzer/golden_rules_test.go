@@ -997,3 +997,197 @@ func TestGoldenRuleSPFAncillaryCorroboration(t *testing.T) {
                 })
         }
 }
+
+func TestGoldenRuleSubdomainCurrentFirstOrdering(t *testing.T) {
+        subdomains := []map[string]any{
+                {"name": "zeta.example.com", "is_current": false, "first_seen": "2023-01-01"},
+                {"name": "alpha.example.com", "is_current": true},
+                {"name": "beta.example.com", "is_current": false, "first_seen": "2025-06-01"},
+                {"name": "gamma.example.com", "is_current": true},
+                {"name": "delta.example.com", "is_current": false, "first_seen": "2024-03-15"},
+                {"name": "epsilon.example.com", "is_current": true},
+        }
+
+        sorted := sortSubdomainsSmartOrder(subdomains)
+
+        lastCurrentIdx := -1
+        firstHistoricalIdx := len(sorted)
+        for i, sd := range sorted {
+                if isCur, ok := sd["is_current"].(bool); ok && isCur {
+                        lastCurrentIdx = i
+                } else if i < firstHistoricalIdx {
+                        firstHistoricalIdx = i
+                }
+        }
+
+        if lastCurrentIdx >= firstHistoricalIdx {
+                t.Fatalf("CRITICAL: current subdomains must ALL appear before historical — last current at index %d, first historical at index %d", lastCurrentIdx, firstHistoricalIdx)
+        }
+
+        for i := 0; i < firstHistoricalIdx-1; i++ {
+                a := sorted[i]["name"].(string)
+                b := sorted[i+1]["name"].(string)
+                if a > b {
+                        t.Errorf("current subdomains must be sorted alphabetically — %q before %q", a, b)
+                }
+        }
+
+        for i := firstHistoricalIdx; i < len(sorted)-1; i++ {
+                di, _ := sorted[i]["first_seen"].(string)
+                dj, _ := sorted[i+1]["first_seen"].(string)
+                if di < dj {
+                        t.Errorf("historical subdomains must be sorted by date descending — %q before %q", di, dj)
+                }
+        }
+}
+
+func TestGoldenRuleDisplayCapNeverHidesCurrent(t *testing.T) {
+        subdomains := make([]map[string]any, 0, 150)
+
+        for i := 0; i < 120; i++ {
+                subdomains = append(subdomains, map[string]any{
+                        "name":       strings.Replace("sub-XXX.example.com", "XXX", strings.Repeat("a", i+1), 1),
+                        "is_current": true,
+                })
+        }
+        for i := 0; i < 30; i++ {
+                subdomains = append(subdomains, map[string]any{
+                        "name":       strings.Replace("old-XXX.example.com", "XXX", strings.Repeat("b", i+1), 1),
+                        "is_current": false,
+                        "first_seen": "2020-01-01",
+                })
+        }
+
+        result := map[string]any{}
+        applySubdomainDisplayCap(result, subdomains, 120)
+
+        displayed := result["subdomains"].([]map[string]any)
+
+        currentInDisplay := 0
+        for _, sd := range displayed {
+                if isCur, ok := sd["is_current"].(bool); ok && isCur {
+                        currentInDisplay++
+                }
+        }
+
+        if currentInDisplay != 120 {
+                t.Fatalf("CRITICAL: display cap must never hide current subdomains — showed %d of 120 current", currentInDisplay)
+        }
+
+        if len(displayed) != 140 {
+                t.Errorf("expected 140 displayed (120 current + 20 historical overflow), got %d", len(displayed))
+        }
+
+        if _, ok := result["display_capped"]; !ok {
+                t.Error("display_capped flag must be set when total exceeds display limit")
+        }
+}
+
+func TestGoldenRuleDisplayCapSmallSetUncapped(t *testing.T) {
+        subdomains := make([]map[string]any, 0, 50)
+        for i := 0; i < 50; i++ {
+                subdomains = append(subdomains, map[string]any{
+                        "name":       "sub.example.com",
+                        "is_current": true,
+                })
+        }
+
+        result := map[string]any{}
+        applySubdomainDisplayCap(result, subdomains, 50)
+
+        displayed := result["subdomains"].([]map[string]any)
+        if len(displayed) != 50 {
+                t.Errorf("small sets must not be capped — expected 50, got %d", len(displayed))
+        }
+        if _, ok := result["display_capped"]; ok {
+                t.Error("display_capped must not be set for sets under soft cap")
+        }
+}
+
+func TestGoldenRuleCTUnavailableFallbackProducesResults(t *testing.T) {
+        entries := []ctEntry{}
+        deduped := deduplicateCTEntries(entries)
+        if len(deduped) != 0 {
+                t.Error("deduplicating empty CT entries must return empty slice")
+        }
+
+        wc := detectWildcardCerts(entries, "example.com")
+        if wc != nil {
+                t.Error("wildcard detection must return nil for empty CT entries")
+        }
+
+        summary := buildCASummary(entries)
+        if len(summary) != 0 {
+                t.Error("CA summary must return empty for empty CT entries")
+        }
+}
+
+func TestGoldenRulePipelineFieldsPreservedThroughSort(t *testing.T) {
+        subdomains := []map[string]any{
+                {
+                        "name":         "current.example.com",
+                        "is_current":   true,
+                        "cname_target": "cdn.example.com",
+                        "source":       "ct",
+                        "first_seen":   "2025-01-01",
+                        "cert_count":   3,
+                },
+                {
+                        "name":         "old.example.com",
+                        "is_current":   false,
+                        "source":       "dns",
+                        "first_seen":   "2023-01-01",
+                },
+        }
+
+        sorted := sortSubdomainsSmartOrder(subdomains)
+
+        for _, sd := range sorted {
+                name, _ := sd["name"].(string)
+                if _, ok := sd["source"]; !ok {
+                        t.Errorf("CRITICAL: sort must preserve 'source' field on %s", name)
+                }
+                if _, ok := sd["first_seen"]; !ok {
+                        t.Errorf("CRITICAL: sort must preserve 'first_seen' field on %s", name)
+                }
+        }
+
+        first := sorted[0]
+        if first["name"].(string) != "current.example.com" {
+                t.Error("current subdomain must appear first after sort")
+        }
+        if _, ok := first["cname_target"]; !ok {
+                t.Error("CRITICAL: sort must preserve 'cname_target' field")
+        }
+        if first["cert_count"] != 3 {
+                t.Error("CRITICAL: sort must preserve 'cert_count' field")
+        }
+}
+
+func TestGoldenRuleFreeCertAuthorityDetection(t *testing.T) {
+        freeCases := []string{
+                "Let's Encrypt",
+                "C=US, O=Let's Encrypt, CN=R3",
+                "Amazon",
+                "Cloudflare Inc ECC CA-3",
+                "Google Trust Services",
+                "ZeroSSL",
+        }
+        for _, ca := range freeCases {
+                if !matchesFreeCertAuthority(ca) {
+                        t.Errorf("must recognize %q as free CA", ca)
+                }
+        }
+
+        paidCases := []string{
+                "DigiCert SHA2 Extended Validation Server CA",
+                "Sectigo RSA Domain Validation Secure Server CA",
+                "GeoTrust RSA CA 2018",
+                "Entrust Certification Authority - L1K",
+        }
+        for _, ca := range paidCases {
+                if matchesFreeCertAuthority(ca) {
+                        t.Errorf("must NOT recognize %q as free CA", ca)
+                }
+        }
+}

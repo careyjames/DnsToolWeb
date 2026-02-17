@@ -309,6 +309,19 @@ After evaluating APA, Chicago/Turabian, IEEE, NIST SP 800, and ICD, the project 
 - **Bootstrap overrides**: Override `--bs-btn-*` CSS variables, NOT direct `background-color`.
 - **Favicon**: HTML `<link rel="icon">` uses `data:` URI (zero HTTP requests, no 404 possible). Navbar brand uses inline SVG shield.
 
+### Subdomain Discovery Pipeline — CRITICAL INFRASTRUCTURE
+
+The subdomain discovery pipeline is the tool's most valuable differentiator — it consistently finds subdomains where competing tools fail. **Treat as critical infrastructure. Do not modify without golden rule test coverage.**
+
+Pipeline sequence (order is load-bearing):
+1. CT fetch → deduplication → `processCTEntries()` → DNS probing → CNAME traversal → `enrichSubdomainsV2()` → recount → `sortSubdomainsSmartOrder()` → cache → `applySubdomainDisplayCap()`
+
+Key invariants:
+- Enrichment (`enrichSubdomainsV2`) MUST happen before sort and count — it mutates `is_current` based on live DNS resolution
+- Display cap NEVER hides current/active subdomains
+- CT unavailability is graceful fallback, not an error — DNS probing still runs
+- Golden rule tests protect: ordering, display cap, field preservation, free CA detection
+
 ### Data and API
 
 - **SecurityTrails**: User-key-only. NEVER call automatically. 50 req/month hard limit.
