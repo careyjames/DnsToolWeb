@@ -1160,3 +1160,48 @@ Full cross-check of public-facing docs (llms.txt, llms-full.txt, FEATURE_INVENTO
 - **replit.md is volatile by design**. Never put comprehensive context in it. Use it as a pointer to stable files.
 - **Audit public-facing docs against actual Go code regularly**. The posture terminology drift (SECURE/PARTIAL/INSECURE vs Low Risk/etc.) was present for multiple versions without being caught.
 - **Subagent audits are effective**: Using parallel subagents for doc creation + cross-checking found 8 issues that manual review missed.
+
+---
+
+## Session: February 17, 2026
+
+### Version Bump: 26.19.23 → 26.19.25
+
+### Registrar Subtitle Wording (v26.19.24)
+- Changed fallback registrar subtitle from "Where you pay to own domain" → "Where domain was purchased"
+- Clearer, more professional wording
+
+### Email Service Provider Enhancement (v26.19.24)
+- When intel stub returns "Unknown" for `email_hosting`, orchestrator now falls back to `dkim_analysis.primary_provider` (framework-level detection)
+- This populates the Email Service Provider card from MX/SPF/DKIM analysis even in the OSS build
+- Added "Inferred" confidence badge with method "MX record and SPF analysis"
+- No-mail domains still correctly show "No Mail Domain"
+- Safe type assertion for `email_confidence` to prevent panics
+
+### AI Surface Scanner RFC Citations (v26.19.24–25)
+- **llms.txt subsection**: Added llmstxt.org "Proposed Standard" link + RFC 8615 (Well-Known URIs)
+- **robots.txt subsection**: Added RFC 9309 (Robots Exclusion Protocol) + IETF AIPREF working group draft
+- Tooltip descriptions explain each standard's scope and status
+- Labels distinguish clearly: "RFC 9309" (ratified), "IETF Draft" (not yet ratified), "Proposed Standard" (community proposal)
+
+### IETF AIPREF vs llmstxt.org — Architect Analysis
+- **Not competing**: They solve different problems
+  - llms.txt = content guidance ("here's useful info about our site for LLMs to consume at inference time")
+  - IETF AIPREF = governance preferences ("here's what you're allowed to do with our content: train-ai=y/n")
+- **Complementary**: A domain could have both — llms.txt curates content for LLMs, while AIPREF controls whether AI can train on or use the content
+- **Status honestly reported**: RFC 9309 is ratified standard; AIPREF is active IETF working group draft; llms.txt is community proposal with ~844K sites but no confirmed AI vendor support
+- **Decision**: Keep both cited with clear status labels. Honesty about standardization status is essential for credibility.
+
+### DMARC Badge Accuracy Fix (v26.19.25)
+- **Bug**: When DMARC record exists with p=none but has configuration warnings (status="warning"), the badge showed "No policy published" — misleading because a record IS published
+- **Root cause**: Badge logic was gated on `$dmarcStatus == "success"` instead of checking the actual policy value. p=none + warnings → status "warning" → fell through to "No policy published"
+- **Fix**: Changed badge logic to key on `$dmarcPolicy` value directly (reject/quarantine/none) instead of `$dmarcStatus`. Now correctly shows "Monitoring only" for p=none regardless of whether there are configuration warnings
+- **Impact**: Any domain with DMARC p=none and warnings (common during rollout) was incorrectly showing "No policy published" instead of "Monitoring only"
+
+### Files Changed
+| File | What Changed |
+|------|-------------|
+| `go-server/internal/config/config.go` | AppVersion 26.19.23 → 26.19.25 |
+| `go-server/internal/analyzer/orchestrator.go` | Email hosting fallback from DKIM primary_provider |
+| `go-server/templates/results.html` | Registrar subtitle, DMARC badge fix, AI Surface Scanner RFC citations |
+| `EVOLUTION.md` | Session breadcrumb |
