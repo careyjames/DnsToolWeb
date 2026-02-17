@@ -376,6 +376,7 @@ All items below are **on the roadmap** — not yet implemented:
 7. **ISC recommendation path integration** — on the roadmap
 8. **One-liner verification commands** — on the roadmap
 9. **Email Header Analyzer feature matrix** — on the roadmap
+10. **Terminal CLI + Web Terminal Demo** — Real terminal app (Homebrew/binary) that works in actual terminals, plus potentially a web-based terminal demo for the browser. Idea needs vetting — TBD whether web demo adds value or dilutes the real-terminal experience. — on the roadmap (concept stage, needs discussion)
 
 ### Probe Network — dns-observe.com (Roadmap Detail)
 
