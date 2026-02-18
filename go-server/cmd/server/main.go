@@ -127,6 +127,8 @@ func main() {
         router.GET("/sitemap.xml", staticHandler.SitemapXML)
         router.GET("/llms.txt", staticHandler.LLMsTxt)
         router.GET("/llms-full.txt", staticHandler.LLMsFullTxt)
+        router.GET("/.well-known/llms.txt", staticHandler.LLMsTxt)
+        router.GET("/.well-known/llms-full.txt", staticHandler.LLMsFullTxt)
         router.GET("/manifest.json", staticHandler.ManifestJSON)
         router.GET("/sw.js", staticHandler.ServiceWorker)
 

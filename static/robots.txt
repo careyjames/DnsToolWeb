@@ -29,6 +29,6 @@ Allow: /
 # Sitemap
 Sitemap: https://dnstool.it-help.tech/sitemap.xml
 
-# AI Agent Documentation (llms.txt standard)
-# Quick overview: /llms.txt
-# Full agent guide: /llms-full.txt
+# AI Agent Documentation (llms.txt standard, RFC 8615)
+# Quick overview: /.well-known/llms.txt (also /llms.txt)
+# Full agent guide: /.well-known/llms-full.txt (also /llms-full.txt)
