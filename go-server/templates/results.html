@@ -4027,9 +4027,9 @@
                 <div class="card-body py-3">
                     <div class="d-flex align-items-center flex-wrap gap-2">
                         <span class="text-muted small"><i class="fas fa-history me-1"></i>DNS History Timeline <span class="badge bg-warning text-dark ms-1 u-fs-070em-vmid">BETA</span></span>
-                        <form class="d-flex align-items-center gap-2 flex-grow-1 u-maxw-500" id="dns-history-form" autocomplete="on">
+                        <form class="d-flex align-items-center gap-2 flex-grow-1 u-maxw-500" id="dns-history-form" autocomplete="off">
                             <label for="securitytrails_api_key" class="visually-hidden">SecurityTrails API Key</label>
-                            <input type="password" class="form-control form-control-sm bg-dark text-light border-secondary u-fs-085em" id="securitytrails_api_key" name="securitytrails_api_key" placeholder="SecurityTrails API Key" autocomplete="section-dnstool securitytrails-api-key" spellcheck="false" aria-label="SecurityTrails API Key for DNS history">
+                            <input type="password" class="form-control form-control-sm bg-dark text-light border-secondary u-fs-085em" id="securitytrails_api_key" name="securitytrails_api_key" placeholder="SecurityTrails API Key" autocomplete="off" spellcheck="false" aria-label="SecurityTrails API Key for DNS history">
                             <button type="submit" class="btn btn-sm btn-outline-info" id="dns-history-btn" data-domain="{{.AsciiDomain}}">
                                 <i class="fas fa-search me-1"></i>Go
                             </button>
