@@ -17,5 +17,8 @@ docs/legacy/migrations/
 # Git panel sync marker (agent-written, not for version control)
 .gitpanel/
 
+# Session Sentinel manifests (internal dev drift detection)
+.drift/
+
 # Private repo staging — never push to public
 dnstool-intel-staging/

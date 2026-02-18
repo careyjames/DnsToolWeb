@@ -9,14 +9,31 @@ This skill contains the critical rules and architecture knowledge for the DNS To
 
 ## Session Startup
 
-1. Run `bash scripts/git-health-check.sh` — fixes stale lock files, interrupted rebases, and detached HEAD before they cascade into checkpoint failures
-2. **Agent**: Always use `bash scripts/git-push.sh` (PAT-based push + ls-remote verification). **User**: Can use the Git panel for Push/Sync after running `bash scripts/git-panel-reset.sh` from Shell to clear stale locks. If the Git panel shows "X commits ahead" but code is already on GitHub, run the panel reset script.
-3. Read `replit.md` — quick-reference config (may reset between sessions)
-4. Read `PROJECT_CONTEXT.md` — canonical, stable project context
-5. Read `EVOLUTION.md` — permanent breadcrumb trail, backup if `replit.md` resets
-6. Check the "Failures & Lessons Learned" section in `EVOLUTION.md` before making changes
-7. If `replit.md` appears truncated or reset, restore key pointers from `PROJECT_CONTEXT.md` and `EVOLUTION.md`
-8. Run `find go-server -name "*_intel*"` — if ANY `_intel.go` or `_intel_test.go` files exist locally, they must be pushed to `dnstool-intel` via the sync script and deleted immediately (see "Cross-Repo Sync via GitHub API" below)
+1. **User (Shell tab)**: Run `bash scripts/git-health-check.sh` — fixes stale lock files, interrupted rebases, detached HEAD, updates tracking refs, AND runs Session Sentinel drift check
+2. **Agent**: Run `bash scripts/git-health-check.sh --read-only` — skips .git repairs (platform blocks them), runs sync check + Session Sentinel only
+3. **Agent push**: Always use `bash scripts/git-push.sh` (PAT-based push + ls-remote verification + auto-snapshot). **User**: Can use the Git panel for Push/Sync after running `bash scripts/git-panel-reset.sh` from Shell.
+4. Read `replit.md` — quick-reference config (may reset between sessions)
+5. Read `PROJECT_CONTEXT.md` — canonical, stable project context
+6. Read `EVOLUTION.md` — permanent breadcrumb trail, backup if `replit.md` resets
+7. Check the "Failures & Lessons Learned" section in `EVOLUTION.md` before making changes
+8. If `replit.md` appears truncated or reset, restore key pointers from `PROJECT_CONTEXT.md` and `EVOLUTION.md`
+9. Run `find go-server -name "*_intel*"` — if ANY `_intel.go` or `_intel_test.go` files exist locally, they must be pushed to `dnstool-intel` via the sync script and deleted immediately
+
+## Session Sentinel — Environment Drift Detection
+
+Internal dev tooling that tracks platform-induced file changes between sessions. **Completely separate from the DNS drift engine (user-facing posture_hash).**
+
+```bash
+bash scripts/session-sentinel.sh snapshot   # Save current state (auto-runs after git-push.sh)
+bash scripts/session-sentinel.sh check      # Diff against last snapshot (auto-runs in health check)
+bash scripts/session-sentinel.sh report     # Show last snapshot info
+```
+
+- **Storage**: `.drift/manifest.json` (gitignored, local only)
+- **Watches**: go.mod, go.sum, package.json, config.go, schema.sql, CSS, build scripts, docs (19 files + binary)
+- **Excludes**: .git/, node_modules/, .cache/, tmp/, logs
+- **Integration**: Runs automatically in `git-push.sh` (snapshot after push) and `git-health-check.sh` (check at session start)
+- **CRITICAL**: Never conflate `.drift/` (internal dev) with the DNS drift engine (user-facing product feature)
 
 ## Mandatory Post-Edit Rules
 

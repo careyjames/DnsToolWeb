@@ -112,6 +112,9 @@ if [ "$LOCAL_SHA" = "$REMOTE_SHA" ]; then
     echo "NOTE: Git panel tracking ref is locked. Panel may show stale counts."
     echo "  To fix: run 'bash scripts/git-panel-reset.sh' from the Shell tab."
   fi
+  if [ -f "scripts/session-sentinel.sh" ]; then
+    bash scripts/session-sentinel.sh snapshot 2>/dev/null || true
+  fi
   echo ""
   echo "SYNC STATUS: VERIFIED MATCH"
   exit 0
@@ -199,5 +202,11 @@ if [ -f ".git/refs/remotes/origin/main.lock" ]; then
   echo "  The Git panel may show stale 'X commits ahead' even though GitHub is current."
   echo "  To fix: run 'bash scripts/git-panel-reset.sh' from the Shell tab."
 fi
+
+# ── Session Sentinel snapshot (record current state after push) ──
+if [ -f "scripts/session-sentinel.sh" ]; then
+  bash scripts/session-sentinel.sh snapshot 2>/dev/null || true
+fi
+
 echo ""
 echo "PUSH COMPLETE."
