@@ -374,6 +374,20 @@ func TestGoldenRuleRemediationProviderAware(t *testing.T) {
                         t.Fatalf("Remediation must never suggest upgrading from ~all to -all — ~all is best practice with DMARC reject. Got: %q", title)
                 }
         }
+
+        posture := a.CalculatePosture(results)
+        monitoring, _ := posture["monitoring"].([]string)
+        for _, m := range monitoring {
+                if strings.Contains(m, "consider upgrading to hard fail") || strings.Contains(m, "consider upgrading to -all") {
+                        t.Fatalf("Posture monitoring must never suggest upgrading from ~all to -all — ~all is industry-standard with DMARC reject (RFC 7489 §10.1). Got: %q", m)
+                }
+        }
+        recommendations, _ := posture["recommendations"].([]string)
+        for _, r := range recommendations {
+                if strings.Contains(r, "consider upgrading to hard fail") || strings.Contains(r, "consider upgrading to -all") {
+                        t.Fatalf("Posture recommendations must never suggest upgrading from ~all to -all — ~all is industry-standard with DMARC reject (RFC 7489 §10.1). Got: %q", r)
+                }
+        }
 }
 
 func TestGoldenRuleHostedProviderNoDANE(t *testing.T) {

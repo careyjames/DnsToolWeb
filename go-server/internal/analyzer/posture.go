@@ -355,7 +355,7 @@ func classifySPF(ps protocolState, acc *postureAccumulator) {
         }
 
         if ps.spfWarning && !ps.spfHardFail {
-                acc.monitoring = append(acc.monitoring, "SPF configured with soft fail (~all) — consider upgrading to hard fail (-all)")
+                acc.monitoring = append(acc.monitoring, "SPF configured with soft fail (~all) — industry-standard when paired with DMARC enforcement (RFC 7489 §10.1)")
         }
 
         if ps.spfHardFail {
