@@ -32,7 +32,7 @@ Traditional DNS security tools treat DNSSEC as the only valid security measure, 
 
 ### Enterprise DNS Providers
 
-Major cloud and infrastructure DNS providers offer DDoS protection, anycast networks, and 24/7 security monitoring. A domain on a top-tier provider without DNSSEC may be MORE secure than a self-hosted domain with DNSSEC. These are tagged "Enterprise" in the results.
+Major cloud and infrastructure DNS providers offer DDoS protection, anycast networks, and 24/7 security monitoring. A domain on a top-tier enterprise DNS provider benefits from operational security measures (DDoS mitigation, anycast, 24/7 monitoring) that complement or partially offset the absence of DNSSEC chain-of-trust validation. These are classified as "Enterprise" in analysis results — acknowledging operational mitigations without equating them to cryptographic assurance (RFC 4033, Section 2).
 
 ### Legacy Providers
 

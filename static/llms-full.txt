@@ -321,7 +321,7 @@ DNS Tool detects when a domain uses a hosted email provider and adjusts DANE ana
 
 ### Infrastructure Intelligence
 - PTR-based hosting detection: Reverse DNS lookups identify hosting providers (e.g., CloudFront, AWS, Google) without third-party APIs
-- IP-to-ASN attribution: Team Cymru DNS service maps IPs to owning organizations (free, no API key, no rate limits)
+- IP-to-ASN attribution: Team Cymru DNS service maps IPs to owning organizations (no API key, no rate limits)
 - Confidence taxonomy: Every attribution labeled as Observed (direct DNS/RDAP), Inferred (pattern matching), or Third-party (external services)
 
 ### Verification & Transparency
@@ -336,7 +336,7 @@ DNS Tool detects when a domain uses a hosted email provider and adjusts DANE ana
 - RDAP: Direct IANA bootstrap queries
 - Response Time: Typically 2-5 seconds per analysis
 - Data: Always fresh, never cached
-- External services: Only ip-api.com (visitor geolocation flag in footer, 45 req/min free tier) uses a rate-limited API — core analysis relies entirely on unlimited DNS protocol queries
+- External services: Only ip-api.com (visitor geolocation flag in footer, 45 req/min) uses a rate-limited API — core analysis relies entirely on unlimited DNS protocol queries
 
 ---
 

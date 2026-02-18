@@ -3,14 +3,14 @@
 <head>
     {{template "head" .}}
     <title>DNS Tool — Domain Security Intelligence | OSINT Reports</title>
-    <meta name="description" content="Free OSINT domain security audit. Analyzes SPF, DKIM, DMARC, DANE, DNSSEC, BIMI, MTA-STS, CAA. Engineer &amp; Executive intelligence reports. Open-standard protocols.">
+    <meta name="description" content="OSINT domain security audit — no login required. Analyzes SPF, DKIM, DMARC, DANE, DNSSEC, BIMI, MTA-STS, CAA. Engineer &amp; Executive intelligence reports. Open-standard protocols.">
     <meta name="keywords" content="DNS lookup, SPF checker, DKIM validator, DMARC lookup, DNSSEC validation, DANE checker, TLSA record lookup, DANE TLSA email security, domain security audit, email authentication, email spoofing protection, cybersecurity posture report, DNS intelligence, OSINT, open source intelligence, DNS OSINT, BIMI checker, MTA-STS checker, TLS-RPT checker, CAA record check, DMARCbis, MPIC, domain reputation, email security assessment, email security management, DMARC monitoring, SPF flattening, SMTP transport encryption, email header analyzer, subdomain discovery, IP intelligence, ASN lookup">
     
     <!-- Facebook / Open Graph -->
     <meta property="og:url" content="https://dnstool.it-help.tech/">
     <meta property="og:type" content="website">
     <meta property="og:title" content="DNS Tool — Domain Security Intelligence | OSINT Reports">
-    <meta property="og:description" content="Free OSINT-based domain security audit producing Engineer's DNS Intelligence Reports and Executive's DNS Intelligence Briefs. Analyzes SPF, DKIM, DMARC, DANE/TLSA, DNSSEC, BIMI, MTA-STS, TLS-RPT, CAA from multiple intelligence sources. Email Header Analyzer, IP Intelligence, AI Surface Scanner. TLP classification. All analysis uses open-standard protocols.">
+    <meta property="og:description" content="OSINT-based domain security audit producing Engineer's DNS Intelligence Reports and Executive's DNS Intelligence Briefs. Analyzes SPF, DKIM, DMARC, DANE/TLSA, DNSSEC, BIMI, MTA-STS, TLS-RPT, CAA from multiple intelligence sources. Email Header Analyzer, IP Intelligence, AI Surface Scanner. TLP classification. All analysis uses open-standard protocols.">
     <meta property="og:image" content="https://dnstool.it-help.tech/static/images/og-image.png">
     
     <!-- Twitter -->
@@ -18,17 +18,17 @@
     <meta property="twitter:domain" content="dnstool.it-help.tech">
     <meta property="twitter:url" content="https://dnstool.it-help.tech/">
     <meta name="twitter:title" content="DNS Tool — Domain Security Intelligence | OSINT Reports">
-    <meta name="twitter:description" content="Free OSINT-based domain security audit producing Engineer's DNS Intelligence Reports and Executive's DNS Intelligence Briefs. Analyzes SPF, DKIM, DMARC, DANE/TLSA, DNSSEC, BIMI, MTA-STS, TLS-RPT, CAA from multiple intelligence sources. Email Header Analyzer, IP Intelligence, AI Surface Scanner. TLP classification. All analysis uses open-standard protocols.">
+    <meta name="twitter:description" content="OSINT-based domain security audit producing Engineer's DNS Intelligence Reports and Executive's DNS Intelligence Briefs. Analyzes SPF, DKIM, DMARC, DANE/TLSA, DNSSEC, BIMI, MTA-STS, TLS-RPT, CAA from multiple intelligence sources. Email Header Analyzer, IP Intelligence, AI Surface Scanner. TLP classification. All analysis uses open-standard protocols.">
     <meta name="twitter:image" content="https://dnstool.it-help.tech/static/images/og-image.png">
     
     <!-- JSON-LD Schema -->
-    <script type="application/ld+json">
+    <script type="application/ld+json" nonce="{{.CspNonce}}">
     {
         "@context": "https://schema.org",
         "@type": "WebApplication",
         "name": "DNS Tool — Domain Security Intelligence | OSINT Reports",
         "alternateName": ["DNS Security Intelligence", "Domain Security Audit", "DNS OSINT Tool", "SPF Checker", "DMARC Lookup", "DKIM Validator", "DNSSEC Checker", "DANE Checker", "TLSA Lookup", "Email Security Audit Tool", "Email Security Management Detector", "MTA-STS Checker", "TLS-RPT Checker", "IP Intelligence Tool", "Email Header Analyzer", "Subdomain Discovery Tool"],
-        "description": "Free OSINT-based domain security audit producing Engineer's DNS Intelligence Reports and Executive's DNS Intelligence Briefs. All analysis uses open-source intelligence — publicly available DNS records, certificate transparency logs, RDAP registry data, and web resources. Analyzes SPF, DKIM, DMARC, DANE/TLSA, DNSSEC, BIMI, MTA-STS, TLS-RPT, and CAA from multiple intelligence sources (Cloudflare, Google, Quad9, OpenDNS). Email Header Analyzer for spoofing detection with OpenPhish integration. IP Intelligence with ASN attribution and geolocation. AI Surface Scanner for llms.txt and crawler governance. Configurable TLP classification (AMBER/GREEN/CLEAR). Multi-layer subdomain discovery via Certificate Transparency and DNS intelligence. Posture drift detection via canonical hashing. All analysis uses open-standard protocols.",
+        "description": "OSINT-based domain security audit producing Engineer's DNS Intelligence Reports and Executive's DNS Intelligence Briefs. All analysis uses open-source intelligence — publicly available DNS records, certificate transparency logs, RDAP registry data, and web resources. Analyzes SPF, DKIM, DMARC, DANE/TLSA, DNSSEC, BIMI, MTA-STS, TLS-RPT, and CAA from multiple intelligence sources (Cloudflare, Google, Quad9, OpenDNS). Email Header Analyzer for spoofing detection with OpenPhish integration. IP Intelligence with ASN attribution and geolocation. AI Surface Scanner for llms.txt and crawler governance. Configurable TLP classification (AMBER/GREEN/CLEAR). Multi-layer subdomain discovery via Certificate Transparency and DNS intelligence. Posture drift detection via canonical hashing. All analysis uses open-standard protocols.",
         "url": "https://dnstool.it-help.tech",
         "applicationCategory": "SecurityApplication",
         "operatingSystem": "Web Browser",
@@ -63,7 +63,7 @@
     </script>
     
     <!-- FAQ Schema for rich search results -->
-    <script type="application/ld+json">
+    <script type="application/ld+json" nonce="{{.CspNonce}}">
     {
         "@context": "https://schema.org",
         "@type": "FAQPage",
@@ -73,7 +73,7 @@
                 "name": "What is a domain security audit?",
                 "acceptedAnswer": {
                     "@type": "Answer",
-                    "text": "A domain security audit examines your domain's DNS configuration, email authentication records (SPF, DKIM, DMARC), transport security (DANE/TLSA, MTA-STS, TLS-RPT), encryption settings (DNSSEC), certificate controls (CAA), and email security management providers. It reveals whether your domain is protected against email spoofing, DNS hijacking, man-in-the-middle attacks, and brand impersonation — and whether that protection is actively managed or unmonitored."
+                    "text": "A domain security audit examines your domain's DNS configuration, email authentication records (SPF, DKIM, DMARC), transport security (DANE/TLSA, MTA-STS, TLS-RPT), encryption settings (DNSSEC), certificate controls (CAA), and email security management providers. It examines your domain's observable DNS controls for email spoofing, DNS hijacking, man-in-the-middle attacks, and brand impersonation — and whether configuration detected signals consistent with active management or is left unmonitored."
                 }
             },
             {
@@ -81,7 +81,7 @@
                 "name": "How do I check if my email can be spoofed?",
                 "acceptedAnswer": {
                     "@type": "Answer",
-                    "text": "Enter your domain name into DNS Tool and click Analyze. It checks your SPF record (which servers can send email as you), DMARC policy (what happens to unauthorized emails), and DKIM keys (cryptographic email signatures). A DMARC policy of reject provides the strongest protection against email spoofing."
+                    "text": "Enter your domain name into DNS Tool and click Analyze. It checks your SPF record (which servers can send email as you), DMARC policy (what happens to unauthorized emails), and DKIM keys (cryptographic email signatures). A DMARC policy of p=reject instructs receiving servers to reject unauthorized messages (RFC 7489, Section 6.3)."
                 }
             },
             {
@@ -102,10 +102,10 @@
             },
             {
                 "@type": "Question",
-                "name": "Is this tool free to use?",
+                "name": "Do I need to create an account?",
                 "acceptedAnswer": {
                     "@type": "Answer",
-                    "text": "Yes, DNS Tool is completely free. There are no sign-ups, no accounts, and no personal data required. We keep a history of analyzed domains and visitor country for usage statistics, but we never collect email addresses, names, or tracking cookies. Every analysis queries DNS records in real-time from multiple resolvers (Cloudflare, Google, Quad9, OpenDNS) to ensure you always see the most current data."
+                    "text": "No. DNS Tool requires no login, no account, and no personal data. Paste a domain, click Analyze, and get your intelligence report immediately. We keep a history of analyzed domains and visitor country for usage statistics, but we never collect email addresses, names, or tracking cookies. Every analysis queries DNS records in real-time from multiple resolvers (Cloudflare, Google, Quad9, OpenDNS) to ensure you always see the most current data."
                 }
             },
             {
@@ -129,7 +129,7 @@
                 "name": "What are DANE, BIMI, MTA-STS, and CAA records?",
                 "acceptedAnswer": {
                     "@type": "Answer",
-                    "text": "DANE (DNS-based Authentication of Named Entities) pins TLS certificates to DNS via TLSA records, protecting email transport against man-in-the-middle attacks — over 1.1 million domains use it globally, including Microsoft Exchange Online. BIMI (Brand Indicators for Message Identification) displays your brand logo next to emails in recipients' inboxes. MTA-STS (Mail Transfer Agent Strict Transport Security) enforces encrypted email delivery. TLS-RPT (TLS Reporting) sends delivery failure reports when encrypted email connections fail. CAA (Certificate Authority Authorization) restricts which certificate authorities can issue SSL certificates for your domain. CAs now verify CAA from multiple geographic locations via MPIC (Multi-Perspective Issuance Corroboration, mandatory since September 2025). DNS Tool checks all of these in a single scan and provides context on MPIC implications for your CAA configuration."
+                    "text": "DANE (DNS-based Authentication of Named Entities) pins TLS certificates to DNS via TLSA records, providing controls against man-in-the-middle attacks when DNSSEC is deployed — over 1.1 million domains publish TLSA records globally, including Microsoft Exchange Online. BIMI (Brand Indicators for Message Identification) enables brand logo display next to emails in supporting inboxes. MTA-STS (Mail Transfer Agent Strict Transport Security) instructs sending servers to require encrypted email delivery. TLS-RPT (TLS Reporting) sends delivery failure reports when encrypted email connections fail. CAA (Certificate Authority Authorization) specifies which certificate authorities are permitted to issue certificates for your domain. CAs now verify CAA from multiple geographic locations via MPIC (Multi-Perspective Issuance Corroboration, mandatory since September 2025). DNS Tool checks all of these in a single scan and provides context on MPIC implications for your CAA configuration."
                 }
             },
             {
@@ -137,7 +137,7 @@
                 "name": "I thought SPF -all (hard fail) was the strongest protection. Isn't ~all weaker?",
                 "acceptedAnswer": {
                     "@type": "Answer",
-                    "text": "This is one of the most common misconceptions in email security. SPF -all (hard fail) sounds stronger, but RFC 7489 Section 10.1 warns that it can cause receiving servers to reject messages before DKIM is checked and before DMARC can evaluate the result. A message that would pass DMARC via DKIM alignment gets rejected prematurely. Google and most major providers recommend ~all (soft fail) for active sending domains, with DMARC p=reject as the enforcement layer. The combination of ~all + DMARC reject is the strongest compatible security stance — every authentication method is fully evaluated before a decision is made. Federal .gov context: CISA BOD 18-01 (2017) requires valid SPF records and DMARC p=reject for federal civilian agencies. The directive doesn't explicitly specify -all vs ~all, but federal agencies widely adopted -all as a defense-in-depth practice. In 2017, most federal domains had no DMARC at all, so -all was a pragmatic safety net — you couldn't rely on DMARC being there. Now that DMARC p=reject is in place, the -all is somewhat redundant and creates the RFC 7489 §10.1 risk, but federal infrastructure is controlled enough that the risk is lower. The directive hasn't been updated to reflect the industry consensus around ~all + DMARC reject. Microsoft also historically defaults to -all."
+                    "text": "This is one of the most common misconceptions in email security. SPF -all (hard fail) sounds stronger, but RFC 7489 Section 10.1 warns that it can cause receiving servers to reject messages before DKIM is checked and before DMARC can evaluate the result. A message that would pass DMARC via DKIM alignment gets rejected prematurely. Google and most major providers recommend ~all (soft fail) for active sending domains, with DMARC p=reject as the enforcement layer. The combination of ~all + DMARC reject is the configuration most consistent with full authentication evaluation — every authentication method is fully evaluated before a disposition decision is made. Federal .gov context: CISA BOD 18-01 (2017) requires valid SPF records and DMARC p=reject for federal civilian agencies. The directive doesn't explicitly specify -all vs ~all, but federal agencies widely adopted -all as a defense-in-depth practice. In 2017, most federal domains had no DMARC at all, so -all was a pragmatic safety net — you couldn't rely on DMARC being there. Now that DMARC p=reject is in place, the -all is somewhat redundant and creates the RFC 7489 §10.1 risk, but federal infrastructure is controlled enough that the risk is lower. The directive hasn't been updated to reflect the industry consensus around ~all + DMARC reject. Microsoft also historically defaults to -all."
                 }
             },
             {
@@ -145,7 +145,7 @@
                 "name": "If your DMARC says p=none, your work's not done. What does this mean?",
                 "acceptedAnswer": {
                     "@type": "Answer",
-                    "text": "DMARC p=none is only a monitoring policy — it tells receiving servers to deliver everything, even messages that fail authentication, and just send you reports. It doesn't actually block spoofed emails. Similarly, p=quarantine is better but still lets suspicious messages land in spam folders where recipients might still open them. The gold standard for modern email security is DMARC p=reject. With reject, spoofed messages are outright refused by receiving mail servers — they never reach the inbox or spam folder. The recommended modern setup is SPF ~all (soft fail) combined with DMARC p=reject and verified DKIM signing. This ensures every authentication method is fully evaluated before a decision is made, and unauthorized messages are definitively blocked."
+                    "text": "DMARC p=none is only a monitoring policy — it instructs receiving servers to deliver everything, even messages that fail authentication, and just send reports. It does not instruct receivers to block spoofed emails. Similarly, p=quarantine instructs receivers to treat suspicious messages as spam, where recipients might still open them. DMARC p=reject instructs receiving servers to refuse messages that fail authentication (RFC 7489, Section 6.3) — they should never reach the inbox or spam folder. The recommended modern configuration is SPF ~all (soft fail) combined with DMARC p=reject and verified DKIM signing. This configuration ensures every authentication method is fully evaluated before a disposition decision is made."
                 }
             },
             {
@@ -169,7 +169,7 @@
                 "name": "DANE vs MTA-STS — what is the relationship between these email transport security standards?",
                 "acceptedAnswer": {
                     "@type": "Answer",
-                    "text": "DANE (RFC 7672) is the primary standard for securing email transport. It publishes TLS certificate information in DNSSEC-signed DNS records (TLSA), creating a cryptographic chain of trust from the DNS root to the mail server certificate — eliminating reliance on certificate authorities entirely. MTA-STS (RFC 8461) was created as an alternative for domains where 'deploying DNSSEC is undesirable or impractical' (RFC 8461 §2). It publishes a TLS policy via HTTPS using the web PKI trust model. RFC 8461 establishes a clear hierarchy: senders 'MUST NOT allow MTA-STS validation to override a failing DANE validation.' Both mechanisms coexist because DANE is backward-compatible — sending servers skip the DANE check if the receiving domain isn't DNSSEC-signed (RFC 7672 §1.3). Microsoft Exchange Online enforces inbound DANE with DNSSEC (GA October 2024), and Proton Mail and Fastmail also support DANE. Google Workspace does not support DANE — its shared MX infrastructure does not publish TLSA records — so it relies on MTA-STS instead. Best practice is deploying both for defense in depth: DANE provides the strongest cryptographic guarantees via DNSSEC, while MTA-STS ensures coverage for senders that don't validate DNSSEC."
+                    "text": "DANE (RFC 7672) is the primary standard for securing email transport. It publishes TLS certificate information in DNSSEC-signed DNS records (TLSA), creating a cryptographic chain of trust from the DNS root to the mail server certificate — removing reliance on certificate authorities. MTA-STS (RFC 8461) was created as an alternative for domains where 'deploying DNSSEC is undesirable or impractical' (RFC 8461 §2). It publishes a TLS policy via HTTPS using the web PKI trust model. RFC 8461 establishes a clear hierarchy: senders 'MUST NOT allow MTA-STS validation to override a failing DANE validation.' Both mechanisms coexist because DANE is backward-compatible — sending servers skip the DANE check if the receiving domain isn't DNSSEC-signed (RFC 7672 §1.3). Microsoft Exchange Online enforces inbound DANE with DNSSEC (GA October 2024), and Proton Mail and Fastmail also support DANE. Google Workspace does not support DANE — its shared MX infrastructure does not publish TLSA records — so it relies on MTA-STS instead. Best practice is deploying both for defense in depth: DANE provides the strongest cryptographic controls via DNSSEC, while MTA-STS provides coverage for senders that don't validate DNSSEC."
                 }
             }
         ]
@@ -304,7 +304,7 @@
                                                        spellcheck="false">
                                             </div>
                                             <div class="form-text text-muted mt-1 u-fs-075em">
-                                                <i class="fas fa-lock me-1"></i>Never stored. <a href="https://securitytrails.com/app/signup" target="_blank" rel="noopener" class="text-info">Get free key</a>
+                                                <i class="fas fa-lock me-1"></i>Never stored. <a href="https://securitytrails.com/app/signup" target="_blank" rel="noopener" class="text-info">Get API key</a>
                                             </div>
                                         </div>
                                         <div class="col-12 mt-2">
@@ -480,7 +480,7 @@
                     <div class="card bg-dark border-info border-opacity-50">
                         <div class="card-body py-4 px-4 text-center">
                             <h3 class="h5 mb-3 text-info"><i class="fas fa-question-circle me-2"></i>Decision-Ready Intelligence</h3>
-                            <p class="mb-2">Every protocol section in your report opens with a plain-language strategic question &mdash; <em>&ldquo;Is your domain protected against email spoofing?&rdquo;</em> &mdash; answered with a data-driven badge before the technical detail begins.</p>
+                            <p class="mb-2">Every protocol section in your report opens with a plain-language strategic question &mdash; <em>&ldquo;Are controls observed for email spoofing prevention?&rdquo;</em> &mdash; answered with a data-driven badge before the technical detail begins.</p>
                             <p class="text-muted small mb-0">Raw DNS data tells you <em>what</em> exists. Decision-ready intelligence tells you <em>what it means</em> and <em>why it matters</em>. Strategic context and RFC-backed fact, together &mdash; so every stakeholder, from the boardroom to the terminal, sees the big picture first.</p>
                         </div>
                     </div>
@@ -563,7 +563,7 @@
                         </h3>
                         <div id="faq1" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
                             <div class="accordion-body text-muted small">
-                                A domain security audit examines your domain's DNS configuration, email authentication records (SPF, DKIM, DMARC), transport security (DANE/TLSA certificate pinning, MTA-STS, TLS-RPT), encryption settings (DNSSEC), certificate controls (CAA), and email security management providers. It reveals whether your domain is protected against email spoofing, DNS hijacking, man-in-the-middle attacks, and brand impersonation — and whether that protection is actively managed or left unmonitored. DNS Tool performs all these checks in a single scan and delivers a clear security posture verdict.
+                                A domain security audit examines your domain's DNS configuration, email authentication records (SPF, DKIM, DMARC), transport security (DANE/TLSA certificate pinning, MTA-STS, TLS-RPT), encryption settings (DNSSEC), certificate controls (CAA), and email security management providers. It examines your domain's observable DNS controls for email spoofing, DNS hijacking, man-in-the-middle attacks, and brand impersonation — and whether configuration detected signals consistent with active management or is left unmonitored. DNS Tool performs all these checks in a single scan and delivers a security posture assessment based on controls observed.
                             </div>
                         </div>
                     </div>
@@ -589,7 +589,7 @@
                         </h3>
                         <div id="faq2" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
                             <div class="accordion-body text-muted small">
-                                Enter your domain name above and click Analyze. DNS Tool checks your SPF record (which servers can send email as you), DMARC policy (what happens to unauthorized emails), and DKIM keys (cryptographic email signatures). If any of these are missing or misconfigured, the report will flag it and explain the risk in plain language. A DMARC policy of "reject" provides the strongest protection against email spoofing.
+                                Enter your domain name above and click Analyze. DNS Tool checks your SPF record (which servers can send email as you), DMARC policy (what happens to unauthorized emails), and DKIM keys (cryptographic email signatures). If any of these are missing or misconfigured, the report will flag it and explain the risk in plain language. A DMARC policy of p=reject instructs receiving servers to reject unauthorized messages (RFC 7489, Section 6.3).
                             </div>
                         </div>
                     </div>
@@ -620,12 +620,12 @@
                     <div class="accordion-item bg-dark border-secondary">
                         <h3 class="accordion-header">
                             <button class="accordion-button collapsed bg-dark text-light" type="button" data-bs-toggle="collapse" data-bs-target="#faq5">
-                                Is this tool free to use?
+                                Do I need to create an account?
                             </button>
                         </h3>
                         <div id="faq5" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
                             <div class="accordion-body text-muted small">
-                                Yes, DNS Tool is completely free. There are no sign-ups, no accounts, and no personal data required. We keep a history of analyzed domains and visitor country for usage statistics, but we never collect email addresses, names, or tracking cookies. Every analysis queries DNS records in real-time from multiple resolvers (Cloudflare, Google, Quad9, OpenDNS) to ensure you always see the most current data. Built by <a href="https://www.it-help.tech" target="_blank" rel="noopener" class="text-info">IT Help San Diego Inc.</a>&mdash;a San Diego-based IT consultancy providing remote DNS configuration and troubleshooting, email deliverability consulting, and network security for organizations worldwide. Our team offers on-demand support without retainers or contracts.
+                                No. DNS Tool requires no login, no account, and no personal data. Paste a domain, click Analyze, and get your intelligence report immediately. We keep a history of analyzed domains and visitor country for usage statistics, but we never collect email addresses, names, or tracking cookies. Every analysis queries DNS records in real-time from multiple resolvers (Cloudflare, Google, Quad9, OpenDNS) to ensure you always see the most current data. Built by <a href="https://www.it-help.tech" target="_blank" rel="noopener" class="text-info">IT Help San Diego Inc.</a>&mdash;a San Diego-based IT consultancy providing remote DNS configuration and troubleshooting, email deliverability consulting, and network security for organizations worldwide. Our team offers on-demand support without retainers or contracts.
                             </div>
                         </div>
                     </div>
@@ -661,7 +661,7 @@
                         </h3>
                         <div id="faq8" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
                             <div class="accordion-body text-muted small">
-                                <strong>DANE</strong> (DNS-based Authentication of Named Entities) pins TLS certificates to DNS via TLSA records, protecting email transport against man-in-the-middle attacks and rogue CAs — it requires DNSSEC and is used by over 1.1 million domains globally, including Microsoft Exchange Online. <strong>BIMI</strong> (Brand Indicators for Message Identification) displays your brand logo next to emails in recipients' inboxes, fighting phishing by making legitimate emails visually identifiable. <strong>MTA-STS</strong> (Mail Transfer Agent Strict Transport Security) enforces encrypted email delivery, preventing downgrade attacks. <strong>TLS-RPT</strong> (TLS Reporting) sends delivery failure reports when encrypted email connections fail, giving you visibility into transport security issues. <strong>CAA</strong> (Certificate Authority Authorization) restricts which certificate authorities can issue SSL certificates for your domain. CAs now verify CAA from multiple geographic locations via MPIC (Multi-Perspective Issuance Corroboration, mandatory since September 2025 per CA/B Forum Ballot SC-067). DNS Tool analyzes your CAA records and provides context on MPIC implications. These are advanced security controls that complement SPF, DKIM, and DMARC. DNS Tool checks all of them in a single scan.
+                                <strong>DANE</strong> (DNS-based Authentication of Named Entities) pins TLS certificates to DNS via TLSA records, providing controls against man-in-the-middle attacks and rogue CAs when DNSSEC is deployed — over 1.1 million domains publish TLSA records globally, including Microsoft Exchange Online. <strong>BIMI</strong> (Brand Indicators for Message Identification) enables brand logo display next to emails in supporting inboxes, providing a visual signal consistent with authenticated sending. <strong>MTA-STS</strong> (Mail Transfer Agent Strict Transport Security) instructs sending servers to require encrypted email delivery, providing controls against downgrade attacks. <strong>TLS-RPT</strong> (TLS Reporting) sends delivery failure reports when encrypted email connections fail, giving you visibility into transport security issues. <strong>CAA</strong> (Certificate Authority Authorization) specifies which certificate authorities are permitted to issue certificates for your domain. CAs now verify CAA from multiple geographic locations via MPIC (Multi-Perspective Issuance Corroboration, mandatory since September 2025 per CA/B Forum Ballot SC-067). DNS Tool analyzes your CAA records and provides context on MPIC implications. These are advanced security controls that complement SPF, DKIM, and DMARC. DNS Tool checks all of them in a single scan.
                             </div>
                         </div>
                     </div>
@@ -673,7 +673,7 @@
                         </h3>
                         <div id="faq9" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
                             <div class="accordion-body text-muted small">
-                                This is one of the most common misconceptions in email security. SPF <strong>-all</strong> (hard fail) sounds stronger, but <a href="https://datatracker.ietf.org/doc/html/rfc7489#section-10.1" target="_blank" rel="noopener" class="text-info">RFC 7489 §10.1</a> warns that it can cause receiving servers to reject messages <em>before</em> DKIM is checked and <em>before</em> DMARC can evaluate the result. A message that would pass DMARC via DKIM alignment gets rejected prematurely. Google and most major providers recommend <strong>~all</strong> (soft fail) for active sending domains, with <strong>DMARC p=reject</strong> as the enforcement layer. The combination of <strong>~all + DMARC reject</strong> is the strongest compatible security stance — every authentication method is fully evaluated before a decision is made.
+                                This is one of the most common misconceptions in email security. SPF <strong>-all</strong> (hard fail) sounds stronger, but <a href="https://datatracker.ietf.org/doc/html/rfc7489#section-10.1" target="_blank" rel="noopener" class="text-info">RFC 7489 §10.1</a> warns that it can cause receiving servers to reject messages <em>before</em> DKIM is checked and <em>before</em> DMARC can evaluate the result. A message that would pass DMARC via DKIM alignment gets rejected prematurely. Google and most major providers recommend <strong>~all</strong> (soft fail) for active sending domains, with <strong>DMARC p=reject</strong> as the enforcement layer. The combination of <strong>~all + DMARC reject</strong> is the configuration most consistent with full authentication evaluation — every authentication method is fully evaluated before a disposition decision is made.
                                 <br><br><strong>Federal .gov context:</strong> <a href="https://www.cisa.gov/news-events/directives/bod-18-01-enhance-email-and-web-security" target="_blank" rel="noopener" class="text-info">CISA BOD 18-01</a> (2017) requires valid SPF records and DMARC p=reject for federal civilian agencies. The directive doesn't explicitly specify -all vs ~all, but federal agencies widely adopted -all as a defense-in-depth practice. In 2017, most federal domains had no DMARC at all, so -all was a pragmatic safety net — you couldn't rely on DMARC being there to catch what SPF missed. Now that DMARC p=reject is in place across federal domains, the -all is somewhat redundant and creates the RFC 7489 §10.1 risk, but federal infrastructure is controlled enough that the risk is lower. The directive hasn't been updated to reflect the broader industry consensus around ~all + DMARC reject. Microsoft also historically defaults to -all.
                             </div>
                         </div>
@@ -686,7 +686,7 @@
                         </h3>
                         <div id="faq10" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
                             <div class="accordion-body text-muted small">
-                                This is a simple way to remember that <strong>DMARC p=none</strong> is only a monitoring policy — it tells receiving servers to deliver everything, even messages that fail authentication, and just send you reports. It doesn't actually block spoofed emails. Similarly, <strong>p=quarantine</strong> is better but still lets suspicious messages land in spam folders where recipients might still open them. The gold standard for modern email security is <strong>DMARC p=reject</strong>. With reject, spoofed messages are outright refused by receiving mail servers — they never reach the inbox or spam folder. The recommended modern setup is <strong>SPF ~all</strong> (soft fail) combined with <strong>DMARC p=reject</strong> and verified <strong>DKIM</strong> signing. This ensures every authentication method is fully evaluated before a decision is made, and unauthorized messages are definitively blocked.
+                                This is a simple way to remember that <strong>DMARC p=none</strong> is only a monitoring policy — it instructs receiving servers to deliver everything, even messages that fail authentication, and just send reports. It does not instruct receivers to block spoofed emails. Similarly, <strong>p=quarantine</strong> instructs receivers to treat suspicious messages as spam, where recipients might still open them. <strong>DMARC p=reject</strong> instructs receiving servers to refuse messages that fail authentication (RFC 7489, Section 6.3) — they should never reach the inbox or spam folder. The recommended modern configuration is <strong>SPF ~all</strong> (soft fail) combined with <strong>DMARC p=reject</strong> and verified <strong>DKIM</strong> signing. This configuration ensures every authentication method is fully evaluated before a disposition decision is made.
                             </div>
                         </div>
                     </div>
@@ -716,19 +716,19 @@
                         <div id="faq12" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
                             <div class="accordion-body text-muted small">
                                 The RFCs themselves establish a clear hierarchy. DANE is the primary standard; MTA-STS is the alternative for domains that cannot deploy DNSSEC.
-                                <br><br><strong>DNSSEC + DANE</strong> (<a href="https://datatracker.ietf.org/doc/html/rfc7672" target="_blank" rel="noopener" class="text-info">RFC 7672</a>) is the <strong>strongest mechanism</strong>. DANE publishes TLS certificate information in DNSSEC-signed TLSA records, creating a cryptographic chain of trust from the DNS root to the mail server certificate. This eliminates reliance on certificate authorities entirely &mdash; no trust-on-first-use weakness, no vulnerability to CA compromise. The requirement: your domain must be signed with DNSSEC.
+                                <br><br><strong>DNSSEC + DANE</strong> (<a href="https://datatracker.ietf.org/doc/html/rfc7672" target="_blank" rel="noopener" class="text-info">RFC 7672</a>) is the <strong>strongest mechanism</strong>. DANE publishes TLS certificate information in DNSSEC-signed TLSA records, creating a cryptographic chain of trust from the DNS root to the mail server certificate. This removes reliance on certificate authorities &mdash; no trust-on-first-use weakness, no vulnerability to CA compromise. The requirement: your domain must be signed with DNSSEC.
                                 <br><br><strong>MTA-STS</strong> (<a href="https://datatracker.ietf.org/doc/html/rfc8461" target="_blank" rel="noopener" class="text-info">RFC 8461</a>) was created for domains where <em>&ldquo;deploying DNSSEC is undesirable or impractical&rdquo;</em> (<a href="https://datatracker.ietf.org/doc/html/rfc8461#section-2" target="_blank" rel="noopener" class="text-info">&sect;2</a>). It publishes a TLS policy via HTTPS using the existing CA trust model. Simpler to deploy but inherits CA limitations and is vulnerable on first use (<a href="https://datatracker.ietf.org/doc/html/rfc8461#section-10" target="_blank" rel="noopener" class="text-info">&sect;10</a>). RFC 8461 mandates: senders <em>&ldquo;MUST NOT allow MTA-STS validation to override a failing DANE validation&rdquo;</em> &mdash; DANE always takes precedence.
                                 <br><br><strong>Why both coexist:</strong> DANE is <strong>backward-compatible by design</strong>. <a href="https://datatracker.ietf.org/doc/html/rfc7672#section-1.3" target="_blank" rel="noopener" class="text-info">RFC 7672 &sect;1.3</a> specifies that sending servers simply skip the DANE check if the receiving domain isn't DNSSEC-signed. This means enabling DANE never breaks anything &mdash; it only adds protection for senders that validate it. MTA-STS works independently alongside DANE without conflict.
                                 <br><br><strong>Where the camps stand today:</strong>
                                 <ul class="mb-2">
                                     <li><strong>Microsoft</strong> is the strongest DANE advocate. Exchange Online enforces inbound DANE with DNSSEC (<a href="https://techcommunity.microsoft.com/blog/exchange/announcing-general-availability-of-inbound-smtp-dane-with-dnssec-for-exchange-on/4281292" target="_blank" rel="noopener" class="text-info">GA October 2024</a>), and plans to make outbound DANE mandatory per-tenant. Microsoft also supports MTA-STS, but DANE is their strategic direction.</li>
-                                    <li><strong>Proton Mail &amp; Fastmail</strong> fully support DANE with DNSSEC on their mail infrastructure, providing cryptographic transport guarantees for their users.</li>
+                                    <li><strong>Proton Mail &amp; Fastmail</strong> fully support DANE with DNSSEC on their mail infrastructure, providing cryptographic transport controls for their users.</li>
                                     <li><strong>Google</strong> validates DANE outbound (Gmail checks TLSA records when sending to DANE-enabled domains). However, <code>google.com</code> is <strong>not DNSSEC-signed</strong>, and <strong>Google Workspace customers cannot deploy DANE</strong> &mdash; Google's shared multi-tenant MX infrastructure (<code>aspmx.l.google.com</code>) does not publish TLSA records and does not allow customers to do so. Google relies on MTA-STS for inbound transport security.</li>
                                     <li><strong>Apple</strong> uses MTA-STS for iCloud Mail. <code>apple.com</code> is not DNSSEC-signed and has no DANE/TLSA records.</li>
                                     <li><strong>Government agencies</strong> (Netherlands, Germany, Czech Republic, Nordic countries) tend to mandate DANE+DNSSEC, often by policy. The <strong>IETF itself</strong> uses DANE on <code>mail.ietf.org</code>.</li>
                                 </ul>
                                 <strong>The key question:</strong> Microsoft's enforcement momentum is the most significant development. When the world's largest email platform not only supports but <em>enforces</em> DANE, it creates pressure on sending domains to enable DNSSEC so their DANE records are actually validated. If Microsoft makes outbound DANE mandatory &mdash; meaning Exchange Online <em>requires</em> DANE for delivery to domains that publish TLSA records &mdash; it could tip the balance toward universal DNSSEC+DANE adoption.
-                                <br><br><strong>Best practice:</strong> Deploy both for defense in depth. DANE provides the strongest cryptographic guarantees via DNSSEC, while MTA-STS ensures coverage for senders that don't validate DNSSEC. The German BSI TR-03108 standard mandates both DANE and MTA-STS together with TLS-RPT. The protocols are complementary: <strong>DANE for cryptographic strength, MTA-STS for breadth of coverage</strong>.
+                                <br><br><strong>Best practice:</strong> Deploy both for defense in depth. DANE provides the strongest cryptographic controls via DNSSEC, while MTA-STS provides coverage for senders that don't validate DNSSEC. The German BSI TR-03108 standard mandates both DANE and MTA-STS together with TLS-RPT. The protocols are complementary: <strong>DANE for cryptographic strength, MTA-STS for breadth of coverage</strong>.
                                 <br><br><strong>See it in practice:</strong> Analyze <a href="/analyze?domain=ietf.org" class="text-info">ietf.org</a> to see DANE + DNSSEC delivering the strongest transport security, then compare with <a href="/analyze?domain=google.com" class="text-info">google.com</a> which uses MTA-STS &mdash; the best available option given Google's infrastructure cannot support DNSSEC/DANE.
                             </div>
                         </div>

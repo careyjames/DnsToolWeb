@@ -105,7 +105,7 @@ Server-rendered HTML with Go html/template, Bootstrap dark theme, custom CSS, cl
 |---------|---------|-------------|
 | **DNS Resolvers** (Cloudflare, Google, Quad9, OpenDNS/Cisco Umbrella) | Multi-resolver consensus DNS queries | Public, no API key |
 | **IANA RDAP** | Registry data lookups | Multi-endpoint, parallel attempts, exponential backoff |
-| **ip-api.com** | Visitor IP-to-country lookups | Free tier |
+| **ip-api.com** | Visitor IP-to-country lookups | Public tier |
 | **crt.sh** | Certificate Transparency logs | Independent context with timeout and size limits |
 | **SecurityTrails** | DNS history and IP Intelligence | **⚠️ 50 req/month HARD LIMIT. User-provided API key ONLY. NEVER call automatically.** |
 | **Team Cymru** | DNS-based IP-to-ASN attribution | Independent 8s context |
@@ -419,8 +419,8 @@ Implementation details are in the intel repo. Key public-facing behaviors:
 
 All items below are **on the roadmap** — not yet implemented:
 
-1. **Freemium Model with Optional Authentication** — on the roadmap (strategic priority)
-   - **Core principle**: Zero-friction "paste and go" analysis stays free forever. No login required. This is the competitive advantage — hackers, DEF CON folks, executives, and security researchers all want tools that just work without signup walls.
+1. **Optional Authentication Model** — on the roadmap (strategic priority)
+   - **Core principle**: Zero-friction paste-and-go analysis remains open to all — no login required. This is the competitive advantage — hackers, DEF CON folks, executives, and security researchers all want tools that just work without signup walls.
    - **Optional Google login** (simple, one-tab auth) unlocks premium features:
      - **Personal analysis history** (currently history is a public global feed — all users see everyone's analyses)
      - **Drift Engine alerts** — get notified when a domain's security posture changes

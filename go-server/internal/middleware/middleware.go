@@ -85,6 +85,9 @@ func SecurityHeaders() gin.HandlerFunc {
                                 "base-uri 'none'; "+
                                 "form-action 'self'; "+
                                 "manifest-src 'self'; "+
+                                "object-src 'none'; "+
+                                "frame-src 'none'; "+
+                                "worker-src 'self'; "+
                                 "%s",
                         nonceStr, nonceStr, upgradeDirective,
                 )

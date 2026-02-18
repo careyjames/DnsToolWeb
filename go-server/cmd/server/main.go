@@ -48,6 +48,8 @@ func main() {
 
         gin.SetMode(gin.ReleaseMode)
         router := gin.New()
+        router.SetTrustedProxies(nil)
+        slog.Info("Trusted proxies disabled — using direct connection IP for rate limiting")
 
         router.Use(middleware.Recovery(cfg.AppVersion))
         router.Use(gzip.Gzip(gzip.DefaultCompression))
@@ -114,7 +116,7 @@ func main() {
         analysisHandler := handlers.NewAnalysisHandler(database, cfg, dnsAnalyzer, dnsHistoryCache)
         statsHandler := handlers.NewStatsHandler(database, cfg)
         compareHandler := handlers.NewCompareHandler(database, cfg)
-        exportHandler := handlers.NewExportHandler(database)
+        // exportHandler := handlers.NewExportHandler(database) // DISABLED: re-enable when auth is implemented
         staticHandler := handlers.NewStaticHandler(staticDir, cfg.AppVersion)
         proxyHandler := handlers.NewProxyHandler()
 
@@ -146,7 +148,7 @@ func main() {
 
         router.GET("/compare", compareHandler.Compare)
 
-        router.GET("/export/json", exportHandler.ExportJSON)
+        // router.GET("/export/json", exportHandler.ExportJSON) // DISABLED: unauthenticated bulk export — re-enable when auth is implemented
         router.GET("/export/subdomains", analysisHandler.ExportSubdomainsCSV)
 
         router.GET("/api/analysis/:id", analysisHandler.APIAnalysis)
