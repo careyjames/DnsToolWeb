@@ -8,8 +8,16 @@ cd /home/runner/workspace 2>/dev/null || exit 0
 
 FIXED=0
 
-# 1. Remove stale lock files
-for lockfile in .git/index.lock .git/HEAD.lock .git/ORIG_HEAD.lock .git/MERGE_HEAD.lock .git/FETCH_HEAD.lock; do
+# 1. Remove ALL stale lock files (comprehensive list from real incidents)
+for lockfile in \
+  .git/index.lock \
+  .git/HEAD.lock \
+  .git/ORIG_HEAD.lock \
+  .git/MERGE_HEAD.lock \
+  .git/FETCH_HEAD.lock \
+  .git/packed-refs.lock \
+  .git/refs/heads/replit-agent.lock \
+  .git/refs/heads/main.lock; do
   if [ -f "$lockfile" ]; then
     rm -f "$lockfile" 2>/dev/null && echo "Removed stale $lockfile" && FIXED=$((FIXED+1))
   fi
