@@ -117,12 +117,24 @@ echo ""
 # ── Show commits to push ──
 git log --oneline "${REMOTE_SHA}..HEAD" 2>/dev/null || git log --oneline -5
 
-# ── Push via PAT ──
+# ── Push via PAT (with retry for checkpoint race conditions) ──
 echo ""
 echo "Pushing to github.com/${REPO} ${BRANCH}..."
-if ! git push "${PAT_URL}" ${BRANCH}; then
+PUSH_OK=0
+for ATTEMPT in 1 2; do
+  if git push "${PAT_URL}" ${BRANCH} 2>&1; then
+    PUSH_OK=1
+    break
+  fi
+  if [ "$ATTEMPT" -eq 1 ]; then
+    echo "  Push attempt 1 failed — retrying in 15s (checkpoint may be in flight)..."
+    sleep 15
+  fi
+done
+
+if [ "$PUSH_OK" -eq 0 ]; then
   echo ""
-  echo "PUSH FAILED. Troubleshoot:"
+  echo "PUSH FAILED after 2 attempts. Troubleshoot:"
   echo "  1. Run 'bash scripts/git-health-check.sh' from Shell tab"
   echo "  2. Check if branches diverged (may need force push — see SKILL.md)"
   echo "  3. Verify PAT is valid: CAREY_PAT_ALL3_REPOS"
@@ -141,10 +153,33 @@ if [ "$LOCAL_SHA" = "$POST_PUSH_REMOTE" ]; then
   echo ""
   echo "SYNC STATUS: FULLY SYNCED"
 else
-  echo "  WARNING: SHA mismatch after push."
-  echo "  Local:  $LOCAL_SHA"
+  echo "  NOTE: SHA mismatch — a checkpoint commit likely landed during push."
+  echo "  Local:  $(git rev-parse HEAD 2>/dev/null)"
   echo "  GitHub: ${POST_PUSH_REMOTE:-"(unable to read)"}"
-  echo "  This may indicate a new checkpoint was created during push."
+  echo "  Re-checking in 10s..."
+  sleep 10
+  NEW_LOCAL=$(git rev-parse HEAD 2>/dev/null)
+  NEW_REMOTE=$(git ls-remote "$PAT_URL" refs/heads/${BRANCH} 2>/dev/null | awk '{print $1}')
+  if [ "$NEW_LOCAL" != "$NEW_REMOTE" ]; then
+    echo "  Still mismatched — pushing new checkpoint..."
+    git push "${PAT_URL}" ${BRANCH} 2>&1 || true
+    FINAL_REMOTE=$(git ls-remote "$PAT_URL" refs/heads/${BRANCH} 2>/dev/null | awk '{print $1}')
+    FINAL_LOCAL=$(git rev-parse HEAD 2>/dev/null)
+    if [ "$FINAL_LOCAL" = "$FINAL_REMOTE" ]; then
+      echo "  VERIFIED after retry: Local matches GitHub."
+      echo ""
+      echo "SYNC STATUS: FULLY SYNCED (after retry)"
+    else
+      echo "  Local and GitHub still differ. A new checkpoint may keep landing."
+      echo "  Run 'bash scripts/git-push.sh' again once activity settles."
+      echo ""
+      echo "SYNC STATUS: PENDING"
+    fi
+  else
+    echo "  VERIFIED on recheck: Local matches GitHub."
+    echo ""
+    echo "SYNC STATUS: FULLY SYNCED"
+  fi
 fi
 echo ""
 echo "PUSH COMPLETE."
