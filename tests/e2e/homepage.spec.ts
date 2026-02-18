@@ -15,9 +15,11 @@ test.describe('Homepage', () => {
     const btn = page.locator('#analyzeBtn');
 
     await input.fill('not a valid domain!!!');
-    await input.dispatchEvent('input');
-    await expect(input).toHaveClass(/is-invalid/);
-    await expect(btn).toBeDisabled();
+    await page.waitForTimeout(300);
+    const isInvalid = await input.evaluate(el => el.classList.contains('is-invalid'));
+    const isDisabled = await btn.isDisabled();
+    expect(isInvalid).toBe(true);
+    expect(isDisabled).toBe(true);
   });
 
   test('accepts valid domain input', async ({ page }) => {
@@ -26,8 +28,9 @@ test.describe('Homepage', () => {
     const btn = page.locator('#analyzeBtn');
 
     await input.fill('example.com');
-    await input.dispatchEvent('input');
-    await expect(input).not.toHaveClass(/is-invalid/);
+    await page.waitForTimeout(300);
+    const isInvalid = await input.evaluate(el => el.classList.contains('is-invalid'));
+    expect(isInvalid).toBe(false);
     await expect(btn).toBeEnabled();
   });
 
@@ -37,17 +40,18 @@ test.describe('Homepage', () => {
     await expect(page.locator('.navbar-brand')).toContainText(/v\d+\.\d+\.\d+/);
   });
 
-  test('advanced options accordion toggles', async ({ page }) => {
+  test('FAQ accordion toggles', async ({ page }) => {
     await page.goto('/');
-    const toggle = page.locator('button:has-text("Advanced Options")');
+    const toggle = page.locator('#faqAccordion .accordion-button').first();
     await expect(toggle).toBeVisible();
     await toggle.click();
-    await expect(page.locator('#advancedCollapse')).toBeVisible();
+    const panel = page.locator('#faq1');
+    await expect(panel).toBeVisible();
   });
 });
 
 test.describe('Loading Overlay', () => {
-  test('overlay element exists in DOM but is hidden', async ({ page }) => {
+  test('overlay element exists in DOM and is hidden', async ({ page }) => {
     await page.goto('/');
     const overlay = page.locator('#loadingOverlay');
     await expect(overlay).toBeAttached();
