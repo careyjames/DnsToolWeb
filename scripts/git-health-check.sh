@@ -107,16 +107,28 @@ if [ -n "$CAREY_PAT_ALL3_REPOS" ]; then
   fi
 fi
 
-# 7. Session Sentinel — environment drift check (always runs)
+# 7. Drift Cairn — environment drift check (always runs)
+# Wrapper function prevents future shell edits from reintroducing gating bugs.
 # Exit codes: 0=clean, 10=drift detected, 20=no manifest, 1=error
-# NOTE: This script must NOT use set -e. Sentinel exit 10 (drift) is informational,
-# not a failure. The || true guards future-proof against accidental set -e additions.
-if [ -f "scripts/session-sentinel.sh" ]; then
+# NOTE: This script must NOT use set -e. Drift exit 10 is informational, not a failure.
+run_cairn() {
+  local cmd="$1"
+  local baseline="${2:-}"
+  local exit_code=0
+  if [ -n "$baseline" ]; then
+    bash scripts/drift-cairn.sh "$cmd" "$baseline" 2>/dev/null || exit_code=$?
+  else
+    bash scripts/drift-cairn.sh "$cmd" 2>/dev/null || exit_code=$?
+  fi
+  return $exit_code
+}
+
+if [ -f "scripts/drift-cairn.sh" ]; then
   echo ""
-  SENTINEL_EXIT=0
-  bash scripts/session-sentinel.sh check 2>/dev/null || SENTINEL_EXIT=$?
-  if [ "$SENTINEL_EXIT" -eq 20 ]; then
-    echo "  (Taking initial snapshot...)"
-    bash scripts/session-sentinel.sh snapshot 2>/dev/null || true
+  CAIRN_EXIT=0
+  run_cairn check || CAIRN_EXIT=$?
+  if [ "$CAIRN_EXIT" -eq 20 ]; then
+    echo "  (Taking initial snapshot — baseline: auto-bootstrap)"
+    run_cairn snapshot auto-bootstrap || true
   fi
 fi

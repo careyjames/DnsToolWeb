@@ -24,6 +24,7 @@ PAT_URL="https://${CAREY_PAT_ALL3_REPOS}@github.com/${REPO}.git"
 export GIT_TERMINAL_PROMPT=0
 export GIT_ASKPASS=
 export GIT_CONFIG_NOSYSTEM=1
+export GIT_TRACE=0
 
 if [ -z "$CAREY_PAT_ALL3_REPOS" ]; then
   echo "ABORT: CAREY_PAT_ALL3_REPOS secret not set"
@@ -116,8 +117,8 @@ if [ "$LOCAL_SHA" = "$REMOTE_SHA" ]; then
     echo "NOTE: Git panel tracking ref is locked. Panel may show stale counts."
     echo "  To fix: run 'bash scripts/git-panel-reset.sh' from the Shell tab."
   fi
-  if [ -f "scripts/session-sentinel.sh" ]; then
-    bash scripts/session-sentinel.sh snapshot 2>/dev/null || true
+  if [ -f "scripts/drift-cairn.sh" ]; then
+    bash scripts/drift-cairn.sh snapshot 2>/dev/null || true
   fi
   echo ""
   echo "SYNC STATUS: VERIFIED MATCH"
@@ -207,9 +208,9 @@ if [ -f ".git/refs/remotes/origin/main.lock" ]; then
   echo "  To fix: run 'bash scripts/git-panel-reset.sh' from the Shell tab."
 fi
 
-# ── Session Sentinel snapshot (record current state after push) ──
-if [ -f "scripts/session-sentinel.sh" ]; then
-  bash scripts/session-sentinel.sh snapshot 2>/dev/null || true
+# ── Drift Cairn snapshot (record current state after push) ──
+if [ -f "scripts/drift-cairn.sh" ]; then
+  bash scripts/drift-cairn.sh snapshot 2>/dev/null || true
 fi
 
 echo ""

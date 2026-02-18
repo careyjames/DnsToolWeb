@@ -30,7 +30,7 @@ The platform monitors all file operations from the agent process tree. Writing t
 
 ## Session Startup
 
-1. **Any context**: Run `bash scripts/git-health-check.sh` — default is read-only (sync status + Session Sentinel drift check). Safe from agent.
+1. **Any context**: Run `bash scripts/git-health-check.sh` — default is read-only (sync status + Drift Cairn check). Safe from agent.
 2. **User (Shell tab) when repairs needed**: Run `bash scripts/git-health-check.sh --repair` — clears lock files, aborts rebases, reattaches HEAD, updates tracking refs.
 3. **Agent push**: Always use `bash scripts/git-push.sh` (PAT-based push + ls-remote verification + auto-snapshot). **User**: Can use the Git panel for Push/Sync after running `bash scripts/git-panel-reset.sh` from Shell.
 4. Read `replit.md` — quick-reference config (may reset between sessions)
@@ -53,25 +53,27 @@ The platform monitors all file operations from the agent process tree. Writing t
 | Read files anywhere | Write/delete inside `.git/` |
 | `bash scripts/git-push.sh` | `bash scripts/git-health-check.sh --repair` |
 | `bash scripts/git-health-check.sh` (default=safe) | Any command that touches `.git/index.lock` |
-| `bash scripts/session-sentinel.sh check` | Calling `git add`, `git commit` directly |
+| `bash scripts/drift-cairn.sh check` | Calling `git add`, `git commit` directly |
 
 **Rule of thumb:** If the git command would create, modify, or delete ANY file under `.git/`, it will kill the agent's process tree (exit 254). When in doubt, don't run it — defer to the user via Shell tab.
 
-## Session Sentinel — Environment Drift Detection
+## Drift Cairn — Environment Drift Detection
 
 Internal dev tooling that tracks platform-induced file changes between sessions. **Completely separate from the DNS drift engine (user-facing posture_hash).**
 
 ```bash
-bash scripts/session-sentinel.sh snapshot   # Save current state (auto-runs after git-push.sh)
-bash scripts/session-sentinel.sh check      # Compare against last snapshot (exit: 0=clean, 10=drift, 20=no manifest)
-bash scripts/session-sentinel.sh report     # Show last snapshot info
+bash scripts/drift-cairn.sh snapshot   # Save current state (auto-runs after git-push.sh)
+bash scripts/drift-cairn.sh check      # Compare against last snapshot (exit: 0=clean, 10=drift, 20=no manifest)
+bash scripts/drift-cairn.sh report     # Show last snapshot info
 ```
 
 - **Storage**: `.drift/manifest.json` (gitignored, local only)
 - **Watches**: go.mod, go.sum, package.json, config.go, schema.sql, CSS, build scripts, docs (19 files + binary)
 - **Excludes**: .git/, node_modules/, .cache/, tmp/, logs
-- **Hash policy v1**: Raw bytes, SHA-256, no line-ending normalization, deterministic path ordering
-- **Integration**: Runs automatically in `git-push.sh` (snapshot after push) and `git-health-check.sh` (check at session start, auto-snapshot if first run)
+- **Hash policy v1** (frozen — changes require v2): Raw bytes, SHA-256, no line-ending normalization, deterministic path ordering. Symlinks: hash target contents. Missing files: MISSING marker. Mode bits: ignored.
+- **Baseline source**: Manifest records `"baseline_source"` — `"explicit"` (user/push), `"auto-bootstrap"` (first run). Prevents confusing auto-snapshots with validated baselines.
+- **Exit codes** (stable contract): `0`=clean, `10`=drift, `20`=no manifest, `1`=error
+- **Integration**: Runs automatically in `git-push.sh` (snapshot after push) and `git-health-check.sh` (check at session start, auto-snapshot if first run via `run_cairn()` wrapper)
 - **CRITICAL**: Never conflate `.drift/` (internal dev) with the DNS drift engine (user-facing product feature)
 
 ## Mandatory Post-Edit Rules

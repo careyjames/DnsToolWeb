@@ -1,22 +1,24 @@
 #!/bin/bash
-# Session Sentinel — Environment Drift Detection
+# Drift Cairn v1.0 — Environment Drift Detection
 # Detects when the Replit platform changes project files between sessions.
+# Named for the trail markers that tell you if you've drifted off course.
 #
 # Usage:
-#   bash scripts/session-sentinel.sh snapshot   # Save current file state
-#   bash scripts/session-sentinel.sh check      # Compare against last snapshot
-#   bash scripts/session-sentinel.sh report     # Show last snapshot info
+#   bash scripts/drift-cairn.sh snapshot   # Save current file state
+#   bash scripts/drift-cairn.sh check      # Compare against last snapshot
+#   bash scripts/drift-cairn.sh report     # Show last snapshot info
 #
-# Exit codes:
+# Exit codes (stable contract — do not change without versioning):
 #   0  = clean (no drift) or snapshot/report succeeded
 #   10 = drift detected (files changed/added/deleted since last snapshot)
 #   20 = no manifest exists (first run — take a snapshot first)
 #   1  = internal error
 #
-# Hashing policy (v1):
+# Hashing policy (v1 — frozen, changes require v2):
 #   - Raw bytes: sha256sum on file as-is, no line-ending normalization
-#   - No symlink resolution: hashes the link target's contents
-#   - Permissions/ownership ignored: content-only comparison
+#   - Symlinks: hashes the link target's contents (no metadata, no resolution flag)
+#   - Missing files: tracked as "MISSING" marker (not an error, not skipped)
+#   - File mode bits: ignored — content-only comparison
 #   - Path ordering: deterministic (hardcoded WATCHED_FILES array order)
 #   - Binary files: tracked by size + mtime only (too slow to hash ~50MB)
 #   - Policy version stored in manifest for future compatibility
@@ -30,6 +32,7 @@ cd /home/runner/workspace
 DRIFT_DIR=".drift"
 MANIFEST="$DRIFT_DIR/manifest.json"
 HASH_POLICY_VERSION="1"
+CAIRN_VERSION="1.0"
 
 WATCHED_FILES=(
   "go.mod"
@@ -88,16 +91,19 @@ count_go_files() {
 }
 
 build_manifest() {
-  local ts
+  local ts baseline_source
   ts=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+  baseline_source="${1:-explicit}"
   local tpl_count
   tpl_count=$(count_templates)
   local go_count
   go_count=$(count_go_files)
 
   printf '{\n'
-  printf '  "sentinel_version": "1.0",\n'
+  printf '  "tool": "drift-cairn",\n'
+  printf '  "version": "%s",\n' "$CAIRN_VERSION"
   printf '  "hash_policy": "%s",\n' "$HASH_POLICY_VERSION"
+  printf '  "baseline_source": "%s",\n' "$baseline_source"
   printf '  "timestamp": "%s",\n' "$ts"
   printf '  "files": {\n'
 
@@ -133,12 +139,13 @@ build_manifest() {
 }
 
 cmd_snapshot() {
+  local baseline_source="${1:-explicit}"
   mkdir -p "$DRIFT_DIR"
-  build_manifest > "$MANIFEST"
+  build_manifest "$baseline_source" > "$MANIFEST"
   local tpl_count go_count
   tpl_count=$(count_templates)
   go_count=$(count_go_files)
-  echo "Session Sentinel: snapshot saved"
+  echo "Drift Cairn: snapshot saved (baseline: $baseline_source)"
   echo "  Watched files: ${#WATCHED_FILES[@]} + binary"
   echo "  Templates: $tpl_count | Go files: $go_count"
   echo "  Manifest: $MANIFEST"
@@ -147,14 +154,14 @@ cmd_snapshot() {
 
 cmd_check() {
   if [ ! -f "$MANIFEST" ]; then
-    echo "Session Sentinel: no previous snapshot found"
-    echo "  Run: bash scripts/session-sentinel.sh snapshot"
+    echo "Drift Cairn: no previous snapshot found"
+    echo "  Run: bash scripts/drift-cairn.sh snapshot"
     exit 20
   fi
 
   local prev_ts
   prev_ts=$(grep '"timestamp"' "$MANIFEST" | head -1 | sed 's/.*: *"\([^"]*\)".*/\1/')
-  echo "Session Sentinel: checking against snapshot from $prev_ts"
+  echo "Drift Cairn: checking against snapshot from $prev_ts"
   echo ""
 
   local changed=0
@@ -225,20 +232,22 @@ cmd_check() {
 
 cmd_report() {
   if [ ! -f "$MANIFEST" ]; then
-    echo "Session Sentinel: no snapshot exists yet"
-    echo "  Run: bash scripts/session-sentinel.sh snapshot"
+    echo "Drift Cairn: no snapshot exists yet"
+    echo "  Run: bash scripts/drift-cairn.sh snapshot"
     exit 20
   fi
 
-  local ts watched tpl_count go_count policy
+  local ts watched tpl_count go_count policy baseline
   ts=$(grep '"timestamp"' "$MANIFEST" | head -1 | sed 's/.*: *"\([^"]*\)".*/\1/')
   watched=$(grep '"watched_files"' "$MANIFEST" | head -1 | sed 's/[^0-9]//g')
   tpl_count=$(grep '"template_count"' "$MANIFEST" | head -1 | sed 's/[^0-9]//g')
   go_count=$(grep '"go_file_count"' "$MANIFEST" | head -1 | sed 's/[^0-9]//g')
   policy=$(grep '"hash_policy"' "$MANIFEST" 2>/dev/null | head -1 | sed 's/.*: *"\([^"]*\)".*/\1/' || echo "unversioned")
+  baseline=$(grep '"baseline_source"' "$MANIFEST" 2>/dev/null | head -1 | sed 's/.*: *"\([^"]*\)".*/\1/' || echo "unknown")
 
-  echo "Session Sentinel: last snapshot"
+  echo "Drift Cairn: last snapshot"
   echo "  Timestamp:    $ts"
+  echo "  Baseline:     $baseline"
   echo "  Hash policy:  v$policy (raw bytes, SHA-256, no normalization)"
   echo "  Watched:      $watched files + binary"
   echo "  Templates:    $tpl_count"
@@ -248,13 +257,13 @@ cmd_report() {
 }
 
 case "${1:-help}" in
-  snapshot) cmd_snapshot ;;
+  snapshot) cmd_snapshot "${2:-explicit}" ;;
   check)    cmd_check ;;
   report)   cmd_report ;;
   *)
-    echo "Session Sentinel v1.0 — Environment Drift Detection"
+    echo "Drift Cairn v$CAIRN_VERSION — Environment Drift Detection"
     echo ""
-    echo "Usage: bash scripts/session-sentinel.sh {snapshot|check|report}"
+    echo "Usage: bash scripts/drift-cairn.sh {snapshot|check|report}"
     echo ""
     echo "  snapshot  Save current file state (auto-runs after git push)"
     echo "  check     Compare current state against last snapshot"
@@ -263,6 +272,7 @@ case "${1:-help}" in
     echo "Exit codes: 0=clean, 10=drift, 20=no manifest, 1=error"
     echo ""
     echo "Hash policy v$HASH_POLICY_VERSION: raw bytes, SHA-256, no line-ending normalization"
+    echo "Symlinks: hash target contents | Missing files: MISSING marker | Mode bits: ignored"
     exit 0
     ;;
 esac

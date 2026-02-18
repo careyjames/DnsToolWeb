@@ -1705,7 +1705,7 @@ git checkout main
 - **Language**: NIST SP 800 + IC conventions. Terms work for IT, executive, and InfoSec audiences.
 - **Status**: ON THE ROADMAP. Layers onto existing drift engine.
 
-### Environment Drift Detection — "Session Sentinel" (Feb 18, 2026)
+### Environment Drift Detection — "Drift Cairn" (Feb 18, 2026)
 
 **Idea**: Lightweight hash-based system to detect when the platform changes project files between sessions.
 
@@ -1720,10 +1720,10 @@ git checkout main
 
 **Status**: IMPLEMENTED (see next entry).
 
-### Session Sentinel — Implementation Complete (Feb 18, 2026)
+### Drift Cairn — Implementation Complete (Feb 18, 2026)
 
 **What shipped**:
-- `scripts/session-sentinel.sh` — `snapshot` / `check` / `report` subcommands
+- `scripts/drift-cairn.sh` — `snapshot` / `check` / `report` subcommands
 - Integrated into `git-push.sh` (auto-snapshot after every push) and `git-health-check.sh` (auto-check at session start)
 - `.drift/` added to `.gitignore` — local-only, never committed
 
@@ -1752,9 +1752,9 @@ git checkout main
 
 **Platform behavior**: Monitors ALL file operations from agent process tree. ANY write to `.git/` (create, modify, delete) → immediate SIGKILL of entire process tree. Error: "Avoid changing .git repository."
 
-**Design change**: `git-health-check.sh` now defaults to read-only (safe from agent). `--repair` flag opts into full .git repairs (Shell tab only). Previous `--read-only` flag removed — read-only is now the default. Sentinel check always runs because it comes after the read-only section.
+**Design change**: `git-health-check.sh` now defaults to read-only (safe from agent). `--repair` flag opts into full .git repairs (Shell tab only). Previous `--read-only` flag removed — read-only is now the default. Drift Cairn check always runs because it comes after the read-only section.
 
-### Prior Art: Session Sentinel vs Existing Tools
+### Prior Art: Drift Cairn vs Existing Tools
 
 **What exists**:
 - **File Integrity Monitoring (FIM)**: Security tools (Wazuh, OSSEC, Tripwire) hash ALL files for tamper detection. Heavy, continuous, security-focused.
@@ -1764,7 +1764,7 @@ git checkout main
 - **Kekkai** (Go): Lightweight manifest + SHA-256 verification. Closest match — but designed for deploy-time integrity, not session-boundary dev drift.
 - `sha256sum -c baseline.txt`: The Unix primitive. Manual, no curation, no integration.
 
-**What Session Sentinel does differently**:
+**What Drift Cairn does differently**:
 1. **Curated allowlist** — not "hash everything" but "hash the 19 files that keep breaking." Problem-driven, not comprehensive.
 2. **Session-boundary** — snapshots at push time, checks at session start. Not continuous monitoring.
 3. **Platform-aware** — designed specifically for Replit's agent/user split: respects .git write restrictions, stores state in `.drift/` (non-.git, local-only).
@@ -1773,7 +1773,7 @@ git checkout main
 
 **Conclusion**: The concept of hashing files for integrity is ancient. What's novel is the curation + session-boundary + platform-constraint integration pattern. Not a new tool category — just an under-served niche (cloud IDE dev environments where the platform itself mutates your files).
 
-### Session Sentinel Hardening (Feb 18, 2026)
+### Drift Cairn Hardening (Feb 18, 2026)
 
 Based on expert review. Changes made:
 
@@ -1823,3 +1823,18 @@ Based on expert review of the zone file import/export design:
 **Zone file sensitivity warning**: Zone files can contain sensitive internal hostnames. Default posture: process in-memory + discard unless user explicitly opts into saving for drift monitoring. Explicit retention window if saved.
 
 **Status**: ON THE ROADMAP. Zone parsing library chosen. UX copy and disclaimer wording to be drafted before implementation.
+
+### Drift Cairn — Naming & Final Hardening (Feb 18, 2026)
+
+**Name chosen**: "Drift Cairn" — a cairn is a trail marker. This tool marks your position (snapshot) and tells you if something moved you off course (drift check). The name reflects the project's philosophy: practical, no-nonsense, evidence-based.
+
+Previously called "Session Sentinel." Renamed for identity and potential distribution as a standalone Replit skill.
+
+**File renamed**: `scripts/session-sentinel.sh` → `scripts/drift-cairn.sh`
+
+**Additional hardening from expert review**:
+- `GIT_TRACE=0` added to git-push.sh — prevents leaking URLs/tokens into logs
+- `run_cairn()` wrapper function in git-health-check.sh — single point of invocation prevents future shell edits from reintroducing gating bugs
+- `"baseline_source"` field in manifest — `"explicit"` (user/push) vs `"auto-bootstrap"` (first run). Prevents confusing auto-snapshots with validated baselines.
+- Hash policy documentation completed: symlinks (hash target contents), missing files (MISSING marker), mode bits (ignored)
+- `"tool": "drift-cairn"` field in manifest for tool identification
