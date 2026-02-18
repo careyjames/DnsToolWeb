@@ -105,24 +105,22 @@ Secret `CAREY_PAT_ALL3_REPOS` is a GitHub Personal Access Token with full permis
 
 **MANDATORY pre-push checklist**:
 1. `go test ./go-server/... -count=1` — must pass (includes boundary integrity)
-2. `bash scripts/git-push.sh` — this script handles the push safely:
-   - **STEP 1**: Detects lock files (reports them, does NOT attempt removal — platform kills the process if it touches `.git`)
-   - **STEP 2**: Detects interrupted rebases (reports them)
-   - **STEP 3**: Checks for `_intel.go` files — ABORTS if found (protects IP)
-   - **STEP 4**: Shows pending commits
-   - **STEP 5**: Pushes via PAT (this always works — locks don't block push)
-   - **STEP 6**: Attempts to update tracking ref via fetch (may fail if locks block it)
-   - **STEP 7**: Verifies sync status — if tracking ref is stale, tells user to run health check
+2. `bash scripts/git-push.sh` — this script enforces 3 hard safety gates before pushing:
+   - **GATE 1**: Lock files — HARD STOP if any `.lock` files exist anywhere in `.git/`. Will not proceed.
+   - **GATE 2**: Rebase state — HARD STOP if interrupted rebase detected.
+   - **GATE 3**: Intel files — HARD STOP if any `_intel.go` files found in public repo.
+   - Only after all 3 gates pass does the script push, update tracking ref, and verify sync.
 
-**Platform limitation**: The Replit agent CANNOT modify `.git` files — not directly AND not inside scripts (the platform blocks the agent's entire process tree). Exit code 254 = platform blocked the `.git` modification. The `git push` command itself still works because git internally handles its own locks. But `rm .git/*.lock` from agent context is always blocked.
+**Lock files are MISSION-CRITICAL BLOCKERS.** They cause PUSH_REJECTED, stalled rebases, and corrupted git state. They cost nearly a full day of production in Feb 2026. Zero tolerance. The push script enforces this — it will not push with locks present.
 
-**Lock file escalation procedure** (when agent hits exit 254):
-1. DO NOT dismiss as cosmetic — lock files compound into production failures
-2. Ask the user to run `bash scripts/git-health-check.sh` from the **Shell tab** (user processes are NOT blocked)
-3. After user confirms clean state, retry the push
-4. If locks reappear, they're being created by Replit's background git maintenance — the health check will catch them on every run
+**Platform limitation**: The Replit agent CANNOT modify `.git` files — the platform kills the agent's entire process tree (exit 254). Only the user can clear locks by running scripts from the Shell tab.
 
-**Lock files are PRODUCTION FAILURES, not cosmetic.** They cause PUSH_REJECTED, stalled rebases, and corrupted git state. Every lock file must be eliminated before it compounds.
+**Lock file resolution procedure** (mandatory, not best-effort):
+1. Agent detects locks (via push script exit 1, or `find .git -name "*.lock"`)
+2. Agent IMMEDIATELY asks user to run `bash scripts/git-health-check.sh` from the **Shell tab**
+3. User confirms clean state
+4. Agent retries the push
+5. If locks reappear, they're from Replit's background git maintenance — run health check again
 
 **NEVER do these for DnsToolWeb**:
 - NEVER push via GitHub API (createBlob/createTree/createCommit/updateRef) — this creates remote commits the local `.git` doesn't know about, causing rebase collisions that corrupt git state
