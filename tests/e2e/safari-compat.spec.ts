@@ -22,7 +22,7 @@ test.describe('Safari/WebKit Compatibility', () => {
     expect(styles.pointerEvents).toBe('none');
   });
 
-  test('overlay element is div with role=status (not output tag)', async ({ page }) => {
+  test('overlay element is div with role=status', async ({ page }) => {
     await page.goto('/');
     const overlay = page.locator('#loadingOverlay');
     const tagName = await overlay.evaluate(el => el.tagName.toLowerCase());
@@ -90,8 +90,10 @@ test.describe('Safari/WebKit Compatibility', () => {
 
   test('history page overlay uses same pattern', async ({ page }) => {
     await page.goto('/history');
-    const overlay = page.locator('#loadingOverlay');
-    if (await overlay.count() > 0) {
+    const overlays = page.locator('.loading-overlay');
+    const count = await overlays.count();
+    if (count > 0) {
+      const overlay = overlays.first();
       const styles = await overlay.evaluate(el => {
         const cs = getComputedStyle(el);
         return { display: cs.display, opacity: cs.opacity, visibility: cs.visibility };
