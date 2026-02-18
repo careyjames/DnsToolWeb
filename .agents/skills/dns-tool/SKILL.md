@@ -10,12 +10,13 @@ This skill contains the critical rules and architecture knowledge for the DNS To
 ## Session Startup
 
 1. Run `bash scripts/git-health-check.sh` — fixes stale lock files, interrupted rebases, and detached HEAD before they cascade into checkpoint failures
-2. Read `replit.md` — quick-reference config (may reset between sessions)
-3. Read `PROJECT_CONTEXT.md` — canonical, stable project context
-4. Read `EVOLUTION.md` — permanent breadcrumb trail, backup if `replit.md` resets
-5. Check the "Failures & Lessons Learned" section in `EVOLUTION.md` before making changes
-6. If `replit.md` appears truncated or reset, restore key pointers from `PROJECT_CONTEXT.md` and `EVOLUTION.md`
-7. Run `find go-server -name "*_intel*"` — if ANY `_intel.go` or `_intel_test.go` files exist locally, they must be pushed to `dnstool-intel` via the sync script and deleted immediately (see "Cross-Repo Sync via GitHub API" below)
+2. **NEVER use the Replit Git panel for Push/Sync.** Always use `bash scripts/git-push.sh` (PAT-based direct push). The Git panel relies on an OAuth token that conflicts with Replit's background git maintenance, causing recurring PUSH_REJECTED errors and stale lock files. The PAT push script bypasses all of this.
+3. Read `replit.md` — quick-reference config (may reset between sessions)
+4. Read `PROJECT_CONTEXT.md` — canonical, stable project context
+5. Read `EVOLUTION.md` — permanent breadcrumb trail, backup if `replit.md` resets
+6. Check the "Failures & Lessons Learned" section in `EVOLUTION.md` before making changes
+7. If `replit.md` appears truncated or reset, restore key pointers from `PROJECT_CONTEXT.md` and `EVOLUTION.md`
+8. Run `find go-server -name "*_intel*"` — if ANY `_intel.go` or `_intel_test.go` files exist locally, they must be pushed to `dnstool-intel` via the sync script and deleted immediately (see "Cross-Repo Sync via GitHub API" below)
 
 ## Mandatory Post-Edit Rules
 
@@ -92,14 +93,16 @@ node scripts/github-intel-sync.mjs commits [count]                   # Show rece
 
 ### Git Operations — Two Methods (Recurring Session Failure)
 
-**Method 1 — PAT Push (preferred for full repo pushes)**:
+**Method 1 — PAT Push (DEFAULT — use this ALWAYS instead of Git panel)**:
 Secret `CAREY_PAT_ALL3_REPOS` is a GitHub Personal Access Token with full permissions (including `workflow` scope) for all three repos: `DnsToolWeb`, `dnstool-intel`, and `it-help-tech-site`.
 
 ```bash
-git push --force https://${CAREY_PAT_ALL3_REPOS}@github.com/careyjames/DnsToolWeb.git main
+bash scripts/git-push.sh
 ```
 
-Use this when: Git panel fails, branches diverge, or commits touch `.github/workflows/` files. Replit's built-in OAuth token LACKS `workflow` scope — any push containing workflow file changes will be rejected without the PAT.
+This script shows pending commits and pushes via PAT. **Use this for ALL pushes.** The Replit Git panel's OAuth token conflicts with background git maintenance, causing PUSH_REJECTED errors and stale lock files. The PAT push bypasses all of that.
+
+For force push (diverged branches): `git push --force https://${CAREY_PAT_ALL3_REPOS}@github.com/careyjames/DnsToolWeb.git main`
 
 **Method 2 — GitHub API (for file-level operations)**:
 The Replit GitHub integration (Octokit, full `repo` scope) gives read/write access to BOTH repos:
