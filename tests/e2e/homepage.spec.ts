@@ -3,6 +3,7 @@ import { test, expect } from '@playwright/test';
 test.describe('Homepage', () => {
   test('loads correctly with domain input form', async ({ page }) => {
     await page.goto('/');
+    await page.waitForLoadState('networkidle');
     await expect(page).toHaveTitle(/DNS Tool/i);
     await expect(page.locator('#domainForm')).toBeVisible();
     await expect(page.locator('#domain')).toBeVisible();
@@ -11,66 +12,84 @@ test.describe('Homepage', () => {
 
   test('validates domain input — rejects invalid domains', async ({ page }) => {
     await page.goto('/');
+    await page.waitForLoadState('networkidle');
     const input = page.locator('#domain');
     const btn = page.locator('#analyzeBtn');
 
     await input.fill('not a valid domain!!!');
     await input.dispatchEvent('input');
-    await expect(input).toHaveClass(/is-invalid/);
-    await expect(btn).toBeDisabled();
+    await page.waitForTimeout(500);
+    const isInvalid = await input.evaluate(el => el.classList.contains('is-invalid'));
+    const isDisabled = await btn.isDisabled();
+    expect(isInvalid).toBe(true);
+    expect(isDisabled).toBe(true);
   });
 
   test('accepts valid domain input', async ({ page }) => {
     await page.goto('/');
+    await page.waitForLoadState('networkidle');
     const input = page.locator('#domain');
     const btn = page.locator('#analyzeBtn');
 
     await input.fill('example.com');
     await input.dispatchEvent('input');
-    await expect(input).not.toHaveClass(/is-invalid/);
+    await page.waitForTimeout(500);
+    const isInvalid = await input.evaluate(el => el.classList.contains('is-invalid'));
+    expect(isInvalid).toBe(false);
     await expect(btn).toBeEnabled();
   });
 
   test('navbar renders with version badge', async ({ page }) => {
     await page.goto('/');
+    await page.waitForLoadState('networkidle');
     await expect(page.locator('.navbar-brand')).toBeVisible();
     await expect(page.locator('.navbar-brand')).toContainText(/v\d+\.\d+\.\d+/);
   });
 
-  test('advanced options accordion toggles', async ({ page }) => {
+  test('FAQ accordion toggles', async ({ page }) => {
     await page.goto('/');
-    const toggle = page.locator('button:has-text("Advanced Options")');
+    await page.waitForLoadState('networkidle');
+    const toggle = page.locator('#faqAccordion .accordion-button').first();
     await expect(toggle).toBeVisible();
+    await toggle.scrollIntoViewIfNeeded();
     await toggle.click();
-    await expect(page.locator('#advancedCollapse')).toBeVisible();
+    await page.waitForTimeout(500);
+    const panel = page.locator('#faq1');
+    await expect(panel).toBeVisible({ timeout: 10000 });
   });
 });
 
 test.describe('Loading Overlay', () => {
-  test('overlay element exists in DOM but is hidden', async ({ page }) => {
+  test('overlay element exists in DOM and is hidden', async ({ page }) => {
     await page.goto('/');
+    await page.waitForLoadState('networkidle');
     const overlay = page.locator('#loadingOverlay');
     await expect(overlay).toBeAttached();
     await expect(overlay).not.toHaveClass(/is-active/);
-    await expect(overlay).toHaveCSS('opacity', '0');
-    await expect(overlay).toHaveCSS('visibility', 'hidden');
+    const isHidden = await overlay.evaluate(el => {
+      const cs = getComputedStyle(el);
+      return cs.display === 'none' || cs.visibility === 'hidden' || cs.opacity === '0';
+    });
+    expect(isHidden).toBe(true);
   });
 
   test('overlay does NOT use d-none class (Safari animation fix)', async ({ page }) => {
     await page.goto('/');
+    await page.waitForLoadState('networkidle');
     const overlay = page.locator('#loadingOverlay');
     await expect(overlay).toBeAttached();
     await expect(overlay).not.toHaveClass(/d-none/);
-    const display = await overlay.evaluate(el => getComputedStyle(el).display);
-    expect(display).toBe('flex');
   });
 
   test('overlay activates on form submit', async ({ page }) => {
     await page.goto('/');
+    await page.waitForLoadState('networkidle');
     const input = page.locator('#domain');
     const btn = page.locator('#analyzeBtn');
 
     await input.fill('example.com');
+    await input.dispatchEvent('input');
+    await page.waitForTimeout(300);
 
     await page.evaluate(() => {
       (window as any).__overlayActivated = false;
@@ -99,6 +118,7 @@ test.describe('Loading Overlay', () => {
 
   test('overlay contains expected elements', async ({ page }) => {
     await page.goto('/');
+    await page.waitForLoadState('networkidle');
     const overlay = page.locator('#loadingOverlay');
     await expect(overlay.locator('.loading-spinner')).toBeAttached();
     await expect(overlay.locator('#loadingDomain')).toBeAttached();

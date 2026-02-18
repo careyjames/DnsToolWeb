@@ -358,4 +358,26 @@ func TestSecurityHeadersPresent(t *testing.T) {
         if !strings.Contains(csp, "nonce-") {
                 t.Error("CSP header does not contain a nonce")
         }
+        if strings.Contains(csp, "upgrade-insecure-requests") {
+                t.Error("CSP should NOT contain upgrade-insecure-requests for plain HTTP requests")
+        }
+}
+
+func TestSecurityHeadersUpgradeInsecureHTTPS(t *testing.T) {
+        router := gin.New()
+        router.Use(middleware.RequestContext())
+        router.Use(middleware.SecurityHeaders())
+        router.GET("/test", func(c *gin.Context) {
+                c.String(http.StatusOK, "ok")
+        })
+
+        w := httptest.NewRecorder()
+        req := httptest.NewRequest("GET", "/test", nil)
+        req.Header.Set("X-Forwarded-Proto", "https")
+        router.ServeHTTP(w, req)
+
+        csp := w.Header().Get("Content-Security-Policy")
+        if !strings.Contains(csp, "upgrade-insecure-requests") {
+                t.Error("CSP should contain upgrade-insecure-requests for HTTPS requests")
+        }
 }
