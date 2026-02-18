@@ -1517,6 +1517,26 @@ git reset HEAD
 git checkout main
 ```
 
+### February 18, 2026 — Hallucination Scrub: "Trusted by Government Agencies"
+
+**Problem**: The old `templates/index.html` (stale, not served by Go server) contained the SEO claim "Executive-ready posture reports trusted by government agencies and enterprises worldwide" in meta description, og:description, twitter:description, and JSON-LD. This is a hallucination — no government agency has endorsed or validated DNS Tool. The claim was never in the active `go-server/templates/index.html` (which was already clean), but the old file persisted in the Git repo.
+
+**Fix**: Updated all four description locations in `templates/index.html` to match the current honest OSINT-focused descriptions. No unearned claims remain anywhere in the codebase.
+
+**Tracking rule**: ALL marketing/SEO text must be factual and verifiable. Acceptable: "produces intelligence products modeled on the formats used by national intelligence agencies" (design aspiration). Unacceptable: "trusted by government agencies" (endorsement claim without evidence). When in doubt, use "designed for" not "trusted by."
+
+**Audit result**: Checked all templates (index, results, history, investigate, stats, email_header, compare, sources, changelog, security_policy, brand_colors, faq_subdomains, results_executive). No unearned claims found in active templates.
+
+### February 18, 2026 — History Page Investigation (No Bug Found)
+
+**User concern**: "Same domains in same order every time after publish."
+
+**Finding**: History page is working correctly. It's a **public global feed** — all users see the same `ORDER BY created_at DESC` list of all analyses. Production DB has 1,581 analyses across 109 unique domains with heavy real-world traffic (557 analyses on Feb 17, 435 on Feb 18). The domains the user saw (switch.com, natashabedingfield.co.uk, hak5.org, etc.) were analyzed by **other users** of the tool, not the owner.
+
+**Root cause of "same order"**: Between the user's page refreshes, no new analyses were run, so the list appeared unchanged. This is expected behavior for a global chronological feed.
+
+**Future product decision**: Consider whether history should remain public/global or become per-user (would require user accounts/sessions). For now, the page could benefit from a label like "Public Analysis Feed" to set expectations.
+
 ### February 18, 2026 — Git Push Rejection Fix (Permanent Solution)
 
 **Problem**: PUSH_REJECTED errors continued even after deleting `replit-agent` branch. Lock files now appearing in deeper paths (`refs/remotes/origin/HEAD.lock`, `objects/maintenance.lock`) that the health check script didn't cover. Agent cannot clean lock files — platform blocks all `.git` file manipulation with "Avoid changing .git repository" error regardless of method (bash, perl, python).
