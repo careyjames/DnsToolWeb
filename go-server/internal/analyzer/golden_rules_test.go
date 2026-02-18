@@ -132,6 +132,37 @@ func TestBrandVerdictPartialGaps(t *testing.T) {
         }
 }
 
+func TestBrandVerdictQuarantineWithBIMICAA(t *testing.T) {
+        ps := protocolState{
+                dmarcPolicy: "quarantine",
+                bimiOK:      true,
+                caaOK:       true,
+        }
+        verdicts := make(map[string]any)
+        buildBrandVerdict(ps, verdicts)
+        brand := verdicts["brand_impersonation"].(map[string]any)
+        if brand["answer"] != "Unlikely" {
+                t.Errorf("DMARC quarantine + BIMI + CAA should be 'Unlikely', got: %s", brand["answer"])
+        }
+        if brand["label"] != "Mostly Protected" {
+                t.Errorf("expected 'Mostly Protected', got: %s", brand["label"])
+        }
+}
+
+func TestBrandVerdictQuarantineAlone(t *testing.T) {
+        ps := protocolState{
+                dmarcPolicy: "quarantine",
+                bimiOK:      false,
+                caaOK:       false,
+        }
+        verdicts := make(map[string]any)
+        buildBrandVerdict(ps, verdicts)
+        brand := verdicts["brand_impersonation"].(map[string]any)
+        if brand["answer"] != "Partially" {
+                t.Errorf("DMARC quarantine without BIMI/CAA should be 'Partially', got: %s", brand["answer"])
+        }
+}
+
 func TestProbableNoMailDetection(t *testing.T) {
         results := map[string]any{
                 "basic_records": map[string]any{},

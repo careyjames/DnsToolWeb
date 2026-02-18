@@ -671,9 +671,19 @@
                             <span class="section-question">Can this domain be impersonated by email?
                                 {{if $posture}}
                                 {{$verdicts := mapGetMap "verdicts" $posture}}
-                                {{$emailAnswer := mapGetStr "email_answer" $verdicts}}
-                                {{if $emailAnswer}}
-                                    <span class="badge bg-{{if hasPrefix $emailAnswer "No"}}success{{else if hasPrefix $emailAnswer "Unlikely"}}info{{else if or (hasPrefix $emailAnswer "Partially") (hasPrefix $emailAnswer "Uncertain")}}warning{{else}}danger{{end}} ms-2">{{$emailAnswer}}</span>
+                                {{$emailShort := mapGetStr "email_answer_short" $verdicts}}
+                                {{$emailReason := mapGetStr "email_answer_reason" $verdicts}}
+                                {{$emailColor := mapGetStr "email_answer_color" $verdicts}}
+                                {{if $emailShort}}
+                                    <span class="intel-verdict">
+                                        <span class="intel-verdict-answer verdict-{{$emailColor}}">{{$emailShort}}</span>
+                                        {{if $emailReason}}<span class="intel-verdict-reason">{{$emailReason}}</span>{{end}}
+                                    </span>
+                                {{else}}
+                                    {{$emailAnswer := mapGetStr "email_answer" $verdicts}}
+                                    {{if $emailAnswer}}
+                                        <span class="badge bg-{{if hasPrefix $emailAnswer "No"}}success{{else if hasPrefix $emailAnswer "Unlikely"}}info{{else if or (hasPrefix $emailAnswer "Partially") (hasPrefix $emailAnswer "Uncertain")}}warning{{else}}danger{{end}} ms-2">{{$emailAnswer}}</span>
+                                    {{end}}
                                 {{end}}
                                 {{end}}
                             </span>
@@ -1821,14 +1831,22 @@
                                 {{$verdicts := mapGetMap "verdicts" $posture}}
                                 {{$brandVerdict := mapGetMap "brand_impersonation" $verdicts}}
                                 {{if $brandVerdict}}
+                                    {{$brandAnswer := mapGetStr "answer" $brandVerdict}}
+                                    {{$brandReason := mapGetStr "reason" $brandVerdict}}
                                     {{$brandLabel := mapGetStr "label" $brandVerdict}}
-                                    {{$brandColor := mapGetStr "color" $brandVerdict}}
-                                    {{if eq $brandLabel "Protected"}}
-                                        <span class="badge bg-success ms-2">No</span>
-                                    {{else if eq $brandLabel "Exposed"}}
-                                        <span class="badge bg-danger ms-2">Yes</span>
+                                    {{if $brandAnswer}}
+                                        <span class="intel-verdict">
+                                            <span class="intel-verdict-answer verdict-{{if eq $brandAnswer "No"}}success{{else if eq $brandAnswer "Yes"}}danger{{else}}warning{{end}}">{{$brandAnswer}}</span>
+                                            {{if $brandReason}}<span class="intel-verdict-reason">{{$brandReason}}</span>{{end}}
+                                        </span>
                                     {{else}}
-                                        <span class="badge bg-warning ms-2">Partially</span>
+                                        {{if eq $brandLabel "Protected"}}
+                                            <span class="badge bg-success ms-2">No</span>
+                                        {{else if eq $brandLabel "Exposed"}}
+                                            <span class="badge bg-danger ms-2">Yes</span>
+                                        {{else}}
+                                            <span class="badge bg-warning ms-2">Partially</span>
+                                        {{end}}
                                     {{end}}
                                 {{end}}
                                 {{end}}
@@ -2608,9 +2626,27 @@
                                 {{$smtpPolicy := mapGetMap "policy" $smtp}}
                                 {{$smtpPolicyVerdict := ""}}
                                 {{if $smtpPolicy}}{{$smtpPolicyVerdict = mapGetStr "verdict" $smtpPolicy}}{{end}}
+                                {{$showTransportFallback := true}}
+                                {{if $posture}}
+                                {{$verdicts := mapGetMap "verdicts" $posture}}
+                                {{$transportVerdict := mapGetMap "transport" $verdicts}}
+                                {{if $transportVerdict}}
+                                    {{$transportAnswer := mapGetStr "answer" $transportVerdict}}
+                                    {{$transportReason := mapGetStr "reason" $transportVerdict}}
+                                    {{if $transportAnswer}}
+                                        {{$showTransportFallback = false}}
+                                        <span class="intel-verdict">
+                                            <span class="intel-verdict-answer verdict-{{if eq $transportAnswer "Yes"}}success{{else if eq $transportAnswer "Partially"}}warning{{else if eq $transportAnswer "No"}}danger{{else}}secondary{{end}}">{{$transportAnswer}}</span>
+                                            {{if $transportReason}}<span class="intel-verdict-reason">{{$transportReason}}</span>{{end}}
+                                        </span>
+                                    {{end}}
+                                {{end}}
+                                {{end}}
+                                {{if $showTransportFallback}}
                                 <span class="badge bg-{{if eq $smtpStatus "success"}}success{{else if eq $smtpStatus "warning"}}warning{{else if eq $smtpStatus "error"}}danger{{else if eq $smtpPolicyVerdict "enforced"}}success{{else if eq $smtpPolicyVerdict "monitored"}}info{{else if eq $smtpStatus "inferred"}}info{{else}}secondary{{end}} ms-2">
                                     {{if eq $smtpPolicyVerdict "enforced"}}Enforced{{else if eq $smtpPolicyVerdict "monitored"}}Monitoring{{else if eq $smtpStatus "success"}}Verified{{else if eq $smtpStatus "warning"}}Partial{{else if eq $smtpStatus "inferred"}}Opportunistic{{else if eq $smtpStatus "info"}}Not Enforced{{else}}Not Assessed{{end}}
                                 </span>
+                                {{end}}
                             </span>
                         </h5>
                     </div>
@@ -3009,13 +3045,22 @@
                                 {{$verdicts := mapGetMap "verdicts" $posture}}
                                 {{$dnsVerdict := mapGetMap "dns_tampering" $verdicts}}
                                 {{if $dnsVerdict}}
+                                    {{$dnsAnswer := mapGetStr "answer" $dnsVerdict}}
+                                    {{$dnsReason := mapGetStr "reason" $dnsVerdict}}
                                     {{$dnsLabel := mapGetStr "label" $dnsVerdict}}
-                                    {{if eq $dnsLabel "Protected"}}
-                                        <span class="badge bg-success ms-2">No</span>
-                                    {{else if eq $dnsLabel "Exposed"}}
-                                        <span class="badge bg-danger ms-2">Yes</span>
+                                    {{if $dnsAnswer}}
+                                        <span class="intel-verdict">
+                                            <span class="intel-verdict-answer verdict-{{if eq $dnsAnswer "No"}}success{{else if eq $dnsAnswer "Yes"}}danger{{else if eq $dnsAnswer "Possible"}}warning{{else}}secondary{{end}}">{{$dnsAnswer}}</span>
+                                            {{if $dnsReason}}<span class="intel-verdict-reason">{{$dnsReason}}</span>{{end}}
+                                        </span>
                                     {{else}}
-                                        <span class="badge bg-secondary ms-2">Not Configured</span>
+                                        {{if eq $dnsLabel "Protected"}}
+                                            <span class="badge bg-success ms-2">No</span>
+                                        {{else if eq $dnsLabel "Exposed"}}
+                                            <span class="badge bg-danger ms-2">Yes</span>
+                                        {{else}}
+                                            <span class="badge bg-secondary ms-2">Not Configured</span>
+                                        {{end}}
                                     {{end}}
                                 {{end}}
                                 {{end}}

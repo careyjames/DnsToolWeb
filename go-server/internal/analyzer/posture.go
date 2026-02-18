@@ -1018,11 +1018,45 @@ func buildBrandVerdict(ps protocolState, verdicts map[string]any) {
                 return
         }
 
+        if ps.dmarcPolicy == "quarantine" {
+                if ps.bimiOK && ps.caaOK {
+                        verdicts["brand_impersonation"] = map[string]any{
+                                "label":  "Mostly Protected",
+                                "color":  "info",
+                                "icon":   iconShieldAlt,
+                                "answer": "Unlikely",
+                                "reason": "DMARC quarantine with BIMI brand verification and CAA certificate restriction — spoofed mail is flagged and brand signals are verified",
+                        }
+                } else if ps.bimiOK || ps.caaOK {
+                        gaps := []string{}
+                        if !ps.bimiOK {
+                                gaps = append(gaps, "no BIMI brand verification")
+                        }
+                        if !ps.caaOK {
+                                gaps = append(gaps, "no CAA certificate restriction")
+                        }
+                        verdicts["brand_impersonation"] = map[string]any{
+                                "label":  "Partially Protected",
+                                "color":  "warning",
+                                "icon":   iconShieldAlt,
+                                "answer": "Partially",
+                                "reason": "DMARC quarantine flags spoofed mail, but " + strings.Join(gaps, " and ") + " — upgrade to p=reject for full protection",
+                        }
+                } else {
+                        verdicts["brand_impersonation"] = map[string]any{
+                                "label":  "Basic",
+                                "color":  "warning",
+                                "icon":   iconShieldAlt,
+                                "answer": "Partially",
+                                "reason": "DMARC quarantine flags spoofed mail but does not reject it — no BIMI or CAA reinforcement",
+                        }
+                }
+                return
+        }
+
         reason := "DMARC policy is not set to reject — partial protection only"
         answer := "Partially"
-        if ps.dmarcPolicy == "quarantine" {
-                reason = "DMARC quarantine policy provides moderate protection but does not fully reject spoofed mail"
-        } else if ps.dmarcPolicy == "none" {
+        if ps.dmarcPolicy == "none" {
                 reason = "DMARC is monitor-only (p=none) — spoofed mail is not blocked"
                 answer = "Likely"
         }
