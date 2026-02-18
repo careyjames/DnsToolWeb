@@ -18,14 +18,15 @@ jobs:
 
       - uses: actions/setup-go@v5
         with:
-          go-version: '1.22'
+          go-version: '1.25'
 
       - name: Run Go tests with coverage
         run: go test ./go-server/... -coverprofile=coverage.out -count=1
         continue-on-error: true
 
       - name: SonarCloud Scan
-        uses: sonarsource/sonarqube-scan-action@v5
+        uses: sonarsource/sonarqube-scan-action@v4
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: https://sonarcloud.io
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
