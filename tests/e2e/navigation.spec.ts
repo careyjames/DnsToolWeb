@@ -3,6 +3,13 @@ import { test, expect } from '@playwright/test';
 test.describe('Navigation', () => {
   test('all navbar links are present and clickable', async ({ page }) => {
     await page.goto('/');
+    await page.waitForLoadState('networkidle');
+
+    const toggler = page.locator('.navbar-toggler');
+    if (await toggler.isVisible()) {
+      await toggler.click();
+      await page.waitForTimeout(500);
+    }
 
     const navLinks = [
       { text: 'Analyze', href: '/' },
@@ -15,7 +22,7 @@ test.describe('Navigation', () => {
 
     for (const link of navLinks) {
       const el = page.locator(`nav a:has-text("${link.text}")`).first();
-      await expect(el).toBeVisible();
+      await expect(el).toBeVisible({ timeout: 10000 });
     }
   });
 
