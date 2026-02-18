@@ -39,7 +39,14 @@ if echo "$CURRENT_HEAD" | grep -qv "ref:"; then
   printf 'ref: refs/heads/main\n' > .git/HEAD 2>/dev/null && echo "Reattached HEAD to main" && FIXED=$((FIXED+1))
 fi
 
-# 4. Report status
+# 4. Update tracking refs (now that locks are cleared)
+#    This fixes the Git panel showing stale "X commits ahead" counts
+if [ "$LOCK_COUNT" -gt 0 ]; then
+  echo "Updating tracking refs..."
+  git fetch 2>/dev/null && echo "Tracking refs updated (Git panel should be current)" || true
+fi
+
+# 5. Report status
 if [ $FIXED -eq 0 ]; then
   echo "Git health: CLEAN — zero lock files, no interrupted operations"
 else
@@ -48,7 +55,7 @@ fi
 
 git branch --show-current 2>/dev/null || true
 
-# 5. Sync status via ls-remote (read-only check against GitHub)
+# 6. Sync status via ls-remote (read-only check against GitHub)
 if [ -n "$CAREY_PAT_ALL3_REPOS" ]; then
   LOCAL_SHA=$(git rev-parse HEAD 2>/dev/null)
   REMOTE_SHA=$(git ls-remote "https://${CAREY_PAT_ALL3_REPOS}@github.com/careyjames/DnsToolWeb.git" refs/heads/main 2>/dev/null | awk '{print $1}')

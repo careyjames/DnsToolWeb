@@ -10,7 +10,7 @@ This skill contains the critical rules and architecture knowledge for the DNS To
 ## Session Startup
 
 1. Run `bash scripts/git-health-check.sh` — fixes stale lock files, interrupted rebases, and detached HEAD before they cascade into checkpoint failures
-2. **NEVER use the Replit Git panel for Push/Sync.** Always use `bash scripts/git-push.sh` (PAT-based direct push). The Git panel relies on an OAuth token that conflicts with Replit's background git maintenance, causing recurring PUSH_REJECTED errors and stale lock files. The PAT push script bypasses all of this.
+2. **Agent**: Always use `bash scripts/git-push.sh` (PAT-based push + ls-remote verification). **User**: Can use the Git panel for Push/Sync after running `bash scripts/git-panel-reset.sh` from Shell to clear stale locks. If the Git panel shows "X commits ahead" but code is already on GitHub, run the panel reset script.
 3. Read `replit.md` — quick-reference config (may reset between sessions)
 4. Read `PROJECT_CONTEXT.md` — canonical, stable project context
 5. Read `EVOLUTION.md` — permanent breadcrumb trail, backup if `replit.md` resets
@@ -127,9 +127,12 @@ Secret `CAREY_PAT_ALL3_REPOS` is a GitHub Personal Access Token with full permis
 
 **NEVER do these for DnsToolWeb**:
 - NEVER push via GitHub API (createBlob/createTree/createCommit/updateRef) — this creates remote commits the local `.git` doesn't know about, causing rebase collisions that corrupt git state
-- NEVER use the Replit Git panel for Push/Sync — its OAuth token conflicts with background maintenance
 - NEVER tell the user "I can't push to Git" — the PAT is always available
 - NEVER dismiss lock files as "cosmetic" — they are production blockers that compound into hours of lost work
+
+**Git panel usage**: The user CAN use the Replit Git panel for Push/Sync after running `bash scripts/git-panel-reset.sh` from the Shell tab to clear stale locks. The agent should use `bash scripts/git-push.sh` (PAT + ls-remote verification). Both methods are safe — they just use different auth (panel uses OAuth, agent uses PAT).
+
+**If Git panel shows stale "X commits ahead"**: The tracking ref (`origin/main`) is stale because the agent cannot update `.git` refs. Fix: user runs `bash scripts/git-panel-reset.sh` from Shell tab (clears locks, fetches, updates tracking ref). Or `bash scripts/git-health-check.sh` (which now auto-fetches after clearing locks).
 
 For force push (diverged branches only): `git push --force https://${CAREY_PAT_ALL3_REPOS}@github.com/careyjames/DnsToolWeb.git main`
 
