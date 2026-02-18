@@ -3568,7 +3568,8 @@
                         {{$ctUnique := mapGetFloat "unique_subdomains" $ct}}
                         <span class="section-question">What infrastructure is exposed in certificate logs?
                             {{if and (eq $ctStatus "success") (gt $ctUnique 0)}}
-                                <span class="badge bg-info ms-2">{{formatFloat 0 $ctUnique}} subdomain{{if ne $ctUnique 1}}s{{end}}</span>
+                                {{$displayed := mapGetInt "displayed_count" $ct}}
+                                <span class="badge bg-info ms-2">{{$displayed}} subdomain{{if ne $displayed 1}}s{{end}}</span>
                             {{else if and (eq $ctStatus "success") (eq $ctUnique 0)}}
                                 <span class="badge bg-secondary ms-2">None found</span>
                             {{else}}
@@ -3701,12 +3702,10 @@
                     {{if mapGetBool "display_capped" $ct}}
                     <div class="alert alert-info bg-info bg-opacity-10 border-info border-opacity-25 py-2 mt-2 mb-2 small">
                         <i class="fas fa-list me-1"></i>
-                        <strong>Showing {{len $ctSubdomains}} of {{mapGetInt "total_subdomains_found" $ct}} subdomains discovered</strong> —
+                        <strong>Showing {{len $ctSubdomains}} subdomains</strong> —
                         all {{mapGetInt "display_current_count" $ct}} current subdomains shown, plus recent historical entries.
-                        {{$omitted := mapGetInt "display_historical_omitted" $ct}}{{if gt $omitted 0}}
-                        <span class="text-muted">{{$omitted}} older historical entries available via export.</span>
-                        {{end}}
-                        <a href="/export/subdomains?domain={{.Domain}}" class="btn btn-sm btn-outline-info ms-2 no-print" title="Download all {{mapGetInt "total_subdomains_found" $ct}} subdomains as CSV">
+                        Additional historical entries available via export.
+                        <a href="/export/subdomains?domain={{.Domain}}" class="btn btn-sm btn-outline-info ms-2 no-print" title="Download complete subdomain recon as CSV">
                             <i class="fas fa-crosshairs me-1"></i>Export Full Recon (CSV)
                         </a>
                     </div>
@@ -3778,14 +3777,14 @@
                     </div>
                     {{if mapGetBool "was_truncated" $ct}}
                     <div class="text-muted small mt-2 mb-0 p-2 rounded u-bg-soft">
-                        <i class="fas fa-filter me-1"></i><strong>Showing {{mapGetStr "display_count" $ct}} of {{formatFloat 0 $ctUnique}} subdomains</strong> &mdash; curated by security relevance.
+                        <i class="fas fa-filter me-1"></i><strong>Subdomains curated by security relevance.</strong>
                         Multiple cooperative discovery methods — including CT logs (<a href="https://datatracker.ietf.org/doc/html/rfc6962" target="_blank" rel="noopener" class="text-info">RFC 6962</a>), DNS probing, and CNAME chain traversal — feed into a unified view.
                         Well-known service names (mail, vpn, api, sso, admin, etc.), DNS-resolving hosts, and subdomains with the most certificate activity are prioritized.
                         {{$expiredCount := mapGetFloat "expired_count" $ct}}
                         {{if gt $expiredCount 0}}
                         <span class="ms-1">{{formatFloat 0 $expiredCount}} expired-certificate-only subdomain{{if ne $expiredCount 1}}s{{end}} included where relevant.</span>
                         {{end}}
-                        <a href="/export/subdomains?domain={{.Domain}}" class="btn btn-sm btn-outline-secondary ms-2 no-print" title="Download all subdomains as CSV">
+                        <a href="/export/subdomains?domain={{.Domain}}" class="btn btn-sm btn-outline-secondary ms-2 no-print" title="Download complete subdomain recon as CSV">
                             <i class="fas fa-crosshairs me-1"></i>Export Full Recon (CSV)
                         </a>
                     </div>
@@ -4147,7 +4146,7 @@
                 {{if $ct}}
                 {{if mapGetBool "was_truncated" $ct}}
                 <p class="text-muted mb-0 u-fs-075rem-lh16">
-                    <strong>Subdomain curation:</strong> From {{formatFloat 0 (mapGetFloat "unique_subdomains" $ct)}} discovered subdomains, the {{mapGetStr "display_count" $ct}} shown were selected by security relevance: well-known service names (mail, vpn, api, sso, admin, etc.), DNS-resolving hosts, and subdomains with the most certificate activity are prioritized. CNAME chain resolution and provider identification run on the curated set for accuracy.
+                    <strong>Subdomain curation:</strong> Discovered subdomains are filtered by security relevance: well-known service names (mail, vpn, api, sso, admin, etc.), DNS-resolving hosts, and subdomains with the most certificate activity are prioritized. CNAME chain resolution and provider identification run on the curated set for accuracy.
                 </p>
                 {{end}}
                 {{end}}
@@ -4306,17 +4305,17 @@
     </main>
 
     <!-- Loading Overlay -->
-    <div id="loadingOverlay" class="loading-overlay" role="status">
+    <div id="loadingOverlay" class="loading-overlay" role="status" aria-live="polite" aria-busy="true" aria-label="Running domain analysis">
         <div class="loading-content">
             <div class="loading-spinner">
-                <i class="fas fa-globe fa-spin"></i>
+                <i class="fas fa-globe fa-spin" aria-hidden="true"></i>
             </div>
             <h4 class="mt-4 mb-2">Running Multi-Source Intelligence Audit</h4>
             <p class="text-muted mb-0" id="loadingDomain">{{.Domain}}</p>
             <div class="loading-elapsed mt-2">
                 <span class="text-muted small" id="loadingTimer">0s</span>
             </div>
-            <div class="loading-dots mt-2">
+            <div class="loading-dots mt-2" aria-hidden="true">
                 <span></span><span></span><span></span>
             </div>
             <div class="scan-checklist mt-3" id="scanChecklist">

@@ -253,6 +253,7 @@ func applySubdomainDisplayCap(result map[string]any, subdomains []map[string]any
 
         if total <= softCap {
                 result["subdomains"] = subdomains
+                result["displayed_count"] = total
                 return
         }
 
@@ -265,11 +266,12 @@ func applySubdomainDisplayCap(result map[string]any, subdomains []map[string]any
 
         if displayLimit >= total {
                 result["subdomains"] = subdomains
+                result["displayed_count"] = total
                 return
         }
 
         result["subdomains"] = subdomains[:displayLimit]
-        result["total_subdomains_found"] = total
+        result["displayed_count"] = displayLimit
         result["display_capped"] = true
         result["display_current_count"] = currentCount
         result["display_historical_omitted"] = total - displayLimit

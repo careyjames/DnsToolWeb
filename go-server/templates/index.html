@@ -794,7 +794,7 @@
 
     <div id="loadingOverlay" class="loading-overlay" role="status" aria-live="polite" aria-busy="true" aria-label="Running domain analysis">
         <div class="loading-content">
-            <div class="loading-spinner">
+            <div class="loading-spinner" aria-hidden="true">
                 <i class="fas fa-globe fa-spin"></i>
             </div>
             <h4 class="mt-4 mb-2">Running Multi-Source Intelligence Audit</h4>
@@ -802,40 +802,40 @@
             <div class="loading-elapsed mt-2">
                 <span class="text-muted small" id="loadingTimer">0s</span>
             </div>
-            <div class="loading-dots mt-2">
+            <div class="loading-dots mt-2" aria-hidden="true">
                 <span></span><span></span><span></span>
             </div>
-            <div class="scan-checklist mt-3" id="scanChecklist">
+            <div class="scan-checklist mt-3" id="scanChecklist" aria-hidden="true">
                 <div class="scan-phase" data-delay="0">
-                    <i class="fas fa-circle-notch fa-spin scan-icon scan-pending"></i>
+                    <i class="fas fa-circle-notch fa-spin scan-icon scan-pending" aria-hidden="true"></i>
                     <span>DNS records &mdash; Cloudflare, Google, Quad9, OpenDNS</span>
                 </div>
                 <div class="scan-phase" data-delay="1200">
-                    <i class="fas fa-circle-notch fa-spin scan-icon scan-pending"></i>
+                    <i class="fas fa-circle-notch fa-spin scan-icon scan-pending" aria-hidden="true"></i>
                     <span>Email auth &mdash; SPF, DMARC, DKIM selectors</span>
                 </div>
                 <div class="scan-phase" data-delay="2500">
-                    <i class="fas fa-circle-notch fa-spin scan-icon scan-pending"></i>
+                    <i class="fas fa-circle-notch fa-spin scan-icon scan-pending" aria-hidden="true"></i>
                     <span>DNSSEC chain of trust &amp; DANE/TLSA</span>
                 </div>
                 <div class="scan-phase" data-delay="3500">
-                    <i class="fas fa-circle-notch fa-spin scan-icon scan-pending"></i>
+                    <i class="fas fa-circle-notch fa-spin scan-icon scan-pending" aria-hidden="true"></i>
                     <span>Certificate Transparency &amp; subdomain discovery</span>
                 </div>
                 <div class="scan-phase" data-delay="5000">
-                    <i class="fas fa-circle-notch fa-spin scan-icon scan-pending"></i>
+                    <i class="fas fa-circle-notch fa-spin scan-icon scan-pending" aria-hidden="true"></i>
                     <span>SMTP transport &amp; STARTTLS verification</span>
                 </div>
                 <div class="scan-phase" data-delay="7000">
-                    <i class="fas fa-circle-notch fa-spin scan-icon scan-pending"></i>
+                    <i class="fas fa-circle-notch fa-spin scan-icon scan-pending" aria-hidden="true"></i>
                     <span>MTA-STS, TLS-RPT, BIMI, CAA</span>
                 </div>
                 <div class="scan-phase" data-delay="9000">
-                    <i class="fas fa-circle-notch fa-spin scan-icon scan-pending"></i>
+                    <i class="fas fa-circle-notch fa-spin scan-icon scan-pending" aria-hidden="true"></i>
                     <span>Registrar &amp; infrastructure analysis</span>
                 </div>
                 <div class="scan-phase" data-delay="12000">
-                    <i class="fas fa-circle-notch fa-spin scan-icon scan-pending"></i>
+                    <i class="fas fa-circle-notch fa-spin scan-icon scan-pending" aria-hidden="true"></i>
                     <span>Classifying &amp; interpreting intelligence</span>
                 </div>
             </div>

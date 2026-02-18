@@ -47,10 +47,11 @@ function startStatusCycle(overlayEl) {
     const startTime = Date.now();
 
     if (timerEl) {
-        setInterval(function() {
-            const elapsed = Math.floor((Date.now() - startTime) / 1000);
+        (function tick() {
+            var elapsed = Math.floor((Date.now() - startTime) / 1000);
             timerEl.textContent = elapsed + 's';
-        }, 1000);
+            requestAnimationFrame(tick);
+        })();
     }
     if (noteEl) {
         setTimeout(function() {
