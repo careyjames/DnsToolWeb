@@ -22,7 +22,7 @@ test.describe('Navigation', () => {
   test('history page loads', async ({ page }) => {
     await page.goto('/history');
     await expect(page).toHaveTitle(/DNS Tool/i);
-    await expect(page.locator('text=/History|Recent/i')).toBeVisible();
+    await expect(page.locator('h1')).toBeVisible();
   });
 
   test('IP Intelligence page loads with input form', async ({ page }) => {

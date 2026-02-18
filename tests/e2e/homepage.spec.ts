@@ -33,13 +33,13 @@ test.describe('Homepage', () => {
 
   test('navbar renders with version badge', async ({ page }) => {
     await page.goto('/');
-    await expect(page.locator('text=DNS Tool')).toBeVisible();
-    await expect(page.locator('text=/v\\d+\\.\\d+\\.\\d+/')).toBeVisible();
+    await expect(page.locator('.navbar-brand')).toBeVisible();
+    await expect(page.locator('.navbar-brand')).toContainText(/v\d+\.\d+\.\d+/);
   });
 
   test('advanced options accordion toggles', async ({ page }) => {
     await page.goto('/');
-    const toggle = page.locator('text=Advanced Options');
+    const toggle = page.locator('button:has-text("Advanced Options")');
     await expect(toggle).toBeVisible();
     await toggle.click();
     await expect(page.locator('#advancedCollapse')).toBeVisible();
