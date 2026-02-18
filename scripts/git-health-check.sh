@@ -108,7 +108,15 @@ if [ -n "$CAREY_PAT_ALL3_REPOS" ]; then
 fi
 
 # 7. Session Sentinel — environment drift check (always runs)
+# Exit codes: 0=clean, 10=drift detected, 20=no manifest, 1=error
+# NOTE: This script must NOT use set -e. Sentinel exit 10 (drift) is informational,
+# not a failure. The || true guards future-proof against accidental set -e additions.
 if [ -f "scripts/session-sentinel.sh" ]; then
   echo ""
-  bash scripts/session-sentinel.sh check 2>/dev/null || true
+  SENTINEL_EXIT=0
+  bash scripts/session-sentinel.sh check 2>/dev/null || SENTINEL_EXIT=$?
+  if [ "$SENTINEL_EXIT" -eq 20 ]; then
+    echo "  (Taking initial snapshot...)"
+    bash scripts/session-sentinel.sh snapshot 2>/dev/null || true
+  fi
 fi

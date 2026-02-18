@@ -1772,3 +1772,54 @@ git checkout main
 5. **Binary-aware** — tracks compiled binary via size/mtime (not hash, too slow for ~50MB binary).
 
 **Conclusion**: The concept of hashing files for integrity is ancient. What's novel is the curation + session-boundary + platform-constraint integration pattern. Not a new tool category — just an under-served niche (cloud IDE dev environments where the platform itself mutates your files).
+
+### Session Sentinel Hardening (Feb 18, 2026)
+
+Based on expert review. Changes made:
+
+**Deterministic exit codes** (automatable, evidence-grade):
+- `0` = clean (no drift) or successful snapshot/report
+- `10` = drift detected
+- `20` = no manifest exists (first run)
+- `1` = internal error
+
+Health check now auto-takes initial snapshot when exit 20 (no manifest).
+
+**Hashing policy versioned** (v1):
+- Raw bytes, SHA-256 via sha256sum, no line-ending normalization
+- No symlink resolution (hashes target contents as-is)
+- Permissions/ownership ignored — content-only comparison
+- Path ordering: deterministic (hardcoded WATCHED_FILES array order)
+- Binary files: size + mtime only (too slow to hash ~50MB)
+- `hash_policy` field added to manifest.json for future compatibility
+
+**Git push hardened**:
+- `GIT_TERMINAL_PROMPT=0` — prevents credential prompts from hanging the agent
+- `GIT_ASKPASS=` (empty) — disables credential helpers
+- `GIT_CONFIG_NOSYSTEM=1` — ignores system git config, freezes environment
+
+**Do/Don't agent reference table** added to SKILL.md — one-screen lookup to prevent regression (someone forgetting and calling an unsafe git command).
+
+### Zone File Feature — Technical Decisions (Feb 18, 2026)
+
+Based on expert review of the zone file import/export design:
+
+**Zone parsing**: Use `miekg/dns` ZoneParser in Go. Handles `$ORIGIN`, `$TTL`, `$GENERATE`, multiline records, TTL inheritance. RFC-1035 compliant. Eliminates "we parsed your zone wrong" credibility failures.
+
+**Baseline language fix**:
+- Never call it "the baseline" (implies original/authoritative)
+- Call it "Baseline Snapshot (User-Provided)" — timestamped, hashed, immutable
+- Export is "Observed Records Snapshot (Reconstructed)" — never "zone file export"
+
+**Custody chain model** (minimum viable defensibility):
+1. Raw input preserved (uploaded zone file as bytes)
+2. Hash at ingestion (SHA-256) stored with timestamp + uploader identity/session
+3. Normalized form stored (canonical rrsets)
+4. All outputs stamped with tool version + parsing version + hashing version
+5. No silent rewrites: parser changes = new "analysis version," not mutation of history
+
+**Diff output labels**: "Added / Missing / Changed / TTL-only" (operational + security meaning)
+
+**Zone file sensitivity warning**: Zone files can contain sensitive internal hostnames. Default posture: process in-memory + discard unless user explicitly opts into saving for drift monitoring. Explicit retention window if saved.
+
+**Status**: ON THE ROADMAP. Zone parsing library chosen. UX copy and disclaimer wording to be drafted before implementation.

@@ -40,20 +40,38 @@ The platform monitors all file operations from the agent process tree. Writing t
 8. If `replit.md` appears truncated or reset, restore key pointers from `PROJECT_CONTEXT.md` and `EVOLUTION.md`
 9. Run `find go-server -name "*_intel*"` — if ANY `_intel.go` or `_intel_test.go` files exist locally, they must be pushed to `dnstool-intel` via the sync script and deleted immediately
 
+## Agent Do / Don't (One-Screen Reference)
+
+| DO (safe) | DON'T (kills process or corrupts state) |
+|-----------|----------------------------------------|
+| `git rev-parse HEAD` | `git status` (creates index.lock) |
+| `git branch --show-current` | `git fetch` (writes FETCH_HEAD, refs) |
+| `git log`, `git diff` | `git update-ref` (writes refs) |
+| `git ls-remote` (network read) | `rm .git/*.lock` (deletes .git files) |
+| `git push` via PAT URL | `echo > .git/*` (writes .git files) |
+| `cat .git/*` (read any .git file) | `git checkout`, `git merge`, `git rebase` |
+| Read files anywhere | Write/delete inside `.git/` |
+| `bash scripts/git-push.sh` | `bash scripts/git-health-check.sh --repair` |
+| `bash scripts/git-health-check.sh` (default=safe) | Any command that touches `.git/index.lock` |
+| `bash scripts/session-sentinel.sh check` | Calling `git add`, `git commit` directly |
+
+**Rule of thumb:** If the git command would create, modify, or delete ANY file under `.git/`, it will kill the agent's process tree (exit 254). When in doubt, don't run it — defer to the user via Shell tab.
+
 ## Session Sentinel — Environment Drift Detection
 
 Internal dev tooling that tracks platform-induced file changes between sessions. **Completely separate from the DNS drift engine (user-facing posture_hash).**
 
 ```bash
 bash scripts/session-sentinel.sh snapshot   # Save current state (auto-runs after git-push.sh)
-bash scripts/session-sentinel.sh check      # Diff against last snapshot (auto-runs in health check)
+bash scripts/session-sentinel.sh check      # Compare against last snapshot (exit: 0=clean, 10=drift, 20=no manifest)
 bash scripts/session-sentinel.sh report     # Show last snapshot info
 ```
 
 - **Storage**: `.drift/manifest.json` (gitignored, local only)
 - **Watches**: go.mod, go.sum, package.json, config.go, schema.sql, CSS, build scripts, docs (19 files + binary)
 - **Excludes**: .git/, node_modules/, .cache/, tmp/, logs
-- **Integration**: Runs automatically in `git-push.sh` (snapshot after push) and `git-health-check.sh` (check at session start)
+- **Hash policy v1**: Raw bytes, SHA-256, no line-ending normalization, deterministic path ordering
+- **Integration**: Runs automatically in `git-push.sh` (snapshot after push) and `git-health-check.sh` (check at session start, auto-snapshot if first run)
 - **CRITICAL**: Never conflate `.drift/` (internal dev) with the DNS drift engine (user-facing product feature)
 
 ## Mandatory Post-Edit Rules

@@ -1,5 +1,7 @@
 {
-  "timestamp": "2026-02-18T16:28:07Z",
+  "sentinel_version": "1.0",
+  "hash_policy": "1",
+  "timestamp": "2026-02-18T16:44:37Z",
   "files": {
     "go.mod": {"sha256":"5aa5a00999bb00e227c0a41c3382490ae16e7c41c8a98e38344b143353bffa93","size":1887,"mtime":1770843797},
     "go.sum": {"sha256":"f714971b3a42e15f4189b9646adf5fb0eb5e812a87df7411ef68edefc4fdf1fd","size":9454,"mtime":1770843797},
@@ -17,8 +19,8 @@
     "static/css/custom.css": {"sha256":"7ddcc609c05e7d79359d888696e53cf8f371a5d40d998a8f28f4115a63b30205","size":84194,"mtime":1771401346},
     "static/css/custom.min.css": {"sha256":"7f29ee296a121414b6c2e1eff90ea09ffb4b163ae92e7e5a65cc9df5fac61da9","size":53776,"mtime":1771401363},
     "static/manifest.json": {"sha256":"2f99e0818980e41792efefd4212eee4634469218a32cc0e9b677d95dc2405e7f","size":1613,"mtime":1771401315},
-    "scripts/git-push.sh": {"sha256":"ca25c1f55d98b75f4c7a0c9854a0ee6a022ec22f3ac237501ff3425d37c89c7b","size":7394,"mtime":1771430366},
-    "scripts/git-health-check.sh": {"sha256":"89a5412a008dca7ba9c4b9f92fe57c32c9dbd9259606fa6a28482a39145e73f2","size":4153,"mtime":1771430839},
+    "scripts/git-push.sh": {"sha256":"2da7be042bde3f3e7249ca8b520c1dced0b98c3bbac82bbbab76bc8132b1de9d","size":7473,"mtime":1771432928},
+    "scripts/git-health-check.sh": {"sha256":"46a9b84cd074bd97409ce18cd9ca8ed848c7bb0f358988063bff0361adfba398","size":4571,"mtime":1771433066},
     "scripts/git-panel-reset.sh": {"sha256":"4c5011aef4b8c607ba8ae1c49b23ba581a67085b4629443320cb636c4c4430bd","size":3319,"mtime":1771409902},
     "dns-tool-server": {"sha256":"BINARY_SKIP","size":38492731,"mtime":1771408632}
   },

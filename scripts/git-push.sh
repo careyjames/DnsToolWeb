@@ -21,6 +21,10 @@ REPO="careyjames/DnsToolWeb"
 BRANCH="main"
 PAT_URL="https://${CAREY_PAT_ALL3_REPOS}@github.com/${REPO}.git"
 
+export GIT_TERMINAL_PROMPT=0
+export GIT_ASKPASS=
+export GIT_CONFIG_NOSYSTEM=1
+
 if [ -z "$CAREY_PAT_ALL3_REPOS" ]; then
   echo "ABORT: CAREY_PAT_ALL3_REPOS secret not set"
   exit 1
