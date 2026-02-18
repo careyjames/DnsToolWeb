@@ -1678,3 +1678,44 @@ git checkout main
 | `.agents/skills/dns-tool/SKILL.md` | Updated Repo Sync Law: lock classification, ls-remote verification, incident history entry |
 | `go-server/internal/config/config.go` | Version bump to 26.20.51 |
 | `EVOLUTION.md` | Session breadcrumb |
+
+### Git Panel Tracking Ref Fix (v26.20.52)
+
+**Problem**: `git fetch` reports success but doesn't actually update the tracking ref file (`.git/refs/remotes/origin/main`). The platform recreates lock files during/after fetch, preventing the ref write.
+
+**Fix**: Both `git-panel-reset.sh` and `git-health-check.sh` now force-update the tracking ref after fetching:
+1. Run `git fetch` (downloads objects)
+2. Get actual GitHub SHA via `git ls-remote origin main` (authoritative, read-only)
+3. Compare against local tracking ref
+4. If mismatched: `git update-ref` (or direct file write as fallback)
+
+### Zone File Import + Observed Records Export — Design Decision (Feb 18, 2026)
+
+**Idea**: Extend the drift engine to support importing standard BIND/Unix zone files as baselines, then comparing fresh DNS analysis results against them. Creates "baseline-aware drift" — unique in DNS tool space.
+
+**Intelligence Processing Matrix**:
+1. **Ingest**: User imports a zone file (BIND format) or tool exports an "Observed Records Snapshot"
+2. **Process**: Parse and normalize → run fresh analysis → diff ("Missing / Added / Changed" with risk scoring)
+3. **Product**: "Observed DNS Records Intelligence Report"
+
+**Key design decisions**:
+- **"Baseline" framing**: Must explain WHICH baseline is being compared and when captured. A zone file from today is today's snapshot, not the domain's original creation baseline.
+- **Export format**: "Observed Records Snapshot" with disclaimers: incomplete, not authoritative, derived from public OSINT sources. Honest intelligence gaps: "fact + here's why" vs "inference + here's why."
+- **BIND compatibility**: Handle `$ORIGIN`, `$TTL`, multiline records, TTL inheritance. Accommodate vendor quirks (Cloudflare SOA numbering) with honest labeling.
+- **Language**: NIST SP 800 + IC conventions. Terms work for IT, executive, and InfoSec audiences.
+- **Status**: ON THE ROADMAP. Layers onto existing drift engine.
+
+### Environment Drift Detection — "Session Sentinel" (Feb 18, 2026)
+
+**Idea**: Lightweight hash-based system to detect when the platform changes project files between sessions.
+
+**Design**:
+- SHA-256 manifest of critical project files stored in `.drift/manifest.json`
+- Curated allowlist: go.mod, go.sum, package.json, config files, build scripts, schema, CSS, binary
+- Volatile exclusions: .git/, node_modules/, tmp/, logs, cache
+- Session start: re-hash and diff against stored manifest
+- Session end / post-push: update manifest
+
+**CRITICAL DATA SEPARATION**: Internal dev tooling (`.drift/`) is completely separate from the DNS drift engine (user-facing product feature). Must never conflate.
+
+**Status**: BUILDING NOW.
