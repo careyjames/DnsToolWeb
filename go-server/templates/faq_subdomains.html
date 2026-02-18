@@ -30,6 +30,11 @@
                     <p class="text-muted lead">How we find subdomains, why they&rsquo;re publicly visible, and how to reduce future exposure.</p>
                 </div>
 
+                <div class="alert alert-secondary bg-dark border-secondary mb-4">
+                    <i class="fas fa-shield-halved me-2 text-info"></i><strong>Passive OSINT Only</strong> &mdash;
+                    DNS Tool performs passive OSINT collection. We read publicly available DNS records, check publicly accessible URLs, and produce intelligence from publicly observable data. We do not attempt to exploit any vulnerability, bypass any access control, or interact with any system in a way that requires authorization.
+                </div>
+
                 <div class="accordion" id="faqAccordion">
 
                     <div class="accordion-item bg-dark border-secondary">
@@ -54,23 +59,23 @@
                         </h2>
                         <div id="faq2" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
                             <div class="accordion-body">
-                                <p>DNS Tool uses three layers of discovery, all based on public data and open standards:</p>
+                                <p>DNS Tool uses multiple layers of discovery, all based on public data and open standards:</p>
                                 <div class="card bg-dark border-secondary mb-3">
                                     <div class="card-body py-2">
-                                        <h6 class="text-info mb-1"><i class="fas fa-certificate me-1"></i>1. CT Log Scanning</h6>
-                                        <p class="mb-0 small">We parse Certificate Transparency entries (via crt.sh and CT datasets) to extract explicit subdomain names that have appeared on certificates.</p>
+                                        <h6 class="text-info mb-1"><i class="fas fa-certificate me-1"></i>Certificate Transparency Scanning</h6>
+                                        <p class="mb-0 small">We parse Certificate Transparency entries to extract subdomain names that have appeared on publicly logged certificates.</p>
                                     </div>
                                 </div>
                                 <div class="card bg-dark border-secondary mb-3">
                                     <div class="card-body py-2">
-                                        <h6 class="text-info mb-1"><i class="fas fa-asterisk me-1"></i>2. Wildcard Certificate Detection</h6>
+                                        <h6 class="text-info mb-1"><i class="fas fa-asterisk me-1"></i>Wildcard Certificate Detection</h6>
                                         <p class="mb-0 small">Wildcards like <code>*.example.com</code> don&rsquo;t list every subdomain, but they signal that subdomains exist and help avoid false &ldquo;0 subdomains&rdquo; results.</p>
                                     </div>
                                 </div>
                                 <div class="card bg-dark border-secondary mb-3">
                                     <div class="card-body py-2">
-                                        <h6 class="text-info mb-1"><i class="fas fa-network-wired me-1"></i>3. High-Speed DNS Probing + CNAME Traversal</h6>
-                                        <p class="mb-0 small">We probe ~290 common service names (e.g., <code>www</code>, <code>mail</code>, <code>api</code>, <code>admin</code>, <code>vpn</code>, <code>sso</code>) using fast UDP lookups and follow CNAME chains to show where each hostname actually points.</p>
+                                        <h6 class="text-info mb-1"><i class="fas fa-network-wired me-1"></i>DNS Probing + CNAME Traversal</h6>
+                                        <p class="mb-0 small">We probe common service names (e.g., <code>www</code>, <code>mail</code>, <code>api</code>, <code>admin</code>, <code>vpn</code>, <code>sso</code>) using standard DNS lookups and follow CNAME chains to show where each hostname actually points.</p>
                                     </div>
                                 </div>
                                 <p class="mb-0 text-muted small">In your report output, we explicitly disclose this: subdomains are discovered via CT logs (<a href="https://datatracker.ietf.org/doc/html/rfc6962" target="_blank" rel="noopener" class="text-info">RFC 6962</a>), DNS probing, and CNAME traversal.</p>
@@ -208,7 +213,7 @@
                                 <p><strong>No.</strong> This is OSINT + DNS, not intrusion:</p>
                                 <ul>
                                     <li class="mb-2">We use public CT history and standard DNS queries.</li>
-                                    <li class="mb-2">Our probing is limited to a curated list of ~290 common service names (not exhaustive brute force).</li>
+                                    <li class="mb-2">Our probing is limited to common service names (not exhaustive brute force).</li>
                                     <li class="mb-0">We disclose the source attribution in the report output (&ldquo;Certificate Transparency + DNS Intelligence&rdquo;).</li>
                                 </ul>
                             </div>

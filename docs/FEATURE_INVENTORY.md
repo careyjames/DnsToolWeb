@@ -36,7 +36,7 @@ The tool performs RFC-compliant parsing and validation of these protocols:
 - Multi-resolver consensus (Cloudflare, Google, Quad9, OpenDNS)
 - Authoritative vs. resolver propagation comparison
 - Registrar/RDAP lookup with caching
-- Three-layer subdomain discovery: Certificate Transparency logs + wildcard detection + high-speed UDP DNS probing (~140 common names)
+- Multi-layer subdomain discovery with intelligent caching (proprietary pipeline)
 - DNS infrastructure provider detection and tier classification
 - Hosting provider detection (web, DNS, email)
 - DNS history timeline via SecurityTrails API (user-provided API key only; 50 req/month hard limit; never called automatically)

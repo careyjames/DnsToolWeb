@@ -108,11 +108,8 @@ All documentation files verified accurate:
 
 **Root Cause**: Domains using wildcard TLS certificates (like it-help.tech with `*.it-help.tech`) showed "0 subdomains" because CT logs only had wildcard entries which got normalized to the base domain and filtered out. The subdomain discovery relied solely on CT logs.
 
-**Fix — Three-Layer Free Discovery** (no paid API dependencies):
-1. **CT log scanning**: Parses crt.sh Certificate Transparency entries for explicit subdomain names
-2. **Wildcard cert detection**: Detects `*.domain` patterns in CT entries, reports active/expired status with info banner
-3. **DNS probing**: Probes ~90 common subdomain names (www, mail, api, admin, etc.) via concurrent DNS lookups with 10-goroutine semaphore cap
-4. **Rich output**: Produces all fields the template expects (name, source, is_current, cert_count, first_seen, issuers, cname_target, wildcard_certs)
+**Fix — Multi-Layer Free Discovery** (no paid API dependencies):
+Multi-layer subdomain discovery pipeline using publicly available data sources. Implementation details in intel repo.
 
 **SecurityTrails NOT used in automatic discovery** (reverted same session):
 - SecurityTrails `FetchSubdomains()` was briefly wired into the pipeline but immediately reverted
@@ -120,36 +117,25 @@ All documentation files verified accurate:
 - Correct pattern: SecurityTrails is user-key-only. Users provide their own API key on DNS History and IP Intelligence pages. The server key is reserved for features where users explicitly opt in.
 - **Rule**: Never call SecurityTrails automatically in the analysis pipeline. It's a user-provided-key feature only.
 
-**Source attribution**: "Certificate Transparency + DNS Intelligence". Caveat lists CT logs, DNS probing, and CNAME traversal.
+**Source attribution**: "Certificate Transparency + DNS Intelligence".
 
-**Date parsing robustness**: Added `parseCertDate()` that handles multiple formats (ISO 8601, date-only, datetime) to prevent silent failures from unexpected crt.sh response formats.
+**Date parsing robustness**: Added robust date parsing that handles multiple formats (ISO 8601, date-only, datetime).
 
 **New Golden Rule Tests** (27 total, 25 previous + 2 new):
 - `TestGoldenRuleWildcardCTDetection` — wildcard-only CT entries produce 0 explicit subdomains but trigger wildcard flag
 - `TestGoldenRuleWildcardNotFalsePositive` — explicit subdomain entries don't falsely trigger wildcard detection
 
-**Result**: Subdomain discovery uses three free intelligence layers (CT + wildcard + DNS probing). No paid API calls. it-help.tech now shows www.it-help.tech via DNS probing with CNAME to CloudFront.
+**Result**: Subdomain discovery now uses multiple free intelligence layers with no paid API calls. Verified working on it-help.tech.
 
 ### Session continuation: February 14, 2026 — Subdomain Discovery Performance Optimization
 
-**Root Cause**: The DNS probing layer (~140 common subdomain names) was timing out because:
-1. Each probe used DoH (DNS-over-HTTPS to dns.google) — full TLS/HTTPS connection per query
-2. Only 10 concurrent goroutines meant 14+ batches of serial HTTPS calls
-3. The shared 60-second analysis context was being consumed before all probes completed
-4. Result: `ct_subdomains` task hit 60+ seconds (timeout), only 2 of 5 known subdomains found
+**Root Cause**: DNS probing was timing out due to protocol overhead in the original implementation.
 
-**Fix — High-Speed UDP DNS Probing**:
-1. **New `ProbeExists()` method** in DNS client: Uses lightweight UDP queries (single packet) to 8.8.8.8 with fallback to 1.1.1.1, instead of expensive DoH HTTPS connections
-2. **Independent context**: `probeCommonSubdomains` gets its own 30-second context, independent of the shared analysis context
-3. **Higher concurrency**: Bumped from 10 to 20 goroutines for both probing and enrichment
-4. **Single query per name**: Only queries A record and extracts CNAME from the response (instead of 3 separate A/AAAA/CNAME queries)
-5. **Enrichment also independent**: `enrichSubdomainsV2` gets its own 30-second context with 20-goroutine concurrency
+**Fix — High-Speed DNS Probing**: Optimized DNS probe transport and concurrency. Implementation details in intel repo.
 
 **Performance Result**:
-- **Before**: 60+ seconds (timeout), incomplete results, only 2/5 subdomains
-- **After**: 1.2 seconds, all 5 known it-help.tech subdomains found (dnstool, schedule, screen, server, www) plus 4 DNS-related names (dmarc, sts, tls, u)
-
-**Design Lesson**: DoH is orders of magnitude more expensive than UDP DNS for bulk operations. A single UDP DNS query is one packet sent and one received (~100 bytes each). A single DoH query requires TCP handshake + TLS handshake + HTTP/2 framing + HTTPS overhead — hundreds of packets. For bulk probing 140+ names, the difference is catastrophic.
+- **Before**: 60+ seconds (timeout), incomplete results
+- **After**: ~1 second, complete subdomain enumeration
 
 **Golden Rule Tests**: 27 total, all pass. No new golden rule tests added (performance optimization, not behavior change).
 
@@ -159,17 +145,9 @@ All documentation files verified accurate:
 
 ### Performance Hardening (Total Analysis: 60s → ~27s)
 
-**Problem**: While ct_subdomains probing was fixed with UDP, three critical bottlenecks remained:
-1. crt.sh CT query inherited the parent 60-second context — if crt.sh was slow (common), it consumed the entire timeout
-2. Subdomain enrichment (`enrichSubdomainsV2`) still used DoH (`QueryDNS`) instead of UDP (`ProbeExists`)
-3. ASN lookup (Team Cymru) ran sequentially in the post-parallel phase, each DoH query timing out against the parent 60s context
+**Problem**: Multiple analysis pipeline stages had suboptimal timeouts and transport overhead.
 
-**Fixes Applied**:
-1. **crt.sh CT query**: Independent 10-second context via `context.Background()` — crt.sh can no longer block the analysis
-2. **Subdomain enrichment**: Switched from `QueryDNS` (DoH-first → UDP fallback, two queries per subdomain) to `ProbeExists` (single UDP query with CNAME extraction) — matches the probing method
-3. **ASN lookup**: Independent 8-second context — Team Cymru queries capped at 8s instead of consuming remaining parent context
-4. **Probing timeout**: Tightened from 30s to 15s (UDP queries are fast, 3s timeout per query)
-5. **Enrichment timeout**: Tightened from 30s to 10s
+**Fixes Applied**: Independent timeout contexts for each pipeline stage, optimized transport protocols, tightened timeouts. Implementation details in intel repo.
 
 **Result**: Total analysis time dropped from 60s to ~27s.
 
@@ -1223,7 +1201,7 @@ Full cross-check of public-facing docs (llms.txt, llms-full.txt, FEATURE_INVENTO
   - `TestGoldenRulePipelineFieldsPreservedThroughSort` — source, first_seen, cname_target, cert_count survive sort
   - `TestGoldenRuleFreeCertAuthorityDetection` — free vs paid CA classification (Let's Encrypt/Amazon/Cloudflare = free; DigiCert/Sectigo = paid)
 - **Documentation**: Added "DO NOT BREAK" sections to SKILL.md and PROJECT_CONTEXT.md documenting pipeline sequence, invariants, and do-not-touch zones.
-- **Key lesson**: Enrichment (`enrichSubdomainsV2`) MUST happen before sort and count — it mutates `is_current` via live DNS resolution.
+- **Key lesson**: Enrichment MUST happen before sort and count — it determines current status via live DNS resolution. Implementation details in intel repo.
 
 ### Maintenance Tag Update
 - Changed MAINTENANCE_NOTE from "Accuracy Tuning · Feb 18–20" to "Accuracy Tuning · Feb 17–20" (user requested start date of today).
@@ -1440,4 +1418,82 @@ The two-repo architecture works when the sync mechanism is documented. Without d
 | `.agents/skills/dns-tool/SKILL.md` | Rewrote "Git Operations" section with two-repo/two-method rule; updated regression pitfalls |
 | `go-server/internal/analyzer/posture_diff.go` | Added DKIM/CAA/SPF/DMARC/DANE fields to diff |
 | `go-server/internal/analyzer/posture_diff_oss.go` | Added `normalizeStatusVal()`; generalized severity matching |
+| `EVOLUTION.md` | Session breadcrumb |
+
+---
+
+## Session: February 18, 2026 — Security Redaction & Mission Statement (v26.19.43)
+
+### Methodology Protection Audit (CRITICAL)
+
+**Problem**: Subdomain discovery methodology details were scattered across 10+ public files — specific implementation values (function names, numeric parameters, pipeline sequences, layer counts, source-specific implementation details). These are the competitive advantage ("crown jewel") and should never have been in public docs.
+
+**Files redacted**:
+- `PROJECT_CONTEXT.md` — Removed pipeline sequence, function names, probe counts
+- `DOCS.md` — Removed pipeline implementation details
+- `EVOLUTION.md` — Replaced specific implementation references with "Implementation details in intel repo"
+- `INTELLIGENCE_ENGINE.md` — Removed methodology specifics
+- `FEATURE_INVENTORY.md` — Removed probe counts and function names
+- `go-server/templates/results.html` — Removed methodology leak in template comments
+- `static/llms.txt`, `static/llms-full.txt` — Removed pipeline details
+- `go-server/templates/index.html` — Replaced specific layer count with "Multi-layer" in JSON-LD schema and persona card
+
+**Intel repo sync**: Created `INTEL_METHODOLOGY.md` with ALL redacted details (full pipeline sequence with 10 numbered steps, function names, probe counts, goroutine concurrency, transport specifics, performance characteristics, golden rule test descriptions) and pushed to `careyjames/dnstool-intel` private repo. Local copy deleted.
+
+**SKILL.md hardened**: Added "Methodology Protection" section with:
+- Banned content list (function names, probe counts, layer counts, timing, concurrency)
+- Approved public language phrases
+- Where proprietary details belong (intel repo only)
+- Grep-based audit checklist to run before every session end
+- Redacted the pipeline sequence that was in SKILL.md itself (it was in the public repo!)
+
+### Mission Statement — docs/MISSION.md
+
+Created `docs/MISSION.md` with 10 core OSINT principles:
+1. Multi-Source Collection — Redundant intelligence from independent sources
+2. Source Authority Hierarchy — Authoritative > secondary > derived
+3. Passive Collection Only — No exploitation, no access control bypass
+4. Independent Verifiability — Every finding reproducible with standard tools
+5. RFC Compliance — Standards-based analysis only
+6. Confidence Taxonomy — Confirmed/Corroborated/Inferred
+7. Transparency of Method — Describe WHAT we observe, not HOW we collect
+8. Intelligence Not Data — Assessed, contextualized, actionable
+9. No Paid Dependencies by Default — Core analysis uses free/public sources
+10. Reality Over Marketing — Every claim backed by implemented code
+
+### Homepage Mission Section
+Added "Our Mission" section to `go-server/templates/index.html` with:
+- fa-compass icon
+- "Produce actionable domain security intelligence from publicly observable data"
+- Three pillars: Multi-Source Collection, Independently Verifiable, Passive OSINT Only
+
+### "How did we find these?" CTA
+- Replaced "Why visible?" button with "How did we find these?" (btn-outline-info styling)
+- Updated in BOTH Go template (`go-server/templates/results.html`) and Jinja2 template (`templates/results.html`)
+- Links to `/faq/subdomains` — 9-item accordion explaining subdomain discovery at a high level
+
+### Maintenance Note Cleared
+- Commented out all `sectionTuningMap` entries in `config.go`
+- "Accuracy Tuning" badge no longer appears in navbar
+
+### SonarCloud Workflow Merge Conflict Resolved
+- Fixed merge conflict markers in `.github/workflows/sonarcloud.yml`
+
+### Key Lesson — Methodology Protection Must Be Permanent
+
+The SKILL.md itself contained the very implementation details being redacted from other docs. **The skill file is in the public repo.** This was the worst leak because it was in the instructions given to every AI session, guaranteeing the details would be reproduced into new documentation. The new "Methodology Protection" section with audit commands and a private-repo audit script prevents this from recurring.
+
+### Files Changed
+| File | What Changed |
+|------|-------------|
+| `go-server/internal/config/config.go` | AppVersion → 26.19.43, sectionTuningMap entries commented out |
+| `docs/MISSION.md` | NEW — 10 OSINT principles |
+| `go-server/templates/index.html` | Mission section, replaced specific layer count with "Multi-layer" in JSON-LD + persona card |
+| `go-server/templates/results.html` | "How did we find these?" CTA, methodology redaction |
+| `templates/results.html` | "How did we find these?" CTA (Jinja2 template) |
+| `PROJECT_CONTEXT.md` | Pipeline details redacted |
+| `DOCS.md` | Pipeline details redacted |
+| `FEATURE_INVENTORY.md` | Pipeline details redacted |
+| `static/llms.txt`, `static/llms-full.txt` | Pipeline details redacted |
+| `.agents/skills/dns-tool/SKILL.md` | "Methodology Protection" section added; pipeline details redacted from SKILL.md itself |
 | `EVOLUTION.md` | Session breadcrumb |

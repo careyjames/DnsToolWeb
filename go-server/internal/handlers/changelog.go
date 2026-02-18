@@ -27,7 +27,6 @@
 package handlers
 
 const (
-        dateFeb17 = "Feb 17, 2026"
         dateFeb15 = "Feb 15, 2026"
         dateFeb14 = "Feb 14, 2026"
         dateFeb13 = "Feb 13, 2026"
@@ -63,14 +62,6 @@ func GetRecentChangelog(n int) []ChangelogEntry {
 
 func GetChangelog() []ChangelogEntry {
         return []ChangelogEntry{
-                {
-                        Version:     "26.19.40",
-                        Date:        dateFeb17,
-                        Category:    "Accuracy",
-                        Title:       "Accuracy Tuning · Feb 17–20",
-                        Description: "Ongoing accuracy refinements across Email Security (SPF/DKIM/DMARC parsing), Brand & Trust (BIMI/CAA detection), AI Surface scanning, Mail Transport Security (MTA-STS/DANE signal inference), and Infrastructure analysis. Improved signal correlation and reduced false positives across all protocol sections.",
-                        Icon:        "fas fa-wrench",
-                },
                 {
                         Version:     "26.17.2",
                         Date:        dateFeb15,

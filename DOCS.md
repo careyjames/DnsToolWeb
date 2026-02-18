@@ -218,7 +218,7 @@ Maximum 8 requests per minute per IP. Wait 60 seconds and retry.
 - Multi-resolver consensus (Cloudflare, Google, Quad9, OpenDNS)
 - AI Surface Scanner with prompt injection detection
 - Email Header Analyzer with RFC parsing
-- Three-layer subdomain discovery (CT logs + wildcard detection + UDP DNS probing) with caching
+- Multi-layer subdomain discovery with intelligent caching
 - SecurityTrails DNS history integration
 - IP Intelligence with IP-to-ASN attribution
 - Posture scoring with CVSS alignment

@@ -1747,6 +1747,7 @@
                     {% if ct.get('status') == 'success' and ct.get('unique_subdomains', 0) > 0 %}
                     <span class="badge bg-info-subtle text-info border border-info-subtle">{% if ct.get('was_truncated') %}{{ ct.display_count }} of {% endif %}{{ ct.unique_subdomains }} subdomain{{ 's' if ct.unique_subdomains != 1 else '' }}</span>
                     {% endif %}
+                    <a href="/faq/subdomains" target="_blank" rel="noopener" class="btn btn-sm btn-outline-info no-print ms-2" data-bs-toggle="tooltip" title="How did we find these subdomains? Why are they publicly visible? What can you do about it?"><i class="fas fa-circle-question me-1"></i>How did we find these?</a>
                 </div>
                 <div class="card-body">
                     {% if ct.get('status') == 'success' and ct.get('subdomains') and ct.subdomains|length > 0 %}
@@ -1864,7 +1865,7 @@
                     {% if ct.get('was_truncated') %}
                     <div class="text-muted small mt-2 mb-0 p-2 rounded" style="background: rgba(255,255,255,0.03);">
                         <i class="fas fa-filter me-1"></i><strong>Showing {{ ct.display_count }} of {{ ct.unique_subdomains }} subdomains</strong> &mdash; curated by security relevance.
-                        Three cooperative discovery methods — CT logs (RFC 6962), DNS probing of ~290 common service names, and CNAME chain traversal — feed into a unified view.
+                        Multiple cooperative discovery methods — including CT logs (<a href="https://datatracker.ietf.org/doc/html/rfc6962" target="_blank" rel="noopener" class="text-info">RFC 6962</a>), DNS probing, and CNAME chain traversal — feed into a unified view.
                         Well-known service names (mail, vpn, api, sso, admin, etc.), DNS-resolving hosts, and subdomains with the most certificate activity are prioritized.
                         {% if ct.expired_count > 0 %}
                         <span class="ms-1">{{ ct.expired_count }} expired-certificate-only subdomain{{ 's' if ct.expired_count != 1 else '' }} {{ 'mostly omitted' if ct.expired_count > ct.display_count else 'included where relevant' }}.</span>

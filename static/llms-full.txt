@@ -195,7 +195,7 @@ Every analysis generates a SHA-256 integrity fingerprint that binds:
 A short hash preview appears in the report header metadata (next to timestamp/version) in the format `SHA-256: c82f✱✱✱✱ Report Integrity ↓` — 4 hex characters plus 4 star masks, as a clickable link that scrolls to the full hash section at the bottom of the report. The full hash can be copied to clipboard. This is distinct from the posture hash (used for drift detection) — the integrity hash uniquely identifies each specific report instance.
 
 ### 11. Subdomain Discovery
-- Three-layer approach: Certificate Transparency logs (crt.sh, RFC 6962) + wildcard certificate detection + high-speed UDP DNS probing of ~140 common service names
+- Multi-layer approach using Certificate Transparency logs (RFC 6962), wildcard certificate detection, DNS probing, and CNAME chain traversal
 - Source attribution: "CT Log" vs "DNS" for each subdomain
 - Wildcard certificate detection and DNS wildcard filtering
 - Subdomain-aware context: detects when the analyzed domain is itself a subdomain and offers a link to scan the registered domain

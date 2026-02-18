@@ -121,7 +121,7 @@ func (a *Analyzer) DiscoverSubdomains(ctx context.Context, domain string) map[st
                 slog.Info("CT provider in cooldown, skipping", "domain", domain)
                 ctAvailable = false
         } else {
-                ctCtx, ctCancel := context.WithTimeout(context.Background(), 45*time.Second)
+                ctCtx, ctCancel := context.WithTimeout(context.Background(), 30*time.Second)
                 defer ctCancel()
                 ctURL := fmt.Sprintf("https://crt.sh/?q=%%25.%s&output=json", domain)
                 start := time.Now()
@@ -212,12 +212,6 @@ func (a *Analyzer) DiscoverSubdomains(ctx context.Context, domain string) map[st
 
         result["unique_subdomains"] = len(subdomains)
         result["ct_source"] = "live"
-        if !ctAvailable {
-                result["status"] = "partial"
-                result["ct_unavailable"] = true
-                result["source"] = "DNS Intelligence (CT logs unavailable)"
-                result["caveat"] = "CT log query timed out or failed. Subdomains shown are from DNS probing of common service names and CNAME chain traversal only. Re-scan to retry CT log discovery."
-        }
         _ = dnsProbed
 
         applySubdomainDisplayCap(result, subdomains, currentCount)

@@ -242,28 +242,52 @@ These have caused repeated regressions — check EVOLUTION.md "Failures & Lesson
 - Report names shortened inconsistently across 5 sync points
 - Font Awesome CSS not cache-busted (missing `staticVersionURL` while other CSS had it)
 - RDAP treated as critical failure instead of Tier 4 contextual (alarming users for non-security data)
+- **Methodology leaked in SKILL.md itself** — pipeline implementation details were documented directly in this public file. Every AI session loaded them and reproduced them into new docs/templates. Fixed Feb 18, 2026: replaced with high-level architecture + pointer to private intel repo. Added "Methodology Protection" section with audit grep.
+
+## Methodology Protection — CRITICAL (Public/Private Content Boundary)
+
+**THIS FILE IS IN THE PUBLIC REPO.** Every word here is visible to the world. The following rules prevent accidental exposure of proprietary subdomain discovery methodology.
+
+### Banned Content in Public Files (this repo, all docs, templates, llms.txt, JSON-LD)
+Never include ANY of the following in public-facing content. Do NOT include concrete examples of banned values — even listing them as "don't say X" leaks X. The full reference list is in `INTEL_METHODOLOGY.md` in the private intel repo.
+
+- **Function names** from the subdomain pipeline
+- **Probe counts** or DNS prefix wordlist sizes
+- **Pipeline step sequences** with implementation details
+- **Specific layer counts** describing the discovery architecture
+- **Concurrency/transport details** (goroutine counts, worker pools, connection settings)
+- **Timing/size parameters** (timeouts, body limits, performance benchmarks)
+- **CT source implementation specifics** (deduplication strategy, parsing details)
+
+### Approved Public Language
+When describing subdomain discovery, use ONLY these vague, high-level phrases:
+- "Multi-layer subdomain discovery"
+- "Certificate Transparency and DNS intelligence"
+- "Multi-source redundant collection"
+- "Finds subdomains where other tools fail"
+
+Do NOT enumerate individual discovery sources in sequence — describing individual layers together reconstructs the pipeline.
+
+### Where Proprietary Details Belong
+- **Private intel repo only** (`careyjames/dnstool-intel`): `INTEL_METHODOLOGY.md` has everything
+- **Go source code** (`subdomains.go`): Function names in compiled source are fine — BSL-licensed implementation
+- **NEVER in**: Any `.md`, `.html`, `.txt` file in this public repo. This includes SKILL.md itself, PROJECT_CONTEXT.md, EVOLUTION.md, DOCS.md, FEATURE_INVENTORY.md, llms.txt, templates, replit.md
+
+### Audit Checklist (run before every session end)
+Run the methodology leak audit script. The script with the specific search patterns lives in the private intel repo at `scripts/methodology-audit.sh`. Use the sync script to read it:
+```bash
+node scripts/github-intel-sync.mjs read scripts/methodology-audit.sh | bash
+```
+If the script doesn't exist yet, create it in the intel repo with patterns matching all banned values, then run it. ANY matches in public files (outside `go-server/internal/`) are leaks that must be fixed immediately. No exceptions for "cautionary" or "don't do this" phrasing.
 
 ## Subdomain Discovery Pipeline — DO NOT BREAK (Critical Infrastructure)
 
 Subdomain discovery is the tool's crown jewel. It consistently finds subdomains where competing tools fail. This was broken for a long time before being fixed. **Treat the pipeline as critical infrastructure.**
 
-### Pipeline Sequence (order matters)
-1. **CT fetch** → `crt.sh` query with 30s timeout (10MB body limit)
-2. **Deduplication** → `deduplicateCTEntries()` by serial_number
-3. **CT processing** → `processCTEntries()` extracts subdomain names from CT SANs
-4. **DNS probing** → `probeCommonSubdomains()` probes ~90 common prefixes
-5. **CNAME traversal** → discovers additional infrastructure via CNAME chains
-6. **Enrichment** → `enrichSubdomainsV2()` resolves each subdomain, updates `is_current`
-7. **Recount** → `currentCount`/`expiredCount` recalculated AFTER enrichment
-8. **Sort** → `sortSubdomainsSmartOrder()` — current first, then historical by date desc
-9. **Cache** → `setCTCache()` stores sorted results
-10. **Display cap** → `applySubdomainDisplayCap()` — never hides current subdomains
+### Architecture (high-level only — details in intel repo)
+The pipeline uses multi-layer discovery: Certificate Transparency for breadth, DNS probing for common service names, CNAME traversal for infrastructure behind aliases, and live enrichment to filter to what's actually resolving. The combination catches subdomains that any single method would miss.
 
-### DO NOT TOUCH without golden rule test coverage
-- `processCTEntries()` — CT → subdomain extraction
-- `probeCommonSubdomains()` — DNS probing wordlist and resolution
-- `enrichSubdomainsV2()` — live resolution and `is_current` mutation
-- The pipeline ORDER: enrichment MUST happen before sort and count
+**Full pipeline sequence, function names, probe counts, and implementation details are in `INTEL_METHODOLOGY.md` in the private intel repo.** Read it there before making pipeline changes.
 
 ### Key Invariants (protected by golden rule tests)
 - Current subdomains ALWAYS appear before historical in display
@@ -271,12 +295,10 @@ Subdomain discovery is the tool's crown jewel. It consistently finds subdomains 
 - CT unavailability gracefully falls back to DNS probing (not an error)
 - All fields (`source`, `first_seen`, `cname_target`, `cert_count`) survive sort
 - `is_current` is authoritative after enrichment — template uses it for badges
+- Enrichment MUST happen before sort and count (sort-before-enrichment bug: v26.19.29)
 
-### Why it works where others fail
-CT provides breadth (every cert ever issued), DNS probing adds common service names that may not have certs, CNAME traversal discovers infrastructure behind aliases, and enrichment filters to what's actually live. The combination catches subdomains that any single method would miss.
-
-### Past failure: Sort-before-enrichment bug (v26.19.29)
-Sorting was originally done before `enrichSubdomainsV2()`, which meant CT entries with expired certs but still-resolving subdomains were classified as "historical" before enrichment could update `is_current = true`. Fix: sort AFTER enrichment.
+### DO NOT TOUCH without golden rule test coverage
+Pipeline processing, probing, and enrichment functions are protected by golden rule tests. Read the test file and the intel methodology doc before making changes.
 
 ## Drift Engine (Phase 2)
 
@@ -314,3 +336,4 @@ The drift engine detects posture changes between analyses. Key files:
 10. **Don't use `style=""`** — CSP blocks inline styles
 11. **NEVER leave `_intel.go` or `_intel_test.go` files in DnsToolWeb** — push to `dnstool-intel` via `node scripts/github-intel-sync.mjs push` and delete locally. Build tags don't hide source code from public Git history. This has caused a real proprietary data leak (Feb 2026).
 12. **Don't assume the Intel repo is inaccessible** — the GitHub integration gives full read/write access via `scripts/github-intel-sync.mjs`. Use it.
+13. **NEVER write pipeline implementation details in public docs** — No function names, probe counts, layer counts, pipeline sequences, or timing details in any `.md`, `.html`, or `.txt` file. Use approved language from the "Methodology Protection" section above. Run the audit grep before ending any session. This has caused a real methodology exposure incident (Feb 2026).

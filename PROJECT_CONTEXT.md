@@ -70,7 +70,7 @@ templates/                 # Python Flask templates (legacy/trampoline)
 The backend utilizes Go with Gin, `pgx` v5 for PostgreSQL, `sqlc` for type-safe queries, and `miekg/dns` for DNS queries. Key implemented features:
 
 - Multi-resolver DNS client with DoH fallback and high-speed UDP probing
-- Three-layer subdomain discovery (CT logs + wildcard detection + DNS probing ~140 common names)
+- Multi-layer subdomain discovery (proprietary pipeline — see intel repo for implementation details)
 - Posture scoring with CVSS-aligned risk levels
 - Concurrent orchestrator with independent contexts per task
 - Mail Transport Security (three-tier: policy/telemetry/probe, RFC 8461/7672 aligned)
@@ -106,7 +106,7 @@ Server-rendered HTML with Go html/template, Bootstrap dark theme, custom CSS, cl
 | **DNS Resolvers** (Cloudflare, Google, Quad9, OpenDNS/Cisco Umbrella) | Multi-resolver consensus DNS queries | Public, no API key |
 | **IANA RDAP** | Registry data lookups | Multi-endpoint, parallel attempts, exponential backoff |
 | **ip-api.com** | Visitor IP-to-country lookups | Free tier |
-| **crt.sh** | Certificate Transparency logs | Independent 30s context, 10MB body limit |
+| **crt.sh** | Certificate Transparency logs | Independent context with timeout and size limits |
 | **SecurityTrails** | DNS history and IP Intelligence | **⚠️ 50 req/month HARD LIMIT. User-provided API key ONLY. NEVER call automatically.** |
 | **Team Cymru** | DNS-based IP-to-ASN attribution | Independent 8s context |
 | **OpenPhish** | Phishing URL feed (Email Header Analyzer body scanning) | Community feed |
@@ -368,16 +368,11 @@ After evaluating APA, Chicago/Turabian, IEEE, NIST SP 800, and ICD, the project 
 
 The subdomain discovery pipeline is the tool's most valuable differentiator — it consistently finds subdomains where competing tools fail. **Treat as critical infrastructure. Do not modify without golden rule test coverage.**
 
-Pipeline sequence (order is load-bearing):
-1. CT fetch → deduplication → `processCTEntries()` → DNS probing → CNAME traversal → `enrichSubdomainsV2()` → recount → `sortSubdomainsSmartOrder()` → cache → `applySubdomainDisplayCap()`
-
-Key invariants:
-- Enrichment (`enrichSubdomainsV2`) MUST happen before sort and count — it mutates `is_current` based on live DNS resolution
-- Display cap (softCap=200, historicalOverflow=25) NEVER hides current/active subdomains
-- CT unavailability is graceful fallback, not an error — DNS probing still runs
+Implementation details are in the intel repo. Key public-facing behaviors:
+- CT unavailability is graceful fallback, not an error — other discovery methods still run
+- Display cap NEVER hides current/active subdomains
 - Golden rule tests protect: ordering, display cap, field preservation, free CA detection
 - CSV export: `/export/subdomains?domain=X` exports ALL cached subdomains (not just displayed ones)
-- CT timeout: 30s, body limit: 10MB (for large domains like apple.com)
 
 ### Data and API
 

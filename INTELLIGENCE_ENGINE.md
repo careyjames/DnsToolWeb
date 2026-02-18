@@ -47,7 +47,7 @@ Every piece of intelligence has a source. Sources have different authority level
 | **Tier 2: Protocol Records** | High | SPF TXT, DMARC TXT, DKIM TXT, CAA, TLSA, MTA-STS, DNSSEC (DNSKEY/DS) | For their specific protocol — RFC-defined semantics |
 | **Tier 3: Resolver Consensus** | High | Multi-resolver validation (Cloudflare, Google, Quad9, OpenDNS) | When authoritative data is unavailable or for propagation validation |
 | **Tier 4: Registry Data** | Medium-High | RDAP (primary), WHOIS (fallback) | For registrar/registration data; RDAP > WHOIS always |
-| **Tier 5: Certificate Intelligence** | Medium | Certificate Transparency logs (crt.sh) | For subdomain discovery, CA authorization validation |
+| **Tier 5: Certificate Intelligence** | Medium | Certificate Transparency logs | For subdomain discovery, CA authorization validation |
 | **Tier 6: Infrastructure Inference** | Medium | NS patterns, MX patterns, CNAME targets, A/AAAA records | For provider identification — inferred, not declared |
 | **Tier 7: Third-Party Intelligence** | Low-Medium | SecurityTrails (history), Team Cymru (ASN), ip-api.com (geo), OpenPhish | For enrichment — external data, not domain-controlled |
 | **Tier 8: Web Intelligence** | Low | HTTP probes (MTA-STS policy, security.txt, robots.txt, llms.txt) | For web-layer configuration — transient, not DNS-authoritative |
@@ -293,7 +293,7 @@ These collect and parse raw data — no classification or interpretation logic:
 | DNS Client | `go-server/internal/dnsclient/` | Multi-resolver queries, DoH fallback, consensus validation |
 | Record Parsers | `go-server/internal/analyzer/records.go` | Raw DNS record fetching (A, AAAA, MX, NS, TXT, SOA, CNAME) |
 | RDAP/WHOIS Client | `go-server/internal/analyzer/registrar.go` (data fetch portions) | Multi-endpoint RDAP lookup, WHOIS fallback |
-| CT Log Client | `go-server/internal/analyzer/subdomains.go` (crt.sh query) | Certificate Transparency log queries |
+| CT Log Client | `go-server/internal/analyzer/subdomains.go` | Certificate Transparency log queries |
 | HTTP Probes | Portions of MTA-STS, security.txt, AI surface (HTTP fetch only) | Fetching well-known URLs |
 
 ### ICIE Modules (BSL 1.1 Protected)

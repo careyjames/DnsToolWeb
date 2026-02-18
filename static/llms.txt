@@ -32,7 +32,7 @@ A single-page report with these sections (scroll down):
 - **Traffic & Routing**: DNS records (A, AAAA, MX, NS, SOA, TXT, SRV, CNAME)
 - **Domain Intelligence**: Registrar, creation/expiration, nameservers via RDAP
 - **DNS History Timeline**: Record changes over time (A, MX, NS) via SecurityTrails
-- **Subdomain Discovery**: Certificate Transparency + high-speed UDP DNS probing (~140 common names)
+- **Subdomain Discovery**: Certificate Transparency + DNS probing + CNAME chain traversal
 - **Intelligence Sources**: Summary of all data sources used in the analysis
 - **Verify It Yourself**: Terminal commands (dig, openssl, curl) to independently reproduce every finding
 
@@ -95,7 +95,7 @@ Every attribution includes a confidence label:
 - DNS history timeline via SecurityTrails (A, MX, NS record changes over time)
 - Security posture scoring with executive-level verdicts
 - Dual intelligence products: Engineer's DNS Intelligence Report (full technical detail) and Executive's DNS Intelligence Brief (condensed board-ready summary with security scorecard)
-- Automatic subdomain discovery via Certificate Transparency logs and high-speed UDP DNS probing (~140 common names, wildcard detection)
+- Automatic subdomain discovery via Certificate Transparency logs, DNS probing, and CNAME chain traversal (with wildcard detection)
 - Confidence taxonomy (Observed / Inferred / Third-party) for all attributions
 - "Verify It Yourself" terminal commands appendix (dig, openssl, curl)
 - Intelligence sources inventory with full transparency

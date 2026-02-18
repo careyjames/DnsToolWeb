@@ -19,7 +19,19 @@ type Config struct {
         SectionTuning   map[string]string
 }
 
-var sectionTuningMap = map[string]string{}
+var sectionTuningMap = map[string]string{
+        // "email": "Accuracy Tuning",
+        // "dane":         "Accuracy Tuning",
+        // "brand": "Accuracy Tuning",
+        // "securitytxt":  "Accuracy Tuning",
+        // "ai":   "Accuracy Tuning",
+        // "secrets":      "Accuracy Tuning",
+        // "web-exposure": "Accuracy Tuning",
+        // "smtp": "Accuracy Tuning",
+        // "infra": "Accuracy Tuning",
+        // "dnssec":       "Accuracy Tuning",
+        // "traffic":      "Accuracy Tuning",
+}
 
 func Load() (*Config, error) {
         dbURL := os.Getenv("DATABASE_URL")
@@ -62,7 +74,7 @@ func Load() (*Config, error) {
                 DatabaseURL:     dbURL,
                 SessionSecret:   sessionSecret,
                 Port:            port,
-                AppVersion:      "26.19.42",
+                AppVersion:      "26.19.43",
                 Testing:         false,
                 SMTPProbeMode:   smtpProbeMode,
                 MaintenanceNote: maintenanceNote,
