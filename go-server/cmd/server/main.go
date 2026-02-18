@@ -148,7 +148,12 @@ func main() {
 
         router.GET("/compare", compareHandler.Compare)
 
-        // router.GET("/export/json", exportHandler.ExportJSON) // DISABLED: unauthenticated bulk export — re-enable when auth is implemented
+        router.GET("/export/json", func(c *gin.Context) {
+                c.JSON(http.StatusForbidden, gin.H{
+                        "error":   "JSON export requires authentication",
+                        "message": "Bulk JSON export is available to authenticated users. Sign in to access this feature.",
+                })
+        })
         router.GET("/export/subdomains", analysisHandler.ExportSubdomainsCSV)
 
         router.GET("/api/analysis/:id", analysisHandler.APIAnalysis)
