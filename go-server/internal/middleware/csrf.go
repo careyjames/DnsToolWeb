@@ -147,7 +147,17 @@ func (m *CSRFMiddleware) rejectCSRF(c *gin.Context, reason string) {
                 "path", c.Request.URL.Path,
                 "remote_addr", c.ClientIP(),
         )
-        c.AbortWithStatus(http.StatusForbidden)
+
+        domain := c.PostForm("domain")
+        if domain == "" {
+                domain = c.Query("domain")
+        }
+        if domain != "" {
+                c.Redirect(http.StatusSeeOther, "/?domain="+domain+"&flash=Session+expired.+Please+try+again.")
+        } else {
+                c.Redirect(http.StatusSeeOther, "/?flash=Session+expired.+Please+try+again.")
+        }
+        c.Abort()
 }
 
 func GetCSRFToken(c *gin.Context) string {

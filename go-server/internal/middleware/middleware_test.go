@@ -87,8 +87,8 @@ func TestCSRFPostWithoutCookie(t *testing.T) {
         req.Header.Set(headerContentType, contentTypeForm)
         router.ServeHTTP(w, req)
 
-        if w.Code != http.StatusForbidden {
-                t.Fatalf(msgExpect403, w.Code)
+        if w.Code != http.StatusSeeOther {
+                t.Fatalf("expected 303 redirect, got %d", w.Code)
         }
 }
 
@@ -108,8 +108,8 @@ func TestCSRFPostWithInvalidSignature(t *testing.T) {
         })
         router.ServeHTTP(w, req)
 
-        if w.Code != http.StatusForbidden {
-                t.Fatalf(msgExpect403, w.Code)
+        if w.Code != http.StatusSeeOther {
+                t.Fatalf("expected 303 redirect, got %d", w.Code)
         }
 }
 
@@ -224,8 +224,8 @@ func TestCSRFPostTokenMismatch(t *testing.T) {
         })
         router.ServeHTTP(postW, postReq)
 
-        if postW.Code != http.StatusForbidden {
-                t.Fatalf(msgExpect403, postW.Code)
+        if postW.Code != http.StatusSeeOther {
+                t.Fatalf("expected 303 redirect, got %d", postW.Code)
         }
 }
 

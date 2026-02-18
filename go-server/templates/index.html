@@ -245,7 +245,7 @@
                                        autocomplete="off"
                                        autofocus
                                        aria-label="Domain to analyze"
-                                       value="{{.WaitDomain}}">
+                                       value="{{if .PrefillDomain}}{{.PrefillDomain}}{{else}}{{.WaitDomain}}{{end}}">
                                 <button class="btn btn-analyze search-btn" type="submit" id="analyzeBtn" aria-label="Analyze domain"
                                     {{if .WaitSeconds}}
                                     data-wait-seconds="{{.WaitSeconds}}"

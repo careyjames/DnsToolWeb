@@ -33,6 +33,14 @@ func (h *HomeHandler) Index(c *gin.Context) {
                 "Changelog":   GetRecentChangelog(6),
                 "DKIMExpand":  c.Query("dkim") != "",
         }
+
+        if flash := c.Query("flash"); flash != "" {
+                data["FlashMessages"] = []FlashMessage{{Category: "warning", Message: flash}}
+                if domain := c.Query("domain"); domain != "" {
+                        data["PrefillDomain"] = domain
+                }
+        }
+
         mergeAuthData(c, h.Config, data)
         c.HTML(http.StatusOK, "index.html", data)
 }
