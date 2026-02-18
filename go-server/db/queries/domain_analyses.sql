@@ -118,6 +118,37 @@ WHERE domain = $1
 ORDER BY created_at DESC
 LIMIT 1;
 
+-- name: GetPreviousAnalysisForDrift :one
+SELECT id, posture_hash, full_results, created_at FROM domain_analyses
+WHERE domain = $1
+  AND analysis_success = TRUE
+  AND posture_hash IS NOT NULL
+  AND posture_hash != ''
+  AND full_results IS NOT NULL
+ORDER BY created_at DESC
+LIMIT 1;
+
+-- name: GetPostureHashBefore :one
+SELECT posture_hash, created_at FROM domain_analyses
+WHERE domain = $1
+  AND id < $2
+  AND analysis_success = TRUE
+  AND posture_hash IS NOT NULL
+  AND posture_hash != ''
+ORDER BY created_at DESC
+LIMIT 1;
+
+-- name: GetPreviousAnalysisForDriftBefore :one
+SELECT id, posture_hash, full_results, created_at FROM domain_analyses
+WHERE domain = $1
+  AND id < $2
+  AND analysis_success = TRUE
+  AND posture_hash IS NOT NULL
+  AND posture_hash != ''
+  AND full_results IS NOT NULL
+ORDER BY created_at DESC
+LIMIT 1;
+
 -- name: GetNewerAnalysisForDomain :one
 SELECT id, created_at FROM domain_analyses
 WHERE ascii_domain = $1

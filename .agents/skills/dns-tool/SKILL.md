@@ -270,6 +270,28 @@ CT provides breadth (every cert ever issued), DNS probing adds common service na
 ### Past failure: Sort-before-enrichment bug (v26.19.29)
 Sorting was originally done before `enrichSubdomainsV2()`, which meant CT entries with expired certs but still-resolving subdomains were classified as "historical" before enrichment could update `is_current = true`. Fix: sort AFTER enrichment.
 
+## Drift Engine (Phase 2)
+
+The drift engine detects posture changes between analyses. Key files:
+- `posture_hash.go` — Canonical SHA-256 posture hashing (public, framework-level)
+- `posture_diff.go` — Structured diff computation: compares two analysis results, returns which fields changed (public)
+- `posture_diff_oss.go` — OSS severity classification for drift fields (public stub, `!intel` build tag)
+- `DRIFT_ENGINE.md` — Public summary only. Full roadmap lives in the private `dnstool-intel` repo.
+
+### Drift diff architecture
+- **Public** (`posture_diff.go`): `ComputePostureDiff(prev, curr map[string]any) []PostureDiffField` — raw field-by-field comparison
+- **Build-tagged** (`posture_diff_oss.go`): `classifyDriftSeverity()` — maps changes to Bootstrap severity classes (danger/warning/success/info)
+- **Handler**: Uses `GetPreviousAnalysisForDrift` query to get previous full_results for diff computation
+- **Template**: Drift alert shows structured table of changed fields with severity-colored badges, "View Previous Report" link, and clickable hash previews
+
+### Drift severity rules (OSS defaults)
+- DMARC policy downgrade (reject → none): `danger`
+- DMARC policy upgrade (none → reject): `success`
+- Security status degradation (pass → fail): `danger`
+- Security status improvement (fail → pass): `success`
+- MX/NS record changes: `warning`
+- Other changes: `info`
+
 ## Anti-Patterns to Avoid
 
 1. **Don't use inline onclick/onchange** — CSP will block it silently

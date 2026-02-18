@@ -43,7 +43,7 @@ func formatDiffValue(v interface{}) string {
 func buildCompareAnalysis(a dbq.DomainAnalysis) CompareAnalysis {
         ca := CompareAnalysis{}
         if a.CreatedAt.Valid {
-                ca.CreatedAt = a.CreatedAt.Time.Format("2006-01-02 15:04:05")
+                ca.CreatedAt = a.CreatedAt.Time.UTC().Format("2006-01-02 15:04:05 UTC")
         }
         if len(a.FullResults) > 0 {
                 var fr map[string]interface{}
@@ -281,7 +281,7 @@ func buildSelectAnalysisItem(a dbq.DomainAnalysis) AnalysisItem {
         }
         createdAt := ""
         if a.CreatedAt.Valid {
-                createdAt = a.CreatedAt.Time.Format("2006-01-02 15:04:05")
+                createdAt = a.CreatedAt.Time.UTC().Format("2006-01-02 15:04:05 UTC")
         }
         toolVersion := ""
         if len(a.FullResults) > 0 {

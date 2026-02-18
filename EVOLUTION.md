@@ -1358,3 +1358,56 @@ The two-repo architecture works when the sync mechanism is documented. Without d
 | `go-server/internal/analyzer/golden_rules_intel_test.go` | DELETED from DnsToolWeb (moved to Intel repo) |
 | `.agents/skills/dns-tool/SKILL.md` | Cross-repo sync documentation; sync script usage |
 | `EVOLUTION.md` | Session breadcrumb |
+
+---
+
+## Session: February 18, 2026
+
+### Drift Engine Phase 2 — Structured Diff + UX Improvements (v26.19.40)
+
+**Context**: Phase 1 (Foundation) was completed Feb 15. Phase 2 was planned in `DRIFT_ENGINE.md` but the roadmap document was in the public repo, exposing commercial product plans (alerting, webhooks, scheduled monitoring).
+
+#### DRIFT_ENGINE.md Moved to Private Repo
+- **Problem**: `DRIFT_ENGINE.md` contained the full 4-phase commercial roadmap (Foundation → Detection → Timeline UI → Alerting/Webhooks/Monitoring)
+- **Action**: Pushed full document to `dnstool-intel` repo, replaced local with public-safe summary (Phase 1-2A status only, "roadmap available under commercial license" note)
+
+#### Phase 2B — Structured Drift Diff
+- **New file**: `posture_diff.go` — `ComputePostureDiff(prev, curr)` compares two analysis result maps field-by-field, returns `[]PostureDiffField` with Label/Previous/Current/Severity
+- **New file**: `posture_diff_oss.go` — `classifyDriftSeverity()` OSS stub (build tag `!intel`). Classifies drift fields into Bootstrap severity classes:
+  - DMARC policy downgrade (reject → none): `danger`
+  - DMARC policy upgrade (none → reject): `success`
+  - Security status degradation (pass → fail): `danger`
+  - MX/NS changes: `warning`
+  - Other: `info`
+- **New queries**: `GetPreviousAnalysisForDrift` and `GetPreviousAnalysisForDriftBefore` — return full_results + ID for diff computation (replaces hash-only queries for drift path)
+- **Architecture decision**: Raw diff computation is public (framework-level, compares public DNS data). Severity classification is behind build tags — private `_intel.go` can provide enhanced severity scoring and prioritization
+
+#### Phase 2C — Drift Alert UX
+- **Structured diff table**: Shows which fields changed with Previous → Current values, severity-colored badges
+- **"View Previous Report" button**: Links to `/analysis/{prevID}/view` for direct comparison
+- **Clickable hash previews**: Previous hash links to the previous report
+- **"Compared against your previous observation on [date]" text**: Clear provenance with explicit UTC timestamp
+- **CSP compliant**: No inline styles, uses Bootstrap utility classes
+
+#### UTC Timestamp Consistency
+- All timestamps across history, compare, and results pages now include explicit "UTC" label
+- Fixes confusion where Feb 17 4:12 PM PST showed as "18 Feb 2026" (correct UTC conversion, but confusing without label)
+
+#### Session Startup Failure Acknowledged
+- Failed to read `DRIFT_ENGINE.md` at session start per SKILL.md step 2 ("Read PROJECT_CONTEXT.md")
+- Built Phase 2 without referencing the existing roadmap document
+- Lesson: The startup checklist exists for a reason. Read ALL project docs before making changes.
+
+### Files Changed
+| File | What Changed |
+|------|-------------|
+| `DRIFT_ENGINE.md` | Replaced with public-safe summary (full roadmap moved to dnstool-intel) |
+| `go-server/internal/analyzer/posture_diff.go` | NEW — Structured drift diff computation |
+| `go-server/internal/analyzer/posture_diff_oss.go` | NEW — OSS severity classification stub |
+| `go-server/db/queries/domain_analyses.sql` | Two new drift queries (full_results + ID) |
+| `go-server/internal/dbq/*` | Regenerated sqlc |
+| `go-server/internal/handlers/analysis.go` | Live + history handlers use structured diff |
+| `go-server/internal/handlers/compare.go` | UTC label on compare timestamps |
+| `go-server/templates/results.html` | Drift alert with structured table, clickable links |
+| `.agents/skills/dns-tool/SKILL.md` | Drift Engine Phase 2 documentation |
+| `EVOLUTION.md` | Session breadcrumb |

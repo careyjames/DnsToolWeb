@@ -122,6 +122,38 @@ func (h *AnalysisHandler) ViewAnalysisStatic(c *gin.Context) {
         integrityHash := analyzer.ReportIntegrityHash(analysis.AsciiDomain, analysis.ID, timestamp, hashVersion, results)
         rfcCount := analyzer.CountVerifiedRFCs(results)
 
+        currentHash := ""
+        if analysis.PostureHash != nil {
+                currentHash = *analysis.PostureHash
+        }
+        var driftDetected bool
+        var driftPrevHash string
+        var driftPrevTime string
+        var driftPrevID int32
+        var driftFields []analyzer.PostureDiffField
+        if currentHash != "" {
+                prevRow, prevErr := h.DB.Queries.GetPreviousAnalysisForDriftBefore(ctx, dbq.GetPreviousAnalysisForDriftBeforeParams{
+                        Domain: analysis.Domain,
+                        ID:     analysis.ID,
+                })
+                if prevErr == nil && prevRow.PostureHash != nil && *prevRow.PostureHash != "" {
+                        if *prevRow.PostureHash != currentHash {
+                                driftDetected = true
+                                driftPrevHash = *prevRow.PostureHash
+                                driftPrevID = prevRow.ID
+                                if prevRow.CreatedAt.Valid {
+                                        driftPrevTime = prevRow.CreatedAt.Time.Format("2 Jan 2006 15:04 UTC")
+                                }
+                                if prevRow.FullResults != nil {
+                                        var prevResults map[string]any
+                                        if json.Unmarshal(prevRow.FullResults, &prevResults) == nil {
+                                                driftFields = analyzer.ComputePostureDiff(prevResults, results)
+                                        }
+                                }
+                        }
+                }
+        }
+
         isSub, rootDom := extractRootDomain(analysis.AsciiDomain)
         c.HTML(http.StatusOK, "results.html", gin.H{
                 "AppVersion":           h.Config.AppVersion,
@@ -147,6 +179,12 @@ func (h *AnalysisHandler) ViewAnalysisStatic(c *gin.Context) {
                 "RFCCount":             rfcCount,
                 "MaintenanceNote":      h.Config.MaintenanceNote,
                 "SectionTuning":        h.Config.SectionTuning,
+                "PostureHash":          currentHash,
+                "DriftDetected":        driftDetected,
+                "DriftPrevHash":        driftPrevHash,
+                "DriftPrevTime":        driftPrevTime,
+                "DriftPrevID":          driftPrevID,
+                "DriftFields":          driftFields,
         })
 }
 
@@ -302,6 +340,32 @@ func (h *AnalysisHandler) Analyze(c *gin.Context) {
 
         countryCode, countryName := lookupCountry(c.ClientIP())
 
+        postureHash := analyzer.CanonicalPostureHash(results)
+
+        var driftDetected bool
+        var driftPrevHash string
+        var driftPrevTime string
+        var driftPrevID int32
+        var driftFields []analyzer.PostureDiffField
+        prevRow, prevErr := h.DB.Queries.GetPreviousAnalysisForDrift(ctx, asciiDomain)
+        if prevErr == nil && prevRow.PostureHash != nil && *prevRow.PostureHash != "" {
+                if *prevRow.PostureHash != postureHash {
+                        driftDetected = true
+                        driftPrevHash = *prevRow.PostureHash
+                        driftPrevID = prevRow.ID
+                        if prevRow.CreatedAt.Valid {
+                                driftPrevTime = prevRow.CreatedAt.Time.Format("2 Jan 2006 15:04 UTC")
+                        }
+                        if prevRow.FullResults != nil {
+                                var prevResults map[string]any
+                                if json.Unmarshal(prevRow.FullResults, &prevResults) == nil {
+                                        driftFields = analyzer.ComputePostureDiff(prevResults, results)
+                                }
+                        }
+                        slog.Info("Posture drift detected", "domain", asciiDomain, "prev_hash", driftPrevHash[:8], "new_hash", postureHash[:8], "changed_fields", len(driftFields))
+                }
+        }
+
         analysisID, timestamp := h.saveAnalysis(c.Request.Context(), domain, asciiDomain, results, analysisDuration, countryCode, countryName)
 
         domainExists := resultsDomainExists(results)
@@ -335,6 +399,12 @@ func (h *AnalysisHandler) Analyze(c *gin.Context) {
                 "ExposureChecks":       exposureChecks,
                 "MaintenanceNote":      h.Config.MaintenanceNote,
                 "SectionTuning":        h.Config.SectionTuning,
+                "PostureHash":          postureHash,
+                "DriftDetected":        driftDetected,
+                "DriftPrevHash":        driftPrevHash,
+                "DriftPrevTime":        driftPrevTime,
+                "DriftPrevID":          driftPrevID,
+                "DriftFields":          driftFields,
         })
 }
 

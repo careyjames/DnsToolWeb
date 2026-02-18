@@ -22,6 +22,18 @@ type AnalysisStat struct {
 	UpdatedAt          pgtype.Timestamp `db:"updated_at" json:"updated_at"`
 }
 
+type DataGovernanceEvent struct {
+	ID            int32            `db:"id" json:"id"`
+	EventType     string           `db:"event_type" json:"event_type"`
+	Description   string           `db:"description" json:"description"`
+	Scope         *string          `db:"scope" json:"scope"`
+	AffectedCount *int32           `db:"affected_count" json:"affected_count"`
+	Reason        string           `db:"reason" json:"reason"`
+	Operator      string           `db:"operator" json:"operator"`
+	Metadata      []byte           `db:"metadata" json:"metadata"`
+	CreatedAt     pgtype.Timestamp `db:"created_at" json:"created_at"`
+}
+
 type DomainAnalysis struct {
 	ID                   int32            `db:"id" json:"id"`
 	Domain               string           `db:"domain" json:"domain"`

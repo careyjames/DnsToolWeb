@@ -174,6 +174,55 @@
                 </a>
             </div>
         </div>
+
+        {{if .DriftDetected}}
+        <div class="alert alert-warning border-warning mb-4" role="alert">
+            <div class="d-flex align-items-start justify-content-between">
+                <div class="d-flex align-items-start">
+                    <i class="fas fa-exchange-alt fa-lg text-warning me-3 mt-1"></i>
+                    <div>
+                        <h6 class="alert-heading mb-1 fw-semibold text-warning">Posture Drift Detected</h6>
+                        <p class="mb-1 small">
+                            Compared against your previous observation{{if .DriftPrevTime}} on {{.DriftPrevTime}}{{end}}.
+                        </p>
+                    </div>
+                </div>
+                {{if .DriftPrevID}}
+                <a href="/analysis/{{.DriftPrevID}}/view" class="btn btn-sm btn-outline-warning ms-3 text-nowrap">
+                    <i class="fas fa-history me-1"></i>View Previous Report
+                </a>
+                {{end}}
+            </div>
+            {{if .DriftFields}}
+            <div class="mt-2 pt-2 border-top border-warning border-opacity-50">
+                <table class="table table-sm table-borderless mb-0 small">
+                    <thead>
+                        <tr class="text-warning-emphasis">
+                            <th class="py-0 ps-0 w-25">Field</th>
+                            <th class="py-0 w-25">Previous</th>
+                            <th class="py-0"></th>
+                            <th class="py-0 w-25">Current</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    {{range .DriftFields}}
+                        <tr>
+                            <td class="py-1 ps-0 fw-semibold">{{.Label}}</td>
+                            <td class="py-1 font-monospace"><span class="badge bg-secondary bg-opacity-25 text-body">{{.Previous}}</span></td>
+                            <td class="py-1 text-center"><i class="fas fa-arrow-right text-warning small"></i></td>
+                            <td class="py-1 font-monospace"><span class="badge bg-{{.Severity}} bg-opacity-25 text-{{.Severity}}">{{.Current}}</span></td>
+                        </tr>
+                    {{end}}
+                    </tbody>
+                </table>
+            </div>
+            {{end}}
+            <div class="font-monospace small u-opacity-70 mt-2">
+                <span class="me-3">Previous: {{if .DriftPrevID}}<a href="/analysis/{{.DriftPrevID}}/view" class="text-warning text-decoration-none"><code>{{substr 0 16 .DriftPrevHash}}&hellip;</code></a>{{else}}<code>{{substr 0 16 .DriftPrevHash}}&hellip;</code>{{end}}</span>
+                <span>Current: <code>{{substr 0 16 .PostureHash}}&hellip;</code></span>
+            </div>
+        </div>
+        {{end}}
         
         <!-- Non-existent Domain Banner -->
         {{if not .DomainExists}}
@@ -710,6 +759,103 @@
                                     <div class="mb-3 p-2 rounded u-bg-soft-bordered">
                                         <div class="d-flex align-items-center mb-1">
                                             <span class="badge bg-warning text-dark me-2">{{mapGetStr "record_type" $rec}}</span>
+                                            <span class="text-muted small">{{mapGetStr "purpose" $rec}}</span>
+                                        </div>
+                                        <table class="table table-dark table-sm table-borderless mb-0 u-fs-080rem">
+                                            <tbody>
+                                                <tr>
+                                                    <th scope="row" class="u-col-label-90 fw-semibold">Host / Name</th>
+                                                    <td><code class="text-info">{{mapGetStr "host" $rec}}</code></td>
+                                                    <td class="text-muted u-fs-075rem">{{mapGetStr "host_help" $rec}}</td>
+                                                </tr>
+                                                <tr>
+                                                    <th scope="row" class="u-color-muted fw-semibold">Type</th>
+                                                    <td><code class="text-info">{{mapGetStr "record_type" $rec}}</code></td>
+                                                    <td class="text-muted u-fs-075rem">Select this from the record type dropdown</td>
+                                                </tr>
+                                                <tr>
+                                                    <th scope="row" class="u-color-muted fw-semibold">Value</th>
+                                                    <td colspan="2"><code class="text-warning">{{mapGetStr "value" $rec}}</code></td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                    {{end}}
+                                </div>
+                                {{end}}
+                            </div>
+                            {{else if eq $mpClassification "no_mail_intent"}}
+                            <div class="alert alert-info py-2 mb-3 small border-info border-opacity-50">
+                                <div class="d-flex align-items-center mb-2">
+                                    <i class="fas fa-info-circle me-2"></i><strong>{{mapGetStr "label" $mp}}</strong>
+                                </div>
+                                <div class="mb-2">{{mapGetStr "summary" $mp}}</div>
+                                <div class="mt-2 pt-2 border-top border-info border-opacity-25">
+                                    <div class="d-flex align-items-start mb-2">
+                                        <i class="fas fa-graduation-cap text-info me-2 mt-1"></i>
+                                        <div>
+                                            <strong class="d-block mb-1">It looks like this is meant to be a no-mail domain.</strong>
+                                            <span class="text-muted">Three RFC specifications define how to properly declare a domain does not send or receive email. Completing all three ensures every mail server knows this domain should never originate email &mdash; preventing spoofing attacks.</span>
+                                        </div>
+                                    </div>
+                                    <div class="ms-4 mb-2">
+                                        <div class="d-flex flex-wrap gap-1 mb-2">
+                                            {{$signals := mapGetMap "signals" $mp}}
+                                            {{if $signals}}
+                                            {{range $key, $val := $signals}}
+                                            {{$sig := toMap $val}}
+                                            {{if $sig}}
+                                            {{if mapGetBool "present" $sig}}
+                                            <span class="badge bg-success bg-opacity-75">
+                                                <i class="fas fa-check me-1"></i>{{mapGetStr "label" $sig}}
+                                            </span>
+                                            {{else}}
+                                            <span class="badge bg-danger bg-opacity-75">
+                                                <i class="fas fa-times me-1"></i>{{mapGetStr "label" $sig}} &mdash; {{mapGetStr "missing_risk" $sig}}
+                                            </span>
+                                            {{end}}
+                                            {{end}}
+                                            {{end}}
+                                            {{end}}
+                                        </div>
+                                    </div>
+                                    <strong class="d-block mb-1 ms-4"><i class="fas fa-book me-1"></i>The three RFC standards for no-mail domains:</strong>
+                                    <div class="ms-4">
+                                        <div class="mb-2 p-2 rounded u-bg-soft-bordered">
+                                            <div class="d-flex align-items-center">
+                                                <span class="badge bg-info bg-opacity-75 me-2">1</span>
+                                                <strong>Null MX Record</strong>
+                                                <a href="https://datatracker.ietf.org/doc/html/rfc7505" target="_blank" rel="noopener" class="text-muted text-decoration-none ms-2">(RFC 7505)</a>
+                                            </div>
+                                            <div class="text-muted mt-1">Publish <code class="text-info">{{.Domain}} MX 0 .</code> to formally declare this domain does not accept inbound email. This is the definitive signal to mail servers.</div>
+                                        </div>
+                                        <div class="mb-2 p-2 rounded u-bg-soft-bordered">
+                                            <div class="d-flex align-items-center">
+                                                <span class="badge bg-info bg-opacity-75 me-2">2</span>
+                                                <strong>SPF Hard Fail</strong>
+                                                <a href="https://datatracker.ietf.org/doc/html/rfc7208" target="_blank" rel="noopener" class="text-muted text-decoration-none ms-2">(RFC 7208)</a>
+                                            </div>
+                                            <div class="text-muted mt-1">Publish <code class="text-info">{{.Domain}} TXT "v=spf1 -all"</code> to declare no servers are authorized to send email from this domain.</div>
+                                        </div>
+                                        <div class="mb-2 p-2 rounded u-bg-soft-bordered">
+                                            <div class="d-flex align-items-center">
+                                                <span class="badge bg-info bg-opacity-75 me-2">3</span>
+                                                <strong>DMARC Reject Policy</strong>
+                                                <a href="https://datatracker.ietf.org/doc/html/rfc7489" target="_blank" rel="noopener" class="text-muted text-decoration-none ms-2">(RFC 7489)</a>
+                                            </div>
+                                            <div class="text-muted mt-1">Publish <code class="text-info">_dmarc.{{.Domain}} TXT "v=DMARC1; p=reject; sp=reject; adkim=s; aspf=s;"</code> to instruct receivers to reject any email claiming to be from this domain.</div>
+                                        </div>
+                                    </div>
+                                </div>
+                                {{$recRecs := toMapSlice (mapGet "recommended_records" $mp)}}
+                                {{if $recRecs}}
+                                <div class="mt-2 pt-2 border-top border-info border-opacity-25">
+                                    <strong class="d-block mb-2"><i class="fas fa-plus-circle me-1"></i>Add these DNS records at your provider:</strong>
+                                    <div class="small text-muted mb-2"><i class="fas fa-info-circle me-1"></i>Log in to wherever you manage DNS for this domain (e.g., Cloudflare, GoDaddy, Namecheap) and add each record below.</div>
+                                    {{range $rec := $recRecs}}
+                                    <div class="mb-3 p-2 rounded u-bg-soft-bordered">
+                                        <div class="d-flex align-items-center mb-1">
+                                            <span class="badge bg-info me-2">{{mapGetStr "record_type" $rec}}</span>
                                             <span class="text-muted small">{{mapGetStr "purpose" $rec}}</span>
                                         </div>
                                         <table class="table table-dark table-sm table-borderless mb-0 u-fs-080rem">
