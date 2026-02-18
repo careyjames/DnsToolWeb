@@ -3515,7 +3515,7 @@
                         {{$ctUnique := mapGetFloat "unique_subdomains" $ct}}
                         <span class="section-question">What infrastructure is exposed in certificate logs?
                             {{if and (eq $ctStatus "success") (gt $ctUnique 0)}}
-                                <span class="badge bg-info ms-2">{{formatFloat 0 $ctUnique}} subdomain{{if ne $ctUnique 1}}s{{end}}</span>
+                                <span class="badge bg-info ms-2">{{mapGetInt "displayed_count" $ct}} of {{formatFloat 0 $ctUnique}} subdomains discovered</span>
                             {{else if and (eq $ctStatus "success") (eq $ctUnique 0)}}
                                 <span class="badge bg-secondary ms-2">None found</span>
                             {{else}}
@@ -3720,6 +3720,13 @@
                             </tbody>
                         </table>
                     </div>
+                    {{if not (or (mapGetBool "display_capped" $ct) (mapGetBool "was_truncated" $ct))}}
+                    <div class="text-end mt-2 no-print">
+                        <a href="/export/subdomains?domain={{.Domain}}" class="btn btn-sm btn-outline-info" title="Download subdomain recon as CSV">
+                            <i class="fas fa-crosshairs me-1"></i>Export Recon (CSV)
+                        </a>
+                    </div>
+                    {{end}}
                     {{if mapGetBool "was_truncated" $ct}}
                     <div class="text-muted small mt-2 mb-0 p-2 rounded u-bg-soft">
                         <i class="fas fa-filter me-1"></i><strong>{{formatFloat 0 $ctUnique}} subdomains discovered, curated by security relevance.</strong>
