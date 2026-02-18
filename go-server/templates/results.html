@@ -3551,210 +3551,6 @@
             </div>
         </div>
 
-        <!-- DNS Diff Section - True Side-by-Side Comparison -->
-        <div class="col-12 mb-4">
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="mb-0 d-flex align-items-center justify-content-between flex-wrap">
-                        <span><i class="fas fa-code-compare me-2"></i>DNS Evidence Diff</span>
-                        <small class="text-muted">Side-by-side comparison</small>
-                    </h5>
-                </div>
-                <div class="card-body p-0">
-                    <!-- Diff Header Row -->
-                    <div class="dns-diff-container">
-                        <div class="dns-diff-header">
-                            <div class="dns-diff-col dns-diff-left">
-                                <i class="fas fa-database me-2"></i>Resolver Records
-                                <small class="opacity-75">(Public DNS cache)</small>
-                            </div>
-                            <div class="dns-diff-col dns-diff-right">
-                                <i class="fas fa-microchip me-2"></i>Authoritative Records
-                                <small class="opacity-75">(Source of truth)</small>
-                            </div>
-                        </div>
-                        
-                        {{if $basic}}
-                        {{range $record_type, $val := $basic}}
-                            {{if eq $record_type "SRV"}}{{continue}}{{end}}
-                            {{$resolver_records := mapGetSlice $record_type $basic}}
-                            {{$auth_recs := mapGetSlice $record_type $auth_records}}
-                            {{$rLen := 0}}{{if $resolver_records}}{{$rLen = len $resolver_records}}{{end}}
-                            {{$aLen := 0}}{{if $auth_recs}}{{$aLen = len $auth_recs}}{{end}}
-                            {{$max_len := maxInt $rLen $aLen}}
-                            
-                            {{if or (gt $max_len 0) (or (eq $record_type "A") (or (eq $record_type "AAAA") (or (eq $record_type "MX") (or (eq $record_type "NS") (or (eq $record_type "TXT") (or (eq $record_type "CAA") (or (eq $record_type "SOA") (or (eq $record_type "DMARC") (or (eq $record_type "MTA-STS") (eq $record_type "TLS-RPT"))))))))))}}
-                                <!-- Record Type Header -->
-                                <div class="dns-diff-type-header">
-                                    <span class="badge bg-secondary me-2">{{$record_type}}</span>
-                                    {{if eq $record_type "DMARC"}}<small class="text-muted me-1">_dmarc.{{$.Domain}}</small>
-                                        <a href="https://datatracker.ietf.org/doc/html/rfc7489#section-6.3" target="_blank" rel="noopener" class="badge bg-dark bg-opacity-25 text-muted text-decoration-none fw-normal u-fs-060rem" title="Domain-based Message Authentication, Reporting, and Conformance — §6.3 Policy">RFC 7489 §6.3</a>
-                                    {{else if eq $record_type "MTA-STS"}}<small class="text-muted me-1">_mta-sts.{{$.Domain}}</small>
-                                        <a href="https://datatracker.ietf.org/doc/html/rfc8461#section-3" target="_blank" rel="noopener" class="badge bg-dark bg-opacity-25 text-muted text-decoration-none fw-normal u-fs-060rem" title="SMTP MTA Strict Transport Security — §3 DNS Record">RFC 8461 §3</a>
-                                    {{else if eq $record_type "TLS-RPT"}}<small class="text-muted me-1">_smtp._tls.{{$.Domain}}</small>
-                                        <a href="https://datatracker.ietf.org/doc/html/rfc8460#section-3" target="_blank" rel="noopener" class="badge bg-dark bg-opacity-25 text-muted text-decoration-none fw-normal u-fs-060rem" title="SMTP TLS Reporting — §3 DNS Record">RFC 8460 §3</a>
-                                    {{else if eq $record_type "CAA"}}
-                                        <a href="https://datatracker.ietf.org/doc/html/rfc8659#section-4" target="_blank" rel="noopener" class="badge bg-dark bg-opacity-25 text-muted text-decoration-none fw-normal u-fs-060rem" title="DNS Certification Authority Authorization — §4 Processing">RFC 8659 §4</a>
-                                    {{else if eq $record_type "SOA"}}
-                                        <a href="https://datatracker.ietf.org/doc/html/rfc1035#section-3.3.13" target="_blank" rel="noopener" class="badge bg-dark bg-opacity-25 text-muted text-decoration-none fw-normal u-fs-060rem" title="Start of Authority record">RFC 1035</a>
-                                    {{else if eq $record_type "MX"}}
-                                        <a href="https://datatracker.ietf.org/doc/html/rfc5321#section-5" target="_blank" rel="noopener" class="badge bg-dark bg-opacity-25 text-muted text-decoration-none fw-normal u-fs-060rem" title="Mail Exchange record">RFC 5321</a>
-                                    {{else if eq $record_type "TXT"}}
-                                        <a href="https://datatracker.ietf.org/doc/html/rfc7208#section-4" target="_blank" rel="noopener" class="badge bg-dark bg-opacity-25 text-muted text-decoration-none fw-normal u-fs-060rem" title="Sender Policy Framework — §4 Record Syntax">RFC 7208 §4</a>
-                                    {{else if eq $record_type "NS"}}
-                                        <a href="https://datatracker.ietf.org/doc/html/rfc1035#section-3.3.11" target="_blank" rel="noopener" class="badge bg-dark bg-opacity-25 text-muted text-decoration-none fw-normal u-fs-060rem" title="Name Server record">RFC 1035</a>
-                                    {{end}}
-                                    {{if $propagation}}
-                                    {{$p_info := toMap (mapGet $record_type $propagation)}}
-                                    {{if $p_info}}
-                                        {{$pStatus := mapGetStr "status" $p_info}}
-                                        {{if eq $pStatus "synchronized"}}
-                                            <span class="badge bg-success-subtle text-success border border-success-subtle px-2 py-1 u-fs-070rem">
-                                                <i class="fas fa-check-double me-1"></i>Synchronized
-                                            </span>
-                                        {{else if eq $pStatus "propagating"}}
-                                            <span class="badge bg-warning-subtle text-warning border border-warning-subtle px-2 py-1 u-fs-070rem">
-                                                <i class="fas fa-clock me-1"></i>Propagating
-                                            </span>
-                                        {{end}}
-                                    {{end}}
-                                    {{end}}
-                                    <span class="ms-auto text-muted small d-flex align-items-center gap-2">
-                                        {{$rLen}} / {{$aLen}} records
-                                    </span>
-                                </div>
-                                
-                                <!-- Record Rows -->
-                                {{if gt $max_len 0}}
-                                    {{range $i := seq 0 (sub $max_len 1)}}
-                                        {{$resolver_val := ""}}
-                                        {{$auth_val := ""}}
-                                        {{if and $resolver_records (lt $i (len $resolver_records))}}{{$resolver_val = toStr (sliceIndex $i $resolver_records)}}{{end}}
-                                        {{if and $auth_recs (lt $i (len $auth_recs))}}{{$auth_val = toStr (sliceIndex $i $auth_recs)}}{{end}}
-                                        {{$is_match := eq $resolver_val $auth_val}}
-                                        
-                                        <div class="dns-diff-row {{if and (not $is_match) (ne $resolver_val "") (ne $auth_val "")}}dns-diff-changed{{else if eq $resolver_val ""}}dns-diff-added{{else if eq $auth_val ""}}dns-diff-removed{{end}}">
-                                            <div class="dns-diff-col dns-diff-left {{if eq $resolver_val ""}}dns-diff-empty{{else if not $is_match}}dns-diff-highlight-old{{end}}">
-                                                {{if ne $resolver_val ""}}
-                                                    <code class="dns-diff-value">{{$resolver_val}}</code>
-                                                {{else}}
-                                                    <span class="dns-diff-placeholder">—</span>
-                                                {{end}}
-                                            </div>
-                                            <div class="dns-diff-col dns-diff-right {{if eq $auth_val ""}}dns-diff-empty{{else if not $is_match}}dns-diff-highlight-new{{end}}">
-                                                {{if ne $auth_val ""}}
-                                                    <code class="dns-diff-value">{{$auth_val}}</code>
-                                                {{else}}
-                                                    <span class="dns-diff-placeholder">—</span>
-                                                {{end}}
-                                            </div>
-                                        </div>
-                                    {{end}}
-                                {{else}}
-                                    <div class="dns-diff-row">
-                                        <div class="dns-diff-col dns-diff-left dns-diff-empty">
-                                            <span class="dns-diff-placeholder">No records</span>
-                                        </div>
-                                        <div class="dns-diff-col dns-diff-right dns-diff-empty">
-                                            <span class="dns-diff-placeholder">No records</span>
-                                        </div>
-                                    </div>
-                                {{end}}
-                            {{end}}
-                        {{end}}
-                        {{end}}
-                    </div>
-                </div>
-            </div>
-        </div>
-        </div>
-
-        <!-- DNS History: user-provided SecurityTrails API key input -->
-        {{if not $dns_history_available}}
-        <div class="col-12 mb-3 dns-history-load-wrapper">
-            <div class="card bg-dark bg-opacity-25 u-border-soft">
-                <div class="card-body py-3">
-                    <div class="d-flex align-items-center flex-wrap gap-2">
-                        <span class="text-muted small"><i class="fas fa-history me-1"></i>DNS History Timeline <span class="badge bg-warning text-dark ms-1 u-fs-070em-vmid">BETA</span></span>
-                        <form class="d-flex align-items-center gap-2 flex-grow-1 u-maxw-500" id="dns-history-form" autocomplete="on">
-                            <label for="securitytrails_api_key" class="visually-hidden">SecurityTrails API Key</label>
-                            <input type="password" class="form-control form-control-sm bg-dark text-light border-secondary u-fs-085em" id="securitytrails_api_key" name="securitytrails_api_key" placeholder="SecurityTrails API Key" autocomplete="section-dnstool securitytrails-api-key" spellcheck="false" aria-label="SecurityTrails API Key for DNS history">
-                            <button type="submit" class="btn btn-sm btn-outline-info" id="dns-history-btn" data-domain="{{.AsciiDomain}}">
-                                <i class="fas fa-search me-1"></i>Go
-                            </button>
-                        </form>
-                    </div>
-                    <div class="mt-2 text-muted u-fs-075em">
-                        <i class="fas fa-shield-alt me-1"></i>Your key is sent directly to SecurityTrails and is never stored on our servers. <a href="https://securitytrails.com/app/signup" target="_blank" rel="noopener" class="text-info">Get a free API key</a>
-                    </div>
-                </div>
-            </div>
-        </div>
-        {{end}}
-
-        <!-- DNS History Timeline (on-demand via SecurityTrails) -->
-        <div class="col-12 mb-4{{if not $dns_history_available}} d-none{{end}}" id="dns-history-section">
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="mb-0 d-flex align-items-center justify-content-between flex-wrap">
-                        <span><i class="fas fa-history me-2"></i>DNS History Timeline <span class="badge bg-warning text-dark ms-1 u-fs-055em-vmid">BETA</span></span>
-                        <small class="text-muted" id="dns-history-source">{{if $dns_history_available}}Source: SecurityTrails{{end}}</small>
-                    </h5>
-                    <p class="mb-0 mt-2 text-warning-emphasis u-fs-095em-fw500"><i class="fas fa-search me-1"></i>When was a record added, removed, or changed &mdash; and could that change be the problem?</p>
-                </div>
-                <div class="card-body" id="dns-history-body">
-                    {{if $dns_history_available}}
-                    {{$changes := mapGetSlice "changes" $dns_history}}
-                    {{if $changes}}
-                    <div class="table-responsive">
-                        <table class="table table-sm table-striped mb-0">
-                            <thead>
-                                <tr>
-                                    <th class="u-w-80px">Date</th>
-                                    <th class="u-w-60px">Type</th>
-                                    <th class="u-w-70px">Action</th>
-                                    <th>Value</th>
-                                    <th>Organization</th>
-                                    <th>Timeline</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {{range $changes}}
-                                {{$ch := toMap .}}
-                                {{if $ch}}
-                                <tr>
-                                    <td><code class="text-muted u-fs-080em">{{mapGetStr "date" $ch}}</code></td>
-                                    <td><span class="badge bg-{{if eq (mapGetStr "record_type" $ch) "A"}}primary{{else if eq (mapGetStr "record_type" $ch) "AAAA"}}primary{{else if eq (mapGetStr "record_type" $ch) "MX"}}success{{else if eq (mapGetStr "record_type" $ch) "NS"}}info{{else}}secondary{{end}}">{{mapGetStr "record_type" $ch}}</span></td>
-                                    <td>
-                                        {{if eq (mapGetStr "action" $ch) "added"}}
-                                        <span class="text-success"><i class="fas fa-plus-circle me-1"></i>Added</span>
-                                        {{else}}
-                                        <span class="text-danger"><i class="fas fa-minus-circle me-1"></i>Removed</span>
-                                        {{end}}
-                                    </td>
-                                    <td><code class="u-fs-085em">{{mapGetStr "value" $ch}}</code></td>
-                                    <td>
-                                        {{if ne (mapGetStr "org" $ch) ""}}
-                                        <span class="text-muted">{{mapGetStr "org" $ch}}</span>
-                                        {{else}}
-                                        <span class="text-muted">&mdash;</span>
-                                        {{end}}
-                                    </td>
-                                    <td><span class="text-muted u-fs-085em">{{mapGetStr "description" $ch}}</span></td>
-                                </tr>
-                                {{end}}
-                                {{end}}
-                            </tbody>
-                        </table>
-                    </div>
-                    {{else}}
-                    <p class="text-muted mb-0"><i class="fas fa-check-circle text-success me-1"></i>No DNS record changes detected in available history. A, AAAA, MX, and NS records for this domain have remained stable.</p>
-                    {{end}}
-                    {{end}}
-                </div>
-            </div>
-        </div>
-
         <!-- Subdomain Discovery (Certificate Transparency) -->
         <div class="row mt-4">
         <div class="col-12">
@@ -4101,6 +3897,211 @@
             </div>
         </div>
         </div>
+
+        <!-- DNS Diff Section - True Side-by-Side Comparison -->
+        <div class="col-12 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0 d-flex align-items-center justify-content-between flex-wrap">
+                        <span><i class="fas fa-code-compare me-2"></i>DNS Evidence Diff</span>
+                        <small class="text-muted">Side-by-side comparison</small>
+                    </h5>
+                </div>
+                <div class="card-body p-0">
+                    <!-- Diff Header Row -->
+                    <div class="dns-diff-container">
+                        <div class="dns-diff-header">
+                            <div class="dns-diff-col dns-diff-left">
+                                <i class="fas fa-database me-2"></i>Resolver Records
+                                <small class="opacity-75">(Public DNS cache)</small>
+                            </div>
+                            <div class="dns-diff-col dns-diff-right">
+                                <i class="fas fa-microchip me-2"></i>Authoritative Records
+                                <small class="opacity-75">(Source of truth)</small>
+                            </div>
+                        </div>
+                        
+                        {{if $basic}}
+                        {{range $record_type, $val := $basic}}
+                            {{if eq $record_type "SRV"}}{{continue}}{{end}}
+                            {{$resolver_records := mapGetSlice $record_type $basic}}
+                            {{$auth_recs := mapGetSlice $record_type $auth_records}}
+                            {{$rLen := 0}}{{if $resolver_records}}{{$rLen = len $resolver_records}}{{end}}
+                            {{$aLen := 0}}{{if $auth_recs}}{{$aLen = len $auth_recs}}{{end}}
+                            {{$max_len := maxInt $rLen $aLen}}
+                            
+                            {{if or (gt $max_len 0) (or (eq $record_type "A") (or (eq $record_type "AAAA") (or (eq $record_type "MX") (or (eq $record_type "NS") (or (eq $record_type "TXT") (or (eq $record_type "CAA") (or (eq $record_type "SOA") (or (eq $record_type "DMARC") (or (eq $record_type "MTA-STS") (eq $record_type "TLS-RPT"))))))))))}}
+                                <!-- Record Type Header -->
+                                <div class="dns-diff-type-header">
+                                    <span class="badge bg-secondary me-2">{{$record_type}}</span>
+                                    {{if eq $record_type "DMARC"}}<small class="text-muted me-1">_dmarc.{{$.Domain}}</small>
+                                        <a href="https://datatracker.ietf.org/doc/html/rfc7489#section-6.3" target="_blank" rel="noopener" class="badge bg-dark bg-opacity-25 text-muted text-decoration-none fw-normal u-fs-060rem" title="Domain-based Message Authentication, Reporting, and Conformance — §6.3 Policy">RFC 7489 §6.3</a>
+                                    {{else if eq $record_type "MTA-STS"}}<small class="text-muted me-1">_mta-sts.{{$.Domain}}</small>
+                                        <a href="https://datatracker.ietf.org/doc/html/rfc8461#section-3" target="_blank" rel="noopener" class="badge bg-dark bg-opacity-25 text-muted text-decoration-none fw-normal u-fs-060rem" title="SMTP MTA Strict Transport Security — §3 DNS Record">RFC 8461 §3</a>
+                                    {{else if eq $record_type "TLS-RPT"}}<small class="text-muted me-1">_smtp._tls.{{$.Domain}}</small>
+                                        <a href="https://datatracker.ietf.org/doc/html/rfc8460#section-3" target="_blank" rel="noopener" class="badge bg-dark bg-opacity-25 text-muted text-decoration-none fw-normal u-fs-060rem" title="SMTP TLS Reporting — §3 DNS Record">RFC 8460 §3</a>
+                                    {{else if eq $record_type "CAA"}}
+                                        <a href="https://datatracker.ietf.org/doc/html/rfc8659#section-4" target="_blank" rel="noopener" class="badge bg-dark bg-opacity-25 text-muted text-decoration-none fw-normal u-fs-060rem" title="DNS Certification Authority Authorization — §4 Processing">RFC 8659 §4</a>
+                                    {{else if eq $record_type "SOA"}}
+                                        <a href="https://datatracker.ietf.org/doc/html/rfc1035#section-3.3.13" target="_blank" rel="noopener" class="badge bg-dark bg-opacity-25 text-muted text-decoration-none fw-normal u-fs-060rem" title="Start of Authority record">RFC 1035</a>
+                                    {{else if eq $record_type "MX"}}
+                                        <a href="https://datatracker.ietf.org/doc/html/rfc5321#section-5" target="_blank" rel="noopener" class="badge bg-dark bg-opacity-25 text-muted text-decoration-none fw-normal u-fs-060rem" title="Mail Exchange record">RFC 5321</a>
+                                    {{else if eq $record_type "TXT"}}
+                                        <a href="https://datatracker.ietf.org/doc/html/rfc7208#section-4" target="_blank" rel="noopener" class="badge bg-dark bg-opacity-25 text-muted text-decoration-none fw-normal u-fs-060rem" title="Sender Policy Framework — §4 Record Syntax">RFC 7208 §4</a>
+                                    {{else if eq $record_type "NS"}}
+                                        <a href="https://datatracker.ietf.org/doc/html/rfc1035#section-3.3.11" target="_blank" rel="noopener" class="badge bg-dark bg-opacity-25 text-muted text-decoration-none fw-normal u-fs-060rem" title="Name Server record">RFC 1035</a>
+                                    {{end}}
+                                    {{if $propagation}}
+                                    {{$p_info := toMap (mapGet $record_type $propagation)}}
+                                    {{if $p_info}}
+                                        {{$pStatus := mapGetStr "status" $p_info}}
+                                        {{if eq $pStatus "synchronized"}}
+                                            <span class="badge bg-success-subtle text-success border border-success-subtle px-2 py-1 u-fs-070rem">
+                                                <i class="fas fa-check-double me-1"></i>Synchronized
+                                            </span>
+                                        {{else if eq $pStatus "propagating"}}
+                                            <span class="badge bg-warning-subtle text-warning border border-warning-subtle px-2 py-1 u-fs-070rem">
+                                                <i class="fas fa-clock me-1"></i>Propagating
+                                            </span>
+                                        {{end}}
+                                    {{end}}
+                                    {{end}}
+                                    <span class="ms-auto text-muted small d-flex align-items-center gap-2">
+                                        {{$rLen}} / {{$aLen}} records
+                                    </span>
+                                </div>
+                                
+                                <!-- Record Rows -->
+                                {{if gt $max_len 0}}
+                                    {{range $i := seq 0 (sub $max_len 1)}}
+                                        {{$resolver_val := ""}}
+                                        {{$auth_val := ""}}
+                                        {{if and $resolver_records (lt $i (len $resolver_records))}}{{$resolver_val = toStr (sliceIndex $i $resolver_records)}}{{end}}
+                                        {{if and $auth_recs (lt $i (len $auth_recs))}}{{$auth_val = toStr (sliceIndex $i $auth_recs)}}{{end}}
+                                        {{$is_match := eq $resolver_val $auth_val}}
+                                        
+                                        <div class="dns-diff-row {{if and (not $is_match) (ne $resolver_val "") (ne $auth_val "")}}dns-diff-changed{{else if eq $resolver_val ""}}dns-diff-added{{else if eq $auth_val ""}}dns-diff-removed{{end}}">
+                                            <div class="dns-diff-col dns-diff-left {{if eq $resolver_val ""}}dns-diff-empty{{else if not $is_match}}dns-diff-highlight-old{{end}}">
+                                                {{if ne $resolver_val ""}}
+                                                    <code class="dns-diff-value">{{$resolver_val}}</code>
+                                                {{else}}
+                                                    <span class="dns-diff-placeholder">—</span>
+                                                {{end}}
+                                            </div>
+                                            <div class="dns-diff-col dns-diff-right {{if eq $auth_val ""}}dns-diff-empty{{else if not $is_match}}dns-diff-highlight-new{{end}}">
+                                                {{if ne $auth_val ""}}
+                                                    <code class="dns-diff-value">{{$auth_val}}</code>
+                                                {{else}}
+                                                    <span class="dns-diff-placeholder">—</span>
+                                                {{end}}
+                                            </div>
+                                        </div>
+                                    {{end}}
+                                {{else}}
+                                    <div class="dns-diff-row">
+                                        <div class="dns-diff-col dns-diff-left dns-diff-empty">
+                                            <span class="dns-diff-placeholder">No records</span>
+                                        </div>
+                                        <div class="dns-diff-col dns-diff-right dns-diff-empty">
+                                            <span class="dns-diff-placeholder">No records</span>
+                                        </div>
+                                    </div>
+                                {{end}}
+                            {{end}}
+                        {{end}}
+                        {{end}}
+                    </div>
+                </div>
+            </div>
+        </div>
+        </div>
+
+        <!-- DNS History: user-provided SecurityTrails API key input -->
+        {{if not $dns_history_available}}
+        <div class="col-12 mb-3 dns-history-load-wrapper">
+            <div class="card bg-dark bg-opacity-25 u-border-soft">
+                <div class="card-body py-3">
+                    <div class="d-flex align-items-center flex-wrap gap-2">
+                        <span class="text-muted small"><i class="fas fa-history me-1"></i>DNS History Timeline <span class="badge bg-warning text-dark ms-1 u-fs-070em-vmid">BETA</span></span>
+                        <form class="d-flex align-items-center gap-2 flex-grow-1 u-maxw-500" id="dns-history-form" autocomplete="on">
+                            <label for="securitytrails_api_key" class="visually-hidden">SecurityTrails API Key</label>
+                            <input type="password" class="form-control form-control-sm bg-dark text-light border-secondary u-fs-085em" id="securitytrails_api_key" name="securitytrails_api_key" placeholder="SecurityTrails API Key" autocomplete="section-dnstool securitytrails-api-key" spellcheck="false" aria-label="SecurityTrails API Key for DNS history">
+                            <button type="submit" class="btn btn-sm btn-outline-info" id="dns-history-btn" data-domain="{{.AsciiDomain}}">
+                                <i class="fas fa-search me-1"></i>Go
+                            </button>
+                        </form>
+                    </div>
+                    <div class="mt-2 text-muted u-fs-075em">
+                        <i class="fas fa-shield-alt me-1"></i>Your key is sent directly to SecurityTrails and is never stored on our servers. <a href="https://securitytrails.com/app/signup" target="_blank" rel="noopener" class="text-info">Get a free API key</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {{end}}
+
+        <!-- DNS History Timeline (on-demand via SecurityTrails) -->
+        <div class="col-12 mb-4{{if not $dns_history_available}} d-none{{end}}" id="dns-history-section">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0 d-flex align-items-center justify-content-between flex-wrap">
+                        <span><i class="fas fa-history me-2"></i>DNS History Timeline <span class="badge bg-warning text-dark ms-1 u-fs-055em-vmid">BETA</span></span>
+                        <small class="text-muted" id="dns-history-source">{{if $dns_history_available}}Source: SecurityTrails{{end}}</small>
+                    </h5>
+                    <p class="mb-0 mt-2 text-warning-emphasis u-fs-095em-fw500"><i class="fas fa-search me-1"></i>When was a record added, removed, or changed &mdash; and could that change be the problem?</p>
+                </div>
+                <div class="card-body" id="dns-history-body">
+                    {{if $dns_history_available}}
+                    {{$changes := mapGetSlice "changes" $dns_history}}
+                    {{if $changes}}
+                    <div class="table-responsive">
+                        <table class="table table-sm table-striped mb-0">
+                            <thead>
+                                <tr>
+                                    <th class="u-w-80px">Date</th>
+                                    <th class="u-w-60px">Type</th>
+                                    <th class="u-w-70px">Action</th>
+                                    <th>Value</th>
+                                    <th>Organization</th>
+                                    <th>Timeline</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {{range $changes}}
+                                {{$ch := toMap .}}
+                                {{if $ch}}
+                                <tr>
+                                    <td><code class="text-muted u-fs-080em">{{mapGetStr "date" $ch}}</code></td>
+                                    <td><span class="badge bg-{{if eq (mapGetStr "record_type" $ch) "A"}}primary{{else if eq (mapGetStr "record_type" $ch) "AAAA"}}primary{{else if eq (mapGetStr "record_type" $ch) "MX"}}success{{else if eq (mapGetStr "record_type" $ch) "NS"}}info{{else}}secondary{{end}}">{{mapGetStr "record_type" $ch}}</span></td>
+                                    <td>
+                                        {{if eq (mapGetStr "action" $ch) "added"}}
+                                        <span class="text-success"><i class="fas fa-plus-circle me-1"></i>Added</span>
+                                        {{else}}
+                                        <span class="text-danger"><i class="fas fa-minus-circle me-1"></i>Removed</span>
+                                        {{end}}
+                                    </td>
+                                    <td><code class="u-fs-085em">{{mapGetStr "value" $ch}}</code></td>
+                                    <td>
+                                        {{if ne (mapGetStr "org" $ch) ""}}
+                                        <span class="text-muted">{{mapGetStr "org" $ch}}</span>
+                                        {{else}}
+                                        <span class="text-muted">&mdash;</span>
+                                        {{end}}
+                                    </td>
+                                    <td><span class="text-muted u-fs-085em">{{mapGetStr "description" $ch}}</span></td>
+                                </tr>
+                                {{end}}
+                                {{end}}
+                            </tbody>
+                        </table>
+                    </div>
+                    {{else}}
+                    <p class="text-muted mb-0"><i class="fas fa-check-circle text-success me-1"></i>No DNS record changes detected in available history. A, AAAA, MX, and NS records for this domain have remained stable.</p>
+                    {{end}}
+                    {{end}}
+                </div>
+            </div>
+        </div>
+
 
         <!-- Back to top -->
         <div class="text-center mt-4">

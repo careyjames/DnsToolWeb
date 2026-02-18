@@ -157,21 +157,27 @@ Results from Cloudflare (1.1.1.1), Google (8.8.8.8), Quad9 (9.9.9.9), and OpenDN
 **DNS Infrastructure Detection**
 Enterprise DNS providers identified (Cloudflare, AWS Route 53, Google Cloud DNS, Akamai, Azure DNS, etc.)
 
-**DNS Evidence Diff**
+### 7. Subdomain Discovery
+- Multi-layer approach using Certificate Transparency logs (RFC 6962), wildcard certificate detection, DNS probing, and CNAME chain traversal
+- Source attribution: "CT Log" vs "DNS" for each subdomain
+- Wildcard certificate detection and DNS wildcard filtering
+- Subdomain-aware context: detects when the analyzed domain is itself a subdomain and offers a link to scan the registered domain
+
+### 8. DNS Evidence Diff
 Compares resolver and authoritative records for A, AAAA, MX, TXT, NS, CAA, SOA, _dmarc, _mta-sts, _smtp._tls — with TTL values and RFC reference badges.
 
-### 7. Domain Intelligence (RDAP)
+### 9. Domain Intelligence (RDAP)
 - Registrar name
 - Domain creation and expiration dates
 - Nameserver delegation
 - Registry information
 
-### 8. Public Exposure Checks
+### 10. Public Exposure Checks
 - Automatic (always-on) scanning of publicly accessible page source and linked JavaScript for exposed secrets, API keys, and credentials
 - Severity, type, redacted value, and confidence level for each finding
 - Sources scanned listed transparently
 
-### 9. Expanded Exposure Checks (Opt-In)
+### 11. Expanded Exposure Checks (Opt-In)
 Enabled via the "Expanded Exposure Checks" checkbox in Advanced Options. Actively probes well-known misconfiguration paths:
 - `/.env` — environment files with database credentials and secrets
 - `/.git/config` and `/.git/HEAD` — exposed git repositories
@@ -184,7 +190,7 @@ Each path is validated by content inspection (not just HTTP 200 status) to reduc
 
 **Important**: These are informational reconnaissance checks of publicly accessible paths — NOT a PCI DSS ASV scan, penetration test, or compliance attestation.
 
-### 10. Report Integrity Hash
+### 12. Report Integrity Hash
 Every analysis generates a SHA-256 integrity fingerprint that binds:
 - Domain name
 - Analysis ID
@@ -193,12 +199,6 @@ Every analysis generates a SHA-256 integrity fingerprint that binds:
 - Canonicalized results data
 
 A short hash preview appears in the report header metadata (next to timestamp/version) in the format `SHA-256: c82f✱✱✱✱ Report Integrity ↓` — 4 hex characters plus 4 star masks, as a clickable link that scrolls to the full hash section at the bottom of the report. The full hash can be copied to clipboard. This is distinct from the posture hash (used for drift detection) — the integrity hash uniquely identifies each specific report instance.
-
-### 11. Subdomain Discovery
-- Multi-layer approach using Certificate Transparency logs (RFC 6962), wildcard certificate detection, DNS probing, and CNAME chain traversal
-- Source attribution: "CT Log" vs "DNS" for each subdomain
-- Wildcard certificate detection and DNS wildcard filtering
-- Subdomain-aware context: detects when the analyzed domain is itself a subdomain and offers a link to scan the registered domain
 
 ---
 
