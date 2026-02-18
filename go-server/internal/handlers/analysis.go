@@ -42,49 +42,25 @@ func (h *AnalysisHandler) ViewAnalysisStatic(c *gin.Context) {
         idStr := c.Param("id")
         analysisID, err := strconv.ParseInt(idStr, 10, 32)
         if err != nil {
-                c.HTML(http.StatusBadRequest, templateIndex, gin.H{
-                        "AppVersion":    h.Config.AppVersion,
-                        "CspNonce":      nonce,
-                        "CsrfToken":    csrfToken,
-                        "ActivePage":    "home",
-                        "FlashMessages": []FlashMessage{{Category: "danger", Message: "Invalid analysis ID"}},
-                })
+                h.renderErrorPage(c, http.StatusBadRequest, nonce, csrfToken, "danger", "Invalid analysis ID")
                 return
         }
 
         ctx := c.Request.Context()
         analysis, err := h.DB.Queries.GetAnalysisByID(ctx, int32(analysisID))
         if err != nil {
-                c.HTML(http.StatusNotFound, templateIndex, gin.H{
-                        "AppVersion":    h.Config.AppVersion,
-                        "CspNonce":      nonce,
-                        "CsrfToken":    csrfToken,
-                        "ActivePage":    "home",
-                        "FlashMessages": []FlashMessage{{Category: "danger", Message: "Analysis not found"}},
-                })
+                h.renderErrorPage(c, http.StatusNotFound, nonce, csrfToken, "danger", "Analysis not found")
                 return
         }
 
         if len(analysis.FullResults) == 0 || string(analysis.FullResults) == "null" {
-                c.HTML(http.StatusGone, templateIndex, gin.H{
-                        "AppVersion":    h.Config.AppVersion,
-                        "CspNonce":      nonce,
-                        "CsrfToken":    csrfToken,
-                        "ActivePage":    "home",
-                        "FlashMessages": []FlashMessage{{Category: "warning", Message: "This report is no longer available. Please re-analyze the domain."}},
-                })
+                h.renderErrorPage(c, http.StatusGone, nonce, csrfToken, "warning", "This report is no longer available. Please re-analyze the domain.")
                 return
         }
 
         results := NormalizeResults(analysis.FullResults)
         if results == nil {
-                c.HTML(http.StatusInternalServerError, templateIndex, gin.H{
-                        "AppVersion":    h.Config.AppVersion,
-                        "CspNonce":      nonce,
-                        "CsrfToken":    csrfToken,
-                        "ActivePage":    "home",
-                        "FlashMessages": []FlashMessage{{Category: "danger", Message: "Failed to parse results"}},
-                })
+                h.renderErrorPage(c, http.StatusInternalServerError, nonce, csrfToken, "danger", "Failed to parse results")
                 return
         }
 
@@ -101,18 +77,7 @@ func (h *AnalysisHandler) ViewAnalysisStatic(c *gin.Context) {
                 dur = *analysis.AnalysisDuration
         }
 
-        domainExists := true
-        if v, ok := results["domain_exists"]; ok {
-                if b, ok := v.(bool); ok {
-                        domainExists = b
-                }
-        }
-
-        toolVersion := ""
-        if tv, ok := results["_tool_version"].(string); ok {
-                toolVersion = tv
-        }
-
+        toolVersion := extractToolVersion(results)
         verifyCommands := analyzer.GenerateVerificationCommands(analysis.AsciiDomain, results)
 
         hashVersion := toolVersion
@@ -126,31 +91,14 @@ func (h *AnalysisHandler) ViewAnalysisStatic(c *gin.Context) {
         if analysis.PostureHash != nil {
                 currentHash = *analysis.PostureHash
         }
-        var driftDetected bool
-        var driftPrevHash string
-        var driftPrevTime string
-        var driftPrevID int32
-        var driftFields []analyzer.PostureDiffField
+        drift := driftInfo{}
         if currentHash != "" {
                 prevRow, prevErr := h.DB.Queries.GetPreviousAnalysisForDriftBefore(ctx, dbq.GetPreviousAnalysisForDriftBeforeParams{
                         Domain: analysis.Domain,
                         ID:     analysis.ID,
                 })
-                if prevErr == nil && prevRow.PostureHash != nil && *prevRow.PostureHash != "" {
-                        if *prevRow.PostureHash != currentHash {
-                                driftDetected = true
-                                driftPrevHash = *prevRow.PostureHash
-                                driftPrevID = prevRow.ID
-                                if prevRow.CreatedAt.Valid {
-                                        driftPrevTime = prevRow.CreatedAt.Time.Format("2 Jan 2006 15:04 UTC")
-                                }
-                                if prevRow.FullResults != nil {
-                                        var prevResults map[string]any
-                                        if json.Unmarshal(prevRow.FullResults, &prevResults) == nil {
-                                                driftFields = analyzer.ComputePostureDiff(prevResults, results)
-                                        }
-                                }
-                        }
+                if prevErr == nil {
+                        drift = computeDriftFromPrev(currentHash, prevRow.PostureHash, prevRow.ID, prevRow.CreatedAt.Valid, prevRow.CreatedAt.Time, prevRow.FullResults, results)
                 }
         }
 
@@ -169,7 +117,7 @@ func (h *AnalysisHandler) ViewAnalysisStatic(c *gin.Context) {
                 "FromHistory":          true,
                 "WaitSeconds":          waitSeconds,
                 "WaitReason":           waitReason,
-                "DomainExists":         domainExists,
+                "DomainExists":         resultsDomainExists(results),
                 "ToolVersion":          toolVersion,
                 "VerificationCommands": verifyCommands,
                 "IsSubdomain":          isSub,
@@ -180,11 +128,11 @@ func (h *AnalysisHandler) ViewAnalysisStatic(c *gin.Context) {
                 "MaintenanceNote":      h.Config.MaintenanceNote,
                 "SectionTuning":        h.Config.SectionTuning,
                 "PostureHash":          currentHash,
-                "DriftDetected":        driftDetected,
-                "DriftPrevHash":        driftPrevHash,
-                "DriftPrevTime":        driftPrevTime,
-                "DriftPrevID":          driftPrevID,
-                "DriftFields":          driftFields,
+                "DriftDetected":        drift.Detected,
+                "DriftPrevHash":        drift.PrevHash,
+                "DriftPrevTime":        drift.PrevTime,
+                "DriftPrevID":          drift.PrevID,
+                "DriftFields":          drift.Fields,
         })
 }
 
@@ -198,49 +146,25 @@ func (h *AnalysisHandler) ViewAnalysisExecutive(c *gin.Context) {
         idStr := c.Param("id")
         analysisID, err := strconv.ParseInt(idStr, 10, 32)
         if err != nil {
-                c.HTML(http.StatusBadRequest, templateIndex, gin.H{
-                        "AppVersion":    h.Config.AppVersion,
-                        "CspNonce":      nonce,
-                        "CsrfToken":    csrfToken,
-                        "ActivePage":    "home",
-                        "FlashMessages": []FlashMessage{{Category: "danger", Message: "Invalid analysis ID"}},
-                })
+                h.renderErrorPage(c, http.StatusBadRequest, nonce, csrfToken, "danger", "Invalid analysis ID")
                 return
         }
 
         ctx := c.Request.Context()
         analysis, err := h.DB.Queries.GetAnalysisByID(ctx, int32(analysisID))
         if err != nil {
-                c.HTML(http.StatusNotFound, templateIndex, gin.H{
-                        "AppVersion":    h.Config.AppVersion,
-                        "CspNonce":      nonce,
-                        "CsrfToken":    csrfToken,
-                        "ActivePage":    "home",
-                        "FlashMessages": []FlashMessage{{Category: "danger", Message: "Analysis not found"}},
-                })
+                h.renderErrorPage(c, http.StatusNotFound, nonce, csrfToken, "danger", "Analysis not found")
                 return
         }
 
         if len(analysis.FullResults) == 0 || string(analysis.FullResults) == "null" {
-                c.HTML(http.StatusGone, templateIndex, gin.H{
-                        "AppVersion":    h.Config.AppVersion,
-                        "CspNonce":      nonce,
-                        "CsrfToken":    csrfToken,
-                        "ActivePage":    "home",
-                        "FlashMessages": []FlashMessage{{Category: "warning", Message: "This report is no longer available. Please re-analyze the domain."}},
-                })
+                h.renderErrorPage(c, http.StatusGone, nonce, csrfToken, "warning", "This report is no longer available. Please re-analyze the domain.")
                 return
         }
 
         results := NormalizeResults(analysis.FullResults)
         if results == nil {
-                c.HTML(http.StatusInternalServerError, templateIndex, gin.H{
-                        "AppVersion":    h.Config.AppVersion,
-                        "CspNonce":      nonce,
-                        "CsrfToken":    csrfToken,
-                        "ActivePage":    "home",
-                        "FlashMessages": []FlashMessage{{Category: "danger", Message: "Failed to parse results"}},
-                })
+                h.renderErrorPage(c, http.StatusInternalServerError, nonce, csrfToken, "danger", "Failed to parse results")
                 return
         }
 
@@ -254,18 +178,7 @@ func (h *AnalysisHandler) ViewAnalysisExecutive(c *gin.Context) {
                 dur = *analysis.AnalysisDuration
         }
 
-        domainExists := true
-        if v, ok := results["domain_exists"]; ok {
-                if b, ok := v.(bool); ok {
-                        domainExists = b
-                }
-        }
-
-        toolVersion := ""
-        if tv, ok := results["_tool_version"].(string); ok {
-                toolVersion = tv
-        }
-
+        toolVersion := extractToolVersion(results)
         hashVersion := toolVersion
         if hashVersion == "" {
                 hashVersion = h.Config.AppVersion
@@ -284,7 +197,7 @@ func (h *AnalysisHandler) ViewAnalysisExecutive(c *gin.Context) {
                 "AnalysisID":        analysis.ID,
                 "AnalysisDuration":  dur,
                 "AnalysisTimestamp": timestamp,
-                "DomainExists":      domainExists,
+                "DomainExists":      resultsDomainExists(results),
                 "ToolVersion":       toolVersion,
                 "IntegrityHash":     integrityHash,
                 "RFCCount":          rfcCount,
@@ -342,35 +255,18 @@ func (h *AnalysisHandler) Analyze(c *gin.Context) {
 
         postureHash := analyzer.CanonicalPostureHash(results)
 
-        var driftDetected bool
-        var driftPrevHash string
-        var driftPrevTime string
-        var driftPrevID int32
-        var driftFields []analyzer.PostureDiffField
+        drift := driftInfo{}
         prevRow, prevErr := h.DB.Queries.GetPreviousAnalysisForDrift(ctx, asciiDomain)
-        if prevErr == nil && prevRow.PostureHash != nil && *prevRow.PostureHash != "" {
-                if *prevRow.PostureHash != postureHash {
-                        driftDetected = true
-                        driftPrevHash = *prevRow.PostureHash
-                        driftPrevID = prevRow.ID
-                        if prevRow.CreatedAt.Valid {
-                                driftPrevTime = prevRow.CreatedAt.Time.Format("2 Jan 2006 15:04 UTC")
-                        }
-                        if prevRow.FullResults != nil {
-                                var prevResults map[string]any
-                                if json.Unmarshal(prevRow.FullResults, &prevResults) == nil {
-                                        driftFields = analyzer.ComputePostureDiff(prevResults, results)
-                                }
-                        }
-                        slog.Info("Posture drift detected", "domain", asciiDomain, "prev_hash", driftPrevHash[:8], "new_hash", postureHash[:8], "changed_fields", len(driftFields))
+        if prevErr == nil {
+                drift = computeDriftFromPrev(postureHash, prevRow.PostureHash, prevRow.ID, prevRow.CreatedAt.Valid, prevRow.CreatedAt.Time, prevRow.FullResults, results)
+                if drift.Detected {
+                        slog.Info("Posture drift detected", "domain", asciiDomain, "prev_hash", drift.PrevHash[:8], "new_hash", postureHash[:8], "changed_fields", len(drift.Fields))
                 }
         }
 
         analysisID, timestamp := h.saveAnalysis(c.Request.Context(), domain, asciiDomain, results, analysisDuration, countryCode, countryName)
 
-        domainExists := resultsDomainExists(results)
         verifyCommands := analyzer.GenerateVerificationCommands(asciiDomain, results)
-
         integrityHash := analyzer.ReportIntegrityHash(asciiDomain, analysisID, timestamp, h.Config.AppVersion, results)
         rfcCount := analyzer.CountVerifiedRFCs(results)
 
@@ -388,7 +284,7 @@ func (h *AnalysisHandler) Analyze(c *gin.Context) {
                 "AnalysisTimestamp":    timestamp,
                 "FromHistory":          false,
                 "FromCache":            false,
-                "DomainExists":         domainExists,
+                "DomainExists":         resultsDomainExists(results),
                 "ToolVersion":          h.Config.AppVersion,
                 "VerificationCommands": verifyCommands,
                 "IsSubdomain":          isSub,
@@ -400,12 +296,58 @@ func (h *AnalysisHandler) Analyze(c *gin.Context) {
                 "MaintenanceNote":      h.Config.MaintenanceNote,
                 "SectionTuning":        h.Config.SectionTuning,
                 "PostureHash":          postureHash,
-                "DriftDetected":        driftDetected,
-                "DriftPrevHash":        driftPrevHash,
-                "DriftPrevTime":        driftPrevTime,
-                "DriftPrevID":          driftPrevID,
-                "DriftFields":          driftFields,
+                "DriftDetected":        drift.Detected,
+                "DriftPrevHash":        drift.PrevHash,
+                "DriftPrevTime":        drift.PrevTime,
+                "DriftPrevID":          drift.PrevID,
+                "DriftFields":          drift.Fields,
         })
+}
+
+type driftInfo struct {
+        Detected bool
+        PrevHash string
+        PrevTime string
+        PrevID   int32
+        Fields   []analyzer.PostureDiffField
+}
+
+func computeDriftFromPrev(currentHash string, prevHash *string, prevID int32, prevCreatedAtValid bool, prevCreatedAt time.Time, prevFullResults json.RawMessage, currentResults map[string]any) driftInfo {
+        if prevHash == nil || *prevHash == "" || *prevHash == currentHash {
+                return driftInfo{}
+        }
+        di := driftInfo{
+                Detected: true,
+                PrevHash: *prevHash,
+                PrevID:   prevID,
+        }
+        if prevCreatedAtValid {
+                di.PrevTime = prevCreatedAt.Format("2 Jan 2006 15:04 UTC")
+        }
+        if prevFullResults != nil {
+                var prevResults map[string]any
+                if json.Unmarshal(prevFullResults, &prevResults) == nil {
+                        di.Fields = analyzer.ComputePostureDiff(prevResults, currentResults)
+                }
+        }
+        return di
+}
+
+func (h *AnalysisHandler) renderErrorPage(c *gin.Context, status int, nonce, csrfToken any, category, message string) {
+        c.HTML(status, templateIndex, gin.H{
+                "AppVersion":    h.Config.AppVersion,
+                "CspNonce":      nonce,
+                "CsrfToken":    csrfToken,
+                "ActivePage":    "home",
+                "FlashMessages": []FlashMessage{{Category: category, Message: message}},
+        })
+}
+
+func extractToolVersion(results map[string]any) string {
+        if tv, ok := results["_tool_version"].(string); ok {
+                return tv
+        }
+        return ""
 }
 
 func (h *AnalysisHandler) renderIndexFlash(c *gin.Context, nonce, csrfToken any, category, message string) {

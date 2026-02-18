@@ -142,6 +142,81 @@ type historyFetchResult struct {
         errored     bool
 }
 
+type historyAggregation struct {
+        changes          []dnsChangeEvent
+        rateLimitedCount int
+        errorCount       int
+        totalTypes       int
+}
+
+func fetchAllHistoryTypes(ctx context.Context, domain, userAPIKey string) historyAggregation {
+        recordTypes := []string{"a", "aaaa", "mx", "ns"}
+        type indexedResult struct {
+                idx    int
+                result historyFetchResult
+        }
+        resultsCh := make(chan indexedResult, len(recordTypes))
+        for i, rtype := range recordTypes {
+                go func(idx int, rt string) {
+                        resultsCh <- indexedResult{idx, fetchHistoryForTypeWithKey(ctx, domain, rt, userAPIKey)}
+                }(i, rtype)
+        }
+
+        agg := historyAggregation{totalTypes: len(recordTypes)}
+        for range recordTypes {
+                ir := <-resultsCh
+                agg.changes = append(agg.changes, ir.result.changes...)
+                if ir.result.rateLimited {
+                        agg.rateLimitedCount++
+                }
+                if ir.result.errored {
+                        agg.errorCount++
+                }
+        }
+
+        sort.Slice(agg.changes, func(i, j int) bool {
+                return agg.changes[i].Date > agg.changes[j].Date
+        })
+        maxChanges := 15
+        if len(agg.changes) > maxChanges {
+                agg.changes = agg.changes[:maxChanges]
+        }
+        return agg
+}
+
+func buildHistoryResult(agg historyAggregation) map[string]any {
+        changesMaps := make([]map[string]any, len(agg.changes))
+        for i, ch := range agg.changes {
+                changesMaps[i] = map[string]any{
+                        "record_type": ch.RecordType,
+                        "value":       ch.Value,
+                        "action":      ch.Action,
+                        "date":        ch.Date,
+                        "org":         ch.Org,
+                        "description": ch.Description,
+                        "days_ago":    float64(ch.DaysAgo),
+                }
+        }
+
+        failedCount := agg.rateLimitedCount + agg.errorCount
+        allFailed := failedCount == agg.totalTypes
+        allRateLimited := agg.rateLimitedCount == agg.totalTypes
+        anyFailed := failedCount > 0
+        status := determineHistoryStatus(allRateLimited, allFailed, anyFailed)
+
+        return map[string]any{
+                "available":      !allFailed,
+                "api_enabled":    true,
+                "has_changes":    len(agg.changes) > 0,
+                "changes":       changesMaps,
+                "total_events":  float64(len(agg.changes)),
+                "source":        "SecurityTrails",
+                "status":        status,
+                "rate_limited":  agg.rateLimitedCount > 0,
+                "fully_checked": failedCount == 0,
+        }
+}
+
 func FetchDNSHistoryWithKey(ctx context.Context, domain, userAPIKey string, cache *DNSHistoryCache) map[string]any {
         if userAPIKey == "" {
                 return map[string]any{
@@ -158,75 +233,10 @@ func FetchDNSHistoryWithKey(ctx context.Context, domain, userAPIKey string, cach
                 }
         }
 
-        recordTypes := []string{"a", "aaaa", "mx", "ns"}
+        agg := fetchAllHistoryTypes(ctx, domain, userAPIKey)
+        result := buildHistoryResult(agg)
 
-        type indexedResult struct {
-                idx    int
-                result historyFetchResult
-        }
-        resultsCh := make(chan indexedResult, len(recordTypes))
-        for i, rtype := range recordTypes {
-                go func(idx int, rt string) {
-                        resultsCh <- indexedResult{idx, fetchHistoryForTypeWithKey(ctx, domain, rt, userAPIKey)}
-                }(i, rtype)
-        }
-
-        var allChanges []dnsChangeEvent
-        rateLimitedCount := 0
-        errorCount := 0
-        for range recordTypes {
-                ir := <-resultsCh
-                allChanges = append(allChanges, ir.result.changes...)
-                if ir.result.rateLimited {
-                        rateLimitedCount++
-                }
-                if ir.result.errored {
-                        errorCount++
-                }
-        }
-
-        sort.Slice(allChanges, func(i, j int) bool {
-                return allChanges[i].Date > allChanges[j].Date
-        })
-
-        maxChanges := 15
-        if len(allChanges) > maxChanges {
-                allChanges = allChanges[:maxChanges]
-        }
-
-        changesMaps := make([]map[string]any, len(allChanges))
-        for i, ch := range allChanges {
-                changesMaps[i] = map[string]any{
-                        "record_type": ch.RecordType,
-                        "value":       ch.Value,
-                        "action":      ch.Action,
-                        "date":        ch.Date,
-                        "org":         ch.Org,
-                        "description": ch.Description,
-                        "days_ago":    float64(ch.DaysAgo),
-                }
-        }
-
-        failedCount := rateLimitedCount + errorCount
-        allFailed := failedCount == len(recordTypes)
-        allRateLimited := rateLimitedCount == len(recordTypes)
-        anyFailed := failedCount > 0
-        fullyChecked := failedCount == 0
-
-        status := determineHistoryStatus(allRateLimited, allFailed, anyFailed)
-
-        result := map[string]any{
-                "available":      !allFailed,
-                "api_enabled":    true,
-                "has_changes":    len(allChanges) > 0,
-                "changes":       changesMaps,
-                "total_events":  float64(len(allChanges)),
-                "source":        "SecurityTrails",
-                "status":        status,
-                "rate_limited":  rateLimitedCount > 0,
-                "fully_checked": fullyChecked,
-        }
-
+        status, _ := result["status"].(string)
         if cache != nil && (status == "success" || status == "partial") {
                 cache.Set(domain, result)
                 slog.Info("DNS history cached", "domain", domain, "status", status, "ttl", cache.ttl)

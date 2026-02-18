@@ -118,26 +118,7 @@ func (a *Analyzer) AnalyzeDomain(ctx context.Context, domain string, customDKIMS
         results["smtp_transport"] = smtpResult
 
         results["hosting_summary"] = a.GetHostingInfo(ctx, domain, results)
-        if hs, ok := results["hosting_summary"].(map[string]any); ok {
-                if results["is_no_mail_domain"] == true || results["has_null_mx"] == true {
-                        if hs["email_hosting"] == "Unknown" || hs["email_hosting"] == "" {
-                                hs["email_hosting"] = "No Mail Domain"
-                        }
-                } else if hs["email_hosting"] == "Unknown" || hs["email_hosting"] == "" {
-                        if dkim, ok := results["dkim_analysis"].(map[string]any); ok {
-                                if pp, ok := dkim["primary_provider"].(string); ok && pp != "" && pp != "Unknown" {
-                                        hs["email_hosting"] = pp
-                                        if ec, ecOK := hs["email_confidence"].(map[string]any); !ecOK || len(ec) == 0 {
-                                                hs["email_confidence"] = map[string]any{
-                                                        "level":  "inferred",
-                                                        "label":  "Inferred",
-                                                        "method": "MX record and SPF analysis",
-                                                }
-                                        }
-                                }
-                        }
-                }
-        }
+        adjustHostingSummary(results)
         results["dns_infrastructure"] = a.AnalyzeDNSInfrastructure(domain, results)
         results["email_security_mgmt"] = a.DetectEmailSecurityManagement(
                 spfAnalysis,
@@ -256,6 +237,41 @@ func (a *Analyzer) runParallelAnalyses(ctx context.Context, domain string, custo
                 slog.Info(logTaskCompleted, "task", nr.key, "domain", domain, "elapsed_ms", fmt.Sprintf("%.0f", float64(nr.elapsed.Milliseconds())))
         }
         return resultsMap
+}
+
+func adjustHostingSummary(results map[string]any) {
+        hs, ok := results["hosting_summary"].(map[string]any)
+        if !ok {
+                return
+        }
+        emailUnknown := hs["email_hosting"] == "Unknown" || hs["email_hosting"] == ""
+        isNoMail := results["is_no_mail_domain"] == true || results["has_null_mx"] == true
+        if isNoMail && emailUnknown {
+                hs["email_hosting"] = "No Mail Domain"
+                return
+        }
+        if !isNoMail && emailUnknown {
+                inferEmailFromDKIM(hs, results)
+        }
+}
+
+func inferEmailFromDKIM(hs, results map[string]any) {
+        dkim, ok := results["dkim_analysis"].(map[string]any)
+        if !ok {
+                return
+        }
+        pp, ok := dkim["primary_provider"].(string)
+        if !ok || pp == "" || pp == "Unknown" {
+                return
+        }
+        hs["email_hosting"] = pp
+        if ec, ecOK := hs["email_confidence"].(map[string]any); !ecOK || len(ec) == 0 {
+                hs["email_confidence"] = map[string]any{
+                        "level":  "inferred",
+                        "label":  "Inferred",
+                        "method": "MX record and SPF analysis",
+                }
+        }
 }
 
 func enrichBasicRecords(basic, resultsMap map[string]any) {
