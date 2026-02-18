@@ -98,13 +98,20 @@ if ! git push "${PAT_URL}" ${BRANCH}; then
 fi
 
 # ── Update tracking ref ──
-# Replit's background maintenance often creates new lock files during/after push.
-# If fetch fails, the push still succeeded — tracking ref can be updated later.
 echo ""
 echo "=== Updating tracking ref ==="
-echo "  Push succeeded. Code is on GitHub."
-echo ""
-echo "  To fully sync tracking ref, run from Shell tab:"
-echo "    bash scripts/git-health-check.sh && git fetch"
+FETCH_URL="https://${CAREY_PAT_ALL3_REPOS}@github.com/${REPO}.git"
+if git fetch "$FETCH_URL" ${BRANCH} 2>/dev/null; then
+  REMAINING=$(git rev-list origin/${BRANCH}..HEAD --count 2>/dev/null || echo "?")
+  if [ "$REMAINING" = "0" ]; then
+    echo "  FULLY SYNCED — zero commits ahead, tracking ref current."
+  else
+    echo "  Tracking ref updated. ${REMAINING} local commits ahead (unpushed checkpoints)."
+  fi
+else
+  echo "  Push succeeded but fetch failed (likely new lock file from background maintenance)."
+  echo "  To fully sync tracking ref, run from Shell tab:"
+  echo "    bash scripts/git-health-check.sh && git fetch"
+fi
 echo ""
 echo "PUSH COMPLETE."
