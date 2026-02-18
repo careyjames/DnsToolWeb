@@ -38,7 +38,7 @@ func NewSourcesHandler(cfg *config.Config) *SourcesHandler {
 
 func (h *SourcesHandler) Sources(c *gin.Context) {
         nonce, _ := c.Get("csp_nonce")
-        c.HTML(http.StatusOK, "sources.html", gin.H{
+        data := gin.H{
                 "AppVersion":      h.Config.AppVersion,
                 "MaintenanceNote": h.Config.MaintenanceNote,
                 "CspNonce":        nonce,
@@ -50,7 +50,9 @@ func (h *SourcesHandler) Sources(c *gin.Context) {
                 "MetaSources":     getMetaSources(),
                 "TLPColors":       getTLPColors(),
                 "CVSSColors":      getCVSSColors(),
-        })
+        }
+        mergeAuthData(c, h.Config, data)
+        c.HTML(http.StatusOK, "sources.html", data)
 }
 
 func getDNSSources() []IntelSource {

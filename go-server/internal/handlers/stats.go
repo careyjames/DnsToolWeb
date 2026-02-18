@@ -29,14 +29,16 @@ func (h *StatsHandler) Stats(c *gin.Context) {
 
         recentStats, err := h.DB.Queries.ListRecentStats(ctx, 30)
         if err != nil {
-                c.HTML(http.StatusInternalServerError, "stats.html", gin.H{
+                errData := gin.H{
                         "AppVersion":      h.Config.AppVersion,
                         "MaintenanceNote": h.Config.MaintenanceNote,
                         "CspNonce":       nonce,
                         "CsrfToken":     csrfToken,
                         "ActivePage":     "stats",
                         "FlashMessages":  []FlashMessage{{Category: "danger", Message: "Failed to fetch stats"}},
-                })
+                }
+                mergeAuthData(c, h.Config, errData)
+                c.HTML(http.StatusInternalServerError, "stats.html", errData)
                 return
         }
 
@@ -72,7 +74,7 @@ func (h *StatsHandler) Stats(c *gin.Context) {
                 countryItems = append(countryItems, buildCountryStat(cs))
         }
 
-        c.HTML(http.StatusOK, "stats.html", gin.H{
+        data := gin.H{
                 "AppVersion":         h.Config.AppVersion,
                 "MaintenanceNote":    h.Config.MaintenanceNote,
                 "CspNonce":           nonce,
@@ -85,7 +87,9 @@ func (h *StatsHandler) Stats(c *gin.Context) {
                 "CountryStats":       countryItems,
                 "PopularDomains":     popItems,
                 "RecentStats":        statItems,
-        })
+        }
+        mergeAuthData(c, h.Config, data)
+        c.HTML(http.StatusOK, "stats.html", data)
 }
 
 func buildDailyStat(s dbq.AnalysisStat) DailyStat {

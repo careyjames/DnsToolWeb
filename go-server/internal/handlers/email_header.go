@@ -28,14 +28,16 @@ func (h *EmailHeaderHandler) EmailHeaderPage(c *gin.Context) {
         nonce, _ := c.Get("csp_nonce")
         csrfToken, _ := c.Get("csrf_token")
 
-        c.HTML(http.StatusOK, emailHeaderTemplate, gin.H{
+        data := gin.H{
                 "AppVersion":      h.Config.AppVersion,
                 "MaintenanceNote": h.Config.MaintenanceNote,
                 "CspNonce":        nonce,
                 "CsrfToken":       csrfToken,
                 "ActivePage":      "email-header",
                 "ShowForm":        true,
-        })
+        }
+        mergeAuthData(c, h.Config, data)
+        c.HTML(http.StatusOK, emailHeaderTemplate, data)
 }
 
 func (h *EmailHeaderHandler) AnalyzeEmailHeader(c *gin.Context) {
@@ -43,7 +45,7 @@ func (h *EmailHeaderHandler) AnalyzeEmailHeader(c *gin.Context) {
         csrfToken, _ := c.Get("csrf_token")
 
         renderErr := func(msg string) {
-                c.HTML(http.StatusOK, emailHeaderTemplate, gin.H{
+                errData := gin.H{
                         "AppVersion":      h.Config.AppVersion,
                         "MaintenanceNote": h.Config.MaintenanceNote,
                         "CspNonce":        nonce,
@@ -51,7 +53,9 @@ func (h *EmailHeaderHandler) AnalyzeEmailHeader(c *gin.Context) {
                         "ActivePage":      "email-header",
                         "ShowForm":        true,
                         "FlashMessages":   []FlashMessage{{Category: "danger", Message: msg}},
-                })
+                }
+                mergeAuthData(c, h.Config, errData)
+                c.HTML(http.StatusOK, emailHeaderTemplate, errData)
         }
 
         var rawInput string
@@ -95,7 +99,7 @@ func (h *EmailHeaderHandler) AnalyzeEmailHeader(c *gin.Context) {
         analysis := analyzer.AnalyzeEmailHeaders(detected.Headers)
         analysis.SourceFormat = detected.Format
 
-        c.HTML(http.StatusOK, emailHeaderTemplate, gin.H{
+        resultData := gin.H{
                 "AppVersion":      h.Config.AppVersion,
                 "MaintenanceNote": h.Config.MaintenanceNote,
                 "CspNonce":        nonce,
@@ -104,5 +108,7 @@ func (h *EmailHeaderHandler) AnalyzeEmailHeader(c *gin.Context) {
                 "ShowForm":        false,
                 "ShowResults":     true,
                 "Analysis":        analysis,
-        })
+        }
+        mergeAuthData(c, h.Config, resultData)
+        c.HTML(http.StatusOK, emailHeaderTemplate, resultData)
 }

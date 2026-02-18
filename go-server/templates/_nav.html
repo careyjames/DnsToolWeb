@@ -41,6 +41,28 @@
                         <i class="fas fa-diagram-project me-1"></i>Sources
                     </a>
                 </li>
+                {{if .GoogleAuthEnabled}}
+                <li class="nav-item ms-lg-2">
+                    {{if .Authenticated}}
+                    <div class="dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="fas fa-user-shield me-1"></i>{{.UserName}}
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end dropdown-menu-dark">
+                            {{if eq .UserRole "admin"}}
+                            <li><span class="dropdown-item-text text-info small"><i class="fas fa-crown me-1"></i>Administrator</span></li>
+                            <li><hr class="dropdown-divider"></li>
+                            {{end}}
+                            <li><a class="dropdown-item" href="/auth/logout"><i class="fas fa-sign-out-alt me-1"></i>Sign Out</a></li>
+                        </ul>
+                    </div>
+                    {{else}}
+                    <a class="nav-link" href="/auth/login">
+                        <i class="fas fa-sign-in-alt me-1"></i>Sign In
+                    </a>
+                    {{end}}
+                </li>
+                {{end}}
             </ul>
         </div>
     </div>

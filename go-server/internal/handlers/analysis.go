@@ -103,7 +103,7 @@ func (h *AnalysisHandler) ViewAnalysisStatic(c *gin.Context) {
         }
 
         isSub, rootDom := extractRootDomain(analysis.AsciiDomain)
-        c.HTML(http.StatusOK, "results.html", gin.H{
+        viewData := gin.H{
                 "AppVersion":           h.Config.AppVersion,
                 "CspNonce":             nonce,
                 "CsrfToken":           csrfToken,
@@ -133,7 +133,9 @@ func (h *AnalysisHandler) ViewAnalysisStatic(c *gin.Context) {
                 "DriftPrevTime":        drift.PrevTime,
                 "DriftPrevID":          drift.PrevID,
                 "DriftFields":          drift.Fields,
-        })
+        }
+        mergeAuthData(c, h.Config, viewData)
+        c.HTML(http.StatusOK, "results.html", viewData)
 }
 
 func (h *AnalysisHandler) ViewAnalysis(c *gin.Context) {
@@ -186,7 +188,7 @@ func (h *AnalysisHandler) ViewAnalysisExecutive(c *gin.Context) {
         integrityHash := analyzer.ReportIntegrityHash(analysis.AsciiDomain, analysis.ID, timestamp, hashVersion, results)
         rfcCount := analyzer.CountVerifiedRFCs(results)
 
-        c.HTML(http.StatusOK, "results_executive.html", gin.H{
+        execData := gin.H{
                 "AppVersion":        h.Config.AppVersion,
                 "CspNonce":          nonce,
                 "CsrfToken":        csrfToken,
@@ -203,7 +205,9 @@ func (h *AnalysisHandler) ViewAnalysisExecutive(c *gin.Context) {
                 "RFCCount":          rfcCount,
                 "MaintenanceNote":   h.Config.MaintenanceNote,
                 "SectionTuning":     h.Config.SectionTuning,
-        })
+        }
+        mergeAuthData(c, h.Config, execData)
+        c.HTML(http.StatusOK, "results_executive.html", execData)
 }
 
 func (h *AnalysisHandler) Analyze(c *gin.Context) {
@@ -271,7 +275,7 @@ func (h *AnalysisHandler) Analyze(c *gin.Context) {
         rfcCount := analyzer.CountVerifiedRFCs(results)
 
         isSub, rootDom := extractRootDomain(asciiDomain)
-        c.HTML(http.StatusOK, "results.html", gin.H{
+        analyzeData := gin.H{
                 "AppVersion":           h.Config.AppVersion,
                 "CspNonce":             nonce,
                 "CsrfToken":           csrfToken,
@@ -301,7 +305,9 @@ func (h *AnalysisHandler) Analyze(c *gin.Context) {
                 "DriftPrevTime":        drift.PrevTime,
                 "DriftPrevID":          drift.PrevID,
                 "DriftFields":          drift.Fields,
-        })
+        }
+        mergeAuthData(c, h.Config, analyzeData)
+        c.HTML(http.StatusOK, "results.html", analyzeData)
 }
 
 type driftInfo struct {
@@ -334,13 +340,15 @@ func computeDriftFromPrev(currentHash string, prevHash *string, prevID int32, pr
 }
 
 func (h *AnalysisHandler) renderErrorPage(c *gin.Context, status int, nonce, csrfToken any, category, message string) {
-        c.HTML(status, templateIndex, gin.H{
+        errData := gin.H{
                 "AppVersion":    h.Config.AppVersion,
                 "CspNonce":      nonce,
                 "CsrfToken":    csrfToken,
                 "ActivePage":    "home",
                 "FlashMessages": []FlashMessage{{Category: category, Message: message}},
-        })
+        }
+        mergeAuthData(c, h.Config, errData)
+        c.HTML(status, templateIndex, errData)
 }
 
 func extractToolVersion(results map[string]any) string {
@@ -351,13 +359,15 @@ func extractToolVersion(results map[string]any) string {
 }
 
 func (h *AnalysisHandler) renderIndexFlash(c *gin.Context, nonce, csrfToken any, category, message string) {
-        c.HTML(http.StatusOK, templateIndex, gin.H{
+        flashData := gin.H{
                 "AppVersion":    h.Config.AppVersion,
                 "CspNonce":      nonce,
                 "CsrfToken":    csrfToken,
                 "ActivePage":    "home",
                 "FlashMessages": []FlashMessage{{Category: category, Message: message}},
-        })
+        }
+        mergeAuthData(c, h.Config, flashData)
+        c.HTML(http.StatusOK, templateIndex, flashData)
 }
 
 func extractCustomSelectors(c *gin.Context) []string {

@@ -59,6 +59,8 @@ func main() {
         csrf := middleware.NewCSRFMiddleware(cfg.SessionSecret)
         router.Use(csrf.Handler())
 
+        router.Use(middleware.SessionLoader(database.Pool))
+
         rateLimiter := middleware.NewInMemoryRateLimiter()
         slog.Info("Rate limiter initialized", "backend", "in-memory", "max_requests", middleware.RateLimitMaxRequests, "window_seconds", middleware.RateLimitWindow)
 
@@ -116,7 +118,7 @@ func main() {
         analysisHandler := handlers.NewAnalysisHandler(database, cfg, dnsAnalyzer, dnsHistoryCache)
         statsHandler := handlers.NewStatsHandler(database, cfg)
         compareHandler := handlers.NewCompareHandler(database, cfg)
-        // exportHandler := handlers.NewExportHandler(database) // DISABLED: re-enable when auth is implemented
+        exportHandler := handlers.NewExportHandler(database)
         staticHandler := handlers.NewStaticHandler(staticDir, cfg.AppVersion)
         proxyHandler := handlers.NewProxyHandler()
 
@@ -148,12 +150,7 @@ func main() {
 
         router.GET("/compare", compareHandler.Compare)
 
-        router.GET("/export/json", func(c *gin.Context) {
-                c.JSON(http.StatusForbidden, gin.H{
-                        "error":   "JSON export requires authentication",
-                        "message": "Bulk JSON export is available to authenticated users. Sign in to access this feature.",
-                })
-        })
+        router.GET("/export/json", middleware.RequireAdmin(), exportHandler.ExportJSON)
         router.GET("/export/subdomains", analysisHandler.ExportSubdomainsCSV)
 
         router.GET("/api/analysis/:id", analysisHandler.APIAnalysis)
@@ -186,15 +183,29 @@ func main() {
         brandColorsHandler := handlers.NewBrandColorsHandler(cfg)
         router.GET("/brand-colors", brandColorsHandler.BrandColors)
 
+        authHandler := handlers.NewAuthHandler(cfg, database.Pool)
+        if cfg.GoogleClientID != "" {
+                router.GET("/auth/login", authHandler.Login)
+                router.GET("/auth/callback", authHandler.Callback)
+                router.GET("/auth/logout", authHandler.Logout)
+        }
+
         router.NoRoute(func(c *gin.Context) {
                 nonce, _ := c.Get("csp_nonce")
                 csrfToken, _ := c.Get("csrf_token")
-                c.HTML(http.StatusNotFound, "index.html", gin.H{
+                data := gin.H{
                         "AppVersion": cfg.AppVersion,
                         "CspNonce":   nonce,
                         "CsrfToken":  csrfToken,
                         "ActivePage": "home",
-                })
+                }
+                for k, v := range middleware.GetAuthTemplateData(c) {
+                        data[k] = v
+                }
+                if cfg.GoogleClientID != "" {
+                        data["GoogleAuthEnabled"] = true
+                }
+                c.HTML(http.StatusNotFound, "index.html", data)
         })
 
         addr := fmt.Sprintf("0.0.0.0:%s", cfg.Port)

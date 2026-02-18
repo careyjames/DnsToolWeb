@@ -21,7 +21,7 @@ func NewHomeHandler(cfg *config.Config) *HomeHandler {
 func (h *HomeHandler) Index(c *gin.Context) {
         nonce, _ := c.Get("csp_nonce")
         csrfToken, _ := c.Get("csrf_token")
-        c.HTML(http.StatusOK, "index.html", gin.H{
+        data := gin.H{
                 "AppVersion":      h.Config.AppVersion,
                 "MaintenanceNote": h.Config.MaintenanceNote,
                 "CspNonce":    nonce,
@@ -32,5 +32,7 @@ func (h *HomeHandler) Index(c *gin.Context) {
                 "WaitReason":  c.DefaultQuery("wait_reason", "anti_repeat"),
                 "Changelog":   GetRecentChangelog(6),
                 "DKIMExpand":  c.Query("dkim") != "",
-        })
+        }
+        mergeAuthData(c, h.Config, data)
+        c.HTML(http.StatusOK, "index.html", data)
 }

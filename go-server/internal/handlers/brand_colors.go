@@ -30,7 +30,7 @@ func NewBrandColorsHandler(cfg *config.Config) *BrandColorsHandler {
 
 func (h *BrandColorsHandler) BrandColors(c *gin.Context) {
         nonce, _ := c.Get("csp_nonce")
-        c.HTML(http.StatusOK, "brand_colors.html", gin.H{
+        data := gin.H{
                 "AppVersion":       h.Config.AppVersion,
                 "MaintenanceNote":  h.Config.MaintenanceNote,
                 "CspNonce":         nonce,
@@ -40,7 +40,9 @@ func (h *BrandColorsHandler) BrandColors(c *gin.Context) {
                 "SurfaceColors":    getSurfaceColors(),
                 "TLPColors":        getTLPColors(),
                 "CVSSColors":       getCVSSColors(),
-        })
+        }
+        mergeAuthData(c, h.Config, data)
+        c.HTML(http.StatusOK, "brand_colors.html", data)
 }
 
 func getBrandPalette() []BrandColor {

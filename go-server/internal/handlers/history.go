@@ -102,14 +102,16 @@ func (h *HistoryHandler) History(c *gin.Context) {
 
         total, err := h.countAnalyses(ctx, searchDomain)
         if err != nil {
-                c.HTML(http.StatusInternalServerError, templateHistory, gin.H{
+                errData := gin.H{
                         "AppVersion":      h.Config.AppVersion,
                         "MaintenanceNote": h.Config.MaintenanceNote,
                         "CspNonce":        nonce,
                         "CsrfToken":       csrfToken,
                         "ActivePage":      "history",
                         "FlashMessages":   []FlashMessage{{Category: "danger", Message: "Failed to count analyses"}},
-                })
+                }
+                mergeAuthData(c, h.Config, errData)
+                c.HTML(http.StatusInternalServerError, templateHistory, errData)
                 return
         }
 
@@ -117,20 +119,22 @@ func (h *HistoryHandler) History(c *gin.Context) {
 
         items, err := h.fetchAnalyses(ctx, searchDomain, &pagination)
         if err != nil {
-                c.HTML(http.StatusInternalServerError, templateHistory, gin.H{
+                errData := gin.H{
                         "AppVersion":      h.Config.AppVersion,
                         "MaintenanceNote": h.Config.MaintenanceNote,
                         "CspNonce":        nonce,
                         "CsrfToken":       csrfToken,
                         "ActivePage":      "history",
                         "FlashMessages":   []FlashMessage{{Category: "danger", Message: "Failed to fetch analyses"}},
-                })
+                }
+                mergeAuthData(c, h.Config, errData)
+                c.HTML(http.StatusInternalServerError, templateHistory, errData)
                 return
         }
 
         pd := BuildPagination(page, pagination.TotalPages, total)
 
-        c.HTML(http.StatusOK, templateHistory, gin.H{
+        data := gin.H{
                 "AppVersion":      h.Config.AppVersion,
                 "MaintenanceNote": h.Config.MaintenanceNote,
                 "CspNonce":     nonce,
@@ -139,7 +143,9 @@ func (h *HistoryHandler) History(c *gin.Context) {
                 "Analyses":     items,
                 "Pagination":   pd,
                 "SearchDomain": searchDomain,
-        })
+        }
+        mergeAuthData(c, h.Config, data)
+        c.HTML(http.StatusOK, templateHistory, data)
 }
 
 func (h *HistoryHandler) countAnalyses(ctx context.Context, searchDomain string) (int64, error) {

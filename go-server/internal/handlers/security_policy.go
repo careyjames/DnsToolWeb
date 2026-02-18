@@ -20,10 +20,12 @@ func NewSecurityPolicyHandler(cfg *config.Config) *SecurityPolicyHandler {
 
 func (h *SecurityPolicyHandler) SecurityPolicy(c *gin.Context) {
         nonce, _ := c.Get("csp_nonce")
-        c.HTML(http.StatusOK, "security_policy.html", gin.H{
+        data := gin.H{
                 "AppVersion":      h.Config.AppVersion,
                 "MaintenanceNote": h.Config.MaintenanceNote,
                 "CspNonce":   nonce,
                 "ActivePage": "security-policy",
-        })
+        }
+        mergeAuthData(c, h.Config, data)
+        c.HTML(http.StatusOK, "security_policy.html", data)
 }

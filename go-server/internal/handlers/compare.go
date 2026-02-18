@@ -83,6 +83,7 @@ func renderCompareError(c *gin.Context, p compareErrorParams) {
         if p.domain != "" {
                 data["Domain"] = p.domain
         }
+        mergeAuthData(c, p.handler.Config, data)
         c.HTML(p.statusCode, p.tmpl, data)
 }
 
@@ -167,7 +168,7 @@ func (h *CompareHandler) Compare(c *gin.Context) {
         diffs := ComputeAllDiffs(resultsA, resultsB)
         diffItems, changesFound := buildDiffItems(diffs)
 
-        c.HTML(http.StatusOK, templateCompare, gin.H{
+        data := gin.H{
                 "AppVersion":      h.Config.AppVersion,
                 "MaintenanceNote": h.Config.MaintenanceNote,
                 "CspNonce":     nonce,
@@ -178,7 +179,9 @@ func (h *CompareHandler) Compare(c *gin.Context) {
                 "AnalysisB":    buildCompareAnalysis(analysisB),
                 "Diffs":        diffItems,
                 "ChangesFound": changesFound,
-        })
+        }
+        mergeAuthData(c, h.Config, data)
+        c.HTML(http.StatusOK, templateCompare, data)
 }
 
 func (h *CompareHandler) selectDomain(c *gin.Context, domain string) {
@@ -186,7 +189,7 @@ func (h *CompareHandler) selectDomain(c *gin.Context, domain string) {
         csrfToken, _ := c.Get("csrf_token")
 
         if domain == "" {
-                c.HTML(http.StatusOK, templateCompareSelect, gin.H{
+                emptyData := gin.H{
                         "AppVersion":      h.Config.AppVersion,
                         "MaintenanceNote": h.Config.MaintenanceNote,
                         "CspNonce":        nonce,
@@ -194,7 +197,9 @@ func (h *CompareHandler) selectDomain(c *gin.Context, domain string) {
                         "ActivePage":      "compare",
                         "Domain":          "",
                         "FlashMessages":   []FlashMessage{{Category: "warning", Message: "Please provide a domain to compare analyses."}},
-                })
+                }
+                mergeAuthData(c, h.Config, emptyData)
+                c.HTML(http.StatusOK, templateCompareSelect, emptyData)
                 return
         }
 
@@ -204,7 +209,7 @@ func (h *CompareHandler) selectDomain(c *gin.Context, domain string) {
                 Limit:  20,
         })
         if err != nil {
-                c.HTML(http.StatusInternalServerError, templateCompareSelect, gin.H{
+                fetchErrData := gin.H{
                         "AppVersion":      h.Config.AppVersion,
                         "MaintenanceNote": h.Config.MaintenanceNote,
                         "CspNonce":        nonce,
@@ -212,12 +217,14 @@ func (h *CompareHandler) selectDomain(c *gin.Context, domain string) {
                         "ActivePage":      "compare",
                         "Domain":          domain,
                         "FlashMessages":   []FlashMessage{{Category: "danger", Message: "Failed to fetch analyses"}},
-                })
+                }
+                mergeAuthData(c, h.Config, fetchErrData)
+                c.HTML(http.StatusInternalServerError, templateCompareSelect, fetchErrData)
                 return
         }
 
         if len(analyses) == 0 {
-                c.HTML(http.StatusOK, templateCompareSelect, gin.H{
+                noData := gin.H{
                         "AppVersion":      h.Config.AppVersion,
                         "MaintenanceNote": h.Config.MaintenanceNote,
                         "CspNonce":        nonce,
@@ -225,7 +232,9 @@ func (h *CompareHandler) selectDomain(c *gin.Context, domain string) {
                         "ActivePage":      "compare",
                         "Domain":          domain,
                         "AnalysisCount":   0,
-                })
+                }
+                mergeAuthData(c, h.Config, noData)
+                c.HTML(http.StatusOK, templateCompareSelect, noData)
                 return
         }
         if len(analyses) < 2 {
@@ -233,7 +242,7 @@ func (h *CompareHandler) selectDomain(c *gin.Context, domain string) {
                 for _, a := range analyses {
                         items = append(items, buildSelectAnalysisItem(a))
                 }
-                c.HTML(http.StatusOK, templateCompareSelect, gin.H{
+                fewData := gin.H{
                         "AppVersion":      h.Config.AppVersion,
                         "MaintenanceNote": h.Config.MaintenanceNote,
                         "CspNonce":        nonce,
@@ -242,7 +251,9 @@ func (h *CompareHandler) selectDomain(c *gin.Context, domain string) {
                         "Domain":          domain,
                         "Analyses":        items,
                         "AnalysisCount":   len(analyses),
-                })
+                }
+                mergeAuthData(c, h.Config, fewData)
+                c.HTML(http.StatusOK, templateCompareSelect, fewData)
                 return
         }
 
@@ -251,7 +262,7 @@ func (h *CompareHandler) selectDomain(c *gin.Context, domain string) {
                 items = append(items, buildSelectAnalysisItem(a))
         }
 
-        c.HTML(http.StatusOK, templateCompareSelect, gin.H{
+        selectData := gin.H{
                 "AppVersion":      h.Config.AppVersion,
                 "MaintenanceNote": h.Config.MaintenanceNote,
                 "CspNonce":   nonce,
@@ -259,7 +270,9 @@ func (h *CompareHandler) selectDomain(c *gin.Context, domain string) {
                 "ActivePage": "",
                 "Domain":     domain,
                 "Analyses":   items,
-        })
+        }
+        mergeAuthData(c, h.Config, selectData)
+        c.HTML(http.StatusOK, templateCompareSelect, selectData)
 }
 
 func buildSelectAnalysisItem(a dbq.DomainAnalysis) AnalysisItem {

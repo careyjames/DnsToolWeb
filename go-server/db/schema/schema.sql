@@ -55,3 +55,27 @@ CREATE TABLE data_governance_events (
     metadata JSONB,
     created_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
+
+CREATE TABLE users (
+    id SERIAL PRIMARY KEY,
+    email VARCHAR(255) NOT NULL UNIQUE,
+    name VARCHAR(255) NOT NULL DEFAULT '',
+    google_sub VARCHAR(255) NOT NULL UNIQUE,
+    role VARCHAR(20) NOT NULL DEFAULT 'user',
+    created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+    last_login_at TIMESTAMP NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX ix_users_email ON users (email);
+CREATE INDEX ix_users_google_sub ON users (google_sub);
+
+CREATE TABLE sessions (
+    id VARCHAR(64) PRIMARY KEY,
+    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+    expires_at TIMESTAMP NOT NULL,
+    last_seen_at TIMESTAMP NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX ix_sessions_user_id ON sessions (user_id);
+CREATE INDEX ix_sessions_expires_at ON sessions (expires_at);

@@ -60,3 +60,21 @@ type DomainAnalysis struct {
 	FullResults          json.RawMessage  `db:"full_results" json:"full_results"`
 	PostureHash          *string          `db:"posture_hash" json:"posture_hash"`
 }
+
+type Session struct {
+	ID         string           `db:"id" json:"id"`
+	UserID     int32            `db:"user_id" json:"user_id"`
+	CreatedAt  pgtype.Timestamp `db:"created_at" json:"created_at"`
+	ExpiresAt  pgtype.Timestamp `db:"expires_at" json:"expires_at"`
+	LastSeenAt pgtype.Timestamp `db:"last_seen_at" json:"last_seen_at"`
+}
+
+type User struct {
+	ID          int32            `db:"id" json:"id"`
+	Email       string           `db:"email" json:"email"`
+	Name        string           `db:"name" json:"name"`
+	GoogleSub   string           `db:"google_sub" json:"google_sub"`
+	Role        string           `db:"role" json:"role"`
+	CreatedAt   pgtype.Timestamp `db:"created_at" json:"created_at"`
+	LastLoginAt pgtype.Timestamp `db:"last_login_at" json:"last_login_at"`
+}

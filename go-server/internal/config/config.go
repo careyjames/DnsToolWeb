@@ -9,14 +9,19 @@ import (
 )
 
 type Config struct {
-        DatabaseURL     string
-        SessionSecret   string
-        Port            string
-        AppVersion      string
-        Testing         bool
-        SMTPProbeMode   string
-        MaintenanceNote string
-        SectionTuning   map[string]string
+        DatabaseURL        string
+        SessionSecret      string
+        Port               string
+        AppVersion         string
+        Testing            bool
+        SMTPProbeMode      string
+        MaintenanceNote    string
+        SectionTuning      map[string]string
+        GoogleClientID     string
+        GoogleClientSecret string
+        GoogleRedirectURL  string
+        AdminBootstrapEmail string
+        BaseURL            string
 }
 
 var sectionTuningMap = map[string]string{
@@ -70,14 +75,29 @@ func Load() (*Config, error) {
                 }
         }
 
+        baseURL := os.Getenv("BASE_URL")
+        if baseURL == "" {
+                baseURL = "https://dnstool.it-help.tech"
+        }
+
+        googleRedirectURL := os.Getenv("GOOGLE_REDIRECT_URL")
+        if googleRedirectURL == "" {
+                googleRedirectURL = baseURL + "/auth/callback"
+        }
+
         return &Config{
-                DatabaseURL:     dbURL,
-                SessionSecret:   sessionSecret,
-                Port:            port,
-                AppVersion:      "26.20.55",
-                Testing:         false,
-                SMTPProbeMode:   smtpProbeMode,
-                MaintenanceNote: maintenanceNote,
-                SectionTuning:   tuning,
+                DatabaseURL:         dbURL,
+                SessionSecret:       sessionSecret,
+                Port:                port,
+                AppVersion:          "26.20.56",
+                Testing:             false,
+                SMTPProbeMode:       smtpProbeMode,
+                MaintenanceNote:     maintenanceNote,
+                SectionTuning:       tuning,
+                GoogleClientID:      os.Getenv("GOOGLE_CLIENT_ID"),
+                GoogleClientSecret:  os.Getenv("GOOGLE_CLIENT_SECRET"),
+                GoogleRedirectURL:   googleRedirectURL,
+                AdminBootstrapEmail: os.Getenv("ADMIN_BOOTSTRAP_EMAIL"),
+                BaseURL:             baseURL,
         }, nil
 }

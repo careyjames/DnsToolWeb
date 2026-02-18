@@ -28,14 +28,16 @@ func (h *InvestigateHandler) InvestigatePage(c *gin.Context) {
         nonce, _ := c.Get("csp_nonce")
         csrfToken, _ := c.Get("csrf_token")
 
-        c.HTML(http.StatusOK, investigateTemplate, gin.H{
+        data := gin.H{
                 "AppVersion":      h.Config.AppVersion,
                 "MaintenanceNote": h.Config.MaintenanceNote,
                 "CspNonce":        nonce,
                 "CsrfToken":       csrfToken,
                 "ActivePage":      "investigate",
                 "ShowForm":        true,
-        })
+        }
+        mergeAuthData(c, h.Config, data)
+        c.HTML(http.StatusOK, investigateTemplate, data)
 }
 
 func (h *InvestigateHandler) Investigate(c *gin.Context) {
@@ -46,7 +48,7 @@ func (h *InvestigateHandler) Investigate(c *gin.Context) {
         ip := strings.TrimSpace(c.PostForm("ip_address"))
 
         if domain == "" || ip == "" {
-                c.HTML(http.StatusOK, investigateTemplate, gin.H{
+                emptyData := gin.H{
                         "AppVersion":      h.Config.AppVersion,
                         "MaintenanceNote": h.Config.MaintenanceNote,
                         "CspNonce":        nonce,
@@ -56,12 +58,14 @@ func (h *InvestigateHandler) Investigate(c *gin.Context) {
                         "FlashMessages":   []FlashMessage{{Category: "danger", Message: "Please enter both a domain name and an IP address."}},
                         "FormDomain":    domain,
                         "FormIP":        ip,
-                })
+                }
+                mergeAuthData(c, h.Config, emptyData)
+                c.HTML(http.StatusOK, investigateTemplate, emptyData)
                 return
         }
 
         if !dnsclient.ValidateDomain(domain) {
-                c.HTML(http.StatusOK, investigateTemplate, gin.H{
+                invDomData := gin.H{
                         "AppVersion":      h.Config.AppVersion,
                         "MaintenanceNote": h.Config.MaintenanceNote,
                         "CspNonce":        nonce,
@@ -71,12 +75,14 @@ func (h *InvestigateHandler) Investigate(c *gin.Context) {
                         "FlashMessages":   []FlashMessage{{Category: "danger", Message: "Invalid domain name. Enter a domain like example.com."}},
                         "FormDomain":    domain,
                         "FormIP":        ip,
-                })
+                }
+                mergeAuthData(c, h.Config, invDomData)
+                c.HTML(http.StatusOK, investigateTemplate, invDomData)
                 return
         }
 
         if !analyzer.ValidateIPAddress(ip) {
-                c.HTML(http.StatusOK, investigateTemplate, gin.H{
+                invIPData := gin.H{
                         "AppVersion":      h.Config.AppVersion,
                         "MaintenanceNote": h.Config.MaintenanceNote,
                         "CspNonce":        nonce,
@@ -86,12 +92,14 @@ func (h *InvestigateHandler) Investigate(c *gin.Context) {
                         "FlashMessages":   []FlashMessage{{Category: "danger", Message: "Invalid IP address. Enter a valid IPv4 or IPv6 address."}},
                         "FormDomain":    domain,
                         "FormIP":        ip,
-                })
+                }
+                mergeAuthData(c, h.Config, invIPData)
+                c.HTML(http.StatusOK, investigateTemplate, invIPData)
                 return
         }
 
         if analyzer.IsPrivateIP(ip) {
-                c.HTML(http.StatusOK, investigateTemplate, gin.H{
+                privData := gin.H{
                         "AppVersion":      h.Config.AppVersion,
                         "MaintenanceNote": h.Config.MaintenanceNote,
                         "CspNonce":        nonce,
@@ -101,7 +109,9 @@ func (h *InvestigateHandler) Investigate(c *gin.Context) {
                         "FlashMessages":   []FlashMessage{{Category: "warning", Message: "Private, loopback, and link-local IP addresses cannot be investigated. Enter a public IP address."}},
                         "FormDomain":    domain,
                         "FormIP":        ip,
-                })
+                }
+                mergeAuthData(c, h.Config, privData)
+                c.HTML(http.StatusOK, investigateTemplate, privData)
                 return
         }
 
@@ -180,7 +190,7 @@ func (h *InvestigateHandler) Investigate(c *gin.Context) {
                 }
         }
 
-        c.HTML(http.StatusOK, investigateTemplate, gin.H{
+        resultsData := gin.H{
                 "AppVersion":      h.Config.AppVersion,
                 "MaintenanceNote": h.Config.MaintenanceNote,
                 "CspNonce":        nonce,
@@ -195,5 +205,7 @@ func (h *InvestigateHandler) Investigate(c *gin.Context) {
                 "IPInfo":        ipInfoData,
                 "STError":       stError,
                 "IPInfoError":   ipInfoError,
-        })
+        }
+        mergeAuthData(c, h.Config, resultsData)
+        c.HTML(http.StatusOK, investigateTemplate, resultsData)
 }
