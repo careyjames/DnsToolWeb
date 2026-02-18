@@ -69,6 +69,11 @@ func SecurityHeaders() gin.HandlerFunc {
                 c.Header("Cross-Origin-Resource-Policy", "same-origin")
                 c.Header("X-Permitted-Cross-Domain-Policies", "none")
 
+                upgradeDirective := ""
+                if c.Request.TLS != nil || c.GetHeader("X-Forwarded-Proto") == "https" {
+                        upgradeDirective = "upgrade-insecure-requests;"
+                }
+
                 csp := fmt.Sprintf(
                         "default-src 'none'; "+
                                 "script-src 'self' 'nonce-%s'; "+
@@ -80,8 +85,8 @@ func SecurityHeaders() gin.HandlerFunc {
                                 "base-uri 'none'; "+
                                 "form-action 'self'; "+
                                 "manifest-src 'self'; "+
-                                "upgrade-insecure-requests;",
-                        nonceStr, nonceStr,
+                                "%s",
+                        nonceStr, nonceStr, upgradeDirective,
                 )
                 c.Header("Content-Security-Policy", csp)
 
