@@ -42,16 +42,16 @@ test.describe('Navigation', () => {
 });
 
 test.describe('Responsive Layout', () => {
-  test('page is usable at mobile width', async ({ page, browserName }) => {
-    test.skip(browserName === 'webkit' && !!page.context().browser()?.version(), 'viewport set by device profile');
+  test('page is usable at mobile width', async ({ page }) => {
+    test.skip(test.info().project.name.includes('iphone') || test.info().project.name.includes('ipad'), 'viewport fixed by device profile');
     await page.setViewportSize({ width: 375, height: 812 });
     await page.goto('/');
     await expect(page.locator('#domainForm')).toBeVisible();
     await expect(page.locator('#domain')).toBeVisible();
   });
 
-  test('page is usable at tablet width', async ({ page, browserName }) => {
-    test.skip(browserName === 'webkit' && !!page.context().browser()?.version(), 'viewport set by device profile');
+  test('page is usable at tablet width', async ({ page }) => {
+    test.skip(test.info().project.name.includes('iphone') || test.info().project.name.includes('ipad'), 'viewport fixed by device profile');
     await page.setViewportSize({ width: 768, height: 1024 });
     await page.goto('/');
     await expect(page.locator('#domainForm')).toBeVisible();
