@@ -6,6 +6,10 @@ globalThis.addEventListener('pageshow', function(e) {
     if (e.persisted) {
         document.querySelectorAll('.loading-overlay').forEach(function(overlay) {
             overlay.classList.remove('is-active');
+            if (overlay.dataset.timerId) {
+                clearInterval(Number(overlay.dataset.timerId));
+                delete overlay.dataset.timerId;
+            }
         });
         document.body.classList.remove('loading');
         var reanalyzeBtn = document.getElementById('reanalyzeBtn');
@@ -47,11 +51,12 @@ function startStatusCycle(overlayEl) {
     const startTime = Date.now();
 
     if (timerEl) {
-        (function tick() {
+        timerEl.textContent = '0s';
+        var timerId = setInterval(function() {
             var elapsed = Math.floor((Date.now() - startTime) / 1000);
             timerEl.textContent = elapsed + 's';
-            requestAnimationFrame(tick);
-        })();
+        }, 1000);
+        overlayEl.dataset.timerId = timerId;
     }
     if (noteEl) {
         setTimeout(function() {
