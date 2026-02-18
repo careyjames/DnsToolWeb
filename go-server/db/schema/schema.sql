@@ -79,3 +79,75 @@ CREATE TABLE sessions (
 
 CREATE INDEX ix_sessions_user_id ON sessions (user_id);
 CREATE INDEX ix_sessions_expires_at ON sessions (expires_at);
+
+-- Intelligence Confidence Engine (ICE) tables
+
+CREATE TABLE ice_protocols (
+    id SERIAL PRIMARY KEY,
+    protocol VARCHAR(20) NOT NULL UNIQUE,
+    display_name VARCHAR(50) NOT NULL,
+    rfc_refs TEXT[] NOT NULL DEFAULT '{}',
+    created_at TIMESTAMP NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE ice_test_runs (
+    id SERIAL PRIMARY KEY,
+    app_version VARCHAR(20) NOT NULL,
+    git_commit VARCHAR(40) NOT NULL DEFAULT '',
+    run_type VARCHAR(20) NOT NULL DEFAULT 'ci',
+    total_cases INTEGER NOT NULL DEFAULT 0,
+    total_passed INTEGER NOT NULL DEFAULT 0,
+    total_failed INTEGER NOT NULL DEFAULT 0,
+    duration_ms INTEGER NOT NULL DEFAULT 0,
+    created_at TIMESTAMP NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX ix_ice_test_runs_created ON ice_test_runs (created_at);
+CREATE INDEX ix_ice_test_runs_version ON ice_test_runs (app_version);
+
+CREATE TABLE ice_results (
+    id SERIAL PRIMARY KEY,
+    run_id INTEGER NOT NULL REFERENCES ice_test_runs(id) ON DELETE CASCADE,
+    protocol VARCHAR(20) NOT NULL,
+    layer VARCHAR(20) NOT NULL,
+    case_id VARCHAR(100) NOT NULL,
+    case_name VARCHAR(255) NOT NULL DEFAULT '',
+    passed BOOLEAN NOT NULL,
+    expected TEXT,
+    actual TEXT,
+    rfc_section VARCHAR(50),
+    notes TEXT,
+    created_at TIMESTAMP NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX ix_ice_results_run ON ice_results (run_id);
+CREATE INDEX ix_ice_results_protocol ON ice_results (protocol, layer);
+CREATE INDEX ix_ice_results_case ON ice_results (case_id);
+
+CREATE TABLE ice_maturity (
+    id SERIAL PRIMARY KEY,
+    protocol VARCHAR(20) NOT NULL,
+    layer VARCHAR(20) NOT NULL,
+    maturity VARCHAR(20) NOT NULL DEFAULT 'development',
+    total_runs INTEGER NOT NULL DEFAULT 0,
+    consecutive_passes INTEGER NOT NULL DEFAULT 0,
+    first_pass_at TIMESTAMP,
+    last_regression_at TIMESTAMP,
+    last_evaluated_at TIMESTAMP NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
+    CONSTRAINT ice_maturity_unique UNIQUE (protocol, layer)
+);
+
+CREATE TABLE ice_regressions (
+    id SERIAL PRIMARY KEY,
+    protocol VARCHAR(20) NOT NULL,
+    layer VARCHAR(20) NOT NULL,
+    run_id INTEGER NOT NULL REFERENCES ice_test_runs(id) ON DELETE CASCADE,
+    previous_maturity VARCHAR(20) NOT NULL,
+    new_maturity VARCHAR(20) NOT NULL,
+    failed_cases TEXT[] NOT NULL DEFAULT '{}',
+    notes TEXT,
+    created_at TIMESTAMP NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX ix_ice_regressions_protocol ON ice_regressions (protocol, layer, created_at);

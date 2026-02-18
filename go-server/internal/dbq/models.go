@@ -61,6 +61,66 @@ type DomainAnalysis struct {
 	PostureHash          *string          `db:"posture_hash" json:"posture_hash"`
 }
 
+type IceMaturity struct {
+	ID                int32            `db:"id" json:"id"`
+	Protocol          string           `db:"protocol" json:"protocol"`
+	Layer             string           `db:"layer" json:"layer"`
+	Maturity          string           `db:"maturity" json:"maturity"`
+	TotalRuns         int32            `db:"total_runs" json:"total_runs"`
+	ConsecutivePasses int32            `db:"consecutive_passes" json:"consecutive_passes"`
+	FirstPassAt       pgtype.Timestamp `db:"first_pass_at" json:"first_pass_at"`
+	LastRegressionAt  pgtype.Timestamp `db:"last_regression_at" json:"last_regression_at"`
+	LastEvaluatedAt   pgtype.Timestamp `db:"last_evaluated_at" json:"last_evaluated_at"`
+	UpdatedAt         pgtype.Timestamp `db:"updated_at" json:"updated_at"`
+}
+
+type IceProtocol struct {
+	ID          int32            `db:"id" json:"id"`
+	Protocol    string           `db:"protocol" json:"protocol"`
+	DisplayName string           `db:"display_name" json:"display_name"`
+	RfcRefs     []string         `db:"rfc_refs" json:"rfc_refs"`
+	CreatedAt   pgtype.Timestamp `db:"created_at" json:"created_at"`
+}
+
+type IceRegression struct {
+	ID               int32            `db:"id" json:"id"`
+	Protocol         string           `db:"protocol" json:"protocol"`
+	Layer            string           `db:"layer" json:"layer"`
+	RunID            int32            `db:"run_id" json:"run_id"`
+	PreviousMaturity string           `db:"previous_maturity" json:"previous_maturity"`
+	NewMaturity      string           `db:"new_maturity" json:"new_maturity"`
+	FailedCases      []string         `db:"failed_cases" json:"failed_cases"`
+	Notes            *string          `db:"notes" json:"notes"`
+	CreatedAt        pgtype.Timestamp `db:"created_at" json:"created_at"`
+}
+
+type IceResult struct {
+	ID         int32            `db:"id" json:"id"`
+	RunID      int32            `db:"run_id" json:"run_id"`
+	Protocol   string           `db:"protocol" json:"protocol"`
+	Layer      string           `db:"layer" json:"layer"`
+	CaseID     string           `db:"case_id" json:"case_id"`
+	CaseName   string           `db:"case_name" json:"case_name"`
+	Passed     bool             `db:"passed" json:"passed"`
+	Expected   *string          `db:"expected" json:"expected"`
+	Actual     *string          `db:"actual" json:"actual"`
+	RfcSection *string          `db:"rfc_section" json:"rfc_section"`
+	Notes      *string          `db:"notes" json:"notes"`
+	CreatedAt  pgtype.Timestamp `db:"created_at" json:"created_at"`
+}
+
+type IceTestRun struct {
+	ID          int32            `db:"id" json:"id"`
+	AppVersion  string           `db:"app_version" json:"app_version"`
+	GitCommit   string           `db:"git_commit" json:"git_commit"`
+	RunType     string           `db:"run_type" json:"run_type"`
+	TotalCases  int32            `db:"total_cases" json:"total_cases"`
+	TotalPassed int32            `db:"total_passed" json:"total_passed"`
+	TotalFailed int32            `db:"total_failed" json:"total_failed"`
+	DurationMs  int32            `db:"duration_ms" json:"duration_ms"`
+	CreatedAt   pgtype.Timestamp `db:"created_at" json:"created_at"`
+}
+
 type Session struct {
 	ID         string           `db:"id" json:"id"`
 	UserID     int32            `db:"user_id" json:"user_id"`
