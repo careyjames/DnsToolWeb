@@ -121,7 +121,7 @@ func (a *Analyzer) DiscoverSubdomains(ctx context.Context, domain string) map[st
                 slog.Info("CT provider in cooldown, skipping", "domain", domain)
                 ctAvailable = false
         } else {
-                ctCtx, ctCancel := context.WithTimeout(context.Background(), 30*time.Second)
+                ctCtx, ctCancel := context.WithTimeout(context.Background(), 60*time.Second)
                 defer ctCancel()
                 ctURL := fmt.Sprintf("https://crt.sh/?q=%%25.%s&output=json", domain)
                 start := time.Now()

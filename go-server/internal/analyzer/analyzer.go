@@ -49,7 +49,7 @@ func New(opts ...Option) *Analyzer {
         a := &Analyzer{
                 DNS:           dnsclient.New(),
                 HTTP:          dnsclient.NewSafeHTTPClient(),
-                SlowHTTP:      dnsclient.NewSafeHTTPClientWithTimeout(15 * time.Second),
+                SlowHTTP:      dnsclient.NewSafeHTTPClientWithTimeout(45 * time.Second),
                 RDAPHTTP:      dnsclient.NewRDAPHTTPClient(),
                 IANARDAPMap:   make(map[string][]string),
                 Telemetry:     telemetry.NewRegistry(),
