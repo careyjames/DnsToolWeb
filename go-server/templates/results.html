@@ -3568,8 +3568,7 @@
                         {{$ctUnique := mapGetFloat "unique_subdomains" $ct}}
                         <span class="section-question">What infrastructure is exposed in certificate logs?
                             {{if and (eq $ctStatus "success") (gt $ctUnique 0)}}
-                                {{$displayed := mapGetInt "displayed_count" $ct}}
-                                <span class="badge bg-info ms-2">{{$displayed}} subdomain{{if ne $displayed 1}}s{{end}}</span>
+                                <span class="badge bg-info ms-2">{{formatFloat 0 $ctUnique}} subdomain{{if ne $ctUnique 1}}s{{end}}</span>
                             {{else if and (eq $ctStatus "success") (eq $ctUnique 0)}}
                                 <span class="badge bg-secondary ms-2">None found</span>
                             {{else}}
@@ -3702,9 +3701,8 @@
                     {{if mapGetBool "display_capped" $ct}}
                     <div class="alert alert-info bg-info bg-opacity-10 border-info border-opacity-25 py-2 mt-2 mb-2 small">
                         <i class="fas fa-list me-1"></i>
-                        <strong>Showing {{len $ctSubdomains}} subdomains</strong> —
-                        all {{mapGetInt "display_current_count" $ct}} current subdomains shown, plus recent historical entries.
-                        Additional historical entries available via export.
+                        <strong>{{formatFloat 0 $ctUnique}} subdomains discovered — showing {{len $ctSubdomains}} prioritized by security relevance.</strong>
+                        All {{mapGetInt "display_current_count" $ct}} current subdomains are included, plus the most relevant historical entries.
                         <a href="/export/subdomains?domain={{.Domain}}" class="btn btn-sm btn-outline-info ms-2 no-print" title="Download complete subdomain recon as CSV">
                             <i class="fas fa-crosshairs me-1"></i>Export Full Recon (CSV)
                         </a>
@@ -3777,7 +3775,7 @@
                     </div>
                     {{if mapGetBool "was_truncated" $ct}}
                     <div class="text-muted small mt-2 mb-0 p-2 rounded u-bg-soft">
-                        <i class="fas fa-filter me-1"></i><strong>Subdomains curated by security relevance.</strong>
+                        <i class="fas fa-filter me-1"></i><strong>{{formatFloat 0 $ctUnique}} subdomains discovered, curated by security relevance.</strong>
                         Multiple cooperative discovery methods — including CT logs (<a href="https://datatracker.ietf.org/doc/html/rfc6962" target="_blank" rel="noopener" class="text-info">RFC 6962</a>), DNS probing, and CNAME chain traversal — feed into a unified view.
                         Well-known service names (mail, vpn, api, sso, admin, etc.), DNS-resolving hosts, and subdomains with the most certificate activity are prioritized.
                         {{$expiredCount := mapGetFloat "expired_count" $ct}}
@@ -4146,7 +4144,7 @@
                 {{if $ct}}
                 {{if mapGetBool "was_truncated" $ct}}
                 <p class="text-muted mb-0 u-fs-075rem-lh16">
-                    <strong>Subdomain curation:</strong> Discovered subdomains are filtered by security relevance: well-known service names (mail, vpn, api, sso, admin, etc.), DNS-resolving hosts, and subdomains with the most certificate activity are prioritized. CNAME chain resolution and provider identification run on the curated set for accuracy.
+                    <strong>Subdomain curation:</strong> {{formatFloat 0 (mapGetFloat "unique_subdomains" $ct)}} subdomains were discovered — the most security-relevant are displayed, prioritized by: well-known service names (mail, vpn, api, sso, admin, etc.), DNS-resolving hosts, and subdomains with the most certificate activity. CNAME chain resolution and provider identification run on the curated set for accuracy. The complete list is available via CSV export.
                 </p>
                 {{end}}
                 {{end}}
