@@ -113,11 +113,7 @@
                                 <div class="d-flex flex-wrap gap-2 mb-2">
                                     {{range $i, $c := .TLPColors}}
                                     <div class="d-flex align-items-center gap-2 px-2 py-1 rounded src-color-chip-wrap">
-                                        {{if eq $c.Name "TLP:CLEAR"}}
-                                        <span class="src-color-dot border" id="src-tlp-dot-{{$i}}"></span>
-                                        {{else}}
-                                        <span class="src-color-dot" id="src-tlp-dot-{{$i}}"></span>
-                                        {{end}}
+                                        <span class="src-color-dot{{if eq $c.Name "TLP:CLEAR"}} border{{end}}" id="src-tlp-dot-{{$i}}"></span>
                                         <span class="small text-light">{{$c.Name}}</span>
                                         <code class="small text-muted">{{$c.Value}}</code>
                                     </div>

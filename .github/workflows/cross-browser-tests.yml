@@ -55,31 +55,36 @@ jobs:
       - name: Initialize database schema
         run: PGPASSWORD=dnstool psql -h localhost -U dnstool -d dnstool -f go-server/db/schema/schema.sql
 
-      - name: Start server
+      - name: Start server and wait for ready
         run: |
           ./dns-tool-server &
-          sleep 3
+          SERVER_PID=$!
+          echo "Server PID: $SERVER_PID"
+          for i in $(seq 1 60); do
+            if curl -s http://localhost:5000/ > /dev/null 2>&1; then
+              echo "Server is ready after ${i}s"
+              exit 0
+            fi
+            if ! kill -0 $SERVER_PID 2>/dev/null; then
+              echo "Server process died"
+              exit 1
+            fi
+            echo "Waiting for server... ($i/60)"
+            sleep 1
+          done
+          echo "Server failed to start within 60s"
+          exit 1
         env:
           PORT: "5000"
           DATABASE_URL: "postgres://dnstool:dnstool@localhost:5432/dnstool?sslmode=disable"
           SESSION_SECRET: "ci-test-session-secret-not-for-production"
 
-      - name: Wait for server
-        run: |
-          for i in $(seq 1 30); do
-            if curl -s http://localhost:5000/ > /dev/null 2>&1; then
-              echo "Server is ready"
-              exit 0
-            fi
-            echo "Waiting for server... ($i/30)"
-            sleep 1
-          done
-          echo "Server failed to start"
-          exit 1
-
       - name: Run Playwright tests — ${{ matrix.browser }}
         run: npx playwright test --project=${{ matrix.browser }}
         env:
+          PORT: "5000"
+          DATABASE_URL: "postgres://dnstool:dnstool@localhost:5432/dnstool?sslmode=disable"
+          SESSION_SECRET: "ci-test-session-secret-not-for-production"
           BASE_URL: http://localhost:5000
 
       - uses: actions/upload-artifact@v4

@@ -75,7 +75,7 @@ test.describe('Safari/WebKit Compatibility', () => {
       const sheetCount = await page.evaluate(() => {
         let accessible = 0;
         for (let i = 0; i < document.styleSheets.length; i++) {
-          try { document.styleSheets[i].cssRules; accessible++; } catch (e) {}
+          try { void document.styleSheets[i].cssRules; accessible++; } catch (e) {}
         }
         return { total: document.styleSheets.length, accessible };
       });
@@ -105,7 +105,7 @@ test.describe('Safari/WebKit Compatibility', () => {
       const sheetCount = await page.evaluate(() => {
         let accessible = 0;
         for (let i = 0; i < document.styleSheets.length; i++) {
-          try { document.styleSheets[i].cssRules; accessible++; } catch (e) {}
+          try { void document.styleSheets[i].cssRules; accessible++; } catch (e) {}
         }
         return { total: document.styleSheets.length, accessible };
       });

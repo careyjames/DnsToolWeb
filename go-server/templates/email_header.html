@@ -252,6 +252,7 @@ You can paste the whole email — we'll separate headers from body automatically
                         <div class="row">
                             <div class="col-md-6">
                                 <table class="table table-dark table-sm mb-0">
+                                    <thead class="visually-hidden"><tr><th>Field</th><th>Value</th></tr></thead>
                                     <tbody>
                                         {{if .From}}<tr><td class="text-muted u-w-35p">From</td><td class="text-break">{{.From}}</td></tr>{{end}}
                                         {{if .To}}<tr><td class="text-muted">To</td><td class="text-break">{{.To}}</td></tr>{{end}}
@@ -262,6 +263,7 @@ You can paste the whole email — we'll separate headers from body automatically
                             </div>
                             <div class="col-md-6">
                                 <table class="table table-dark table-sm mb-0">
+                                    <thead class="visually-hidden"><tr><th>Field</th><th>Value</th></tr></thead>
                                     <tbody>
                                         {{if .ReturnPath}}<tr><td class="text-muted u-w-35p">Return-Path</td><td class="text-break">{{.ReturnPath}}</td></tr>{{end}}
                                         {{if .ReplyTo}}<tr><td class="text-muted">Reply-To</td><td class="text-break">{{.ReplyTo}}</td></tr>{{end}}
