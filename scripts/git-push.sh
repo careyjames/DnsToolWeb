@@ -54,16 +54,42 @@ fi
 
 if [ -n "$PUSH_BLOCKERS" ]; then
   echo ""
-  echo "  HARD STOP: Push-blocking lock file(s) found:"
+  echo "  Push-blocking lock file(s) found:"
   echo -e "$PUSH_BLOCKERS" | sed '/^$/d' | sed 's/^/    /'
   echo ""
-  echo "  These locks prevent git push. Fix before pushing."
+  echo "  Checking staleness..."
+  REPAIR_OK=true
+  STALE_COUNT=0
+  while IFS= read -r lockfile; do
+    if [ -n "$lockfile" ]; then
+      LOCK_AGE=$(( $(date +%s) - $(stat -c %Y "$lockfile" 2>/dev/null || echo "$(date +%s)") ))
+      LOCK_SIZE=$(stat -c %s "$lockfile" 2>/dev/null || echo "-1")
+      if [ "$LOCK_AGE" -ge 30 ] && [ "$LOCK_SIZE" -le 0 ]; then
+        if rm -f "$lockfile" 2>/dev/null; then
+          echo "    Removed stale lock (${LOCK_AGE}s old, empty): $lockfile"
+          STALE_COUNT=$((STALE_COUNT+1))
+        else
+          echo "    FAILED to remove: $lockfile"
+          REPAIR_OK=false
+        fi
+      else
+        echo "    Lock appears active (age: ${LOCK_AGE}s, size: ${LOCK_SIZE}B): $lockfile"
+        REPAIR_OK=false
+      fi
+    fi
+  done <<< "$(echo -e "$PUSH_BLOCKERS" | sed '/^$/d')"
+
+  if [ "$REPAIR_OK" = false ]; then
+    echo ""
+    echo "  HARD STOP: Lock file(s) may be actively held."
+    echo "  Wait a moment for any in-flight operation to finish, then run:"
+    echo "    bash scripts/git-health-check.sh --repair"
+    echo ""
+    echo "  Then re-run this push script."
+    exit 1
+  fi
+  echo "  Auto-repair succeeded (removed $STALE_COUNT stale lock(s)) — continuing push."
   echo ""
-  echo "  Run this in the Shell tab:"
-  echo "    bash scripts/git-health-check.sh"
-  echo ""
-  echo "  Then re-run this push script."
-  exit 1
 fi
 
 if [ -n "$HARMLESS" ]; then
@@ -79,7 +105,7 @@ if [ -d ".git/rebase-merge" ] || [ -d ".git/rebase-apply" ]; then
   echo "  HARD STOP: Interrupted rebase detected."
   echo ""
   echo "  Run this in the Shell tab:"
-  echo "    bash scripts/git-health-check.sh"
+  echo "    bash scripts/git-health-check.sh --repair"
   echo ""
   echo "  Then re-run this push script."
   exit 1
