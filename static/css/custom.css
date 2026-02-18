@@ -52,6 +52,11 @@ body {
     text-rendering: optimizeLegibility;
     background-color: var(--bg-primary);
     padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+    overflow-x: hidden;
+}
+
+html {
+    overflow-x: hidden;
 }
 
 /* ============================================
@@ -524,6 +529,18 @@ main.container {
     .container {
         padding-left: 0.75rem;
         padding-right: 0.75rem;
+    }
+
+    .navbar-brand {
+        max-width: calc(100vw - 80px);
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        font-size: 1.1rem;
+    }
+
+    .u-maintenance-tag {
+        display: none !important;
     }
     
     .code-block {
