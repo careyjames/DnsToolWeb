@@ -6,24 +6,35 @@
 package dbq
 
 import (
-	"context"
+        "context"
 
-	"github.com/jackc/pgx/v5/pgtype"
+        "github.com/jackc/pgx/v5/pgtype"
 )
+
+const countAdminUsers = `-- name: CountAdminUsers :one
+SELECT COUNT(*) FROM users WHERE role = 'admin'
+`
+
+func (q *Queries) CountAdminUsers(ctx context.Context) (int64, error) {
+        row := q.db.QueryRow(ctx, countAdminUsers)
+        var count int64
+        err := row.Scan(&count)
+        return count, err
+}
 
 const createSession = `-- name: CreateSession :exec
 INSERT INTO sessions (id, user_id, expires_at) VALUES ($1, $2, $3)
 `
 
 type CreateSessionParams struct {
-	ID        string           `db:"id" json:"id"`
-	UserID    int32            `db:"user_id" json:"user_id"`
-	ExpiresAt pgtype.Timestamp `db:"expires_at" json:"expires_at"`
+        ID        string           `db:"id" json:"id"`
+        UserID    int32            `db:"user_id" json:"user_id"`
+        ExpiresAt pgtype.Timestamp `db:"expires_at" json:"expires_at"`
 }
 
 func (q *Queries) CreateSession(ctx context.Context, arg CreateSessionParams) error {
-	_, err := q.db.Exec(ctx, createSession, arg.ID, arg.UserID, arg.ExpiresAt)
-	return err
+        _, err := q.db.Exec(ctx, createSession, arg.ID, arg.UserID, arg.ExpiresAt)
+        return err
 }
 
 const deleteExpiredSessions = `-- name: DeleteExpiredSessions :exec
@@ -31,8 +42,8 @@ DELETE FROM sessions WHERE expires_at < NOW()
 `
 
 func (q *Queries) DeleteExpiredSessions(ctx context.Context) error {
-	_, err := q.db.Exec(ctx, deleteExpiredSessions)
-	return err
+        _, err := q.db.Exec(ctx, deleteExpiredSessions)
+        return err
 }
 
 const deleteSession = `-- name: DeleteSession :exec
@@ -40,8 +51,8 @@ DELETE FROM sessions WHERE id = $1
 `
 
 func (q *Queries) DeleteSession(ctx context.Context, id string) error {
-	_, err := q.db.Exec(ctx, deleteSession, id)
-	return err
+        _, err := q.db.Exec(ctx, deleteSession, id)
+        return err
 }
 
 const getSession = `-- name: GetSession :one
@@ -52,32 +63,32 @@ WHERE s.id = $1 AND s.expires_at > NOW()
 `
 
 type GetSessionRow struct {
-	ID         string           `db:"id" json:"id"`
-	UserID     int32            `db:"user_id" json:"user_id"`
-	CreatedAt  pgtype.Timestamp `db:"created_at" json:"created_at"`
-	ExpiresAt  pgtype.Timestamp `db:"expires_at" json:"expires_at"`
-	LastSeenAt pgtype.Timestamp `db:"last_seen_at" json:"last_seen_at"`
-	Email      string           `db:"email" json:"email"`
-	Name       string           `db:"name" json:"name"`
-	Role       string           `db:"role" json:"role"`
-	GoogleSub  string           `db:"google_sub" json:"google_sub"`
+        ID         string           `db:"id" json:"id"`
+        UserID     int32            `db:"user_id" json:"user_id"`
+        CreatedAt  pgtype.Timestamp `db:"created_at" json:"created_at"`
+        ExpiresAt  pgtype.Timestamp `db:"expires_at" json:"expires_at"`
+        LastSeenAt pgtype.Timestamp `db:"last_seen_at" json:"last_seen_at"`
+        Email      string           `db:"email" json:"email"`
+        Name       string           `db:"name" json:"name"`
+        Role       string           `db:"role" json:"role"`
+        GoogleSub  string           `db:"google_sub" json:"google_sub"`
 }
 
 func (q *Queries) GetSession(ctx context.Context, id string) (GetSessionRow, error) {
-	row := q.db.QueryRow(ctx, getSession, id)
-	var i GetSessionRow
-	err := row.Scan(
-		&i.ID,
-		&i.UserID,
-		&i.CreatedAt,
-		&i.ExpiresAt,
-		&i.LastSeenAt,
-		&i.Email,
-		&i.Name,
-		&i.Role,
-		&i.GoogleSub,
-	)
-	return i, err
+        row := q.db.QueryRow(ctx, getSession, id)
+        var i GetSessionRow
+        err := row.Scan(
+                &i.ID,
+                &i.UserID,
+                &i.CreatedAt,
+                &i.ExpiresAt,
+                &i.LastSeenAt,
+                &i.Email,
+                &i.Name,
+                &i.Role,
+                &i.GoogleSub,
+        )
+        return i, err
 }
 
 const getUserByEmail = `-- name: GetUserByEmail :one
@@ -85,18 +96,18 @@ SELECT id, email, name, google_sub, role, created_at, last_login_at FROM users W
 `
 
 func (q *Queries) GetUserByEmail(ctx context.Context, email string) (User, error) {
-	row := q.db.QueryRow(ctx, getUserByEmail, email)
-	var i User
-	err := row.Scan(
-		&i.ID,
-		&i.Email,
-		&i.Name,
-		&i.GoogleSub,
-		&i.Role,
-		&i.CreatedAt,
-		&i.LastLoginAt,
-	)
-	return i, err
+        row := q.db.QueryRow(ctx, getUserByEmail, email)
+        var i User
+        err := row.Scan(
+                &i.ID,
+                &i.Email,
+                &i.Name,
+                &i.GoogleSub,
+                &i.Role,
+                &i.CreatedAt,
+                &i.LastLoginAt,
+        )
+        return i, err
 }
 
 const getUserByGoogleSub = `-- name: GetUserByGoogleSub :one
@@ -104,18 +115,18 @@ SELECT id, email, name, google_sub, role, created_at, last_login_at FROM users W
 `
 
 func (q *Queries) GetUserByGoogleSub(ctx context.Context, googleSub string) (User, error) {
-	row := q.db.QueryRow(ctx, getUserByGoogleSub, googleSub)
-	var i User
-	err := row.Scan(
-		&i.ID,
-		&i.Email,
-		&i.Name,
-		&i.GoogleSub,
-		&i.Role,
-		&i.CreatedAt,
-		&i.LastLoginAt,
-	)
-	return i, err
+        row := q.db.QueryRow(ctx, getUserByGoogleSub, googleSub)
+        var i User
+        err := row.Scan(
+                &i.ID,
+                &i.Email,
+                &i.Name,
+                &i.GoogleSub,
+                &i.Role,
+                &i.CreatedAt,
+                &i.LastLoginAt,
+        )
+        return i, err
 }
 
 const getUserByID = `-- name: GetUserByID :one
@@ -123,18 +134,18 @@ SELECT id, email, name, google_sub, role, created_at, last_login_at FROM users W
 `
 
 func (q *Queries) GetUserByID(ctx context.Context, id int32) (User, error) {
-	row := q.db.QueryRow(ctx, getUserByID, id)
-	var i User
-	err := row.Scan(
-		&i.ID,
-		&i.Email,
-		&i.Name,
-		&i.GoogleSub,
-		&i.Role,
-		&i.CreatedAt,
-		&i.LastLoginAt,
-	)
-	return i, err
+        row := q.db.QueryRow(ctx, getUserByID, id)
+        var i User
+        err := row.Scan(
+                &i.ID,
+                &i.Email,
+                &i.Name,
+                &i.GoogleSub,
+                &i.Role,
+                &i.CreatedAt,
+                &i.LastLoginAt,
+        )
+        return i, err
 }
 
 const updateSessionLastSeen = `-- name: UpdateSessionLastSeen :exec
@@ -142,8 +153,8 @@ UPDATE sessions SET last_seen_at = NOW() WHERE id = $1
 `
 
 func (q *Queries) UpdateSessionLastSeen(ctx context.Context, id string) error {
-	_, err := q.db.Exec(ctx, updateSessionLastSeen, id)
-	return err
+        _, err := q.db.Exec(ctx, updateSessionLastSeen, id)
+        return err
 }
 
 const upsertUser = `-- name: UpsertUser :one
@@ -155,28 +166,28 @@ RETURNING id, email, name, google_sub, role, created_at, last_login_at
 `
 
 type UpsertUserParams struct {
-	Email     string `db:"email" json:"email"`
-	Name      string `db:"name" json:"name"`
-	GoogleSub string `db:"google_sub" json:"google_sub"`
-	Role      string `db:"role" json:"role"`
+        Email     string `db:"email" json:"email"`
+        Name      string `db:"name" json:"name"`
+        GoogleSub string `db:"google_sub" json:"google_sub"`
+        Role      string `db:"role" json:"role"`
 }
 
 func (q *Queries) UpsertUser(ctx context.Context, arg UpsertUserParams) (User, error) {
-	row := q.db.QueryRow(ctx, upsertUser,
-		arg.Email,
-		arg.Name,
-		arg.GoogleSub,
-		arg.Role,
-	)
-	var i User
-	err := row.Scan(
-		&i.ID,
-		&i.Email,
-		&i.Name,
-		&i.GoogleSub,
-		&i.Role,
-		&i.CreatedAt,
-		&i.LastLoginAt,
-	)
-	return i, err
+        row := q.db.QueryRow(ctx, upsertUser,
+                arg.Email,
+                arg.Name,
+                arg.GoogleSub,
+                arg.Role,
+        )
+        var i User
+        err := row.Scan(
+                &i.ID,
+                &i.Email,
+                &i.Name,
+                &i.GoogleSub,
+                &i.Role,
+                &i.CreatedAt,
+                &i.LastLoginAt,
+        )
+        return i, err
 }

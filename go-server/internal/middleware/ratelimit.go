@@ -128,6 +128,26 @@ func (l *InMemoryRateLimiter) CheckAndRecord(ip, domain string) RateLimitResult 
         }
 }
 
+func AuthRateLimit(limiter *InMemoryRateLimiter) gin.HandlerFunc {
+        return func(c *gin.Context) {
+                clientIP := c.ClientIP()
+                result := limiter.CheckAndRecord(clientIP, "_auth_flow")
+
+                if !result.Allowed {
+                        slog.Warn("Auth rate limit triggered",
+                                "ip", clientIP,
+                                "reason", result.Reason,
+                                "wait_seconds", result.WaitSeconds,
+                        )
+                        c.Redirect(http.StatusFound, "/")
+                        c.Abort()
+                        return
+                }
+
+                c.Next()
+        }
+}
+
 func AnalyzeRateLimit(limiter RateLimiter) gin.HandlerFunc {
         return func(c *gin.Context) {
                 if c.Request.Method != "POST" {

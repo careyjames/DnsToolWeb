@@ -20,7 +20,7 @@ type Config struct {
         GoogleClientID     string
         GoogleClientSecret string
         GoogleRedirectURL  string
-        AdminBootstrapEmail string
+        InitialAdminEmail string
         BaseURL            string
 }
 
@@ -89,7 +89,7 @@ func Load() (*Config, error) {
                 DatabaseURL:         dbURL,
                 SessionSecret:       sessionSecret,
                 Port:                port,
-                AppVersion:          "26.20.56",
+                AppVersion:          "26.20.57",
                 Testing:             false,
                 SMTPProbeMode:       smtpProbeMode,
                 MaintenanceNote:     maintenanceNote,
@@ -97,7 +97,7 @@ func Load() (*Config, error) {
                 GoogleClientID:      os.Getenv("GOOGLE_CLIENT_ID"),
                 GoogleClientSecret:  os.Getenv("GOOGLE_CLIENT_SECRET"),
                 GoogleRedirectURL:   googleRedirectURL,
-                AdminBootstrapEmail: os.Getenv("ADMIN_BOOTSTRAP_EMAIL"),
+                InitialAdminEmail:   os.Getenv("INITIAL_ADMIN_EMAIL"),
                 BaseURL:             baseURL,
         }, nil
 }

@@ -29,5 +29,8 @@ UPDATE sessions SET last_seen_at = NOW() WHERE id = $1;
 -- name: DeleteSession :exec
 DELETE FROM sessions WHERE id = $1;
 
+-- name: CountAdminUsers :one
+SELECT COUNT(*) FROM users WHERE role = 'admin';
+
 -- name: DeleteExpiredSessions :exec
 DELETE FROM sessions WHERE expires_at < NOW();

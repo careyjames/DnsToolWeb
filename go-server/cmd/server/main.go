@@ -185,8 +185,9 @@ func main() {
 
         authHandler := handlers.NewAuthHandler(cfg, database.Pool)
         if cfg.GoogleClientID != "" {
-                router.GET("/auth/login", authHandler.Login)
-                router.GET("/auth/callback", authHandler.Callback)
+                authRL := middleware.AuthRateLimit(rateLimiter)
+                router.GET("/auth/login", authRL, authHandler.Login)
+                router.GET("/auth/callback", authRL, authHandler.Callback)
                 router.GET("/auth/logout", authHandler.Logout)
         }
 
