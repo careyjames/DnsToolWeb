@@ -1718,4 +1718,57 @@ git checkout main
 
 **CRITICAL DATA SEPARATION**: Internal dev tooling (`.drift/`) is completely separate from the DNS drift engine (user-facing product feature). Must never conflate.
 
-**Status**: BUILDING NOW.
+**Status**: IMPLEMENTED (see next entry).
+
+### Session Sentinel — Implementation Complete (Feb 18, 2026)
+
+**What shipped**:
+- `scripts/session-sentinel.sh` — `snapshot` / `check` / `report` subcommands
+- Integrated into `git-push.sh` (auto-snapshot after every push) and `git-health-check.sh` (auto-check at session start)
+- `.drift/` added to `.gitignore` — local-only, never committed
+
+### Replit Platform Constraints — Empirical Testing (Feb 18, 2026)
+
+**Problem**: We kept hitting exit 254 process kills and working around them one-off. Needed hard facts about what the agent can and cannot do.
+
+**Method**: Tested each git command individually from the agent process to map the exact boundary.
+
+**Results**:
+
+| Command | Agent Safe? | Why |
+|---------|-------------|-----|
+| `git rev-parse HEAD` | YES | Pure read from .git/HEAD |
+| `git branch --show-current` | YES | Reads .git/HEAD |
+| `git log` | YES | Reads .git/objects |
+| `git diff` | YES | Reads .git/objects |
+| `git ls-remote` | YES | Network read, no .git writes |
+| `cat .git/*` | YES | File read |
+| `git push` (via PAT) | YES | Network write, no local .git mutation |
+| `git status` | NO | Creates .git/index.lock → exit 254 |
+| `git fetch` | NO | Writes .git/FETCH_HEAD, updates refs → exit 254 |
+| `git update-ref` | NO | Writes .git/refs/ → exit 254 |
+| `rm .git/*.lock` | NO | Deletes .git file → exit 254 |
+| `echo > .git/*` | NO | Writes .git file → exit 254 |
+
+**Platform behavior**: Monitors ALL file operations from agent process tree. ANY write to `.git/` (create, modify, delete) → immediate SIGKILL of entire process tree. Error: "Avoid changing .git repository."
+
+**Design change**: `git-health-check.sh` now defaults to read-only (safe from agent). `--repair` flag opts into full .git repairs (Shell tab only). Previous `--read-only` flag removed — read-only is now the default. Sentinel check always runs because it comes after the read-only section.
+
+### Prior Art: Session Sentinel vs Existing Tools
+
+**What exists**:
+- **File Integrity Monitoring (FIM)**: Security tools (Wazuh, OSSEC, Tripwire) hash ALL files for tamper detection. Heavy, continuous, security-focused.
+- **Infrastructure drift** (Terraform/driftctl, ArgoCD, Puppet): Compare IaC state to live infra. Cloud-focused, not dev environment files.
+- **Watchman** (Meta): File watcher for triggering rebuilds. Real-time, event-driven, not session-boundary.
+- **direnv**: Auto-loads env vars per directory. `watch_file` detects changes but limited to env reload.
+- **Kekkai** (Go): Lightweight manifest + SHA-256 verification. Closest match — but designed for deploy-time integrity, not session-boundary dev drift.
+- `sha256sum -c baseline.txt`: The Unix primitive. Manual, no curation, no integration.
+
+**What Session Sentinel does differently**:
+1. **Curated allowlist** — not "hash everything" but "hash the 19 files that keep breaking." Problem-driven, not comprehensive.
+2. **Session-boundary** — snapshots at push time, checks at session start. Not continuous monitoring.
+3. **Platform-aware** — designed specifically for Replit's agent/user split: respects .git write restrictions, stores state in `.drift/` (non-.git, local-only).
+4. **Integrated** — wired into the existing push/health-check workflow, not a separate tool to remember.
+5. **Binary-aware** — tracks compiled binary via size/mtime (not hash, too slow for ~50MB binary).
+
+**Conclusion**: The concept of hashing files for integrity is ancient. What's novel is the curation + session-boundary + platform-constraint integration pattern. Not a new tool category — just an under-served niche (cloud IDE dev environments where the platform itself mutates your files).

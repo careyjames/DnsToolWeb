@@ -1,26 +1,41 @@
 #!/bin/bash
-# Git Health Check — run at session start from the Shell tab
-# Fixes: stale lock files, interrupted rebases, detached HEAD
-# Safe to run repeatedly — only fixes problems, never destructive
+# Git Health Check — run at session start
 #
-# NOTE: Steps 1-4 modify .git files and can ONLY run from the Shell tab.
-# The Replit platform blocks .git writes from agent processes (exit 254).
-# Pass --read-only to skip .git repairs (safe for agent context).
+# MODES:
+#   Default (no flags): Read-only. Safe from any context (agent or Shell).
+#     Reports sync status and environment drift only.
 #
-# HISTORY: Stale lock files have caused PUSH_REJECTED errors, stalled rebases,
-# and wasted nearly a full day of production (Feb 2026). This script exists
-# because lock files are PRODUCTION FAILURES, not cosmetic issues.
+#   --repair: Full repair mode. Run from Shell tab ONLY.
+#     Clears lock files, aborts rebases, reattaches HEAD, updates tracking refs.
+#     The Replit platform kills agent processes that write to .git (exit 254).
+#
+# PLATFORM FACTS (empirically tested Feb 18, 2026):
+#   SAFE (read-only):  git rev-parse, git branch, git log, git diff,
+#                      git ls-remote, git push (via PAT), cat .git/*
+#   KILLS PROCESS:     git status, git fetch, git update-ref,
+#                      echo > .git/*, rm .git/*.lock
+#                      ANY write to .git/ → exit 254 + process tree killed
+#   Error message:     "Avoid changing .git repository. When git operations
+#                       are needed, only allow users who have proper git
+#                       expertise to perform these actions themselves
+#                       through shell tools."
+#
+# HISTORY: Stale lock files caused PUSH_REJECTED errors, stalled rebases,
+# and wasted nearly a full day of production (Feb 2026).
 
 cd /home/runner/workspace 2>/dev/null || exit 0
 
-READ_ONLY=false
-if [ "${1:-}" = "--read-only" ]; then
-  READ_ONLY=true
-fi
+REPAIR=false
+for arg in "$@"; do
+  case "$arg" in
+    --repair|--full) REPAIR=true ;;
+    --read-only)     REPAIR=false ;;
+  esac
+done
 
 FIXED=0
 
-if [ "$READ_ONLY" = false ]; then
+if [ "$REPAIR" = true ]; then
 
   # 1. Remove ALL stale lock files — comprehensive sweep
   LOCK_COUNT=0
@@ -69,11 +84,15 @@ if [ "$READ_ONLY" = false ]; then
     echo "Git health: fixed $FIXED issue(s)"
   fi
 
+else
+  echo "[read-only mode — .git repairs skipped (use --repair from Shell tab)]"
 fi
+
+# ── Everything below is read-only and safe from any context ──
 
 git branch --show-current 2>/dev/null || true
 
-# 6. Sync status via ls-remote (read-only, works from any context)
+# 6. Sync status via ls-remote (read-only, safe everywhere)
 if [ -n "$CAREY_PAT_ALL3_REPOS" ]; then
   LOCAL_SHA=$(git rev-parse HEAD 2>/dev/null)
   REMOTE_SHA=$(git ls-remote "https://${CAREY_PAT_ALL3_REPOS}@github.com/careyjames/DnsToolWeb.git" refs/heads/main 2>/dev/null | awk '{print $1}')
@@ -88,7 +107,7 @@ if [ -n "$CAREY_PAT_ALL3_REPOS" ]; then
   fi
 fi
 
-# 7. Session Sentinel — environment drift check (read-only)
+# 7. Session Sentinel — environment drift check (always runs)
 if [ -f "scripts/session-sentinel.sh" ]; then
   echo ""
   bash scripts/session-sentinel.sh check 2>/dev/null || true
