@@ -8,7 +8,8 @@ cd /home/runner/workspace 2>/dev/null || exit 0
 
 FIXED=0
 
-# 1. Remove ALL stale lock files (comprehensive list from real incidents)
+# 1. Remove ALL stale lock files — comprehensive sweep including deep paths
+#    Covers: index, HEAD, refs, remotes, objects, packed-refs, merge/rebase state
 for lockfile in \
   .git/index.lock \
   .git/HEAD.lock \
@@ -16,11 +17,19 @@ for lockfile in \
   .git/MERGE_HEAD.lock \
   .git/FETCH_HEAD.lock \
   .git/packed-refs.lock \
+  .git/objects/maintenance.lock \
   .git/refs/heads/replit-agent.lock \
-  .git/refs/heads/main.lock; do
+  .git/refs/heads/main.lock \
+  .git/refs/remotes/origin/HEAD.lock \
+  .git/refs/remotes/origin/main.lock; do
   if [ -f "$lockfile" ]; then
     rm -f "$lockfile" 2>/dev/null && echo "Removed stale $lockfile" && FIXED=$((FIXED+1))
   fi
+done
+
+# 1b. Catch any remaining .lock files we haven't listed explicitly
+find .git -name "*.lock" -type f 2>/dev/null | while read -r extra_lock; do
+  rm -f "$extra_lock" 2>/dev/null && echo "Removed stale $extra_lock" && FIXED=$((FIXED+1))
 done
 
 # 2. Abort interrupted rebase
