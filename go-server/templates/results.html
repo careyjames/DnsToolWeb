@@ -151,18 +151,18 @@
                     </a>
                 </div>
                 <div class="dropdown me-2">
-                    <button class="btn btn-sm dropdown-toggle btn-tlp-amber" id="tlpSelectorBtn" type="button" data-bs-toggle="dropdown" aria-expanded="false" title="Traffic Light Protocol — controls report distribution scope">
+                    <button class="btn btn-sm dropdown-toggle btn-tlp-amber" id="tlpSelectorBtn" type="button" data-bs-toggle="dropdown" aria-expanded="false" title="Traffic Light Protocol — controls dissemination scope for this intelligence product">
                         <i class="fas fa-shield-alt me-1"></i><span id="tlpSelectorLabel">TLP:AMBER</span>
                     </button>
                     <ul class="dropdown-menu dropdown-menu-dark">
-                        <li><h6 class="dropdown-header">Report Distribution</h6></li>
+                        <li><h6 class="dropdown-header">Intelligence Dissemination</h6></li>
                         <li><a class="dropdown-item tlp-option" href="#" data-tlp="red" data-class="tlp-red" data-btn-class="btn-tlp-red"><span class="badge tlp-badge-red me-2">RED</span> Recipient only</a></li>
                         <li><a class="dropdown-item tlp-option" href="#" data-tlp="amber-strict" data-class="tlp-amber-strict" data-btn-class="btn-tlp-amber-strict"><span class="badge tlp-badge-amber-strict me-2">AMBER+STRICT</span> Organisation only</a></li>
                         <li><a class="dropdown-item tlp-option" href="#" data-tlp="amber" data-class="tlp-amber" data-btn-class="btn-tlp-amber"><span class="badge tlp-badge-amber me-2">AMBER</span> Organisation and its clients</a></li>
                         <li><a class="dropdown-item tlp-option" href="#" data-tlp="green" data-class="tlp-green" data-btn-class="btn-tlp-green"><span class="badge tlp-badge-green me-2">GREEN</span> Share within community</a></li>
                         <li><a class="dropdown-item tlp-option" href="#" data-tlp="clear" data-class="tlp-clear" data-btn-class="btn-tlp-clear"><span class="badge tlp-badge-clear me-2">CLEAR</span> Unlimited distribution</a></li>
                         <li><hr class="dropdown-divider"></li>
-                        <li><span class="dropdown-item-text small text-muted pe-3" data-bs-toggle="tooltip" title="FIRST TLP v2.0 standard">TLP (Traffic Light Protocol) controls who may receive this report. Default: AMBER per FIRST/CISA standards for security posture reports. Full hierarchy: RED (recipient only) → AMBER+STRICT (organisation only) → AMBER (organisation and clients) → GREEN (community) → CLEAR (public). Per FIRST TLP v2.0.</span></li>
+                        <li><span class="dropdown-item-text small text-muted pe-3" data-bs-toggle="tooltip" title="FIRST TLP v2.0 standard">TLP (Traffic Light Protocol) governs dissemination of this intelligence product. Default: AMBER per FIRST/CISA standards for security posture reports. Full hierarchy: RED (recipient only) → AMBER+STRICT (organisation only) → AMBER (organisation and clients) → GREEN (community) → CLEAR (public). Per FIRST TLP v2.0.</span></li>
                     </ul>
                 </div>
                 <a href="/analyze?domain={{.AsciiDomain}}" id="reanalyzeBtn" class="btn btn-primary" data-domain="{{.AsciiDomain}}"
@@ -3910,6 +3910,12 @@
                         <span class="text-muted">{{$omitted}} older historical entries available via export.</span>
                         {{end}}
                         <a href="/export/subdomains?domain={{.Domain}}" class="btn btn-sm btn-outline-info ms-2 no-print" title="Download all {{mapGetInt "total_subdomains_found" $ct}} subdomains as CSV">
+                            <i class="fas fa-download me-1"></i>Export Full Recon (CSV)
+                        </a>
+                    </div>
+                    {{else}}
+                    <div class="d-flex justify-content-end mt-2 mb-2 no-print">
+                        <a href="/export/subdomains?domain={{.Domain}}" class="btn btn-sm btn-outline-info" title="Download all {{len $ctSubdomains}} subdomains as CSV">
                             <i class="fas fa-download me-1"></i>Export Full Recon (CSV)
                         </a>
                     </div>
