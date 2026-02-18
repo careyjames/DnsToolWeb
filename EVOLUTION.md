@@ -1497,3 +1497,22 @@ The SKILL.md itself contained the very implementation details being redacted fro
 | `static/llms.txt`, `static/llms-full.txt` | Pipeline details redacted |
 | `.agents/skills/dns-tool/SKILL.md` | "Methodology Protection" section added; pipeline details redacted from SKILL.md itself |
 | `EVOLUTION.md` | Session breadcrumb |
+
+### Session: February 18, 2026 — Git Corruption Prevention
+
+**Problem**: Recurring git corruption — platform checkpoint system interrupts rebases between `main` and `replit-agent` branches, leaving stale lock files (`.git/index.lock`, `.git/HEAD.lock`, `.git/ORIG_HEAD.lock`), half-finished `.git/rebase-merge` state, and detached HEAD. This cascades into failed checkpoints and "Unsupported state" errors.
+
+**Root Cause**: Dual-branch architecture (`main` + `replit-agent`) with automated rebase/merge during checkpoints. When interrupted, the incomplete rebase corrupts git state.
+
+**Fix**:
+1. Deleted `replit-agent` branch to eliminate dual-branch rebase collisions
+2. Created `scripts/git-health-check.sh` — auto-detects and fixes stale lock files, interrupted rebases, and detached HEAD
+3. Added health check as Step 1 in SKILL.md Session Startup — runs before any other work
+
+**Recovery commands** (if git corruption recurs):
+```bash
+rm -f .git/index.lock .git/HEAD.lock .git/ORIG_HEAD.lock
+rm -rf .git/rebase-merge .git/rebase-apply
+git reset HEAD
+git checkout main
+```

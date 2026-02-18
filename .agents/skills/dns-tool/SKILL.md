@@ -9,12 +9,13 @@ This skill contains the critical rules and architecture knowledge for the DNS To
 
 ## Session Startup
 
-1. Read `replit.md` — quick-reference config (may reset between sessions)
-2. Read `PROJECT_CONTEXT.md` — canonical, stable project context
-3. Read `EVOLUTION.md` — permanent breadcrumb trail, backup if `replit.md` resets
-4. Check the "Failures & Lessons Learned" section in `EVOLUTION.md` before making changes
-5. If `replit.md` appears truncated or reset, restore key pointers from `PROJECT_CONTEXT.md` and `EVOLUTION.md`
-6. Run `find go-server -name "*_intel*"` — if ANY `_intel.go` or `_intel_test.go` files exist locally, they must be pushed to `dnstool-intel` via the sync script and deleted immediately (see "Cross-Repo Sync via GitHub API" below)
+1. Run `bash scripts/git-health-check.sh` — fixes stale lock files, interrupted rebases, and detached HEAD before they cascade into checkpoint failures
+2. Read `replit.md` — quick-reference config (may reset between sessions)
+3. Read `PROJECT_CONTEXT.md` — canonical, stable project context
+4. Read `EVOLUTION.md` — permanent breadcrumb trail, backup if `replit.md` resets
+5. Check the "Failures & Lessons Learned" section in `EVOLUTION.md` before making changes
+6. If `replit.md` appears truncated or reset, restore key pointers from `PROJECT_CONTEXT.md` and `EVOLUTION.md`
+7. Run `find go-server -name "*_intel*"` — if ANY `_intel.go` or `_intel_test.go` files exist locally, they must be pushed to `dnstool-intel` via the sync script and deleted immediately (see "Cross-Repo Sync via GitHub API" below)
 
 ## Mandatory Post-Edit Rules
 
