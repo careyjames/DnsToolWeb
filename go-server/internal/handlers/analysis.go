@@ -17,7 +17,7 @@ import (
         "dnstool/go-server/internal/db"
         "dnstool/go-server/internal/dbq"
         "dnstool/go-server/internal/dnsclient"
-        "dnstool/go-server/internal/ice"
+        "dnstool/go-server/internal/icae"
 
         "github.com/gin-gonic/gin"
 )
@@ -135,8 +135,8 @@ func (h *AnalysisHandler) ViewAnalysisStatic(c *gin.Context) {
                 "DriftPrevID":          drift.PrevID,
                 "DriftFields":          drift.Fields,
         }
-        if iceMetrics := ice.LoadReportMetrics(ctx, h.DB.Queries); iceMetrics != nil {
-                viewData["ICEMetrics"] = iceMetrics
+        if icaeMetrics := icae.LoadReportMetrics(ctx, h.DB.Queries); icaeMetrics != nil {
+                viewData["ICAEMetrics"] = icaeMetrics
         }
 
         mergeAuthData(c, h.Config, viewData)
@@ -311,8 +311,8 @@ func (h *AnalysisHandler) Analyze(c *gin.Context) {
                 "DriftPrevID":          drift.PrevID,
                 "DriftFields":          drift.Fields,
         }
-        if iceMetrics := ice.LoadReportMetrics(ctx, h.DB.Queries); iceMetrics != nil {
-                analyzeData["ICEMetrics"] = iceMetrics
+        if icaeMetrics := icae.LoadReportMetrics(ctx, h.DB.Queries); icaeMetrics != nil {
+                analyzeData["ICAEMetrics"] = icaeMetrics
         }
 
         mergeAuthData(c, h.Config, analyzeData)

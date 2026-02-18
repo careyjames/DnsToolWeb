@@ -80,7 +80,7 @@ CREATE TABLE sessions (
 CREATE INDEX ix_sessions_user_id ON sessions (user_id);
 CREATE INDEX ix_sessions_expires_at ON sessions (expires_at);
 
--- Intelligence Confidence Engine (ICE) tables
+-- Intelligence Confidence Audit Engine (ICAE) tables
 
 CREATE TABLE ice_protocols (
     id SERIAL PRIMARY KEY,

@@ -1,9 +1,9 @@
--- Migration 002: Intelligence Confidence Engine (ICE) tables
+-- Migration 002: Intelligence Confidence Audit Engine (ICAE) tables
 -- Applied: 2026-02-18
 -- Operator: admin
 -- Status: PENDING
 --
--- Context: ICE tracks per-protocol accuracy across two layers:
+-- Context: ICAE tracks per-protocol accuracy across two layers:
 --   Layer 1 (collection): Did we successfully retrieve raw DNS data?
 --   Layer 2 (analysis):   Did we correctly classify and interpret per RFC?
 --

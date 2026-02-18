@@ -11,7 +11,7 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
-const iCECountResultsByProtocol = `-- name: ICECountResultsByProtocol :many
+const iCAECountResultsByProtocol = `-- name: ICAECountResultsByProtocol :many
 SELECT protocol, layer,
        COUNT(*) AS total,
        COUNT(*) FILTER (WHERE passed = true) AS passed,
@@ -22,7 +22,7 @@ GROUP BY protocol, layer
 ORDER BY protocol, layer
 `
 
-type ICECountResultsByProtocolRow struct {
+type ICAECountResultsByProtocolRow struct {
 	Protocol string `db:"protocol" json:"protocol"`
 	Layer    string `db:"layer" json:"layer"`
 	Total    int64  `db:"total" json:"total"`
@@ -30,15 +30,15 @@ type ICECountResultsByProtocolRow struct {
 	Failed   int64  `db:"failed" json:"failed"`
 }
 
-func (q *Queries) ICECountResultsByProtocol(ctx context.Context, runID int32) ([]ICECountResultsByProtocolRow, error) {
-	rows, err := q.db.Query(ctx, iCECountResultsByProtocol, runID)
+func (q *Queries) ICAECountResultsByProtocol(ctx context.Context, runID int32) ([]ICAECountResultsByProtocolRow, error) {
+	rows, err := q.db.Query(ctx, iCAECountResultsByProtocol, runID)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	items := []ICECountResultsByProtocolRow{}
+	items := []ICAECountResultsByProtocolRow{}
 	for rows.Next() {
-		var i ICECountResultsByProtocolRow
+		var i ICAECountResultsByProtocolRow
 		if err := rows.Scan(
 			&i.Protocol,
 			&i.Layer,
@@ -56,14 +56,14 @@ func (q *Queries) ICECountResultsByProtocol(ctx context.Context, runID int32) ([
 	return items, nil
 }
 
-const iCEGetAllMaturity = `-- name: ICEGetAllMaturity :many
+const iCAEGetAllMaturity = `-- name: ICAEGetAllMaturity :many
 SELECT protocol, layer, maturity, total_runs, consecutive_passes,
        first_pass_at, last_regression_at, last_evaluated_at
 FROM ice_maturity
 ORDER BY protocol, layer
 `
 
-type ICEGetAllMaturityRow struct {
+type ICAEGetAllMaturityRow struct {
 	Protocol          string           `db:"protocol" json:"protocol"`
 	Layer             string           `db:"layer" json:"layer"`
 	Maturity          string           `db:"maturity" json:"maturity"`
@@ -74,15 +74,15 @@ type ICEGetAllMaturityRow struct {
 	LastEvaluatedAt   pgtype.Timestamp `db:"last_evaluated_at" json:"last_evaluated_at"`
 }
 
-func (q *Queries) ICEGetAllMaturity(ctx context.Context) ([]ICEGetAllMaturityRow, error) {
-	rows, err := q.db.Query(ctx, iCEGetAllMaturity)
+func (q *Queries) ICAEGetAllMaturity(ctx context.Context) ([]ICAEGetAllMaturityRow, error) {
+	rows, err := q.db.Query(ctx, iCAEGetAllMaturity)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	items := []ICEGetAllMaturityRow{}
+	items := []ICAEGetAllMaturityRow{}
 	for rows.Next() {
-		var i ICEGetAllMaturityRow
+		var i ICAEGetAllMaturityRow
 		if err := rows.Scan(
 			&i.Protocol,
 			&i.Layer,
@@ -103,14 +103,14 @@ func (q *Queries) ICEGetAllMaturity(ctx context.Context) ([]ICEGetAllMaturityRow
 	return items, nil
 }
 
-const iCEGetFailedResultsByRun = `-- name: ICEGetFailedResultsByRun :many
+const iCAEGetFailedResultsByRun = `-- name: ICAEGetFailedResultsByRun :many
 SELECT protocol, layer, case_id, case_name, expected, actual, rfc_section, notes
 FROM ice_results
 WHERE run_id = $1 AND passed = false
 ORDER BY protocol, layer, case_id
 `
 
-type ICEGetFailedResultsByRunRow struct {
+type ICAEGetFailedResultsByRunRow struct {
 	Protocol   string  `db:"protocol" json:"protocol"`
 	Layer      string  `db:"layer" json:"layer"`
 	CaseID     string  `db:"case_id" json:"case_id"`
@@ -121,15 +121,15 @@ type ICEGetFailedResultsByRunRow struct {
 	Notes      *string `db:"notes" json:"notes"`
 }
 
-func (q *Queries) ICEGetFailedResultsByRun(ctx context.Context, runID int32) ([]ICEGetFailedResultsByRunRow, error) {
-	rows, err := q.db.Query(ctx, iCEGetFailedResultsByRun, runID)
+func (q *Queries) ICAEGetFailedResultsByRun(ctx context.Context, runID int32) ([]ICAEGetFailedResultsByRunRow, error) {
+	rows, err := q.db.Query(ctx, iCAEGetFailedResultsByRun, runID)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	items := []ICEGetFailedResultsByRunRow{}
+	items := []ICAEGetFailedResultsByRunRow{}
 	for rows.Next() {
-		var i ICEGetFailedResultsByRunRow
+		var i ICAEGetFailedResultsByRunRow
 		if err := rows.Scan(
 			&i.Protocol,
 			&i.Layer,
@@ -150,15 +150,15 @@ func (q *Queries) ICEGetFailedResultsByRun(ctx context.Context, runID int32) ([]
 	return items, nil
 }
 
-const iCEGetLatestRun = `-- name: ICEGetLatestRun :one
+const iCAEGetLatestRun = `-- name: ICAEGetLatestRun :one
 SELECT id, app_version, git_commit, run_type, total_cases, total_passed, total_failed, duration_ms, created_at
 FROM ice_test_runs
 ORDER BY created_at DESC
 LIMIT 1
 `
 
-func (q *Queries) ICEGetLatestRun(ctx context.Context) (IceTestRun, error) {
-	row := q.db.QueryRow(ctx, iCEGetLatestRun)
+func (q *Queries) ICAEGetLatestRun(ctx context.Context) (IceTestRun, error) {
+	row := q.db.QueryRow(ctx, iCAEGetLatestRun)
 	var i IceTestRun
 	err := row.Scan(
 		&i.ID,
@@ -174,19 +174,19 @@ func (q *Queries) ICEGetLatestRun(ctx context.Context) (IceTestRun, error) {
 	return i, err
 }
 
-const iCEGetMaturity = `-- name: ICEGetMaturity :one
+const iCAEGetMaturity = `-- name: ICAEGetMaturity :one
 SELECT protocol, layer, maturity, total_runs, consecutive_passes,
        first_pass_at, last_regression_at, last_evaluated_at
 FROM ice_maturity
 WHERE protocol = $1 AND layer = $2
 `
 
-type ICEGetMaturityParams struct {
+type ICAEGetMaturityParams struct {
 	Protocol string `db:"protocol" json:"protocol"`
 	Layer    string `db:"layer" json:"layer"`
 }
 
-type ICEGetMaturityRow struct {
+type ICAEGetMaturityRow struct {
 	Protocol          string           `db:"protocol" json:"protocol"`
 	Layer             string           `db:"layer" json:"layer"`
 	Maturity          string           `db:"maturity" json:"maturity"`
@@ -197,9 +197,9 @@ type ICEGetMaturityRow struct {
 	LastEvaluatedAt   pgtype.Timestamp `db:"last_evaluated_at" json:"last_evaluated_at"`
 }
 
-func (q *Queries) ICEGetMaturity(ctx context.Context, arg ICEGetMaturityParams) (ICEGetMaturityRow, error) {
-	row := q.db.QueryRow(ctx, iCEGetMaturity, arg.Protocol, arg.Layer)
-	var i ICEGetMaturityRow
+func (q *Queries) ICAEGetMaturity(ctx context.Context, arg ICAEGetMaturityParams) (ICAEGetMaturityRow, error) {
+	row := q.db.QueryRow(ctx, iCAEGetMaturity, arg.Protocol, arg.Layer)
+	var i ICAEGetMaturityRow
 	err := row.Scan(
 		&i.Protocol,
 		&i.Layer,
@@ -213,14 +213,14 @@ func (q *Queries) ICEGetMaturity(ctx context.Context, arg ICEGetMaturityParams) 
 	return i, err
 }
 
-const iCEGetRecentRegressions = `-- name: ICEGetRecentRegressions :many
+const iCAEGetRecentRegressions = `-- name: ICAEGetRecentRegressions :many
 SELECT protocol, layer, previous_maturity, new_maturity, failed_cases, notes, created_at
 FROM ice_regressions
 ORDER BY created_at DESC
 LIMIT $1
 `
 
-type ICEGetRecentRegressionsRow struct {
+type ICAEGetRecentRegressionsRow struct {
 	Protocol         string           `db:"protocol" json:"protocol"`
 	Layer            string           `db:"layer" json:"layer"`
 	PreviousMaturity string           `db:"previous_maturity" json:"previous_maturity"`
@@ -230,15 +230,15 @@ type ICEGetRecentRegressionsRow struct {
 	CreatedAt        pgtype.Timestamp `db:"created_at" json:"created_at"`
 }
 
-func (q *Queries) ICEGetRecentRegressions(ctx context.Context, limit int32) ([]ICEGetRecentRegressionsRow, error) {
-	rows, err := q.db.Query(ctx, iCEGetRecentRegressions, limit)
+func (q *Queries) ICAEGetRecentRegressions(ctx context.Context, limit int32) ([]ICAEGetRecentRegressionsRow, error) {
+	rows, err := q.db.Query(ctx, iCAEGetRecentRegressions, limit)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	items := []ICEGetRecentRegressionsRow{}
+	items := []ICAEGetRecentRegressionsRow{}
 	for rows.Next() {
-		var i ICEGetRecentRegressionsRow
+		var i ICAEGetRecentRegressionsRow
 		if err := rows.Scan(
 			&i.Protocol,
 			&i.Layer,
@@ -258,14 +258,14 @@ func (q *Queries) ICEGetRecentRegressions(ctx context.Context, limit int32) ([]I
 	return items, nil
 }
 
-const iCEGetResultsByRun = `-- name: ICEGetResultsByRun :many
+const iCAEGetResultsByRun = `-- name: ICAEGetResultsByRun :many
 SELECT protocol, layer, case_id, case_name, passed, expected, actual, rfc_section, notes
 FROM ice_results
 WHERE run_id = $1
 ORDER BY protocol, layer, case_id
 `
 
-type ICEGetResultsByRunRow struct {
+type ICAEGetResultsByRunRow struct {
 	Protocol   string  `db:"protocol" json:"protocol"`
 	Layer      string  `db:"layer" json:"layer"`
 	CaseID     string  `db:"case_id" json:"case_id"`
@@ -277,15 +277,15 @@ type ICEGetResultsByRunRow struct {
 	Notes      *string `db:"notes" json:"notes"`
 }
 
-func (q *Queries) ICEGetResultsByRun(ctx context.Context, runID int32) ([]ICEGetResultsByRunRow, error) {
-	rows, err := q.db.Query(ctx, iCEGetResultsByRun, runID)
+func (q *Queries) ICAEGetResultsByRun(ctx context.Context, runID int32) ([]ICAEGetResultsByRunRow, error) {
+	rows, err := q.db.Query(ctx, iCAEGetResultsByRun, runID)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	items := []ICEGetResultsByRunRow{}
+	items := []ICAEGetResultsByRunRow{}
 	for rows.Next() {
-		var i ICEGetResultsByRunRow
+		var i ICAEGetResultsByRunRow
 		if err := rows.Scan(
 			&i.Protocol,
 			&i.Layer,
@@ -307,12 +307,12 @@ func (q *Queries) ICEGetResultsByRun(ctx context.Context, runID int32) ([]ICEGet
 	return items, nil
 }
 
-const iCEInsertRegression = `-- name: ICEInsertRegression :exec
+const iCAEInsertRegression = `-- name: ICAEInsertRegression :exec
 INSERT INTO ice_regressions (protocol, layer, run_id, previous_maturity, new_maturity, failed_cases, notes)
 VALUES ($1, $2, $3, $4, $5, $6, $7)
 `
 
-type ICEInsertRegressionParams struct {
+type ICAEInsertRegressionParams struct {
 	Protocol         string   `db:"protocol" json:"protocol"`
 	Layer            string   `db:"layer" json:"layer"`
 	RunID            int32    `db:"run_id" json:"run_id"`
@@ -322,8 +322,8 @@ type ICEInsertRegressionParams struct {
 	Notes            *string  `db:"notes" json:"notes"`
 }
 
-func (q *Queries) ICEInsertRegression(ctx context.Context, arg ICEInsertRegressionParams) error {
-	_, err := q.db.Exec(ctx, iCEInsertRegression,
+func (q *Queries) ICAEInsertRegression(ctx context.Context, arg ICAEInsertRegressionParams) error {
+	_, err := q.db.Exec(ctx, iCAEInsertRegression,
 		arg.Protocol,
 		arg.Layer,
 		arg.RunID,
@@ -335,12 +335,12 @@ func (q *Queries) ICEInsertRegression(ctx context.Context, arg ICEInsertRegressi
 	return err
 }
 
-const iCEInsertResult = `-- name: ICEInsertResult :exec
+const iCAEInsertResult = `-- name: ICAEInsertResult :exec
 INSERT INTO ice_results (run_id, protocol, layer, case_id, case_name, passed, expected, actual, rfc_section, notes)
 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
 `
 
-type ICEInsertResultParams struct {
+type ICAEInsertResultParams struct {
 	RunID      int32   `db:"run_id" json:"run_id"`
 	Protocol   string  `db:"protocol" json:"protocol"`
 	Layer      string  `db:"layer" json:"layer"`
@@ -353,8 +353,8 @@ type ICEInsertResultParams struct {
 	Notes      *string `db:"notes" json:"notes"`
 }
 
-func (q *Queries) ICEInsertResult(ctx context.Context, arg ICEInsertResultParams) error {
-	_, err := q.db.Exec(ctx, iCEInsertResult,
+func (q *Queries) ICAEInsertResult(ctx context.Context, arg ICAEInsertResultParams) error {
+	_, err := q.db.Exec(ctx, iCAEInsertResult,
 		arg.RunID,
 		arg.Protocol,
 		arg.Layer,
@@ -369,13 +369,13 @@ func (q *Queries) ICEInsertResult(ctx context.Context, arg ICEInsertResultParams
 	return err
 }
 
-const iCEInsertTestRun = `-- name: ICEInsertTestRun :one
+const iCAEInsertTestRun = `-- name: ICAEInsertTestRun :one
 INSERT INTO ice_test_runs (app_version, git_commit, run_type, total_cases, total_passed, total_failed, duration_ms)
 VALUES ($1, $2, $3, $4, $5, $6, $7)
 RETURNING id, created_at
 `
 
-type ICEInsertTestRunParams struct {
+type ICAEInsertTestRunParams struct {
 	AppVersion  string `db:"app_version" json:"app_version"`
 	GitCommit   string `db:"git_commit" json:"git_commit"`
 	RunType     string `db:"run_type" json:"run_type"`
@@ -385,13 +385,13 @@ type ICEInsertTestRunParams struct {
 	DurationMs  int32  `db:"duration_ms" json:"duration_ms"`
 }
 
-type ICEInsertTestRunRow struct {
+type ICAEInsertTestRunRow struct {
 	ID        int32            `db:"id" json:"id"`
 	CreatedAt pgtype.Timestamp `db:"created_at" json:"created_at"`
 }
 
-func (q *Queries) ICEInsertTestRun(ctx context.Context, arg ICEInsertTestRunParams) (ICEInsertTestRunRow, error) {
-	row := q.db.QueryRow(ctx, iCEInsertTestRun,
+func (q *Queries) ICAEInsertTestRun(ctx context.Context, arg ICAEInsertTestRunParams) (ICAEInsertTestRunRow, error) {
+	row := q.db.QueryRow(ctx, iCAEInsertTestRun,
 		arg.AppVersion,
 		arg.GitCommit,
 		arg.RunType,
@@ -400,12 +400,12 @@ func (q *Queries) ICEInsertTestRun(ctx context.Context, arg ICEInsertTestRunPara
 		arg.TotalFailed,
 		arg.DurationMs,
 	)
-	var i ICEInsertTestRunRow
+	var i ICAEInsertTestRunRow
 	err := row.Scan(&i.ID, &i.CreatedAt)
 	return i, err
 }
 
-const iCEUpdateMaturity = `-- name: ICEUpdateMaturity :exec
+const iCAEUpdateMaturity = `-- name: ICAEUpdateMaturity :exec
 UPDATE ice_maturity SET
     maturity = $3,
     total_runs = $4,
@@ -417,7 +417,7 @@ UPDATE ice_maturity SET
 WHERE protocol = $1 AND layer = $2
 `
 
-type ICEUpdateMaturityParams struct {
+type ICAEUpdateMaturityParams struct {
 	Protocol          string           `db:"protocol" json:"protocol"`
 	Layer             string           `db:"layer" json:"layer"`
 	Maturity          string           `db:"maturity" json:"maturity"`
@@ -427,8 +427,8 @@ type ICEUpdateMaturityParams struct {
 	LastRegressionAt  pgtype.Timestamp `db:"last_regression_at" json:"last_regression_at"`
 }
 
-func (q *Queries) ICEUpdateMaturity(ctx context.Context, arg ICEUpdateMaturityParams) error {
-	_, err := q.db.Exec(ctx, iCEUpdateMaturity,
+func (q *Queries) ICAEUpdateMaturity(ctx context.Context, arg ICAEUpdateMaturityParams) error {
+	_, err := q.db.Exec(ctx, iCAEUpdateMaturity,
 		arg.Protocol,
 		arg.Layer,
 		arg.Maturity,
@@ -440,7 +440,7 @@ func (q *Queries) ICEUpdateMaturity(ctx context.Context, arg ICEUpdateMaturityPa
 	return err
 }
 
-const iCEUpsertMaturity = `-- name: ICEUpsertMaturity :exec
+const iCAEUpsertMaturity = `-- name: ICAEUpsertMaturity :exec
 INSERT INTO ice_maturity (protocol, layer, maturity, total_runs, consecutive_passes, first_pass_at, last_regression_at, last_evaluated_at, updated_at)
 VALUES ($1, $2, $3, $4, $5, $6, $7, NOW(), NOW())
 ON CONFLICT (protocol, layer) DO UPDATE SET
@@ -453,7 +453,7 @@ ON CONFLICT (protocol, layer) DO UPDATE SET
     updated_at = NOW()
 `
 
-type ICEUpsertMaturityParams struct {
+type ICAEUpsertMaturityParams struct {
 	Protocol          string           `db:"protocol" json:"protocol"`
 	Layer             string           `db:"layer" json:"layer"`
 	Maturity          string           `db:"maturity" json:"maturity"`
@@ -463,8 +463,8 @@ type ICEUpsertMaturityParams struct {
 	LastRegressionAt  pgtype.Timestamp `db:"last_regression_at" json:"last_regression_at"`
 }
 
-func (q *Queries) ICEUpsertMaturity(ctx context.Context, arg ICEUpsertMaturityParams) error {
-	_, err := q.db.Exec(ctx, iCEUpsertMaturity,
+func (q *Queries) ICAEUpsertMaturity(ctx context.Context, arg ICAEUpsertMaturityParams) error {
+	_, err := q.db.Exec(ctx, iCAEUpsertMaturity,
 		arg.Protocol,
 		arg.Layer,
 		arg.Maturity,

@@ -29,6 +29,10 @@ OSINT platform for RFC-compliant domain security analysis. Go/Gin backend, Boots
 - **Nav**: "Sign In" (fa-key) in collapse menu; authenticated dropdown with fa-user-shield; admin badge fa-shield.
 - **Route protection**: /export/json requires admin. All analysis remains no-login-required.
 
+## Engines
+- **ICIE** — Intelligence Classification & Interpretation Engine (analysis logic)
+- **ICAE** — Intelligence Confidence Audit Engine (accuracy tracking). Package: `go-server/internal/icae/`. DB tables: `ice_*` (legacy prefix, not renamed). Two layers per protocol: collection + analysis. Maturity: development → verified → consistent → gold → master_gold. 28 deterministic test cases.
+
 ## Architecture Quick Reference
 - **Build tags**: `//go:build intel` (private) / `//go:build !intel` (public OSS stubs)
 - **11 stub files**: edge_cdn, saas_txt, infrastructure, providers, ip_investigation, manifest, ai_surface/{http,llms_txt,robots_txt,poisoning,scanner}
