@@ -44,19 +44,27 @@ if [ "$LOCKS_FOUND" -eq 0 ]; then
   echo "  No lock files found (good)"
 fi
 
-# Step 2: Fetch to update tracking refs
+# Step 2: Fetch and force-update tracking ref
 echo ""
 echo "Fetching latest from GitHub..."
-if git fetch 2>/dev/null; then
-  echo "  Fetch successful — tracking refs updated"
-else
-  echo "  Standard fetch failed — trying with PAT..."
-  if [ -n "$CAREY_PAT_ALL3_REPOS" ]; then
-    git fetch "https://${CAREY_PAT_ALL3_REPOS}@github.com/careyjames/DnsToolWeb.git" main:refs/remotes/origin/main 2>/dev/null
-    echo "  PAT fetch complete"
+git fetch 2>/dev/null
+
+GITHUB_SHA=$(git ls-remote origin main 2>/dev/null | awk '{print $1}')
+CURRENT_REF=$(cat .git/refs/remotes/origin/main 2>/dev/null)
+
+if [ -n "$GITHUB_SHA" ] && [ "$CURRENT_REF" != "$GITHUB_SHA" ]; then
+  git update-ref refs/remotes/origin/main "$GITHUB_SHA" 2>/dev/null
+  if [ $? -eq 0 ]; then
+    echo "  Tracking ref updated to match GitHub: ${GITHUB_SHA:0:7}"
   else
-    echo "  No PAT available. Try: git fetch"
+    echo "  update-ref failed — writing ref file directly..."
+    echo "$GITHUB_SHA" > .git/refs/remotes/origin/main 2>/dev/null
+    echo "  Ref file written: ${GITHUB_SHA:0:7}"
   fi
+elif [ -n "$GITHUB_SHA" ]; then
+  echo "  Tracking ref already current: ${GITHUB_SHA:0:7}"
+else
+  echo "  Could not reach GitHub to verify"
 fi
 
 # Step 3: Report sync state

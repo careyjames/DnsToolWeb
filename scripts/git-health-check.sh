@@ -40,10 +40,19 @@ if echo "$CURRENT_HEAD" | grep -qv "ref:"; then
 fi
 
 # 4. Update tracking refs (now that locks are cleared)
-#    This fixes the Git panel showing stale "X commits ahead" counts
-if [ "$LOCK_COUNT" -gt 0 ]; then
-  echo "Updating tracking refs..."
-  git fetch 2>/dev/null && echo "Tracking refs updated (Git panel should be current)" || true
+#    git fetch alone may not update the ref file if locks interfere,
+#    so we verify with ls-remote and force-write if needed.
+echo "Updating tracking refs..."
+git fetch 2>/dev/null || true
+
+GITHUB_SHA=$(git ls-remote origin main 2>/dev/null | awk '{print $1}')
+CURRENT_REF=$(cat .git/refs/remotes/origin/main 2>/dev/null)
+if [ -n "$GITHUB_SHA" ] && [ "$CURRENT_REF" != "$GITHUB_SHA" ]; then
+  git update-ref refs/remotes/origin/main "$GITHUB_SHA" 2>/dev/null \
+    || echo "$GITHUB_SHA" > .git/refs/remotes/origin/main 2>/dev/null
+  echo "Tracking ref force-updated to ${GITHUB_SHA:0:7}"
+elif [ -n "$GITHUB_SHA" ]; then
+  echo "Tracking ref already current"
 fi
 
 # 5. Report status
