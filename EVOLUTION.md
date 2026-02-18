@@ -1592,3 +1592,58 @@ git checkout main
 | `go-server/internal/analyzer/golden_rules_test.go` | Added `providerGoogleWorkspace` constant, replaced 4 inline "Google Workspace" strings |
 | `go-server/internal/analyzer/commands.go` | Extracted `findExternalAuthMap()` helper from `extractDMARCRuaTargets()` |
 | `EVOLUTION.md` | Session breadcrumb |
+
+### SonarCloud S3776 Refactoring — CC Reduction (v26.20.48)
+
+**Problem**: SonarCloud flagged 4 functions with cognitive complexity (S3776) exceeding 15. All were in public framework files (no proprietary code involved).
+
+**Refactoring approach**: Pure extraction — no algorithm or behavior changes. Move repeated code blocks into named helper functions. All existing tests pass before and after.
+
+**Changes by file**:
+
+1. **`orchestrator.go`** (AnalyzeDomain):
+   - Extracted `adjustHostingSummary()` — nested hosting summary logic
+   - Extracted `inferEmailFromDKIM()` — DKIM-based email provider fallback
+
+2. **`dns_history.go`** (FetchDNSHistoryWithKey):
+   - Extracted `fetchAllHistoryTypes()` with `historyAggregation` struct — parallel history type fetching
+   - Extracted `buildHistoryResult()` — result assembly and status computation
+
+3. **`analysis.go`** (ViewAnalysisStatic, ViewAnalysisExecutive, Analyze):
+   - Extracted `renderErrorPage()` — replaces repeated 6-line error blocks (used 12+ times across 3 handlers)
+   - Extracted `extractToolVersion()` — shared type assertion
+   - Extracted `resultsDomainExists()` — shared boolean extraction from results map
+   - Extracted `computeDriftFromPrev()` with `driftInfo` struct — shared drift detection logic
+   - Removed unused `driftRow` type
+
+**Verification**: Build passes, all tests pass (analyzer, handlers, db, dnsclient), boundary integrity tests clean, live domain scan confirmed working at normal speed (~40s for example.com).
+
+**IP protection**: All changes are public framework code (no build tags). Zero `_intel.go` files exist locally. Boundary integrity test suite confirms clean separation. No intel push needed.
+
+### Repo Sync Completed — Both Repos Current (Feb 18, 2026)
+
+**DnsToolWeb (public)**: 11 commits pushed via PAT (`02409f2..2bb5d6c`). All changes are public framework refactoring.
+
+**dnstool-intel (private)**: Audited — 44 files present, all 11 `_intel.go` boundary files accounted for, golden rules intel test present, methodology docs present. Last commit: Feb 18 (methodology audit script). No sync needed — no intel-side changes this session.
+
+### Repo Sync Law — Written Into SKILL.md
+
+**Problem**: Recurring git disasters from wrong push methods. API pushes to DnsToolWeb caused rebase collisions. Git panel pushes caused lock file conflicts. Intel files left in public repo exposed IP.
+
+**Solution**: Formalized "Repo Sync Law" in SKILL.md with:
+- Mandatory pre-push checklist (intel file scan, test suite, health check)
+- Explicit NEVER rules for DnsToolWeb (no API push, no Git panel)
+- Post-intel-push checklist (delete local file, verify clean state)
+- Sync verification commands for both repos
+- Incident history table documenting WHY these rules exist
+
+**Key rule**: DnsToolWeb = PAT push only. dnstool-intel = GitHub API only. Zero exceptions.
+
+### Files Changed
+| File | What Changed |
+|------|-------------|
+| `go-server/internal/analyzer/orchestrator.go` | Extracted `adjustHostingSummary()`, `inferEmailFromDKIM()` |
+| `go-server/internal/analyzer/dns_history.go` | Extracted `fetchAllHistoryTypes()`, `buildHistoryResult()`, `historyAggregation` struct |
+| `go-server/internal/handlers/analysis.go` | Extracted `renderErrorPage()`, `extractToolVersion()`, `resultsDomainExists()`, `computeDriftFromPrev()`, `driftInfo` struct; removed `driftRow` |
+| `.agents/skills/dns-tool/SKILL.md` | "Repo Sync Law" section with mandatory checklists, NEVER rules, incident history |
+| `EVOLUTION.md` | Session breadcrumb |

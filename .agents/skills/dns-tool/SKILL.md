@@ -91,41 +91,67 @@ node scripts/github-intel-sync.mjs commits [count]                   # Show rece
 
 **CRITICAL**: If you create or modify `_intel.go` files, push them to `dnstool-intel` via the sync script and DELETE them from the local DnsToolWeb working directory. Files with `//go:build intel` tags won't compile in the OSS build but their source code is visible in the public repo history.
 
-### Git Operations — Two Methods (Recurring Session Failure)
+### Repo Sync Law — Two Repos, Two Methods, Zero Exceptions
 
-**Method 1 — PAT Push (DEFAULT — use this ALWAYS instead of Git panel)**:
-Secret `CAREY_PAT_ALL3_REPOS` is a GitHub Personal Access Token with full permissions (including `workflow` scope) for all three repos: `DnsToolWeb`, `dnstool-intel`, and `it-help-tech-site`.
+This is the ONLY permitted way to push code. Violations have caused hours of git corruption, stalled rebases, and lost work. These rules are non-negotiable.
+
+#### DnsToolWeb (public) — PAT Push ONLY
 
 ```bash
 bash scripts/git-push.sh
 ```
 
-This script shows pending commits and pushes via PAT. **Use this for ALL pushes.** The Replit Git panel's OAuth token conflicts with background git maintenance, causing PUSH_REJECTED errors and stale lock files. The PAT push bypasses all of that.
+Secret `CAREY_PAT_ALL3_REPOS` is a GitHub Personal Access Token with full permissions (including `workflow` scope) for all three repos: `DnsToolWeb`, `dnstool-intel`, and `it-help-tech-site`.
 
-For force push (diverged branches): `git push --force https://${CAREY_PAT_ALL3_REPOS}@github.com/careyjames/DnsToolWeb.git main`
+**MANDATORY pre-push checklist**:
+1. `find go-server -name "*_intel*"` — must return NOTHING
+2. `go test ./go-server/... -count=1` — must pass (includes boundary integrity)
+3. `bash scripts/git-health-check.sh` — clean up stale locks. **Note**: The platform blocks agent `.git` modifications, so the agent may get a 254 exit code. If blocked, ask the user to run it from the Shell tab, or skip if the push succeeds without it.
+4. `bash scripts/git-push.sh` — push via PAT
 
-**Method 2 — GitHub API (for file-level operations)**:
-The Replit GitHub integration (Octokit, full `repo` scope) gives read/write access to BOTH repos:
-- `careyjames/DnsToolWeb` (public)
-- `careyjames/dnstool-intel` (private)
+**NEVER do these for DnsToolWeb**:
+- NEVER push via GitHub API (createBlob/createTree/createCommit/updateRef) — this creates remote commits the local `.git` doesn't know about, causing rebase collisions that corrupt git state
+- NEVER use the Replit Git panel for Push/Sync — its OAuth token conflicts with background maintenance
+- NEVER tell the user "I can't push to Git" — the PAT is always available
 
-Use this for: Reading/writing individual files, pushing intel files via `scripts/github-intel-sync.mjs`, deleting files from remote.
+For force push (diverged branches only): `git push --force https://${CAREY_PAT_ALL3_REPOS}@github.com/careyjames/DnsToolWeb.git main`
 
-```javascript
-// Pattern: Push individual files to DnsToolWeb via API
-// 1. Get remote HEAD: octokit.git.getRef({ ref: 'heads/main' })
-// 2. Get base tree: octokit.git.getCommit({ commit_sha: headSha })
-// 3. Create blobs for changed files: octokit.git.createBlob()
-// 4. Create new tree: octokit.git.createTree({ base_tree, tree: entries })
-// 5. Create commit: octokit.git.createCommit({ tree, parents: [remoteHead] })
-// 6. Update ref: octokit.git.updateRef({ ref: 'heads/main', sha: newCommit })
+#### dnstool-intel (private) — GitHub API ONLY
+
+```bash
+node scripts/github-intel-sync.mjs push <local> <remote> [message]
+node scripts/github-intel-sync.mjs list
+node scripts/github-intel-sync.mjs read <path>
+node scripts/github-intel-sync.mjs delete <path> [message]
+node scripts/github-intel-sync.mjs commits [count]
 ```
 
-**To delete a file from the remote**, include it in the tree with `sha: null`.
+This is a remote-only repo. No local clone exists. API operations don't cause divergence.
 
-**Commit author**: GitHub API commits use `careyjames` (the GitHub identity). Replit checkpoint commits use `careybalboa` (Replit's internal identity). Both are normal — they represent the same person.
+**MANDATORY post-intel-push checklist**:
+1. Delete the local `_intel.go` file immediately after pushing
+2. `find go-server -name "*_intel*"` — must return NOTHING
+3. Run boundary integrity tests to confirm clean state
 
-**DO NOT tell the user "I can't push to Git" or "you need to click Sync Changes."** Multiple sessions have wasted time this way. The PAT or API is always available.
+#### Sync Verification (run after any push to either repo)
+
+```bash
+git log --oneline origin/main..HEAD                        # DnsToolWeb: should show 0 commits ahead
+node scripts/github-intel-sync.mjs commits 5               # Intel: verify latest commit is yours
+find go-server -name "*_intel*"                            # Both: must return nothing
+go test ./go-server/internal/analyzer/ -run Boundary -v    # Both: boundary tests pass
+```
+
+#### Why These Rules Exist (Feb 2026 Incident History)
+
+| Date | What Went Wrong | Root Cause | Hours Lost |
+|------|----------------|------------|------------|
+| Feb 17 | Rebase stalled, "Unsupported state" error | API push to DnsToolWeb created remote commits local didn't know about | 1+ |
+| Feb 18 | Recurring PUSH_REJECTED, stale lock files | Replit Git panel OAuth + background maintenance conflict | 1+ |
+| Feb 17 | `golden_rules_intel_test.go` exposed in public repo | `_intel.go` file committed to DnsToolWeb (visible in Git history even with build tags) | N/A (IP risk) |
+| Feb 18 | SKILL.md itself contained methodology details | Public repo file documenting proprietary pipeline | N/A (IP risk) |
+
+**Commit author note**: GitHub API commits use `careyjames` (GitHub identity). Replit checkpoint commits use `careybalboa` (Replit internal identity). Both are the same person — this is expected.
 
 ### Three-File Pattern
 | File | Build Tag | Purpose |
@@ -248,7 +274,7 @@ Grep for shortened variants before committing. Past regressions: "Executive's In
 
 These have caused repeated regressions — check EVOLUTION.md "Failures & Lessons Learned" for details:
 - **Intel files left in public repo** — `_intel.go` and `_intel_test.go` files committed to DnsToolWeb expose proprietary patterns in public Git history even with build tags. Always push to dnstool-intel via sync script and delete locally. (Feb 2026 incident: `golden_rules_intel_test.go` with enterprise provider patterns was public.)
-- **"I can't push to Git"** — WRONG. The Replit shell blocks `git` CLI but the GitHub API (Octokit) has full `repo` scope on BOTH repos. Use the API to push changes, resolve diverged branches, and delete files. Multiple sessions have wasted time on this. See "Git Operations" section above.
+- **"I can't push to Git"** — WRONG. Use `bash scripts/git-push.sh` (PAT push) for DnsToolWeb. Use `node scripts/github-intel-sync.mjs` for dnstool-intel. NEVER use the GitHub API (createBlob/createTree/createCommit/updateRef) to push to DnsToolWeb — this caused rebase corruption in Feb 2026. See "Repo Sync Law" section above.
 - CSP inline handlers added then silently failing (recurring v26.14–v26.16)
 - Font Awesome icons used without checking subset CSS rules exist
 - PDF/print font sizes dropping below minimums (recurring v26.15–v26.16)
