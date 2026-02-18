@@ -2805,9 +2805,15 @@ main.container {
 .btn-outline-warning {
     --bs-btn-color: #b89700;
     --bs-btn-border-color: #b89700;
-    --bs-btn-hover-border-color: #b89700;
+    --bs-btn-hover-bg: rgba(184, 151, 0, 0.15);
+    --bs-btn-hover-color: #d4af37;
+    --bs-btn-hover-border-color: #d4af37;
+    --bs-btn-active-bg: rgba(184, 151, 0, 0.25);
+    --bs-btn-active-color: #d4af37;
+    --bs-btn-active-border-color: #d4af37;
     --bs-btn-disabled-color: #b89700;
     --bs-btn-disabled-border-color: #b89700;
+    transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
 }
 .u-code-font {
     font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;

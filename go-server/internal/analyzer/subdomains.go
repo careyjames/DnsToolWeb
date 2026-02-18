@@ -169,6 +169,11 @@ func (a *Analyzer) DiscoverSubdomains(ctx context.Context, domain string) map[st
         }
 
         dnsProbed := a.probeCommonSubdomains(ctx, domain, subdomainSet)
+
+        if ctAvailable && len(dedupedEntries) > 0 {
+                enrichDNSWithCTData(dedupedEntries, domain, subdomainSet)
+        }
+
         result["cname_discovered_count"] = 0.0
 
         var subdomains []map[string]any
@@ -507,6 +512,63 @@ func processCTEntries(ctEntries []ctEntry, domain string, subdomainSet map[strin
                                         "first_seen": entry.NotBefore,
                                         "issuers":    []string{issuer},
                                 }
+                        }
+                }
+        }
+}
+
+func enrichDNSWithCTData(ctEntries []ctEntry, domain string, subdomainSet map[string]map[string]any) {
+        now := time.Now()
+        for name, entry := range subdomainSet {
+                src, _ := entry["source"].(string)
+                if src != "dns" {
+                        continue
+                }
+                certCount := 0
+                var firstSeen time.Time
+                issuersMap := make(map[string]bool)
+                var issuersList []string
+
+                for _, ct := range ctEntries {
+                        names := strings.Split(ct.NameValue, "\n")
+                        covers := false
+                        for _, n := range names {
+                                n = strings.TrimSpace(strings.ToLower(n))
+                                if n == name {
+                                        covers = true
+                                        break
+                                }
+                                if strings.HasPrefix(n, "*.") && strings.HasSuffix(name, n[1:]) {
+                                        covers = true
+                                        break
+                                }
+                        }
+                        if !covers {
+                                continue
+                        }
+                        certCount++
+                        notBefore := parseCertDate(ct.NotBefore)
+                        if !notBefore.IsZero() && (firstSeen.IsZero() || notBefore.Before(firstSeen)) {
+                                firstSeen = notBefore
+                        }
+                        notAfter := parseCertDate(ct.NotAfter)
+                        if notAfter.After(now) {
+                                entry["is_current"] = true
+                        }
+                        issuer := simplifyIssuer(ct.IssuerName)
+                        if issuer != "" && !issuersMap[issuer] && len(issuersList) < 5 {
+                                issuersMap[issuer] = true
+                                issuersList = append(issuersList, issuer)
+                        }
+                }
+
+                if certCount > 0 {
+                        entry["cert_count"] = fmt.Sprintf("%d", certCount)
+                        if !firstSeen.IsZero() {
+                                entry["first_seen"] = firstSeen.Format("2006-01-02")
+                        }
+                        if len(issuersList) > 0 {
+                                entry["issuers"] = issuersList
                         }
                 }
         }
