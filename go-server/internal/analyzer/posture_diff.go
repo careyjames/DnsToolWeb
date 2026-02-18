@@ -5,78 +5,92 @@ package analyzer
 import "strings"
 
 type PostureDiffField struct {
-	Label    string
-	Previous string
-	Current  string
-	Severity string
+        Label    string
+        Previous string
+        Current  string
+        Severity string
 }
 
 func ComputePostureDiff(prev, curr map[string]any) []PostureDiffField {
-	type fieldSpec struct {
-		label   string
-		section string
-		key     string
-	}
+        type fieldSpec struct {
+                label   string
+                section string
+                key     string
+        }
 
-	fields := []fieldSpec{
-		{"SPF Status", "spf_analysis", "status"},
-		{"DMARC Status", "dmarc_analysis", "status"},
-		{"DMARC Policy", "dmarc_analysis", "policy"},
-		{"DKIM Status", "dkim_analysis", "status"},
-		{"MTA-STS Status", "mta_sts_analysis", "status"},
-		{"MTA-STS Mode", "mta_sts_analysis", "mode"},
-		{"TLS-RPT Status", "tlsrpt_analysis", "status"},
-		{"BIMI Status", "bimi_analysis", "status"},
-		{"DANE Status", "dane_analysis", "status"},
-		{"CAA Status", "caa_analysis", "status"},
-		{"DNSSEC Status", "dnssec_analysis", "status"},
-		{"Mail Posture", "mail_posture", "label"},
-	}
+        fields := []fieldSpec{
+                {"SPF Status", "spf_analysis", "status"},
+                {"DMARC Status", "dmarc_analysis", "status"},
+                {"DMARC Policy", "dmarc_analysis", "policy"},
+                {"DKIM Status", "dkim_analysis", "status"},
+                {"MTA-STS Status", "mta_sts_analysis", "status"},
+                {"MTA-STS Mode", "mta_sts_analysis", "mode"},
+                {"TLS-RPT Status", "tlsrpt_analysis", "status"},
+                {"BIMI Status", "bimi_analysis", "status"},
+                {"DANE Status", "dane_analysis", "status"},
+                {"CAA Status", "caa_analysis", "status"},
+                {"DNSSEC Status", "dnssec_analysis", "status"},
+                {"Mail Posture", "mail_posture", "label"},
+        }
 
-	var diffs []PostureDiffField
+        var diffs []PostureDiffField
 
-	for _, f := range fields {
-		prevVal := extractPostureField(prev, f.section, f.key)
-		currVal := extractPostureField(curr, f.section, f.key)
-		if prevVal != currVal {
-			diffs = append(diffs, PostureDiffField{
-				Label:    f.label,
-				Previous: displayVal(prevVal),
-				Current:  displayVal(currVal),
-				Severity: classifyDriftSeverity(f.label, prevVal, currVal),
-			})
-		}
-	}
+        for _, f := range fields {
+                prevVal := extractPostureField(prev, f.section, f.key)
+                currVal := extractPostureField(curr, f.section, f.key)
+                if prevVal != currVal {
+                        diffs = append(diffs, PostureDiffField{
+                                Label:    f.label,
+                                Previous: displayVal(prevVal),
+                                Current:  displayVal(currVal),
+                                Severity: classifyDriftSeverity(f.label, prevVal, currVal),
+                        })
+                }
+        }
 
-	prevMX := extractSortedMX(prev)
-	currMX := extractSortedMX(curr)
-	if prevMX != currMX {
-		diffs = append(diffs, PostureDiffField{
-			Label:    "MX Records",
-			Previous: displayVal(prevMX),
-			Current:  displayVal(currMX),
-			Severity: classifyDriftSeverity("MX Records", prevMX, currMX),
-		})
-	}
+        type sortedSpec struct {
+                label string
+                fn    func(map[string]any) string
+        }
+        sortedFields := []sortedSpec{
+                {"DKIM Selectors", extractSortedSelectors},
+                {"CAA Tags", extractSortedCAATags},
+                {"SPF Records", func(r map[string]any) string { return extractSortedRecords(r, "spf_analysis", "records") }},
+                {"DMARC Records", func(r map[string]any) string { return extractSortedRecords(r, "dmarc_analysis", "records") }},
+                {"MX Records", extractSortedMX},
+                {"NS Records", extractSortedNS},
+        }
+        for _, sf := range sortedFields {
+                prevVal := sf.fn(prev)
+                currVal := sf.fn(curr)
+                if prevVal != currVal {
+                        diffs = append(diffs, PostureDiffField{
+                                Label:    sf.label,
+                                Previous: displayVal(prevVal),
+                                Current:  displayVal(currVal),
+                                Severity: classifyDriftSeverity(sf.label, prevVal, currVal),
+                        })
+                }
+        }
 
-	prevNS := extractSortedNS(prev)
-	currNS := extractSortedNS(curr)
-	if prevNS != currNS {
-		diffs = append(diffs, PostureDiffField{
-			Label:    "NS Records",
-			Previous: displayVal(prevNS),
-			Current:  displayVal(currNS),
-			Severity: classifyDriftSeverity("NS Records", prevNS, currNS),
-		})
-	}
+        prevDANE := extractPostureBool(prev, "dane_analysis", "has_dane")
+        currDANE := extractPostureBool(curr, "dane_analysis", "has_dane")
+        if prevDANE != currDANE {
+                diffs = append(diffs, PostureDiffField{
+                        Label:    "DANE Present",
+                        Previous: displayVal(prevDANE),
+                        Current:  displayVal(currDANE),
+                        Severity: classifyDriftSeverity("DANE Present", prevDANE, currDANE),
+                })
+        }
 
-	return diffs
+        return diffs
 }
 
 func displayVal(v string) string {
-	v = strings.TrimSpace(v)
-	if v == "" {
-		return "(none)"
-	}
-	return v
+        v = strings.TrimSpace(v)
+        if v == "" {
+                return "(none)"
+        }
+        return v
 }

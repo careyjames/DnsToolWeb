@@ -9,21 +9,27 @@ import "strings"
 
 func classifyDriftSeverity(fieldLabel, prevVal, currVal string) string {
         lbl := strings.ToLower(fieldLabel)
-        prev := strings.ToLower(prevVal)
-        curr := strings.ToLower(currVal)
+        prev := normalizeStatusVal(prevVal)
+        curr := normalizeStatusVal(currVal)
 
         switch {
         case lbl == "dmarc policy":
                 return classifyPolicyChange(prev, curr)
-        case lbl == "spf status" || lbl == "dmarc status" || lbl == "dkim status":
+        case strings.HasSuffix(lbl, "status") || lbl == "dane present":
                 return classifyStatusChange(prev, curr)
-        case lbl == "dnssec status" || lbl == "dane status":
-                return classifyStatusChange(prev, curr)
-        case lbl == "ns records" || lbl == "mx records":
+        case strings.HasSuffix(lbl, "records") || strings.HasSuffix(lbl, "selectors") || strings.HasSuffix(lbl, "tags"):
                 return "warning"
         default:
                 return "info"
         }
+}
+
+func normalizeStatusVal(v string) string {
+        v = strings.ToLower(strings.TrimSpace(v))
+        if idx := strings.Index(v, " ("); idx > 0 {
+                v = v[:idx]
+        }
+        return v
 }
 
 func classifyPolicyChange(prev, curr string) string {
