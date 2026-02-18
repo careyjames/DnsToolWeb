@@ -1647,3 +1647,34 @@ git checkout main
 | `go-server/internal/handlers/analysis.go` | Extracted `renderErrorPage()`, `extractToolVersion()`, `resultsDomainExists()`, `computeDriftFromPrev()`, `driftInfo` struct; removed `driftRow` |
 | `.agents/skills/dns-tool/SKILL.md` | "Repo Sync Law" section with mandatory checklists, NEVER rules, incident history |
 | `EVOLUTION.md` | Session breadcrumb |
+
+---
+
+## Session: February 18, 2026 (continued)
+
+### Git Push: Autonomous Sync via ls-remote (Breakthrough Fix)
+
+**Problem**: Agent could push code to GitHub via PAT, but could never verify sync. `git fetch` requires writing `.git/refs/remotes/origin/main`, which the platform blocks (exit 254 kills entire process tree). Worse, Gate 1 treated ALL lock files as push-blockers, including `maintenance.lock` (Replit's always-running background maintenance) — meaning the agent could NEVER push autonomously.
+
+**Root cause analysis**:
+- `maintenance.lock` is created by Replit's background git maintenance — it's ALWAYS present, not a stale lock
+- `refs/remotes/origin/main.lock` was left by a killed `git fetch` attempt
+- Neither lock actually blocks `git push` — only `index.lock`, `HEAD.lock`, `config.lock`, and `shallow.lock` do
+- Gate 1's "zero tolerance for ANY lock" policy was correct in spirit but wrong in implementation
+
+**Solution** (two changes):
+1. **Smart lock classification in Gate 1**: Push-blocking locks (`index.lock`, `HEAD.lock`, `config.lock`, `shallow.lock`) → HARD STOP. Background locks (`maintenance.lock`, `refs/remotes/*.lock`) → INFO only, push proceeds.
+2. **Sync verification via `git ls-remote`**: Instead of `git fetch` (writes to `.git`), compare `git rev-parse HEAD` (local) against `git ls-remote` (remote, read-only). If SHAs match → FULLY SYNCED. No `.git` writes needed.
+
+**Result**: Agent can now push, verify sync, and report SYNC STATUS: VERIFIED MATCH — fully autonomously, with `maintenance.lock` present, no user intervention needed.
+
+**Version**: 26.20.51
+
+### Files Changed
+| File | What Changed |
+|------|-------------|
+| `scripts/git-push.sh` | Smart lock classification in Gate 1; replaced `git fetch` with `git ls-remote` for sync verification; pre-push remote SHA comparison |
+| `scripts/git-health-check.sh` | Added sync status check via `git ls-remote` at end of health check |
+| `.agents/skills/dns-tool/SKILL.md` | Updated Repo Sync Law: lock classification, ls-remote verification, incident history entry |
+| `go-server/internal/config/config.go` | Version bump to 26.20.51 |
+| `EVOLUTION.md` | Session breadcrumb |
