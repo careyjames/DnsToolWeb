@@ -168,6 +168,9 @@ func main() {
         changelogHandler := handlers.NewChangelogHandler(cfg)
         router.GET("/changelog", changelogHandler.Changelog)
 
+        faqHandler := handlers.NewFAQHandler(cfg)
+        router.GET("/faq/subdomains", faqHandler.SubdomainDiscovery)
+
         securityPolicyHandler := handlers.NewSecurityPolicyHandler(cfg)
         router.GET("/security-policy", securityPolicyHandler.SecurityPolicy)
 

@@ -3780,6 +3780,7 @@
                             {{end}}
                         </span>
                     </h5>
+                    <a href="/faq/subdomains" target="_blank" rel="noopener" class="btn btn-sm btn-outline-secondary no-print ms-2" data-bs-toggle="tooltip" title="Why are subdomains visible? How does DNS Tool find them?"><i class="fas fa-circle-question me-1"></i>Why visible?</a>
                 </div>
                 <div class="card-body">
                     {{$ctSubdomains := mapGetSlice "subdomains" $ct}}
@@ -3910,13 +3911,13 @@
                         <span class="text-muted">{{$omitted}} older historical entries available via export.</span>
                         {{end}}
                         <a href="/export/subdomains?domain={{.Domain}}" class="btn btn-sm btn-outline-info ms-2 no-print" title="Download all {{mapGetInt "total_subdomains_found" $ct}} subdomains as CSV">
-                            <i class="fas fa-download me-1"></i>Export Full Recon (CSV)
+                            <i class="fas fa-crosshairs me-1"></i>Export Full Recon (CSV)
                         </a>
                     </div>
                     {{else}}
                     <div class="d-flex justify-content-end mt-2 mb-2 no-print">
                         <a href="/export/subdomains?domain={{.Domain}}" class="btn btn-sm btn-outline-info" title="Download all {{len $ctSubdomains}} subdomains as CSV">
-                            <i class="fas fa-download me-1"></i>Export Full Recon (CSV)
+                            <i class="fas fa-crosshairs me-1"></i>Export Full Recon (CSV)
                         </a>
                     </div>
                     {{end}}
@@ -3995,7 +3996,7 @@
                         <span class="ms-1">{{formatFloat 0 $expiredCount}} expired-certificate-only subdomain{{if ne $expiredCount 1}}s{{end}} included where relevant.</span>
                         {{end}}
                         <a href="/export/subdomains?domain={{.Domain}}" class="btn btn-sm btn-outline-secondary ms-2 no-print" title="Download all subdomains as CSV">
-                            <i class="fas fa-download me-1"></i>Export Full Recon (CSV)
+                            <i class="fas fa-crosshairs me-1"></i>Export Full Recon (CSV)
                         </a>
                     </div>
                     {{end}}
