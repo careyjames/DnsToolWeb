@@ -15,6 +15,21 @@ jobs:
       matrix:
         browser: [chromium, firefox, webkit, iphone-safari, ipad-safari]
 
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: dnstool
+          POSTGRES_PASSWORD: dnstool
+          POSTGRES_DB: dnstool
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
     steps:
       - uses: actions/checkout@v4
 
@@ -43,6 +58,7 @@ jobs:
           sleep 3
         env:
           PORT: "5000"
+          DATABASE_URL: "postgres://dnstool:dnstool@localhost:5432/dnstool?sslmode=disable"
 
       - name: Wait for server
         run: |
