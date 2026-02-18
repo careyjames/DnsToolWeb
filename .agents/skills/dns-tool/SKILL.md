@@ -33,6 +33,21 @@ npx csso static/css/custom.css -o static/css/custom.min.css
 ### Version Bump — MANDATORY EVERY TIME (cache-busting)
 **After EVERY change (Go, CSS, templates — no exceptions)**, bump the patch number in `AppVersion` in `go-server/internal/config/config.go`. The version string busts browser caches for all static assets. If you don't bump it, the user cannot test your changes — they'll see stale cached content. This is non-negotiable and must happen before rebuild.
 
+### Public-Facing Docs — Update After Feature/Section Changes
+
+When adding, removing, or reordering report sections or features, these files must all stay in sync:
+
+1. **`static/llms.txt`** — Short overview (llmstxt.org spec, root path `/llms.txt`)
+2. **`static/llms-full.txt`** — Full AI agent guide with numbered section list matching actual report order
+3. **`go-server/templates/index.html`** — JSON-LD schema (`WebApplication` + `FAQPage`) with `alternateName` and `description`
+4. **`static/robots.txt`** — Disallow paths, AI bot directives, llms.txt path comments
+5. **`DOCS.md`** — Technical documentation feature list
+6. **`PROJECT_CONTEXT.md`** — Architecture and feature inventory
+
+**llms.txt standard**: Root path `/llms.txt` (like `robots.txt`), NOT `/.well-known/`. Our server also serves at `/.well-known/llms.txt` for maximum discoverability, but the spec is root-path. Our AI Surface Scanner checks both locations on scanned domains.
+
+**JSON-LD checklist**: After adding a feature, update `alternateName` array and `description` in the `WebApplication` schema in `index.html`.
+
 ### Build and Deploy Chain — CRITICAL (caused multiple regressions)
 
 The launch chain is: `gunicorn → main.py → os.execvp("./dns-tool-server")`. Python is a trampoline only — it replaces itself with the Go binary. There is NO Flask, NO Python logic at runtime.
