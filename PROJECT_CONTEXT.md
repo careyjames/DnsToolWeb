@@ -177,11 +177,19 @@ node scripts/github-intel-sync.mjs commits [count]                   # Show rece
 
 To delete a file, include it in the tree entries with `sha: null`.
 
-**Auth**: Use the Replit connector API to get an access token (same as `scripts/github-intel-sync.mjs`). No separate API key needed.
+**Auth — Two methods**:
+1. **PAT (preferred for pushes)**: Secret `CAREY_PAT_ALL3_REPOS` — a GitHub Personal Access Token with full permissions (including `workflow` scope) for all three repos: `DnsToolWeb`, `dnstool-intel`, and `it-help-tech-site`. Use for `git push` commands:
+   ```
+   git push --force https://${CAREY_PAT_ALL3_REPOS}@github.com/careyjames/DnsToolWeb.git main
+   ```
+   This bypasses the Replit OAuth token's missing `workflow` scope that blocks pushes containing `.github/workflows/` changes.
+2. **Replit connector API**: Use for GitHub Contents API operations (reading/writing individual files via Octokit). Same as `scripts/github-intel-sync.mjs`. No separate API key needed.
+
+**Why two methods**: Replit's built-in OAuth token lacks `workflow` scope, so `git push` via the Git pane or CLI fails if ANY commit touches `.github/workflows/*` files. The PAT solves this permanently.
 
 **Commit authors**: GitHub API commits appear as `careyjames`. Replit internal checkpoints appear as `careybalboa`. Both represent the same user; this is expected behavior.
 
-**DO NOT tell the user "I can't push to Git" or "you need to click Sync Changes."** This has caused repeated wasted sessions. The API is always available.
+**DO NOT tell the user "I can't push to Git" or "you need to click Sync Changes."** This has caused repeated wasted sessions. The PAT or API is always available.
 
 ### Three-File Pattern
 
