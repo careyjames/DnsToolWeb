@@ -1,9 +1,9 @@
 #!/bin/bash
-# Direct push to GitHub via PAT — bypasses Replit Git panel
+# Direct push to GitHub via PAT — the agent's method for pushing DnsToolWeb
 # Usage: bash scripts/git-push.sh
 #
-# CRITICAL: This is the ONLY permitted method to push DnsToolWeb.
-# NEVER use the GitHub API or Git panel to push this repo.
+# The user can also push via the Git panel after running git-panel-reset.sh.
+# NEVER push via GitHub API (createBlob/createTree/createCommit/updateRef).
 # See SKILL.md "Repo Sync Law" for why.
 #
 # LOCK FILES: Smart classification — only push-blocking locks (index, HEAD,
@@ -105,6 +105,13 @@ REMOTE_SHA=$(git ls-remote "$PAT_URL" refs/heads/${BRANCH} 2>/dev/null | awk '{p
 
 if [ "$LOCAL_SHA" = "$REMOTE_SHA" ]; then
   echo "Already synced — local HEAD ($LOCAL_SHA) matches GitHub."
+  mkdir -p .gitpanel 2>/dev/null
+  echo "$LOCAL_SHA" > .gitpanel/last_pushed_sha 2>/dev/null
+  if [ -f ".git/refs/remotes/origin/main.lock" ]; then
+    echo ""
+    echo "NOTE: Git panel tracking ref is locked. Panel may show stale counts."
+    echo "  To fix: run 'bash scripts/git-panel-reset.sh' from the Shell tab."
+  fi
   echo ""
   echo "SYNC STATUS: VERIFIED MATCH"
   exit 0
@@ -146,6 +153,10 @@ echo ""
 echo "=== Verifying sync (read-only) ==="
 POST_PUSH_REMOTE=$(git ls-remote "$PAT_URL" refs/heads/${BRANCH} 2>/dev/null | awk '{print $1}')
 
+# Write marker file (non-.git) so staleness is always detectable
+mkdir -p .gitpanel 2>/dev/null
+echo "$LOCAL_SHA" > .gitpanel/last_pushed_sha 2>/dev/null
+
 if [ "$LOCAL_SHA" = "$POST_PUSH_REMOTE" ]; then
   echo "  VERIFIED: Local HEAD matches GitHub HEAD."
   echo "  Local:  $LOCAL_SHA"
@@ -180,6 +191,13 @@ else
     echo ""
     echo "SYNC STATUS: FULLY SYNCED"
   fi
+fi
+# ── Git panel staleness check ──
+if [ -f ".git/refs/remotes/origin/main.lock" ]; then
+  echo ""
+  echo "NOTE: Git panel tracking ref is locked (.git/refs/remotes/origin/main.lock)"
+  echo "  The Git panel may show stale 'X commits ahead' even though GitHub is current."
+  echo "  To fix: run 'bash scripts/git-panel-reset.sh' from the Shell tab."
 fi
 echo ""
 echo "PUSH COMPLETE."

@@ -6,6 +6,10 @@
 # verification, but the Git panel reads origin/main (the tracking ref).
 # A stale .lock file can block the tracking ref from updating, causing
 # the panel to show "X commits ahead" even though GitHub is current.
+#
+# PREVENTION: The agent's push script writes the last-pushed SHA to
+# .gitpanel/last_pushed_sha. This script compares that marker against
+# origin/main to detect staleness without needing the agent.
 
 cd /home/runner/workspace
 
@@ -14,28 +18,39 @@ echo ""
 
 FIXED=0
 
-if [ -f ".git/refs/remotes/origin/main.lock" ]; then
-  rm -f ".git/refs/remotes/origin/main.lock" 2>/dev/null
-  echo "  Removed stale refs/remotes/origin/main.lock"
-  FIXED=$((FIXED+1))
-else
-  echo "  No remote ref lock found (good)"
+# Step 1: Clear ALL lock files that block ref updates
+LOCKS_FOUND=0
+for lockfile in \
+  ".git/refs/remotes/origin/main.lock" \
+  ".git/objects/maintenance.lock" \
+  ".git/refs/heads/main.lock"; do
+  if [ -f "$lockfile" ]; then
+    rm -f "$lockfile" 2>/dev/null
+    echo "  Removed $lockfile"
+    FIXED=$((FIXED+1))
+    LOCKS_FOUND=$((LOCKS_FOUND+1))
+  fi
+done
+
+# Sweep any other stale locks
+OTHER_LOCKS=$(find .git -name "*.lock" -type f 2>/dev/null || true)
+if [ -n "$OTHER_LOCKS" ]; then
+  while IFS= read -r lockfile; do
+    rm -f "$lockfile" 2>/dev/null && echo "  Removed $lockfile" && FIXED=$((FIXED+1)) && LOCKS_FOUND=$((LOCKS_FOUND+1))
+  done <<< "$OTHER_LOCKS"
 fi
 
-if [ -f ".git/objects/maintenance.lock" ]; then
-  rm -f ".git/objects/maintenance.lock" 2>/dev/null
-  echo "  Removed maintenance.lock"
-  FIXED=$((FIXED+1))
-else
-  echo "  No maintenance lock found (good)"
+if [ "$LOCKS_FOUND" -eq 0 ]; then
+  echo "  No lock files found (good)"
 fi
 
+# Step 2: Fetch to update tracking refs
 echo ""
 echo "Fetching latest from GitHub..."
 if git fetch 2>/dev/null; then
   echo "  Fetch successful — tracking refs updated"
 else
-  echo "  Fetch failed — trying with PAT..."
+  echo "  Standard fetch failed — trying with PAT..."
   if [ -n "$CAREY_PAT_ALL3_REPOS" ]; then
     git fetch "https://${CAREY_PAT_ALL3_REPOS}@github.com/careyjames/DnsToolWeb.git" main:refs/remotes/origin/main 2>/dev/null
     echo "  PAT fetch complete"
@@ -44,6 +59,7 @@ else
   fi
 fi
 
+# Step 3: Report sync state
 echo ""
 LOCAL=$(git rev-parse HEAD 2>/dev/null)
 REMOTE=$(git rev-parse origin/main 2>/dev/null)
@@ -52,15 +68,26 @@ AHEAD=$(git rev-list origin/main..HEAD --count 2>/dev/null || echo "?")
 echo "  Local HEAD:  $LOCAL"
 echo "  origin/main: $REMOTE"
 echo "  Commits ahead: $AHEAD"
-echo ""
 
+# Check marker file from agent's last push
+if [ -f ".gitpanel/last_pushed_sha" ]; then
+  LAST_PUSHED=$(cat .gitpanel/last_pushed_sha 2>/dev/null)
+  echo "  Last agent push: $LAST_PUSHED"
+  if [ "$REMOTE" = "$LAST_PUSHED" ] && [ "$AHEAD" != "0" ]; then
+    echo ""
+    echo "  INFO: origin/main matches the agent's last push."
+    echo "  The $AHEAD commit(s) ahead are unpushed local checkpoints."
+  fi
+fi
+
+echo ""
 if [ "$AHEAD" = "0" ]; then
   echo "GIT PANEL: Should now show 0 ahead, 0 behind."
   echo "Close and re-open the Git tab to refresh."
 else
-  echo "GIT PANEL: Shows $AHEAD commit(s) ahead."
-  echo "These are local checkpoints not yet pushed to GitHub."
-  echo "Run 'bash scripts/git-push.sh' to push them."
+  echo "GIT PANEL: $AHEAD commit(s) ahead of origin/main."
+  echo "To push them: bash scripts/git-push.sh"
+  echo "Or use the Git panel Push button."
 fi
 echo ""
 echo "Done. $FIXED lock file(s) cleared."
