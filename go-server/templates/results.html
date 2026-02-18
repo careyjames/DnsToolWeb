@@ -165,7 +165,7 @@
                         <li><span class="dropdown-item-text small text-muted pe-3" data-bs-toggle="tooltip" title="FIRST TLP v2.0 standard">TLP (Traffic Light Protocol) governs dissemination of this intelligence product. Default: AMBER per FIRST/CISA standards for security posture reports. Full hierarchy: RED (recipient only) → AMBER+STRICT (organisation only) → AMBER (organisation and clients) → GREEN (community) → CLEAR (public). Per FIRST TLP v2.0.</span></li>
                     </ul>
                 </div>
-                <a href="/analyze?domain={{.AsciiDomain}}" id="reanalyzeBtn" class="btn btn-primary" data-domain="{{.AsciiDomain}}"
+                <a href="/analyze?domain={{.AsciiDomain}}" id="reanalyzeBtn" class="btn btn-analyze" data-domain="{{.AsciiDomain}}"
                     {{if gt .WaitSeconds 0}}data-wait-seconds="{{.WaitSeconds}}" data-wait-reason="{{.WaitReason}}"{{end}}>
                     <i class="fas fa-sync-alt me-2"></i>Re-analyze
                 </a>
@@ -4525,7 +4525,7 @@
                 
                 function startCountdown(seconds) {
                     reanalyzeBtn.classList.add('disabled');
-                    reanalyzeBtn.classList.remove('btn-primary');
+                    reanalyzeBtn.classList.remove('btn-analyze');
                     reanalyzeBtn.classList.add('btn-secondary');
                     
                     function updateButton() {
@@ -4533,7 +4533,7 @@
                             clearInterval(countdownInterval);
                             reanalyzeBtn.innerHTML = '<i class="fas fa-sync-alt me-2"></i>Re-analyze';
                             reanalyzeBtn.classList.remove('disabled', 'btn-secondary');
-                            reanalyzeBtn.classList.add('btn-primary');
+                            reanalyzeBtn.classList.add('btn-analyze');
                         } else {
                             reanalyzeBtn.innerHTML = '<i class="fas fa-clock me-2"></i>Ready in ' + seconds + 's';
                             seconds--;

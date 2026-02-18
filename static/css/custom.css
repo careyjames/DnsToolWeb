@@ -30,6 +30,8 @@
     /* Sophistication Accents — non-status, brand-authority colors */
     --accent-steel: #7d8ea8;       /* Steel blue — premium, intelligence, composure */
     --accent-deep: #1e3a5f;        /* Deep navy — authority, depth, classified */
+    --accent-violet: #6c5ce7;      /* Authority violet — primary action, NIST-aligned */
+    --accent-violet-hover: #7b6ef0;
     
     /* Borders */
     --border-default: #30363d;
@@ -2973,6 +2975,44 @@ main.container {
 }
 @media print {
     .u-section-tuning { display: none; }
+}
+
+/* ============================================
+   ANALYZE BUTTON — Authority Violet Outline
+   Distinguished from generic btn-primary.
+   NIST-aligned accent: --accent-violet
+   ============================================ */
+.btn-analyze {
+    --bs-btn-bg: transparent;
+    --bs-btn-border-color: var(--accent-violet);
+    --bs-btn-color: #c4b5fd;
+    --bs-btn-hover-bg: var(--accent-violet);
+    --bs-btn-hover-border-color: var(--accent-violet-hover);
+    --bs-btn-hover-color: #fff;
+    --bs-btn-active-bg: #5b47d7;
+    --bs-btn-active-border-color: #5b47d7;
+    --bs-btn-active-color: #fff;
+    --bs-btn-disabled-bg: transparent;
+    --bs-btn-disabled-border-color: rgba(108, 92, 231, 0.4);
+    --bs-btn-disabled-color: rgba(196, 181, 253, 0.5);
+    background-color: var(--bs-btn-bg);
+    border: 2px solid var(--bs-btn-border-color);
+    color: var(--bs-btn-color);
+    transition: all 0.2s ease;
+}
+
+.btn-analyze:hover,
+.btn-analyze:focus {
+    background-color: var(--bs-btn-hover-bg);
+    border-color: var(--bs-btn-hover-border-color);
+    color: var(--bs-btn-hover-color);
+    box-shadow: 0 0 12px rgba(108, 92, 231, 0.3);
+}
+
+.btn-analyze:active {
+    background-color: var(--bs-btn-active-bg);
+    border-color: var(--bs-btn-active-border-color);
+    color: var(--bs-btn-active-color);
 }
 
 /* ============================================

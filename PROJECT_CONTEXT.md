@@ -419,15 +419,19 @@ Implementation details are in the intel repo. Key public-facing behaviors:
 
 All items below are **on the roadmap** — not yet implemented:
 
-1. **Optional Authentication Model** — on the roadmap (strategic priority)
+1. **Optional Authentication Model** — IMPLEMENTED (v26.20.56–57)
    - **Core principle**: Zero-friction paste-and-go analysis remains open to all — no login required. This is the competitive advantage — hackers, DEF CON folks, executives, and security researchers all want tools that just work without signup walls.
-   - **Optional Google login** (simple, one-tab auth) unlocks premium features:
-     - **Personal analysis history** (currently history is a public global feed — all users see everyone's analyses)
+   - **Google OAuth 2.0 with PKCE** — Pure stdlib implementation (no external OAuth libraries), compatible with Google Advanced Protection Program. Minimal scopes: openid, email, profile.
+   - **Security hardening (v26.20.57)**: One-time admin bootstrap (only if zero admins exist, env var `INITIAL_ADMIN_EMAIL`), email_verified=true enforced, ID token claims validation (iss, aud, exp), 64-char high-entropy PKCE verifier, rate limiting on /auth/*, no tokens stored (discarded after identity extraction), audit logging on admin bootstrap.
+   - **Session management**: Server-side PostgreSQL sessions, 30-day expiry, HttpOnly/Secure/SameSite=Lax cookies, session ID rotation on login.
+   - **Nav integration**: "Sign In" with key icon in collapse menu; authenticated users see name + user-shield icon with dropdown; admins get shield badge.
+   - **Route protection**: /export/json behind RequireAdmin. All analysis remains open.
+   - **Future premium features** (on the roadmap):
+     - **Personal analysis history** (currently history is a public global feed)
      - **Drift Engine alerts** — get notified when a domain's security posture changes
      - **Saved reports** — bookmark and revisit past analyses
      - **API access** — programmatic analysis for automation workflows
-   - **CLI app** (Homebrew/binary) works without login for basic analysis; authenticated mode unlocks history sync, drift alerts, and API quota
-   - **When to build**: After the CLI app and Drift Engine are further along, so there's meaningful premium value to offer behind the login wall
+   - **CLI app** (Homebrew/binary) works without login for basic analysis; authenticated mode unlocks history sync, drift alerts, and API quota — on the roadmap
    - **Why this works**: The tools that make users "go through a bunch of login and sign-up bullshit" lose users immediately. We stay open by default, premium by choice.
 2. **Drift Engine Phases 2-4** (compare, timeline UI, alerting) — see `DRIFT_ENGINE.md` — on the roadmap
 3. **Globalping.io** distributed DNS resolution probes (complementary to port 25 probe, NOT replacement) — on the roadmap

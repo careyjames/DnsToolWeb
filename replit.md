@@ -21,6 +21,14 @@ OSINT platform for RFC-compliant domain security analysis. Go/Gin backend, Boots
 9. **Font Awesome**: WOFF2 subset only. Check CSS rule exists before using new icons.
 10. **Stubs**: `_oss.go` files return safe non-nil defaults, never errors.
 
+## Authentication (v26.20.56–57)
+- **Google OAuth 2.0 + PKCE** — Pure stdlib, no external OAuth libraries. Advanced Protection compatible.
+- **Env vars**: `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `INITIAL_ADMIN_EMAIL` (all optional — app runs without them).
+- **One-time admin bootstrap**: `INITIAL_ADMIN_EMAIL` grants admin only if zero admins exist in DB.
+- **Security**: email_verified enforced, ID token claims validated, rate-limited /auth/*, no tokens stored, audit logging.
+- **Nav**: "Sign In" (fa-key) in collapse menu; authenticated dropdown with fa-user-shield; admin badge fa-shield.
+- **Route protection**: /export/json requires admin. All analysis remains no-login-required.
+
 ## Architecture Quick Reference
 - **Build tags**: `//go:build intel` (private) / `//go:build !intel` (public OSS stubs)
 - **11 stub files**: edge_cdn, saas_txt, infrastructure, providers, ip_investigation, manifest, ai_surface/{http,llms_txt,robots_txt,poisoning,scanner}
