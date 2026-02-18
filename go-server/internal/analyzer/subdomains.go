@@ -273,6 +273,7 @@ func applySubdomainDisplayCap(result map[string]any, subdomains []map[string]any
         result["subdomains"] = subdomains[:displayLimit]
         result["displayed_count"] = displayLimit
         result["display_capped"] = true
+        result["was_truncated"] = true
         result["display_current_count"] = currentCount
         result["display_historical_omitted"] = total - displayLimit
 }
