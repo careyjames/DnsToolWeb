@@ -20,6 +20,7 @@ OSINT platform for RFC-compliant domain security analysis. Go/Gin backend, Boots
 8. **Reality Check**: Every claim must be backed by implemented code. Use "on the roadmap" for future items.
 9. **Font Awesome**: WOFF2 subset only. Check CSS rule exists before using new icons.
 10. **Stubs**: `_oss.go` files return safe non-nil defaults, never errors.
+11. **Capitalization**: NIST/Chicago title case for all user-facing headings, badges, trust indicators. Never camelCase in UI copy.
 
 ## Authentication (v26.20.56–57)
 - **Google OAuth 2.0 + PKCE** — Pure stdlib, no external OAuth libraries. Advanced Protection compatible.

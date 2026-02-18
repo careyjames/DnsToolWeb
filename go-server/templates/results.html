@@ -3515,7 +3515,7 @@
                         {{$ctUnique := mapGetFloat "unique_subdomains" $ct}}
                         <span class="section-question">What infrastructure is exposed in certificate logs?
                             {{if and (eq $ctStatus "success") (gt $ctUnique 0)}}
-                                <span class="badge bg-info ms-2">{{mapGetInt "displayed_count" $ct}} of {{formatFloat 0 $ctUnique}} subdomains discovered</span>
+                                <span class="badge badge-recon-count ms-2"><i class="fas fa-crosshairs me-1"></i>{{mapGetInt "displayed_count" $ct}} of {{formatFloat 0 $ctUnique}} subdomains discovered</span>
                             {{else if and (eq $ctStatus "success") (eq $ctUnique 0)}}
                                 <span class="badge bg-secondary ms-2">None found</span>
                             {{else}}
@@ -3650,7 +3650,7 @@
                         <i class="fas fa-list me-1"></i>
                         <strong>{{formatFloat 0 $ctUnique}} subdomains discovered — showing {{len $ctSubdomains}} prioritized by security relevance.</strong>
                         All {{mapGetInt "display_current_count" $ct}} current subdomains are included, plus the most relevant historical entries.
-                        <a href="/export/subdomains?domain={{.Domain}}" class="btn btn-sm btn-outline-info ms-2 no-print" title="Download complete subdomain recon as CSV">
+                        <a href="/export/subdomains?domain={{.Domain}}" class="btn btn-sm btn-recon ms-2 no-print" title="Download complete subdomain recon as CSV">
                             <i class="fas fa-crosshairs me-1"></i>Export Full Recon (CSV)
                         </a>
                     </div>
@@ -3722,7 +3722,7 @@
                     </div>
                     {{if not (or (mapGetBool "display_capped" $ct) (mapGetBool "was_truncated" $ct))}}
                     <div class="text-end mt-2 no-print">
-                        <a href="/export/subdomains?domain={{.Domain}}" class="btn btn-sm btn-outline-info" title="Download subdomain recon as CSV">
+                        <a href="/export/subdomains?domain={{.Domain}}" class="btn btn-sm btn-recon" title="Download subdomain recon as CSV">
                             <i class="fas fa-crosshairs me-1"></i>Export Recon (CSV)
                         </a>
                     </div>
@@ -3736,7 +3736,7 @@
                         {{if gt $expiredCount 0}}
                         <span class="ms-1">{{formatFloat 0 $expiredCount}} expired-certificate-only subdomain{{if ne $expiredCount 1}}s{{end}} included where relevant.</span>
                         {{end}}
-                        <a href="/export/subdomains?domain={{.Domain}}" class="btn btn-sm btn-outline-secondary ms-2 no-print" title="Download complete subdomain recon as CSV">
+                        <a href="/export/subdomains?domain={{.Domain}}" class="btn btn-sm btn-recon ms-2 no-print" title="Download complete subdomain recon as CSV">
                             <i class="fas fa-crosshairs me-1"></i>Export Full Recon (CSV)
                         </a>
                     </div>

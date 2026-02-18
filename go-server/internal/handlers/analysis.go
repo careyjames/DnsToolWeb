@@ -275,6 +275,8 @@ func (h *AnalysisHandler) Analyze(c *gin.Context) {
 
         analysisID, timestamp := h.saveAnalysis(c.Request.Context(), domain, asciiDomain, results, analysisDuration, countryCode, countryName)
 
+        icae.EvaluateAndRecord(context.Background(), h.DB.Queries, h.Config.AppVersion)
+
         verifyCommands := analyzer.GenerateVerificationCommands(asciiDomain, results)
         integrityHash := analyzer.ReportIntegrityHash(asciiDomain, analysisID, timestamp, h.Config.AppVersion, results)
         rfcCount := analyzer.CountVerifiedRFCs(results)

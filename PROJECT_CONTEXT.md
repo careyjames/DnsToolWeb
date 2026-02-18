@@ -331,6 +331,7 @@ After evaluating APA, Chicago/Turabian, IEEE, NIST SP 800, and ICD, the project 
 3. Technical references: IEEE numbered citations for RFCs/standards
 4. Terminology: NIST/CISA vocabulary (control, finding, observation, recommendation, risk level)
 5. Visual identity: NIST governs content structure, not visual design — dark theme and hacker fonts remain
+6. Capitalization: NIST SP 800-series title case for all headings, section titles, trust indicators, badges, and named UI concepts. Follow Chicago Manual of Style (17th ed.) capitalization rules: capitalize major words, lowercase articles/prepositions/conjunctions under four letters unless first/last word. Examples: "Live DNS, Real-Time Results" not "Live DNS, real-time results"; "No Login Required" not "no login required". Never use camelCase in user-facing copy.
 
 ### Intelligence Document Naming
 
