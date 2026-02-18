@@ -3498,59 +3498,6 @@
             </div>
         </div>
 
-        <!-- Propagation Delta Summary -->
-        <div class="row mb-3">
-            <div class="col-12">
-                {{$hasPropagating := false}}
-                {{if $propagation}}
-                {{range $rtype, $val := $propagation}}
-                    {{$pinfo := toMap $val}}
-                    {{if and $pinfo (eq (mapGetStr "status" $pinfo) "propagating")}}
-                    {{$hasPropagating = true}}
-                    {{end}}
-                {{end}}
-                {{end}}
-                {{if $hasPropagating}}
-                <div class="alert alert-warning py-2 mb-0 d-flex align-items-center justify-content-between flex-wrap">
-                    <div>
-                        <i class="fas fa-sync-alt fa-spin me-2"></i>
-                        <strong>Δ Changes Detected:</strong>
-                        {{range $rtype, $val := $propagation}}
-                            {{$pinfo := toMap $val}}
-                            {{if and $pinfo (eq (mapGetStr "status" $pinfo) "propagating")}}
-                            <span class="badge bg-warning text-dark ms-1">{{$rtype}}</span>
-                            {{end}}
-                        {{end}}
-                        <span class="ms-2 small text-muted">Resolver ≠ Authoritative (TTL / CDN rotation / recent change)</span>
-                    </div>
-                    <small class="text-warning-emphasis">
-                        <i class="fas fa-clock me-1"></i>Risk: Low - typically resolves within TTL
-                    </small>
-                </div>
-                {{else}}
-                <div class="alert alert-success py-2 mb-0 d-flex align-items-center">
-                    <i class="fas fa-check-circle me-2"></i>
-                    <strong>Δ No Propagation Issues:</strong>
-                    <span class="ms-2 small">All DNS records are synchronized between resolver and authoritative nameserver.</span>
-                </div>
-                {{end}}
-            </div>
-        </div>
-
-        <!-- DNS Intelligence Section Header -->
-        <div class="card bg-dark border-info mb-4">
-            <div class="card-body py-3">
-                <div class="d-flex align-items-center justify-content-between flex-wrap">
-                    <div class="d-flex align-items-center">
-                        <span class="badge bg-info text-dark px-3 py-2 me-3 u-fs-090rem">
-                            <i class="fas fa-microscope me-2"></i>DNS Intelligence
-                        </span>
-                        <span class="text-light">What does DNS look like <strong class="text-info">right now</strong> &mdash; and what <strong class="text-info">changed over time</strong>?</span>
-                    </div>
-                </div>
-            </div>
-        </div>
-
         <!-- Subdomain Discovery (Certificate Transparency) -->
         <div class="row mt-4">
         <div class="col-12">
@@ -3893,6 +3840,59 @@
                 </div>
             </div>
         </div>
+        </div>
+
+        <!-- Propagation Delta Summary -->
+        <div class="row mb-3">
+            <div class="col-12">
+                {{$hasPropagating := false}}
+                {{if $propagation}}
+                {{range $rtype, $val := $propagation}}
+                    {{$pinfo := toMap $val}}
+                    {{if and $pinfo (eq (mapGetStr "status" $pinfo) "propagating")}}
+                    {{$hasPropagating = true}}
+                    {{end}}
+                {{end}}
+                {{end}}
+                {{if $hasPropagating}}
+                <div class="alert alert-warning py-2 mb-0 d-flex align-items-center justify-content-between flex-wrap">
+                    <div>
+                        <i class="fas fa-sync-alt fa-spin me-2"></i>
+                        <strong>Δ Changes Detected:</strong>
+                        {{range $rtype, $val := $propagation}}
+                            {{$pinfo := toMap $val}}
+                            {{if and $pinfo (eq (mapGetStr "status" $pinfo) "propagating")}}
+                            <span class="badge bg-warning text-dark ms-1">{{$rtype}}</span>
+                            {{end}}
+                        {{end}}
+                        <span class="ms-2 small text-muted">Resolver ≠ Authoritative (TTL / CDN rotation / recent change)</span>
+                    </div>
+                    <small class="text-warning-emphasis">
+                        <i class="fas fa-clock me-1"></i>Risk: Low - typically resolves within TTL
+                    </small>
+                </div>
+                {{else}}
+                <div class="alert alert-success py-2 mb-0 d-flex align-items-center">
+                    <i class="fas fa-check-circle me-2"></i>
+                    <strong>Δ No Propagation Issues:</strong>
+                    <span class="ms-2 small">All DNS records are synchronized between resolver and authoritative nameserver.</span>
+                </div>
+                {{end}}
+            </div>
+        </div>
+
+        <!-- DNS Intelligence Section Header -->
+        <div class="card bg-dark border-info mb-4">
+            <div class="card-body py-3">
+                <div class="d-flex align-items-center justify-content-between flex-wrap">
+                    <div class="d-flex align-items-center">
+                        <span class="badge bg-info text-dark px-3 py-2 me-3 u-fs-090rem">
+                            <i class="fas fa-microscope me-2"></i>DNS Intelligence
+                        </span>
+                        <span class="text-light">What does DNS look like <strong class="text-info">right now</strong> &mdash; and what <strong class="text-info">changed over time</strong>?</span>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <!-- DNS Diff Section - True Side-by-Side Comparison -->
