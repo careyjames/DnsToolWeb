@@ -461,17 +461,17 @@ func (h *AnalysisHandler) APISubdomains(c *gin.Context) {
 func (h *AnalysisHandler) ExportSubdomainsCSV(c *gin.Context) {
         domain := strings.TrimSpace(strings.ToLower(c.Query("domain")))
         if domain == "" {
-                c.String(http.StatusBadRequest, "domain parameter required")
+                c.Redirect(http.StatusFound, "/")
                 return
         }
         if !dnsclient.ValidateDomain(domain) {
-                c.String(http.StatusBadRequest, "invalid domain")
+                c.Redirect(http.StatusFound, "/")
                 return
         }
 
         cached, ok := h.Analyzer.GetCTCache(domain)
         if !ok || len(cached) == 0 {
-                c.String(http.StatusNotFound, "No subdomain data available. Analyze the domain first, then export.")
+                c.Redirect(http.StatusFound, "/analyze?domain="+domain)
                 return
         }
 
