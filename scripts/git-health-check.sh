@@ -1,36 +1,31 @@
 #!/bin/bash
-# Git Health Check — run at session start to prevent cascading git corruption
+# Git Health Check — run at session start AND before every push
 # Fixes: stale lock files, interrupted rebases, detached HEAD
 # Safe to run repeatedly — only fixes problems, never destructive
+#
+# HISTORY: Stale lock files have caused PUSH_REJECTED errors, stalled rebases,
+# and wasted nearly a full day of production (Feb 2026). This script exists
+# because lock files are PRODUCTION FAILURES, not cosmetic issues.
 
 set -e
 cd /home/runner/workspace 2>/dev/null || exit 0
 
 FIXED=0
 
-# 1. Remove ALL stale lock files — comprehensive sweep including deep paths
-#    Covers: index, HEAD, refs, remotes, objects, packed-refs, merge/rebase state
-for lockfile in \
-  .git/index.lock \
-  .git/HEAD.lock \
-  .git/ORIG_HEAD.lock \
-  .git/MERGE_HEAD.lock \
-  .git/FETCH_HEAD.lock \
-  .git/packed-refs.lock \
-  .git/objects/maintenance.lock \
-  .git/refs/heads/replit-agent.lock \
-  .git/refs/heads/main.lock \
-  .git/refs/remotes/origin/HEAD.lock \
-  .git/refs/remotes/origin/main.lock; do
-  if [ -f "$lockfile" ]; then
-    rm -f "$lockfile" 2>/dev/null && echo "Removed stale $lockfile" && FIXED=$((FIXED+1))
+# 1. Remove ALL stale lock files — comprehensive sweep
+#    Uses find to catch EVERY .lock file in .git, including deep nested paths
+#    like gitsafe-backup, packed-refs, remotes, objects, etc.
+LOCK_COUNT=0
+while IFS= read -r lockfile; do
+  if [ -n "$lockfile" ]; then
+    rm -f "$lockfile" 2>/dev/null && echo "Removed stale $lockfile" && LOCK_COUNT=$((LOCK_COUNT+1))
   fi
-done
+done < <(find .git -name "*.lock" -type f 2>/dev/null)
 
-# 1b. Catch any remaining .lock files we haven't listed explicitly
-find .git -name "*.lock" -type f 2>/dev/null | while read -r extra_lock; do
-  rm -f "$extra_lock" 2>/dev/null && echo "Removed stale $extra_lock" && FIXED=$((FIXED+1))
-done
+if [ "$LOCK_COUNT" -gt 0 ]; then
+  FIXED=$((FIXED+LOCK_COUNT))
+  echo "Cleared $LOCK_COUNT lock file(s)"
+fi
 
 # 2. Abort interrupted rebase
 if [ -d ".git/rebase-merge" ] || [ -d ".git/rebase-apply" ]; then
@@ -46,7 +41,7 @@ fi
 
 # 4. Report status
 if [ $FIXED -eq 0 ]; then
-  echo "Git health: OK"
+  echo "Git health: CLEAN — zero lock files, no interrupted operations"
 else
   echo "Git health: fixed $FIXED issue(s)"
 fi

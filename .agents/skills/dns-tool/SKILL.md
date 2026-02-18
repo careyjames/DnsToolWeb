@@ -104,15 +104,31 @@ bash scripts/git-push.sh
 Secret `CAREY_PAT_ALL3_REPOS` is a GitHub Personal Access Token with full permissions (including `workflow` scope) for all three repos: `DnsToolWeb`, `dnstool-intel`, and `it-help-tech-site`.
 
 **MANDATORY pre-push checklist**:
-1. `find go-server -name "*_intel*"` — must return NOTHING
-2. `go test ./go-server/... -count=1` — must pass (includes boundary integrity)
-3. `bash scripts/git-health-check.sh` — clean up stale locks. **Note**: The platform blocks agent `.git` modifications, so the agent may get a 254 exit code. If blocked, ask the user to run it from the Shell tab, or skip if the push succeeds without it.
-4. `bash scripts/git-push.sh` — push via PAT
+1. `go test ./go-server/... -count=1` — must pass (includes boundary integrity)
+2. `bash scripts/git-push.sh` — this script handles the push safely:
+   - **STEP 1**: Detects lock files (reports them, does NOT attempt removal — platform kills the process if it touches `.git`)
+   - **STEP 2**: Detects interrupted rebases (reports them)
+   - **STEP 3**: Checks for `_intel.go` files — ABORTS if found (protects IP)
+   - **STEP 4**: Shows pending commits
+   - **STEP 5**: Pushes via PAT (this always works — locks don't block push)
+   - **STEP 6**: Attempts to update tracking ref via fetch (may fail if locks block it)
+   - **STEP 7**: Verifies sync status — if tracking ref is stale, tells user to run health check
+
+**Platform limitation**: The Replit agent CANNOT modify `.git` files — not directly AND not inside scripts (the platform blocks the agent's entire process tree). Exit code 254 = platform blocked the `.git` modification. The `git push` command itself still works because git internally handles its own locks. But `rm .git/*.lock` from agent context is always blocked.
+
+**Lock file escalation procedure** (when agent hits exit 254):
+1. DO NOT dismiss as cosmetic — lock files compound into production failures
+2. Ask the user to run `bash scripts/git-health-check.sh` from the **Shell tab** (user processes are NOT blocked)
+3. After user confirms clean state, retry the push
+4. If locks reappear, they're being created by Replit's background git maintenance — the health check will catch them on every run
+
+**Lock files are PRODUCTION FAILURES, not cosmetic.** They cause PUSH_REJECTED, stalled rebases, and corrupted git state. Every lock file must be eliminated before it compounds.
 
 **NEVER do these for DnsToolWeb**:
 - NEVER push via GitHub API (createBlob/createTree/createCommit/updateRef) — this creates remote commits the local `.git` doesn't know about, causing rebase collisions that corrupt git state
 - NEVER use the Replit Git panel for Push/Sync — its OAuth token conflicts with background maintenance
 - NEVER tell the user "I can't push to Git" — the PAT is always available
+- NEVER dismiss lock files as "cosmetic" — they are production blockers that compound into hours of lost work
 
 For force push (diverged branches only): `git push --force https://${CAREY_PAT_ALL3_REPOS}@github.com/careyjames/DnsToolWeb.git main`
 
@@ -147,7 +163,8 @@ go test ./go-server/internal/analyzer/ -run Boundary -v    # Both: boundary test
 | Date | What Went Wrong | Root Cause | Hours Lost |
 |------|----------------|------------|------------|
 | Feb 17 | Rebase stalled, "Unsupported state" error | API push to DnsToolWeb created remote commits local didn't know about | 1+ |
-| Feb 18 | Recurring PUSH_REJECTED, stale lock files | Replit Git panel OAuth + background maintenance conflict | 1+ |
+| Feb 18 | Recurring PUSH_REJECTED, stale lock files | Replit Git panel OAuth + background maintenance conflict. Lock files dismissed as "cosmetic" instead of treated as production failures. | 1+ |
+| Feb 18 | Lock files left after push, tracking ref stale | `git-health-check.sh` didn't cover `gitsafe-backup/` paths. Cleanup ran AFTER push instead of BEFORE. Agent blocked from `.git` modifications. | Compounding |
 | Feb 17 | `golden_rules_intel_test.go` exposed in public repo | `_intel.go` file committed to DnsToolWeb (visible in Git history even with build tags) | N/A (IP risk) |
 | Feb 18 | SKILL.md itself contained methodology details | Public repo file documenting proprietary pipeline | N/A (IP risk) |
 
