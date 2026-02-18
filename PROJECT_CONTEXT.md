@@ -419,16 +419,26 @@ Implementation details are in the intel repo. Key public-facing behaviors:
 
 All items below are **on the roadmap** — not yet implemented:
 
-1. **Drift Engine Phases 2-4** (compare, timeline UI, alerting) — see `DRIFT_ENGINE.md` — on the roadmap
-2. **Globalping.io** distributed DNS resolution probes (complementary to port 25 probe, NOT replacement) — on the roadmap
-3. **Probe Network (dns-observe.com)** — First node provisioned: `probe-us-01.dns-observe.com` (Feb 2026). See details below. — on the roadmap
-4. **Homebrew distribution** for macOS/Linux CLI — on the roadmap
-5. **Zone file export/import** for offline analysis — on the roadmap
-6. **Raw intelligence API access** — on the roadmap
-7. **ISC recommendation path integration** — on the roadmap
-8. **One-liner verification commands** — on the roadmap
-9. **Email Header Analyzer feature matrix** — on the roadmap
-10. **Terminal CLI + Web Terminal Demo** — Real terminal app (Homebrew/binary) that works in actual terminals, plus potentially a web-based terminal demo for the browser. Idea needs vetting — TBD whether web demo adds value or dilutes the real-terminal experience. — on the roadmap (concept stage, needs discussion)
+1. **Freemium Model with Optional Authentication** — on the roadmap (strategic priority)
+   - **Core principle**: Zero-friction "paste and go" analysis stays free forever. No login required. This is the competitive advantage — hackers, DEF CON folks, executives, and security researchers all want tools that just work without signup walls.
+   - **Optional Google login** (simple, one-tab auth) unlocks premium features:
+     - **Personal analysis history** (currently history is a public global feed — all users see everyone's analyses)
+     - **Drift Engine alerts** — get notified when a domain's security posture changes
+     - **Saved reports** — bookmark and revisit past analyses
+     - **API access** — programmatic analysis for automation workflows
+   - **CLI app** (Homebrew/binary) works without login for basic analysis; authenticated mode unlocks history sync, drift alerts, and API quota
+   - **When to build**: After the CLI app and Drift Engine are further along, so there's meaningful premium value to offer behind the login wall
+   - **Why this works**: The tools that make users "go through a bunch of login and sign-up bullshit" lose users immediately. We stay open by default, premium by choice.
+2. **Drift Engine Phases 2-4** (compare, timeline UI, alerting) — see `DRIFT_ENGINE.md` — on the roadmap
+3. **Globalping.io** distributed DNS resolution probes (complementary to port 25 probe, NOT replacement) — on the roadmap
+4. **Probe Network (dns-observe.com)** — First node provisioned: `probe-us-01.dns-observe.com` (Feb 2026). See details below. — on the roadmap
+5. **Homebrew distribution** for macOS/Linux CLI — on the roadmap
+6. **Zone file export/import** for offline analysis — on the roadmap
+7. **Raw intelligence API access** — on the roadmap
+8. **ISC recommendation path integration** — on the roadmap
+9. **One-liner verification commands** — on the roadmap
+10. **Email Header Analyzer feature matrix** — on the roadmap
+11. **Terminal CLI + Web Terminal Demo** — Real terminal app (Homebrew/binary) that works in actual terminals, plus potentially a web-based terminal demo for the browser. Idea needs vetting — TBD whether web demo adds value or dilutes the real-terminal experience. — on the roadmap (concept stage, needs discussion)
 
 ### Probe Network — dns-observe.com (Roadmap Detail)
 
