@@ -58,7 +58,7 @@ test.describe('Safari/WebKit Compatibility', () => {
         try {
           const rules = sheets[i].cssRules;
           for (let j = 0; j < rules.length; j++) {
-            if (rules[j] instanceof CSSKeyframesRule && rules[j].name === 'pulse') {
+            if (rules[j] instanceof CSSKeyframesRule && (rules[j] as CSSKeyframesRule).name === 'pulse') {
               return true;
             }
           }
@@ -77,7 +77,7 @@ test.describe('Safari/WebKit Compatibility', () => {
         try {
           const rules = sheets[i].cssRules;
           for (let j = 0; j < rules.length; j++) {
-            if (rules[j] instanceof CSSKeyframesRule && rules[j].name === 'bounce') {
+            if (rules[j] instanceof CSSKeyframesRule && (rules[j] as CSSKeyframesRule).name === 'bounce') {
               return true;
             }
           }

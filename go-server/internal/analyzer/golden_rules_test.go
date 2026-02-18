@@ -1285,3 +1285,163 @@ func TestGoldenRuleZohoSquareSelectors(t *testing.T) {
                 t.Errorf("square selector should map to %s", providerSquareOnline)
         }
 }
+
+func TestNoMailRemediationHasSeverityColor(t *testing.T) {
+        ps := protocolState{
+                isNoMailDomain: true,
+                dmarcMissing:   true,
+        }
+        var fixes []fix
+        fixes = appendNoMailHardeningFixes(fixes, ps, "example.com")
+        if len(fixes) < 2 {
+                t.Fatalf("expected at least 2 no-mail fixes, got %d", len(fixes))
+        }
+        for _, f := range fixes {
+                if f.SeverityColor == "" {
+                        t.Errorf("no-mail fix %q has empty SeverityColor — badge will be invisible", f.Title)
+                }
+                if f.SeverityOrder == 0 {
+                        t.Errorf("no-mail fix %q has SeverityOrder 0 — will sort incorrectly", f.Title)
+                }
+                if f.Severity != severityHigh {
+                        t.Errorf("no-mail fix %q should be %s severity, got %s", f.Title, severityHigh, f.Severity)
+                }
+        }
+}
+
+func TestProbableNoMailRemediationHasSeverityColor(t *testing.T) {
+        ps := protocolState{
+                probableNoMail: true,
+                dmarcMissing:   true,
+        }
+        var fixes []fix
+        fixes = appendProbableNoMailFixes(fixes, ps, "example.com")
+        if len(fixes) < 2 {
+                t.Fatalf("expected at least 2 probable no-mail fixes, got %d", len(fixes))
+        }
+        for _, f := range fixes {
+                if f.SeverityColor == "" {
+                        t.Errorf("probable no-mail fix %q has empty SeverityColor — badge will be invisible", f.Title)
+                }
+        }
+}
+
+func TestDeliberateMonitoringNoneWithRua(t *testing.T) {
+        ps := protocolState{
+                dmarcOK:     true,
+                dmarcHasRua: true,
+                spfOK:       true,
+                dmarcPolicy: "none",
+        }
+        deliberate, msg := evaluateDeliberateMonitoring(ps, 2)
+        if !deliberate {
+                t.Error("p=none with rua and spfOK and 2 configured should trigger deliberate monitoring")
+        }
+        if msg == "" {
+                t.Error("monitoring message should not be empty")
+        }
+}
+
+func TestDeliberateMonitoringQuarantineFull(t *testing.T) {
+        ps := protocolState{
+                dmarcOK:     true,
+                dmarcHasRua: true,
+                spfOK:       true,
+                dmarcPolicy: "quarantine",
+                dmarcPct:    100,
+        }
+        deliberate, msg := evaluateDeliberateMonitoring(ps, 3)
+        if !deliberate {
+                t.Error("p=quarantine at 100% with rua should trigger deliberate deployment phase")
+        }
+        if msg == "" {
+                t.Error("deployment phase message should not be empty")
+        }
+}
+
+func TestDeliberateMonitoringQuarantinePartial(t *testing.T) {
+        ps := protocolState{
+                dmarcOK:     true,
+                dmarcHasRua: true,
+                spfOK:       true,
+                dmarcPolicy: "quarantine",
+                dmarcPct:    50,
+        }
+        deliberate, msg := evaluateDeliberateMonitoring(ps, 2)
+        if !deliberate {
+                t.Error("p=quarantine at 50% with rua should trigger deliberate deployment phase")
+        }
+        if msg == "" {
+                t.Error("deployment phase message should not be empty")
+        }
+}
+
+func TestDeliberateMonitoringNoRua(t *testing.T) {
+        ps := protocolState{
+                dmarcOK:     true,
+                dmarcHasRua: false,
+                spfOK:       true,
+                dmarcPolicy: "none",
+        }
+        deliberate, _ := evaluateDeliberateMonitoring(ps, 3)
+        if deliberate {
+                t.Error("p=none WITHOUT rua should NOT trigger deliberate monitoring")
+        }
+}
+
+func TestDeliberateMonitoringRejectNotMonitoring(t *testing.T) {
+        ps := protocolState{
+                dmarcOK:     true,
+                dmarcHasRua: true,
+                spfOK:       true,
+                dmarcPolicy: "reject",
+        }
+        deliberate, _ := evaluateDeliberateMonitoring(ps, 5)
+        if deliberate {
+                t.Error("p=reject should NOT trigger monitoring phase — reject is fully enforced")
+        }
+}
+
+func TestMailPostureClassificationNoMailVerified(t *testing.T) {
+        mf := mailFlags{hasNullMX: true, spfDenyAll: true, dmarcReject: true, dmarcPolicy: "reject"}
+        mc := classifyMailPosture(mf, 3, "example.com", protocolState{})
+        if mc.classification != "no_mail_verified" {
+                t.Errorf("null MX + SPF -all + DMARC reject should be no_mail_verified, got %s", mc.classification)
+        }
+        if !mc.isNoMail {
+                t.Error("no_mail_verified should set isNoMail = true")
+        }
+}
+
+func TestMailPostureClassificationNoMailPartial(t *testing.T) {
+        mf := mailFlags{hasNullMX: true, spfDenyAll: true, dmarcReject: false, dmarcPolicy: "none"}
+        mc := classifyMailPosture(mf, 2, "example.com", protocolState{})
+        if mc.classification != "no_mail_partial" {
+                t.Errorf("null MX + SPF -all but no DMARC reject should be no_mail_partial, got %s", mc.classification)
+        }
+        if !mc.isNoMail {
+                t.Error("no_mail_partial should set isNoMail = true")
+        }
+}
+
+func TestMailPostureClassificationNoMailIntent(t *testing.T) {
+        mf := mailFlags{hasNullMX: false, hasMX: false, spfDenyAll: true}
+        mc := classifyMailPosture(mf, 1, "example.com", protocolState{})
+        if mc.classification != "no_mail_intent" {
+                t.Errorf("no MX + SPF -all should be no_mail_intent, got %s", mc.classification)
+        }
+        if !mc.isNoMail {
+                t.Error("no_mail_intent should set isNoMail = true for recommended records")
+        }
+}
+
+func TestMailPostureClassificationProtected(t *testing.T) {
+        mf := mailFlags{hasMX: true, hasSPF: true, hasDMARC: true, hasDKIM: true, dmarcReject: true, dmarcPolicy: "reject"}
+        mc := classifyMailPosture(mf, 0, "example.com", protocolState{})
+        if mc.classification != "protected" {
+                t.Errorf("full mail domain with all controls should be protected, got %s", mc.classification)
+        }
+        if mc.isNoMail {
+                t.Error("protected mail domain should not be isNoMail")
+        }
+}

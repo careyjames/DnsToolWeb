@@ -80,6 +80,7 @@ type noMailSignalDef struct {
         key         string
         present     bool
         rfc         string
+        rfcURL      string
         label       string
         description string
         missingRisk string
@@ -615,28 +616,34 @@ func extractFirstMXHost(results map[string]any) string {
 func appendNoMailHardeningFixes(fixes []fix, ps protocolState, domain string) []fix {
         if !ps.spfHardFail {
                 fixes = append(fixes, fix{
-                        Title:       "Harden SPF for Null MX Domain",
-                        Description: "This domain publishes a Null MX record (RFC 7505) declaring it does not accept email. Complete the no-mail hardening by adding a strict SPF record that explicitly denies all senders.",
-                        Severity:    "high",
-                        DNSHost:     domain,
-                        DNSType:     "TXT",
-                        DNSValue:    "v=spf1 -all",
-                        DNSPurpose:  "Explicitly declares no servers are authorized to send email from this null MX domain.",
-                        RFC:         "RFC 7208",
-                        Section:     "SPF",
+                        Title:         "Harden SPF for Null MX Domain",
+                        Description:   "This domain publishes a Null MX record (RFC 7505) declaring it does not accept email. Complete the no-mail hardening by adding a strict SPF record that explicitly denies all senders.",
+                        Severity:      severityHigh,
+                        SeverityColor: colorHigh,
+                        SeverityOrder: 1,
+                        DNSHost:       domain,
+                        DNSType:       "TXT",
+                        DNSValue:      "v=spf1 -all",
+                        DNSPurpose:    "Explicitly declares no servers are authorized to send email from this null MX domain.",
+                        RFC:           "RFC 7208",
+                        RFCURL:        "https://datatracker.ietf.org/doc/html/rfc7208",
+                        Section:       "SPF",
                 })
         }
         if ps.dmarcMissing || (ps.dmarcPolicy != "reject") {
                 fixes = append(fixes, fix{
-                        Title:       "Add DMARC Reject for Null MX Domain",
-                        Description: "This domain publishes a Null MX record (RFC 7505) but lacks a DMARC reject policy. Without it, attackers can still spoof email from this domain. Complete the no-mail hardening with a strict DMARC reject policy.",
-                        Severity:    "high",
-                        DNSHost:     "_dmarc." + domain,
-                        DNSType:     "TXT",
-                        DNSValue:    "v=DMARC1; p=reject; sp=reject; adkim=s; aspf=s;",
-                        DNSPurpose:  "Instructs receiving servers to reject all email from this null MX domain — no legitimate mail is expected.",
-                        RFC:         "RFC 7489",
-                        Section:     "DMARC",
+                        Title:         "Add DMARC Reject for Null MX Domain",
+                        Description:   "This domain publishes a Null MX record (RFC 7505) but lacks a DMARC reject policy. Without it, attackers can still spoof email from this domain. Complete the no-mail hardening with a strict DMARC reject policy.",
+                        Severity:      severityHigh,
+                        SeverityColor: colorHigh,
+                        SeverityOrder: 1,
+                        DNSHost:       "_dmarc." + domain,
+                        DNSType:       "TXT",
+                        DNSValue:      "v=DMARC1; p=reject; sp=reject; adkim=s; aspf=s;",
+                        DNSPurpose:    "Instructs receiving servers to reject all email from this null MX domain — no legitimate mail is expected.",
+                        RFC:           "RFC 7489",
+                        RFCURL:        "https://datatracker.ietf.org/doc/html/rfc7489",
+                        Section:       "DMARC",
                 })
         }
         return fixes
@@ -645,28 +652,34 @@ func appendNoMailHardeningFixes(fixes []fix, ps protocolState, domain string) []
 func appendProbableNoMailFixes(fixes []fix, ps protocolState, domain string) []fix {
         if !ps.spfHardFail {
                 fixes = append(fixes, fix{
-                        Title:       "Lock Down SPF for No-Mail Domain",
-                        Description: "This domain has no MX records and appears to be a website-only domain. Publishing a strict SPF record explicitly declares that no servers are authorized to send email, preventing attackers from spoofing your domain.",
-                        Severity:    "high",
-                        DNSHost:     domain,
-                        DNSType:     "TXT",
-                        DNSValue:    "v=spf1 -all",
-                        DNSPurpose:  "Explicitly declares no servers are authorized to send email from this domain.",
-                        RFC:         "RFC 7208",
-                        Section:     "SPF",
+                        Title:         "Lock Down SPF for No-Mail Domain",
+                        Description:   "This domain has no MX records and appears to be a website-only domain. Publishing a strict SPF record explicitly declares that no servers are authorized to send email, preventing attackers from spoofing your domain.",
+                        Severity:      severityHigh,
+                        SeverityColor: colorHigh,
+                        SeverityOrder: 1,
+                        DNSHost:       domain,
+                        DNSType:       "TXT",
+                        DNSValue:      "v=spf1 -all",
+                        DNSPurpose:    "Explicitly declares no servers are authorized to send email from this domain.",
+                        RFC:           "RFC 7208",
+                        RFCURL:        "https://datatracker.ietf.org/doc/html/rfc7208",
+                        Section:       "SPF",
                 })
         }
         if ps.dmarcMissing || (ps.dmarcPolicy != "reject") {
                 fixes = append(fixes, fix{
-                        Title:       "Add DMARC Reject for No-Mail Domain",
-                        Description: "This domain has no MX records and appears to be a website-only domain. A DMARC reject policy tells receiving mail servers to reject any email claiming to be from your domain.",
-                        Severity:    "high",
-                        DNSHost:     "_dmarc." + domain,
-                        DNSType:     "TXT",
-                        DNSValue:    "v=DMARC1; p=reject; sp=reject; adkim=s; aspf=s;",
-                        DNSPurpose:  "Instructs receiving servers to reject all email from this domain — no legitimate mail is expected.",
-                        RFC:         "RFC 7489",
-                        Section:     "DMARC",
+                        Title:         "Add DMARC Reject for No-Mail Domain",
+                        Description:   "This domain has no MX records and appears to be a website-only domain. A DMARC reject policy tells receiving mail servers to reject any email claiming to be from your domain.",
+                        Severity:      severityHigh,
+                        SeverityColor: colorHigh,
+                        SeverityOrder: 1,
+                        DNSHost:       "_dmarc." + domain,
+                        DNSType:       "TXT",
+                        DNSValue:      "v=DMARC1; p=reject; sp=reject; adkim=s; aspf=s;",
+                        DNSPurpose:    "Instructs receiving servers to reject all email from this domain — no legitimate mail is expected.",
+                        RFC:           "RFC 7489",
+                        RFCURL:        "https://datatracker.ietf.org/doc/html/rfc7489",
+                        Section:       "DMARC",
                 })
         }
         return fixes
@@ -754,8 +767,9 @@ func buildMailPosture(results map[string]any) map[string]any {
         }
 
         if mc.isNoMail {
-                mp["recommended_records"] = buildNoMailRecommendedRecords(mf, extractDomain(results))
-                mp["structured_records"] = buildNoMailStructuredRecords(mf, extractDomain(results))
+                domain := extractDomain(results)
+                mp["recommended_records"] = buildNoMailRecommendedRecords(mf, domain)
+                mp["structured_records"] = buildNoMailStructuredRecords(mf, domain)
         }
 
         return mp
@@ -800,14 +814,15 @@ func buildNoMailSignals(mf mailFlags) (map[string]any, int) {
         signals := map[string]any{}
         count := 0
         defs := []noMailSignalDef{
-                {key: "null_mx", present: mf.hasNullMX, rfc: "RFC 7505", label: "Null MX", description: "Null MX record published", missingRisk: "Domain may receive unwanted mail"},
-                {key: "spf_deny", present: mf.spfDenyAll, rfc: "RFC 7208", label: "SPF -all", description: "SPF hard fail configured", missingRisk: "Unauthorized senders not explicitly rejected"},
-                {key: "dmarc_reject", present: mf.dmarcReject, rfc: "RFC 7489", label: "DMARC reject", description: "DMARC reject policy active", missingRisk: "Spoofed mail may be delivered"},
+                {key: "null_mx", present: mf.hasNullMX, rfc: "RFC 7505", rfcURL: "https://datatracker.ietf.org/doc/html/rfc7505", label: "Null MX", description: "Null MX record published", missingRisk: "Domain may receive unwanted mail"},
+                {key: "spf_deny", present: mf.spfDenyAll, rfc: "RFC 7208", rfcURL: "https://datatracker.ietf.org/doc/html/rfc7208", label: "SPF -all", description: "SPF hard fail configured", missingRisk: "Unauthorized senders not explicitly rejected"},
+                {key: "dmarc_reject", present: mf.dmarcReject, rfc: "RFC 7489", rfcURL: "https://datatracker.ietf.org/doc/html/rfc7489", label: "DMARC reject", description: "DMARC reject policy active", missingRisk: "Spoofed mail may be delivered"},
         }
         for _, d := range defs {
                 signals[d.key] = map[string]any{
                         "present":      d.present,
                         "rfc":          d.rfc,
+                        "rfc_url":      d.rfcURL,
                         "label":        d.label,
                         "description":  d.description,
                         "missing_risk": d.missingRisk,
@@ -842,12 +857,32 @@ func buildMissingSteps(mf mailFlags) []map[string]any {
 
 func classifyMailPosture(mf mailFlags, presentCount int, domain string, ps protocolState) mailClassification {
         if mf.hasNullMX {
+                if mf.spfDenyAll && mf.dmarcReject {
+                        return mailClassification{
+                                classification: "no_mail_verified",
+                                label:          "No-Mail Domain — Fully Hardened",
+                                color:          "success",
+                                icon:           "fas fa-shield-alt",
+                                summary:        "This domain declares it does not send or receive email and has all three RFC-recommended controls in place: Null MX (RFC 7505), SPF -all (RFC 7208), and DMARC reject (RFC 7489).",
+                                isNoMail:       true,
+                        }
+                }
                 return mailClassification{
-                        classification: "no_mail",
-                        label:          "No Mail Observed",
-                        color:          "secondary",
-                        icon:           "fas fa-ban",
-                        summary:        "Null MX record observed — this domain appears configured to not accept mail.",
+                        classification: "no_mail_partial",
+                        label:          "No-Mail Domain — Incomplete Hardening",
+                        color:          "warning",
+                        icon:           "fas fa-exclamation-triangle",
+                        summary:        "This domain publishes a Null MX record (RFC 7505) declaring it does not accept email, but is missing additional hardening controls needed to fully prevent spoofing.",
+                        isNoMail:       true,
+                }
+        }
+        if !mf.hasMX && mf.spfDenyAll {
+                return mailClassification{
+                        classification: "no_mail_intent",
+                        label:          "Probable No-Mail Domain — Needs Formal Declaration",
+                        color:          "info",
+                        icon:           "fas fa-info-circle",
+                        summary:        "This domain has no MX records and an SPF -all policy, which suggests it is intended to be a no-mail domain. However, it is missing the formal Null MX record (RFC 7505) that explicitly declares this intent. Adding the standard no-mail DNS records would make this intention unambiguous to all mail servers.",
                         isNoMail:       true,
                 }
         }

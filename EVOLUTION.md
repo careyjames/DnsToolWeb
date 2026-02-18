@@ -1411,3 +1411,33 @@ The two-repo architecture works when the sync mechanism is documented. Without d
 | `go-server/templates/results.html` | Drift alert with structured table, clickable links |
 | `.agents/skills/dns-tool/SKILL.md` | Drift Engine Phase 2 documentation |
 | `EVOLUTION.md` | Session breadcrumb |
+
+---
+
+## Session: February 18, 2026
+
+### Git Push Architecture Fix (CRITICAL — Recurring Problem)
+
+**Problem**: Multiple sessions pushed DnsToolWeb changes to GitHub via the GitHub API (create blob → create tree → create commit → update ref). This created remote commits that the local `.git` didn't know about. Replit's Git tab auto-detected the divergence and tried to rebase local checkpoint commits onto the new remote HEAD, hitting conflicts (e.g., SKILL.md) and getting permanently stuck in "Unsupported state: you are in the middle of a rebase." The user had to manually `rm -rf .git/rebase-merge` to recover. This wasted over an hour across sessions.
+
+**Root cause**: API-created commits bypass the local git index. The local branch still points to the old HEAD while the remote has moved forward. Replit's auto-sync triggers a rebase of local checkpoint commits on top of the new remote HEAD — any conflicting file (common with SKILL.md, EVOLUTION.md) causes the rebase to stall.
+
+**Fix**: Updated SKILL.md "Git Operations" section with two-repo/two-method rule:
+- **DnsToolWeb (public)**: NEVER push via GitHub API. User pushes via Replit Git tab.
+- **dnstool-intel (private)**: Always use GitHub API via `scripts/github-intel-sync.mjs`. Remote-only repo, no local divergence risk.
+- **Recovery**: `rm -rf .git/rebase-merge` if stuck rebase occurs.
+
+**Lesson**: The previous SKILL.md instructions *actively caused* this problem by documenting API pushes to DnsToolWeb as "the solution" for Git issues. The instructions themselves were the root cause.
+
+### Drift Diff Aligned with Posture Hash
+- Extended `posture_diff.go` to diff ALL fields contributing to the posture hash: added DKIM Selectors, CAA Tags, SPF Records, DMARC Records, DANE Present
+- Added `normalizeStatusVal()` to severity classifier to strip parentheticals before classification
+- Generalized severity matching with suffix patterns (status/records/selectors/tags)
+
+### Files Changed
+| File | What Changed |
+|------|-------------|
+| `.agents/skills/dns-tool/SKILL.md` | Rewrote "Git Operations" section with two-repo/two-method rule; updated regression pitfalls |
+| `go-server/internal/analyzer/posture_diff.go` | Added DKIM/CAA/SPF/DMARC/DANE fields to diff |
+| `go-server/internal/analyzer/posture_diff_oss.go` | Added `normalizeStatusVal()`; generalized severity matching |
+| `EVOLUTION.md` | Session breadcrumb |
