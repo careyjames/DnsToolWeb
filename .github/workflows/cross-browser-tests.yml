@@ -52,6 +52,9 @@ jobs:
           chmod +x build.sh
           ./build.sh
 
+      - name: Initialize database schema
+        run: PGPASSWORD=dnstool psql -h localhost -U dnstool -d dnstool -f go-server/db/schema/schema.sql
+
       - name: Start server
         run: |
           ./dns-tool-server &
