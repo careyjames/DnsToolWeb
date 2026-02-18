@@ -353,24 +353,31 @@ func extractDKIMSelectors(results map[string]any) []string {
         return result
 }
 
-func extractDMARCRuaTargets(results map[string]any) []string {
-        extAuth, ok := results["dmarc_report_auth"]
-        if !ok {
-                dmarc, ok := results["dmarc"]
-                if !ok {
-                        return nil
-                }
-                dmarcMap, ok := dmarc.(map[string]any)
-                if !ok {
-                        return nil
-                }
-                extAuth, ok = dmarcMap["external_report_auth"]
-                if !ok {
-                        return nil
+func findExternalAuthMap(results map[string]any) map[string]any {
+        if extAuth, ok := results["dmarc_report_auth"]; ok {
+                if m, ok := extAuth.(map[string]any); ok {
+                        return m
                 }
         }
-        extAuthMap, ok := extAuth.(map[string]any)
+        dmarc, ok := results["dmarc"]
         if !ok {
+                return nil
+        }
+        dmarcMap, ok := dmarc.(map[string]any)
+        if !ok {
+                return nil
+        }
+        extAuth, ok := dmarcMap["external_report_auth"]
+        if !ok {
+                return nil
+        }
+        m, _ := extAuth.(map[string]any)
+        return m
+}
+
+func extractDMARCRuaTargets(results map[string]any) []string {
+        extAuthMap := findExternalAuthMap(results)
+        if extAuthMap == nil {
                 return nil
         }
         targets, ok := extAuthMap["external_domains"]

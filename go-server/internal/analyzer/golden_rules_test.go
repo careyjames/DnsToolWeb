@@ -14,6 +14,7 @@ import (
 )
 
 const errExpectedGot = "expected %q, got %q"
+const providerGoogleWorkspace = "Google Workspace"
 
 func TestEmailAnswerNoMailDomain(t *testing.T) {
         ps := protocolState{isNoMailDomain: true}
@@ -393,7 +394,7 @@ func TestGoldenRuleHostedProviderNoDANE(t *testing.T) {
                 "dkim_analysis": map[string]any{
                         "status":           "success",
                         "has_dkim":         true,
-                        "primary_provider": "Google Workspace",
+                        "primary_provider": providerGoogleWorkspace,
                 },
                 "mta_sts_analysis": map[string]any{
                         "status": "success",
@@ -430,11 +431,11 @@ func TestGoldenRuleHostedProviderNoDANE(t *testing.T) {
                 }
         }
 
-        if !isHostedEmailProvider("Google Workspace") {
+        if !isHostedEmailProvider(providerGoogleWorkspace) {
                 t.Fatal("isHostedEmailProvider must return true for 'Google Workspace' — it is a hosted provider that cannot deploy inbound DANE")
         }
 
-        hostedProviders := []string{"Google Workspace", "Microsoft 365", "Zoho Mail"}
+        hostedProviders := []string{providerGoogleWorkspace, "Microsoft 365", "Zoho Mail"}
         for _, p := range hostedProviders {
                 if providerSupportsDANE(p) {
                         t.Fatalf("providerSupportsDANE must return false for hosted provider %q — hosted providers cannot deploy inbound DANE", p)
@@ -443,7 +444,7 @@ func TestGoldenRuleHostedProviderNoDANE(t *testing.T) {
 }
 
 func TestGoldenRuleBIMIRecommendedRegardlessOfProvider(t *testing.T) {
-        providers := []string{"Google Workspace", "Microsoft 365", "Zoho Mail", "Fastmail", "ProtonMail", "Self-hosted"}
+        providers := []string{providerGoogleWorkspace, "Microsoft 365", "Zoho Mail", "Fastmail", "ProtonMail", "Self-hosted"}
         for _, provider := range providers {
                 t.Run(provider, func(t *testing.T) {
                         a := &Analyzer{}

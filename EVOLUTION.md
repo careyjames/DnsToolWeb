@@ -1554,3 +1554,41 @@ git checkout main
 **Scripts**:
 - `bash scripts/git-push.sh` — shows pending commits, pushes via PAT (use for ALL pushes)
 - `bash scripts/git-health-check.sh` — cleans lock files (run from Shell tab; agent cannot run it due to platform restrictions)
+
+### Session: February 18, 2026 — SonarCloud Queue Triage & Cleanup
+
+**Task**: Audit the SonarCloud queue files (`attached_assets/sonar-careyjames_DnsToolWeb-replit-queue*.md`) — the project's active backlog — and fix remaining issues.
+
+**Key Finding**: The majority of SonarCloud issues from prior sessions were ALREADY FIXED. The queue files are historical snapshots, not live data. Comprehensive scan confirmed:
+
+#### Already Fixed (verified via grep/build):
+- **S7761**: All `getAttribute`/`setAttribute` → `.dataset` conversions (results.html) ✅
+- **S7764**: `window` → `globalThis` conversions ✅
+- **S1854/S1481**: `timerInterval` unused variable removed (investigate.html) ✅
+- **S2004**: Nested function depth reduced to ≤4 (results.html) ✅
+- **S1192**: All Go string duplicates EXCEPT one test file ✅
+- **S3776**: Many complexity functions refactored (posture.go, https_svcb.go, infrastructure.go, ip_investigation.go, ietf_metadata.go, remediation.go) ✅
+- **S4830/S5527**: SMTP TLS probe — confirmed INTENTIONAL design (NOSONAR + nolint comments already present; separate `verifyCert()` does proper validation) ✅
+
+#### Fixed This Session:
+- **S1192**: `golden_rules_test.go` — extracted `providerGoogleWorkspace` constant (was 4 occurrences)
+- **S3776**: `commands.go` — extracted `findExternalAuthMap()` helper from `extractDMARCRuaTargets()` to reduce cognitive complexity
+
+#### Remaining (deferred — high-risk refactors):
+- **S3776**: `orchestrator.go:AnalyzeDomain` (CC ~19, 160 lines) — core orchestrator, risky to refactor
+- **S3776**: `dns_history.go:FetchDNSHistoryWithKey` (CC ~16, 93 lines) — already clean, delegates well
+- **S3776**: `analysis.go:ViewAnalysisStatic` (CC ~22, 150 lines) — handler with template rendering logic
+- **S3776**: `analysis.go:Analyze` (CC ~11, 114 lines) — main analysis handler
+- **S7924**: CSS contrast in drift diff colors (lines 1010-1040) — intentional GitHub-style diff highlighting
+
+#### Confirmed Non-Issues:
+- **History page**: Working correctly. ORDER BY created_at DESC, 20 per page. Domains appear repeated because it's a shared chronological feed showing all analyses run.
+- **Owl of Athena**: User actively processing graphics (v1-v12 exist). Leave alone.
+- **docs/legacy/** hotspots: All in archived Python code, not active.
+
+### Files Changed
+| File | What Changed |
+|------|-------------|
+| `go-server/internal/analyzer/golden_rules_test.go` | Added `providerGoogleWorkspace` constant, replaced 4 inline "Google Workspace" strings |
+| `go-server/internal/analyzer/commands.go` | Extracted `findExternalAuthMap()` helper from `extractDMARCRuaTargets()` |
+| `EVOLUTION.md` | Session breadcrumb |
