@@ -3766,14 +3766,14 @@
                             <a href="https://datatracker.ietf.org/doc/html/rfc6962" target="_blank" rel="noopener" class="badge bg-dark bg-opacity-25 text-muted text-decoration-none fw-normal ms-2 u-fs-060rem" title="Certificate Transparency">RFC 6962</a>
                             <span class="badge u-badge-recon ms-2 no-print" data-bs-toggle="tooltip" title="Recon Advantage — Three-layer discovery: CT logs, DNS probing of ~290 service names, and CNAME chain traversal."><i class="fas fa-terminal me-1"></i>Recon</span>
                             {{$ctFreshness := mapGetMap "ct_subdomains" $data_freshness}}
-                        {{if or (eq (mapGetStr "status" $ct) "error") (eq (mapGetStr "status" $ct) "timeout")}}<span class="badge bg-warning bg-opacity-25 border border-warning border-opacity-25 text-warning ms-1 u-fs-055rem" data-bs-toggle="tooltip" title="Certificate Transparency lookup encountered an issue">UNAVAILABLE</span>{{else if and $ctFreshness (eq (mapGetStr "source" $ctFreshness) "cache")}}<span class="badge bg-secondary bg-opacity-50 border border-secondary border-opacity-25 ms-1 u-fs-055rem" data-bs-toggle="tooltip" title="CT log data cached for 1 hour — certificate records change infrequently">CACHED</span>{{else}}<span class="badge bg-success bg-opacity-25 border border-success border-opacity-25 ms-1 u-fs-055rem" data-bs-toggle="tooltip" title="Live Certificate Transparency query">LIVE</span>{{end}}
+                        {{if or (eq (mapGetStr "status" $ct) "error") (eq (mapGetStr "status" $ct) "timeout") (eq (mapGetStr "status" $ct) "partial")}}<span class="badge bg-warning bg-opacity-25 border border-warning border-opacity-25 text-warning ms-1 u-fs-055rem" data-bs-toggle="tooltip" title="Certificate Transparency lookup encountered an issue — subdomains shown are from DNS probing only">CT UNAVAILABLE</span>{{else if and $ctFreshness (eq (mapGetStr "source" $ctFreshness) "cache")}}<span class="badge bg-secondary bg-opacity-50 border border-secondary border-opacity-25 ms-1 u-fs-055rem" data-bs-toggle="tooltip" title="CT log data cached for 1 hour — certificate records change infrequently">CACHED</span>{{else}}<span class="badge bg-success bg-opacity-25 border border-success border-opacity-25 ms-1 u-fs-055rem" data-bs-toggle="tooltip" title="Live Certificate Transparency query">LIVE</span>{{end}}
                         </span>
                         {{$ctStatus := mapGetStr "status" $ct}}
                         {{$ctUnique := mapGetFloat "unique_subdomains" $ct}}
                         <span class="section-question">What infrastructure is exposed in certificate logs?
-                            {{if and (eq $ctStatus "success") (gt $ctUnique 0)}}
+                            {{if and (or (eq $ctStatus "success") (eq $ctStatus "partial")) (gt $ctUnique 0)}}
                                 <span class="badge bg-info ms-2">{{formatFloat 0 $ctUnique}} subdomain{{if ne $ctUnique 1}}s{{end}}</span>
-                            {{else if and (eq $ctStatus "success") (eq $ctUnique 0)}}
+                            {{else if and (or (eq $ctStatus "success") (eq $ctStatus "partial")) (eq $ctUnique 0)}}
                                 <span class="badge bg-secondary ms-2">None found</span>
                             {{else}}
                                 <span class="badge bg-warning ms-2">Unavailable</span>
@@ -3783,7 +3783,7 @@
                 </div>
                 <div class="card-body">
                     {{$ctSubdomains := mapGetSlice "subdomains" $ct}}
-                    {{if and (eq $ctStatus "success") $ctSubdomains (gt (len $ctSubdomains) 0)}}
+                    {{if and (or (eq $ctStatus "success") (eq $ctStatus "partial")) $ctSubdomains (gt (len $ctSubdomains) 0)}}
                     <div class="mb-3">
                         <div class="d-flex flex-wrap align-items-center gap-2 mb-2">
                             {{$uniqueCerts := mapGetInt "unique_certs" $ct}}
