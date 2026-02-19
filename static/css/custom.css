@@ -536,6 +536,19 @@ main.container {
 }
 
 /* ============================================
+   SECTION COLUMN DIVIDERS
+   Subtle vertical separators for multi-column
+   analysis sections (SPF / DMARC / DKIM, etc.)
+   ============================================ */
+.section-col-divider {
+    border-right: 1px solid rgba(125, 142, 168, 0.18);
+}
+
+.section-col-divider:last-child {
+    border-right: none;
+}
+
+/* ============================================
    HISTORY MOBILE CARDS
    ============================================ */
 .history-mobile-card {
@@ -637,6 +650,19 @@ main.container {
     
     .results-meta {
         flex-wrap: wrap;
+    }
+
+    .section-col-divider {
+        border-right: none;
+        border-bottom: 1px solid rgba(125, 142, 168, 0.12);
+        padding-bottom: 0.75rem;
+        margin-bottom: 0.75rem;
+    }
+
+    .section-col-divider:last-child {
+        border-bottom: none;
+        padding-bottom: 0;
+        margin-bottom: 0;
     }
 
     .domain-summary-col {

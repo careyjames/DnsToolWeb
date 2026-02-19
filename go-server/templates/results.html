@@ -1003,7 +1003,7 @@
                         {{end}}
                         <div class="row">
                             <!-- SPF Analysis -->
-                            <div class="col-md-4 mb-3 mb-md-0">
+                            <div class="col-md-4 mb-3 mb-md-0 section-col-divider">
                                 <p class="d-flex align-items-center mb-1">
                                     <i class="fas fa-envelope me-2"></i>SPF Record
                                     <a href="https://datatracker.ietf.org/doc/html/rfc7208#section-4" target="_blank" rel="noopener" class="ms-2 text-muted rfc-link" data-bs-toggle="tooltip" data-bs-html="true" title="<strong>Sender Policy Framework</strong><br>Specifies which mail servers can send email for your domain. §4 defines SPF record syntax." aria-label="Learn about SPF - RFC 7208 §4"><i class="fas fa-info-circle"></i><span class="rfc-label">RFC 7208 §4</span></a>
@@ -1165,7 +1165,7 @@
                             </div>
 
                             <!-- DMARC Analysis -->
-                            <div class="col-md-4 mb-3 mb-md-0">
+                            <div class="col-md-4 mb-3 mb-md-0 section-col-divider">
                                 <p class="d-flex align-items-center mb-1">
                                     <i class="fas fa-lock me-2"></i>DMARC Policy
                                     <a href="https://datatracker.ietf.org/doc/html/rfc7489#section-6.3" target="_blank" rel="noopener" class="ms-2 text-muted rfc-link" data-bs-toggle="tooltip" data-bs-html="true" title="<strong>Domain-based Message Authentication</strong><br>Tells receivers how to handle SPF/DKIM failures and where to send reports. §6.3 covers policy enforcement." aria-label="Learn about DMARC - RFC 7489 §6.3"><i class="fas fa-info-circle"></i><span class="rfc-label">RFC 7489 §6.3</span></a>
@@ -1326,7 +1326,7 @@
                             </div>
 
                             <!-- DKIM Analysis -->
-                            <div class="col-md-4">
+                            <div class="col-md-4 section-col-divider">
                                 <p class="d-flex align-items-center mb-1">
                                     <i class="fas fa-key me-2"></i>DKIM Records
                                     <a href="https://datatracker.ietf.org/doc/html/rfc6376#section-3.6" target="_blank" rel="noopener" class="ms-2 text-muted rfc-link" data-bs-toggle="tooltip" data-bs-html="true" title="<strong>DomainKeys Identified Mail</strong><br>Cryptographic signatures that verify email hasn't been altered in transit. §3.6 covers key records." aria-label="Learn about DKIM - RFC 6376 §3.6"><i class="fas fa-info-circle"></i><span class="rfc-label">RFC 6376 §3.6</span></a>
@@ -1458,7 +1458,7 @@
                         <!-- Second Row: MTA-STS and TLS-RPT -->
                         <div class="row mt-4 pt-3 border-top mta-sts-tlsrpt-row">
                             <!-- MTA-STS Analysis -->
-                            <div class="col-md-6 mb-3 mb-md-0">
+                            <div class="col-md-6 mb-3 mb-md-0 section-col-divider">
                                 <p class="d-flex align-items-center flex-wrap">
                                     <i class="fas fa-shield-alt me-2"></i>MTA-STS
                                     <a href="https://datatracker.ietf.org/doc/html/rfc8461#section-3" target="_blank" rel="noopener" class="ms-2 text-muted rfc-link" data-bs-toggle="tooltip" data-bs-html="true" title="<strong>SMTP MTA Strict Transport Security</strong><br>Forces TLS encryption between mail servers to prevent downgrade attacks. §3 covers the DNS record." aria-label="Learn about MTA-STS - RFC 8461 §3"><i class="fas fa-info-circle"></i><span class="rfc-label">RFC 8461 §3</span></a>
@@ -1912,7 +1912,7 @@
                         {{end}}
                         <div class="row">
                             <!-- BIMI Analysis -->
-                            <div class="col-md-6 mb-3 mb-md-0">
+                            <div class="col-md-6 mb-3 mb-md-0 section-col-divider">
                                 {{$bimiStatus := mapGetStr "status" $bimi}}
                                 <p class="d-flex align-items-center">
                                     <i class="fas fa-image me-2"></i>BIMI
@@ -3154,7 +3154,7 @@
                         {{end}}
                         <div class="row">
                             <!-- DNSSEC Analysis -->
-                            <div class="col-md-6 mb-3 mb-md-0">
+                            <div class="col-md-6 mb-3 mb-md-0 section-col-divider">
                                 {{$dnssecStatus := mapGetStr "status" $dnssec}}
                                 {{$chainOfTrust := mapGetStr "chain_of_trust" $dnssec}}
                                 <p class="d-flex align-items-center flex-wrap">
