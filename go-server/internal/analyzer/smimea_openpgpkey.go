@@ -7,7 +7,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/miekg/dns"
+	"codeberg.org/miekg/dns"
+	"codeberg.org/miekg/dns/dnsutil"
 )
 
 func (a *Analyzer) AnalyzeSMIMEA(ctx context.Context, domain string) map[string]any {
@@ -45,8 +46,7 @@ func (a *Analyzer) AnalyzeSMIMEA(ctx context.Context, domain string) map[string]
 
 func (a *Analyzer) querySMIMEA(ctx context.Context, domain string) []*dns.SMIMEA {
 	queryName := fmt.Sprintf("*._smimecert.%s", domain)
-	msg := new(dns.Msg)
-	msg.SetQuestion(dns.Fqdn(queryName), dns.TypeSMIMEA)
+	msg := dns.NewMsg(dnsutil.Fqdn(queryName), dns.TypeSMIMEA)
 	msg.RecursionDesired = true
 
 	resp, err := a.DNS.ExchangeContext(ctx, msg)
@@ -65,8 +65,7 @@ func (a *Analyzer) querySMIMEA(ctx context.Context, domain string) []*dns.SMIMEA
 
 func (a *Analyzer) queryOPENPGPKEY(ctx context.Context, domain string) []*dns.OPENPGPKEY {
 	queryName := fmt.Sprintf("*._openpgpkey.%s", domain)
-	msg := new(dns.Msg)
-	msg.SetQuestion(dns.Fqdn(queryName), dns.TypeOPENPGPKEY)
+	msg := dns.NewMsg(dnsutil.Fqdn(queryName), dns.TypeOPENPGPKEY)
 	msg.RecursionDesired = true
 
 	resp, err := a.DNS.ExchangeContext(ctx, msg)

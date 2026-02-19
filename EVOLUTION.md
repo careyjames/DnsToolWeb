@@ -10,7 +10,54 @@ This file is the project's permanent breadcrumb trail — every session's decisi
 
 ---
 
-## Session: February 19, 2026 (continued)
+## Session: February 19, 2026 (v26.20.76)
+
+### v26.20.76 — miekg/dns v2 Migration + Bug Fixes + CT Resilience
+
+#### miekg/dns v2 Migration (Major)
+- **Decision**: Migrate from `github.com/miekg/dns` v1.1.72 to `codeberg.org/miekg/dns` v0.6.52 (v2)
+- **Rationale**: v1 is archived/maintenance-only on GitHub. v2 is production-ready on Codeberg with ~2x performance, better memory efficiency, and modern API. Aligns with Codeberg canonical strategy.
+- **Scope**: 4 Go source files migrated:
+  - `go-server/internal/dnsclient/client.go` — heaviest changes: Exchange API, rdata field access, EDNS0, Header.TTL
+  - `go-server/internal/analyzer/smimea_openpgpkey.go` — NewMsg, dnsutil.Fqdn
+  - `go-server/internal/analyzer/cds_cdnskey.go` — NewMsg, dnsutil.Fqdn
+  - `go-server/internal/analyzer/https_svcb.go` — SVCB pair types moved to svcb package, netip.Addr
+- **Key API changes applied**:
+  - Import: `github.com/miekg/dns` → `codeberg.org/miekg/dns` + `dnsutil` + `svcb` subpackages
+  - `ExchangeContext(ctx, msg, addr)` → `Exchange(ctx, msg, "udp"/"tcp", addr)` with network param
+  - `new(dns.Msg)` + `SetQuestion()` → `dns.NewMsg()` / `dnsutil.SetQuestion()`
+  - `SetEdns0(4096, true)` → `m.UDPSize, m.Security = 4096, true`
+  - `r.MsgHdr.AuthenticatedData` → `r.AuthenticatedData`
+  - `rr.Header().Ttl` → `rr.Header().TTL`
+  - All RR rdata fields: `v.A.String()` → `v.A.Addr.String()`, `v.Preference` → `v.MX.Preference`, etc.
+  - SVCB: `dns.SVCBKeyValue` → `svcb.Pair`, `*dns.SVCBAlpn` → `*svcb.ALPN`, `net.IP` → `netip.Addr`
+  - Client timeout: v2 Client uses Transport with net.Dialer, created `newDNSClient()` helper
+- **Sources page**: Updated library link from GitHub to Codeberg, label "miekg/dns v2"
+
+#### Brand Security Verdict Fix
+- **Bug**: quarantine + BIMI/VMC + CAA was showing "Possible" (warning) instead of "Unlikely" (success)
+- **Fix**: Lines 1021-1029 of posture.go — quarantine with all three brand controls (BIMI, VMC, CAA) now shows "Unlikely/Well Protected" with success color. Advisory to upgrade to reject is retained.
+- **Test update**: `TestBrandVerdictQuarantineWithBIMICAA` updated to expect new correct verdict
+
+#### Safari Analysis Overlay Fix
+- **Bug**: Safari analysis overlay would hang, preventing form submission
+- **Fix**: Removed setTimeout wrapper, used direct form.submit() with re-entry guard flag (analysisSubmitted)
+- **Root cause**: WebKit loses gesture context when setTimeout wraps form.submit()
+
+#### CT Log Resilience (Certspotter Fallback)
+- **Enhancement**: Added Certspotter API as fallback CT source when crt.sh fails (502/timeout)
+- **DNS probe list**: Expanded from ~130 to ~280 common subdomains for better coverage
+- **Probe timeout**: Increased from 15s → 25s, concurrency from 20 → 30 workers
+
+#### Codeberg Intel Sync Script
+- **New file**: `scripts/codeberg-intel-sync.mjs` — Forgejo API version of `scripts/github-intel-sync.mjs`
+- **Uses**: `CODEBERG_FORGEJO_API` token for authentication
+- **Target repo**: `careybalboa/dns-tool-intel` on Codeberg
+- **Commands**: list, read, push, delete, commits (same interface as GitHub version)
+
+---
+
+## Session: February 19, 2026 (earlier)
 
 ### v26.20.74 — History Table Cleanup + GitHub README
 

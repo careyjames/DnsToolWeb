@@ -1861,7 +1861,7 @@
                                     {{$brandLabel := mapGetStr "label" $brandVerdict}}
                                     {{if $brandAnswer}}
                                         <span class="intel-verdict">
-                                            <span class="intel-verdict-answer verdict-{{if eq $brandAnswer "No"}}success{{else if eq $brandAnswer "Yes"}}danger{{else if eq $brandAnswer "Likely"}}danger{{else}}warning{{end}}">{{$brandAnswer}}</span>
+                                            <span class="intel-verdict-answer verdict-{{if eq $brandAnswer "No"}}success{{else if eq $brandAnswer "Unlikely"}}success{{else if eq $brandAnswer "Yes"}}danger{{else if eq $brandAnswer "Likely"}}danger{{else}}warning{{end}}">{{$brandAnswer}}</span>
                                             {{if $brandReason}}<span class="intel-verdict-reason">{{$brandReason}}</span>{{end}}
                                         </span>
                                     {{else}}

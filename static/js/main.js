@@ -92,6 +92,21 @@ function startStatusCycle(overlayEl) {
     });
 }
 
+function hideOverlayAndReset(overlay, btn) {
+    if (overlay) {
+        overlay.classList.remove('is-active');
+        if (overlay.dataset.timerId) {
+            clearInterval(Number(overlay.dataset.timerId));
+            delete overlay.dataset.timerId;
+        }
+    }
+    document.body.classList.remove('loading');
+    if (btn) {
+        btn.innerHTML = '<i class="fas fa-search me-1"></i> Analyze';
+        btn.disabled = false;
+    }
+}
+
 function isValidDomain(domain) {
     if (!domain) return false;
     const d = domain.replace(/\.$/, '');
@@ -162,9 +177,11 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
         
+        var analysisSubmitted = false;
         domainForm.addEventListener('submit', function(e) {
+            if (analysisSubmitted) return;
             e.preventDefault();
-            const domain = domainInput.value.trim().toLowerCase();
+            var domain = domainInput.value.trim().toLowerCase();
             domainInput.value = domain;
             
             if (!domain) {
@@ -182,8 +199,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 return;
             }
             
-            const overlay = document.getElementById('loadingOverlay');
-            const loadingDomain = document.getElementById('loadingDomain');
+            var overlay = document.getElementById('loadingOverlay');
+            var loadingDomain = document.getElementById('loadingDomain');
             if (overlay) {
                 if (loadingDomain) {
                     loadingDomain.textContent = domain;
@@ -192,15 +209,14 @@ document.addEventListener('DOMContentLoaded', function() {
                 startStatusCycle(overlay);
             }
             analyzeBtn.textContent = '';
-            const spinner = document.createElement('i');
+            var spinner = document.createElement('i');
             spinner.className = 'fas fa-spinner fa-spin me-2';
             analyzeBtn.appendChild(spinner);
             analyzeBtn.appendChild(document.createTextNode('Analyzing...'));
             analyzeBtn.disabled = true;
             document.body.classList.add('loading');
-            // Safari workaround: delay form submission to allow overlay animations to initialize.
-            // Programmatic submit() bypasses the event listener, preventing re-entry.
-            setTimeout(function() { domainForm.submit(); }, 80);
+            analysisSubmitted = true;
+            domainForm.submit();
         });
         
         domainInput.addEventListener('focus', function() {

@@ -5,10 +5,12 @@ package analyzer
 import (
         "context"
         "fmt"
-        "net"
+        "net/netip"
         "strings"
 
-        "github.com/miekg/dns"
+        "codeberg.org/miekg/dns"
+        "codeberg.org/miekg/dns/dnsutil"
+        "codeberg.org/miekg/dns/svcb"
 )
 
 func (a *Analyzer) AnalyzeHTTPSSVCB(ctx context.Context, domain string) map[string]any {
@@ -50,8 +52,7 @@ func (a *Analyzer) AnalyzeHTTPSSVCB(ctx context.Context, domain string) map[stri
 }
 
 func (a *Analyzer) queryHTTPSRecords(ctx context.Context, domain string) []*dns.HTTPS {
-        msg := new(dns.Msg)
-        msg.SetQuestion(dns.Fqdn(domain), dns.TypeHTTPS)
+        msg := dns.NewMsg(dnsutil.Fqdn(domain), dns.TypeHTTPS)
         msg.RecursionDesired = true
 
         resp, err := a.DNS.ExchangeContext(ctx, msg)
@@ -69,8 +70,7 @@ func (a *Analyzer) queryHTTPSRecords(ctx context.Context, domain string) []*dns.
 }
 
 func (a *Analyzer) querySVCBRecords(ctx context.Context, domain string) []*dns.SVCB {
-        msg := new(dns.Msg)
-        msg.SetQuestion(dns.Fqdn(domain), dns.TypeSVCB)
+        msg := dns.NewMsg(dnsutil.Fqdn(domain), dns.TypeSVCB)
         msg.RecursionDesired = true
 
         resp, err := a.DNS.ExchangeContext(ctx, msg)
@@ -115,7 +115,7 @@ func parseSVCBRecords(records []*dns.SVCB) []map[string]any {
         return parsed
 }
 
-func parseSvcParams(entry map[string]any, values []dns.SVCBKeyValue) {
+func parseSvcParams(entry map[string]any, values []svcb.Pair) {
         var alpnList []string
         for _, kv := range values {
                 alpnList = applySvcParam(entry, kv, alpnList)
@@ -125,33 +125,33 @@ func parseSvcParams(entry map[string]any, values []dns.SVCBKeyValue) {
         }
 }
 
-func applySvcParam(entry map[string]any, kv dns.SVCBKeyValue, alpnList []string) []string {
+func applySvcParam(entry map[string]any, kv svcb.Pair, alpnList []string) []string {
         switch v := kv.(type) {
-        case *dns.SVCBAlpn:
+        case *svcb.ALPN:
                 entry["alpn"] = v.Alpn
                 return v.Alpn
-        case *dns.SVCBPort:
+        case *svcb.PORT:
                 entry["port"] = v.Port
-        case *dns.SVCBIPv4Hint:
+        case *svcb.IPV4HINT:
                 entry["ipv4hint"] = ipHintsToStrings(v.Hint)
-        case *dns.SVCBIPv6Hint:
+        case *svcb.IPV6HINT:
                 entry["ipv6hint"] = ipHintsToStrings(v.Hint)
-        case *dns.SVCBECHConfig:
+        case *svcb.ECHCONFIG:
                 entry["ech"] = true
                 entry["ech_config_len"] = len(v.ECH)
-        case *dns.SVCBMandatory:
-                keys := make([]string, len(v.Code))
-                for i, c := range v.Code {
-                        keys[i] = c.String()
+        case *svcb.MANDATORY:
+                keys := make([]string, len(v.Key))
+                for i, c := range v.Key {
+                        keys[i] = svcb.KeyToString(c)
                 }
                 entry["mandatory"] = keys
-        case *dns.SVCBNoDefaultAlpn:
+        case *svcb.NODEFAULTALPN:
                 entry["no_default_alpn"] = true
         }
         return alpnList
 }
 
-func ipHintsToStrings(hints []net.IP) []string {
+func ipHintsToStrings(hints []netip.Addr) []string {
         result := make([]string, len(hints))
         for i, ip := range hints {
                 result[i] = ip.String()

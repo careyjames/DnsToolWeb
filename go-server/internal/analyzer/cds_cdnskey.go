@@ -7,7 +7,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/miekg/dns"
+	"codeberg.org/miekg/dns"
+	"codeberg.org/miekg/dns/dnsutil"
 )
 
 func (a *Analyzer) AnalyzeCDSCDNSKEY(ctx context.Context, domain string) map[string]any {
@@ -47,8 +48,7 @@ func (a *Analyzer) AnalyzeCDSCDNSKEY(ctx context.Context, domain string) map[str
 }
 
 func (a *Analyzer) queryCDS(ctx context.Context, domain string) []*dns.CDS {
-	msg := new(dns.Msg)
-	msg.SetQuestion(dns.Fqdn(domain), dns.TypeCDS)
+	msg := dns.NewMsg(dnsutil.Fqdn(domain), dns.TypeCDS)
 	msg.RecursionDesired = true
 
 	resp, err := a.DNS.ExchangeContext(ctx, msg)
@@ -66,8 +66,7 @@ func (a *Analyzer) queryCDS(ctx context.Context, domain string) []*dns.CDS {
 }
 
 func (a *Analyzer) queryCDNSKEY(ctx context.Context, domain string) []*dns.CDNSKEY {
-	msg := new(dns.Msg)
-	msg.SetQuestion(dns.Fqdn(domain), dns.TypeCDNSKEY)
+	msg := dns.NewMsg(dnsutil.Fqdn(domain), dns.TypeCDNSKEY)
 	msg.RecursionDesired = true
 
 	resp, err := a.DNS.ExchangeContext(ctx, msg)

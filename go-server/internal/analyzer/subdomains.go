@@ -23,54 +23,92 @@ type ctEntry struct {
 }
 
 var commonSubdomainProbes = []string{
-        "www", "www2", "www3", "web", "m", "mobile",
-        "mail", "email", "webmail", "smtp", "pop", "imap", "mx", "mx1", "mx2", "relay", "mta",
-        "autodiscover", "autoconfig", "owa", "exchange",
-        "ftp", "sftp", "ssh",
-        "vpn", "remote", "gateway", "gw",
-        "api", "app", "apps", "portal",
-        "admin", "panel", "cpanel", "dashboard", "manage", "management",
-        "server", "server1", "server2",
-        "blog", "news", "wiki", "docs", "doc", "help", "support", "kb", "faq",
-        "shop", "store", "billing", "pay", "payment", "checkout", "invoice",
-        "sso", "auth", "login", "id", "accounts", "account", "signup", "register",
-        "dev", "staging", "test", "demo", "sandbox", "beta", "preview", "uat", "stage",
-        "cdn", "static", "assets", "media", "img", "images",
-        "ns1", "ns2", "ns3", "ns4", "dns", "dns1", "dns2",
-        "cloud", "host",
-        "db", "database", "sql", "mysql", "postgres",
-        "monitor", "status", "grafana", "prometheus", "nagios", "zabbix",
-        "git", "gitlab", "github", "repo", "bitbucket",
-        "ci", "jenkins", "build", "deploy",
-        "calendar", "cal", "meet", "video", "chat", "conference",
-        "crm", "erp", "hr",
-        "intranet", "internal", "corp",
-        "proxy", "lb", "loadbalancer",
-        "secure", "ssl", "tls",
-        "files", "download", "backup", "share",
-        "forum", "community",
-        "office", "work", "connect",
-        "analytics", "metrics", "logs", "tracking",
-        "search", "es", "elastic",
-        "cache", "redis", "memcached",
-        "queue", "mq", "rabbitmq",
-        "s3", "storage", "bucket",
-        "map", "maps", "geo",
-        "confluence", "jira", "ticket", "tickets",
-        "slack", "teams", "zoom",
-        "reports", "report",
-        "screen", "schedule", "booking", "appointments",
-        "dnstool", "tools", "tool",
-        "client", "clients", "partner", "partners",
-        "training", "learn", "lms", "academy",
-        "inventory", "orders", "catalog",
-        "notify", "notifications", "alerts",
-        "print", "printer", "scan",
-        "backup1", "backup2", "archive",
-        "voip", "sip", "phone", "pbx", "tel",
-        "mdm", "devices",
-        "proxy1", "proxy2", "edge",
-        "waf", "firewall",
+        "www", "www1", "www2", "www3", "web", "web1", "web2", "m", "mobile",
+        "mail", "mail1", "mail2", "mail3", "email", "webmail", "smtp", "smtp1", "smtp2",
+        "pop", "pop3", "imap", "mx", "mx1", "mx2", "mx3", "mx4", "mx5", "relay", "relay1", "mta",
+        "autodiscover", "autoconfig", "owa", "exchange", "outlook",
+        "ftp", "ftp1", "ftp2", "sftp", "ssh", "scp",
+        "vpn", "vpn1", "vpn2", "vpn3", "remote", "ra", "gateway", "gw", "gw1", "gw2",
+        "api", "api1", "api2", "api3", "apis", "rest", "graphql", "ws",
+        "app", "app1", "app2", "apps", "portal", "portal2", "hub",
+        "admin", "admin1", "admin2", "panel", "cpanel", "whm", "plesk",
+        "dashboard", "console", "manage", "management", "manager",
+        "server", "server1", "server2", "server3", "srv", "srv1", "srv2",
+        "blog", "news", "press", "media", "wiki", "docs", "doc", "documentation",
+        "help", "helpdesk", "support", "support2", "kb", "faq",
+        "shop", "store", "ecommerce", "cart", "billing", "pay", "payment", "payments",
+        "checkout", "invoice", "orders", "order",
+        "sso", "auth", "oauth", "login", "signin", "id", "identity",
+        "accounts", "account", "myaccount", "my", "profile", "signup", "register",
+        "dev", "dev1", "dev2", "develop", "developer", "developers",
+        "staging", "stg", "stage", "test", "test1", "test2", "testing",
+        "demo", "sandbox", "beta", "alpha", "preview", "uat", "qa", "preprod", "pre",
+        "cdn", "cdn1", "cdn2", "cdn3", "static", "static1", "static2",
+        "assets", "media", "img", "images", "image", "photos", "video", "videos",
+        "ns", "ns1", "ns2", "ns3", "ns4", "ns5", "ns6", "dns", "dns1", "dns2",
+        "cloud", "host", "hosting", "vps", "dedicated",
+        "db", "db1", "db2", "database", "sql", "mysql", "postgres", "mongo", "mongodb",
+        "monitor", "monitoring", "status", "uptime", "health", "healthcheck",
+        "grafana", "prometheus", "nagios", "zabbix", "kibana", "datadog",
+        "git", "gitlab", "github", "repo", "repos", "bitbucket", "svn", "code",
+        "ci", "cd", "jenkins", "build", "builds", "deploy", "deployment", "releases",
+        "calendar", "cal", "meet", "meeting", "video", "chat", "conference",
+        "webinar", "live", "stream", "streaming",
+        "crm", "erp", "hr", "hris", "payroll", "finance", "accounting",
+        "intranet", "internal", "corp", "corporate", "hq",
+        "proxy", "proxy1", "proxy2", "lb", "loadbalancer", "haproxy", "nginx",
+        "secure", "ssl", "tls", "ocsp", "crl", "pki", "ca", "cert", "certs",
+        "files", "file", "download", "downloads", "upload", "uploads", "backup", "share",
+        "forum", "forums", "community", "discuss", "discussions",
+        "office", "o365", "work", "connect", "workspace",
+        "analytics", "stats", "statistics", "metrics", "logs", "log", "tracking",
+        "search", "es", "elastic", "elasticsearch", "solr",
+        "cache", "redis", "memcached", "varnish",
+        "queue", "mq", "rabbitmq", "kafka", "broker",
+        "s3", "storage", "bucket", "blob", "object",
+        "map", "maps", "geo", "location", "gis",
+        "confluence", "jira", "ticket", "tickets", "servicedesk", "itsm",
+        "slack", "teams", "zoom", "webex",
+        "reports", "report", "reporting", "bi",
+        "schedule", "booking", "appointments", "reservations",
+        "tools", "tool", "utility",
+        "client", "clients", "partner", "partners", "vendor", "vendors",
+        "training", "learn", "learning", "lms", "academy", "courses", "education",
+        "inventory", "catalog", "products", "product",
+        "notify", "notifications", "alerts", "alert",
+        "print", "printer", "scan", "scanner",
+        "backup1", "backup2", "archive", "archives",
+        "voip", "sip", "phone", "pbx", "tel", "telecom",
+        "mdm", "devices", "endpoint",
+        "edge", "edge1", "edge2", "waf", "firewall", "fw",
+        "data", "data1", "data2", "bigdata", "warehouse", "etl",
+        "service", "services", "svc", "microservices",
+        "gateway", "apigw", "kong",
+        "registry", "docker", "k8s", "kubernetes", "containers", "rancher",
+        "vault", "secrets", "config", "configuration",
+        "auth0", "okta", "adfs", "ldap", "ad", "directory",
+        "cms", "content", "drupal", "wordpress", "wp",
+        "marketing", "campaign", "campaigns", "promo",
+        "feedback", "survey", "surveys", "forms",
+        "careers", "jobs", "recruit", "hiring", "talent",
+        "legal", "compliance", "policy", "policies", "terms", "privacy",
+        "investor", "investors", "ir",
+        "events", "event", "webinars",
+        "network", "net", "lan", "wan",
+        "it", "itsupport", "techsupport",
+        "cname", "redirect",
+        "origin", "origin1", "origin2",
+        "primary", "secondary",
+        "a", "b", "c", "d", "e", "f",
+        "node1", "node2", "node3", "worker", "worker1", "worker2",
+        "us", "eu", "ap", "asia", "na", "emea", "apac",
+        "us-east", "us-west", "eu-west", "ap-south",
+        "int", "ext", "public", "private",
+        "go", "swift", "link", "links", "url", "r",
+        "feeds", "feed", "rss", "atom", "xml",
+        "websocket", "socket", "realtime", "rt",
+        "metrics", "trace", "tracing", "apm",
+        "sandbox1", "sandbox2", "lab", "labs",
 }
 
 func (a *Analyzer) DiscoverSubdomains(ctx context.Context, domain string) map[string]any {
@@ -126,6 +164,17 @@ func (a *Analyzer) DiscoverSubdomains(ctx context.Context, domain string) map[st
                 ctFailureReason = "cooldown"
         } else {
                 ctEntries, ctAvailable, ctFailureReason = a.fetchCTWithRetry(domain, ctProvider)
+        }
+
+        if !ctAvailable || len(ctEntries) == 0 {
+                csEntries, csOK := a.fetchCertspotter(domain)
+                if csOK && len(csEntries) > 0 {
+                        ctEntries = csEntries
+                        ctAvailable = true
+                        ctFailureReason = ""
+                        result["ct_source_fallback"] = "certspotter"
+                        slog.Info("Certspotter fallback succeeded", "domain", domain, "entries", len(csEntries))
+                }
         }
 
         dedupedEntries := deduplicateCTEntries(ctEntries)
@@ -297,6 +346,47 @@ func (a *Analyzer) fetchCTWithRetry(domain, ctProvider string) ([]ctEntry, bool,
                 reason = "error"
         }
         return nil, false, reason
+}
+
+type certspotterEntry struct {
+        DNSNames  []string `json:"dns_names"`
+        NotBefore string   `json:"not_before"`
+        NotAfter  string   `json:"not_after"`
+}
+
+func (a *Analyzer) fetchCertspotter(domain string) ([]ctEntry, bool) {
+        csURL := fmt.Sprintf("https://api.certspotter.com/v1/issuances?domain=%s&include_subdomains=true&expand=dns_names", domain)
+        csCtx, csCancel := context.WithTimeout(context.Background(), 30*time.Second)
+        defer csCancel()
+
+        resp, err := a.HTTP.Get(csCtx, csURL)
+        if err != nil {
+                slog.Warn("Certspotter query failed", "domain", domain, "error", err)
+                return nil, false
+        }
+        body, err := a.HTTP.ReadBody(resp, 10<<20)
+        if err != nil || resp.StatusCode != 200 {
+                slog.Warn("Certspotter bad response", "domain", domain, "status", resp.StatusCode)
+                return nil, false
+        }
+
+        var csEntries []certspotterEntry
+        if json.Unmarshal(body, &csEntries) != nil {
+                return nil, false
+        }
+
+        var ctEntries []ctEntry
+        for _, cs := range csEntries {
+                nameValue := strings.Join(cs.DNSNames, "\n")
+                ctEntries = append(ctEntries, ctEntry{
+                        NameValue: nameValue,
+                        NotBefore: cs.NotBefore,
+                        NotAfter:  cs.NotAfter,
+                })
+        }
+
+        slog.Info("Certspotter query succeeded", "domain", domain, "entries", len(ctEntries))
+        return ctEntries, true
 }
 
 func sortSubdomainsSmartOrder(subdomains []map[string]any) []map[string]any {
@@ -650,14 +740,14 @@ func enrichDNSWithCTData(ctEntries []ctEntry, domain string, subdomainSet map[st
 }
 
 func (a *Analyzer) probeCommonSubdomains(ctx context.Context, domain string, subdomainSet map[string]map[string]any) int {
-        probeCtx, probeCancel := context.WithTimeout(context.Background(), 15*time.Second)
+        probeCtx, probeCancel := context.WithTimeout(context.Background(), 25*time.Second)
         defer probeCancel()
 
         found := 0
         var mu sync.Mutex
         var wg sync.WaitGroup
 
-        sem := make(chan struct{}, 20)
+        sem := make(chan struct{}, 30)
 
         for _, prefix := range commonSubdomainProbes {
                 fqdn := prefix + "." + domain

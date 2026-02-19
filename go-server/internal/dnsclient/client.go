@@ -16,7 +16,8 @@ import (
         "sync"
         "time"
 
-        "github.com/miekg/dns"
+        "codeberg.org/miekg/dns"
+        "codeberg.org/miekg/dns/dnsutil"
 )
 
 type ResolverConfig struct {
@@ -193,25 +194,25 @@ func dnsTypeFromString(recordType string) (uint16, error) {
 func rrToString(rr dns.RR) string {
         switch v := rr.(type) {
         case *dns.A:
-                return v.A.String()
+                return v.A.Addr.String()
         case *dns.AAAA:
-                return v.AAAA.String()
+                return v.AAAA.Addr.String()
         case *dns.MX:
-                return fmt.Sprintf("%d %s", v.Preference, v.Mx)
+                return fmt.Sprintf("%d %s", v.MX.Preference, v.MX.Mx)
         case *dns.TXT:
-                return strings.Join(v.Txt, "")
+                return strings.Join(v.TXT.Txt, "")
         case *dns.NS:
-                return v.Ns
+                return v.NS.Ns
         case *dns.CNAME:
-                return v.Target
+                return v.CNAME.Target
         case *dns.CAA:
-                return fmt.Sprintf("%d %s \"%s\"", v.Flag, v.Tag, v.Value)
+                return fmt.Sprintf("%d %s \"%s\"", v.CAA.Flag, v.CAA.Tag, v.CAA.Value)
         case *dns.SOA:
-                return fmt.Sprintf("%s %s %d %d %d %d %d", v.Ns, v.Mbox, v.Serial, v.Refresh, v.Retry, v.Expire, v.Minttl)
+                return fmt.Sprintf("%s %s %d %d %d %d %d", v.SOA.Ns, v.SOA.Mbox, v.SOA.Serial, v.SOA.Refresh, v.SOA.Retry, v.SOA.Expire, v.SOA.Minttl)
         case *dns.SRV:
-                return fmt.Sprintf("%d %d %d %s", v.Priority, v.Weight, v.Port, v.Target)
+                return fmt.Sprintf("%d %d %d %s", v.SRV.Priority, v.SRV.Weight, v.SRV.Port, v.SRV.Target)
         case *dns.TLSA:
-                return fmt.Sprintf("%d %d %d %s", v.Usage, v.Selector, v.MatchingType, v.Certificate)
+                return fmt.Sprintf("%d %d %d %s", v.TLSA.Usage, v.TLSA.Selector, v.TLSA.MatchingType, v.TLSA.Certificate)
         case *dns.DNSKEY:
                 return v.String()
         case *dns.DS:
@@ -279,17 +280,13 @@ func (c *Client) querySingleResolver(ctx context.Context, domain, recordType, re
                 return resolverIP, nil, err.Error()
         }
 
-        fqdn := dns.Fqdn(domain)
-        msg := new(dns.Msg)
-        msg.SetQuestion(fqdn, qtype)
+        fqdn := dnsutil.Fqdn(domain)
+        msg := dns.NewMsg(fqdn, qtype)
         msg.RecursionDesired = true
 
-        dnsClient := &dns.Client{
-                Net:     "udp",
-                Timeout: c.timeout,
-        }
+        client := newDNSClient(c.timeout)
 
-        r, _, err := dnsClient.ExchangeContext(ctx, msg, net.JoinHostPort(resolverIP, "53"))
+        r, _, err := client.Exchange(ctx, msg, "udp", net.JoinHostPort(resolverIP, "53"))
         if err != nil {
                 return resolverIP, nil, err.Error()
         }
@@ -468,18 +465,14 @@ func (c *Client) CheckDNSSECADFlag(ctx context.Context, domain string) ADFlagRes
         validatingResolvers := []string{"8.8.8.8", "1.1.1.1"}
 
         for _, resolverIP := range validatingResolvers {
-                fqdn := dns.Fqdn(domain)
-                msg := new(dns.Msg)
-                msg.SetQuestion(fqdn, dns.TypeA)
+                fqdn := dnsutil.Fqdn(domain)
+                msg := dns.NewMsg(fqdn, dns.TypeA)
                 msg.RecursionDesired = true
-                msg.SetEdns0(4096, true)
+                msg.UDPSize, msg.Security = 4096, true
 
-                dnsClient := &dns.Client{
-                        Net:     "udp",
-                        Timeout: 3 * time.Second,
-                }
+                dnsClient := newDNSClient(3 * time.Second)
 
-                r, _, err := dnsClient.ExchangeContext(ctx, msg, net.JoinHostPort(resolverIP, "53"))
+                r, _, err := dnsClient.Exchange(ctx, msg, "udp", net.JoinHostPort(resolverIP, "53"))
                 if err != nil {
                         if isNXDomain(r) {
                                 errStr := "Domain not found"
@@ -497,17 +490,16 @@ func (c *Client) CheckDNSSECADFlag(ctx context.Context, domain string) ADFlagRes
                 }
 
                 if len(r.Answer) == 0 {
-                        msg2 := new(dns.Msg)
-                        msg2.SetQuestion(fqdn, dns.TypeSOA)
+                        msg2 := dns.NewMsg(fqdn, dns.TypeSOA)
                         msg2.RecursionDesired = true
-                        msg2.SetEdns0(4096, true)
-                        r2, _, err2 := dnsClient.ExchangeContext(ctx, msg2, net.JoinHostPort(resolverIP, "53"))
+                        msg2.UDPSize, msg2.Security = 4096, true
+                        r2, _, err2 := dnsClient.Exchange(ctx, msg2, "udp", net.JoinHostPort(resolverIP, "53"))
                         if err2 == nil {
                                 r = r2
                         }
                 }
 
-                if r.MsgHdr.AuthenticatedData {
+                if r.AuthenticatedData {
                         result.ADFlag = true
                         result.Validated = true
                         result.ResolverUsed = &resolverIP
@@ -530,15 +522,14 @@ func (c *Client) ExchangeContext(ctx context.Context, msg *dns.Msg) (*dns.Msg, e
 }
 
 func (c *Client) exchangeWithFallback(ctx context.Context, msg *dns.Msg, resolverAddr string) (*dns.Msg, error) {
-        udpClient := &dns.Client{Net: "udp", Timeout: c.timeout}
-        r, _, err := udpClient.ExchangeContext(ctx, msg, resolverAddr)
+        client := newDNSClient(c.timeout)
+        r, _, err := client.Exchange(ctx, msg, "udp", resolverAddr)
         if err == nil {
                 return r, nil
         }
 
         slog.Debug("UDP query failed, falling back to TCP", "resolver", resolverAddr, "error", err)
-        tcpClient := &dns.Client{Net: "tcp", Timeout: c.timeout}
-        r, _, err = tcpClient.ExchangeContext(ctx, msg, resolverAddr)
+        r, _, err = client.Exchange(ctx, msg, "tcp", resolverAddr)
         return r, err
 }
 
@@ -548,9 +539,8 @@ func (c *Client) QuerySpecificResolver(ctx context.Context, recordType, domain, 
                 return nil, err
         }
 
-        fqdn := dns.Fqdn(domain)
-        msg := new(dns.Msg)
-        msg.SetQuestion(fqdn, qtype)
+        fqdn := dnsutil.Fqdn(domain)
+        msg := dns.NewMsg(fqdn, qtype)
         msg.RecursionDesired = false
 
         resolverAddr := net.JoinHostPort(resolverIP, "53")
@@ -579,9 +569,8 @@ func (c *Client) QueryWithTTLFromResolver(ctx context.Context, recordType, domai
                 return RecordWithTTL{}
         }
 
-        fqdn := dns.Fqdn(domain)
-        msg := new(dns.Msg)
-        msg.SetQuestion(fqdn, qtype)
+        fqdn := dnsutil.Fqdn(domain)
+        msg := dns.NewMsg(fqdn, qtype)
         msg.RecursionDesired = false
 
         resolverAddr := net.JoinHostPort(resolverIP, "53")
@@ -601,7 +590,7 @@ func (c *Client) QueryWithTTLFromResolver(ctx context.Context, recordType, domai
                 if s != "" {
                         results = append(results, s)
                         if ttl == nil {
-                                t := rr.Header().Ttl
+                                t := rr.Header().TTL
                                 ttl = &t
                         }
                 }
@@ -693,21 +682,17 @@ func parseDohResponse(body []byte, recordType string) RecordWithTTL {
 }
 
 func (c *Client) ProbeExists(ctx context.Context, domain string) (exists bool, cname string) {
-        fqdn := dns.Fqdn(domain)
-        msg := new(dns.Msg)
-        msg.SetQuestion(fqdn, dns.TypeA)
+        fqdn := dnsutil.Fqdn(domain)
+        msg := dns.NewMsg(fqdn, dns.TypeA)
         msg.RecursionDesired = true
 
-        dnsClient := &dns.Client{
-                Net:     "udp",
-                Timeout: 3 * time.Second,
-        }
+        dnsClient := newDNSClient(3 * time.Second)
 
         resolverIP := "8.8.8.8"
-        r, _, err := dnsClient.ExchangeContext(ctx, msg, net.JoinHostPort(resolverIP, "53"))
+        r, _, err := dnsClient.Exchange(ctx, msg, "udp", net.JoinHostPort(resolverIP, "53"))
         if err != nil {
                 resolverIP = "1.1.1.1"
-                r, _, err = dnsClient.ExchangeContext(ctx, msg, net.JoinHostPort(resolverIP, "53"))
+                r, _, err = dnsClient.Exchange(ctx, msg, "udp", net.JoinHostPort(resolverIP, "53"))
                 if err != nil {
                         return false, ""
                 }
@@ -725,7 +710,7 @@ func (c *Client) ProbeExists(ctx context.Context, domain string) (exists bool, c
                         hasA = true
                 case *dns.CNAME:
                         if cnameTarget == "" {
-                                cnameTarget = strings.TrimSuffix(v.Target, ".")
+                                cnameTarget = strings.TrimSuffix(v.CNAME.Target, ".")
                         }
                 }
         }
@@ -747,17 +732,13 @@ func (c *Client) udpQueryWithTTL(ctx context.Context, domain, recordType, resolv
                 return RecordWithTTL{}
         }
 
-        fqdn := dns.Fqdn(domain)
-        msg := new(dns.Msg)
-        msg.SetQuestion(fqdn, qtype)
+        fqdn := dnsutil.Fqdn(domain)
+        msg := dns.NewMsg(fqdn, qtype)
         msg.RecursionDesired = true
 
-        dnsClient := &dns.Client{
-                Net:     "udp",
-                Timeout: c.timeout,
-        }
+        dnsClient := newDNSClient(c.timeout)
 
-        r, _, err := dnsClient.ExchangeContext(ctx, msg, net.JoinHostPort(resolverIP, "53"))
+        r, _, err := dnsClient.Exchange(ctx, msg, "udp", net.JoinHostPort(resolverIP, "53"))
         if err != nil {
                 return RecordWithTTL{}
         }
@@ -773,13 +754,25 @@ func (c *Client) udpQueryWithTTL(ctx context.Context, domain, recordType, resolv
                 if s != "" {
                         results = append(results, s)
                         if ttl == nil {
-                                t := rr.Header().Ttl
+                                t := rr.Header().TTL
                                 ttl = &t
                         }
                 }
         }
 
         return RecordWithTTL{Records: results, TTL: ttl}
+}
+
+func newDNSClient(timeout time.Duration) *dns.Client {
+        return &dns.Client{
+                Transport: &dns.Transport{
+                        Dialer: &net.Dialer{
+                                Timeout: timeout,
+                        },
+                        ReadTimeout:  timeout,
+                        WriteTimeout: timeout,
+                },
+        }
 }
 
 func isNXDomain(r *dns.Msg) bool {

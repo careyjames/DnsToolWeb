@@ -67,7 +67,7 @@ templates/                 # Python Flask templates (legacy/trampoline)
 
 ### Backend
 
-The backend utilizes Go with Gin, `pgx` v5 for PostgreSQL, `sqlc` for type-safe queries, and `miekg/dns` for DNS queries. Key implemented features:
+The backend utilizes Go with Gin, `pgx` v5 for PostgreSQL, `sqlc` for type-safe queries, and `miekg/dns` v2 (`codeberg.org/miekg/dns` v0.6.52) for DNS queries. Key implemented features:
 
 - Multi-resolver DNS client with DoH fallback and high-speed UDP probing
 - Multi-layer subdomain discovery (proprietary pipeline — see intel repo for implementation details)

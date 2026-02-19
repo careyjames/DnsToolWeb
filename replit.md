@@ -37,7 +37,10 @@ OSINT platform for RFC-compliant domain security analysis. Go/Gin backend, Boots
 ## Architecture Quick Reference
 - **Build tags**: `//go:build intel` (private) / `//go:build !intel` (public OSS stubs)
 - **12 stub files**: edge_cdn, saas_txt, infrastructure, providers, ip_investigation, manifest, posture_diff, ai_surface/{http,llms_txt,robots_txt,poisoning,scanner}
-- **Intel repo sync**: `node scripts/github-intel-sync.mjs` — reads/writes `careyjames/dnstool-intel` via GitHub API. NEVER leave `_intel.go` files in this repo — push to Intel repo and delete locally.
+- **Intel repo sync (GitHub)**: `node scripts/github-intel-sync.mjs` — reads/writes `careyjames/dnstool-intel` via GitHub API.
+- **Intel repo sync (Codeberg)**: `node scripts/codeberg-intel-sync.mjs` — reads/writes `careybalboa/dns-tool-intel` via Forgejo API. Uses `CODEBERG_FORGEJO_API` token.
+- NEVER leave `_intel.go` files in this repo — push to Intel repo and delete locally.
+- **DNS library**: `codeberg.org/miekg/dns` v0.6.52 (v2). Migrated from `github.com/miekg/dns` v1.1.72 in v26.20.76.
 - **Reports**: "Engineer's DNS Intelligence Report" (technical) / "Executive's DNS Intelligence Brief" (board-ready)
 - **TLP**: FIRST TLP v2.0, default TLP:AMBER
 

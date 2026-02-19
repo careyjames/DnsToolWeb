@@ -1021,11 +1021,11 @@ func buildBrandVerdict(ps protocolState, verdicts map[string]any) {
         if ps.dmarcPolicy == "quarantine" {
                 if ps.bimiOK && ps.caaOK {
                         verdicts["brand_impersonation"] = map[string]any{
-                                "label":  "Mostly Protected",
-                                "color":  "info",
+                                "label":  "Well Protected",
+                                "color":  "success",
                                 "icon":   iconShieldAlt,
-                                "answer": "Possible",
-                                "reason": "DMARC quarantine flags spoofed mail (RFC 7489 §6.3) with BIMI brand verification and CAA certificate restriction (RFC 8659 §4) — upgrade to p=reject for full email spoofing protection",
+                                "answer": "Unlikely",
+                                "reason": "DMARC quarantine enforced (RFC 7489 §6.3) with BIMI brand verification (VMC-validated logo in inboxes) and CAA certificate restriction (RFC 8659 §4) — all three brand-faking vectors addressed; upgrade to p=reject to block spoofed mail outright instead of flagging",
                         }
                 } else if ps.bimiOK || ps.caaOK {
                         gaps := []string{}

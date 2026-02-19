@@ -161,11 +161,14 @@ func TestBrandVerdictQuarantineWithBIMICAA(t *testing.T) {
         verdicts := make(map[string]any)
         buildBrandVerdict(ps, verdicts)
         brand := verdicts["brand_impersonation"].(map[string]any)
-        if brand["answer"] != "Possible" {
-                t.Errorf("DMARC quarantine + BIMI + CAA should be 'Possible' (quarantine only flags, doesn't reject per RFC 7489 §6.3), got: %s", brand["answer"])
+        if brand["answer"] != "Unlikely" {
+                t.Errorf("DMARC quarantine + BIMI/VMC + CAA addresses all three brand-faking vectors — should be 'Unlikely', got: %s", brand["answer"])
         }
-        if brand["label"] != "Mostly Protected" {
-                t.Errorf("expected 'Mostly Protected', got: %s", brand["label"])
+        if brand["label"] != "Well Protected" {
+                t.Errorf("expected 'Well Protected', got: %s", brand["label"])
+        }
+        if brand["color"] != "success" {
+                t.Errorf("expected success color for Well Protected verdict, got: %s", brand["color"])
         }
 }
 
