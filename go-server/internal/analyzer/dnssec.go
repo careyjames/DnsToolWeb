@@ -48,6 +48,20 @@ type dnssecParams struct {
         adResolver    *string
 }
 
+func algorithmObservation(algo *int) map[string]any {
+        if algo == nil {
+                return nil
+        }
+        c := ClassifyDNSSECAlgorithm(*algo)
+        return map[string]any{
+                "strength":    c.Strength,
+                "label":       c.Label,
+                "rfc":         c.RFC,
+                "observation": c.Observation,
+                "quantum_note": c.QuantumNote,
+        }
+}
+
 func buildDNSSECResult(p dnssecParams) map[string]any {
         if p.hasDNSKEY && p.hasDS {
                 var message string
@@ -57,48 +71,51 @@ func buildDNSSECResult(p dnssecParams) map[string]any {
                         message = "DNSSEC configured (DNSKEY + DS records present) but AD flag not set — resolver did not confirm chain of trust validation (RFC 4035 §3.2.3). This may indicate a broken chain or a non-validating resolver path."
                 }
                 return map[string]any{
-                        "status":         "success",
-                        "message":        message,
-                        "has_dnskey":     true,
-                        "has_ds":         true,
-                        "dnskey_records": p.dnskeyRecords,
-                        "ds_records":     p.dsRecords,
-                        "algorithm":      derefInt(p.algorithm),
-                        "algorithm_name": derefStr(p.algorithmName),
-                        "chain_of_trust": "complete",
-                        "ad_flag":        p.adFlag,
-                        "ad_resolver":    derefStr(p.adResolver),
+                        "status":                "success",
+                        "message":               message,
+                        "has_dnskey":            true,
+                        "has_ds":                true,
+                        "dnskey_records":        p.dnskeyRecords,
+                        "ds_records":            p.dsRecords,
+                        "algorithm":             derefInt(p.algorithm),
+                        "algorithm_name":        derefStr(p.algorithmName),
+                        "algorithm_observation": algorithmObservation(p.algorithm),
+                        "chain_of_trust":        "complete",
+                        "ad_flag":               p.adFlag,
+                        "ad_resolver":           derefStr(p.adResolver),
                 }
         }
 
         if p.hasDNSKEY && !p.hasDS {
                 return map[string]any{
-                        "status":         "warning",
-                        "message":        "DNSSEC partially configured - DNSKEY exists but DS record missing at registrar",
-                        "has_dnskey":     true,
-                        "has_ds":         false,
-                        "dnskey_records": p.dnskeyRecords,
-                        "ds_records":     []string{},
-                        "algorithm":      nil,
-                        "algorithm_name": nil,
-                        "chain_of_trust": "broken",
-                        "ad_flag":        false,
-                        "ad_resolver":    derefStr(p.adResolver),
+                        "status":                "warning",
+                        "message":               "DNSSEC partially configured - DNSKEY exists but DS record missing at registrar",
+                        "has_dnskey":            true,
+                        "has_ds":                false,
+                        "dnskey_records":        p.dnskeyRecords,
+                        "ds_records":            []string{},
+                        "algorithm":             nil,
+                        "algorithm_name":        nil,
+                        "algorithm_observation": nil,
+                        "chain_of_trust":        "broken",
+                        "ad_flag":               false,
+                        "ad_resolver":           derefStr(p.adResolver),
                 }
         }
 
         return map[string]any{
-                "status":         "warning",
-                "message":        "DNSSEC not configured - DNS responses are unsigned",
-                "has_dnskey":     false,
-                "has_ds":         false,
-                "dnskey_records": []string{},
-                "ds_records":     []string{},
-                "algorithm":      nil,
-                "algorithm_name": nil,
-                "chain_of_trust": "none",
-                "ad_flag":        false,
-                "ad_resolver":    nil,
+                "status":                "warning",
+                "message":               "DNSSEC not configured - DNS responses are unsigned",
+                "has_dnskey":            false,
+                "has_ds":                false,
+                "dnskey_records":        []string{},
+                "ds_records":            []string{},
+                "algorithm":             nil,
+                "algorithm_name":        nil,
+                "algorithm_observation": nil,
+                "chain_of_trust":        "none",
+                "ad_flag":               false,
+                "ad_resolver":           nil,
         }
 }
 
@@ -149,19 +166,20 @@ func buildInheritedDNSSECResult(parentZone string, adResolver *string, parentAlg
                 message = "DNSSEC validated by resolver - DNS responses are authenticated"
         }
         return map[string]any{
-                "status":         "success",
-                "message":        message,
-                "has_dnskey":     false,
-                "has_ds":         false,
-                "dnskey_records": []string{},
-                "ds_records":     []string{},
-                "algorithm":      derefInt(parentAlgo),
-                "algorithm_name": derefStr(parentAlgoName),
-                "chain_of_trust": "inherited",
-                "ad_flag":        true,
-                "ad_resolver":    derefStr(adResolver),
-                "is_subdomain":   true,
-                "parent_zone":    parentZone,
+                "status":                "success",
+                "message":               message,
+                "has_dnskey":            false,
+                "has_ds":                false,
+                "dnskey_records":        []string{},
+                "ds_records":            []string{},
+                "algorithm":             derefInt(parentAlgo),
+                "algorithm_name":        derefStr(parentAlgoName),
+                "algorithm_observation": algorithmObservation(parentAlgo),
+                "chain_of_trust":        "inherited",
+                "ad_flag":               true,
+                "ad_resolver":           derefStr(adResolver),
+                "is_subdomain":          true,
+                "parent_zone":           parentZone,
         }
 }
 

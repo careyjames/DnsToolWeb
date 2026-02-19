@@ -216,6 +216,40 @@
                 </div>
 
                 <div class="card bg-dark border-secondary mt-4">
+                    <div class="card-body">
+                        <h5 class="card-title text-center"><i class="fas fa-flask me-2 text-info"></i>Cryptographic Algorithm Transparency</h5>
+                        <p class="text-muted small text-center mb-3">Every algorithm classification cites the governing RFC. No proprietary risk scores &mdash; only standards-body guidance.</p>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h6 class="text-info">DNSSEC Algorithms <span class="text-muted small">(RFC 8624 / RFC 9904)</span></h6>
+                                <table class="table table-sm table-borderless mb-2">
+                                    <tbody>
+                                        <tr><td class="small py-1"><span class="badge bg-danger">Deprecated</span></td><td class="text-muted small py-1">RSAMD5, DSA, ECC-GOST &mdash; MUST NOT use</td></tr>
+                                        <tr><td class="small py-1"><span class="badge bg-warning text-dark">Legacy</span></td><td class="text-muted small py-1">RSA/SHA-1 &mdash; NOT RECOMMENDED</td></tr>
+                                        <tr><td class="small py-1"><span class="badge bg-secondary">Adequate</span></td><td class="text-muted small py-1">RSA/SHA-256, RSA/SHA-512 &mdash; MUST implement</td></tr>
+                                        <tr><td class="small py-1"><span class="badge bg-success">Modern</span></td><td class="text-muted small py-1">ECDSA P-256/P-384, Ed25519, Ed448</td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div class="col-md-6">
+                                <h6 class="text-info">DKIM Key Strength <span class="text-muted small">(RFC 8301)</span></h6>
+                                <table class="table table-sm table-borderless mb-2">
+                                    <tbody>
+                                        <tr><td class="small py-1"><span class="badge bg-danger">Deprecated</span></td><td class="text-muted small py-1">RSA &lt; 1024-bit &mdash; MUST NOT use</td></tr>
+                                        <tr><td class="small py-1"><span class="badge bg-warning text-dark">Weak</span></td><td class="text-muted small py-1">RSA 1024-bit &mdash; upgrade recommended</td></tr>
+                                        <tr><td class="small py-1"><span class="badge bg-secondary">Adequate</span></td><td class="text-muted small py-1">RSA 2048-bit &mdash; industry standard</td></tr>
+                                        <tr><td class="small py-1"><span class="badge bg-success">Strong</span></td><td class="text-muted small py-1">RSA 4096-bit, Ed25519 &mdash; future-ready</td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        <div class="text-center mt-2">
+                            <p class="text-muted small mb-0"><i class="fas fa-flask me-1"></i>Post-quantum DNSSEC standards in active IETF development (<a href="https://datatracker.ietf.org/doc/draft-sheth-pqc-dnssec-strategy/" class="text-info" target="_blank" rel="noopener">draft-sheth-pqc-dnssec-strategy</a>) &mdash; no PQC algorithms standardized for DNS yet. All classical algorithms carry this transparency note in reports.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card bg-dark border-secondary mt-4">
                     <div class="card-body text-center">
                         <h5 class="card-title"><i class="fas fa-laptop-code me-2 text-info"></i>Every Command, Open Source</h5>
                         <p class="text-muted mb-2">Every report includes a &ldquo;Verify It Yourself&rdquo; appendix with <code>dig</code>, <code>openssl</code>, and <code>curl</code> commands to independently reproduce every finding &mdash; open-source tools available on macOS and Linux, and installable on Windows via <a href="https://learn.microsoft.com/en-us/windows/wsl/install" class="text-info" target="_blank" rel="noopener">WSL</a> or individual packages.</p>

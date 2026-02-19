@@ -522,8 +522,10 @@ func analyzeDKIMKey(record string) map[string]any {
                 "issues":    []string{},
         }
 
+        keyType := "rsa"
         if m := dkimKeyTypeRe.FindStringSubmatch(strings.ToLower(record)); m != nil {
-                keyInfo["key_type"] = m[1]
+                keyType = m[1]
+                keyInfo["key_type"] = keyType
         }
 
         lower := strings.ToLower(record)
@@ -533,6 +535,16 @@ func analyzeDKIMKey(record string) map[string]any {
         keyBits, revoked, pkIssues := analyzePublicKey(record)
         keyInfo["key_bits"] = keyBits
         keyInfo["revoked"] = revoked
+
+        if keyBits != nil {
+                if bits, ok := keyBits.(int); ok {
+                        c := ClassifyDKIMKey(keyType, bits)
+                        keyInfo["key_strength"] = c.Strength
+                        keyInfo["key_strength_label"] = c.Label
+                        keyInfo["key_strength_rfc"] = c.RFC
+                        keyInfo["key_strength_observation"] = c.Observation
+                }
+        }
 
         var issues []string
         issues = append(issues, pkIssues...)

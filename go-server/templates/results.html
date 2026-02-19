@@ -1419,6 +1419,11 @@
                                                         {{if gt $keyBits 0}}
                                                             <span class="badge bg-{{if lt $keyBits 2048}}warning{{else}}success{{end}} ms-1">{{formatFloat 0 $keyBits}}-bit</span>
                                                         {{end}}
+                                                        {{$ksLabel := mapGetStr "key_strength_label" $kiMap}}
+                                                        {{if $ksLabel}}
+                                                            {{$ksStrength := mapGetStr "key_strength" $kiMap}}
+                                                            <span class="badge ms-1 {{if eq $ksStrength "deprecated"}}bg-danger{{else if eq $ksStrength "weak"}}bg-warning text-dark{{else if eq $ksStrength "strong"}}bg-success{{else}}bg-secondary{{end}}" data-bs-toggle="tooltip" title="{{mapGetStr "key_strength_observation" $kiMap}}">{{$ksLabel}}</span>
+                                                        {{end}}
                                                         {{end}}
                                                     {{end}}
                                                 {{end}}
@@ -3119,8 +3124,23 @@
                                     {{if mapGetStr "algorithm_name" $dnssec}}
                                         <span class="badge bg-info ms-2 text-break">{{mapGetStr "algorithm_name" $dnssec}}</span>
                                     {{end}}
+                                    {{$algoObs := mapGetMap "algorithm_observation" $dnssec}}
+                                    {{if $algoObs}}
+                                        {{$algoStrength := mapGetStr "strength" $algoObs}}
+                                        <span class="badge ms-2 {{if eq $algoStrength "deprecated"}}bg-danger{{else if eq $algoStrength "legacy"}}bg-warning text-dark{{else if eq $algoStrength "modern"}}bg-success{{else}}bg-secondary{{end}}">{{mapGetStr "label" $algoObs}}</span>
+                                    {{end}}
                                 </p>
                                 <p class="text-muted mb-2 small">{{mapGetStr "message" $dnssec}}</p>
+                                {{if $algoObs}}
+                                <div class="small mb-2 crypto-observation" style="border-left: 3px solid {{if eq (mapGetStr "strength" $algoObs) "deprecated"}}#e74c3c{{else if eq (mapGetStr "strength" $algoObs) "legacy"}}#f0ad4e{{else if eq (mapGetStr "strength" $algoObs) "modern"}}#198754{{else}}#6c757d{{end}}; padding-left: 0.75rem;">
+                                    <div class="text-muted">
+                                        <i class="fas fa-microscope me-1"></i><strong>Algorithm Observation:</strong> {{mapGetStr "observation" $algoObs}}
+                                    </div>
+                                    <div class="text-muted mt-1" style="font-size: 0.75rem;">
+                                        <i class="fas fa-flask me-1"></i>{{mapGetStr "quantum_note" $algoObs}}
+                                    </div>
+                                </div>
+                                {{end}}
                                 
                                 {{if and (eq $dnssecStatus "success") (eq $chainOfTrust "inherited")}}
                                     <div class="small text-success mb-2">
