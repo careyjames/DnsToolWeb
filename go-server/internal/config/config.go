@@ -16,6 +16,7 @@ type Config struct {
         Testing            bool
         SMTPProbeMode      string
         ProbeAPIURL        string
+        ProbeAPIKey        string
         MaintenanceNote    string
         SectionTuning      map[string]string
         GoogleClientID     string
@@ -99,6 +100,7 @@ func Load() (*Config, error) {
                 Testing:             false,
                 SMTPProbeMode:       smtpProbeMode,
                 ProbeAPIURL:         probeAPIURL,
+                ProbeAPIKey:         os.Getenv("PROBE_API_KEY"),
                 MaintenanceNote:     maintenanceNote,
                 SectionTuning:       tuning,
                 GoogleClientID:      os.Getenv("GOOGLE_CLIENT_ID"),

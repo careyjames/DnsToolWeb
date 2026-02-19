@@ -249,7 +249,7 @@ func buildProbeResult(a *Analyzer, ctx context.Context, domain string, mxHosts [
         }
 
         if a.SMTPProbeMode == "remote" && a.ProbeAPIURL != "" {
-                return runRemoteProbe(ctx, a.ProbeAPIURL, mxHosts, probe)
+                return runRemoteProbe(ctx, a.ProbeAPIURL, a.ProbeAPIKey, mxHosts, probe)
         }
 
         if a.SMTPProbeMode == "force" || a.SMTPProbeMode == "remote" {
@@ -259,19 +259,22 @@ func buildProbeResult(a *Analyzer, ctx context.Context, domain string, mxHosts [
         return probe
 }
 
-func runRemoteProbe(ctx context.Context, apiURL string, mxHosts []string, probe map[string]any) map[string]any {
+func runRemoteProbe(ctx context.Context, apiURL string, apiKey string, mxHosts []string, probe map[string]any) map[string]any {
         hostsToCheck := mxHosts
         if len(hostsToCheck) > 5 {
                 hostsToCheck = hostsToCheck[:5]
         }
 
-        reqBody, err := json.Marshal(map[string]any{"hosts": hostsToCheck})
+        reqBody, err := json.Marshal(map[string]any{
+                "hosts": hostsToCheck,
+                "ports": []int{25, 465, 587},
+        })
         if err != nil {
                 slog.Error("Remote probe: failed to marshal request", "error", err)
                 return runLiveProbe(ctx, mxHosts, probe)
         }
 
-        probeCtx, cancel := context.WithTimeout(ctx, 20*time.Second)
+        probeCtx, cancel := context.WithTimeout(ctx, 25*time.Second)
         defer cancel()
 
         req, err := http.NewRequestWithContext(probeCtx, "POST", apiURL+"/probe/smtp", bytes.NewReader(reqBody))
@@ -280,6 +283,9 @@ func runRemoteProbe(ctx context.Context, apiURL string, mxHosts []string, probe 
                 return runLiveProbe(ctx, mxHosts, probe)
         }
         req.Header.Set("Content-Type", "application/json")
+        if apiKey != "" {
+                req.Header.Set("X-Probe-Key", apiKey)
+        }
 
         resp, err := http.DefaultClient.Do(req)
         if err != nil {
@@ -288,12 +294,20 @@ func runRemoteProbe(ctx context.Context, apiURL string, mxHosts []string, probe 
         }
         defer resp.Body.Close()
 
+        if resp.StatusCode == http.StatusUnauthorized {
+                slog.Error("Remote probe: authentication failed (401) — check PROBE_API_KEY")
+                return runLiveProbe(ctx, mxHosts, probe)
+        }
+        if resp.StatusCode == http.StatusTooManyRequests {
+                slog.Warn("Remote probe: rate limited (429), falling back to local")
+                return runLiveProbe(ctx, mxHosts, probe)
+        }
         if resp.StatusCode != http.StatusOK {
                 slog.Warn("Remote probe: non-200 response, falling back to local", "status", resp.StatusCode)
                 return runLiveProbe(ctx, mxHosts, probe)
         }
 
-        body, err := io.ReadAll(io.LimitReader(resp.Body, 256*1024))
+        body, err := io.ReadAll(io.LimitReader(resp.Body, 512*1024))
         if err != nil {
                 slog.Warn("Remote probe: failed to read response, falling back to local", "error", err)
                 return runLiveProbe(ctx, mxHosts, probe)
@@ -301,8 +315,10 @@ func runRemoteProbe(ctx context.Context, apiURL string, mxHosts []string, probe 
 
         var apiResp struct {
                 ProbeHost      string           `json:"probe_host"`
+                Version        string           `json:"version"`
                 ElapsedSeconds float64          `json:"elapsed_seconds"`
                 Servers        []map[string]any `json:"servers"`
+                AllPorts       []map[string]any `json:"all_ports"`
         }
         if err := json.Unmarshal(body, &apiResp); err != nil {
                 slog.Warn("Remote probe: failed to parse response, falling back to local", "error", err)
@@ -333,6 +349,10 @@ func runRemoteProbe(ctx context.Context, apiURL string, mxHosts []string, probe 
         probe["probe_host"] = apiResp.ProbeHost
         probe["probe_elapsed"] = apiResp.ElapsedSeconds
 
+        if len(apiResp.AllPorts) > 0 {
+                probe["multi_port"] = apiResp.AllPorts
+        }
+
         if summary.StartTLSSupport == reachable && summary.ValidCerts == summary.StartTLSSupport {
                 probe["probe_verdict"] = "all_tls"
         } else if summary.StartTLSSupport > 0 {
@@ -343,7 +363,9 @@ func runRemoteProbe(ctx context.Context, apiURL string, mxHosts []string, probe 
 
         slog.Info("Remote SMTP probe completed",
                 "probe_host", apiResp.ProbeHost,
+                "version", apiResp.Version,
                 "servers", len(apiResp.Servers),
+                "all_ports", len(apiResp.AllPorts),
                 "reachable", reachable,
                 "starttls", summary.StartTLSSupport,
                 "elapsed", apiResp.ElapsedSeconds,

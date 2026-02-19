@@ -30,6 +30,7 @@ type Analyzer struct {
 
         SMTPProbeMode string
         ProbeAPIURL   string
+        ProbeAPIKey   string
 }
 
 type ctCacheEntry struct {

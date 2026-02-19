@@ -105,6 +105,7 @@ func main() {
         dnsAnalyzer := analyzer.New()
         dnsAnalyzer.SMTPProbeMode = cfg.SMTPProbeMode
         dnsAnalyzer.ProbeAPIURL = cfg.ProbeAPIURL
+        dnsAnalyzer.ProbeAPIKey = cfg.ProbeAPIKey
         slog.Info("DNS analyzer initialized with telemetry", "smtp_probe_mode", cfg.SMTPProbeMode, "probe_api_url", cfg.ProbeAPIURL)
 
         analyzer.InitIETFMetadata()
