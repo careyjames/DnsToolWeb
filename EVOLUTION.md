@@ -10,6 +10,33 @@ This file is the project's permanent breadcrumb trail — every session's decisi
 
 ---
 
+## Session: February 19, 2026 (continued)
+
+### v26.20.74 — History Table Cleanup + GitHub README
+
+#### History Table: Status Column Removed
+- **Decision**: Remove the redundant status column (green checkmark / red X) from history table
+- **Rationale**: Handler already queries `ListSuccessfulAnalyses` / `CountSuccessfulAnalyses` — failed analyses are never shown in history. The `AnalysisSuccess` field was hardcoded to `true` in `buildHistoryItem()`. The column was an unlabeled green checkmark wasting horizontal space.
+- **Changes**: Removed status column header, status badge cell (desktop), status badge (mobile), `AnalysisSuccess` field from `historyAnalysisItem` struct
+- **User quote**: "If they fail, then they shouldn't be listed in history. They should be in statistics as failures."
+- **Result**: History table now 4 columns: Domain, Email Security, Date, Actions
+
+#### GitHub README.md Created
+- **Decision**: Create comprehensive README.md for the public DnsToolWeb repo
+- **Content**: Owl of Athena logo, version/license/Go/PostgreSQL/RFC badges, dual report types, core capabilities (email triad, transport, brand, infrastructure, privacy), architecture overview with ICIE/ICAE engines, self-auditing section (45 test cases across 5 protocols), quick start guide, environment variables, project structure, RFC citation table, license summary
+- **Design**: Centered header with badges, tables for structured data, ASCII architecture diagram, links to architecture diagrams and docs
+
+#### Background Color Consistency Audit
+- **Finding**: All pages use the same body background (`--bg-primary: #0d1117`). The perceived "lighter" look on homepage/investigate/email-header comes from the hero gradient (`linear-gradient(170deg, #0a1628 → #0d1117 → accent-deep → #0d1117)`). This is standard design hierarchy — hero sections create visual prominence for input pages, data-heavy pages (history, stats, sources) go straight to content.
+- **Decision**: No CSS changes needed — current approach is intentional and correct.
+
+#### ice_ Table Prefix — Keep for Stability
+- **Decision**: Keep `ice_*` table names (`ice_results`, `ice_maturity`, `ice_test_runs`, `ice_regressions`) despite engine rename ICE → ICAE
+- **Rationale**: Renaming requires migrations + sqlc regeneration + potential data loss. No user-facing benefit. Already documented as "legacy prefix, not renamed" in replit.md.
+- **Architect recommendation**: If ever renamed, use phased migration with CREATE VIEW aliases.
+
+---
+
 ## Session: February 14, 2026
 
 ### License Migration (AGPL → BSL 1.1)

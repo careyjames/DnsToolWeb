@@ -10,7 +10,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/careyjames/DnsToolWeb/releases"><img src="https://img.shields.io/badge/version-26.20.73-blue?style=flat-square" alt="Version"></a>
+  <a href="https://github.com/careyjames/DnsToolWeb/releases"><img src="https://img.shields.io/badge/version-26.20.74-blue?style=flat-square" alt="Version"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-BUSL--1.1-orange?style=flat-square" alt="License"></a>
   <img src="https://img.shields.io/badge/Go-1.23-00ADD8?style=flat-square&logo=go" alt="Go">
   <img src="https://img.shields.io/badge/PostgreSQL-15+-336791?style=flat-square&logo=postgresql" alt="PostgreSQL">
