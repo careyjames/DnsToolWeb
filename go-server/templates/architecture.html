@@ -10,64 +10,71 @@
     <meta property="og:description" content="Interactive architecture diagrams of DNS Tool's intelligence engines, request lifecycle, and package structure.">
     <style nonce="{{.CspNonce}}">
         .arch-diagram-card {
-            background: linear-gradient(145deg, #0f1318 0%, #141a22 50%, #111820 100%);
-            border: 1px solid rgba(88,166,255,0.18) !important;
-            border-radius: 12px;
+            background: linear-gradient(145deg, #0c1018 0%, #111720 50%, #0e141c 100%);
+            border: 1px solid rgba(88,166,255,0.2) !important;
+            border-radius: 14px;
             overflow: hidden;
-        }
-        .arch-diagram-card .card-header {
-            background: linear-gradient(90deg, rgba(88,166,255,0.12) 0%, rgba(63,185,80,0.06) 50%, transparent 100%);
-            border-bottom: 1px solid rgba(88,166,255,0.12) !important;
-            padding: 1rem 1.25rem;
-        }
-        .arch-diagram-card .card-body {
-            padding: 2rem 1.5rem;
-        }
-        .arch-diagram-card .card-body .mermaid {
-            font-size: 14px;
-        }
-        .arch-diagram-card:hover {
-            border-color: rgba(88,166,255,0.35) !important;
-            box-shadow: 0 4px 24px rgba(88,166,255,0.08);
             transition: border-color 0.3s, box-shadow 0.3s;
         }
-        .arch-counter {
-            display: inline-flex;
-            align-items: center;
+        .arch-diagram-card:hover {
+            border-color: rgba(88,166,255,0.4) !important;
+            box-shadow: 0 8px 32px rgba(88,166,255,0.1), 0 0 0 1px rgba(88,166,255,0.05);
+        }
+        .arch-diagram-header {
+            background: linear-gradient(90deg, rgba(88,166,255,0.1) 0%, rgba(63,185,80,0.05) 60%, transparent 100%);
+            border-bottom: 1px solid rgba(88,166,255,0.12) !important;
+            padding: 1rem 1.5rem;
+        }
+        .arch-diagram-body {
+            padding: 2.5rem 2rem;
+            overflow-x: auto;
+        }
+        .arch-diagram-body svg {
+            max-width: 100%;
+            height: auto;
+        }
+        .arch-legend {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
             justify-content: center;
-            width: 28px;
-            height: 28px;
-            border-radius: 8px;
-            background: linear-gradient(135deg, #1a3a5c, #264f78);
-            border: 1px solid #58a6ff;
-            color: #58a6ff;
-            font-weight: 700;
-            font-size: 13px;
-            margin-right: 10px;
+            padding: 0.75rem 1.5rem;
+            border-top: 1px solid rgba(88,166,255,0.08);
+            background: rgba(88,166,255,0.02);
+        }
+        .arch-legend-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 12px;
+            color: #8b949e;
+        }
+        .arch-legend-swatch {
+            width: 14px;
+            height: 14px;
+            border-radius: 4px;
+            border: 1.5px solid;
             flex-shrink: 0;
         }
     </style>
 </head>
 <body class="bg-dark text-light">
     {{template "nav" .}}
-    <main class="container-fluid px-4 py-4" id="main-content" style="max-width: 1400px;">
+    <main class="container-fluid px-3 px-md-5 py-4" id="main-content" style="max-width: 1500px;">
         <div class="text-center mb-5">
             <h1 class="display-5 fw-bold"><i class="fas fa-project-diagram me-2 text-info"></i>System Architecture</h1>
-            <p class="lead text-muted">Interactive diagrams of DNS Tool&rsquo;s intelligence engines, request lifecycle, and package structure.</p>
+            <p class="lead text-muted mb-0">Interactive diagrams of DNS Tool&rsquo;s intelligence engines, request lifecycle, and package structure.</p>
         </div>
 
-        {{$counter := 0}}
         {{range .Diagrams}}
-        <div class="card arch-diagram-card border-0 mb-5 shadow-lg">
-            <div class="card-header border-0">
+        <div class="card arch-diagram-card border-0 mb-5">
+            <div class="arch-diagram-header">
                 <h5 class="mb-0 fw-semibold d-flex align-items-center" style="color: #e6edf3;">
-                    <i class="fas fa-sitemap me-2" style="color: #58a6ff; opacity: 0.8;"></i>{{.Title}}
+                    <i class="fas fa-sitemap me-2" style="color: #58a6ff;"></i>{{.Title}}
                 </h5>
             </div>
-            <div class="card-body text-center">
-                <div class="d-inline-block" style="min-width: 60%; max-width: 100%;">
-                    <pre class="mermaid">{{.Content}}</pre>
-                </div>
+            <div class="arch-diagram-body text-center">
+                <pre class="mermaid">{{.Content}}</pre>
             </div>
         </div>
         {{end}}
@@ -84,57 +91,74 @@
     <script nonce="{{.CspNonce}}">
         mermaid.initialize({
             startOnLoad: true,
-            theme: 'dark',
+            theme: 'base',
             themeVariables: {
-                darkMode: true,
-                background: 'transparent',
-                primaryColor: '#264f78',
+                background: '#0d1117',
+                fontFamily: '"Segoe UI", system-ui, -apple-system, sans-serif',
+                fontSize: '14px',
+
+                primaryColor: '#2d5a88',
                 primaryBorderColor: '#58a6ff',
                 primaryTextColor: '#f0f6fc',
-                secondaryColor: '#1e4d3a',
+
+                secondaryColor: '#245a3a',
                 secondaryBorderColor: '#3fb950',
                 secondaryTextColor: '#f0f6fc',
-                tertiaryColor: '#4a2d6e',
+
+                tertiaryColor: '#4c2d70',
                 tertiaryBorderColor: '#bc8cff',
                 tertiaryTextColor: '#f0f6fc',
+
                 lineColor: '#58a6ff',
-                textColor: '#f0f6fc',
-                mainBkg: '#264f78',
+                textColor: '#e6edf3',
+
+                mainBkg: '#2d5a88',
                 nodeBorder: '#58a6ff',
-                clusterBkg: 'rgba(88,166,255,0.06)',
-                clusterBorder: 'rgba(88,166,255,0.30)',
+                nodeTextColor: '#f0f6fc',
+
+                clusterBkg: 'rgba(136,198,255,0.07)',
+                clusterBorder: 'rgba(88,166,255,0.35)',
+
                 titleColor: '#79c0ff',
                 edgeLabelBackground: '#161b22',
-                nodeTextColor: '#f0f6fc',
                 labelTextColor: '#e6edf3',
-                actorBkg: '#264f78',
+
+                actorBkg: '#2d5a88',
                 actorBorder: '#58a6ff',
                 actorTextColor: '#f0f6fc',
-                signalColor: '#79c0ff',
-                signalTextColor: '#f0f6fc',
-                noteBkgColor: '#1e4d3a',
+                actorLineColor: '#58a6ff',
+
+                signalColor: '#58a6ff',
+                signalTextColor: '#e6edf3',
+
+                noteBkgColor: '#245a3a',
                 noteBorderColor: '#3fb950',
                 noteTextColor: '#f0f6fc',
-                activationBkgColor: '#264f78',
+
+                activationBkgColor: '#2d5a88',
                 activationBorderColor: '#58a6ff',
-                labelBoxBkgColor: '#1b2836',
-                labelBoxBorderColor: '#58a6ff'
+
+                loopTextColor: '#e6edf3',
+                labelBoxBkgColor: '#161b22',
+                labelBoxBorderColor: '#30363d'
             },
             flowchart: {
                 htmlLabels: true,
                 curve: 'basis',
-                padding: 15,
+                padding: 18,
                 nodeSpacing: 50,
                 rankSpacing: 60,
-                diagramPadding: 20
+                diagramPadding: 24,
+                useMaxWidth: true
             },
             sequence: {
                 actorMargin: 60,
                 messageMargin: 40,
-                boxMargin: 10,
+                boxMargin: 12,
                 noteMargin: 15,
                 mirrorActors: false,
-                useMaxWidth: true
+                useMaxWidth: true,
+                wrap: true
             }
         });
     </script>
