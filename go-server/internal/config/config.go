@@ -89,7 +89,7 @@ func Load() (*Config, error) {
                 DatabaseURL:         dbURL,
                 SessionSecret:       sessionSecret,
                 Port:                port,
-                AppVersion:          "26.20.79",
+                AppVersion:          "26.20.80",
                 Testing:             false,
                 SMTPProbeMode:       smtpProbeMode,
                 MaintenanceNote:     maintenanceNote,
