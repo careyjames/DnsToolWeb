@@ -1114,9 +1114,9 @@
                                     <div class="mt-2 p-2 bg-warning bg-opacity-10 border border-warning rounded">
                                         <small class="text-warning d-block fw-bold">
                                             <i class="fas fa-exclamation-triangle me-1"></i>
-                                            Legacy SPF-like records detected
+                                            Legacy Record — Safe to Delete
                                         </small>
-                                        <small class="text-muted d-block">These deprecated records (e.g. spf2.0/pra) should be ignored per RFC 7208, but some non-compliant receivers may still process them. Consider removing.</small>
+                                        <small class="text-muted d-block">This is a <strong>Sender ID</strong> record (<code>spf2.0/pra</code>) from a Microsoft experiment circa 2006 that was never standardized. <a href="https://datatracker.ietf.org/doc/html/rfc7208#appendix-A" target="_blank" rel="noopener" class="text-info rfc-link" data-bs-toggle="tooltip" title="RFC 7208 Appendix A — SPF/Sender ID history">RFC 7208 §A</a> explicitly deprecates it. No modern mail receiver processes this record. It is safe to delete.</small>
                                         {{range $record := $spfLike}}
                                             <div class="code-block small mt-1 border-warning text-warning">{{$record}}</div>
                                         {{end}}

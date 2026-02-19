@@ -489,21 +489,26 @@
         <section class="mt-5 mb-4">
             <div class="row justify-content-center">
                 <div class="col-lg-8">
-                    <div class="card bg-dark border-info border-opacity-50 homepage-big-question-card">
-                        <div class="card-body py-4 px-4">
-                            <h3 class="h5 mb-4 text-info text-center"><i class="fas fa-question-circle me-2" aria-hidden="true"></i>Decision-Ready Intelligence</h3>
-                            <div class="homepage-big-question-preview">
-                                <span class="homepage-big-question-label">The Big Question</span>
-                                <span class="homepage-big-question-text">Can this domain be impersonated by email?</span>
+                    <div class="dri-card">
+                        <div class="dri-accent-bar"></div>
+                        <div class="dri-body">
+                            <div class="dri-header">
+                                <span class="dri-badge"><i class="fas fa-crosshairs me-1" aria-hidden="true"></i>Intelligence Product</span>
+                                <h3 class="dri-title">Decision-Ready Intelligence</h3>
+                                <p class="dri-subtitle">Every section of your report opens with a plain-language strategic question &mdash; answered with a data-driven verdict before the technical detail begins.</p>
                             </div>
-                            <p class="mt-3 mb-2 text-center">Every section of your report opens with a plain-language strategic question like this &mdash; answered with a data-driven verdict before the technical detail begins.</p>
-                            <div class="homepage-big-question-examples">
-                                <span class="homepage-big-question-example"><i class="fas fa-angle-right me-1" aria-hidden="true"></i>Are spoofed emails rejected or quarantined?</span>
-                                <span class="homepage-big-question-example"><i class="fas fa-angle-right me-1" aria-hidden="true"></i>Can attackers downgrade SMTP to intercept mail?</span>
-                                <span class="homepage-big-question-example"><i class="fas fa-angle-right me-1" aria-hidden="true"></i>Can this brand be convincingly faked?</span>
-                                <span class="homepage-big-question-example"><i class="fas fa-angle-right me-1" aria-hidden="true"></i>Can DNS responses be tampered with in transit?</span>
+                            <div class="dri-question-block">
+                                <span class="dri-question-label"><i class="fas fa-shield-alt me-1" aria-hidden="true"></i>The Big Question</span>
+                                <span class="dri-question-text">Can this domain be impersonated by email?</span>
+                                <span class="dri-question-answer"><span class="badge bg-danger me-1">YES</span> DMARC is monitor-only (p=none)</span>
                             </div>
-                            <p class="text-muted small mb-0 mt-3 text-center">Raw DNS data tells you <em>what</em> exists. Decision-ready intelligence tells you <em>what it means</em> and <em>why it matters</em>.</p>
+                            <div class="dri-examples">
+                                <div class="dri-example"><i class="fas fa-angle-right me-1 text-warning" aria-hidden="true"></i>Are spoofed emails rejected or quarantined?</div>
+                                <div class="dri-example"><i class="fas fa-angle-right me-1 text-warning" aria-hidden="true"></i>Can attackers downgrade SMTP to intercept mail?</div>
+                                <div class="dri-example"><i class="fas fa-angle-right me-1 text-warning" aria-hidden="true"></i>Can this brand be convincingly faked?</div>
+                                <div class="dri-example"><i class="fas fa-angle-right me-1 text-warning" aria-hidden="true"></i>Can DNS responses be tampered with in transit?</div>
+                            </div>
+                            <p class="dri-footer">Raw DNS data tells you <em>what</em> exists. Decision-ready intelligence tells you <em>what it means</em> and <em>why it matters</em>.</p>
                         </div>
                     </div>
                 </div>
