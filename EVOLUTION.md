@@ -10,6 +10,39 @@ This file is the project's permanent breadcrumb trail — every session's decisi
 
 ---
 
+## Session: February 19, 2026 (v26.21.2 — Bootstrap Removal, Foundation CSS/JS)
+
+### v26.21.2 — Bootstrap Removed, Custom Foundation CSS/JS
+
+#### What Changed
+1. **Bootstrap fully removed**: Replaced `bootstrap-dark-theme.min.css` (234KB) and `bootstrap.bundle.min.js` (80KB) with custom `foundation.css` (40KB minified) and `foundation.js` (4.5KB minified). **Total savings: 269KB (86% reduction)**. All template class names preserved for zero-breakage migration.
+2. **Foundation CSS** (`static/css/foundation.css`): Complete drop-in replacement covering reset/reboot, responsive 12-column flexbox grid (container, row, col-sm/md/lg/xl), spacing utilities (m*/p*), display/flex utilities, text/bg/border utilities with opacity modifiers, and all components used: navbar, dropdown, card, badge, button (solid + outline), alert, table, form controls, accordion, collapse, list-group, tooltips.
+3. **Foundation JS** (`static/js/foundation.js`): Vanilla JS replacements for navbar responsive toggle, dropdown menus (click toggle, outside-click close, Escape key), accordion/collapse with smooth height transitions, tooltips (hover/focus with HTML support), alert dismissal, tab/pill toggle. Exposes `window.bootstrap.Dropdown` and `window.bootstrap.Tooltip` compatibility shims for existing template code.
+4. **Critical CSS updated**: Inline critical CSS in `_head.html` updated to use project design tokens (#0d1117, #21262d, #30363d) instead of Bootstrap's legacy values (#212529, #2b3035, #495057).
+5. **Admin bootstrap fix**: Verified `INITIAL_ADMIN_EMAIL` secret is set correctly. Zero admins in production — next login with matching email will trigger auto-promotion.
+6. **Version bump**: 26.21.1 → 26.21.2
+
+#### Size Comparison
+| Asset | Before (Bootstrap) | After (Foundation) | Savings |
+|-------|-------------------|-------------------|---------|
+| CSS   | 234KB (minified)  | 40KB (minified)   | 83%     |
+| JS    | 80KB (minified)   | 4.5KB (minified)  | 94%     |
+| **Total** | **314KB**     | **44.5KB**        | **86%** |
+
+#### Lessons Learned
+- Bootstrap's class naming convention is well-designed — keeping identical names meant zero template changes beyond the asset include paths. The migration was purely CSS/JS replacement.
+- The project's `custom.css` already defined the entire visual language via CSS variables. Bootstrap was acting as structural scaffolding (grid, utilities) with 90%+ of its styling overridden.
+- CSS variable patterns for opacity modifiers (`--bs-bg-opacity`, `--bs-border-opacity`) are elegant and worth keeping even without Bootstrap.
+- Vanilla JS for interactive components (collapse, dropdown, tooltip) is ~50x smaller than Bootstrap's JS bundle because we only need the exact features used.
+- `data-bs-toggle` and `data-bs-target` attribute patterns are a good API — kept them as the JS hook convention.
+
+#### Files Changed
+- **New**: `static/css/foundation.css`, `static/css/foundation.min.css`, `static/js/foundation.js`, `static/js/foundation.min.js`
+- **Modified**: `go-server/templates/_head.html` (CSS include + critical CSS), `go-server/templates/_footer.html` (JS include), `go-server/templates/investigate.html` (JS include), `go-server/templates/results_executive.html` (JS include), `go-server/internal/config/config.go` (version)
+- **Retained but unused**: `static/css/bootstrap-dark-theme.min.css`, `static/js/bootstrap.bundle.min.js` (kept for rollback safety)
+
+---
+
 ## Session: February 19, 2026 (v26.21.1 — Safari Overlay Fix, Philosophy)
 
 ### v26.21.1 — Safari Analysis Overlay Fix

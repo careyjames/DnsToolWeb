@@ -23,26 +23,24 @@
 {{end}}
 
 {{define "head_css"}}
-<link rel="stylesheet" href="{{staticVersionURL "css/bootstrap-dark-theme.min.css" .AppVersion}}">
+<link rel="stylesheet" href="{{staticVersionURL "css/foundation.min.css" .AppVersion}}">
 <link href="{{staticVersionURL "css/custom.min.css" .AppVersion}}" rel="stylesheet">
 <link rel="stylesheet" href="{{staticVersionURL "css/fontawesome-subset.min.css" .AppVersion}}">
 {{end}}
 
 {{define "critical_css"}}
 <style nonce="{{.CspNonce}}">
-:root{--bs-body-bg:#212529;--bs-body-color:#dee2e6;--bs-primary:#0d6efd;--bs-secondary:#6c757d;--bs-body-font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text','SF Pro Display',system-ui,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;--bs-font-sans-serif:-apple-system,BlinkMacSystemFont,'SF Pro Text','SF Pro Display',system-ui,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif}
 *,::after,::before{box-sizing:border-box}
-body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text",system-ui,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;background-color:var(--bs-body-bg);color:var(--bs-body-color);line-height:1.5;-webkit-font-smoothing:antialiased}
-.navbar{display:flex;padding:.5rem 1rem;background-color:#212529!important}
+body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text",system-ui,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;background-color:#0d1117;color:rgba(230,237,243,0.9);line-height:1.5;-webkit-font-smoothing:antialiased}
+.navbar{display:flex;padding:.5rem 1rem;background-color:#0d1117}
 .navbar-brand{color:#fff;text-decoration:none;font-size:1.25rem;padding:.3125rem 0}
 .container{width:100%;max-width:1140px;margin:0 auto;padding:0 .75rem}
-.card{background-color:#2b3035;border:1px solid #495057;border-radius:.375rem}
+.card{background-color:#21262d;border:1px solid #30363d;border-radius:.375rem}
 .card-body{padding:1rem}
 .badge{display:inline-block;padding:.35em .65em;font-size:.75em;font-weight:700;border-radius:.25rem}
 .fas,.fab,.far,.fa{display:inline-block;font-style:normal;font-variant:normal;text-rendering:auto;-webkit-font-smoothing:antialiased;font-family:"Font Awesome 6 Free",sans-serif;font-weight:900;line-height:1}
 .d-none{display:none}
 .collapse:not(.show){display:none}
 @media(min-width:992px){.collapse.navbar-collapse{display:flex!important}}
-.visually-hidden-focusable{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);border:0}.visually-hidden-focusable:focus{position:fixed;top:0;left:0;width:auto;height:auto;padding:1rem;margin:0;overflow:visible;clip:auto;background:#0d6efd;color:#fff;z-index:9999;font-size:1rem}
 </style>
 {{end}}
