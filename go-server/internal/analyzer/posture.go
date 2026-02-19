@@ -977,7 +977,7 @@ func buildBrandVerdict(ps protocolState, verdicts map[string]any) {
                         "color":  "danger",
                         "icon":   iconExclamationTriangle,
                         "answer": "Yes",
-                        "reason": "No DMARC policy — attackers can send email appearing to be from this domain",
+                        "reason": "No DMARC policy (RFC 7489) — attackers can send email appearing to be from this domain with no sender-authentication barrier",
                 }
                 return
         }
@@ -989,30 +989,30 @@ func buildBrandVerdict(ps protocolState, verdicts map[string]any) {
                                 "color":  "success",
                                 "icon":   iconShieldAlt,
                                 "answer": "No",
-                                "reason": "DMARC reject policy enforced, BIMI brand verification active, and certificate issuance restricted by CAA",
+                                "reason": "DMARC reject policy enforced (RFC 7489 §6.3), BIMI brand verification active (BIMI Spec), and certificate issuance restricted by CAA (RFC 8659 §4) — all three brand-faking vectors addressed",
                         }
                 } else if ps.bimiOK || ps.caaOK {
                         gaps := []string{}
                         if !ps.bimiOK {
-                                gaps = append(gaps, "no BIMI brand verification")
+                                gaps = append(gaps, "no BIMI brand verification (lookalike domains display identically in inboxes)")
                         }
                         if !ps.caaOK {
-                                gaps = append(gaps, "no CAA certificate restriction")
+                                gaps = append(gaps, "no CAA certificate restriction (RFC 8659 — any CA can issue certificates for lookalike domains)")
                         }
                         verdicts["brand_impersonation"] = map[string]any{
                                 "label":  "Mostly Protected",
                                 "color":  "info",
                                 "icon":   iconShieldAlt,
-                                "answer": "Unlikely",
-                                "reason": "DMARC reject policy blocks email spoofing, but " + strings.Join(gaps, " and ") + " — brand faking via other vectors remains possible",
+                                "answer": "Possible",
+                                "reason": "DMARC reject policy blocks email spoofing (RFC 7489 §6.3), but " + strings.Join(gaps, " and ") + " — brand impersonation via remaining vectors is still feasible",
                         }
                 } else {
                         verdicts["brand_impersonation"] = map[string]any{
                                 "label":  "Partially Protected",
-                                "color":  "info",
-                                "icon":   iconShieldAlt,
-                                "answer": "Unlikely",
-                                "reason": "DMARC reject policy blocks email spoofing, but no BIMI brand verification and no CAA certificate restriction — visual and certificate-based brand faking remains possible",
+                                "color":  "warning",
+                                "icon":   iconExclamationTriangle,
+                                "answer": "Possible",
+                                "reason": "DMARC reject policy blocks email spoofing (RFC 7489 §6.3), but no BIMI brand verification and no CAA certificate restriction (RFC 8659) — visual impersonation via lookalike domains and unrestricted certificate issuance remain open vectors",
                         }
                 }
                 return
@@ -1024,8 +1024,8 @@ func buildBrandVerdict(ps protocolState, verdicts map[string]any) {
                                 "label":  "Mostly Protected",
                                 "color":  "info",
                                 "icon":   iconShieldAlt,
-                                "answer": "Unlikely",
-                                "reason": "DMARC quarantine with BIMI brand verification and CAA certificate restriction — spoofed mail is flagged and brand signals are verified",
+                                "answer": "Possible",
+                                "reason": "DMARC quarantine flags spoofed mail (RFC 7489 §6.3) with BIMI brand verification and CAA certificate restriction (RFC 8659 §4) — upgrade to p=reject for full email spoofing protection",
                         }
                 } else if ps.bimiOK || ps.caaOK {
                         gaps := []string{}
@@ -1033,37 +1033,36 @@ func buildBrandVerdict(ps protocolState, verdicts map[string]any) {
                                 gaps = append(gaps, "no BIMI brand verification")
                         }
                         if !ps.caaOK {
-                                gaps = append(gaps, "no CAA certificate restriction")
+                                gaps = append(gaps, "no CAA certificate restriction (RFC 8659)")
                         }
                         verdicts["brand_impersonation"] = map[string]any{
                                 "label":  "Partially Protected",
                                 "color":  "warning",
-                                "icon":   iconShieldAlt,
-                                "answer": "Partially",
-                                "reason": "DMARC quarantine flags spoofed mail, but " + strings.Join(gaps, " and ") + " — upgrade to p=reject for full protection",
+                                "icon":   iconExclamationTriangle,
+                                "answer": "Likely",
+                                "reason": "DMARC quarantine flags but does not reject spoofed mail (RFC 7489 §6.3), and " + strings.Join(gaps, " and ") + " — multiple brand-faking vectors remain open",
                         }
                 } else {
                         verdicts["brand_impersonation"] = map[string]any{
                                 "label":  "Basic",
                                 "color":  "warning",
-                                "icon":   iconShieldAlt,
-                                "answer": "Partially",
-                                "reason": "DMARC quarantine flags spoofed mail but does not reject it — no BIMI or CAA reinforcement",
+                                "icon":   iconExclamationTriangle,
+                                "answer": "Likely",
+                                "reason": "DMARC quarantine flags but does not reject spoofed mail (RFC 7489 §6.3) — no BIMI or CAA (RFC 8659) reinforcement leaves brand impersonation largely unaddressed",
                         }
                 }
                 return
         }
 
-        reason := "DMARC policy is not set to reject — partial protection only"
-        answer := "Partially"
+        reason := "DMARC policy is not set to reject (RFC 7489 §6.3) — partial protection only"
+        answer := "Likely"
         if ps.dmarcPolicy == "none" {
-                reason = "DMARC is monitor-only (p=none) — spoofed mail is not blocked"
-                answer = "Likely"
+                reason = "DMARC is monitor-only p=none (RFC 7489 §6.3) — spoofed mail is not blocked, brand faking is trivial"
         }
         verdicts["brand_impersonation"] = map[string]any{
                 "label":  "Basic",
                 "color":  "warning",
-                "icon":   iconShieldAlt,
+                "icon":   iconExclamationTriangle,
                 "answer": answer,
                 "reason": reason,
         }

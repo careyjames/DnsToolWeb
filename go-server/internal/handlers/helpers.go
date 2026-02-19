@@ -167,9 +167,11 @@ func normalizeVerdictAnswers(verdicts map[string]interface{}) {
                         "Not Configured": "Possible",
                 },
                 "brand_impersonation": {
-                        "Protected": "No",
-                        "Exposed":   "Yes",
-                        "Basic":     "Partially",
+                        "Protected":          "No",
+                        "Exposed":            "Yes",
+                        "Mostly Protected":   "Possible",
+                        "Partially Protected": "Possible",
+                        "Basic":              "Likely",
                 },
                 "certificate_control": {
                         "Configured":     "Yes",

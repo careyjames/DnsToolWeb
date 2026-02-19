@@ -96,8 +96,8 @@ func TestGoldenRuleUSAGov(t *testing.T) {
         if brandAnswer == "No" {
                 t.Errorf("usa.gov-like domain (DMARC reject, no BIMI, no CAA) brand verdict should NOT be 'No', got: %s — BIMI and CAA gaps must be reflected", brandAnswer)
         }
-        if brandAnswer != "Unlikely" {
-                t.Errorf("usa.gov-like domain (DMARC reject, no BIMI, no CAA) brand verdict should be 'Unlikely', got: %s", brandAnswer)
+        if brandAnswer != "Possible" {
+                t.Errorf("usa.gov-like domain (DMARC reject, no BIMI, no CAA) brand verdict should be 'Possible' (RFC 7489 blocks email spoofing but no BIMI/CAA leaves visual+cert vectors open), got: %s", brandAnswer)
         }
 }
 
@@ -124,11 +124,31 @@ func TestBrandVerdictPartialGaps(t *testing.T) {
         verdicts := make(map[string]any)
         buildBrandVerdict(ps, verdicts)
         brand := verdicts["brand_impersonation"].(map[string]any)
-        if brand["answer"] != "Unlikely" {
-                t.Errorf("DMARC reject + BIMI - CAA should be 'Unlikely', got: %s", brand["answer"])
+        if brand["answer"] != "Possible" {
+                t.Errorf("DMARC reject + BIMI - CAA should be 'Possible' (RFC 7489 blocks spoofing but missing CAA per RFC 8659 leaves cert vector open), got: %s", brand["answer"])
         }
         if brand["label"] != "Mostly Protected" {
                 t.Errorf("expected 'Mostly Protected', got: %s", brand["label"])
+        }
+}
+
+func TestBrandVerdictRejectNoBIMINoCAA(t *testing.T) {
+        ps := protocolState{
+                dmarcPolicy: "reject",
+                bimiOK:      false,
+                caaOK:       false,
+        }
+        verdicts := make(map[string]any)
+        buildBrandVerdict(ps, verdicts)
+        brand := verdicts["brand_impersonation"].(map[string]any)
+        if brand["answer"] != "Possible" {
+                t.Errorf("DMARC reject without BIMI or CAA should be 'Possible' (RFC 7489 §6.3 blocks email spoofing but no BIMI/CAA leaves visual+cert vectors open), got: %s", brand["answer"])
+        }
+        if brand["label"] != "Partially Protected" {
+                t.Errorf("expected 'Partially Protected', got: %s", brand["label"])
+        }
+        if brand["color"] != "warning" {
+                t.Errorf("expected color 'warning' for partially protected brand, got: %s", brand["color"])
         }
 }
 
@@ -141,8 +161,8 @@ func TestBrandVerdictQuarantineWithBIMICAA(t *testing.T) {
         verdicts := make(map[string]any)
         buildBrandVerdict(ps, verdicts)
         brand := verdicts["brand_impersonation"].(map[string]any)
-        if brand["answer"] != "Unlikely" {
-                t.Errorf("DMARC quarantine + BIMI + CAA should be 'Unlikely', got: %s", brand["answer"])
+        if brand["answer"] != "Possible" {
+                t.Errorf("DMARC quarantine + BIMI + CAA should be 'Possible' (quarantine only flags, doesn't reject per RFC 7489 §6.3), got: %s", brand["answer"])
         }
         if brand["label"] != "Mostly Protected" {
                 t.Errorf("expected 'Mostly Protected', got: %s", brand["label"])
@@ -158,8 +178,39 @@ func TestBrandVerdictQuarantineAlone(t *testing.T) {
         verdicts := make(map[string]any)
         buildBrandVerdict(ps, verdicts)
         brand := verdicts["brand_impersonation"].(map[string]any)
-        if brand["answer"] != "Partially" {
-                t.Errorf("DMARC quarantine without BIMI/CAA should be 'Partially', got: %s", brand["answer"])
+        if brand["answer"] != "Likely" {
+                t.Errorf("DMARC quarantine without BIMI/CAA should be 'Likely' (RFC 7489 quarantine only flags mail, no brand reinforcement), got: %s", brand["answer"])
+        }
+}
+
+func TestBrandVerdictDMARCNone(t *testing.T) {
+        ps := protocolState{
+                dmarcPolicy: "none",
+                dmarcOK:     true,
+        }
+        verdicts := make(map[string]any)
+        buildBrandVerdict(ps, verdicts)
+        brand := verdicts["brand_impersonation"].(map[string]any)
+        if brand["answer"] != "Likely" {
+                t.Errorf("DMARC p=none should be 'Likely' (RFC 7489 monitor-only, no enforcement), got: %s", brand["answer"])
+        }
+        if brand["label"] != "Basic" {
+                t.Errorf("expected 'Basic', got: %s", brand["label"])
+        }
+}
+
+func TestBrandVerdictDMARCMissing(t *testing.T) {
+        ps := protocolState{
+                dmarcMissing: true,
+        }
+        verdicts := make(map[string]any)
+        buildBrandVerdict(ps, verdicts)
+        brand := verdicts["brand_impersonation"].(map[string]any)
+        if brand["answer"] != "Yes" {
+                t.Errorf("No DMARC should be 'Yes' (no RFC 7489 protection at all), got: %s", brand["answer"])
+        }
+        if brand["label"] != "Exposed" {
+                t.Errorf("expected 'Exposed', got: %s", brand["label"])
         }
 }
 
