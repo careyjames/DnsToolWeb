@@ -29,6 +29,7 @@ type Analyzer struct {
         semaphore     chan struct{}
 
         SMTPProbeMode string
+        ProbeAPIURL   string
 }
 
 type ctCacheEntry struct {

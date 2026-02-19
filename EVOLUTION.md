@@ -10,6 +10,40 @@ This file is the project's permanent breadcrumb trail — every session's decisi
 
 ---
 
+## Session: February 19, 2026 (Remote SMTP Probe Infrastructure)
+
+### v26.20.87 — Remote SMTP Probe via Dedicated Probe Server
+
+#### What Changed
+1. **Deployed SMTP probe API on probe-us-01.dns-observe.com** — Python 3 HTTP service (`/opt/dns-probe/probe_api.py`) running as systemd unit (`dns-probe.service`), listening on 127.0.0.1:8025, reverse-proxied by Caddy on HTTPS.
+2. **New probe mode: `remote`** — Go backend calls `PROBE_API_URL/probe/smtp` with MX hosts, receives structured JSON with TLS version, cipher, cert details. Falls back to local `force` probe if remote fails.
+3. **Config**: `PROBE_API_URL` (secret), `PROBE_SSH_HOST`, `PROBE_SSH_USER`, `PROBE_SSH_PRIVATE_KEY` (all secrets). `SMTP_PROBE_MODE=remote` auto-set when `PROBE_API_URL` is present.
+4. **Graceful fallback**: If remote probe API is unreachable, times out, or returns invalid data, the system falls back to direct local SMTP probing (same as `force` mode).
+5. **Probe API features**: POST `/probe/smtp` with `{"hosts": ["mx1.example.com"]}`, GET `/health` for monitoring. Concurrent probing (up to 3 workers), 6s per-host timeout, max 5 hosts per request.
+6. **Response includes**: `probe_host` field identifying which probe server performed the scan, `elapsed_seconds` for performance monitoring.
+
+#### Why Remote Probe
+Cloud hosting providers (AWS, GCP, Azure, Replit) block outbound TCP port 25 as anti-spam policy. Dedicated probe server (VPS) has unrestricted port 25 access, enabling live STARTTLS verification with actual TLS handshake, certificate chain validation, and cipher suite inspection.
+
+#### Architecture
+```
+DNS Tool (Replit) → HTTPS POST → probe-us-01.dns-observe.com/probe/smtp
+                                          ↓
+                                  Python probe API (systemd)
+                                          ↓
+                                  TCP:25 → MX host → STARTTLS → TLS handshake
+                                          ↓
+                                  JSON response with TLS/cert details
+```
+
+#### Secrets (all pre-configured)
+- `PROBE_API_URL` — https://probe-us-01.dns-observe.com
+- `PROBE_SSH_HOST` — probe-us-01.dns-observe.com
+- `PROBE_SSH_USER` — root
+- `PROBE_SSH_PRIVATE_KEY` — ED25519 deploy key
+
+---
+
 ## Session: February 19, 2026 (Codeberg Migration → GitHub Reversal)
 
 ### Phase 1: Codeberg Migration (Completed, Then Reversed)

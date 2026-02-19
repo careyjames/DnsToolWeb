@@ -15,6 +15,7 @@ type Config struct {
         AppVersion         string
         Testing            bool
         SMTPProbeMode      string
+        ProbeAPIURL        string
         MaintenanceNote    string
         SectionTuning      map[string]string
         GoogleClientID     string
@@ -59,6 +60,11 @@ func Load() (*Config, error) {
                 smtpProbeMode = "skip"
         }
 
+        probeAPIURL := os.Getenv("PROBE_API_URL")
+        if probeAPIURL != "" && smtpProbeMode == "skip" {
+                smtpProbeMode = "remote"
+        }
+
         maintenanceNote := os.Getenv("MAINTENANCE_NOTE")
 
         tuning := make(map[string]string)
@@ -89,9 +95,10 @@ func Load() (*Config, error) {
                 DatabaseURL:         dbURL,
                 SessionSecret:       sessionSecret,
                 Port:                port,
-                AppVersion:          "26.20.86",
+                AppVersion:          "26.20.87",
                 Testing:             false,
                 SMTPProbeMode:       smtpProbeMode,
+                ProbeAPIURL:         probeAPIURL,
                 MaintenanceNote:     maintenanceNote,
                 SectionTuning:       tuning,
                 GoogleClientID:      os.Getenv("GOOGLE_CLIENT_ID"),

@@ -30,6 +30,14 @@ OSINT platform for RFC-compliant domain security analysis. Go/Gin backend, Boots
 - **Nav**: "Sign In" (fa-key) in collapse menu; authenticated dropdown with fa-user-shield; admin badge fa-shield.
 - **Route protection**: /export/json requires admin. All analysis remains no-login-required.
 
+## SMTP Probe Infrastructure (v26.20.87)
+- **Remote probe mode**: `SMTP_PROBE_MODE=remote` calls external probe API instead of local port 25.
+- **Probe server**: `probe-us-01.dns-observe.com` — Python 3 API (`/opt/dns-probe/probe_api.py`), systemd unit `dns-probe.service`, Caddy reverse proxy.
+- **Secrets**: `PROBE_API_URL`, `PROBE_SSH_HOST`, `PROBE_SSH_USER`, `PROBE_SSH_PRIVATE_KEY` (all configured).
+- **API endpoints**: POST `/probe/smtp` (with `{"hosts": [...]}`) and GET `/health`.
+- **Fallback**: If remote probe fails, falls back to local direct SMTP probing (`force` mode).
+- **SSH access**: `ssh -i <key> root@probe-us-01.dns-observe.com` — key requires newline reformatting from secret storage.
+
 ## Engines
 - **ICIE** — Intelligence Classification & Interpretation Engine (analysis logic)
 - **ICAE** — Intelligence Confidence Audit Engine (accuracy tracking). Package: `go-server/internal/icae/`. DB tables: `ice_*` (legacy prefix, not renamed). Two layers per protocol: collection + analysis. Maturity: development → verified → consistent → gold → gold_master. 45 deterministic test cases.
