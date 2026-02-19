@@ -238,6 +238,7 @@ go test ./go-server/internal/analyzer/ -run Boundary -v    # Boundary tests pass
 | Feb 18 | `maintenance.lock` blocking ALL pushes from agent | Gate 1 treated ALL locks as push-blockers. Replit's `maintenance.lock` is always present but doesn't block `git push`. FIX: Smart lock classification — only `index/HEAD/config/shallow.lock` block. Sync via `git ls-remote` (read-only). | 1+ |
 | Feb 17 | `golden_rules_intel_test.go` exposed in public repo | `_intel.go` file committed to DnsToolWeb (visible in Git history even with build tags) | N/A (IP risk) |
 | Feb 18 | SKILL.md itself contained methodology details | Public repo file documenting proprietary pipeline | N/A (IP risk) |
+| Feb 19 | Git panel stuck on "Resolve merge conflicts" forever | `git-health-check.sh --repair` and `git-panel-reset.sh` never checked for MERGE_HEAD/MERGE_MSG/MERGE_MODE. FIX: Both scripts now detect and abort interrupted merges. | 0.5+ |
 
 **Commit author note**: GitHub API commits use `careyjames` (GitHub identity). Replit checkpoint commits use `careybalboa` (Replit internal identity). Both are the same person — this is expected.
 

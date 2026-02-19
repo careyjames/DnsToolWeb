@@ -50,19 +50,25 @@ if [ "$REPAIR" = true ]; then
     echo "Cleared $LOCK_COUNT lock file(s)"
   fi
 
-  # 2. Abort interrupted rebase
+  # 2. Abort interrupted merge
+  if [ -f ".git/MERGE_HEAD" ] || [ -f ".git/MERGE_MSG" ] || [ -f ".git/MERGE_MODE" ]; then
+    git merge --abort 2>/dev/null && echo "Aborted interrupted merge" && FIXED=$((FIXED+1))
+    rm -f .git/MERGE_HEAD .git/MERGE_MSG .git/MERGE_MODE 2>/dev/null
+  fi
+
+  # 3. Abort interrupted rebase
   if [ -d ".git/rebase-merge" ] || [ -d ".git/rebase-apply" ]; then
     git rebase --abort 2>/dev/null && echo "Aborted interrupted rebase" && FIXED=$((FIXED+1))
     rm -rf .git/rebase-merge .git/rebase-apply 2>/dev/null
   fi
 
-  # 3. Fix detached HEAD — reattach to main
+  # 4. Fix detached HEAD — reattach to main
   CURRENT_HEAD=$(cat .git/HEAD 2>/dev/null)
   if echo "$CURRENT_HEAD" | grep -qv "ref:"; then
     printf 'ref: refs/heads/main\n' > .git/HEAD 2>/dev/null && echo "Reattached HEAD to main" && FIXED=$((FIXED+1))
   fi
 
-  # 4. Update tracking refs
+  # 5. Update tracking refs
   echo "Updating tracking refs..."
   git fetch 2>/dev/null || true
 
@@ -77,7 +83,7 @@ if [ "$REPAIR" = true ]; then
     echo "  Tracking ref already current"
   fi
 
-  # 5. Report status
+  # 6. Report status
   if [ $FIXED -eq 0 ]; then
     echo "Git health: CLEAN — zero lock files, no interrupted operations"
   else

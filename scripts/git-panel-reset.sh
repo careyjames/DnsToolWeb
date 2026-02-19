@@ -44,6 +44,18 @@ if [ "$LOCKS_FOUND" -eq 0 ]; then
   echo "  No lock files found (good)"
 fi
 
+# Step 1b: Abort interrupted merge (blocks Git panel with "Resolve conflicts" overlay)
+if [ -f ".git/MERGE_HEAD" ] || [ -f ".git/MERGE_MSG" ] || [ -f ".git/MERGE_MODE" ]; then
+  git merge --abort 2>/dev/null && echo "  Aborted interrupted merge" && FIXED=$((FIXED+1))
+  rm -f .git/MERGE_HEAD .git/MERGE_MSG .git/MERGE_MODE 2>/dev/null
+fi
+
+# Step 1c: Abort interrupted rebase
+if [ -d ".git/rebase-merge" ] || [ -d ".git/rebase-apply" ]; then
+  git rebase --abort 2>/dev/null && echo "  Aborted interrupted rebase" && FIXED=$((FIXED+1))
+  rm -rf .git/rebase-merge .git/rebase-apply 2>/dev/null
+fi
+
 # Step 2: Fetch and force-update tracking ref
 echo ""
 echo "Fetching latest from GitHub..."
