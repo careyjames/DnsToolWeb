@@ -3745,8 +3745,8 @@
                         </a>
                     </div>
                     {{end}}
-                    <div class="table-responsive">
-                        <table class="table table-sm table-hover mb-0">
+                    <div class="table-responsive" id="subdomainTableWrap">
+                        <table class="table table-sm table-hover mb-0" id="subdomainTable">
                             <thead>
                                 <tr>
                                     <th class="border-secondary">Subdomain</th>
@@ -3758,7 +3758,7 @@
                                     <th class="border-secondary">Issuer(s)</th>
                                 </tr>
                             </thead>
-                            <tbody>
+                            <tbody id="subdomainTbody">
                                 {{range $sub := $ctSubdomains}}
                                 {{$s := toMap $sub}}
                                 {{if $s}}
@@ -4702,6 +4702,67 @@
                     });
                 });
             }
+            (function setupSubdomainCollapse() {
+                var tbody = document.getElementById('subdomainTbody');
+                if (!tbody) return;
+                var rows = tbody.querySelectorAll('tr');
+                var total = rows.length;
+                var VISIBLE = 20;
+                if (total <= VISIBLE) return;
+                var hidden = total - VISIBLE;
+                for (var i = VISIBLE; i < total; i++) {
+                    rows[i].style.display = 'none';
+                    rows[i].classList.add('subdomain-collapsed-row');
+                }
+                var expandRow = document.createElement('tr');
+                expandRow.id = 'subdomainExpandRow';
+                var td = document.createElement('td');
+                td.colSpan = 7;
+                td.className = 'text-center py-3 border-secondary';
+                var btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = 'btn btn-outline-info btn-sm';
+                btn.innerHTML = '<i class="fas fa-chevron-down me-2"></i>Show All ' + total + ' Subdomains <span class="text-muted ms-1">(' + hidden + ' more)</span>';
+                btn.addEventListener('click', function() {
+                    var hiddenRows = tbody.querySelectorAll('.subdomain-collapsed-row');
+                    for (var j = 0; j < hiddenRows.length; j++) {
+                        hiddenRows[j].style.display = '';
+                    }
+                    expandRow.style.display = 'none';
+                    if (!collapseRow.parentNode) {
+                        tbody.appendChild(collapseRow);
+                    }
+                    collapseRow.style.display = '';
+                });
+                td.appendChild(btn);
+                expandRow.appendChild(td);
+                var refRow = rows[VISIBLE];
+                tbody.insertBefore(expandRow, refRow);
+                var collapseRow = document.createElement('tr');
+                collapseRow.id = 'subdomainCollapseRow';
+                collapseRow.style.display = 'none';
+                var collapseTd = document.createElement('td');
+                collapseTd.colSpan = 7;
+                collapseTd.className = 'text-center py-3 border-secondary';
+                var collapseBtn = document.createElement('button');
+                collapseBtn.type = 'button';
+                collapseBtn.className = 'btn btn-outline-secondary btn-sm';
+                collapseBtn.innerHTML = '<i class="fas fa-chevron-up me-2"></i>Collapse to Top ' + VISIBLE;
+                collapseBtn.addEventListener('click', function() {
+                    var hiddenRows = tbody.querySelectorAll('.subdomain-collapsed-row');
+                    for (var j = 0; j < hiddenRows.length; j++) {
+                        hiddenRows[j].style.display = 'none';
+                    }
+                    collapseRow.style.display = 'none';
+                    expandRow.style.display = '';
+                    var table = document.getElementById('subdomainTable');
+                    if (table) table.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                });
+                collapseTd.appendChild(collapseBtn);
+                collapseRow.appendChild(collapseTd);
+                tbody.appendChild(collapseRow);
+            })();
+
             setupCopyCommandButtons();
             setupIntegrityHashCopy();
             setupHashPreviewLink();
