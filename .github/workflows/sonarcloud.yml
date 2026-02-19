@@ -22,7 +22,9 @@ jobs:
 
       - name: Run Go tests with coverage
         run: go test ./go-server/... -cov  erprofile=coverage.out -count=1 -short -timeout 120s
-
+                env:
+          CGO_ENABLED: '0'
+          
       - name: SonarCloud Scan
         uses: sonarsource/sonarqube-scan-action@v6
         env:
