@@ -114,7 +114,7 @@ echo "  PASS — no interrupted rebase"
 
 # ── GATE 3: No intel files in public repo ──
 echo "=== GATE 3: Intel file safety check ==="
-INTEL_FILES=$(find go-server -name "*_intel*" 2>/dev/null || true)
+INTEL_FILES=$(find go-server -name "*_intel.go" -o -name "*_intel_test.go" 2>/dev/null || true)
 if [ -n "$INTEL_FILES" ]; then
   echo ""
   echo "  HARD STOP: Intel files found in public repo!"

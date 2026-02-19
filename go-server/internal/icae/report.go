@@ -37,31 +37,45 @@ func LoadReportMetrics(ctx context.Context, queries DBTX) *ReportMetrics {
                         DisplayName: ProtocolDisplayNames[proto],
                 }
 
-                if col, ok := maturityMap[proto][LayerCollection]; ok {
-                        pr.CollectionLevel = col.Maturity
-                        pr.CollectionDisplay = MaturityDisplayNames[col.Maturity]
-                        pr.CollectionRuns = int(col.TotalRuns)
+                colData, hasCol := maturityMap[proto][LayerCollection]
+                analData, hasAnal := maturityMap[proto][LayerAnalysis]
+
+                if hasCol {
+                        pr.CollectionLevel = colData.Maturity
+                        pr.CollectionDisplay = MaturityDisplayNames[colData.Maturity]
+                        pr.CollectionRuns = int(colData.TotalRuns)
                 } else {
                         pr.CollectionLevel = MaturityDevelopment
                         pr.CollectionDisplay = MaturityDisplayNames[MaturityDevelopment]
                 }
 
-                if anal, ok := maturityMap[proto][LayerAnalysis]; ok {
-                        pr.AnalysisLevel = anal.Maturity
-                        pr.AnalysisDisplay = MaturityDisplayNames[anal.Maturity]
-                        pr.AnalysisRuns = int(anal.TotalRuns)
+                if hasAnal {
+                        pr.AnalysisLevel = analData.Maturity
+                        pr.AnalysisDisplay = MaturityDisplayNames[analData.Maturity]
+                        pr.AnalysisRuns = int(analData.TotalRuns)
                 } else {
                         pr.AnalysisLevel = MaturityDevelopment
                         pr.AnalysisDisplay = MaturityDisplayNames[MaturityDevelopment]
                 }
 
+                hasRuns := (hasCol && colData.TotalRuns > 0) || (hasAnal && analData.TotalRuns > 0)
+                pr.HasRuns = hasRuns
+
                 protocols = append(protocols, pr)
+        }
+
+        evaluatedCount := 0
+        for _, p := range protocols {
+                if p.HasRuns {
+                        evaluatedCount++
+                }
         }
 
         overall := OverallMaturity(protocols)
         metrics := &ReportMetrics{
                 Protocols:              protocols,
                 TotalProtocols:         len(protocols),
+                EvaluatedCount:         evaluatedCount,
                 OverallMaturity:        overall,
                 OverallMaturityDisplay: MaturityDisplayNames[overall],
         }

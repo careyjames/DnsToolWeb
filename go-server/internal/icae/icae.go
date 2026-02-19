@@ -110,6 +110,7 @@ type ReportMetrics struct {
         LastRunAt              *time.Time
         LastRunVersion         string
         TotalProtocols         int
+        EvaluatedCount         int
         OverallMaturity        string
         OverallMaturityDisplay string
 }
@@ -123,6 +124,7 @@ type ProtocolReport struct {
         AnalysisLevel     string
         AnalysisDisplay   string
         AnalysisRuns      int
+        HasRuns           bool
 }
 
 func ComputeMaturity(consecutivePasses int, firstPassAt *time.Time, lastRegressionAt *time.Time) string {

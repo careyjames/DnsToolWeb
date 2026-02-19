@@ -2994,7 +2994,7 @@
                             {{if $saas_txt}}
                             <div class="col-md-{{if and $asn_info $edge_cdn}}4{{else if or $asn_info $edge_cdn}}6{{else}}12{{end}} mb-3">
                                 {{$saasStatus := mapGetStr "status" $saas_txt}}
-                                <p class="d-flex align-items-center">
+                                <p class="d-flex align-items-center flex-wrap">
                                     <i class="fas fa-puzzle-piece me-2"></i>SaaS TXT Footprint
                                     <span class="badge bg-{{if eq $saasStatus "success"}}success{{else}}info{{end}} ms-2">{{title $saasStatus}}</span>
                                     {{$svcCount := mapGetFloat "service_count" $saas_txt}}
@@ -3561,7 +3561,7 @@
                         <span class="section-question">What subdomains and infrastructure are exposed in certificate logs?
                             {{if and (eq $ctStatus "success") (gt $ctUnique 0)}}
                                 {{if or (mapGetBool "display_capped" $ct) (mapGetBool "was_truncated" $ct)}}
-                                <span class="badge badge-recon-count ms-2"><i class="fas fa-crosshairs me-1"></i>{{formatFloat 0 $ctUnique}} discovered — showing {{mapGetInt "displayed_count" $ct}} prioritized</span>
+                                <span class="badge badge-recon-count ms-2"><i class="fas fa-crosshairs me-1"></i>Showing {{mapGetInt "displayed_count" $ct}} of {{formatFloat 0 $ctUnique}} discovered</span>
                                 {{else}}
                                 <span class="badge badge-recon-count ms-2"><i class="fas fa-crosshairs me-1"></i>{{formatFloat 0 $ctUnique}} subdomains discovered</span>
                                 {{end}}
@@ -3700,7 +3700,7 @@
                     {{if mapGetBool "display_capped" $ct}}
                     <div class="alert alert-info bg-info bg-opacity-10 border-info border-opacity-25 py-2 mt-2 mb-2 small">
                         <i class="fas fa-list me-1"></i>
-                        <strong>{{formatFloat 0 $ctUnique}} subdomains discovered — showing {{len $ctSubdomains}} prioritized by security relevance.</strong>
+                        <strong>Showing {{len $ctSubdomains}} of {{formatFloat 0 $ctUnique}} discovered subdomains, prioritized by security relevance.</strong>
                         All {{mapGetInt "display_current_count" $ct}} current subdomains are included, plus the most relevant historical entries.
                         <a href="/export/subdomains?domain={{.Domain}}" class="btn btn-sm btn-recon ms-2 no-print" title="Download complete subdomain recon as CSV">
                             <i class="fas fa-crosshairs me-1"></i>Export Full Recon (CSV)
@@ -3781,7 +3781,7 @@
                     {{end}}
                     {{if mapGetBool "was_truncated" $ct}}
                     <div class="text-muted small mt-2 mb-0 p-2 rounded u-bg-soft">
-                        <i class="fas fa-filter me-1"></i><strong>{{formatFloat 0 $ctUnique}} subdomains discovered, curated by security relevance.</strong>
+                        <i class="fas fa-filter me-1"></i><strong>Showing {{len $ctSubdomains}} of {{formatFloat 0 $ctUnique}} discovered subdomains, curated by security relevance.</strong>
                         Multiple cooperative discovery methods — including CT logs (<a href="https://datatracker.ietf.org/doc/html/rfc6962" target="_blank" rel="noopener" class="text-info">RFC 6962</a>), DNS probing, and CNAME chain traversal — feed into a unified view.
                         Well-known service names (mail, vpn, api, sso, admin, etc.), DNS-resolving hosts, and subdomains with the most certificate activity are prioritized.
                         {{$expiredCount := mapGetFloat "expired_count" $ct}}
@@ -4315,17 +4315,24 @@
                         <i class="fas fa-check-circle text-info me-2"></i>
                         <span class="text-muted small fw-bold text-uppercase u-icae-label">Intelligence Confidence Audit Engine</span>
                     </span>
-                    <span class="badge bg-dark border border-secondary text-muted small" data-bs-toggle="tooltip" title="Overall system maturity across all {{.ICAEMetrics.TotalProtocols}} monitored protocols">{{.ICAEMetrics.OverallMaturityDisplay}}</span>
+                    <span class="badge bg-dark border border-secondary text-muted small" data-bs-toggle="tooltip" title="Overall system maturity · {{.ICAEMetrics.EvaluatedCount}} of {{.ICAEMetrics.TotalProtocols}} protocols under active evaluation">{{.ICAEMetrics.OverallMaturityDisplay}} · {{.ICAEMetrics.EvaluatedCount}}/{{.ICAEMetrics.TotalProtocols}} evaluated</span>
                 </div>
                 <div class="text-muted small mb-2">
                     How confident are these results? Each protocol below is independently tested against RFC standards. Maturity levels reflect consecutive passing runs: Development → Verified → Consistent → Gold.
                 </div>
                 <div class="d-flex flex-wrap gap-2">
                     {{range .ICAEMetrics.Protocols}}
+                    {{if .HasRuns}}
                     <span class="badge bg-dark border border-secondary px-2 py-1" data-bs-toggle="tooltip" title="Collection: {{.CollectionDisplay}} ({{.CollectionRuns}} runs) · Analysis: {{.AnalysisDisplay}} ({{.AnalysisRuns}} runs)">
                         <span class="text-muted">{{.DisplayName}}</span>
                         <span class="ms-1 {{if eq .AnalysisLevel "gold"}}text-warning{{else if eq .AnalysisLevel "master_gold"}}text-warning{{else if eq .AnalysisLevel "consistent"}}text-info{{else if eq .AnalysisLevel "verified"}}text-success{{else}}text-secondary{{end}}">{{.AnalysisDisplay}}</span>
                     </span>
+                    {{else}}
+                    <span class="badge bg-dark border border-secondary border-opacity-50 px-2 py-1 opacity-50" data-bs-toggle="tooltip" title="{{.DisplayName}}: Awaiting test coverage — no automated test fixtures yet">
+                        <span class="text-muted">{{.DisplayName}}</span>
+                        <span class="ms-1 text-secondary">Pending</span>
+                    </span>
+                    {{end}}
                     {{end}}
                 </div>
                 <div class="text-muted mt-2 u-icae-disclaimer">
