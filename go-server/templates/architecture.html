@@ -145,7 +145,7 @@
             },
             flowchart: {
                 htmlLabels: true,
-                curve: 'basis',
+                curve: 'linear',
                 padding: 18,
                 nodeSpacing: 50,
                 rankSpacing: 60,
@@ -237,13 +237,21 @@
                     el.setAttribute('fill', '#79c0ff');
                 });
 
-                svg.querySelectorAll('.edgePath path').forEach(function(p) {
+                svg.querySelectorAll('.edgePath path, .flowchart-link, .edge-pattern-solid, .edge-pattern-dotted').forEach(function(p) {
                     p.setAttribute('stroke', '#58a6ff');
                     p.setAttribute('stroke-width', '1.5');
+                    p.setAttribute('fill', 'none');
                 });
 
-                svg.querySelectorAll('marker path').forEach(function(p) {
+                svg.querySelectorAll('marker path, marker polygon, marker circle').forEach(function(p) {
                     p.setAttribute('fill', '#58a6ff');
+                    p.setAttribute('stroke', '#58a6ff');
+                });
+
+                svg.querySelectorAll('path[class*="edge"], line[class*="edge"]').forEach(function(p) {
+                    p.setAttribute('stroke', '#58a6ff');
+                    p.setAttribute('stroke-width', '1.5');
+                    p.setAttribute('fill', 'none');
                 });
 
                 applyTextColor(svg);
