@@ -8,6 +8,12 @@ import (
         "strings"
 )
 
+var (
+        Version   = "26.21.3"
+        GitCommit = "dev"
+        BuildTime = "unknown"
+)
+
 type Config struct {
         DatabaseURL        string
         SessionSecret      string
@@ -96,7 +102,7 @@ func Load() (*Config, error) {
                 DatabaseURL:         dbURL,
                 SessionSecret:       sessionSecret,
                 Port:                port,
-                AppVersion:          "26.21.2",
+                AppVersion:          Version,
                 Testing:             false,
                 SMTPProbeMode:       smtpProbeMode,
                 ProbeAPIURL:         probeAPIURL,

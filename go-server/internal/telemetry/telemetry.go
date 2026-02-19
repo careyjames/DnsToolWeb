@@ -4,6 +4,7 @@ package telemetry
 
 import (
         "math"
+        "slices"
         "sync"
         "time"
 )
@@ -208,20 +209,12 @@ func (p *provider) stats() ProviderStats {
         if count > 0 {
                 sorted := make([]float64, count)
                 copy(sorted, p.latencies[:count])
-                sortFloats(sorted)
+                slices.Sort(sorted)
                 s.AvgLatencyMs = avgFloats(sorted)
                 s.P95LatencyMs = sorted[int(float64(len(sorted)-1)*0.95)]
         }
 
         return s
-}
-
-func sortFloats(data []float64) {
-        for i := 1; i < len(data); i++ {
-                for j := i; j > 0 && data[j-1] > data[j]; j-- {
-                        data[j-1], data[j] = data[j], data[j-1]
-                }
-        }
 }
 
 func avgFloats(data []float64) float64 {

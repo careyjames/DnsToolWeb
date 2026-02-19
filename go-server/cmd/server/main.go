@@ -3,13 +3,16 @@
 package main
 
 import (
+        "context"
         "fmt"
         "html/template"
         "log/slog"
         "net/http"
         "os"
+        "os/signal"
         "path/filepath"
         "strings"
+        "syscall"
         "time"
 
         "dnstool/go-server/internal/analyzer"
@@ -52,7 +55,7 @@ func main() {
         slog.Info("Trusted proxies disabled — using direct connection IP for rate limiting")
 
         router.Use(middleware.Recovery(cfg.AppVersion))
-        router.Use(gzip.Gzip(gzip.DefaultCompression))
+        router.Use(gzip.Gzip(gzip.BestSpeed))
         router.Use(middleware.RequestContext())
         router.Use(middleware.SecurityHeaders())
 
@@ -76,34 +79,19 @@ func main() {
         staticDir := findStaticDir()
         staticFS := http.Dir(staticDir)
         fileServer := http.StripPrefix("/static", http.FileServer(staticFS))
-        router.GET("/static/*filepath", func(c *gin.Context) {
+        serveStatic := func(c *gin.Context) {
                 fp := c.Param("filepath")
-                if strings.HasSuffix(fp, ".css") || strings.HasSuffix(fp, ".js") ||
-                        strings.HasSuffix(fp, ".woff2") || strings.HasSuffix(fp, ".woff") ||
-                        strings.HasSuffix(fp, ".png") || strings.HasSuffix(fp, ".ico") ||
-                        strings.HasSuffix(fp, ".svg") || strings.HasSuffix(fp, ".jpg") {
-                        if strings.Contains(fp, "?v=") || strings.Contains(c.Request.URL.RawQuery, "v=") {
+                if isStaticAsset(fp) {
+                        if strings.Contains(c.Request.URL.RawQuery, "v=") {
                                 c.Header(headerCacheControl, "public, max-age=31536000, immutable")
                         } else {
                                 c.Header(headerCacheControl, "public, max-age=86400")
                         }
                 }
                 fileServer.ServeHTTP(c.Writer, c.Request)
-        })
-        router.HEAD("/static/*filepath", func(c *gin.Context) {
-                fp := c.Param("filepath")
-                if strings.HasSuffix(fp, ".css") || strings.HasSuffix(fp, ".js") ||
-                        strings.HasSuffix(fp, ".woff2") || strings.HasSuffix(fp, ".woff") ||
-                        strings.HasSuffix(fp, ".png") || strings.HasSuffix(fp, ".ico") ||
-                        strings.HasSuffix(fp, ".svg") || strings.HasSuffix(fp, ".jpg") {
-                        if strings.Contains(fp, "?v=") || strings.Contains(c.Request.URL.RawQuery, "v=") {
-                                c.Header(headerCacheControl, "public, max-age=31536000, immutable")
-                        } else {
-                                c.Header(headerCacheControl, "public, max-age=86400")
-                        }
-                }
-                fileServer.ServeHTTP(c.Writer, c.Request)
-        })
+        }
+        router.GET("/static/*filepath", serveStatic)
+        router.HEAD("/static/*filepath", serveStatic)
 
         dnsAnalyzer := analyzer.New()
         dnsAnalyzer.SMTPProbeMode = cfg.SMTPProbeMode
@@ -234,12 +222,46 @@ func main() {
         })
 
         addr := fmt.Sprintf("0.0.0.0:%s", cfg.Port)
-        slog.Info("Starting Go DNS Tool server", "address", addr, "version", cfg.AppVersion)
+        slog.Info("Starting Go DNS Tool server",
+                "address", addr,
+                "version", cfg.AppVersion,
+                "commit", config.GitCommit,
+                "built", config.BuildTime,
+        )
 
-        if err := router.Run(addr); err != nil {
-                slog.Error("Server failed to start", "error", err)
+        srv := &http.Server{
+                Addr:              addr,
+                Handler:           router.Handler(),
+                ReadHeaderTimeout: 10 * time.Second,
+                IdleTimeout:       120 * time.Second,
+                MaxHeaderBytes:    1 << 20,
+        }
+
+        quit := make(chan os.Signal, 1)
+        signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+
+        go func() {
+                if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+                        slog.Error("Server failed to start", "error", err)
+                        os.Exit(1)
+                }
+        }()
+
+        <-quit
+        slog.Info("Shutdown signal received, draining connections…")
+
+        analyticsCollector.Flush()
+        slog.Info("Analytics flushed on shutdown")
+
+        shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 15*time.Second)
+        defer shutdownCancel()
+
+        if err := srv.Shutdown(shutdownCtx); err != nil {
+                slog.Error("Server forced to shutdown", "error", err)
                 os.Exit(1)
         }
+
+        slog.Info("Server exited cleanly")
 }
 
 func findTemplatesDir() string {
@@ -255,6 +277,15 @@ func findTemplatesDir() string {
         }
         slog.Warn("Templates directory not found, using default")
         return "templates"
+}
+
+func isStaticAsset(fp string) bool {
+        for _, ext := range []string{".css", ".js", ".woff2", ".woff", ".png", ".ico", ".svg", ".jpg", ".webp", ".avif"} {
+                if strings.HasSuffix(fp, ext) {
+                        return true
+                }
+        }
+        return false
 }
 
 func findStaticDir() string {
