@@ -10,6 +10,45 @@ This file is the project's permanent breadcrumb trail — every session's decisi
 
 ---
 
+## Session: February 19, 2026 (v26.21.3 — Production Hardening, Architecture Quality)
+
+### v26.21.3 — Production Hardening & Architecture Quality Audit
+
+#### What Changed
+1. **Graceful shutdown**: Replaced `router.Run()` with `http.Server` + OS signal handling (`SIGINT`, `SIGTERM`). Server now drains in-flight requests with 15-second timeout, flushes analytics data, and exits cleanly. Adds `ReadHeaderTimeout` (10s), `IdleTimeout` (120s), `MaxHeaderBytes` (1MB) for Slowloris protection.
+2. **Build pipeline hardening**: `build.sh` now injects git commit hash and build timestamp via `-ldflags` at compile time. Added `-trimpath` for reproducible builds and `-s -w` for symbol stripping (binary 39.7MB → 27.8MB, 30% reduction). Startup log now shows version, commit, and build time.
+3. **Session context bug fix**: `SessionLoader` goroutine was using `c.Request.Context()` for `UpdateSessionLastSeen` — this context gets cancelled when the HTTP request completes, causing silent failures. Fixed to use `context.Background()` with 5-second timeout.
+4. **DRY static file handler**: Deduplicated GET/HEAD static file routing into single `serveStatic` handler. Added `.webp` and `.avif` to cacheable asset extensions.
+5. **Modern Go stdlib**: Replaced custom `sortFloats` insertion sort with `slices.Sort` (Go 1.21+ stdlib). O(n log n) guaranteed vs O(n²) worst case.
+6. **Middleware chain optimization**: Changed gzip compression from `DefaultCompression` (level 6) to `BestSpeed` (level 1) — ~85-90% compression ratio retained with significantly lower CPU latency per request.
+7. **Analytics flush on shutdown**: Analytics data is now flushed before graceful drain begins, preventing data loss on process termination.
+8. **Config modernization**: `AppVersion` now sourced from package-level `config.Version` variable (ldflags-injectable) instead of hardcoded string in `Load()`. Added `GitCommit` and `BuildTime` package vars.
+9. **Version bump**: 26.21.2 → 26.21.3
+
+#### Architecture Improvements
+| Area | Before | After |
+|------|--------|-------|
+| Shutdown | Abrupt `router.Run()` exit | Graceful drain with signal handling |
+| Binary size | 39.7MB | 27.8MB (-30%) |
+| Build metadata | None injected | Commit + timestamp via ldflags |
+| Session goroutine | Used cancelled request context | Isolated background context |
+| Static handler | Duplicated GET/HEAD | Single shared handler |
+| Telemetry sort | Custom O(n²) insertion sort | stdlib `slices.Sort` O(n log n) |
+| Gzip | Level 6 (CPU-heavy) | Level 1 (fast, ~same ratio) |
+| Analytics | Lost on kill | Flushed before shutdown |
+
+#### Lessons Learned
+- `http.Server.ReadHeaderTimeout` is critical for Slowloris defense — Go's `net/http` has no default.
+- `context.Background()` for fire-and-forget goroutines is non-negotiable when the parent context is request-scoped.
+- `-s -w` ldflags strip DWARF debug info and symbol tables; 30% size reduction with zero runtime impact.
+- `-trimpath` removes local filesystem paths from the binary — important for reproducible builds and to avoid leaking build machine paths in stack traces.
+- `gzip.BestSpeed` vs `gzip.DefaultCompression`: For HTML/JSON responses under 100KB, level 1 achieves 85-90% of level 6's ratio at 3-5x less CPU. The bottleneck for DNS analysis is network I/O, not compression.
+
+#### Files Changed
+- **Modified**: `go-server/cmd/server/main.go` (graceful shutdown, DRY static handler, build metadata logging), `go-server/internal/config/config.go` (package-level Version/GitCommit/BuildTime vars), `go-server/internal/middleware/auth.go` (session context fix), `go-server/internal/telemetry/telemetry.go` (slices.Sort), `build.sh` (ldflags, trimpath, symbol stripping)
+
+---
+
 ## Session: February 19, 2026 (v26.21.2 — Bootstrap Removal, Foundation CSS/JS)
 
 ### v26.21.2 — Bootstrap Removed, Custom Foundation CSS/JS
