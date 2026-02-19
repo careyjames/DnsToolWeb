@@ -32,5 +32,8 @@ DELETE FROM sessions WHERE id = $1;
 -- name: CountAdminUsers :one
 SELECT COUNT(*) FROM users WHERE role = 'admin';
 
+-- name: PromoteUserToAdmin :exec
+UPDATE users SET role = 'admin' WHERE id = $1;
+
 -- name: DeleteExpiredSessions :exec
 DELETE FROM sessions WHERE expires_at < NOW();

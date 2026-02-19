@@ -707,7 +707,7 @@
                                 {{else}}
                                     {{$emailAnswer := mapGetStr "email_answer" $verdicts}}
                                     {{if $emailAnswer}}
-                                        <span class="badge bg-{{if hasPrefix $emailAnswer "No"}}success{{else if hasPrefix $emailAnswer "Unlikely"}}info{{else if or (hasPrefix $emailAnswer "Partially") (hasPrefix $emailAnswer "Uncertain")}}warning{{else}}danger{{end}} ms-2">{{$emailAnswer}}</span>
+                                        <span class="badge bg-{{if hasPrefix $emailAnswer "No"}}success{{else if hasPrefix $emailAnswer "Unlikely"}}success{{else if or (hasPrefix $emailAnswer "Partially") (hasPrefix $emailAnswer "Uncertain")}}warning{{else}}danger{{end}} ms-2">{{$emailAnswer}}</span>
                                     {{end}}
                                 {{end}}
                                 {{end}}

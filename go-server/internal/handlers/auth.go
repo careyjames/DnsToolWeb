@@ -178,12 +178,14 @@ func (h *AuthHandler) Callback(c *gin.Context) {
         ctx := c.Request.Context()
 
         role := "user"
+        shouldBootstrapAdmin := false
         if h.Config.InitialAdminEmail != "" && strings.EqualFold(email, h.Config.InitialAdminEmail) {
                 adminCount, countErr := h.Queries.CountAdminUsers(ctx)
                 if countErr != nil {
                         slog.Error("Failed to count admin users", "error", countErr)
                 } else if adminCount == 0 {
                         role = "admin"
+                        shouldBootstrapAdmin = true
                         slog.Warn("AUDIT: Admin bootstrap triggered",
                                 "email", email,
                                 "reason", "zero_admin_users",
@@ -201,6 +203,19 @@ func (h *AuthHandler) Callback(c *gin.Context) {
                 slog.Error("OAuth callback: failed to upsert user", "error", err, "email", email)
                 c.Redirect(http.StatusFound, "/")
                 return
+        }
+
+        if shouldBootstrapAdmin && user.Role != "admin" {
+                err = h.Queries.PromoteUserToAdmin(ctx, user.ID)
+                if err != nil {
+                        slog.Error("OAuth callback: failed to promote user to admin", "error", err, "user_id", user.ID)
+                } else {
+                        user.Role = "admin"
+                        slog.Warn("AUDIT: Existing user promoted to admin via bootstrap",
+                                "email", email,
+                                "user_id", user.ID,
+                        )
+                }
         }
 
         sessionID, err := generateSessionID()

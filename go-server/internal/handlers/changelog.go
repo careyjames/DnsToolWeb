@@ -15,7 +15,10 @@
 //
 // Canonical date mapping (verified Feb 19, 2026):
 //   dateFeb19 — Architecture Diagrams, miekg/dns v2 Migration, CT Resilience,
-//               History Table Cleanup, Brand Verdict Overhaul, DKIM Selector Expansion
+//               History Table Cleanup, Brand Verdict Overhaul, DKIM Selector Expansion,
+//               Privacy-Preserving Analytics, Admin Analytics Dashboard,
+//               Admin Dashboard + JSON Export, Admin Bootstrap Fix,
+//               UNLIKELY Badge Color Unification
 //   dateFeb18 — Google OAuth 2.0 + PKCE, Security Redaction & Mission Statement
 //   dateFeb17 — BSL 1.1 License Migration, Boundary Integrity Test Suite
 //   dateFeb15 — Dual Intelligence Products (Engineer's DNS Intelligence Report & Executive's DNS Intelligence Brief), OpenPhish Threat
@@ -76,6 +79,46 @@ func GetChangelog() []ChangelogEntry {
                         Title:       "Authenticated Multi-Port SMTP Probe API",
                         Description: "Remote probe infrastructure upgraded to API v2 with shared-secret authentication, rate limiting (30 requests per 60 seconds per IP), and multi-port mail transport probing across ports 25 (SMTP), 465 (SMTPS), and 587 (submission). Banner capture provides additional server intelligence fingerprinting. Graceful fallback on 401 or 429 responses.",
                         Icon:        "fas fa-satellite-dish",
+                },
+                {
+                        Version:     "26.20.88",
+                        Date:        dateFeb19,
+                        Category:    "Analytics",
+                        Title:       "Privacy-Preserving Analytics Middleware",
+                        Description: "Cookie-free, GDPR-friendly analytics pipeline collecting pageviews, unique visitors, analyses run, and unique domains analyzed. Daily-rotating random salt hashes visitor IPs into pseudonymous IDs — no cookies, no fingerprinting, no PII stored. Referrer origin and top page tracking with automatic self-referral filtering. In-memory aggregation flushed to PostgreSQL every 60 seconds via UPSERT. Static assets, health checks, and bot paths excluded.",
+                        Icon:        "fas fa-chart-line",
+                },
+                {
+                        Version:     "26.20.88",
+                        Date:        dateFeb19,
+                        Category:    "Admin",
+                        Title:       "Admin Analytics Dashboard",
+                        Description: "New /admin/analytics route (admin-only) with 30-day daily analytics view showing pageviews, unique visitors, analyses run, and unique domains. Summary cards with totals, averages, top referrers (top 10), and most-visited pages (top 10). Built on the privacy-preserving analytics middleware — no third-party tracking scripts.",
+                        Icon:        "fas fa-chart-bar",
+                },
+                {
+                        Version:     "26.20.85",
+                        Date:        dateFeb19,
+                        Category:    "Admin",
+                        Title:       "Admin Dashboard & JSON Export",
+                        Description: "New /admin route (admin-only) with stats cards for total users, analyses, unique domains, private analyses, sessions, and active sessions. Users table with role badges, recent analyses table with domain links and status, ICAE test runs table. JSON export at /export/json streams NDJSON with paginated 100-record batches and proper Content-Disposition header.",
+                        Icon:        "fas fa-tachometer-alt",
+                },
+                {
+                        Version:     "26.20.85",
+                        Date:        dateFeb19,
+                        Category:    "Security",
+                        Title:       "Admin Bootstrap Fix (PromoteUserToAdmin)",
+                        Description: "Fixed admin bootstrap for existing users. When INITIAL_ADMIN_EMAIL matches an already-registered user and zero admins exist, the system now calls PromoteUserToAdmin to upgrade their role. Previously, UpsertUser preserved the existing role, silently skipping the bootstrap. Audit-logged with reason and email.",
+                        Icon:        "fas fa-user-shield",
+                },
+                {
+                        Version:     "26.20.76",
+                        Date:        dateFeb19,
+                        Category:    "UX",
+                        Title:       "UNLIKELY Badge Color Unification",
+                        Description: "Unified the UNLIKELY verdict color to green/success across both email spoofing and brand impersonation assessments. Email spoofing with DMARC quarantine at 100% now shows success (green) instead of warning (amber). Brand impersonation with quarantine + BIMI + CAA also uses success (green). Consistent visual language: UNLIKELY = green across all verdict types.",
+                        Icon:        "fas fa-palette",
                 },
                 {
                         Version:     "26.20.87",

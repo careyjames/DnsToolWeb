@@ -16,6 +16,7 @@ graph TB
     subgraph "Application Layer — Go/Gin"
         Router["Gin Router<br/>CSP Middleware"]
         Auth["Google OAuth 2.0 + PKCE<br/>stdlib only"]
+        Analytics["Analytics Middleware<br/>Privacy-preserving · No cookies"]
         Handlers["Request Handlers<br/>analysis, history, export, dossier"]
         Templates["Go html/template<br/>Nonce-injected CSP"]
     end
@@ -49,6 +50,8 @@ graph TB
     Gunicorn -->|"subprocess"| GoBinary
     GoBinary --> Router
     Router --> Auth
+    Router --> Analytics
+    Analytics --> Handlers
     Router --> Handlers
     Handlers --> Templates
     Handlers --> ICIE
@@ -59,6 +62,7 @@ graph TB
     ICIE --> HTTP
     ICIE --> ICAE
     Handlers --> PG
+    Analytics -->|"flush aggregates"| PG
     ICAE --> PG
     Handlers -.->|"user-provided key"| SecurityTrails
     GoBinary -.->|"build tags"| IntelRepo
@@ -73,7 +77,7 @@ graph TB
     class PG storage
     class SecurityTrails,IntelRepo external
     class Browser client
-    class Router,Auth,Handlers,Templates app
+    class Router,Auth,Analytics,Handlers,Templates app
     class DNSClient,SMTP,CT,HTTP engine
     class ProbeServer external
     class Gunicorn,GoBinary app
@@ -328,6 +332,7 @@ sequenceDiagram
     participant G as Gunicorn
     participant R as Gin Router
     participant MW as Middleware
+    participant AN as Analytics
     participant H as Handler
     participant ICIE as ICIE Engine
     participant DNS as DNS Client
@@ -336,7 +341,8 @@ sequenceDiagram
     B->>G: GET /analyze?domain=example.com
     G->>R: Proxy to Go binary
     R->>MW: CSP · Rate Limit · Session
-    MW->>H: analysisHandler()
+    MW->>AN: Record pageview (salted hash)
+    AN->>H: analysisHandler()
     
     H->>ICIE: RunFullAnalysis(domain, selectors)
     
@@ -368,8 +374,13 @@ sequenceDiagram
         H-->>H: Do not persist
     end
     
+    H->>AN: RecordAnalysis(domain)
+    
     H->>R: Render template (engineer/executive)
     R-->>B: HTML Response with CSP nonce
+    
+    Note over AN,DB: Analytics flushed every 60s<br/>Daily-rotating salt · No PII
+    AN->>DB: UPSERT site_analytics (aggregates)
 ```
 
 ## 7. Package Dependency Map
@@ -382,8 +393,8 @@ graph TB
 
     subgraph "internal"
         Config["config<br/>AppVersion · env vars"]
-        Middleware["middleware<br/>CSP · rate limit · session"]
-        Handlers["handlers<br/>analysis · auth · history<br/>export · dossier · compare"]
+        Middleware["middleware<br/>CSP · rate limit · session<br/>analytics (privacy-preserving)"]
+        Handlers["handlers<br/>analysis · auth · history<br/>export · dossier · compare<br/>admin · analytics"]
         Analyzer["analyzer<br/>ICIE engine core<br/>posture · dkim · spf · dmarc<br/>remediation · brand"]
         AISurface["analyzer/ai_surface<br/>robots.txt · llms.txt<br/>HTTP · poisoning · scanner"]
         ICAE2["icae<br/>ICAE engine<br/>runner · evaluator · report"]
@@ -402,7 +413,7 @@ graph TB
     ICAE2 --> DB2 & Models
     Handlers --> Telemetry
     DB2 --> DBQ
-    Middleware --> Config & Telemetry
+    Middleware --> Config & Telemetry & DB2
 
     classDef default fill:#2563eb,stroke:#60a5fa,stroke-width:2px,color:#f0f6fc
     classDef core fill:#2563eb,stroke:#60a5fa,stroke-width:2px,color:#fff,font-weight:bold

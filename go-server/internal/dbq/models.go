@@ -131,6 +131,19 @@ type Session struct {
 	LastSeenAt pgtype.Timestamp `db:"last_seen_at" json:"last_seen_at"`
 }
 
+type SiteAnalytic struct {
+	ID                    int32            `db:"id" json:"id"`
+	Date                  pgtype.Date      `db:"date" json:"date"`
+	Pageviews             int32            `db:"pageviews" json:"pageviews"`
+	UniqueVisitors        int32            `db:"unique_visitors" json:"unique_visitors"`
+	AnalysesRun           int32            `db:"analyses_run" json:"analyses_run"`
+	UniqueDomainsAnalyzed int32            `db:"unique_domains_analyzed" json:"unique_domains_analyzed"`
+	ReferrerSources       []byte           `db:"referrer_sources" json:"referrer_sources"`
+	TopPages              []byte           `db:"top_pages" json:"top_pages"`
+	CreatedAt             pgtype.Timestamp `db:"created_at" json:"created_at"`
+	UpdatedAt             pgtype.Timestamp `db:"updated_at" json:"updated_at"`
+}
+
 type User struct {
 	ID          int32            `db:"id" json:"id"`
 	Email       string           `db:"email" json:"email"`

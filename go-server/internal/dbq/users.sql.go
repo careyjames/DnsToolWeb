@@ -148,6 +148,15 @@ func (q *Queries) GetUserByID(ctx context.Context, id int32) (User, error) {
 	return i, err
 }
 
+const promoteUserToAdmin = `-- name: PromoteUserToAdmin :exec
+UPDATE users SET role = 'admin' WHERE id = $1
+`
+
+func (q *Queries) PromoteUserToAdmin(ctx context.Context, id int32) error {
+	_, err := q.db.Exec(ctx, promoteUserToAdmin, id)
+	return err
+}
+
 const updateSessionLastSeen = `-- name: UpdateSessionLastSeen :exec
 UPDATE sessions SET last_seen_at = NOW() WHERE id = $1
 `

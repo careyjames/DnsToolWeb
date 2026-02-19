@@ -145,9 +145,6 @@ func normalizeEmailAnswer(verdicts map[string]interface{}) {
                 switch {
                 case answer == "No" || answer == "Unlikely":
                         color = "success"
-                        if answer == "Unlikely" {
-                                color = "info"
-                        }
                 case answer == "Yes" || answer == "Likely":
                         color = "danger"
                 case answer == "Partially" || answer == "Uncertain":

@@ -905,7 +905,7 @@ func buildEmailAnswerStructured(ps protocolState, hasSPF, hasDMARC bool) map[str
                 return map[string]string{"answer": "No", "reason": "SPF and DMARC reject policy enforced", "color": "success"}
         }
         if hasSPF && hasDMARC && ps.dmarcPolicy == "quarantine" && ps.dmarcPct >= 100 {
-                return map[string]string{"answer": "Unlikely", "reason": "SPF and DMARC quarantine policy enforced", "color": "info"}
+                return map[string]string{"answer": "Unlikely", "reason": "SPF and DMARC quarantine policy enforced", "color": "success"}
         }
         if hasSPF && hasDMARC && ps.dmarcPolicy == "quarantine" {
                 return map[string]string{"answer": "Partially", "reason": "DMARC quarantine at limited percentage", "color": "warning"}
