@@ -37,7 +37,7 @@ OSINT platform for RFC-compliant domain security analysis. Go/Gin backend, Boots
 ## Repositories (GitHub Canonical, Codeberg Mirror)
 - **Webapp**: `careyjames/DnsToolWeb` (GitHub, canonical) → `careybalboa/dns-tool-webapp` (Codeberg, read-only mirror)
 - **Intel**: `careyjames/dnstool-intel` (GitHub, canonical) → `careybalboa/dns-tool-intel` (Codeberg, mirror)
-- **CLI**: `careyjames/dns-tool` (GitHub, archived) / `careybalboa/dns-tool-cli` (Codeberg, archived)
+- **CLI**: `careyjames/dns-tool-cli` (GitHub, canonical) → `careybalboa/dns-tool-cli` (Codeberg, read-only mirror)
 - GitHub→Codeberg sync via `.github/workflows/mirror-codeberg.yml`. SonarCloud runs on GitHub (primary).
 
 ## Architecture Quick Reference

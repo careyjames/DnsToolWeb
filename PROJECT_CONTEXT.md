@@ -154,7 +154,7 @@ Two-repository design with Go build tags (`//go:build intel` / `//go:build !inte
 | Repo | GitHub (canonical) | Codeberg (mirror) | Visibility |
 |------|-------------------|-------------------|------------|
 | Web App | `careyjames/DnsToolWeb` | `careybalboa/dns-tool-webapp` (read-only mirror) | Public |
-| CLI | `careyjames/dns-tool` (archived) | `careybalboa/dns-tool-cli` (archived) | Public |
+| CLI | `careyjames/dns-tool-cli` | `careybalboa/dns-tool-cli` (read-only mirror) | Public |
 | Intel | `careyjames/dnstool-intel` | `careybalboa/dns-tool-intel` (read-only mirror) | Private |
 
 **GitHub→Codeberg sync** via GitHub Actions workflow (`.github/workflows/mirror-codeberg.yml`). Every push to GitHub triggers a mirror push to Codeberg. Codeberg repos display "read-only mirror" notices pointing to GitHub. Issues and PRs are disabled on Codeberg.

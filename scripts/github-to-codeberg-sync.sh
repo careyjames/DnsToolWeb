@@ -29,7 +29,7 @@ sync_repo() {
 }
 
 sync_repo "DnsToolWeb" "dns-tool-webapp"
-sync_repo "dns-tool"   "dns-tool-cli"
+sync_repo "dns-tool-cli" "dns-tool-cli"
 
 echo ""
 echo "Public repos synced. For dns-tool-intel (private), run:"

@@ -36,7 +36,7 @@ Initial decision was Codeberg as canonical with GitHub push mirrors. Full migrat
 | Repo | GitHub (canonical) | Codeberg (mirror) | Visibility |
 |------|-------------------|-------------------|------------|
 | Web App | `careyjames/DnsToolWeb` | `careybalboa/dns-tool-webapp` | Public |
-| CLI | `careyjames/dns-tool` (archived) | `careybalboa/dns-tool-cli` (archived) | Public |
+| CLI | `careyjames/dns-tool-cli` | `careybalboa/dns-tool-cli` (read-only mirror) | Public |
 | Intel | `careyjames/dnstool-intel` | `careybalboa/dns-tool-intel` | Private |
 
 #### GitHub Setup Required (One-Time)
