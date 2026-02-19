@@ -179,6 +179,13 @@ func (h *AuthHandler) Callback(c *gin.Context) {
 
         role := "user"
         shouldBootstrapAdmin := false
+        if h.Config.InitialAdminEmail != "" {
+                slog.Debug("Admin bootstrap check",
+                        "login_email", email,
+                        "initial_admin_email", h.Config.InitialAdminEmail,
+                        "match", strings.EqualFold(email, h.Config.InitialAdminEmail),
+                )
+        }
         if h.Config.InitialAdminEmail != "" && strings.EqualFold(email, h.Config.InitialAdminEmail) {
                 adminCount, countErr := h.Queries.CountAdminUsers(ctx)
                 if countErr != nil {

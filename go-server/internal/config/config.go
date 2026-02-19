@@ -112,7 +112,7 @@ func Load() (*Config, error) {
                 GoogleClientID:      os.Getenv("GOOGLE_CLIENT_ID"),
                 GoogleClientSecret:  os.Getenv("GOOGLE_CLIENT_SECRET"),
                 GoogleRedirectURL:   googleRedirectURL,
-                InitialAdminEmail:   os.Getenv("INITIAL_ADMIN_EMAIL"),
+                InitialAdminEmail:   strings.TrimSpace(os.Getenv("INITIAL_ADMIN_EMAIL")),
                 BaseURL:             baseURL,
         }, nil
 }
