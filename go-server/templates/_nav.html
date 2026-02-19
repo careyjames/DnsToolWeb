@@ -4,7 +4,7 @@
     <div class="container">
         <a class="navbar-brand" href="/">
             <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 32 32" class="me-2 u-valign-n3" aria-hidden="true" focusable="false"><defs><linearGradient id="navShieldGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#58a6ff"/><stop offset="100%" stop-color="#1f6feb"/></linearGradient></defs><rect width="32" height="32" rx="6" fill="#0d1117"/><path d="M16 4 L26 9 L26 17 C26 23 21 27 16 28 C11 27 6 23 6 17 L6 9 Z" fill="url(#navShieldGrad)" opacity="0.9"/><circle cx="16" cy="15" r="4" fill="#fff"/><circle cx="16" cy="15" r="2" fill="#0d1117"/><rect x="15" y="6" width="2" height="4" rx="1" fill="#3fb950"/><rect x="15" y="20" width="2" height="4" rx="1" fill="#3fb950"/><rect x="9" y="14" width="4" height="2" rx="1" fill="#3fb950"/><rect x="19" y="14" width="4" height="2" rx="1" fill="#3fb950"/></svg>DNS Tool <span class="badge bg-info text-dark ms-1">v{{.AppVersion}}</span>
-            {{if .MaintenanceNote}}<span class="badge ms-2 u-maintenance-tag"><i class="fas fa-wrench me-1"></i>{{.MaintenanceNote}}</span>{{end}}
+            {{if .MaintenanceNote}}<span class="badge ms-2 u-maintenance-tag"><i class="fas fa-wrench me-1" aria-hidden="true"></i>{{.MaintenanceNote}}</span>{{end}}
         </a>
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
             <span class="navbar-toggler-icon"></span>
@@ -13,32 +13,32 @@
             <ul class="navbar-nav ms-auto">
                 <li class="nav-item">
                     <a class="nav-link{{if eq .ActivePage "home"}} active{{end}}" href="/">
-                        <i class="fas fa-search me-1"></i>Analyze
+                        <i class="fas fa-search me-1" aria-hidden="true"></i>Analyze
                     </a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link{{if eq .ActivePage "investigate"}} active{{end}}" href="/investigate">
-                        <i class="fas fa-route me-1"></i>IP Intelligence
+                        <i class="fas fa-route me-1" aria-hidden="true"></i>IP Intelligence
                     </a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link{{if eq .ActivePage "email-header"}} active{{end}}" href="/email-header">
-                        <i class="fas fa-envelope me-1"></i>Email Header
+                        <i class="fas fa-envelope me-1" aria-hidden="true"></i>Email Header
                     </a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link{{if eq .ActivePage "history"}} active{{end}}" href="/history">
-                        <i class="fas fa-history me-1"></i>History
+                        <i class="fas fa-history me-1" aria-hidden="true"></i>History
                     </a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link{{if eq .ActivePage "stats"}} active{{end}}" href="/stats">
-                        <i class="fas fa-chart-bar me-1"></i>Statistics
+                        <i class="fas fa-chart-bar me-1" aria-hidden="true"></i>Statistics
                     </a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link{{if eq .ActivePage "sources"}} active{{end}}" href="/sources">
-                        <i class="fas fa-diagram-project me-1"></i>Sources
+                        <i class="fas fa-diagram-project me-1" aria-hidden="true"></i>Sources
                     </a>
                 </li>
                 <li class="nav-item">
@@ -51,23 +51,23 @@
                     {{if .Authenticated}}
                     <div class="dropdown">
                         <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                            <i class="fas fa-user-shield me-1"></i>{{.UserName}}
+                            <i class="fas fa-user-shield me-1" aria-hidden="true"></i>{{.UserName}}
                         </a>
                         <ul class="dropdown-menu dropdown-menu-end dropdown-menu-dark">
                             {{if eq .UserRole "admin"}}
-                            <li><span class="dropdown-item-text text-info small"><i class="fas fa-shield me-1"></i>Administrator</span></li>
-                            <li><a class="dropdown-item" href="/admin"><i class="fas fa-tachometer-alt me-1"></i>Admin Dashboard</a></li>
+                            <li><span class="dropdown-item-text text-info small"><i class="fas fa-shield me-1" aria-hidden="true"></i>Administrator</span></li>
+                            <li><a class="dropdown-item" href="/ops"><i class="fas fa-tachometer-alt me-1" aria-hidden="true"></i>Admin Dashboard</a></li>
                             <li><hr class="dropdown-divider"></li>
                             {{end}}
-                            <li><a class="dropdown-item" href="/dossier"><i class="fas fa-briefcase me-1"></i>Intelligence Reports</a></li>
-                            <li><a class="dropdown-item" href="/zone"><i class="fas fa-upload me-1"></i>Zone File Import</a></li>
+                            <li><a class="dropdown-item" href="/dossier"><i class="fas fa-briefcase me-1" aria-hidden="true"></i>Intelligence Reports</a></li>
+                            <li><a class="dropdown-item" href="/zone"><i class="fas fa-upload me-1" aria-hidden="true"></i>Zone File Import</a></li>
                             <li><hr class="dropdown-divider"></li>
-                            <li><a class="dropdown-item" href="/auth/logout"><i class="fas fa-arrow-right me-1"></i>Sign Out</a></li>
+                            <li><a class="dropdown-item" href="/auth/logout"><i class="fas fa-arrow-right me-1" aria-hidden="true"></i>Sign Out</a></li>
                         </ul>
                     </div>
                     {{else}}
                     <a class="nav-link" href="/auth/login">
-                        <i class="fas fa-key me-1"></i>Sign In
+                        <i class="fas fa-key me-1" aria-hidden="true"></i>Sign In
                     </a>
                     {{end}}
                 </li>

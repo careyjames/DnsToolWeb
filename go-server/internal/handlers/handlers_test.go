@@ -172,7 +172,7 @@ func TestSitemapXML(t *testing.T) {
 
 func TestRobotsTxt(t *testing.T) {
         tempDir := t.TempDir()
-        robotsContent := "User-agent: *\nDisallow: /admin\nAllow: /\n"
+        robotsContent := "User-agent: *\nDisallow: /api/\nAllow: /\n"
         robotsPath := filepath.Join(tempDir, "robots.txt")
         if err := os.WriteFile(robotsPath, []byte(robotsContent), 0644); err != nil {
                 t.Fatalf("failed to create test robots.txt: %v", err)
@@ -193,8 +193,8 @@ func TestRobotsTxt(t *testing.T) {
                 t.Error("expected 'User-agent: *' in robots.txt response")
         }
 
-        if !contains(body, "Disallow: /admin") {
-                t.Error("expected 'Disallow: /admin' in robots.txt response")
+        if !contains(body, "Disallow: /api/") {
+                t.Error("expected 'Disallow: /api/' in robots.txt response")
         }
 }
 

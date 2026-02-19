@@ -209,7 +209,7 @@
         <div class="container">
             <div class="text-center hero-content">
                 <div class="hero-badge mb-3">
-                    <i class="fas fa-shield-alt me-1"></i> DNS Security Intelligence
+                    <i class="fas fa-shield-alt me-1" aria-hidden="true"></i> DNS Security Intelligence
                 </div>
                 <h1 class="hero-title mb-3">
                     Domain Security Audit
@@ -256,17 +256,17 @@
                                 </button>
                             </div>
                             <div class="form-text search-hint mt-2">
-                                <i class="fas fa-info-circle me-1"></i>
+                                <i class="fas fa-info-circle me-1" aria-hidden="true"></i>
                                 Enter the raw domain (e.g., <strong>example.com</strong>) &mdash; no https://. Pro tip: <strong>www</strong> is just a subdomain, the same way DKIM selectors like <strong>google._domainkey</strong> are.
                             </div>
                             <div class="mt-2">
                                 <button type="button" class="btn btn-link small text-muted text-decoration-none p-0 border-0" data-bs-toggle="collapse" data-bs-target="#advancedOptions" aria-expanded="{{if .DKIMExpand}}true{{else}}false{{end}}" aria-controls="advancedOptions">
-                                    <i class="fas fa-sliders-h me-1 u-color-blue-soft"></i>Advanced Options <span class="text-muted small">(optional)</span> <i class="fas fa-chevron-down ms-1 small"></i>
+                                    <i class="fas fa-sliders-h me-1 u-color-blue-soft" aria-hidden="true"></i>Advanced Options <span class="text-muted small">(optional)</span> <i class="fas fa-chevron-down ms-1 small" aria-hidden="true"></i>
                                 </button>
                                 <div class="collapse{{if .DKIMExpand}} show{{end}} mt-2" id="advancedOptions">
                                     <div class="row g-3">
                                         <div class="col-md-7">
-                                            <label class="form-label text-muted small mb-1"><i class="fas fa-key me-1 u-color-gold"></i>DKIM Selectors</label>
+                                            <label class="form-label text-muted small mb-1"><i class="fas fa-key me-1 u-color-gold" aria-hidden="true"></i>DKIM Selectors</label>
                                             <div class="row g-2">
                                                 <div class="col-6">
                                                     <input type="text"
@@ -292,9 +292,9 @@
                                             </div>
                                         </div>
                                         <div class="col-md-5">
-                                            <label for="securitytrails_api_key" class="form-label text-muted small mb-1"><i class="fas fa-history me-1 u-color-info-alt"></i>SecurityTrails API Key</label>
+                                            <label for="securitytrails_api_key" class="form-label text-muted small mb-1"><i class="fas fa-history me-1 u-color-info-alt" aria-hidden="true"></i>SecurityTrails API Key</label>
                                             <div class="input-group input-group-sm">
-                                                <span class="input-group-text bg-dark border-secondary text-muted"><i class="fas fa-shield-alt"></i></span>
+                                                <span class="input-group-text bg-dark border-secondary text-muted" aria-hidden="true"><i class="fas fa-shield-alt"></i></span>
                                                 <input type="password"
                                                        class="form-control form-control-sm bg-dark text-light border-secondary"
                                                        name="securitytrails_api_key"
@@ -304,16 +304,16 @@
                                                        spellcheck="false">
                                             </div>
                                             <div class="form-text text-muted mt-1 u-fs-075em">
-                                                <i class="fas fa-lock me-1"></i>Never stored. <a href="https://securitytrails.com/app/signup" target="_blank" rel="noopener" class="text-info">Get API key</a>
+                                                <i class="fas fa-lock me-1" aria-hidden="true"></i>Never stored. <a href="https://securitytrails.com/app/signup" target="_blank" rel="noopener" class="text-info">Get API key</a>
                                             </div>
                                         </div>
                                         <div class="col-12 mt-2">
                                             <div class="form-check">
                                                 <input type="checkbox" class="form-check-input" name="exposure_checks" id="exposure_checks" value="1">
                                                 <label class="form-check-label small text-muted" for="exposure_checks">
-                                                    <i class="fas fa-search me-1 u-color-gold"></i><strong>Expanded Exposure Checks</strong>
+                                                    <i class="fas fa-search me-1 u-color-gold" aria-hidden="true"></i><strong>Expanded Exposure Checks</strong>
                                                     <span class="d-block mt-1 u-fs-075em u-color-gray-400">
-                                                        Deeper reconnaissance &mdash; actively checks well-known misconfiguration paths (<code>/.env</code>, <code>/.git/config</code>, <code>/server-status</code>, etc.) on the target domain. These are publicly accessible URLs any browser could visit. <strong class="text-warning"><i class="fas fa-clock me-1"></i>Adds extra scan time.</strong>
+                                                        Deeper reconnaissance &mdash; actively checks well-known misconfiguration paths (<code>/.env</code>, <code>/.git/config</code>, <code>/server-status</code>, etc.) on the target domain. These are publicly accessible URLs any browser could visit. <strong class="text-warning"><i class="fas fa-clock me-1" aria-hidden="true"></i>Adds extra scan time.</strong>
                                                     </span>
                                                 </label>
                                             </div>
@@ -328,13 +328,13 @@
 
             <!-- Trust indicators -->
             <div class="text-center mt-4 hero-trust">
-                <span><i class="fas fa-bolt me-1"></i> Live DNS, Real-Time Results</span>
+                <span><i class="fas fa-bolt me-1" aria-hidden="true"></i> Live DNS, Real-Time Results</span>
                 <span class="trust-divider"></span>
-                <span><i class="fas fa-lock me-1"></i> No Login Required</span>
+                <span><i class="fas fa-lock me-1" aria-hidden="true"></i> No Login Required</span>
                 <span class="trust-divider"></span>
-                <span><i class="fas fa-globe me-1"></i> Multi-Resolver Consensus</span>
+                <span><i class="fas fa-globe me-1" aria-hidden="true"></i> Multi-Resolver Consensus</span>
                 <span class="trust-divider"></span>
-                <span><i class="fas fa-gavel me-1"></i> RFC-Aligned OSINT Intelligence Analysis</span>
+                <span><i class="fas fa-gavel me-1" aria-hidden="true"></i> RFC-Aligned OSINT Intelligence Analysis</span>
             </div>
         </div>
     </section>
@@ -347,7 +347,7 @@
                         <div class="card-body py-3 px-4">
                             <div class="d-flex align-items-center">
                                 <div class="me-3">
-                                    <i class="fas fa-route fa-2x text-info"></i>
+                                    <i class="fas fa-route fa-2x text-info" aria-hidden="true"></i>
                                 </div>
                                 <div class="flex-grow-1">
                                     <p class="mb-1 fw-semibold">Is this IP authorized to act on behalf of your domain?</p>
@@ -355,7 +355,7 @@
                                 </div>
                                 <div class="ms-3">
                                     <a href="/investigate" class="btn btn-outline-info btn-sm text-nowrap">
-                                        <i class="fas fa-route me-1"></i>IP Intelligence <span class="badge bg-warning text-dark ms-1 u-fs-065em-vmid">BETA</span>
+                                        <i class="fas fa-route me-1" aria-hidden="true"></i>IP Intelligence <span class="badge bg-warning text-dark ms-1 u-fs-065em-vmid">BETA</span>
                                     </a>
                                 </div>
                             </div>
@@ -369,7 +369,7 @@
                         <div class="card-body py-3 px-4">
                             <div class="d-flex align-items-center">
                                 <div class="me-3">
-                                    <i class="fas fa-envelope fa-2x text-warning"></i>
+                                    <i class="fas fa-envelope fa-2x text-warning" aria-hidden="true"></i>
                                 </div>
                                 <div class="flex-grow-1">
                                     <p class="mb-1 fw-semibold">Did this email actually come from who it claims?</p>
@@ -377,7 +377,7 @@
                                 </div>
                                 <div class="ms-3">
                                     <a href="/email-header" class="btn btn-outline-warning btn-sm text-nowrap">
-                                        <i class="fas fa-envelope me-1"></i>Email Header <span class="badge bg-warning text-dark ms-1 u-fs-065em-vmid">BETA</span>
+                                        <i class="fas fa-envelope me-1" aria-hidden="true"></i>Email Header <span class="badge bg-warning text-dark ms-1 u-fs-065em-vmid">BETA</span>
                                     </a>
                                 </div>
                             </div>
@@ -395,7 +395,7 @@
                 <div class="col-md-6 col-lg-3">
                     <div class="feature-card">
                         <div class="feature-card-icon feature-card-icon--primary">
-                            <i class="fas fa-server"></i>
+                            <i class="fas fa-server" aria-hidden="true"></i>
                         </div>
                         <h3 class="feature-card-title">DNS Records</h3>
                         <p class="feature-card-text">A, AAAA, MX, TXT, and NS records from multiple resolvers with multi-resolver consensus verification</p>
@@ -404,7 +404,7 @@
                 <div class="col-md-6 col-lg-3">
                     <div class="feature-card">
                         <div class="feature-card-icon feature-card-icon--success">
-                            <i class="fas fa-shield-alt"></i>
+                            <i class="fas fa-shield-alt" aria-hidden="true"></i>
                         </div>
                         <h3 class="feature-card-title">Email Authentication</h3>
                         <p class="feature-card-text">SPF, DMARC, and DKIM validation with key strength analysis, DANE/TLSA certificate pinning, MTA-STS enforcement, TLS-RPT reporting, and SMTP transport verification</p>
@@ -413,7 +413,7 @@
                 <div class="col-md-6 col-lg-3">
                     <div class="feature-card">
                         <div class="feature-card-icon feature-card-icon--info">
-                            <i class="fas fa-building"></i>
+                            <i class="fas fa-building" aria-hidden="true"></i>
                         </div>
                         <h3 class="feature-card-title">Domain Intelligence</h3>
                         <p class="feature-card-text">Domain registration via RDAP, enterprise infrastructure detection, email security management provider identification, Certificate Transparency subdomain discovery, and DNS provider analysis</p>
@@ -422,7 +422,7 @@
                 <div class="col-md-6 col-lg-3">
                     <div class="feature-card">
                         <div class="feature-card-icon feature-card-icon--warning">
-                            <i class="fas fa-lock"></i>
+                            <i class="fas fa-lock" aria-hidden="true"></i>
                         </div>
                         <h3 class="feature-card-title">Security Posture</h3>
                         <p class="feature-card-text">DNSSEC validation, DANE/TLSA verification, BIMI, CAA with MPIC context, DMARCbis readiness, graduated security posture scoring, and per-section remediation with RFC-cited fixes</p>
@@ -438,35 +438,35 @@
             <div class="row g-4 justify-content-center">
                 <div class="col-md-6 col-lg-4">
                     <div class="persona-card">
-                        <div class="persona-card-icon"><i class="fas fa-briefcase text-primary"></i></div>
+                        <div class="persona-card-icon"><i class="fas fa-briefcase text-primary" aria-hidden="true"></i></div>
                         <h3 class="persona-card-title text-primary">Executives & Board Members</h3>
                         <p class="persona-card-text">Clear CVSS-aligned risk levels (Critical / High / Medium / Low / Informational) that communicate cybersecurity posture at a glance. See whether email security is actively managed by professional providers or left unmonitored.</p>
                     </div>
                 </div>
                 <div class="col-md-6 col-lg-4">
                     <div class="persona-card">
-                        <div class="persona-card-icon"><i class="fas fa-laptop-code text-success"></i></div>
+                        <div class="persona-card-icon"><i class="fas fa-laptop-code text-success" aria-hidden="true"></i></div>
                         <h3 class="persona-card-title text-success">IT Professionals</h3>
                         <p class="persona-card-text">Validate SPF, DKIM, DMARC, and DANE/TLSA configurations. Check email authentication, verify DNSSEC, and troubleshoot DNS records across multiple resolvers.</p>
                     </div>
                 </div>
                 <div class="col-md-6 col-lg-4">
                     <div class="persona-card">
-                        <div class="persona-card-icon"><i class="fas fa-network-wired text-warning"></i></div>
+                        <div class="persona-card-icon"><i class="fas fa-network-wired text-warning" aria-hidden="true"></i></div>
                         <h3 class="persona-card-title text-warning">DNS Specialists</h3>
                         <p class="persona-card-text">Authoritative nameserver queries, multi-resolver consensus verification, DNSSEC chain validation, DANE/TLSA analysis, and enterprise DNS provider detection.</p>
                     </div>
                 </div>
                 <div class="col-md-6 col-lg-4">
                     <div class="persona-card">
-                        <div class="persona-card-icon"><i class="fas fa-users text-info"></i></div>
+                        <div class="persona-card-icon"><i class="fas fa-users text-info" aria-hidden="true"></i></div>
                         <h3 class="persona-card-title text-info">Business & Risk</h3>
                         <p class="persona-card-text">Verify your domain can't be impersonated. Identify who manages your DMARC monitoring and SPF. Assess brand protection with BIMI. Evidence-ready reports for cyber insurance and audit readiness.</p>
                     </div>
                 </div>
                 <div class="col-md-6 col-lg-4">
                     <div class="persona-card">
-                        <div class="persona-card-icon"><i class="fas fa-terminal text-danger"></i></div>
+                        <div class="persona-card-icon"><i class="fas fa-terminal text-danger" aria-hidden="true"></i></div>
                         <h3 class="persona-card-title text-danger">Security Researchers & Red Teams</h3>
                         <p class="persona-card-text">OSINT-grade DNS recon, multi-layer subdomain discovery, and attack surface enumeration with verifiable evidence. Built for threat modeling, bug bounty prep, and red team ops. CLI edition on the roadmap.</p>
                     </div>
@@ -479,17 +479,17 @@
                 <div class="col-lg-8">
                     <div class="card bg-dark border-info border-opacity-50 homepage-big-question-card">
                         <div class="card-body py-4 px-4">
-                            <h3 class="h5 mb-4 text-info text-center"><i class="fas fa-question-circle me-2"></i>Decision-Ready Intelligence</h3>
+                            <h3 class="h5 mb-4 text-info text-center"><i class="fas fa-question-circle me-2" aria-hidden="true"></i>Decision-Ready Intelligence</h3>
                             <div class="homepage-big-question-preview">
                                 <span class="homepage-big-question-label">The Big Question</span>
                                 <span class="homepage-big-question-text">Can this domain be impersonated by email?</span>
                             </div>
                             <p class="mt-3 mb-2 text-center">Every section of your report opens with a plain-language strategic question like this &mdash; answered with a data-driven verdict before the technical detail begins.</p>
                             <div class="homepage-big-question-examples">
-                                <span class="homepage-big-question-example"><i class="fas fa-angle-right me-1"></i>Are spoofed emails rejected or quarantined?</span>
-                                <span class="homepage-big-question-example"><i class="fas fa-angle-right me-1"></i>Can attackers downgrade SMTP to intercept mail?</span>
-                                <span class="homepage-big-question-example"><i class="fas fa-angle-right me-1"></i>Can this brand be convincingly faked?</span>
-                                <span class="homepage-big-question-example"><i class="fas fa-angle-right me-1"></i>Can DNS responses be tampered with in transit?</span>
+                                <span class="homepage-big-question-example"><i class="fas fa-angle-right me-1" aria-hidden="true"></i>Are spoofed emails rejected or quarantined?</span>
+                                <span class="homepage-big-question-example"><i class="fas fa-angle-right me-1" aria-hidden="true"></i>Can attackers downgrade SMTP to intercept mail?</span>
+                                <span class="homepage-big-question-example"><i class="fas fa-angle-right me-1" aria-hidden="true"></i>Can this brand be convincingly faked?</span>
+                                <span class="homepage-big-question-example"><i class="fas fa-angle-right me-1" aria-hidden="true"></i>Can DNS responses be tampered with in transit?</span>
                             </div>
                             <p class="text-muted small mb-0 mt-3 text-center">Raw DNS data tells you <em>what</em> exists. Decision-ready intelligence tells you <em>what it means</em> and <em>why it matters</em>.</p>
                         </div>
@@ -504,25 +504,25 @@
                     <div class="card bg-dark border-secondary">
                         <div class="card-body py-4 px-4">
                             <div class="text-center mb-3">
-                                <h2 class="h5 mb-0"><i class="fas fa-compass me-2 text-info"></i>Our Mission</h2>
+                                <h2 class="h5 mb-0"><i class="fas fa-compass me-2 text-info" aria-hidden="true"></i>Our Mission</h2>
                             </div>
                             <p class="text-center text-muted mb-3">Produce actionable domain security intelligence from publicly observable data &mdash; transparently, independently verifiably, and without requiring authorization from or interaction with the target.</p>
                             <div class="row g-3 text-center">
                                 <div class="col-md-4">
                                     <div class="p-2">
-                                        <i class="fas fa-layer-group text-info mb-2 fa-lg"></i>
+                                        <i class="fas fa-layer-group text-info mb-2 fa-lg" aria-hidden="true"></i>
                                         <p class="small text-muted mb-0"><strong class="text-light">Multi-Source Collection</strong><br>Redundant public sources, cross-referenced and corroborated. No single source is sufficient.</p>
                                     </div>
                                 </div>
                                 <div class="col-md-4">
                                     <div class="p-2">
-                                        <i class="fas fa-check-double text-info mb-2 fa-lg"></i>
+                                        <i class="fas fa-check-double text-info mb-2 fa-lg" aria-hidden="true"></i>
                                         <p class="small text-muted mb-0"><strong class="text-light">Independently Verifiable</strong><br>Every conclusion reproducible with standard tools. <code>dig</code>, <code>openssl</code>, <code>curl</code> &mdash; verify it yourself.</p>
                                     </div>
                                 </div>
                                 <div class="col-md-4">
                                     <div class="p-2">
-                                        <i class="fas fa-shield-halved text-info mb-2 fa-lg"></i>
+                                        <i class="fas fa-shield-halved text-info mb-2 fa-lg" aria-hidden="true"></i>
                                         <p class="small text-muted mb-0"><strong class="text-light">Passive OSINT Only</strong><br>We read public data and produce intelligence. No exploitation, no authorization required.</p>
                                     </div>
                                 </div>
@@ -535,7 +535,7 @@
 
         {{if .Changelog}}
         <section class="mt-5 mb-4" id="whats-new">
-            <h2 class="section-heading text-center mb-2"><i class="fas fa-bolt me-2"></i>Changelog</h2>
+            <h2 class="section-heading text-center mb-2"><i class="fas fa-bolt me-2" aria-hidden="true"></i>Changelog</h2>
             <p class="text-center text-muted mb-4">Recent improvements to analysis accuracy, transparency, and intelligence depth</p>
             <div class="row g-3">
                 {{range .Changelog}}
@@ -555,7 +555,7 @@
                 {{end}}
             </div>
             <div class="text-center mt-3">
-                <a href="/changelog" class="btn btn-outline-info btn-sm"><i class="fas fa-history me-1"></i>View All Updates</a>
+                <a href="/changelog" class="btn btn-outline-info btn-sm"><i class="fas fa-history me-1" aria-hidden="true"></i>View All Updates</a>
             </div>
         </section>
         {{end}}
@@ -804,7 +804,7 @@
     <div id="loadingOverlay" class="loading-overlay" role="status" aria-live="polite" aria-busy="true" aria-label="Running domain analysis">
         <div class="loading-content">
             <div class="loading-spinner" aria-hidden="true">
-                <i class="fas fa-globe fa-spin"></i>
+                <i class="fas fa-globe fa-spin" aria-hidden="true"></i>
             </div>
             <h4 class="mt-4 mb-2">Running Multi-Source Intelligence Audit</h4>
             <p class="text-muted mb-0" id="loadingDomain"></p>

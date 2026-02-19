@@ -148,10 +148,10 @@ func main() {
         router.GET("/compare", compareHandler.Compare)
 
         adminHandler := handlers.NewAdminHandler(database, cfg)
-        router.GET("/admin", middleware.RequireAdmin(), adminHandler.Dashboard)
+        router.GET("/ops", middleware.RequireAdmin(), adminHandler.Dashboard)
 
         analyticsHandler := handlers.NewAnalyticsHandler(database, cfg)
-        router.GET("/admin/analytics", middleware.RequireAdmin(), analyticsHandler.Dashboard)
+        router.GET("/ops/analytics", middleware.RequireAdmin(), analyticsHandler.Dashboard)
 
         router.GET("/snapshot/:domain", snapshotHandler.Snapshot)
 
