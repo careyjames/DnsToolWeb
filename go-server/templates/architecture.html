@@ -8,6 +8,45 @@
     <meta property="og:type" content="website">
     <meta property="og:title" content="System Architecture - DNS Tool">
     <meta property="og:description" content="Interactive architecture diagrams of DNS Tool's intelligence engines, request lifecycle, and package structure.">
+    <style nonce="{{.CspNonce}}">
+        .arch-diagram-card {
+            background: linear-gradient(145deg, #0f1318 0%, #141a22 50%, #111820 100%);
+            border: 1px solid rgba(88,166,255,0.18) !important;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+        .arch-diagram-card .card-header {
+            background: linear-gradient(90deg, rgba(88,166,255,0.12) 0%, rgba(63,185,80,0.06) 50%, transparent 100%);
+            border-bottom: 1px solid rgba(88,166,255,0.12) !important;
+            padding: 1rem 1.25rem;
+        }
+        .arch-diagram-card .card-body {
+            padding: 2rem 1.5rem;
+        }
+        .arch-diagram-card .card-body .mermaid {
+            font-size: 14px;
+        }
+        .arch-diagram-card:hover {
+            border-color: rgba(88,166,255,0.35) !important;
+            box-shadow: 0 4px 24px rgba(88,166,255,0.08);
+            transition: border-color 0.3s, box-shadow 0.3s;
+        }
+        .arch-counter {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 28px;
+            height: 28px;
+            border-radius: 8px;
+            background: linear-gradient(135deg, #1a3a5c, #264f78);
+            border: 1px solid #58a6ff;
+            color: #58a6ff;
+            font-weight: 700;
+            font-size: 13px;
+            margin-right: 10px;
+            flex-shrink: 0;
+        }
+    </style>
 </head>
 <body class="bg-dark text-light">
     {{template "nav" .}}
@@ -17,12 +56,15 @@
             <p class="lead text-muted">Interactive diagrams of DNS Tool&rsquo;s intelligence engines, request lifecycle, and package structure.</p>
         </div>
 
+        {{$counter := 0}}
         {{range .Diagrams}}
-        <div class="card border-0 mb-5 shadow-lg" style="background: linear-gradient(135deg, #0d1117 0%, #161b22 100%); border: 1px solid rgba(88,166,255,0.15) !important;">
-            <div class="card-header border-0 py-3" style="background: linear-gradient(90deg, rgba(88,166,255,0.08) 0%, transparent 100%); border-bottom: 1px solid rgba(88,166,255,0.12) !important;">
-                <h5 class="mb-0 fw-semibold" style="color: #58a6ff;"><i class="fas fa-sitemap me-2 opacity-75"></i>{{.Title}}</h5>
+        <div class="card arch-diagram-card border-0 mb-5 shadow-lg">
+            <div class="card-header border-0">
+                <h5 class="mb-0 fw-semibold d-flex align-items-center" style="color: #e6edf3;">
+                    <i class="fas fa-sitemap me-2" style="color: #58a6ff; opacity: 0.8;"></i>{{.Title}}
+                </h5>
             </div>
-            <div class="card-body p-4 text-center">
+            <div class="card-body text-center">
                 <div class="d-inline-block" style="min-width: 60%; max-width: 100%;">
                     <pre class="mermaid">{{.Content}}</pre>
                 </div>
@@ -46,35 +88,37 @@
             themeVariables: {
                 darkMode: true,
                 background: 'transparent',
-                primaryColor: '#1a3a5c',
+                primaryColor: '#264f78',
                 primaryBorderColor: '#58a6ff',
-                primaryTextColor: '#e6edf3',
-                secondaryColor: '#1a3c2e',
+                primaryTextColor: '#f0f6fc',
+                secondaryColor: '#1e4d3a',
                 secondaryBorderColor: '#3fb950',
-                secondaryTextColor: '#e6edf3',
-                tertiaryColor: '#3d2a5c',
+                secondaryTextColor: '#f0f6fc',
+                tertiaryColor: '#4a2d6e',
                 tertiaryBorderColor: '#bc8cff',
-                tertiaryTextColor: '#e6edf3',
+                tertiaryTextColor: '#f0f6fc',
                 lineColor: '#58a6ff',
-                textColor: '#e6edf3',
-                mainBkg: '#1a3a5c',
+                textColor: '#f0f6fc',
+                mainBkg: '#264f78',
                 nodeBorder: '#58a6ff',
-                clusterBkg: 'rgba(88,166,255,0.04)',
-                clusterBorder: 'rgba(88,166,255,0.25)',
-                titleColor: '#58a6ff',
-                edgeLabelBackground: '#0d1117',
-                nodeTextColor: '#e6edf3',
-                labelTextColor: '#c9d1d9',
-                actorBkg: '#1a3a5c',
+                clusterBkg: 'rgba(88,166,255,0.06)',
+                clusterBorder: 'rgba(88,166,255,0.30)',
+                titleColor: '#79c0ff',
+                edgeLabelBackground: '#161b22',
+                nodeTextColor: '#f0f6fc',
+                labelTextColor: '#e6edf3',
+                actorBkg: '#264f78',
                 actorBorder: '#58a6ff',
-                actorTextColor: '#e6edf3',
-                signalColor: '#58a6ff',
-                signalTextColor: '#e6edf3',
-                noteBkgColor: '#1a3c2e',
+                actorTextColor: '#f0f6fc',
+                signalColor: '#79c0ff',
+                signalTextColor: '#f0f6fc',
+                noteBkgColor: '#1e4d3a',
                 noteBorderColor: '#3fb950',
-                noteTextColor: '#e6edf3',
-                activationBkgColor: '#1a3a5c',
-                activationBorderColor: '#58a6ff'
+                noteTextColor: '#f0f6fc',
+                activationBkgColor: '#264f78',
+                activationBorderColor: '#58a6ff',
+                labelBoxBkgColor: '#1b2836',
+                labelBoxBorderColor: '#58a6ff'
             },
             flowchart: {
                 htmlLabels: true,

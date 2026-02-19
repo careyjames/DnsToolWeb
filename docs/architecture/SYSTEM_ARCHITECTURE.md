@@ -58,12 +58,19 @@ graph TB
     Handlers -.->|"user-provided key"| SecurityTrails
     GoBinary -.->|"build tags"| IntelRepo
 
-    classDef engine fill:#1a5276,stroke:#2980b9,color:#fff
-    classDef storage fill:#145a32,stroke:#27ae60,color:#fff
-    classDef external fill:#7d3c98,stroke:#9b59b6,color:#fff
+    classDef default fill:#1b2f45,stroke:#4a90d9,stroke-width:2px,color:#f0f6fc
+    classDef engine fill:#1a5c8a,stroke:#58a6ff,stroke-width:2px,color:#fff
+    classDef storage fill:#1a5c3a,stroke:#3fb950,stroke-width:2px,color:#fff
+    classDef external fill:#5a3088,stroke:#bc8cff,stroke-width:2px,color:#fff
+    classDef client fill:#2a4a6a,stroke:#79c0ff,stroke-width:2px,color:#fff
+    classDef app fill:#1e3a5a,stroke:#58a6ff,stroke-width:2px,color:#fff
     class ICIE,ICAE engine
     class PG storage
     class SecurityTrails,IntelRepo external
+    class Browser client
+    class Router,Auth,Handlers,Templates app
+    class DNSClient,SMTP,CT,HTTP engine
+    class Gunicorn,GoBinary app
 ```
 
 ## 2. ICIE — Intelligence Classification & Interpretation Engine
@@ -125,12 +132,17 @@ graph LR
     Privacy -->|"novel + anon"| Ephemeral
     Remediation --> Engineer & Executive & JSON
 
-    classDef rfc fill:#1b4f72,stroke:#2e86c1,color:#fff
-    classDef gate fill:#7d6608,stroke:#f1c40f,color:#fff
-    classDef output fill:#145a32,stroke:#27ae60,color:#fff
-    class SPF,DMARC,DKIM,DNSSEC,DANE,MTASTS,CAA,SMTP2 rfc
+    classDef default fill:#1b2f45,stroke:#4a90d9,stroke-width:2px,color:#f0f6fc
+    classDef rfc fill:#1a5c8a,stroke:#58a6ff,stroke-width:2px,color:#fff
+    classDef gate fill:#6b5a10,stroke:#f1c40f,stroke-width:2px,color:#fff
+    classDef output fill:#1a5c3a,stroke:#3fb950,stroke-width:2px,color:#fff
+    classDef classify fill:#0e5c55,stroke:#1abc9c,stroke-width:2px,color:#fff
+    classDef input fill:#2a4a6a,stroke:#79c0ff,stroke-width:2px,color:#fff
+    class SPF,DMARC,DKIM,DNSSEC,DANE,MTASTS,CAA,SMTP2,CT2,SubD,BIMI,DNS rfc
     class Privacy,Public,Private,Ephemeral gate
     class Engineer,Executive,JSON output
+    class Posture,Brand,Transport,Remediation classify
+    class Domain,Selectors,APIKeys input
 ```
 
 ## 3. ICAE — Intelligence Confidence Audit Engine
@@ -175,10 +187,13 @@ graph TB
     Runner --> DB
     Scores --> Report
 
-    classDef maturity fill:#1a5276,stroke:#2980b9,color:#fff
-    classDef cases fill:#0e6655,stroke:#1abc9c,color:#fff
+    classDef default fill:#1b2f45,stroke:#4a90d9,stroke-width:2px,color:#f0f6fc
+    classDef maturity fill:#1a5c8a,stroke:#58a6ff,stroke-width:2px,color:#fff
+    classDef cases fill:#0e5c55,stroke:#1abc9c,stroke-width:2px,color:#fff
+    classDef output fill:#1a5c3a,stroke:#3fb950,stroke-width:2px,color:#fff
     class Dev,Verified,Consistent,Gold,Master maturity
     class SPFCases,DMARCCases,DNSSECCases cases
+    class Scores,Report output
 ```
 
 ## 4. Two-Repo Open-Core Architecture
@@ -220,12 +235,15 @@ graph TB
     Tests -->|"verify no leaks"| PublicGo
     Tests -->|"verify stub contracts"| Stubs
 
-    classDef public fill:#1a5276,stroke:#2980b9,color:#fff
-    classDef private fill:#7d3c98,stroke:#9b59b6,color:#fff
-    classDef build fill:#145a32,stroke:#27ae60,color:#fff
+    classDef default fill:#1b2f45,stroke:#4a90d9,stroke-width:2px,color:#f0f6fc
+    classDef public fill:#1a5c8a,stroke:#58a6ff,stroke-width:2px,color:#fff
+    classDef private fill:#5a3088,stroke:#bc8cff,stroke-width:2px,color:#fff
+    classDef build fill:#1a5c3a,stroke:#3fb950,stroke-width:2px,color:#fff
+    classDef sync fill:#6b5a10,stroke:#f1c40f,stroke-width:2px,color:#fff
     class PublicGo,Stubs,Templates2,Static,Tests,Scripts public
     class Intel,ProviderDB,Methodology,Commercial private
     class BuildOSS,BuildIntel build
+    class Sync sync
 ```
 
 ## 5. Email Security Verdict Chain
@@ -258,8 +276,9 @@ graph TB
 
     subgraph "Brand Security Verdict Matrix"
         Protected["No — Protected<br/>reject + BIMI + CAA"]
-        MostlyP["Possible — Mostly Protected<br/>reject + one of BIMI/CAA"]
-        PartialP["Possible — Partially Protected<br/>reject + neither BIMI nor CAA"]
+        WellP["Unlikely — Well Protected<br/>reject + BIMI/VMC"]
+        MostlyP["Possible — Mostly Protected<br/>reject + CAA only"]
+        PartialP["Possible — Partially Protected<br/>reject + neither"]
         AtRisk["Likely — At Risk<br/>quarantine or none"]
         Exposed["Yes — Exposed<br/>No DMARC"]
     end
@@ -273,18 +292,26 @@ graph TB
     DMARCCheck -->|"missing"| Missing
     Reject --> BIMI2 & CAA2
     BIMI2 & CAA2 -->|"both present"| Protected
-    BIMI2 & CAA2 -->|"one present"| MostlyP
+    BIMI2 -->|"BIMI/VMC present"| WellP
+    CAA2 -->|"CAA only"| MostlyP
     BIMI2 & CAA2 -->|"neither"| PartialP
     Quarantine --> AtRisk
     None --> AtRisk
     Missing --> Exposed
 
-    classDef safe fill:#145a32,stroke:#27ae60,color:#fff
-    classDef warn fill:#7d6608,stroke:#f1c40f,color:#fff
-    classDef danger fill:#922b21,stroke:#e74c3c,color:#fff
-    class Protected safe
+    classDef default fill:#1b2f45,stroke:#4a90d9,stroke-width:2px,color:#f0f6fc
+    classDef safe fill:#1a5c3a,stroke:#3fb950,stroke-width:2px,color:#fff
+    classDef warn fill:#6b5a10,stroke:#f1c40f,stroke-width:2px,color:#fff
+    classDef danger fill:#6e2a1e,stroke:#f85149,stroke-width:2px,color:#fff
+    classDef rfc fill:#1a5c8a,stroke:#58a6ff,stroke-width:2px,color:#fff
+    classDef check fill:#0e5c55,stroke:#1abc9c,stroke-width:2px,color:#fff
+    class Protected,WellP safe
     class MostlyP,PartialP warn
     class AtRisk,Exposed danger
+    class RFC7208,RFC6376,RFC7489 rfc
+    class SPFCheck,DKIMCheck,DMARCCheck check
+    class Reject,Quarantine,None,Missing default
+    class BIMI2,CAA2 rfc
 ```
 
 ## 6. Request Lifecycle
@@ -371,12 +398,14 @@ graph TB
     DB2 --> DBQ
     Middleware --> Config & Telemetry
 
-    classDef core fill:#1a5276,stroke:#2980b9,color:#fff
-    classDef engine fill:#0e6655,stroke:#1abc9c,color:#fff
-    classDef infra fill:#6c3483,stroke:#8e44ad,color:#fff
+    classDef default fill:#1b2f45,stroke:#4a90d9,stroke-width:2px,color:#f0f6fc
+    classDef core fill:#1a5c8a,stroke:#58a6ff,stroke-width:2px,color:#fff
+    classDef engine fill:#0e5c55,stroke:#1abc9c,stroke-width:2px,color:#fff
+    classDef infra fill:#5a3088,stroke:#bc8cff,stroke-width:2px,color:#fff
     class Analyzer,AISurface,ICAE2 engine
     class Server,Handlers,Middleware core
     class DB2,DBQ,DNSClient2,Telemetry infra
+    class Config,Models,Providers,Templates3 default
 ```
 
 ---
