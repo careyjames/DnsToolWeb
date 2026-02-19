@@ -12,11 +12,11 @@ globalThis.addEventListener('pageshow', function(e) {
             }
         });
         document.body.classList.remove('loading');
-        var reanalyzeBtn = document.getElementById('reanalyzeBtn');
+        const reanalyzeBtn = document.getElementById('reanalyzeBtn');
         if (reanalyzeBtn && !reanalyzeBtn.classList.contains('disabled')) {
             reanalyzeBtn.innerHTML = '<i class="fas fa-sync-alt me-2"></i>Re-analyze';
         }
-        var analyzeBtn = document.getElementById('analyzeBtn');
+        const analyzeBtn = document.getElementById('analyzeBtn');
         if (analyzeBtn) {
             analyzeBtn.innerHTML = '<i class="fas fa-search me-1"></i> Analyze';
             analyzeBtn.disabled = false;
@@ -34,7 +34,7 @@ function showOverlay(overlay) {
     requestAnimationFrame(function() {
         requestAnimationFrame(function() {
             overlay.querySelectorAll('.loading-spinner, .loading-spinner i, .loading-dots span').forEach(function(el) {
-                var anim = getComputedStyle(el).animationName;
+                const anim = getComputedStyle(el).animationName;
                 if (anim && anim !== 'none') {
                     el.style.animation = 'none';
                     void el.offsetWidth; // NOSONAR — Safari reflow
@@ -52,8 +52,8 @@ function startStatusCycle(overlayEl) {
 
     if (timerEl) {
         timerEl.textContent = '0s';
-        var timerId = setInterval(function() {
-            var elapsed = Math.floor((Date.now() - startTime) / 1000);
+        const timerId = setInterval(function() {
+            const elapsed = Math.floor((Date.now() - startTime) / 1000);
             timerEl.textContent = elapsed + 's';
         }, 1000);
         overlayEl.dataset.timerId = timerId;
@@ -81,7 +81,7 @@ function startStatusCycle(overlayEl) {
         setTimeout(function() {
             phase.classList.remove('active-phase');
             phase.classList.add('done');
-            var icon = phase.querySelector('.scan-icon');
+            const icon = phase.querySelector('.scan-icon');
             if (icon) {
                 icon.classList.remove('fa-circle-notch', 'fa-spin', 'scan-pending');
                 void icon.offsetWidth; // NOSONAR — Safari reflow trigger for ::before content swap
@@ -177,11 +177,11 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
         
-        var analysisSubmitted = false;
+        let analysisSubmitted = false;
         domainForm.addEventListener('submit', function(e) {
             if (analysisSubmitted) return;
             e.preventDefault();
-            var domain = domainInput.value.trim().toLowerCase();
+            const domain = domainInput.value.trim().toLowerCase();
             domainInput.value = domain;
             
             if (!domain) {
@@ -199,8 +199,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 return;
             }
             
-            var overlay = document.getElementById('loadingOverlay');
-            var loadingDomain = document.getElementById('loadingDomain');
+            const overlay = document.getElementById('loadingOverlay');
+            const loadingDomain = document.getElementById('loadingDomain');
             if (overlay) {
                 if (loadingDomain) {
                     loadingDomain.textContent = domain;
@@ -209,14 +209,14 @@ document.addEventListener('DOMContentLoaded', function() {
                 startStatusCycle(overlay);
             }
             analyzeBtn.textContent = '';
-            var spinner = document.createElement('i');
+            const spinner = document.createElement('i');
             spinner.className = 'fas fa-spinner fa-spin me-2';
             analyzeBtn.appendChild(spinner);
             analyzeBtn.appendChild(document.createTextNode('Analyzing...'));
             analyzeBtn.disabled = true;
             document.body.classList.add('loading');
             analysisSubmitted = true;
-            var formData = new FormData(domainForm);
+            const formData = new FormData(domainForm);
             fetch(domainForm.action, {
                 method: 'POST',
                 body: formData,
@@ -238,11 +238,11 @@ document.addEventListener('DOMContentLoaded', function() {
             }).catch(function() {
                 hideOverlayAndReset(overlay, analyzeBtn);
                 analysisSubmitted = false;
-                var flash = document.createElement('div');
+                const flash = document.createElement('div');
                 flash.className = 'alert alert-danger alert-dismissible fade show mt-3';
                 flash.setAttribute('role', 'alert');
                 flash.textContent = 'Network error — please check your connection and try again.';
-                var closeBtn = document.createElement('button');
+                const closeBtn = document.createElement('button');
                 closeBtn.type = 'button';
                 closeBtn.className = 'btn-close';
                 closeBtn.setAttribute('data-bs-dismiss', 'alert');
@@ -260,10 +260,10 @@ document.addEventListener('DOMContentLoaded', function() {
         if (link.id === 'reanalyzeBtn') return;
         link.addEventListener('click', function(e) {
             e.preventDefault();
-            var overlay = document.getElementById('loadingOverlay');
-            var loadingDomain = document.getElementById('loadingDomain');
-            var url = new URL(link.href, globalThis.location.origin);
-            var domain = url.searchParams.get('domain') || '';
+            const overlay = document.getElementById('loadingOverlay');
+            const loadingDomain = document.getElementById('loadingDomain');
+            const url = new URL(link.href, globalThis.location.origin);
+            const domain = url.searchParams.get('domain') || '';
             if (overlay) {
                 if (loadingDomain) loadingDomain.textContent = domain;
                 showOverlay(overlay);
@@ -352,7 +352,7 @@ if (allFixesCollapse) {
 }
 
 function escapeHtml(str) {
-    var div = document.createElement('div');
+    const div = document.createElement('div');
     div.textContent = str;
     return div.innerHTML;
 }
@@ -377,38 +377,38 @@ function loadDNSHistory(domain) {
 
             source.textContent = 'Source: ' + (data.source || 'SecurityTrails');
 
-            var changes = data.changes || [];
+            const changes = data.changes || [];
             body.textContent = '';
             if (changes.length === 0) {
-                var p = document.createElement('p');
+                const p = document.createElement('p');
                 p.className = 'text-muted mb-0';
-                var ico = document.createElement('i');
+                const ico = document.createElement('i');
                 ico.className = 'fas fa-check-circle text-success me-1';
                 p.appendChild(ico);
                 p.appendChild(document.createTextNode('No DNS record changes detected in available history. A, AAAA, MX, and NS records for this domain have remained stable.'));
                 body.appendChild(p);
             } else {
-                var wrap = document.createElement('div');
+                const wrap = document.createElement('div');
                 wrap.className = 'table-responsive';
-                var table = document.createElement('table');
+                const table = document.createElement('table');
                 table.className = 'table table-sm table-striped mb-0';
-                var thead = document.createElement('thead');
-                var headRow = document.createElement('tr');
-                var headers = [
+                const thead = document.createElement('thead');
+                const headRow = document.createElement('tr');
+                const headers = [
                     {text: 'Date', cls: 'u-w-80px'}, {text: 'Type', cls: 'u-w-60px'},
                     {text: 'Action', cls: 'u-w-70px'}, {text: 'Value'}, {text: 'Organization'}, {text: 'Timeline'}
                 ];
                 headers.forEach(function(h) {
-                    var th = document.createElement('th');
+                    const th = document.createElement('th');
                     if (h.cls) th.className = h.cls;
                     th.textContent = h.text;
                     headRow.appendChild(th);
                 });
                 thead.appendChild(headRow);
                 table.appendChild(thead);
-                var tbody = document.createElement('tbody');
+                const tbody = document.createElement('tbody');
                 changes.forEach(function(ch) {
-                    var typeColor = 'secondary';
+                    let typeColor = 'secondary';
                     if (ch.record_type === 'A' || ch.record_type === 'AAAA') {
                         typeColor = 'primary';
                     } else if (ch.record_type === 'MX') {
@@ -416,23 +416,23 @@ function loadDNSHistory(domain) {
                     } else if (ch.record_type === 'NS') {
                         typeColor = 'info';
                     }
-                    var tr = document.createElement('tr');
+                    const tr = document.createElement('tr');
 
-                    var tdDate = document.createElement('td');
-                    var codeDate = document.createElement('code');
+                    const tdDate = document.createElement('td');
+                    const codeDate = document.createElement('code');
                     codeDate.className = 'text-muted u-fs-080em';
                     codeDate.textContent = ch.date || '';
                     tdDate.appendChild(codeDate);
 
-                    var tdType = document.createElement('td');
-                    var badgeType = document.createElement('span');
+                    const tdType = document.createElement('td');
+                    const badgeType = document.createElement('span');
                     badgeType.className = 'badge bg-' + typeColor;
                     badgeType.textContent = ch.record_type || '';
                     tdType.appendChild(badgeType);
 
-                    var tdAction = document.createElement('td');
-                    var actionSpan = document.createElement('span');
-                    var actionIcon = document.createElement('i');
+                    const tdAction = document.createElement('td');
+                    const actionSpan = document.createElement('span');
+                    const actionIcon = document.createElement('i');
                     if (ch.action === 'added') {
                         actionSpan.className = 'text-success';
                         actionIcon.className = 'fas fa-plus-circle me-1';
@@ -446,20 +446,20 @@ function loadDNSHistory(domain) {
                     }
                     tdAction.appendChild(actionSpan);
 
-                    var tdValue = document.createElement('td');
-                    var codeValue = document.createElement('code');
+                    const tdValue = document.createElement('td');
+                    const codeValue = document.createElement('code');
                     codeValue.className = 'u-fs-085em';
                     codeValue.textContent = ch.value || '';
                     tdValue.appendChild(codeValue);
 
-                    var tdOrg = document.createElement('td');
-                    var spanOrg = document.createElement('span');
+                    const tdOrg = document.createElement('td');
+                    const spanOrg = document.createElement('span');
                     spanOrg.className = 'text-muted';
                     spanOrg.textContent = ch.org || '\u2014';
                     tdOrg.appendChild(spanOrg);
 
-                    var tdDesc = document.createElement('td');
-                    var spanDesc = document.createElement('span');
+                    const tdDesc = document.createElement('td');
+                    const spanDesc = document.createElement('span');
                     spanDesc.className = 'text-muted u-fs-085em';
                     spanDesc.textContent = ch.description || '';
                     tdDesc.appendChild(spanDesc);
