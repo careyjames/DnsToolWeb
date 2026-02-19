@@ -216,7 +216,39 @@ document.addEventListener('DOMContentLoaded', function() {
             analyzeBtn.disabled = true;
             document.body.classList.add('loading');
             analysisSubmitted = true;
-            domainForm.submit();
+            var formData = new FormData(domainForm);
+            fetch(domainForm.action, {
+                method: 'POST',
+                body: formData,
+                headers: { 'X-Requested-With': 'fetch' },
+                redirect: 'follow'
+            }).then(function(resp) {
+                if (resp.redirected) {
+                    globalThis.location.href = resp.url;
+                    return;
+                }
+                return resp.text().then(function(html) {
+                    document.open();
+                    document.write(html);
+                    document.close();
+                    if (resp.url && resp.url !== globalThis.location.href) {
+                        globalThis.history.replaceState(null, '', resp.url);
+                    }
+                });
+            }).catch(function() {
+                hideOverlayAndReset(overlay, analyzeBtn);
+                analysisSubmitted = false;
+                var flash = document.createElement('div');
+                flash.className = 'alert alert-danger alert-dismissible fade show mt-3';
+                flash.setAttribute('role', 'alert');
+                flash.textContent = 'Network error — please check your connection and try again.';
+                var closeBtn = document.createElement('button');
+                closeBtn.type = 'button';
+                closeBtn.className = 'btn-close';
+                closeBtn.setAttribute('data-bs-dismiss', 'alert');
+                flash.appendChild(closeBtn);
+                domainForm.parentNode.insertBefore(flash, domainForm);
+            });
         });
         
         domainInput.addEventListener('focus', function() {

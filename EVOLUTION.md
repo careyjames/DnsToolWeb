@@ -10,6 +10,22 @@ This file is the project's permanent breadcrumb trail — every session's decisi
 
 ---
 
+## Session: February 19, 2026 (v26.21.1 — Safari Overlay Fix, Philosophy)
+
+### v26.21.1 — Safari Analysis Overlay Fix
+
+#### What Changed
+1. **Safari overlay freeze fix (index + dossier)**: Replaced synchronous `form.submit()` with `fetch()` API for analysis form submissions on both the homepage (`static/js/main.js`) and dossier page (`go-server/templates/dossier.html`). Safari kills JavaScript timers and CSS animations when traditional form submission triggers navigation; `fetch()` keeps the event loop alive during the 10-60s server processing, then writes the response HTML via `document.write()`. Network error handling added with user-visible alert. CSRF tokens captured via `FormData` automatically.
+2. **"Accuracy First, Speed Follows" philosophy**: Documented core principle in PROJECT_CONTEXT.md with concrete codebase evidence (RFC compliance, ICAE scoring, SHA-256 custody chains, observation-based language, deterministic tests).
+3. **Version bump**: 26.20.89 → 26.21.1
+
+#### Lessons Learned
+- Safari's WebKit engine freezes all JavaScript execution during synchronous form navigation — `setInterval` timers stop, CSS animations freeze. The `fetch()` API avoids this because it's asynchronous and doesn't trigger page unload.
+- `document.write()` after `fetch()` correctly replaces the entire page including `<head>` scripts. Combined with `history.replaceState()` for clean URL.
+- `FormData(form)` automatically captures all hidden fields including CSRF tokens.
+
+---
+
 ## Session: February 19, 2026 (v26.20.89 — Zone Import, Snapshot, a11y, CI Fix, Philosophy)
 
 ### v26.20.89 — Zone File Import, Observed Records Snapshot, Accessibility, CI Fix

@@ -418,24 +418,32 @@
                     }, 1000);
                 }
 
-                var form = document.createElement('form');
-                form.method = 'POST';
-                form.action = '/analyze';
-                var input = document.createElement('input');
-                input.type = 'hidden';
-                input.name = 'domain';
-                input.value = decodeURIComponent(domain);
-                form.appendChild(input);
+                var formData = new FormData();
+                formData.append('domain', decodeURIComponent(domain));
                 var csrf = document.querySelector('meta[name="csrf-token"]');
-                if(csrf){
-                    var csrfInput = document.createElement('input');
-                    csrfInput.type = 'hidden';
-                    csrfInput.name = '_csrf';
-                    csrfInput.value = csrf.getAttribute('content');
-                    form.appendChild(csrfInput);
-                }
-                document.body.appendChild(form);
-                form.submit();
+                if(csrf) formData.append('_csrf', csrf.getAttribute('content'));
+                fetch('/analyze', {
+                    method: 'POST',
+                    body: formData,
+                    headers: { 'X-Requested-With': 'fetch' },
+                    redirect: 'follow'
+                }).then(function(resp) {
+                    if (resp.redirected) {
+                        globalThis.location.href = resp.url;
+                        return;
+                    }
+                    return resp.text().then(function(html) {
+                        document.open();
+                        document.write(html);
+                        document.close();
+                        if (resp.url && resp.url !== globalThis.location.href) {
+                            globalThis.history.replaceState(null, '', resp.url);
+                        }
+                    });
+                }).catch(function() {
+                    if(overlay) overlay.classList.remove('active');
+                    alert('Network error — please check your connection and try again.');
+                });
             });
         });
     })();
