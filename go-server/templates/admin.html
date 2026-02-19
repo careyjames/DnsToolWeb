@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="dark">
+<head>
+    {{template "head" .}}
+    <title>Admin Dashboard - DNS Tool</title>
+    <meta name="robots" content="noindex, nofollow">
+    {{template "critical_css" .}}
+    {{template "head_css" .}}
+</head>
+<body>
+    {{template "nav" .}}
+
+    <main id="main-content" class="container my-4">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h1 class="h3 mb-1">
+                    <i class="fas fa-shield me-2"></i>Admin Dashboard
+                </h1>
+                <p class="text-muted mb-0">System overview and user management</p>
+            </div>
+            <a href="/export/json" class="btn btn-outline-info">
+                <i class="fas fa-download me-2"></i>Export NDJSON
+            </a>
+        </div>
+
+        {{template "flash_messages" .}}
+
+        <div class="row mb-4">
+            <div class="col-md-2 mb-3">
+                <div class="card text-center">
+                    <div class="card-body py-3">
+                        <div class="h4 mb-1 text-info">{{.Stats.TotalUsers}}</div>
+                        <small class="text-muted">Total Users</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-2 mb-3">
+                <div class="card text-center">
+                    <div class="card-body py-3">
+                        <div class="h4 mb-1 text-success">{{.Stats.TotalAnalyses}}</div>
+                        <small class="text-muted">Total Analyses</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-2 mb-3">
+                <div class="card text-center">
+                    <div class="card-body py-3">
+                        <div class="h4 mb-1 text-warning">{{.Stats.UniqueDomainsCount}}</div>
+                        <small class="text-muted">Unique Domains</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-2 mb-3">
+                <div class="card text-center">
+                    <div class="card-body py-3">
+                        <div class="h4 mb-1 text-secondary">{{.Stats.PrivateAnalyses}}</div>
+                        <small class="text-muted">Private Analyses</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-2 mb-3">
+                <div class="card text-center">
+                    <div class="card-body py-3">
+                        <div class="h4 mb-1 text-info">{{.Stats.TotalSessions}}</div>
+                        <small class="text-muted">Total Sessions</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-2 mb-3">
+                <div class="card text-center">
+                    <div class="card-body py-3">
+                        <div class="h4 mb-1 text-success">{{.Stats.ActiveSessions}}</div>
+                        <small class="text-muted">Active Sessions</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-lg-5 mb-4">
+                <div class="card">
+                    <div class="card-body">
+                        <h2 class="h5 mb-3"><i class="fas fa-users me-2"></i>Registered Users</h2>
+                        {{if .Users}}
+                        <div class="table-responsive">
+                            <table class="table table-sm table-dark mb-0">
+                                <thead>
+                                    <tr>
+                                        <th>User</th>
+                                        <th>Role</th>
+                                        <th>Last Login</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {{range .Users}}
+                                    <tr>
+                                        <td>
+                                            <div>{{.Name}}</div>
+                                            <small class="text-muted">{{.Email}}</small>
+                                        </td>
+                                        <td>
+                                            {{if eq .Role "admin"}}
+                                            <span class="badge bg-info text-dark">Admin</span>
+                                            {{else}}
+                                            <span class="badge bg-secondary">User</span>
+                                            {{end}}
+                                        </td>
+                                        <td><small>{{.LastLoginAt}}</small></td>
+                                    </tr>
+                                    {{end}}
+                                </tbody>
+                            </table>
+                        </div>
+                        {{else}}
+                        <p class="text-muted mb-0">No registered users yet.</p>
+                        {{end}}
+                    </div>
+                </div>
+
+                {{if .ICAERuns}}
+                <div class="card mt-4">
+                    <div class="card-body">
+                        <h2 class="h5 mb-3"><i class="fas fa-flask me-2"></i>ICAE Test Runs</h2>
+                        <div class="table-responsive">
+                            <table class="table table-sm table-dark mb-0">
+                                <thead>
+                                    <tr>
+                                        <th>Version</th>
+                                        <th>Cases</th>
+                                        <th>Result</th>
+                                        <th>Date</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {{range .ICAERuns}}
+                                    <tr>
+                                        <td><code>{{.AppVersion}}</code></td>
+                                        <td>{{.TotalCases}}</td>
+                                        <td>
+                                            {{if eq .TotalFailed 0}}
+                                            <span class="text-success">{{.TotalPassed}}/{{.TotalCases}}</span>
+                                            {{else}}
+                                            <span class="text-danger">{{.TotalPassed}}/{{.TotalCases}}</span>
+                                            <small class="text-danger">({{.TotalFailed}} failed)</small>
+                                            {{end}}
+                                        </td>
+                                        <td><small>{{.CreatedAt}}</small></td>
+                                    </tr>
+                                    {{end}}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                {{end}}
+            </div>
+
+            <div class="col-lg-7 mb-4">
+                <div class="card">
+                    <div class="card-body">
+                        <h2 class="h5 mb-3"><i class="fas fa-history me-2"></i>Recent Analyses</h2>
+                        {{if .RecentAnalyses}}
+                        <div class="table-responsive">
+                            <table class="table table-sm table-dark mb-0">
+                                <thead>
+                                    <tr>
+                                        <th>Domain</th>
+                                        <th>Status</th>
+                                        <th>Duration</th>
+                                        <th>Flags</th>
+                                        <th>Date</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {{range .RecentAnalyses}}
+                                    <tr>
+                                        <td>
+                                            <a href="/analysis/{{.ID}}" class="text-info text-decoration-none">{{.Domain}}</a>
+                                        </td>
+                                        <td>
+                                            {{if .Success}}
+                                            <span class="text-success"><i class="fas fa-check"></i></span>
+                                            {{else}}
+                                            <span class="text-danger"><i class="fas fa-times"></i></span>
+                                            {{end}}
+                                        </td>
+                                        <td><small>{{.Duration}}</small></td>
+                                        <td>
+                                            {{if .Private}}<span class="badge bg-warning text-dark" title="Private">P</span>{{end}}
+                                            {{if .HasUserSelectors}}<span class="badge bg-secondary" title="Custom DKIM Selectors">S</span>{{end}}
+                                            {{if .CountryCode}}<small class="text-muted">{{.CountryCode}}</small>{{end}}
+                                        </td>
+                                        <td><small>{{.CreatedAt}}</small></td>
+                                    </tr>
+                                    {{end}}
+                                </tbody>
+                            </table>
+                        </div>
+                        {{else}}
+                        <p class="text-muted mb-0">No analyses recorded yet.</p>
+                        {{end}}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    {{template "footer" .}}
+    {{template "scripts" .}}
+</body>
+</html>

@@ -153,6 +153,9 @@ func main() {
 
         router.GET("/compare", compareHandler.Compare)
 
+        adminHandler := handlers.NewAdminHandler(database, cfg)
+        router.GET("/admin", middleware.RequireAdmin(), adminHandler.Dashboard)
+
         router.GET("/export/json", middleware.RequireAdmin(), exportHandler.ExportJSON)
         router.GET("/export/subdomains", analysisHandler.ExportSubdomainsCSV)
 
