@@ -22,14 +22,22 @@ OSINT platform for RFC-compliant domain security analysis. Go/Gin backend, Boots
 10. **Stubs**: `_oss.go` files return safe non-nil defaults, never errors.
 11. **Capitalization**: NIST/Chicago title case for all user-facing headings, badges, trust indicators. Never camelCase in UI copy.
 
-## /dev/null Ephemeral Scan (v26.21.9)
+## /dev/null Ephemeral Scan (v26.21.11)
 - **User-selectable checkbox** in Advanced Options: `/dev/null Scan` — full analysis, zero persistence.
-- **Skips**: `saveAnalysis()`, `InsertUserAnalysis()`, `icae.EvaluateAndRecord()`, `RecordAnalysis()` analytics.
+- **Auto-enables**: Ticking `/dev/null` auto-enables Expanded Exposure Checks (user can still uncheck).
+- **Skips**: `saveAnalysis()`, `InsertUserAnalysis()`, `icae.EvaluateAndRecord()`, `RecordAnalysis()` analytics, drift lookup.
 - **Response headers**: `X-Hacker` and `X-Persistence: /dev/null` on ephemeral results.
 - **Template**: Dark terminal-themed banner with `> ./dns-tool --output /dev/null` code block.
-- **Console Easter egg**: Styled hacker verse in browser dev tools (nonce'd, CSP-compliant).
-- **HTML Easter eggs**: Hacker verses in HTML comments on index.html and results.html source.
 - **Logic**: `ephemeral = devNull || (hasNovelSelectors && !isAuthenticated)` — devNull flag overrides.
+
+## Easter Eggs & Community Signals (v26.21.11)
+- **RFC 1392 legal disclaimer**: All Easter eggs cite IETF definition of "hacker" (1993). No ANSI art in HTTP (RFC 7230 prohibits escape codes in headers).
+- **HTML comments**: `index.html` (zone-diff verse), `results.html` (NSEC-chain verse), `architecture.html` (discovery breadcrumb). Visible via `curl` or View Source.
+- **Console log** (devNull only): Styled hacker verse in browser DevTools (nonce'd, CSP-compliant).
+- **HTTP headers** (devNull only): `X-Hacker` and `X-Persistence: /dev/null`. RFC 7230 compliant ASCII.
+- **Architecture hint**: 50% opacity text encouraging source code exploration.
+- **htmlComment() function**: `go-server/internal/templates/funcs.go` — bypasses Go's html/template comment stripping. Sanitizes `--` to em dashes. Static strings only.
+- **Full inventory**: See PROJECT_CONTEXT.md "Easter Eggs & Community Signals" section.
 
 ## Content-Usage Directive Detection (v26.21.9)
 - **IETF AI Preferences draft**: Detects `Content-Usage:` directives in robots.txt (e.g., `ai=n`).

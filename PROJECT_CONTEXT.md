@@ -428,6 +428,39 @@ Implementation details are in the intel repo. Key public-facing behaviors:
 - Sitemap: 8 indexable pages.
 - Meta descriptions: <155 chars. Page titles: <60 chars.
 
+### Easter Eggs & Community Signals (v26.21.11)
+
+DNS Tool includes discoverable Easter eggs targeting the security research and hacker communities. All content follows the project's "observation-based language" standard and carries legal disclaimers citing RFC 1392.
+
+**Guiding Principle**: "Hacker" per RFC 1392 (IETF Internet Users' Glossary, 1993) — *"A person who delights in having an intimate understanding of the internal workings of a system, computers and computer networks in particular."* The RFC explicitly distinguishes this from "cracker" (unauthorized access).
+
+#### Complete Inventory
+
+| Location | Type | Content | Discoverable Via |
+|----------|------|---------|-----------------|
+| `index.html` | HTML comment | Hacker verse (zone-diff variant) + RFC 1392 legal disclaimer | `curl`, View Source |
+| `results.html` | HTML comment | Hacker verse (NSEC-chain variant) + RFC 1392 legal disclaimer | `curl`, View Source |
+| `architecture.html` | HTML comment | "You found one. There are more. View source is a valid attack vector against boredom." | `curl`, View Source |
+| `results.html` (devNull only) | Console log | Hacker verse (exploit-config variant) + `> ./dns-tool --output /dev/null` banner + RFC 1392 disclaimer | Browser DevTools (F12) |
+| `results.html` (devNull only) | HTTP headers | `X-Hacker: MUST means MUST -- not kinda, maybe, should. // DNS Tool` and `X-Persistence: /dev/null` | `curl -I`, browser DevTools Network tab |
+| `architecture.html` | Visible hint | "Hackers who read source code sometimes find things others don't." (50% opacity, terminal icon) | Visible on page (subtle) |
+
+#### Implementation Details
+
+- **htmlComment() template function**: `go-server/internal/templates/funcs.go` — outputs `template.HTML` to bypass Go's html/template comment stripping. Sanitizes `--` to em dashes to prevent comment injection. Used ONLY with static strings in templates, never with user input.
+- **X-Hacker / X-Persistence headers**: Set in `go-server/internal/handlers/analysis.go` only when `devNull=true`. Standard HTTP response headers, RFC 7230 compliant (visible US-ASCII only, no ANSI escape codes).
+- **Console log**: Nonce'd `<script>` block in results.html, CSP-compliant. Only fires when `{{if .DevNull}}` is true. Uses `%c` CSS styling for monospace, dimmed colors.
+- **Architecture hint**: Standard HTML element with `u-opacity-50` CSS class. No CSP concerns.
+
+#### ANSI Art / Terminal Colors — Not Permitted in HTTP
+
+RFC 7230 requires header field values to be visible US-ASCII (0x21-0x7E) plus SP/HTAB. ANSI escape codes (0x1B) are NOT valid in HTTP headers and would break parsers, proxies, CDNs, and logging tools. The HTML comments are the correct mechanism for curl discovery — they render as readable plain text in terminals.
+
+#### Legal Disclaimer (Standard Text)
+
+All Easter eggs include this disclaimer (or a compact variant):
+> DNS Tool performs passive, non-intrusive analysis of publicly available DNS records and web resources. No systems are penetrated, exploited, or accessed without authorization. All data is obtained from public sources (DNS, CT logs, HTTP headers, robots.txt). "Hacker" per RFC 1392 (IETF Internet Users' Glossary, 1993): "A person who delights in having an intimate understanding of the internal workings of a system, computers and computer networks in particular." That's us. That's always been us.
+
 ---
 
 ## 9. Documentation Files

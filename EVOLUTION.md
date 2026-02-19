@@ -10,6 +10,56 @@ This file is the project's permanent breadcrumb trail — every session's decisi
 
 ---
 
+## Session: February 19, 2026 (v26.21.11 — Easter Eggs, /dev/null Enhancements, RFC 1392 Compliance)
+
+### v26.21.11 — Easter Eggs & Community Signals
+
+#### What Changed
+
+1. **htmlComment() template function**: Go's `html/template` silently strips all HTML comments for security. Created `htmlComment()` in `go-server/internal/templates/funcs.go` that returns `template.HTML` type, bypassing the stripping. Sanitizes `--` to em dashes to prevent comment injection. Used ONLY with static strings.
+
+2. **Hacker verses in HTML comments**: Three unique verses across `index.html` (zone-diff variant), `results.html` (NSEC-chain variant), and `architecture.html` (discovery breadcrumb). All discoverable via `curl` or View Source.
+
+3. **RFC 1392 legal disclaimers**: Every Easter egg carries a legal disclaimer citing RFC 1392 (IETF Internet Users' Glossary, 1993) definition of "hacker": *"A person who delights in having an intimate understanding of the internal workings of a system."* Explicitly distinguishes from "cracker." Added because the original "RFC-readers" shorthand, while directionally correct, lacked the IETF citation weight needed for bulletproof credibility.
+
+4. **Console Easter egg** (devNull only): `/dev/null` scan results show styled hacker verse in browser DevTools console. Nonce'd `<script>`, CSP-compliant. Three-tier: terminal command banner (blue), verse (muted), disclaimer (dimmed). Only fires when `DevNull=true`.
+
+5. **X-Hacker / X-Persistence HTTP headers** (devNull only): Custom response headers on `/dev/null` scan results. `X-Hacker: MUST means MUST -- not kinda, maybe, should. // DNS Tool` and `X-Persistence: /dev/null`. RFC 7230 compliant (visible US-ASCII only).
+
+6. **Architecture page hint**: Subtle 50% opacity text with terminal icon: "Hackers who read source code sometimes find things others don't." Plus HTML comment breadcrumb encouraging source exploration.
+
+7. **/dev/null auto-enables Expanded Exposure Checks**: When `/dev/null` checkbox is ticked, JavaScript auto-enables the exposure checks checkbox. Copy updated to: "Maximum intelligence, zero persistence. Automatically enables Expanded Exposure Checks for full reconnaissance." User can still manually uncheck.
+
+8. **/dev/null copy accuracy**: Replaced overpromising language ("no one will ever know", "zero footprint") with precise scoping: "Nothing written to our database" (scoped), "Standard network activity occurs normally" (honest). No absolute privacy claims.
+
+9. **/dev/null drift isolation**: Authenticated users in devNull mode now skip drift lookup entirely, preventing historical data reads in a privacy-focused scan mode.
+
+10. **CT log test fix**: `TestGoldenRuleSubdomainDiscoveryUnder60s` changed from asserting specific subdomain names to validating structural properties (non-empty name, correct suffix), making it deterministic against external CT data changes.
+
+#### ANSI Art / Terminal Colors — Research Conclusion
+
+Investigated whether HTTP responses could include ANSI escape codes for terminal colorization when accessed via `curl`. Conclusion: **Not permitted.** RFC 7230 requires header field values to be visible US-ASCII (0x21-0x7E) plus SP/HTAB. ANSI escape codes (0x1B) violate the spec and break parsers, proxies, CDNs, and logging tools. HTML comments in the response body are the correct mechanism for `curl` discovery — they render as readable plain text in terminals.
+
+#### Siemens ProductCERT Connection
+
+The Easter egg approach extends the same transparency philosophy adopted from Siemens ProductCERT in v26.21.4 (cryptographic algorithm classification). Key lesson: *radical transparency, when backed by citations and standards, is a strength signal, not a weakness signal.* Applied here: the legal disclaimers don't weaken the Easter eggs — they strengthen them by showing we know exactly what we do (passive OSINT) and aren't afraid to say so, with RFC citations to back it up.
+
+#### Complete Easter Egg Inventory
+
+| Location | Type | Trigger | Discoverable Via |
+|----------|------|---------|-----------------|
+| `index.html` | HTML comment | Always | `curl`, View Source |
+| `results.html` | HTML comment | Always | `curl`, View Source |
+| `architecture.html` | HTML comment | Always | `curl`, View Source |
+| `results.html` | Console log | devNull=true | Browser DevTools (F12) |
+| `results.html` | HTTP headers | devNull=true | `curl -I`, Network tab |
+| `architecture.html` | Visible text | Always | On-page (subtle, 50% opacity) |
+
+#### Files Changed
+- **Modified**: `go-server/internal/templates/funcs.go` (htmlComment function), `go-server/templates/index.html` (HTML comment + RFC 1392), `go-server/templates/results.html` (HTML comment + console log + RFC 1392), `go-server/templates/architecture.html` (HTML comment + hint text), `go-server/internal/handlers/analysis.go` (devNull drift skip, auto-enable logic), `go-server/internal/analyzer/golden_rules_test.go` (CT test fix), `go-server/internal/config/config.go` (v26.21.11), `PROJECT_CONTEXT.md` (Easter egg inventory section), `replit.md` (Easter egg summary)
+
+---
+
 ## Session: February 19, 2026 (v26.21.4 — Cryptographic Algorithm Classification & Transparency)
 
 ### v26.21.4 — Cryptographic Algorithm Classification System
