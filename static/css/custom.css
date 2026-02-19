@@ -3008,6 +3008,7 @@ main.container {
 .icae-level-verified { background: rgba(25, 135, 84, 0.2); color: #75b798; border: 1px solid rgba(25, 135, 84, 0.4); }
 .icae-level-consistent { background: rgba(13, 202, 240, 0.15); color: #6edff6; border: 1px solid rgba(13, 202, 240, 0.35); }
 .icae-level-gold { background: rgba(212, 168, 85, 0.2); color: #d4a855; border: 1px solid rgba(212, 168, 85, 0.4); }
+.icae-level-gold-master { background: linear-gradient(135deg, rgba(212, 168, 85, 0.25), rgba(240, 192, 64, 0.25)); color: #f0c040; border: 1px solid rgba(240, 192, 64, 0.5); }
 
 .icae-protocol-card {
     background: rgba(33, 37, 41, 0.6);
@@ -3041,6 +3042,7 @@ main.container {
 .icae-dot-verified { background: #198754; box-shadow: 0 0 4px rgba(25, 135, 84, 0.6); }
 .icae-dot-consistent { background: #0dcaf0; box-shadow: 0 0 6px rgba(13, 202, 240, 0.5); }
 .icae-dot-gold { background: #d4a855; box-shadow: 0 0 6px rgba(212, 168, 85, 0.6); }
+.icae-dot-gold-master { background: linear-gradient(135deg, #d4a855, #f0c040); box-shadow: 0 0 8px rgba(240, 192, 64, 0.8); }
 .icae-dot-pending { background: #495057; }
 
 .icae-progress-track {
@@ -3058,6 +3060,7 @@ main.container {
 .icae-fill-verified { background: linear-gradient(90deg, #198754, #20c997); }
 .icae-fill-consistent { background: linear-gradient(90deg, #0dcaf0, #67d6ed); }
 .icae-fill-gold { background: linear-gradient(90deg, #d4a855, #f0c040); }
+.icae-fill-gold-master { background: linear-gradient(90deg, #d4a855, #f0c040, #ffe066); }
 .icae-fill-pending { background: transparent; }
 .icae-w-0 { width: 0%; }
 .icae-w-20 { width: 20%; }
@@ -3076,6 +3079,7 @@ main.container {
 .icae-stat-verified { color: #75b798; }
 .icae-stat-consistent { color: #6edff6; }
 .icae-stat-gold { color: #d4a855; }
+.icae-stat-gold-master { color: #f0c040; }
 .icae-stat-pending { color: #6c757d; }
 
 .icae-runs {

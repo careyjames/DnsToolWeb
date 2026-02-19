@@ -4408,7 +4408,7 @@
                         <i class="fas fa-shield-alt text-info me-2"></i>
                         <span class="text-muted small fw-bold text-uppercase u-icae-label">Intelligence Confidence Audit Engine</span>
                     </span>
-                    <span class="badge icae-overall-badge {{if eq .ICAEMetrics.OverallMaturity "gold_master"}}icae-level-gold{{else if eq .ICAEMetrics.OverallMaturity "gold"}}icae-level-gold{{else if eq .ICAEMetrics.OverallMaturity "consistent"}}icae-level-consistent{{else if eq .ICAEMetrics.OverallMaturity "verified"}}icae-level-verified{{else}}icae-level-dev{{end}}">{{.ICAEMetrics.OverallMaturityDisplay}} · {{.ICAEMetrics.EvaluatedCount}}/{{.ICAEMetrics.TotalProtocols}} Evaluated</span>
+                    <span class="badge icae-overall-badge {{if eq .ICAEMetrics.OverallMaturity "gold_master"}}icae-level-gold-master{{else if eq .ICAEMetrics.OverallMaturity "gold"}}icae-level-gold{{else if eq .ICAEMetrics.OverallMaturity "consistent"}}icae-level-consistent{{else if eq .ICAEMetrics.OverallMaturity "verified"}}icae-level-verified{{else}}icae-level-dev{{end}}">{{.ICAEMetrics.OverallMaturityDisplay}} · {{.ICAEMetrics.EvaluatedCount}}/{{.ICAEMetrics.TotalProtocols}} Evaluated</span>
                 </div>
                 <div class="text-muted small mb-3">
                     How confident are these results? Each protocol is independently verified against RFC standards. No self-awarded badges.
@@ -4420,17 +4420,17 @@
                             <div class="d-flex align-items-center justify-content-between mb-1">
                                 <span class="icae-proto-name">{{.DisplayName}}</span>
                                 {{if .HasRuns}}
-                                <span class="icae-maturity-dot {{if eq .AnalysisLevel "gold_master"}}icae-dot-gold{{else if eq .AnalysisLevel "gold"}}icae-dot-gold{{else if eq .AnalysisLevel "consistent"}}icae-dot-consistent{{else if eq .AnalysisLevel "verified"}}icae-dot-verified{{else}}icae-dot-dev{{end}}" data-bs-toggle="tooltip" title="Analysis: {{.AnalysisDisplay}} · Collection: {{.CollectionDisplay}}"></span>
+                                <span class="icae-maturity-dot {{if eq .AnalysisLevel "gold_master"}}icae-dot-gold-master{{else if eq .AnalysisLevel "gold"}}icae-dot-gold{{else if eq .AnalysisLevel "consistent"}}icae-dot-consistent{{else if eq .AnalysisLevel "verified"}}icae-dot-verified{{else}}icae-dot-dev{{end}}" data-bs-toggle="tooltip" title="Analysis: {{.AnalysisDisplay}} · Collection: {{.CollectionDisplay}}"></span>
                                 {{else}}
                                 <span class="icae-maturity-dot icae-dot-pending" data-bs-toggle="tooltip" title="Awaiting test coverage"></span>
                                 {{end}}
                             </div>
                             {{if .HasRuns}}
                             <div class="icae-progress-track">
-                                <div class="icae-progress-fill {{if eq .AnalysisLevel "gold_master"}}icae-fill-gold icae-w-100{{else if eq .AnalysisLevel "gold"}}icae-fill-gold icae-w-80{{else if eq .AnalysisLevel "consistent"}}icae-fill-consistent icae-w-60{{else if eq .AnalysisLevel "verified"}}icae-fill-verified icae-w-40{{else}}icae-fill-dev icae-w-20{{end}}"></div>
+                                <div class="icae-progress-fill {{if eq .AnalysisLevel "gold_master"}}icae-fill-gold-master icae-w-100{{else if eq .AnalysisLevel "gold"}}icae-fill-gold icae-w-80{{else if eq .AnalysisLevel "consistent"}}icae-fill-consistent icae-w-60{{else if eq .AnalysisLevel "verified"}}icae-fill-verified icae-w-40{{else}}icae-fill-dev icae-w-20{{end}}"></div>
                             </div>
                             <div class="d-flex justify-content-between mt-1">
-                                <span class="icae-stat {{if eq .AnalysisLevel "gold_master"}}icae-stat-gold{{else if eq .AnalysisLevel "gold"}}icae-stat-gold{{else if eq .AnalysisLevel "consistent"}}icae-stat-consistent{{else if eq .AnalysisLevel "verified"}}icae-stat-verified{{else}}icae-stat-dev{{end}}">{{.AnalysisDisplay}}</span>
+                                <span class="icae-stat {{if eq .AnalysisLevel "gold_master"}}icae-stat-gold-master{{else if eq .AnalysisLevel "gold"}}icae-stat-gold{{else if eq .AnalysisLevel "consistent"}}icae-stat-consistent{{else if eq .AnalysisLevel "verified"}}icae-stat-verified{{else}}icae-stat-dev{{end}}">{{.AnalysisDisplay}}</span>
                                 <span class="icae-runs">{{.AnalysisRuns}} runs</span>
                             </div>
                             {{else}}
@@ -4455,6 +4455,8 @@
                     <span class="icae-legend-item"><span class="icae-legend-dot icae-dot-consistent"></span>Consistent</span>
                     <span class="icae-legend-sep">→</span>
                     <span class="icae-legend-item"><span class="icae-legend-dot icae-dot-gold"></span>Gold</span>
+                    <span class="icae-legend-sep">→</span>
+                    <span class="icae-legend-item"><span class="icae-legend-dot icae-dot-gold-master"></span>Gold Master</span>
                 </div>
             </div>
         </div>
