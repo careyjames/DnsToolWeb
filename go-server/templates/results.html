@@ -4400,33 +4400,58 @@
         {{if .ICAEMetrics}}
         <div class="card bg-dark border-secondary mt-5 mb-3 screen-only" id="icae-confidence">
             <div class="card-body py-3 px-4">
-                <div class="d-flex align-items-center justify-content-between mb-2">
+                <div class="d-flex align-items-center justify-content-between mb-3">
                     <span>
-                        <i class="fas fa-check-circle text-info me-2"></i>
+                        <i class="fas fa-shield-alt text-info me-2"></i>
                         <span class="text-muted small fw-bold text-uppercase u-icae-label">Intelligence Confidence Audit Engine</span>
                     </span>
-                    <span class="badge bg-dark border border-secondary text-muted small" data-bs-toggle="tooltip" title="Overall system maturity · {{.ICAEMetrics.EvaluatedCount}} of {{.ICAEMetrics.TotalProtocols}} protocols under active evaluation">{{.ICAEMetrics.OverallMaturityDisplay}} · {{.ICAEMetrics.EvaluatedCount}}/{{.ICAEMetrics.TotalProtocols}} evaluated</span>
+                    <span class="badge icae-overall-badge {{if eq .ICAEMetrics.OverallMaturity "gold_master"}}icae-level-gold{{else if eq .ICAEMetrics.OverallMaturity "gold"}}icae-level-gold{{else if eq .ICAEMetrics.OverallMaturity "consistent"}}icae-level-consistent{{else if eq .ICAEMetrics.OverallMaturity "verified"}}icae-level-verified{{else}}icae-level-dev{{end}}">{{.ICAEMetrics.OverallMaturityDisplay}} · {{.ICAEMetrics.EvaluatedCount}}/{{.ICAEMetrics.TotalProtocols}} Evaluated</span>
                 </div>
-                <div class="text-muted small mb-2">
-                    How confident are these results? Each protocol below is independently tested against RFC standards. Maturity levels reflect consecutive passing runs: Development → Verified → Consistent → Gold.
+                <div class="text-muted small mb-3">
+                    How confident are these results? Each protocol is independently verified against RFC standards. No self-awarded badges.
                 </div>
-                <div class="d-flex flex-wrap gap-2">
+                <div class="row g-2">
                     {{range .ICAEMetrics.Protocols}}
-                    {{if .HasRuns}}
-                    <span class="badge bg-dark border border-secondary px-2 py-1" data-bs-toggle="tooltip" title="Collection: {{.CollectionDisplay}} ({{.CollectionRuns}} runs) · Analysis: {{.AnalysisDisplay}} ({{.AnalysisRuns}} runs)">
-                        <span class="text-muted">{{.DisplayName}}</span>
-                        <span class="ms-1 {{if eq .AnalysisLevel "gold"}}text-warning{{else if eq .AnalysisLevel "gold_master"}}text-warning{{else if eq .AnalysisLevel "consistent"}}text-info{{else if eq .AnalysisLevel "verified"}}text-success{{else}}text-secondary{{end}}">{{.AnalysisDisplay}}</span>
-                    </span>
-                    {{else}}
-                    <span class="badge bg-dark border border-secondary border-opacity-50 px-2 py-1 opacity-50" data-bs-toggle="tooltip" title="{{.DisplayName}}: Awaiting test coverage — no automated test fixtures yet">
-                        <span class="text-muted">{{.DisplayName}}</span>
-                        <span class="ms-1 text-secondary">Pending</span>
-                    </span>
-                    {{end}}
+                    <div class="col-6 col-md-4 col-lg-3">
+                        <div class="icae-protocol-card {{if .HasRuns}}icae-active{{else}}icae-pending{{end}}">
+                            <div class="d-flex align-items-center justify-content-between mb-1">
+                                <span class="icae-proto-name">{{.DisplayName}}</span>
+                                {{if .HasRuns}}
+                                <span class="icae-maturity-dot {{if eq .AnalysisLevel "gold_master"}}icae-dot-gold{{else if eq .AnalysisLevel "gold"}}icae-dot-gold{{else if eq .AnalysisLevel "consistent"}}icae-dot-consistent{{else if eq .AnalysisLevel "verified"}}icae-dot-verified{{else}}icae-dot-dev{{end}}" data-bs-toggle="tooltip" title="Analysis: {{.AnalysisDisplay}} · Collection: {{.CollectionDisplay}}"></span>
+                                {{else}}
+                                <span class="icae-maturity-dot icae-dot-pending" data-bs-toggle="tooltip" title="Awaiting test coverage"></span>
+                                {{end}}
+                            </div>
+                            {{if .HasRuns}}
+                            <div class="icae-progress-track">
+                                <div class="icae-progress-fill {{if eq .AnalysisLevel "gold_master"}}icae-fill-gold icae-w-100{{else if eq .AnalysisLevel "gold"}}icae-fill-gold icae-w-80{{else if eq .AnalysisLevel "consistent"}}icae-fill-consistent icae-w-60{{else if eq .AnalysisLevel "verified"}}icae-fill-verified icae-w-40{{else}}icae-fill-dev icae-w-20{{end}}"></div>
+                            </div>
+                            <div class="d-flex justify-content-between mt-1">
+                                <span class="icae-stat {{if eq .AnalysisLevel "gold_master"}}icae-stat-gold{{else if eq .AnalysisLevel "gold"}}icae-stat-gold{{else if eq .AnalysisLevel "consistent"}}icae-stat-consistent{{else if eq .AnalysisLevel "verified"}}icae-stat-verified{{else}}icae-stat-dev{{end}}">{{.AnalysisDisplay}}</span>
+                                <span class="icae-runs">{{.AnalysisRuns}} runs</span>
+                            </div>
+                            {{else}}
+                            <div class="icae-progress-track">
+                                <div class="icae-progress-fill icae-fill-pending icae-w-0"></div>
+                            </div>
+                            <div class="d-flex justify-content-between mt-1">
+                                <span class="icae-stat icae-stat-pending">Pending</span>
+                                <span class="icae-runs">0 runs</span>
+                            </div>
+                            {{end}}
+                        </div>
+                    </div>
                     {{end}}
                 </div>
-                <div class="text-muted mt-2 u-icae-disclaimer">
-                    Per-protocol accuracy verified against RFC test fixtures. Collection + analysis layers tracked independently. Hover any protocol for details. No self-awarded badges.
+                <div class="icae-maturity-legend mt-3">
+                    <span class="icae-legend-label">Maturity:</span>
+                    <span class="icae-legend-item"><span class="icae-legend-dot icae-dot-dev"></span>Development</span>
+                    <span class="icae-legend-sep">→</span>
+                    <span class="icae-legend-item"><span class="icae-legend-dot icae-dot-verified"></span>Verified</span>
+                    <span class="icae-legend-sep">→</span>
+                    <span class="icae-legend-item"><span class="icae-legend-dot icae-dot-consistent"></span>Consistent</span>
+                    <span class="icae-legend-sep">→</span>
+                    <span class="icae-legend-item"><span class="icae-legend-dot icae-dot-gold"></span>Gold</span>
                 </div>
             </div>
         </div>

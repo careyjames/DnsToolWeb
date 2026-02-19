@@ -2988,6 +2988,127 @@ main.container {
 .u-fs-075rem-break { font-size: 0.75rem; word-break: break-all; }
 .u-icae-label { letter-spacing: 0.05em; }
 .u-icae-disclaimer { font-size: 0.7rem; }
+
+/* ICAE Redesign — Protocol Cards with Progress Bars */
+.icae-overall-badge {
+    font-size: 0.75rem;
+    font-weight: 600;
+    padding: 0.35em 0.75em;
+    border-radius: 0.375rem;
+    letter-spacing: 0.02em;
+}
+.icae-level-dev { background: rgba(108, 117, 125, 0.25); color: #adb5bd; border: 1px solid rgba(108, 117, 125, 0.4); }
+.icae-level-verified { background: rgba(25, 135, 84, 0.2); color: #75b798; border: 1px solid rgba(25, 135, 84, 0.4); }
+.icae-level-consistent { background: rgba(13, 202, 240, 0.15); color: #6edff6; border: 1px solid rgba(13, 202, 240, 0.35); }
+.icae-level-gold { background: rgba(212, 168, 85, 0.2); color: #d4a855; border: 1px solid rgba(212, 168, 85, 0.4); }
+
+.icae-protocol-card {
+    background: rgba(33, 37, 41, 0.6);
+    border: 1px solid rgba(108, 117, 125, 0.3);
+    border-radius: 0.5rem;
+    padding: 0.625rem 0.75rem;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+.icae-protocol-card.icae-active:hover {
+    border-color: rgba(13, 202, 240, 0.4);
+    box-shadow: 0 0 8px rgba(13, 202, 240, 0.1);
+}
+.icae-protocol-card.icae-pending {
+    opacity: 0.5;
+}
+.icae-proto-name {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #dee2e6;
+    letter-spacing: 0.02em;
+}
+
+.icae-maturity-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    display: inline-block;
+    flex-shrink: 0;
+}
+.icae-dot-dev { background: #6c757d; box-shadow: 0 0 4px rgba(108, 117, 125, 0.5); }
+.icae-dot-verified { background: #198754; box-shadow: 0 0 4px rgba(25, 135, 84, 0.6); }
+.icae-dot-consistent { background: #0dcaf0; box-shadow: 0 0 6px rgba(13, 202, 240, 0.5); }
+.icae-dot-gold { background: #d4a855; box-shadow: 0 0 6px rgba(212, 168, 85, 0.6); }
+.icae-dot-pending { background: #495057; }
+
+.icae-progress-track {
+    height: 4px;
+    background: rgba(108, 117, 125, 0.2);
+    border-radius: 2px;
+    overflow: hidden;
+}
+.icae-progress-fill {
+    height: 100%;
+    border-radius: 2px;
+    transition: width 0.6s ease;
+}
+.icae-fill-dev { background: linear-gradient(90deg, #6c757d, #868e96); }
+.icae-fill-verified { background: linear-gradient(90deg, #198754, #20c997); }
+.icae-fill-consistent { background: linear-gradient(90deg, #0dcaf0, #67d6ed); }
+.icae-fill-gold { background: linear-gradient(90deg, #d4a855, #f0c040); }
+.icae-fill-pending { background: transparent; }
+.icae-w-0 { width: 0%; }
+.icae-w-20 { width: 20%; }
+.icae-w-40 { width: 40%; }
+.icae-w-60 { width: 60%; }
+.icae-w-80 { width: 80%; }
+.icae-w-100 { width: 100%; }
+
+.icae-stat {
+    font-size: 0.68rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+}
+.icae-stat-dev { color: #adb5bd; }
+.icae-stat-verified { color: #75b798; }
+.icae-stat-consistent { color: #6edff6; }
+.icae-stat-gold { color: #d4a855; }
+.icae-stat-pending { color: #6c757d; }
+
+.icae-runs {
+    font-size: 0.65rem;
+    color: #6c757d;
+    font-variant-numeric: tabular-nums;
+}
+
+.icae-maturity-legend {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    padding-top: 0.5rem;
+    border-top: 1px solid rgba(108, 117, 125, 0.2);
+}
+.icae-legend-label {
+    font-size: 0.68rem;
+    color: #6c757d;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+.icae-legend-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    font-size: 0.68rem;
+    color: #adb5bd;
+}
+.icae-legend-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    display: inline-block;
+}
+.icae-legend-sep {
+    font-size: 0.6rem;
+    color: #495057;
+}
 .u-hash-label { font-size: 0.7rem; border: 1px solid rgba(255,193,7,0.4); color: #ffc107; background: transparent; }
 .u-color-gray-400 { color: #9ca3af; }
 .u-color-gray-500 { color: #6b7280; }
