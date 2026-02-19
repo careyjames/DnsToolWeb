@@ -424,8 +424,10 @@ func (h *AnalysisHandler) renderRestrictedAccess(c *gin.Context, nonce, csrfToke
                 h.renderErrorPage(c, http.StatusNotFound, nonce, csrfToken, "danger", "Analysis not found")
                 return
         }
-        msg := "This report was created with user-provided intelligence and is restricted to its owner. " +
-                "If you believe you should have access, contact the person who shared this link with you."
+        msg := "This report includes user-provided intelligence and is restricted to its owner. " +
+                "Custom selectors can reveal internal mail infrastructure and vendor relationships — " +
+                "responsible intelligence handling means sharing only with trusted parties. " +
+                "If you should have access, request it from the report owner."
         errData := gin.H{
                 "AppVersion":    h.Config.AppVersion,
                 "CspNonce":      nonce,
@@ -630,7 +632,7 @@ func (h *AnalysisHandler) APIAnalysis(c *gin.Context) {
                 if auth == true {
                         c.JSON(http.StatusForbidden, gin.H{
                                 "error":   "restricted",
-                                "message": "This report was created with user-provided intelligence and is restricted to its owner.",
+                                "message": "This report includes user-provided intelligence and is restricted to its owner. Custom selectors can reveal internal mail infrastructure and vendor relationships.",
                         })
                 } else {
                         c.JSON(http.StatusNotFound, gin.H{"error": "Analysis not found"})

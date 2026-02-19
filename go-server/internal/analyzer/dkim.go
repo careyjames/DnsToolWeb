@@ -82,6 +82,45 @@ const (
         selSquareup    = "squareup._domainkey"
         selSQ          = "sq._domainkey"
 
+        selDKIM1       = "dkim1._domainkey"
+        selDKIM2       = "dkim2._domainkey"
+        selDKIM3       = "dkim3._domainkey"
+        selKey1        = "key1._domainkey"
+        selKey2        = "key2._domainkey"
+        selSig2        = "sig2._domainkey"
+        selS3          = "s3._domainkey"
+        selK3          = "k3._domainkey"
+        selSelector3   = "selector3._domainkey"
+        selBrevo       = "brevo._domainkey"
+        selMTA         = "mta._domainkey"
+        selMTA1        = "mta1._domainkey"
+        selMTA2        = "mta2._domainkey"
+        selSendgrid2   = "sendgrid2._domainkey"
+        selSmtpapi     = "smtpapi._domainkey"
+        selEM          = "em._domainkey"
+        selBarracuda   = "barracuda._domainkey"
+        selHornet      = "hornet._domainkey"
+        selCiscoDKIM   = "cisco._domainkey"
+        selTurbo       = "turbo-smtp._domainkey"
+        selFreshdesk   = "freshdesk._domainkey"
+        selHubspot     = "hubspot._domainkey"
+        selHS1         = "hs1._domainkey"
+        selHS2         = "hs2._domainkey"
+        selSalesforce  = "salesforce._domainkey"
+        selSF1         = "sf1._domainkey"
+        selSF2         = "sf2._domainkey"
+        selMandrill2   = "mandrill2._domainkey"
+        selKlaviyo     = "klaviyo._domainkey"
+        selIntercom    = "intercom._domainkey"
+        selCustomerio  = "customerio._domainkey"
+        selConstContact = "ctct1._domainkey"
+        selConstContact2 = "ctct2._domainkey"
+        selActiveCampaign = "dk._domainkey"
+        selMailchimp2    = "mc._domainkey"
+        selMailerLite    = "ml._domainkey"
+        selDrip          = "drip._domainkey"
+        selEverlyticKey2 = "everlytickey2._domainkey"
+
         providerSquareOnline = "Square Online"
 )
 
@@ -93,20 +132,29 @@ var (
 
 var defaultDKIMSelectors = []string{
         selDefault, selDKIM, selMail,
-        selEmail, selK1, selK2,
-        selS1, selS2, selSig1,
-        selSelector1, selSelector2,
+        selEmail, selK1, selK2, selK3,
+        selS1, selS2, selS3, selSig1, selSig2,
+        selSelector1, selSelector2, selSelector3,
         selGoogle, selGoogle2048,
-        selMailjet, selMandrill, selAmazonSES,
-        selSendgrid, selMailchimp, selPostmark,
-        selSparkpost, selMailgun, selSendinblue,
-        selMimecast, selProofpoint, selEverlytic,
+        selMailjet, selMandrill, selMandrill2, selAmazonSES,
+        selSendgrid, selSendgrid2, selSmtpapi, selEM,
+        selMailchimp, selMailchimp2, selPostmark,
+        selSparkpost, selMailgun, selSendinblue, selBrevo,
+        selMimecast, selProofpoint, selEverlytic, selEverlyticKey2,
         selZendesk1, selZendesk2, selCM,
-        selMX, selSMTP, selMailer,
+        selMX, selSMTP, selMailer, selMTA, selMTA1, selMTA2,
         selProtonmail, selProtonmail2, selProtonmail3,
         selFM1, selFM2, selFM3,
         selZoho, selZohoMail, selZmail,
         selSquare, selSquareup, selSQ,
+        selDKIM1, selDKIM2, selDKIM3,
+        selKey1, selKey2,
+        selBarracuda, selHornet, selCiscoDKIM, selTurbo,
+        selFreshdesk, selHubspot, selHS1, selHS2,
+        selSalesforce, selSF1, selSF2,
+        selKlaviyo, selIntercom, selCustomerio,
+        selConstContact, selConstContact2,
+        selActiveCampaign, selMailerLite, selDrip,
 }
 
 var selectorProviderMap = map[string]string{
@@ -130,7 +178,8 @@ var selectorProviderMap = map[string]string{
         selSendinblue: providerBrevo,
         selMimecast:  providerMimecast,
         selProofpoint: providerProofpoint,
-        selEverlytic: "Everlytic",
+        selEverlytic:     "Everlytic",
+        selEverlyticKey2: "Everlytic",
         selZendesk1:  providerZendesk,
         selZendesk2:  providerZendesk,
         selCM:        "Campaign Monitor",
@@ -140,6 +189,29 @@ var selectorProviderMap = map[string]string{
         selSquare:    providerSquareOnline,
         selSquareup:  providerSquareOnline,
         selSQ:        providerSquareOnline,
+        selBrevo:          providerBrevo,
+        selSendgrid2:      providerSendGrid,
+        selSmtpapi:        providerSendGrid,
+        selEM:             providerSendGrid,
+        selMandrill2:      "MailChimp (Mandrill)",
+        selMailchimp2:     providerMailChimp,
+        selBarracuda:      providerBarracuda,
+        selHornet:         providerHornetsecurity,
+        selFreshdesk:      "Freshdesk",
+        selHubspot:        "HubSpot",
+        selHS1:            "HubSpot",
+        selHS2:            "HubSpot",
+        selSalesforce:     "Salesforce",
+        selSF1:            "Salesforce",
+        selSF2:            "Salesforce",
+        selKlaviyo:        "Klaviyo",
+        selIntercom:       "Intercom",
+        selCustomerio:     "Customer.io",
+        selConstContact:   "Constant Contact",
+        selConstContact2:  "Constant Contact",
+        selActiveCampaign: "ActiveCampaign",
+        selMailerLite:     "MailerLite",
+        selDrip:           "Drip",
 }
 
 var mxToDKIMProvider = map[string]string{
@@ -193,17 +265,36 @@ var mailboxProviders = map[string]bool{
 }
 
 var primaryProviderSelectors = map[string][]string{
-        providerMicrosoft365:    {selSelector1, selSelector2},
+        providerMicrosoft365:    {selSelector1, selSelector2, selSelector3},
         providerGoogleWS:        {selGoogle, selGoogle2048},
         providerProofpoint:      {selProofpoint},
         providerMimecast:        {selMimecast},
         providerMailgun:         {selMailgun},
-        providerSendGrid:        {selS1, selS2, selSendgrid},
+        providerSendGrid:        {selS1, selS2, selS3, selSendgrid, selSendgrid2, selSmtpapi, selEM},
         providerAmazonSES:       {selAmazonSES},
         providerZohoMail:        {selZoho, selZohoMail, selZmail, selDefault},
         providerFastmail:        {selFM1, selFM2, selFM3},
         providerProtonMail:      {selProtonmail, selProtonmail2, selProtonmail3},
         providerCloudflareEmail: {selDefault},
+        providerBarracuda:       {selBarracuda},
+        providerHornetsecurity:  {selHornet},
+        providerBrevo:           {selBrevo, selSendinblue},
+        providerMailChimp:       {selMailchimp, selMailchimp2, selK1, selK2, selK3, selMandrill, selMandrill2},
+        providerMailjet:         {selMailjet},
+        providerPostmark:        {selPostmark},
+        providerSparkPost:       {selSparkpost},
+        providerZendesk:         {selZendesk1, selZendesk2},
+        "HubSpot":               {selHubspot, selHS1, selHS2},
+        "Salesforce":            {selSalesforce, selSF1, selSF2},
+        "Klaviyo":               {selKlaviyo},
+        "Intercom":              {selIntercom},
+        "Customer.io":           {selCustomerio},
+        "Constant Contact":      {selConstContact, selConstContact2},
+        "ActiveCampaign":        {selActiveCampaign},
+        "MailerLite":            {selMailerLite},
+        "Drip":                  {selDrip},
+        "Freshdesk":             {selFreshdesk},
+        "Everlytic":             {selEverlytic, selEverlyticKey2},
 }
 
 var spfMailboxProviders = map[string]string{
@@ -233,6 +324,15 @@ var spfAncillarySenders = map[string]string{
         "spf.mtasv.net":     providerPostmark,
         "spf.freshdesk":     "Freshdesk",
         "hostedrt.com":      "Best Practical RT",
+        "hubspot.net":       "HubSpot",
+        "spf.salesforce.com": "Salesforce",
+        "spf1.klaviyo.com":  "Klaviyo",
+        "intercom.io":       "Intercom",
+        "spf.customerio":    "Customer.io",
+        "spf.constantcontact": "Constant Contact",
+        "emsd1.com":         "ActiveCampaign",
+        "spf.mailerlite":    "MailerLite",
+        "getdrip.com":       "Drip",
 }
 
 var ambiguousSelectors = map[string]bool{
