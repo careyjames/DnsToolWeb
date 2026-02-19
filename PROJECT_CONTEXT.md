@@ -146,63 +146,65 @@ Intelligence Reports page: `/dossier` (renamed from "Intelligence Dossier" to "I
 ## 5. Two-Repo Build-Tag Architecture
 
 Two-repository design with Go build tags (`//go:build intel` / `//go:build !intel`):
-- **DNS Tool Web** (public, `careyjames/DnsToolWeb`): Full framework + `_oss.go` stubs (empty maps, safe defaults)
-- **dnstool-intel** (private, `careyjames/dnstool-intel`): `_intel.go` files with proprietary provider databases
+- **DNS Tool Web** (public): Full framework + `_oss.go` stubs (empty maps, safe defaults)
+- **dnstool-intel** (private): `_intel.go` files with proprietary provider databases
 
-### Intel Repo Access from Replit
+### Repository Locations (Codeberg Canonical, GitHub Mirror)
 
-The Replit GitHub integration (Octokit, full `repo` scope) provides direct read/write access to `careyjames/dnstool-intel` via the GitHub Contents API. A sync script handles all operations:
+| Repo | Codeberg (canonical) | GitHub (mirror) | Visibility |
+|------|---------------------|-----------------|------------|
+| Web App | `careybalboa/dns-tool-webapp` | `careyjames/DnsToolWeb` (read-only mirror) | Public |
+| CLI | `careybalboa/dns-tool-cli` (archived) | `careyjames/dns-tool` (archived) | Public |
+| Intel | `careybalboa/dns-tool-intel` | `careyjames/dnstool-intel` (read-only mirror) | Private |
+
+**Codeberg→GitHub push mirrors** are configured with `sync_on_commit=true` + 8-hour interval. Changes pushed to Codeberg automatically propagate to GitHub. GitHub repos display "read-only mirror" notices pointing to Codeberg.
+
+**SonarCloud** continues running on GitHub mirror (`sonarcloud.yml` workflow) — it requires GitHub integration for PR decoration and checks. The push mirror keeps it fed.
+
+### Sync Scripts
+
+Three sync scripts for managing repos from Replit:
 
 ```bash
-node scripts/github-intel-sync.mjs list                              # List all Intel repo files
-node scripts/github-intel-sync.mjs read <path>                       # Read a file
-node scripts/github-intel-sync.mjs push <local> <remote> [message]   # Push local file
-node scripts/github-intel-sync.mjs delete <path> [message]           # Delete file
-node scripts/github-intel-sync.mjs commits [count]                   # Show recent commits
+# Codeberg webapp sync (canonical)
+node scripts/codeberg-webapp-sync.mjs list|read|push|delete|commits|status
+
+# Codeberg Intel sync (canonical)
+node scripts/codeberg-intel-sync.mjs list|read|push|delete|commits
+
+# GitHub Intel sync (mirror — for SonarCloud/CI integration)
+node scripts/github-intel-sync.mjs list|read|push|delete|commits
 ```
+
+### Intel Repo Workflow
 
 **MANDATORY WORKFLOW for `_intel.go` files**:
 1. Write the `_intel.go` file locally (for testing/development)
-2. Push it to `dnstool-intel` via: `node scripts/github-intel-sync.mjs push <local-path> <remote-path> "commit message"`
-3. DELETE the local file immediately — do not leave it in DnsToolWeb
-4. Verify: `find go-server -name "*_intel*"` should return nothing
+2. Push to Codeberg: `node scripts/codeberg-intel-sync.mjs push <local-path> <remote-path> "commit message"`
+3. Push to GitHub mirror: `node scripts/github-intel-sync.mjs push <local-path> <remote-path> "commit message"`
+4. DELETE the local file immediately — do not leave it in the webapp repo
+5. Verify: `find go-server -name "*_intel*"` should return nothing
 
-**WHY**: Even with `//go:build intel` tags, source code committed to DnsToolWeb is visible in the public Git history. Build tags only affect compilation, not visibility. Proprietary provider databases, detection patterns, and intelligence test cases must NEVER exist in the public repo — not even temporarily.
+**WHY**: Even with `//go:build intel` tags, source code committed to the webapp repo is visible in the public Git history. Build tags only affect compilation, not visibility. Proprietary provider databases, detection patterns, and intelligence test cases must NEVER exist in the public repo — not even temporarily.
 
-### Git Operations — GitHub API (NOT Git CLI)
+### Git Operations — API-Based
 
-**The Replit shell blocks `git` CLI commands** ("Avoid changing .git repository" error). This does NOT mean you can't do Git operations. The GitHub integration (Octokit, `@octokit/rest`, full `repo` scope) gives complete read/write access to BOTH repos (`careyjames/DnsToolWeb` and `careyjames/dnstool-intel`).
+**The Replit shell blocks `git` CLI commands** ("Avoid changing .git repository" error). Use the sync scripts or direct API calls instead.
 
-**Use the GitHub API for**:
-- Pushing changes to DnsToolWeb when the Replit Git panel fails (PUSH_REJECTED, diverged branches)
-- Pushing `_intel.go` files to dnstool-intel (via `scripts/github-intel-sync.mjs`)
-- Deleting files from either remote repo
-- Reading files from dnstool-intel to check current Intel repo state
-- Resolving branch divergence without force-push (create commit on top of remote HEAD)
+**Auth tokens**:
+- `CODEBERG_FORGEJO_API` — Codeberg personal access token (Forgejo API)
+- `CAREY_PAT_ALL3_REPOS` — GitHub PAT with full permissions for all three repos
+- Replit GitHub integration (Octokit) — for GitHub Contents API operations
 
-**GitHub API push pattern** (for DnsToolWeb when the Git panel can't sync):
-1. Get remote HEAD: `octokit.git.getRef({ owner, repo, ref: 'heads/main' })`
-2. Get base tree: `octokit.git.getCommit({ commit_sha: headSha })`
-3. Create blobs for changed files: `octokit.git.createBlob({ content, encoding: 'base64' })`
-4. Create new tree: `octokit.git.createTree({ base_tree: baseTreeSha, tree: entries })`
-5. Create commit: `octokit.git.createCommit({ tree: newTreeSha, parents: [remoteHeadSha], message })`
-6. Update ref: `octokit.git.updateRef({ ref: 'heads/main', sha: newCommitSha })`
+**Commit authors**: Codeberg API commits appear as `careybalboa`. GitHub API commits appear as `careyjames`. Replit internal checkpoints appear as `careybalboa`. All represent the same user.
 
-To delete a file, include it in the tree entries with `sha: null`.
+**DO NOT tell the user "I can't push to Git" or "you need to click Sync Changes."** The sync scripts and PATs are always available.
 
-**Auth — Two methods**:
-1. **PAT (preferred for pushes)**: Secret `CAREY_PAT_ALL3_REPOS` — a GitHub Personal Access Token with full permissions (including `workflow` scope) for all three repos: `DnsToolWeb`, `dnstool-intel`, and `it-help-tech-site`. Use for `git push` commands:
-   ```
-   git push --force https://${CAREY_PAT_ALL3_REPOS}@github.com/careyjames/DnsToolWeb.git main
-   ```
-   This bypasses the Replit OAuth token's missing `workflow` scope that blocks pushes containing `.github/workflows/` changes.
-2. **Replit connector API**: Use for GitHub Contents API operations (reading/writing individual files via Octokit). Same as `scripts/github-intel-sync.mjs`. No separate API key needed.
+### CI/CD
 
-**Why two methods**: Replit's built-in OAuth token lacks `workflow` scope, so `git push` via the Git pane or CLI fails if ANY commit touches `.github/workflows/*` files. The PAT solves this permanently.
-
-**Commit authors**: GitHub API commits appear as `careyjames`. Replit internal checkpoints appear as `careybalboa`. Both represent the same user; this is expected behavior.
-
-**DO NOT tell the user "I can't push to Git" or "you need to click Sync Changes."** This has caused repeated wasted sessions. The PAT or API is always available.
+- **Codeberg**: Forgejo Actions CI (`.forgejo/workflows/ci.yml`) — Go build, test, smoke test with PostgreSQL service
+- **GitHub**: SonarCloud analysis (`.github/workflows/sonarcloud.yml`) — runs on mirror pushes
+- **GitHub**: Cross-browser E2E tests (`.github/workflows/cross-browser-tests.yml`) — suspended
 
 ### Three-File Pattern
 

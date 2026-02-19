@@ -10,6 +10,46 @@ This file is the project's permanent breadcrumb trail — every session's decisi
 
 ---
 
+## Session: February 19, 2026 (Codeberg Migration)
+
+### Codeberg Migration — Canonical Repository Strategy
+
+#### Decision: Codeberg as Canonical, GitHub as Mirror
+- **Rationale**: Align hosting with open-source values. Codeberg is nonprofit, GDPR-compliant, community-governed. GitHub remains as mirror for SonarCloud CI integration and discoverability.
+- **Strategy**: Codeberg→GitHub push mirrors (sync_on_commit + 8h interval). All development, issues, and contributions happen on Codeberg.
+
+#### Three-Repo Setup on Codeberg (careybalboa)
+1. **dns-tool-webapp** (public) — Full webapp codebase migrated from `careyjames/DnsToolWeb` with complete commit history
+   - Description: RFC-compliant domain security analysis — OSINT DNS intelligence platform
+   - Topics: dns, security, osint, dmarc, spf, dkim, email-security, golang, cybersecurity, bsl-1-1
+   - Website: https://dnstool.it-help.tech
+   - Push mirror → `careyjames/DnsToolWeb` on GitHub
+2. **dns-tool-cli** (public, archived) — Original CLI imported from `careyjames/dns-tool` with full history, archived pending rewrite
+3. **dns-tool-intel** (private) — Intelligence modules migrated from `careyjames/dnstool-intel` with full history
+   - Push mirror → `careyjames/dnstool-intel` on GitHub
+
+#### GitHub Changes
+- `careyjames/dns-tool` — Archived with redirect notice to Codeberg
+- `careyjames/DnsToolWeb` — README replaced with "read-only mirror" notice pointing to Codeberg
+- `careyjames/dnstool-intel` — README updated with "read-only mirror" notice pointing to Codeberg
+
+#### CI/CD
+- **Codeberg**: Forgejo Actions CI (`.forgejo/workflows/ci.yml`) — Go build, test, PostgreSQL service, smoke test
+- **GitHub**: SonarCloud analysis continues on mirror (`.github/workflows/sonarcloud.yml`)
+- **GitHub**: Cross-browser E2E tests remain suspended (`.github/workflows/cross-browser-tests.yml`)
+
+#### New Sync Script
+- `scripts/codeberg-webapp-sync.mjs` — Forgejo API sync for webapp repo (list, read, push, delete, commits, status)
+- Complements existing `codeberg-intel-sync.mjs` and `github-intel-sync.mjs`
+
+#### Gaps vs GitHub (Accepted)
+- No Dependabot or CodeQL security scanning (use SonarCloud on GitHub mirror)
+- No GitHub Sponsors or Discussions
+- CI is Linux-only (no macOS/Windows runners)
+- Codeberg has smaller community but aligns with project values
+
+---
+
 ## Session: February 19, 2026 (v26.20.76)
 
 ### v26.20.76 — miekg/dns v2 Migration + Bug Fixes + CT Resilience
