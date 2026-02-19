@@ -184,18 +184,16 @@
                 <div class="card bg-dark border-info mt-4">
                     <div class="card-body">
                         <h5 class="card-title"><i class="fas fa-clipboard-check me-2 text-info"></i>The Audit Engine</h5>
-                        <p class="text-muted small mb-3">The <strong class="text-info">Intelligence Confidence Audit Engine (ICAE)</strong> continuously validates that the Intelligence Engine produces correct results. Every release runs against a deterministic test suite &mdash; if analysis accuracy regresses, we know before you do.</p>
+                        <p class="text-muted small mb-3">The <strong class="text-info">Intelligence Confidence Audit Engine (ICAE)</strong> continuously validates that the Intelligence Engine delivers accurate, RFC-compliant intelligence. Every release runs against a deterministic test suite anchored to specific RFC sections &mdash; if analysis accuracy regresses, we know before you do.</p>
                         <div class="row">
                             <div class="col-md-6 mb-3 mb-md-0">
-                                <h6 class="text-info">Test Coverage</h6>
-                                <p class="text-muted small mb-2"><strong>45 deterministic test cases</strong> across five protocol families validate analysis accuracy against known-good expected outcomes:</p>
+                                <h6 class="text-info">RFC-Grounded Test Coverage</h6>
+                                <p class="text-muted small mb-2"><strong>45 deterministic test cases</strong> across three protocol families validate analysis accuracy against RFC-specified expected outcomes:</p>
                                 <table class="table table-sm table-borderless mb-0">
                                     <tbody>
-                                        <tr><td class="text-muted small py-1">SPF Analysis</td><td class="text-light small py-1">8 cases &mdash; hard/soft fail, lookup limits, redirects, multiple records</td></tr>
-                                        <tr><td class="text-muted small py-1">DMARC Analysis</td><td class="text-light small py-1">12 cases &mdash; policy levels, alignment, subdomain policy, percentage ramp</td></tr>
-                                        <tr><td class="text-muted small py-1">Transport Security</td><td class="text-light small py-1">8 cases &mdash; DANE, MTA-STS, combined presence, STARTTLS-only</td></tr>
-                                        <tr><td class="text-muted small py-1">Posture Classification</td><td class="text-light small py-1">9 cases &mdash; no-mail, protected, partial, at-risk, exposed</td></tr>
-                                        <tr><td class="text-muted small py-1">Brand Impersonation</td><td class="text-light small py-1">8 cases &mdash; full verdict matrix from protected to exposed</td></tr>
+                                        <tr><td class="text-muted small py-1">SPF</td><td class="text-light small py-1">17 cases &mdash; <a href="https://datatracker.ietf.org/doc/html/rfc7208" class="text-info" target="_blank" rel="noopener">RFC 7208</a> mechanisms, qualifiers, lookup limits, verdict logic, cross-protocol warnings (<a href="https://datatracker.ietf.org/doc/html/rfc7489#section-10.1" class="text-info" target="_blank" rel="noopener">RFC 7489 &sect;10.1</a>)</td></tr>
+                                        <tr><td class="text-muted small py-1">DMARC</td><td class="text-light small py-1">11 cases &mdash; <a href="https://datatracker.ietf.org/doc/html/rfc7489" class="text-info" target="_blank" rel="noopener">RFC 7489</a> policy levels, alignment modes, subdomain policy, null MX (<a href="https://datatracker.ietf.org/doc/html/rfc7505" class="text-info" target="_blank" rel="noopener">RFC 7505</a>), posture classification</td></tr>
+                                        <tr><td class="text-muted small py-1">DNSSEC</td><td class="text-light small py-1">17 cases &mdash; <a href="https://datatracker.ietf.org/doc/html/rfc4033" class="text-info" target="_blank" rel="noopener">RFC 4033</a> chain validation, tampering verdicts, enterprise DNS classification (<a href="https://datatracker.ietf.org/doc/html/rfc1035" class="text-info" target="_blank" rel="noopener">RFC 1035</a>)</td></tr>
                                     </tbody>
                                 </table>
                             </div>
@@ -208,7 +206,7 @@
                                         <tr><td class="small py-1"><span class="badge bg-info text-dark">Verified</span></td><td class="text-muted small py-1">50&ndash;70% pass rate</td></tr>
                                         <tr><td class="small py-1"><span class="badge bg-primary">Consistent</span></td><td class="text-muted small py-1">70&ndash;90% pass rate</td></tr>
                                         <tr><td class="small py-1"><span class="badge bg-warning text-dark">Gold</span></td><td class="text-muted small py-1">90&ndash;99% pass rate</td></tr>
-                                        <tr><td class="small py-1"><span class="badge bg-success">Master Gold</span></td><td class="text-muted small py-1">100% sustained</td></tr>
+                                        <tr><td class="small py-1"><span class="badge icae-master-gold">Master Gold</span></td><td class="text-muted small py-1">100% sustained</td></tr>
                                     </tbody>
                                 </table>
                                 <p class="text-muted small mb-0">Regressions are tracked per protocol with automatic detection. If a previously passing test case fails, it&rsquo;s flagged immediately &mdash; not buried in logs.</p>
