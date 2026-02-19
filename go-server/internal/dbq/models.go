@@ -59,6 +59,8 @@ type DomainAnalysis struct {
 	CtSubdomains         json.RawMessage  `db:"ct_subdomains" json:"ct_subdomains"`
 	FullResults          json.RawMessage  `db:"full_results" json:"full_results"`
 	PostureHash          *string          `db:"posture_hash" json:"posture_hash"`
+	Private              bool             `db:"private" json:"private"`
+	HasUserSelectors     bool             `db:"has_user_selectors" json:"has_user_selectors"`
 }
 
 type IceMaturity struct {

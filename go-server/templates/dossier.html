@@ -2,8 +2,8 @@
 <html lang="en" data-bs-theme="dark">
 <head>
     {{template "head" .}}
-    <title>Intelligence Dossier - DNS Tool</title>
-    <meta name="description" content="Your tasked intelligence collections. View domains you have analyzed, track posture changes, and revisit your DNS security reports.">
+    <title>Intelligence Reports - DNS Tool</title>
+    <meta name="description" content="Your intelligence reports. View domains you have analyzed, track posture changes, and revisit your DNS security reports.">
     <meta name="robots" content="noindex, nofollow">
     {{template "critical_css" .}}
     <style nonce="{{.CspNonce}}">
@@ -93,11 +93,11 @@
         {{if .RequiresAuth}}
         <div class="text-center py-5">
             <i class="fas fa-briefcase fa-3x text-muted mb-3"></i>
-            <h1 class="h3 mb-2">Intelligence Dossier</h1>
-            <p class="text-muted mb-4">Sign in to access your tasked intelligence collections and track your domain security assessments.</p>
+            <h1 class="h3 mb-2">Intelligence Reports</h1>
+            <p class="text-muted mb-4">Sign in to access your intelligence reports and track your domain security assessments.</p>
             {{if .GoogleAuthEnabled}}
             <a href="/auth/login" class="btn btn-primary">
-                <i class="fas fa-key me-2"></i>Sign In to Access Dossier
+                <i class="fas fa-key me-2"></i>Sign In to Access Reports
             </a>
             {{end}}
         </div>
@@ -106,9 +106,9 @@
         <div class="d-flex justify-content-between align-items-center mb-4">
             <div>
                 <h1 class="h3 mb-1">
-                    <i class="fas fa-briefcase me-2"></i>Intelligence Dossier
+                    <i class="fas fa-briefcase me-2"></i>Intelligence Reports
                 </h1>
-                <p class="text-muted mb-0">Your tasked intelligence collections &mdash; domain assessments initiated by <strong class="text-info">{{.UserName}}</strong></p>
+                <p class="text-muted mb-0">Your intelligence reports &mdash; domain assessments initiated by <strong class="text-info">{{.UserName}}</strong></p>
             </div>
             <div class="d-flex gap-2">
                 <a href="/" class="btn btn-primary">
@@ -301,7 +301,7 @@
             </div>
 
             {{if gt .Pagination.TotalPages 1}}
-                <nav aria-label="Intelligence dossier pagination" class="mt-4">
+                <nav aria-label="Intelligence reports pagination" class="mt-4">
                     <ul class="pagination justify-content-center">
                         {{if .Pagination.HasPrev}}
                             <li class="page-item">
@@ -344,7 +344,7 @@
                 {{if .SearchDomain}}
                     <i class="fas fa-search fa-3x text-muted mb-3"></i>
                     <h4 class="text-muted">No Matching Collections</h4>
-                    <p class="text-muted mb-4">No intelligence reports found for "<strong>{{.SearchDomain}}</strong>" in your dossier.</p>
+                    <p class="text-muted mb-4">No intelligence reports found for "<strong>{{.SearchDomain}}</strong>" in your reports.</p>
                     <a href="/dossier" class="btn btn-outline-secondary me-2">
                         <i class="fas fa-times me-2"></i>Clear Search
                     </a>
@@ -354,7 +354,7 @@
                 {{else}}
                     <i class="fas fa-briefcase fa-3x text-muted mb-3"></i>
                     <h4 class="text-muted">No Tasked Collections Yet</h4>
-                    <p class="text-muted mb-4">Your intelligence dossier is empty. Run a domain security assessment while signed in to begin building your collection.</p>
+                    <p class="text-muted mb-4">Your intelligence reports are empty. Run a domain security assessment while signed in to begin building your collection.</p>
                     <a href="/" class="btn btn-primary">
                         <i class="fas fa-search me-2"></i>Start First Assessment
                     </a>

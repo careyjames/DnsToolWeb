@@ -184,7 +184,7 @@ func (h *DossierHandler) Dossier(c *gin.Context) {
                         "CspNonce":        nonce,
                         "CsrfToken":       csrfToken,
                         "ActivePage":      "dossier",
-                        "FlashMessages":   []FlashMessage{{Category: "danger", Message: "Failed to load intelligence dossier"}},
+                        "FlashMessages":   []FlashMessage{{Category: "danger", Message: "Failed to load intelligence reports"}},
                 }
                 mergeAuthData(c, h.Config, errData)
                 c.HTML(http.StatusInternalServerError, templateDossier, errData)

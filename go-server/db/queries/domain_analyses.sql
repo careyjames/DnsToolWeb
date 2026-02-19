@@ -9,7 +9,7 @@ LIMIT 1;
 
 -- name: ListSuccessfulAnalyses :many
 SELECT * FROM domain_analyses
-WHERE full_results IS NOT NULL AND analysis_success = TRUE
+WHERE full_results IS NOT NULL AND analysis_success = TRUE AND private = FALSE
 ORDER BY created_at DESC
 LIMIT $1 OFFSET $2;
 
@@ -17,18 +17,20 @@ LIMIT $1 OFFSET $2;
 SELECT * FROM domain_analyses
 WHERE full_results IS NOT NULL
   AND analysis_success = TRUE
+  AND private = FALSE
   AND (domain ILIKE $1 OR ascii_domain ILIKE $1)
 ORDER BY created_at DESC
 LIMIT $2 OFFSET $3;
 
 -- name: CountSuccessfulAnalyses :one
 SELECT COUNT(*) FROM domain_analyses
-WHERE full_results IS NOT NULL AND analysis_success = TRUE;
+WHERE full_results IS NOT NULL AND analysis_success = TRUE AND private = FALSE;
 
 -- name: CountSearchSuccessfulAnalyses :one
 SELECT COUNT(*) FROM domain_analyses
 WHERE full_results IS NOT NULL
   AND analysis_success = TRUE
+  AND private = FALSE
   AND (domain ILIKE $1 OR ascii_domain ILIKE $1);
 
 -- name: ListAnalysesByDomain :many
@@ -50,10 +52,10 @@ INSERT INTO domain_analyses (
     ct_subdomains, full_results,
     country_code, country_name,
     analysis_success, error_message, analysis_duration,
-    posture_hash,
+    posture_hash, private, has_user_selectors,
     created_at
 ) VALUES (
-    $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, NOW()
+    $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, NOW()
 ) RETURNING id, created_at;
 
 -- name: UpdateAnalysis :exec
@@ -105,7 +107,7 @@ LIMIT $1;
 SELECT id, domain, ascii_domain, created_at, updated_at,
        analysis_duration, country_code, country_name, full_results
 FROM domain_analyses
-WHERE full_results IS NOT NULL AND analysis_success = TRUE
+WHERE full_results IS NOT NULL AND analysis_success = TRUE AND private = FALSE
 ORDER BY created_at DESC
 LIMIT $1 OFFSET $2;
 
@@ -157,3 +159,9 @@ WHERE ascii_domain = $1
   AND full_results IS NOT NULL
 ORDER BY created_at DESC
 LIMIT 1;
+
+-- name: CheckAnalysisOwnership :one
+SELECT EXISTS(
+    SELECT 1 FROM user_analyses
+    WHERE analysis_id = $1 AND user_id = $2
+) AS is_owner;

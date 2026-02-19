@@ -12,6 +12,25 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const checkAnalysisOwnership = `-- name: CheckAnalysisOwnership :one
+SELECT EXISTS(
+    SELECT 1 FROM user_analyses
+    WHERE analysis_id = $1 AND user_id = $2
+) AS is_owner
+`
+
+type CheckAnalysisOwnershipParams struct {
+	AnalysisID int32 `db:"analysis_id" json:"analysis_id"`
+	UserID     int32 `db:"user_id" json:"user_id"`
+}
+
+func (q *Queries) CheckAnalysisOwnership(ctx context.Context, arg CheckAnalysisOwnershipParams) (bool, error) {
+	row := q.db.QueryRow(ctx, checkAnalysisOwnership, arg.AnalysisID, arg.UserID)
+	var is_owner bool
+	err := row.Scan(&is_owner)
+	return is_owner, err
+}
+
 const countAllAnalyses = `-- name: CountAllAnalyses :one
 SELECT COUNT(*) FROM domain_analyses
 `
@@ -27,6 +46,7 @@ const countSearchSuccessfulAnalyses = `-- name: CountSearchSuccessfulAnalyses :o
 SELECT COUNT(*) FROM domain_analyses
 WHERE full_results IS NOT NULL
   AND analysis_success = TRUE
+  AND private = FALSE
   AND (domain ILIKE $1 OR ascii_domain ILIKE $1)
 `
 
@@ -39,7 +59,7 @@ func (q *Queries) CountSearchSuccessfulAnalyses(ctx context.Context, domain stri
 
 const countSuccessfulAnalyses = `-- name: CountSuccessfulAnalyses :one
 SELECT COUNT(*) FROM domain_analyses
-WHERE full_results IS NOT NULL AND analysis_success = TRUE
+WHERE full_results IS NOT NULL AND analysis_success = TRUE AND private = FALSE
 `
 
 func (q *Queries) CountSuccessfulAnalyses(ctx context.Context) (int64, error) {
@@ -75,7 +95,7 @@ const exportSuccessfulAnalyses = `-- name: ExportSuccessfulAnalyses :many
 SELECT id, domain, ascii_domain, created_at, updated_at,
        analysis_duration, country_code, country_name, full_results
 FROM domain_analyses
-WHERE full_results IS NOT NULL AND analysis_success = TRUE
+WHERE full_results IS NOT NULL AND analysis_success = TRUE AND private = FALSE
 ORDER BY created_at DESC
 LIMIT $1 OFFSET $2
 `
@@ -128,7 +148,7 @@ func (q *Queries) ExportSuccessfulAnalyses(ctx context.Context, arg ExportSucces
 }
 
 const getAnalysisByID = `-- name: GetAnalysisByID :one
-SELECT id, domain, ascii_domain, basic_records, authoritative_records, spf_status, spf_records, dmarc_status, dmarc_policy, dmarc_records, dkim_status, dkim_selectors, registrar_name, registrar_source, analysis_success, error_message, analysis_duration, created_at, updated_at, country_code, country_name, ct_subdomains, full_results, posture_hash FROM domain_analyses WHERE id = $1
+SELECT id, domain, ascii_domain, basic_records, authoritative_records, spf_status, spf_records, dmarc_status, dmarc_policy, dmarc_records, dkim_status, dkim_selectors, registrar_name, registrar_source, analysis_success, error_message, analysis_duration, created_at, updated_at, country_code, country_name, ct_subdomains, full_results, posture_hash, private, has_user_selectors FROM domain_analyses WHERE id = $1
 `
 
 func (q *Queries) GetAnalysisByID(ctx context.Context, id int32) (DomainAnalysis, error) {
@@ -159,6 +179,8 @@ func (q *Queries) GetAnalysisByID(ctx context.Context, id int32) (DomainAnalysis
 		&i.CtSubdomains,
 		&i.FullResults,
 		&i.PostureHash,
+		&i.Private,
+		&i.HasUserSelectors,
 	)
 	return i, err
 }
@@ -307,7 +329,7 @@ func (q *Queries) GetPreviousPostureHash(ctx context.Context, domain string) (Ge
 }
 
 const getRecentAnalysisByDomain = `-- name: GetRecentAnalysisByDomain :one
-SELECT id, domain, ascii_domain, basic_records, authoritative_records, spf_status, spf_records, dmarc_status, dmarc_policy, dmarc_records, dkim_status, dkim_selectors, registrar_name, registrar_source, analysis_success, error_message, analysis_duration, created_at, updated_at, country_code, country_name, ct_subdomains, full_results, posture_hash FROM domain_analyses
+SELECT id, domain, ascii_domain, basic_records, authoritative_records, spf_status, spf_records, dmarc_status, dmarc_policy, dmarc_records, dkim_status, dkim_selectors, registrar_name, registrar_source, analysis_success, error_message, analysis_duration, created_at, updated_at, country_code, country_name, ct_subdomains, full_results, posture_hash, private, has_user_selectors FROM domain_analyses
 WHERE domain = $1
 ORDER BY created_at DESC
 LIMIT 1
@@ -341,6 +363,8 @@ func (q *Queries) GetRecentAnalysisByDomain(ctx context.Context, domain string) 
 		&i.CtSubdomains,
 		&i.FullResults,
 		&i.PostureHash,
+		&i.Private,
+		&i.HasUserSelectors,
 	)
 	return i, err
 }
@@ -356,10 +380,10 @@ INSERT INTO domain_analyses (
     ct_subdomains, full_results,
     country_code, country_name,
     analysis_success, error_message, analysis_duration,
-    posture_hash,
+    posture_hash, private, has_user_selectors,
     created_at
 ) VALUES (
-    $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, NOW()
+    $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, NOW()
 ) RETURNING id, created_at
 `
 
@@ -385,6 +409,8 @@ type InsertAnalysisParams struct {
 	ErrorMessage         *string         `db:"error_message" json:"error_message"`
 	AnalysisDuration     *float64        `db:"analysis_duration" json:"analysis_duration"`
 	PostureHash          *string         `db:"posture_hash" json:"posture_hash"`
+	Private              bool            `db:"private" json:"private"`
+	HasUserSelectors     bool            `db:"has_user_selectors" json:"has_user_selectors"`
 }
 
 type InsertAnalysisRow struct {
@@ -415,6 +441,8 @@ func (q *Queries) InsertAnalysis(ctx context.Context, arg InsertAnalysisParams) 
 		arg.ErrorMessage,
 		arg.AnalysisDuration,
 		arg.PostureHash,
+		arg.Private,
+		arg.HasUserSelectors,
 	)
 	var i InsertAnalysisRow
 	err := row.Scan(&i.ID, &i.CreatedAt)
@@ -422,7 +450,7 @@ func (q *Queries) InsertAnalysis(ctx context.Context, arg InsertAnalysisParams) 
 }
 
 const listAnalysesByDomain = `-- name: ListAnalysesByDomain :many
-SELECT id, domain, ascii_domain, basic_records, authoritative_records, spf_status, spf_records, dmarc_status, dmarc_policy, dmarc_records, dkim_status, dkim_selectors, registrar_name, registrar_source, analysis_success, error_message, analysis_duration, created_at, updated_at, country_code, country_name, ct_subdomains, full_results, posture_hash FROM domain_analyses
+SELECT id, domain, ascii_domain, basic_records, authoritative_records, spf_status, spf_records, dmarc_status, dmarc_policy, dmarc_records, dkim_status, dkim_selectors, registrar_name, registrar_source, analysis_success, error_message, analysis_duration, created_at, updated_at, country_code, country_name, ct_subdomains, full_results, posture_hash, private, has_user_selectors FROM domain_analyses
 WHERE domain = $1
   AND full_results IS NOT NULL
   AND analysis_success = TRUE
@@ -469,6 +497,8 @@ func (q *Queries) ListAnalysesByDomain(ctx context.Context, arg ListAnalysesByDo
 			&i.CtSubdomains,
 			&i.FullResults,
 			&i.PostureHash,
+			&i.Private,
+			&i.HasUserSelectors,
 		); err != nil {
 			return nil, err
 		}
@@ -549,8 +579,8 @@ func (q *Queries) ListPopularDomains(ctx context.Context, limit int32) ([]ListPo
 }
 
 const listSuccessfulAnalyses = `-- name: ListSuccessfulAnalyses :many
-SELECT id, domain, ascii_domain, basic_records, authoritative_records, spf_status, spf_records, dmarc_status, dmarc_policy, dmarc_records, dkim_status, dkim_selectors, registrar_name, registrar_source, analysis_success, error_message, analysis_duration, created_at, updated_at, country_code, country_name, ct_subdomains, full_results, posture_hash FROM domain_analyses
-WHERE full_results IS NOT NULL AND analysis_success = TRUE
+SELECT id, domain, ascii_domain, basic_records, authoritative_records, spf_status, spf_records, dmarc_status, dmarc_policy, dmarc_records, dkim_status, dkim_selectors, registrar_name, registrar_source, analysis_success, error_message, analysis_duration, created_at, updated_at, country_code, country_name, ct_subdomains, full_results, posture_hash, private, has_user_selectors FROM domain_analyses
+WHERE full_results IS NOT NULL AND analysis_success = TRUE AND private = FALSE
 ORDER BY created_at DESC
 LIMIT $1 OFFSET $2
 `
@@ -594,6 +624,8 @@ func (q *Queries) ListSuccessfulAnalyses(ctx context.Context, arg ListSuccessful
 			&i.CtSubdomains,
 			&i.FullResults,
 			&i.PostureHash,
+			&i.Private,
+			&i.HasUserSelectors,
 		); err != nil {
 			return nil, err
 		}
@@ -606,9 +638,10 @@ func (q *Queries) ListSuccessfulAnalyses(ctx context.Context, arg ListSuccessful
 }
 
 const searchSuccessfulAnalyses = `-- name: SearchSuccessfulAnalyses :many
-SELECT id, domain, ascii_domain, basic_records, authoritative_records, spf_status, spf_records, dmarc_status, dmarc_policy, dmarc_records, dkim_status, dkim_selectors, registrar_name, registrar_source, analysis_success, error_message, analysis_duration, created_at, updated_at, country_code, country_name, ct_subdomains, full_results, posture_hash FROM domain_analyses
+SELECT id, domain, ascii_domain, basic_records, authoritative_records, spf_status, spf_records, dmarc_status, dmarc_policy, dmarc_records, dkim_status, dkim_selectors, registrar_name, registrar_source, analysis_success, error_message, analysis_duration, created_at, updated_at, country_code, country_name, ct_subdomains, full_results, posture_hash, private, has_user_selectors FROM domain_analyses
 WHERE full_results IS NOT NULL
   AND analysis_success = TRUE
+  AND private = FALSE
   AND (domain ILIKE $1 OR ascii_domain ILIKE $1)
 ORDER BY created_at DESC
 LIMIT $2 OFFSET $3
@@ -654,6 +687,8 @@ func (q *Queries) SearchSuccessfulAnalyses(ctx context.Context, arg SearchSucces
 			&i.CtSubdomains,
 			&i.FullResults,
 			&i.PostureHash,
+			&i.Private,
+			&i.HasUserSelectors,
 		); err != nil {
 			return nil, err
 		}

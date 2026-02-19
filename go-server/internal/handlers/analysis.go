@@ -37,6 +37,29 @@ func NewAnalysisHandler(database *db.Database, cfg *config.Config, a *analyzer.A
         return &AnalysisHandler{DB: database, Config: cfg, Analyzer: a, DNSHistoryCache: historyCache}
 }
 
+func (h *AnalysisHandler) checkPrivateAccess(c *gin.Context, analysisID int32, private bool) bool {
+        if !private {
+                return true
+        }
+        auth, exists := c.Get("authenticated")
+        if !exists || auth != true {
+                return false
+        }
+        uid, ok := c.Get("user_id")
+        if !ok {
+                return false
+        }
+        userID, ok := uid.(int32)
+        if !ok {
+                return false
+        }
+        isOwner, err := h.DB.Queries.CheckAnalysisOwnership(c.Request.Context(), dbq.CheckAnalysisOwnershipParams{
+                AnalysisID: analysisID,
+                UserID:     userID,
+        })
+        return err == nil && isOwner
+}
+
 func (h *AnalysisHandler) ViewAnalysisStatic(c *gin.Context) {
         nonce, _ := c.Get("csp_nonce")
         csrfToken, _ := c.Get("csrf_token")
@@ -50,6 +73,11 @@ func (h *AnalysisHandler) ViewAnalysisStatic(c *gin.Context) {
         ctx := c.Request.Context()
         analysis, err := h.DB.Queries.GetAnalysisByID(ctx, int32(analysisID))
         if err != nil {
+                h.renderErrorPage(c, http.StatusNotFound, nonce, csrfToken, "danger", "Analysis not found")
+                return
+        }
+
+        if !h.checkPrivateAccess(c, analysis.ID, analysis.Private) {
                 h.renderErrorPage(c, http.StatusNotFound, nonce, csrfToken, "danger", "Analysis not found")
                 return
         }
@@ -164,6 +192,11 @@ func (h *AnalysisHandler) ViewAnalysisExecutive(c *gin.Context) {
                 return
         }
 
+        if !h.checkPrivateAccess(c, analysis.ID, analysis.Private) {
+                h.renderErrorPage(c, http.StatusNotFound, nonce, csrfToken, "danger", "Analysis not found")
+                return
+        }
+
         if len(analysis.FullResults) == 0 || string(analysis.FullResults) == "null" {
                 h.renderErrorPage(c, http.StatusGone, nonce, csrfToken, "warning", "This report is no longer available. Please re-analyze the domain.")
                 return
@@ -240,7 +273,19 @@ func (h *AnalysisHandler) Analyze(c *gin.Context) {
         }
 
         customSelectors := extractCustomSelectors(c)
+        hasUserSelectors := len(customSelectors) > 0
         exposureChecks := c.PostForm("exposure_checks") == "1"
+
+        isAuthenticated := false
+        var userID int32
+        if auth, exists := c.Get("authenticated"); exists && auth == true {
+                isAuthenticated = true
+                if uid, ok := c.Get("user_id"); ok {
+                        userID, _ = uid.(int32)
+                }
+        }
+
+        ephemeral := hasUserSelectors && !isAuthenticated
 
         startTime := time.Now()
         ctx := c.Request.Context()
@@ -273,24 +318,27 @@ func (h *AnalysisHandler) Analyze(c *gin.Context) {
                 }
         }
 
-        analysisID, timestamp := h.saveAnalysis(c.Request.Context(), domain, asciiDomain, results, analysisDuration, countryCode, countryName)
+        var analysisID int32
+        var timestamp string
+        isPrivate := hasUserSelectors && isAuthenticated
 
-        if analysisID > 0 {
-                if auth, exists := c.Get("authenticated"); exists && auth == true {
-                        if uid, ok := c.Get("user_id"); ok {
-                                if userID, ok := uid.(int32); ok {
-                                        go func() {
-                                                err := h.DB.Queries.InsertUserAnalysis(context.Background(), dbq.InsertUserAnalysisParams{
-                                                        UserID:     userID,
-                                                        AnalysisID: analysisID,
-                                                })
-                                                if err != nil {
-                                                        slog.Error("Failed to record user analysis association", "user_id", userID, "analysis_id", analysisID, "error", err)
-                                                }
-                                        }()
-                                }
+        if ephemeral {
+                slog.Info("Ephemeral analysis (custom DKIM selectors, unauthenticated) — not persisted", "domain", asciiDomain)
+                timestamp = time.Now().UTC().Format("2006-01-02 15:04:05 UTC")
+        } else {
+                analysisID, timestamp = h.saveAnalysis(c.Request.Context(), domain, asciiDomain, results, analysisDuration, countryCode, countryName, isPrivate, hasUserSelectors)
+        }
+
+        if analysisID > 0 && isAuthenticated && userID > 0 {
+                go func() {
+                        err := h.DB.Queries.InsertUserAnalysis(context.Background(), dbq.InsertUserAnalysisParams{
+                                UserID:     userID,
+                                AnalysisID: analysisID,
+                        })
+                        if err != nil {
+                                slog.Error("Failed to record user analysis association", "user_id", userID, "analysis_id", analysisID, "error", err)
                         }
-                }
+                }()
         }
 
         icae.EvaluateAndRecord(context.Background(), h.DB.Queries, h.Config.AppVersion)
@@ -330,6 +378,8 @@ func (h *AnalysisHandler) Analyze(c *gin.Context) {
                 "DriftPrevTime":        drift.PrevTime,
                 "DriftPrevID":          drift.PrevID,
                 "DriftFields":          drift.Fields,
+                "Ephemeral":            ephemeral,
+                "IsPrivateReport":      isPrivate,
         }
         if icaeMetrics := icae.LoadReportMetrics(ctx, h.DB.Queries); icaeMetrics != nil {
                 analyzeData["ICAEMetrics"] = icaeMetrics
@@ -556,6 +606,11 @@ func (h *AnalysisHandler) APIAnalysis(c *gin.Context) {
                 return
         }
 
+        if !h.checkPrivateAccess(c, analysis.ID, analysis.Private) {
+                c.JSON(http.StatusNotFound, gin.H{"error": "Analysis not found"})
+                return
+        }
+
         var fullResults interface{}
         if len(analysis.FullResults) > 0 {
                 json.Unmarshal(analysis.FullResults, &fullResults)
@@ -587,7 +642,7 @@ func (h *AnalysisHandler) APIAnalysis(c *gin.Context) {
         })
 }
 
-func (h *AnalysisHandler) saveAnalysis(ctx context.Context, domain, asciiDomain string, results map[string]any, duration float64, countryCode, countryName string) (int32, string) {
+func (h *AnalysisHandler) saveAnalysis(ctx context.Context, domain, asciiDomain string, results map[string]any, duration float64, countryCode, countryName string, private, hasUserSelectors bool) (int32, string) {
         results["_tool_version"] = h.Config.AppVersion
         fullResultsJSON, _ := json.Marshal(results)
 
@@ -645,6 +700,8 @@ func (h *AnalysisHandler) saveAnalysis(ctx context.Context, domain, asciiDomain 
                 ErrorMessage:         errorMessage,
                 AnalysisDuration:     &duration,
                 PostureHash:          &postureHash,
+                Private:              private,
+                HasUserSelectors:     hasUserSelectors,
         }
 
         row, err := h.DB.Queries.InsertAnalysis(ctx, params)

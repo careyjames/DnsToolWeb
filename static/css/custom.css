@@ -2769,6 +2769,7 @@ main.container {
     border: 1px solid rgba(13, 202, 240, 0.15);
 }
 .u-bg-info-soft { background: rgba(13, 202, 240, 0.08); }
+.u-bg-warn-soft { background: rgba(210, 153, 34, 0.12); }
 .u-alert-warning-soft {
     background: rgba(255, 193, 7, 0.08);
     border-left: 3px solid #ffc107;

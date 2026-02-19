@@ -29,6 +29,31 @@
     <main id="main-content" class="container my-4">
         {{template "flash_messages" .}}
 
+        {{if .Ephemeral}}
+        <div class="alert alert-warning border-0 mb-3 u-bg-warn-soft">
+            <div class="d-flex align-items-start">
+                <i class="fas fa-shield-alt me-2 mt-1 text-warning"></i>
+                <div>
+                    <strong>Intelligence Privacy Notice</strong>
+                    <p class="mb-1 mt-1">Custom DKIM selectors may contain sensitive organizational intelligence. Because you are not signed in, <strong>this analysis has not been saved</strong> to public history or any report archive.</p>
+                    <p class="mb-0 small text-warning-emphasis">To preserve reports with custom selectors privately in your <strong>Intelligence Reports</strong>, <a href="/auth/login" class="alert-link">sign in</a> before running the analysis. Your private reports are never visible to other users.</p>
+                </div>
+            </div>
+        </div>
+        {{end}}
+
+        {{if .IsPrivateReport}}
+        <div class="alert alert-info border-0 mb-3 u-bg-info-soft">
+            <div class="d-flex align-items-start">
+                <i class="fas fa-lock me-2 mt-1 text-info"></i>
+                <div>
+                    <strong>Private Intelligence Report</strong>
+                    <span class="ms-1">— This report contains user-provided DKIM selectors and is visible only to you in your <a href="/dossier" class="alert-link text-info">Intelligence Reports</a>. It will not appear in public history.</span>
+                </div>
+            </div>
+        </div>
+        {{end}}
+
         {{if .IsSubdomain}}
         <div class="alert alert-info border-0 mb-3 u-bg-info-soft">
             <div class="d-flex align-items-start">
