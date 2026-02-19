@@ -145,11 +145,9 @@ graph TB
         Runner["Test Runner<br/>45 Deterministic Cases"]
         
         subgraph "Analysis Layer Cases"
-            SPFCases["SPF Verdicts<br/>8 cases"]
-            DMARCCases["DMARC Verdicts<br/>12 cases"]
-            TransportCases["Transport Verdicts<br/>8 cases"]
-            PostureCases["Posture Classification<br/>9 cases"]
-            BrandCases["Brand Impersonation<br/>8 cases"]
+            SPFCases["SPF Protocol<br/>17 cases"]
+            DMARCCases["DMARC Protocol<br/>11 cases"]
+            DNSSECCases["DNSSEC Protocol<br/>17 cases"]
         end
     end
 
@@ -171,8 +169,8 @@ graph TB
     end
 
     Verdicts --> Runner
-    Runner --> SPFCases & DMARCCases & TransportCases & PostureCases & BrandCases
-    SPFCases & DMARCCases & TransportCases & PostureCases & BrandCases --> Scores
+    Runner --> SPFCases & DMARCCases & DNSSECCases
+    SPFCases & DMARCCases & DNSSECCases --> Scores
     Scores --> Dev --> Verified --> Consistent --> Gold --> Master
     Runner --> DB
     Scores --> Report
@@ -180,7 +178,7 @@ graph TB
     classDef maturity fill:#1a5276,stroke:#2980b9,color:#fff
     classDef cases fill:#0e6655,stroke:#1abc9c,color:#fff
     class Dev,Verified,Consistent,Gold,Master maturity
-    class SPFCases,DMARCCases,TransportCases,PostureCases,BrandCases cases
+    class SPFCases,DMARCCases,DNSSECCases cases
 ```
 
 ## 4. Two-Repo Open-Core Architecture

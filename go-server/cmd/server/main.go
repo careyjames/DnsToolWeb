@@ -174,6 +174,9 @@ func main() {
         sourcesHandler := handlers.NewSourcesHandler(cfg)
         router.GET("/sources", sourcesHandler.Sources)
 
+        architectureHandler := handlers.NewArchitectureHandler(cfg)
+        router.GET("/architecture", architectureHandler.Architecture)
+
         changelogHandler := handlers.NewChangelogHandler(cfg)
         router.GET("/changelog", changelogHandler.Changelog)
 
