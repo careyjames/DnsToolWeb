@@ -10,6 +10,31 @@ This file is the project's permanent breadcrumb trail — every session's decisi
 
 ---
 
+## Session: February 19, 2026 (Probe API v2 — Auth, Rate Limiting, Multi-Port)
+
+### v26.20.88 — Probe API v2 with Authentication, Rate Limiting, and Multi-Port Probing
+
+#### What Changed
+1. **API authentication**: Added shared-secret authentication via `X-Probe-Key` header. Probe API returns 401 without valid key. Go backend reads `PROBE_API_KEY` from environment and sends it with every remote probe request.
+2. **Rate limiting**: 30 requests per 60 seconds per client IP on probe API. Returns 429 when exceeded. Go backend handles 429 gracefully with fallback to local probing.
+3. **Multi-port probing**: Probe API v2 now tests ports 25 (SMTP), 465 (SMTPS implicit TLS), and 587 (submission/STARTTLS) in parallel per host. Results available in `all_ports` response field, stored as `multi_port` in probe results.
+4. **Banner capture**: SMTP server banners captured (first 200 chars) for additional intelligence fingerprinting.
+5. **Enhanced cert validation**: Separate TLS connection for certificate verification — insecure handshake for protocol details, then verified handshake for cert chain validation. Reports issuer, subject, expiry, days remaining.
+6. **Per-port timeout**: 4s timeout per connection (reduced from 5s for efficiency).
+7. **Config wiring**: `ProbeAPIKey` added to Config struct, Analyzer struct, and wired in main.go.
+8. **Server identification**: Probe API returns `version: "2.0"` and Go backend logs it.
+
+#### Secrets
+- `PROBE_API_KEY` — shared secret for probe API authentication (stored in Replit secrets)
+
+#### Roadmap Items Completed
+- [x] API authentication (shared secret via X-Probe-Key header)
+- [x] Rate limiting on probe API (30/60s per IP)
+- [x] Multi-port probing (25, 465, 587)
+- [x] Banner capture for SMTP intelligence
+
+---
+
 ## Session: February 19, 2026 (Remote SMTP Probe Infrastructure)
 
 ### v26.20.87 — Remote SMTP Probe via Dedicated Probe Server
@@ -48,10 +73,10 @@ DNS Tool (Replit) → HTTPS POST → probe-us-01.dns-observe.com/probe/smtp
 - **Port 25 outbound**: Confirmed working (live-tested against Google MX, Proton Mail). VPS providers generally allow outbound 25; provider-specific policy should be verified via support ticket.
 
 #### Probe Server Roadmap / Future Work
+- [x] API authentication: shared secret via X-Probe-Key header (completed v26.20.88)
+- [x] Rate limiting on probe API: 30 req/60s per IP (completed v26.20.88)
 - [ ] Automated health monitoring: periodic GET /health checks with alerting on failure
 - [ ] Provider policy documentation: confirm VPS provider's outbound port 25 policy in writing
-- [ ] API authentication: add shared secret or mTLS between DNS Tool and probe API (currently open on HTTPS)
-- [ ] Rate limiting on probe API: prevent abuse if URL is discovered
 - [ ] Multi-region probes: add probe-eu-01, probe-ap-01 for geographic diversity
 - [ ] Log rotation and monitoring on probe server (journald retention, disk alerts)
 - [ ] Consider Unix socket instead of TCP 8025 for Caddy→probe communication (minor OPSEC improvement)

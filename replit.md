@@ -30,15 +30,19 @@ OSINT platform for RFC-compliant domain security analysis. Go/Gin backend, Boots
 - **Nav**: "Sign In" (fa-key) in collapse menu; authenticated dropdown with fa-user-shield; admin badge fa-shield.
 - **Route protection**: /export/json requires admin. All analysis remains no-login-required.
 
-## SMTP Probe Infrastructure (v26.20.87)
+## SMTP Probe Infrastructure (v26.20.87–88)
 - **Remote probe mode**: `SMTP_PROBE_MODE=remote` calls external probe API instead of local port 25.
-- **Probe server**: `probe-us-01.dns-observe.com` — Python 3 API (`/opt/dns-probe/probe_api.py`), systemd unit `dns-probe.service`, pre-existing Caddy reverse proxy (only Caddyfile updated).
-- **Secrets**: `PROBE_API_URL`, `PROBE_SSH_HOST`, `PROBE_SSH_USER`, `PROBE_SSH_PRIVATE_KEY` (all configured).
-- **API endpoints**: POST `/probe/smtp` (with `{"hosts": [...]}`) and GET `/health`.
-- **Fallback**: If remote probe fails, falls back to local direct SMTP probing (`force` mode).
+- **Probe server**: `probe-us-01.dns-observe.com` — Python 3 API v2.0 (`/opt/dns-probe/probe_api.py`), systemd unit `dns-probe.service`, pre-existing Caddy reverse proxy (only Caddyfile updated).
+- **Authentication**: Shared-secret via `X-Probe-Key` header. Returns 401 without valid key. Go backend sends `PROBE_API_KEY` automatically.
+- **Rate limiting**: 30 requests per 60 seconds per client IP. Returns 429 when exceeded.
+- **Multi-port probing**: Ports 25 (SMTP), 465 (SMTPS), 587 (submission) probed in parallel per host. Results in `all_ports` / `multi_port` field.
+- **Banner capture**: First 200 chars of SMTP banner captured for intelligence fingerprinting.
+- **Secrets**: `PROBE_API_URL`, `PROBE_API_KEY`, `PROBE_SSH_HOST`, `PROBE_SSH_USER`, `PROBE_SSH_PRIVATE_KEY` (all configured).
+- **API endpoints**: POST `/probe/smtp` (with `{"hosts": [...], "ports": [25,465,587]}`) and GET `/health`.
+- **Fallback**: If remote probe fails (network, 401, 429, invalid response), falls back to local direct SMTP probing (`force` mode).
 - **SSH access**: `ssh -i <key> root@probe-us-01.dns-observe.com` — key requires newline reformatting from secret storage.
 - **OPSEC note**: Internal port 8025 bound to loopback only; only 443 exposed externally. Architect reviewed: acceptable.
-- **Roadmap**: See EVOLUTION.md "Probe Server Roadmap / Future Work" for planned improvements (API auth, health monitoring, multi-region, firewall hardening).
+- **Roadmap**: See EVOLUTION.md "Probe Server Roadmap / Future Work" for remaining items (health monitoring, multi-region, firewall hardening).
 
 ## Engines
 - **ICIE** — Intelligence Classification & Interpretation Engine (analysis logic)
