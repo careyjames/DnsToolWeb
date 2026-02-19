@@ -1,4 +1,12 @@
 <!DOCTYPE html>
+<!--
+    Cause I'm a hacker, baby, I'm gonna pwn you good,
+    Diff your zone to the spec like you knew I would.
+    Cite those RFCs, baby, so my argument stood,
+    Standards over swagger — that's understood.
+
+    — DNS Tool / If it's not in RFC 1034, it ain't understood.
+-->
 <html lang="en" data-bs-theme="dark">
 <head>
     {{template "head" .}}
@@ -314,6 +322,17 @@
                                                     <i class="fas fa-search me-1 u-color-gold" aria-hidden="true"></i><strong>Expanded Exposure Checks</strong>
                                                     <span class="d-block mt-1 u-fs-075em u-color-gray-400">
                                                         Deeper reconnaissance &mdash; actively checks well-known misconfiguration paths (<code>/.env</code>, <code>/.git/config</code>, <code>/server-status</code>, etc.) on the target domain. These are publicly accessible URLs any browser could visit. <strong class="text-warning"><i class="fas fa-clock me-1" aria-hidden="true"></i>Adds extra scan time.</strong>
+                                                    </span>
+                                                </label>
+                                            </div>
+                                        </div>
+                                        <div class="col-12 mt-2">
+                                            <div class="form-check">
+                                                <input type="checkbox" class="form-check-input" name="devnull" id="devnull" value="1">
+                                                <label class="form-check-label small text-muted" for="devnull">
+                                                    <i class="fas fa-terminal me-1 u-color-info-alt" aria-hidden="true"></i><strong>/dev/null Scan</strong>
+                                                    <span class="d-block mt-1 u-fs-075em u-color-gray-400">
+                                                        Full analysis, zero persistence. Results are piped straight to <code>/dev/null</code> after you see them &mdash; no history, no analytics, no statistics, no database writes. Gone when you close the tab. For when you want the intel without the footprint.
                                                     </span>
                                                 </label>
                                             </div>

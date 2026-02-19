@@ -1,4 +1,12 @@
 <!DOCTYPE html>
+<!--
+    Cause I'm a hacker, baby, I'm gonna pwn you good,
+    Walk your NSEC chain like you knew I would.
+    Cite those RFCs, baby, so my argument stood,
+    "MUST" means MUST — not "kinda, maybe, should."
+
+    — DNS Tool / Standards over swagger.
+-->
 <html lang="en" data-bs-theme="dark">
 <head>
     {{template "head" .}}
@@ -30,6 +38,18 @@
         {{template "flash_messages" .}}
 
         {{if .Ephemeral}}
+        {{if .DevNull}}
+        <div class="alert alert-dark border-0 mb-3 u-devnull-banner">
+            <div class="d-flex align-items-start">
+                <i class="fas fa-terminal me-2 mt-1 text-info"></i>
+                <div>
+                    <strong class="text-info"><code>&gt; ./dns-tool --output /dev/null</code></strong>
+                    <p class="mb-1 mt-1 text-light">This scan ran in <strong>/dev/null mode</strong>. Full analysis, zero persistence. No database writes, no history entry, no analytics increment, no statistics. This page is the only place these results exist.</p>
+                    <p class="mb-0 small text-muted"><i class="fas fa-biohazard me-1"></i>When you close this tab, these results are gone. No one will ever know this scan happened. Not even us.</p>
+                </div>
+            </div>
+        </div>
+        {{else}}
         <div class="alert alert-warning border-0 mb-3 u-bg-warn-soft">
             <div class="d-flex align-items-start">
                 <i class="fas fa-shield-alt me-2 mt-1 text-warning"></i>
@@ -40,6 +60,7 @@
                 </div>
             </div>
         </div>
+        {{end}}
         {{end}}
 
         {{if .IsPrivateReport}}
@@ -2338,6 +2359,34 @@
                             <div class="text-muted small"><i class="fas fa-minus-circle me-1"></i> No robots.txt found</div>
                             {{end}}
                         </div>
+                        {{end}}
+
+                        <!-- Content-Usage Directive (IETF AI Preferences Draft) -->
+                        {{if $aiRobots}}
+                        {{$contentUsage := mapGetMap "content_usage" $aiRobots}}
+                        {{if and $contentUsage (mapGetBool "found" $contentUsage)}}
+                        <div class="mb-3">
+                            <h6 class="text-info"><i class="fas fa-file-contract me-1"></i> Content-Usage Directive
+                                <a href="https://datatracker.ietf.org/doc/draft-ietf-aipref-attach/" target="_blank" rel="noopener" class="ms-2 text-muted rfc-link" data-bs-toggle="tooltip" data-bs-html="true" title="<strong>IETF AI Preferences — Active Draft</strong><br>Experimental directive allowing sites to express AI training and inference preferences via robots.txt. Adoption is emerging and enforcement varies by crawler."><i class="fas fa-info-circle"></i><span class="rfc-label">IETF Draft</span></a>
+                            </h6>
+                            <div class="protocol-question mb-2">
+                                <span class="protocol-question-text">Does the site express AI content-usage preferences?</span>
+                                {{if mapGetBool "ai_denied" $contentUsage}}
+                                    <span class="badge bg-success">AI Usage Denied</span>
+                                {{else}}
+                                    <span class="badge bg-info">Directive Present</span>
+                                {{end}}
+                            </div>
+                            <div class="alert {{if mapGetBool "ai_denied" $contentUsage}}alert-success{{else}}alert-info{{end}} py-2 small">
+                                <i class="fas fa-file-alt me-1"></i>
+                                <strong>Content-Usage directive observed:</strong>
+                                <code>{{mapGetStr "raw" $contentUsage}}</code>
+                                <div class="mt-1 text-muted u-fs-085em">
+                                    This is an experimental IETF draft directive. Presence is observed; enforcement depends on individual crawler compliance.
+                                </div>
+                            </div>
+                        </div>
+                        {{end}}
                         {{end}}
 
                         <!-- AI Recommendation Poisoning IOCs -->
@@ -5020,5 +5069,12 @@
             });
     }
     </script>
+    {{if .DevNull}}
+    <script nonce="{{.CspNonce}}">
+    console.log('%c > ./dns-tool --output /dev/null', 'color: #58a6ff; font-family: monospace; font-size: 14px; font-weight: bold;');
+    console.log('%c Cause I\'m a hacker, baby, I\'m gonna pwn you good,\n Exploit bad config like you knew I would.\n Cite those RFCs, baby, so my argument stood,\n If it\'s not in 1034 — it ain\'t understood.', 'color: #8b949e; font-family: monospace; font-size: 11px;');
+    console.log('%c Zero persistence. Zero footprint. Standards over swagger.', 'color: #3fb950; font-family: monospace; font-size: 11px;');
+    </script>
+    {{end}}
 </body>
 </html>

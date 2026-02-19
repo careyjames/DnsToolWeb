@@ -187,6 +187,7 @@ func (s *Scanner) checkRobotsTxt(ctx context.Context, domain string, evidence *[
                 "blocked_crawlers":   []string{},
                 "allowed_crawlers":   []string{},
                 "directives":         []map[string]any{},
+                "content_usage":      map[string]any{},
                 "evidence":           []map[string]any{},
         }
 
@@ -216,6 +217,9 @@ func (s *Scanner) checkRobotsTxt(ctx context.Context, domain string, evidence *[
                         result["allowed_crawlers"] = allowed
                         result["directives"] = directives
 
+                        contentUsage := parseContentUsageDirectives(content)
+                        result["content_usage"] = contentUsage
+
                         if len(blocked) > 0 {
                                 result["blocks_ai_crawlers"] = true
                                 *evidence = append(*evidence, Evidence{
@@ -235,9 +239,70 @@ func (s *Scanner) checkRobotsTxt(ctx context.Context, domain string, evidence *[
                                         Confidence: "Observed",
                                 })
                         }
-                        slog.Info("AI Surface: robots.txt analyzed", "domain", domain, "blocked", len(blocked))
+
+                        if found, ok := contentUsage["found"].(bool); ok && found {
+                                detail := "Content-Usage directive present in robots.txt"
+                                if raw, ok := contentUsage["raw"].(string); ok {
+                                        detail = fmt.Sprintf("Content-Usage directive observed: %s", raw)
+                                }
+                                *evidence = append(*evidence, Evidence{
+                                        Type:       "content_usage_directive",
+                                        Source:     url,
+                                        Detail:     detail,
+                                        Severity:   "info",
+                                        Confidence: "Observed",
+                                })
+                        }
+
+                        slog.Info("AI Surface: robots.txt analyzed", "domain", domain, "blocked", len(blocked), "content_usage", contentUsage["found"])
                         break
                 }
+        }
+
+        return result
+}
+
+func parseContentUsageDirectives(content string) map[string]any {
+        result := map[string]any{
+                "found":      false,
+                "raw":        "",
+                "ai_denied":  false,
+                "parameters": map[string]string{},
+        }
+
+        scanner := bufio.NewScanner(strings.NewReader(content))
+        for scanner.Scan() {
+                line := strings.TrimSpace(scanner.Text())
+                if strings.HasPrefix(line, "#") || line == "" {
+                        continue
+                }
+                lower := strings.ToLower(line)
+                if !strings.HasPrefix(lower, "content-usage:") {
+                        continue
+                }
+
+                value := strings.TrimSpace(line[len("content-usage:"):])
+                if value == "" {
+                        continue
+                }
+
+                result["found"] = true
+                result["raw"] = value
+
+                params := map[string]string{}
+                for _, part := range strings.Split(value, ",") {
+                        part = strings.TrimSpace(part)
+                        if idx := strings.Index(part, "="); idx > 0 {
+                                key := strings.TrimSpace(strings.ToLower(part[:idx]))
+                                val := strings.TrimSpace(strings.ToLower(part[idx+1:]))
+                                params[key] = val
+                                if key == "ai" && (val == "n" || val == "no" || val == "none" || val == "disallow") {
+                                        result["ai_denied"] = true
+                                }
+                        }
+                }
+                result["parameters"] = params
+                break
         }
 
         return result
@@ -497,6 +562,10 @@ func buildSummary(results map[string]any, evidence []Evidence) map[string]any {
         hasLLMS, _ := llms["found"].(bool)
         blocksAI, _ := robots["blocks_ai_crawlers"].(bool)
         allowsAI, _ := robots["allows_ai_crawlers"].(bool)
+        hasContentUsage := false
+        if cu, ok := robots["content_usage"].(map[string]any); ok {
+                hasContentUsage, _ = cu["found"].(bool)
+        }
         iocCount := 0
         if v, ok := poisoning["ioc_count"].(int); ok {
                 iocCount = v
@@ -512,7 +581,7 @@ func buildSummary(results map[string]any, evidence []Evidence) map[string]any {
         if iocCount > 0 || hiddenCount > 0 {
                 status = "warning"
                 message = "AI-related risks detected — review recommended"
-        } else if hasLLMS || blocksAI {
+        } else if hasLLMS || blocksAI || hasContentUsage {
                 status = "success"
                 message = "AI governance signals observed"
         } else if allowsAI {
@@ -521,13 +590,14 @@ func buildSummary(results map[string]any, evidence []Evidence) map[string]any {
         }
 
         return map[string]any{
-                "status":          status,
-                "message":         message,
-                "has_llms_txt":    hasLLMS,
-                "blocks_ai":       blocksAI,
-                "allows_ai":       allowsAI,
-                "poisoning_count": iocCount,
-                "hidden_count":    hiddenCount,
-                "total_evidence":  len(evidence),
+                "status":            status,
+                "message":           message,
+                "has_llms_txt":      hasLLMS,
+                "blocks_ai":         blocksAI,
+                "allows_ai":         allowsAI,
+                "has_content_usage": hasContentUsage,
+                "poisoning_count":   iocCount,
+                "hidden_count":      hiddenCount,
+                "total_evidence":    len(evidence),
         }
 }

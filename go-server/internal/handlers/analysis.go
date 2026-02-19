@@ -275,6 +275,7 @@ func (h *AnalysisHandler) Analyze(c *gin.Context) {
         customSelectors := extractCustomSelectors(c)
         hasNovelSelectors := len(customSelectors) > 0 && !analyzer.AllSelectorsKnown(customSelectors)
         exposureChecks := c.PostForm("exposure_checks") == "1"
+        devNull := c.PostForm("devnull") == "1"
 
         isAuthenticated := false
         var userID int32
@@ -285,7 +286,7 @@ func (h *AnalysisHandler) Analyze(c *gin.Context) {
                 }
         }
 
-        ephemeral := hasNovelSelectors && !isAuthenticated
+        ephemeral := devNull || (hasNovelSelectors && !isAuthenticated)
 
         startTime := time.Now()
         ctx := c.Request.Context()
@@ -323,7 +324,11 @@ func (h *AnalysisHandler) Analyze(c *gin.Context) {
         isPrivate := hasNovelSelectors && isAuthenticated
 
         if ephemeral {
-                slog.Info("Ephemeral analysis (custom DKIM selectors, unauthenticated) — not persisted", "domain", asciiDomain)
+                if devNull {
+                        slog.Info("/dev/null scan — full analysis, zero persistence", "domain", asciiDomain)
+                } else {
+                        slog.Info("Ephemeral analysis (custom DKIM selectors, unauthenticated) — not persisted", "domain", asciiDomain)
+                }
                 timestamp = time.Now().UTC().Format("2006-01-02 15:04:05 UTC")
         } else {
                 analysisID, timestamp = h.saveAnalysis(c.Request.Context(), domain, asciiDomain, results, analysisDuration, countryCode, countryName, isPrivate, hasNovelSelectors)
@@ -341,11 +346,15 @@ func (h *AnalysisHandler) Analyze(c *gin.Context) {
                 }()
         }
 
-        icae.EvaluateAndRecord(context.Background(), h.DB.Queries, h.Config.AppVersion)
+        if !ephemeral {
+                icae.EvaluateAndRecord(context.Background(), h.DB.Queries, h.Config.AppVersion)
+        }
 
-        if ac, exists := c.Get("analytics_collector"); exists {
-                if collector, ok := ac.(interface{ RecordAnalysis(string) }); ok {
-                        collector.RecordAnalysis(asciiDomain)
+        if !ephemeral {
+                if ac, exists := c.Get("analytics_collector"); exists {
+                        if collector, ok := ac.(interface{ RecordAnalysis(string) }); ok {
+                                collector.RecordAnalysis(asciiDomain)
+                        }
                 }
         }
 
@@ -385,10 +394,16 @@ func (h *AnalysisHandler) Analyze(c *gin.Context) {
                 "DriftPrevID":          drift.PrevID,
                 "DriftFields":          drift.Fields,
                 "Ephemeral":            ephemeral,
+                "DevNull":              devNull,
                 "IsPrivateReport":      isPrivate,
         }
         if icaeMetrics := icae.LoadReportMetrics(ctx, h.DB.Queries); icaeMetrics != nil {
                 analyzeData["ICAEMetrics"] = icaeMetrics
+        }
+
+        if devNull {
+                c.Header("X-Hacker", "MUST means MUST -- not kinda, maybe, should. // DNS Tool")
+                c.Header("X-Persistence", "/dev/null")
         }
 
         mergeAuthData(c, h.Config, analyzeData)

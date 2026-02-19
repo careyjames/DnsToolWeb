@@ -22,6 +22,22 @@ OSINT platform for RFC-compliant domain security analysis. Go/Gin backend, Boots
 10. **Stubs**: `_oss.go` files return safe non-nil defaults, never errors.
 11. **Capitalization**: NIST/Chicago title case for all user-facing headings, badges, trust indicators. Never camelCase in UI copy.
 
+## /dev/null Ephemeral Scan (v26.21.9)
+- **User-selectable checkbox** in Advanced Options: `/dev/null Scan` — full analysis, zero persistence.
+- **Skips**: `saveAnalysis()`, `InsertUserAnalysis()`, `icae.EvaluateAndRecord()`, `RecordAnalysis()` analytics.
+- **Response headers**: `X-Hacker` and `X-Persistence: /dev/null` on ephemeral results.
+- **Template**: Dark terminal-themed banner with `> ./dns-tool --output /dev/null` code block.
+- **Console Easter egg**: Styled hacker verse in browser dev tools (nonce'd, CSP-compliant).
+- **HTML Easter eggs**: Hacker verses in HTML comments on index.html and results.html source.
+- **Logic**: `ephemeral = devNull || (hasNovelSelectors && !isAuthenticated)` — devNull flag overrides.
+
+## Content-Usage Directive Detection (v26.21.9)
+- **IETF AI Preferences draft**: Detects `Content-Usage:` directives in robots.txt (e.g., `ai=n`).
+- **Parser**: `parseContentUsageDirectives()` in `scanner.go` — comma-separated key=value format.
+- **Flags**: `ai_denied` when `ai` ∈ {n, no, none, disallow}. Observation-based language only.
+- **Display**: New section in AI Surface results between crawler governance and poisoning checks.
+- **Governance signal**: Content-Usage presence triggers "AI governance signals observed" in summary.
+
 ## Authentication (v26.20.56–57)
 - **Google OAuth 2.0 + PKCE** — Pure stdlib, no external OAuth libraries. Advanced Protection compatible.
 - **Env vars**: `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `INITIAL_ADMIN_EMAIL` (all optional — app runs without them).

@@ -2798,6 +2798,7 @@ main.container {
 }
 .u-bg-info-soft { background: rgba(13, 202, 240, 0.08); }
 .u-bg-warn-soft { background: rgba(210, 153, 34, 0.12); }
+.u-devnull-banner { background: #161b22; border-left: 3px solid #58a6ff; }
 .u-alert-warning-soft {
     background: rgba(255, 193, 7, 0.08);
     border-left: 3px solid #ffc107;
