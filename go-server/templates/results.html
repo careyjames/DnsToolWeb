@@ -3132,11 +3132,11 @@
                                 </p>
                                 <p class="text-muted mb-2 small">{{mapGetStr "message" $dnssec}}</p>
                                 {{if $algoObs}}
-                                <div class="small mb-2 crypto-observation" style="border-left: 3px solid {{if eq (mapGetStr "strength" $algoObs) "deprecated"}}#e74c3c{{else if eq (mapGetStr "strength" $algoObs) "legacy"}}#f0ad4e{{else if eq (mapGetStr "strength" $algoObs) "modern"}}#198754{{else}}#6c757d{{end}}; padding-left: 0.75rem;">
+                                <div class="small mb-2 crypto-observation crypto-observation-{{mapGetStr "strength" $algoObs}}">
                                     <div class="text-muted">
                                         <i class="fas fa-microscope me-1"></i><strong>Algorithm Observation:</strong> {{mapGetStr "observation" $algoObs}}
                                     </div>
-                                    <div class="text-muted mt-1" style="font-size: 0.75rem;">
+                                    <div class="text-muted mt-1 crypto-pqc-note">
                                         <i class="fas fa-flask me-1"></i>{{mapGetStr "quantum_note" $algoObs}}
                                     </div>
                                 </div>

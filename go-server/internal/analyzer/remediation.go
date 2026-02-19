@@ -552,6 +552,30 @@ func appendDNSSECFixes(fixes []fix, ps protocolState) []fix {
                         Section:     "DNSSEC",
                 })
         }
+        if ps.dnssecOK && ps.dnssecAlgoStrength == "deprecated" {
+                fixes = append(fixes, fix{
+                        Title:         "Migrate From Deprecated DNSSEC Algorithm",
+                        Description:   "This domain uses a DNSSEC signing algorithm classified as MUST NOT use per RFC 8624. Deprecated algorithms (RSAMD5, DSA, ECC-GOST) have known cryptographic weaknesses. Re-sign the zone with ECDSAP256SHA256 (algorithm 13) or Ed25519 (algorithm 15).",
+                        RFC:           "RFC 8624 §3.1",
+                        RFCURL:        "https://datatracker.ietf.org/doc/html/rfc8624#section-3.1",
+                        Severity:      severityHigh,
+                        SeverityColor: colorHigh,
+                        SeverityOrder: 2,
+                        Section:       "DNSSEC",
+                })
+        }
+        if ps.dnssecOK && ps.dnssecAlgoStrength == "legacy" {
+                fixes = append(fixes, fix{
+                        Title:         "Upgrade From Legacy DNSSEC Algorithm",
+                        Description:   "This domain uses RSA/SHA-1 (algorithm 5 or 7) which is NOT RECOMMENDED per RFC 8624. While still operational, plan migration to ECDSAP256SHA256 (algorithm 13) or Ed25519 (algorithm 15) for improved security and smaller signatures.",
+                        RFC:           "RFC 8624 §3.1",
+                        RFCURL:        "https://datatracker.ietf.org/doc/html/rfc8624#section-3.1",
+                        Severity:      severityMedium,
+                        SeverityColor: colorMedium,
+                        SeverityOrder: 3,
+                        Section:       "DNSSEC",
+                })
+        }
         return fixes
 }
 

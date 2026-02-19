@@ -48,6 +48,7 @@ type protocolState struct {
         daneProviderLimited bool
         dnssecOK           bool
         dnssecBroken       bool
+        dnssecAlgoStrength string
         primaryProvider    string
         isNoMailDomain     bool
         probableNoMail     bool
@@ -221,6 +222,11 @@ func evaluateProtocolStates(results map[string]any) protocolState {
                         ps.dnssecOK = true
                 case "error":
                         ps.dnssecBroken = true
+                }
+                if obs, ok := dnssec["algorithm_observation"].(map[string]any); ok {
+                        if s, ok := obs["strength"].(string); ok {
+                                ps.dnssecAlgoStrength = s
+                        }
                 }
         }
 

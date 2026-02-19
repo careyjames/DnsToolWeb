@@ -10,6 +10,42 @@ This file is the project's permanent breadcrumb trail — every session's decisi
 
 ---
 
+## Session: February 19, 2026 (v26.21.4 — Cryptographic Algorithm Classification & Transparency)
+
+### v26.21.4 — Cryptographic Algorithm Classification System
+
+#### What Changed
+1. **crypto_policy.go**: New classification engine for DNSSEC algorithms (RFC 8624/9904), DKIM key strength (RFC 8301), and DS digest types. Each classification returns strength tier, human-readable label, governing RFC citation, factual observation, and post-quantum transparency note.
+2. **DNSSEC algorithm observations**: `dnssec.go` now annotates every signed domain with algorithm strength (deprecated/legacy/adequate/modern) plus quantum-readiness note citing `draft-sheth-pqc-dnssec-strategy`.
+3. **DKIM key strength classification**: `dkim.go` `analyzeDKIMKey()` now classifies key strength (deprecated/weak/adequate/strong) with RFC 8301 citations.
+4. **Results template**: DNSSEC section shows algorithm strength badge (color-coded) with expandable observation panel including RFC citation and PQC transparency note. DKIM section shows key strength badge with tooltip observation.
+5. **Sources page**: New "Cryptographic Algorithm Transparency" card documenting the full classification taxonomy for DNSSEC algorithms and DKIM keys, with PQC status link.
+6. **Remediation guidance**: New fixes for deprecated DNSSEC algorithms (severity: high, "Migrate From Deprecated DNSSEC Algorithm") and legacy algorithms (severity: medium, "Upgrade From Legacy DNSSEC Algorithm") with specific migration targets (algorithm 13 or 15).
+7. **Font Awesome compliance**: Used `fa-flask` and `fa-microscope` (both in WOFF2 subset) instead of `fa-atom` (not in subset).
+
+#### Algorithm Classification Taxonomy
+| Protocol | Tier | Examples | RFC |
+|----------|------|----------|-----|
+| DNSSEC | Deprecated | RSAMD5, DSA, ECC-GOST | RFC 8624 §3.1 (MUST NOT) |
+| DNSSEC | Legacy | RSA/SHA-1 (algo 5, 7) | RFC 8624 §3.1 (NOT RECOMMENDED) |
+| DNSSEC | Adequate | RSA/SHA-256, RSA/SHA-512 | RFC 8624 §3.1 (MUST) |
+| DNSSEC | Modern | ECDSA P-256/384, Ed25519, Ed448 | RFC 8624 §3.1 (RECOMMENDED) |
+| DKIM | Deprecated | RSA < 1024-bit | RFC 8301 (MUST NOT) |
+| DKIM | Weak | RSA 1024-bit | RFC 8301 (upgrade recommended) |
+| DKIM | Adequate | RSA 2048-bit | RFC 8301 (industry standard) |
+| DKIM | Strong | RSA 4096-bit, Ed25519 | RFC 8463 |
+
+#### Design Principles
+- **Observation-based language**: All classifications use RFC-cited factual observations, never fear-mongering ("MUST NOT use per RFC 8624 §3.1" not "unsafe" or "dangerous").
+- **PQC transparency**: Every classical algorithm carries identical quantum note: "Post-quantum DNSSEC standards in active IETF development but no PQC algorithms standardized yet."
+- **Enterprise transparency model**: Inspired by Siemens ProductCERT approach — high-volume, machine-readable, standards-cited disclosures as a signal of engineering maturity.
+
+#### Files Changed
+- **New**: `go-server/internal/analyzer/crypto_policy.go` (classification engine)
+- **Modified**: `go-server/internal/analyzer/dnssec.go` (algorithm observation injection), `go-server/internal/analyzer/dkim.go` (key strength classification), `go-server/internal/analyzer/remediation.go` (algorithm remediation fixes), `go-server/internal/analyzer/posture.go` (dnssecAlgoStrength field), `go-server/templates/results.html` (algorithm badges + observation panels), `go-server/templates/sources.html` (crypto transparency card), `go-server/internal/config/config.go` (version 26.21.4)
+
+---
+
 ## Session: February 19, 2026 (v26.21.3 — Production Hardening, Architecture Quality)
 
 ### v26.21.3 — Production Hardening & Architecture Quality Audit

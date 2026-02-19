@@ -3362,3 +3362,21 @@ main.container {
         white-space: normal;
     }
 }
+.crypto-observation {
+    padding-left: 0.75rem;
+}
+.crypto-observation-deprecated {
+    border-left: 3px solid #e74c3c;
+}
+.crypto-observation-legacy {
+    border-left: 3px solid #f0ad4e;
+}
+.crypto-observation-modern {
+    border-left: 3px solid #198754;
+}
+.crypto-observation-adequate {
+    border-left: 3px solid #6c757d;
+}
+.crypto-pqc-note {
+    font-size: 0.75rem;
+}
