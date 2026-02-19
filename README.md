@@ -24,8 +24,8 @@
   <a href="docs/FEATURE_INVENTORY.md">Feature Inventory</a>
 </p>
 
-> **Canonical Repository**: [codeberg.org/careybalboa/dns-tool-webapp](https://codeberg.org/careybalboa/dns-tool-webapp)
-> GitHub mirror: [github.com/careyjames/DnsToolWeb](https://github.com/careyjames/DnsToolWeb) (read-only)
+> **Canonical Repository**: [github.com/careyjames/DnsToolWeb](https://github.com/careyjames/DnsToolWeb)
+> Codeberg mirror: [codeberg.org/careybalboa/dns-tool-webapp](https://codeberg.org/careybalboa/dns-tool-webapp) (read-only)
 
 ---
 
@@ -122,8 +122,8 @@ Every release runs the full suite. Results are stored and tracked over time with
 
 ```bash
 # Clone
-git clone https://codeberg.org/careybalboa/dns-tool-webapp.git
-cd dns-tool-webapp
+git clone https://github.com/careyjames/DnsToolWeb.git
+cd DnsToolWeb
 
 # Set environment
 export DATABASE_URL="postgresql://user:pass@localhost:5432/dnstool"
