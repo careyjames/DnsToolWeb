@@ -2869,6 +2869,7 @@ main.container {
 /* --------------------------------------------
    OPACITY
    -------------------------------------------- */
+.u-opacity-50 { opacity: 0.5; }
 .u-opacity-60 { opacity: 0.6; }
 .u-opacity-70 { opacity: 0.7; }
 /* Bootstrap has .opacity-75 */

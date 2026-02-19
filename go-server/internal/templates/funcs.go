@@ -669,6 +669,11 @@ func pluralize(count interface{}, singular, plural string) string {
         return plural
 }
 
+func htmlComment(s string) template.HTML {
+        clean := strings.ReplaceAll(s, "--", "\u2014")
+        return template.HTML("<!--\n" + clean + "\n-->")
+}
+
 func displayFuncs() template.FuncMap {
         return template.FuncMap{
                 "statusBadgeClass": statusBadgeClass,
@@ -679,6 +684,7 @@ func displayFuncs() template.FuncMap {
                 "toJSON":           toJSON,
                 "toStr":            toStr,
                 "pluralize":        pluralize,
+                "htmlComment":      htmlComment,
         }
 }
 
