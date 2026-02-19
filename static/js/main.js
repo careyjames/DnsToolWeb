@@ -163,18 +163,22 @@ document.addEventListener('DOMContentLoaded', function() {
         });
         
         domainForm.addEventListener('submit', function(e) {
+            e.preventDefault();
             const domain = domainInput.value.trim().toLowerCase();
             domainInput.value = domain;
             
             if (!domain) {
-                e.preventDefault();
                 domainInput.classList.add('is-invalid');
                 return;
             }
             
             if (!isValidDomain(domain)) {
-                e.preventDefault();
                 domainInput.classList.add('is-invalid');
+                return;
+            }
+
+            if (!domainForm.checkValidity()) {
+                domainForm.reportValidity();
                 return;
             }
             
@@ -194,6 +198,9 @@ document.addEventListener('DOMContentLoaded', function() {
             analyzeBtn.appendChild(document.createTextNode('Analyzing...'));
             analyzeBtn.disabled = true;
             document.body.classList.add('loading');
+            // Safari workaround: delay form submission to allow overlay animations to initialize.
+            // Programmatic submit() bypasses the event listener, preventing re-entry.
+            setTimeout(function() { domainForm.submit(); }, 80);
         });
         
         domainInput.addEventListener('focus', function() {
@@ -215,7 +222,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 startStatusCycle(overlay);
             }
             document.body.classList.add('loading');
-            requestAnimationFrame(function() { globalThis.location.href = link.href; });
+            setTimeout(function() { globalThis.location.href = link.href; }, 80);
         });
     });
 

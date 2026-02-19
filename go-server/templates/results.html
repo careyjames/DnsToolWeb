@@ -3149,11 +3149,11 @@
                                     {{else if or (eq $enterpriseDNSPattern "dedicated") (eq $enterpriseDNSPattern "managed") (eq $enterpriseDNSPattern "multi-provider")}}
                                     <div class="small text-info mb-2">
                                         <i class="fas fa-building me-1"></i>
-                                        <strong>Enterprise DNS Context:</strong> Large organizations with dedicated DNS infrastructure often rely on network-layer controls (DDoS mitigation, anycast routing, TSIG-authenticated zone transfers) rather than DNSSEC. While DNSSEC provides cryptographic response authentication per <a href="https://datatracker.ietf.org/doc/html/rfc4033#section-2" target="_blank" rel="noopener" class="text-info">RFC 4033 &sect;2</a>, enterprise DNS operators may determine that their existing security controls provide sufficient protection for their threat model.
+                                        <strong>Enterprise DNS Context:</strong> DNSSEC is the only standardized, DNS-verifiable mechanism that cryptographically authenticates responses between authoritative servers and resolvers (<a href="https://datatracker.ietf.org/doc/html/rfc4033#section-2" target="_blank" rel="noopener" class="text-info">RFC 4033 &sect;2</a>, <a href="https://datatracker.ietf.org/doc/html/rfc4035" target="_blank" rel="noopener" class="text-info">RFC 4035</a>). Without it, DNS responses are technically vulnerable to in-transit tampering. Enterprise operators may employ compensating controls (anycast, DDoS mitigation, private peering, TSIG) &mdash; however, these do not provide DNS-layer data authentication to third-party resolvers and are not verifiable via DNS alone.
                                     </div>
                                     <div class="small text-muted mb-2">
-                                        <i class="fas fa-info-circle me-1"></i>
-                                        Domain does not use DNSSEC. This is a deliberate infrastructure decision &mdash; not an oversight. Enterprise DNS operators weigh deployment complexity against their existing security posture.
+                                        <i class="fas fa-eye me-1"></i>
+                                        <strong>Visibility:</strong> DNS-only &mdash; network-layer compensating controls cannot be observed or verified through DNS queries. This assessment reflects what is provable from the DNS evidence available.
                                     </div>
                                     {{else}}
                                     <div class="small text-muted mb-2">
@@ -4707,9 +4707,9 @@
                     }
                     
                     const url = '/analyze?domain=' + encodeURIComponent(domain) + '&refresh=' + Date.now();
-                    requestAnimationFrame(function() {
+                    setTimeout(function() {
                         globalThis.location.href = url;
-                    });
+                    }, 80);
                 });
             }
             (function setupSubdomainCollapse() {
