@@ -3623,6 +3623,23 @@
                     <a href="/faq/subdomains" target="_blank" rel="noopener" class="btn btn-sm btn-outline-info no-print ms-2" data-bs-toggle="tooltip" title="How did we find these subdomains? Why are they publicly visible? What can you do about it?"><i class="fas fa-circle-question me-1"></i>How did we find these?</a>
                 </div>
                 <div class="card-body">
+                    {{$ctAvailable := mapGetBool "ct_available" $ct}}
+                    {{$ctFailureReason := mapGetStr "ct_failure_reason" $ct}}
+                    {{$ctUniqueFloat := mapGetFloat "unique_subdomains" $ct}}
+                    {{if and (not $ctAvailable) (gt $ctUniqueFloat 0)}}
+                    <div class="alert alert-warning bg-warning bg-opacity-10 border-warning border-opacity-50 py-3 mb-3">
+                        <div class="d-flex align-items-start">
+                            <i class="fas fa-exclamation-triangle text-warning me-3 mt-1 u-fs-135rem"></i>
+                            <div>
+                                <strong class="text-warning d-block mb-1">Certificate Transparency Logs Unavailable</strong>
+                                <span class="text-light">The results below are from <strong>DNS probing only</strong> and may be significantly incomplete. CT logs typically reveal hundreds or thousands of additional subdomains via certificate issuance history (RFC 6962).{{if eq $ctFailureReason "timeout"}} The CT log server (crt.sh) timed out during this query.{{else if eq $ctFailureReason "cooldown"}} The CT log server was temporarily unavailable and is in a cooldown period.{{else if eq $ctFailureReason "error"}} The CT log server returned an error.{{end}}</span>
+                                <div class="mt-2">
+                                    <a href="/analyze?domain={{.Domain}}" class="btn btn-sm btn-outline-warning"><i class="fas fa-sync me-1"></i>Re-Analyze to Retry CT Lookup</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {{end}}
                     {{$ctSubdomains := mapGetSlice "subdomains" $ct}}
                     {{if and (eq $ctStatus "success") $ctSubdomains (gt (len $ctSubdomains) 0)}}
                     <div class="mb-3">

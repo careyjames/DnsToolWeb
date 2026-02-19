@@ -85,11 +85,13 @@ func (a *Analyzer) DiscoverSubdomains(ctx context.Context, domain string) map[st
                 "expired_count":     "0",
                 "cname_count":       0.0,
                 "providers_found":   0.0,
+                "ct_available":      true,
         }
 
         if cached, ok := a.getCTCache(domain); ok {
                 result["unique_subdomains"] = len(cached)
                 result["ct_source"] = "cache"
+                result["ct_available"] = true
 
                 currentCount := 0
                 expiredCount := 0
@@ -116,35 +118,14 @@ func (a *Analyzer) DiscoverSubdomains(ctx context.Context, domain string) map[st
         ctProvider := "ct:crt.sh"
         var ctEntries []ctEntry
         ctAvailable := true
+        ctFailureReason := ""
 
         if a.Telemetry.InCooldown(ctProvider) {
                 slog.Info("CT provider in cooldown, skipping", "domain", domain)
                 ctAvailable = false
+                ctFailureReason = "cooldown"
         } else {
-                ctCtx, ctCancel := context.WithTimeout(context.Background(), 60*time.Second)
-                defer ctCancel()
-                ctURL := fmt.Sprintf("https://crt.sh/?q=%%25.%s&output=json", domain)
-                start := time.Now()
-                resp, err := a.SlowHTTP.Get(ctCtx, ctURL)
-                if err != nil {
-                        a.Telemetry.RecordFailure(ctProvider, err.Error())
-                        slog.Warn("CT log query failed", "domain", domain, "error", err, "elapsed_ms", time.Since(start).Milliseconds())
-                        ctAvailable = false
-                } else {
-                        body, err := a.HTTP.ReadBody(resp, 10<<20)
-                        if err != nil {
-                                a.Telemetry.RecordFailure(ctProvider, err.Error())
-                                ctAvailable = false
-                        } else if resp.StatusCode != 200 {
-                                a.Telemetry.RecordFailure(ctProvider, fmt.Sprintf("HTTP %d", resp.StatusCode))
-                                ctAvailable = false
-                        } else {
-                                a.Telemetry.RecordSuccess(ctProvider, time.Since(start))
-                                if json.Unmarshal(body, &ctEntries) != nil {
-                                        ctAvailable = false
-                                }
-                        }
-                }
+                ctEntries, ctAvailable, ctFailureReason = a.fetchCTWithRetry(domain, ctProvider)
         }
 
         dedupedEntries := deduplicateCTEntries(ctEntries)
@@ -217,11 +198,105 @@ func (a *Analyzer) DiscoverSubdomains(ctx context.Context, domain string) map[st
 
         result["unique_subdomains"] = len(subdomains)
         result["ct_source"] = "live"
+        result["ct_available"] = ctAvailable
+        if !ctAvailable {
+                result["ct_failure_reason"] = ctFailureReason
+        }
         _ = dnsProbed
 
         applySubdomainDisplayCap(result, subdomains, currentCount)
 
         return result
+}
+
+func (a *Analyzer) fetchCTWithRetry(domain, ctProvider string) ([]ctEntry, bool, string) {
+        const maxAttempts = 2
+        ctURL := fmt.Sprintf("https://crt.sh/?q=%%25.%s&output=json&exclude=expired", domain)
+
+        totalBudget, totalCancel := context.WithTimeout(context.Background(), 90*time.Second)
+        defer totalCancel()
+
+        var lastErr string
+        for attempt := 1; attempt <= maxAttempts; attempt++ {
+                if totalBudget.Err() != nil {
+                        break
+                }
+                ctCtx, ctCancel := context.WithTimeout(totalBudget, 75*time.Second)
+                start := time.Now()
+                resp, err := a.SlowHTTP.Get(ctCtx, ctURL)
+                if err != nil {
+                        lastErr = err.Error()
+                        a.Telemetry.RecordFailure(ctProvider, lastErr)
+                        slog.Warn("CT log query failed", "domain", domain, "attempt", attempt, "error", err, "elapsed_ms", time.Since(start).Milliseconds())
+                        ctCancel()
+                        if attempt < maxAttempts {
+                                time.Sleep(time.Duration(attempt*2) * time.Second)
+                        }
+                        continue
+                }
+
+                body, err := a.HTTP.ReadBody(resp, 20<<20)
+                if err != nil {
+                        lastErr = err.Error()
+                        a.Telemetry.RecordFailure(ctProvider, lastErr)
+                        ctCancel()
+                        if attempt < maxAttempts {
+                                time.Sleep(time.Duration(attempt*2) * time.Second)
+                        }
+                        continue
+                }
+                if resp.StatusCode != 200 {
+                        lastErr = fmt.Sprintf("HTTP %d", resp.StatusCode)
+                        a.Telemetry.RecordFailure(ctProvider, lastErr)
+                        ctCancel()
+                        if resp.StatusCode >= 400 && resp.StatusCode < 500 {
+                                return nil, false, "error"
+                        }
+                        if attempt < maxAttempts {
+                                time.Sleep(time.Duration(attempt*2) * time.Second)
+                        }
+                        continue
+                }
+
+                var entries []ctEntry
+                if json.Unmarshal(body, &entries) != nil {
+                        lastErr = "JSON parse error"
+                        ctCancel()
+                        return nil, false, "error"
+                }
+
+                elapsed := time.Since(start)
+                a.Telemetry.RecordSuccess(ctProvider, elapsed)
+                slog.Info("CT log query succeeded", "domain", domain, "attempt", attempt, "entries", len(entries), "elapsed_ms", elapsed.Milliseconds())
+                ctCancel()
+
+                if len(entries) == 0 && totalBudget.Err() == nil {
+                        ctURL2 := fmt.Sprintf("https://crt.sh/?q=%%25.%s&output=json", domain)
+                        ctCtx2, ctCancel2 := context.WithTimeout(totalBudget, 75*time.Second)
+                        start2 := time.Now()
+                        resp2, err2 := a.SlowHTTP.Get(ctCtx2, ctURL2)
+                        if err2 == nil {
+                                body2, err3 := a.HTTP.ReadBody(resp2, 20<<20)
+                                if err3 == nil && resp2.StatusCode == 200 {
+                                        var allEntries []ctEntry
+                                        if json.Unmarshal(body2, &allEntries) == nil && len(allEntries) > 0 {
+                                                a.Telemetry.RecordSuccess(ctProvider, time.Since(start2))
+                                                ctCancel2()
+                                                return allEntries, true, ""
+                                        }
+                                }
+                        }
+                        ctCancel2()
+                }
+
+                return entries, true, ""
+        }
+
+        reason := "timeout"
+        if lastErr != "" && !strings.Contains(lastErr, "deadline") && !strings.Contains(lastErr, "timeout") {
+                reason = "error"
+        }
+        return nil, false, reason
 }
 
 func sortSubdomainsSmartOrder(subdomains []map[string]any) []map[string]any {

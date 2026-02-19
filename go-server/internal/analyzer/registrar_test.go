@@ -15,7 +15,7 @@ func newTestAnalyzer() *Analyzer {
         return &Analyzer{
                 DNS:         dnsclient.New(),
                 HTTP:        dnsclient.NewSafeHTTPClient(),
-                SlowHTTP:    dnsclient.NewSafeHTTPClientWithTimeout(45 * time.Second),
+                SlowHTTP:    dnsclient.NewSafeHTTPClientWithTimeout(75 * time.Second),
                 RDAPHTTP:    dnsclient.NewRDAPHTTPClient(),
                 IANARDAPMap: make(map[string][]string),
                 Telemetry:   telemetry.NewRegistry(),
