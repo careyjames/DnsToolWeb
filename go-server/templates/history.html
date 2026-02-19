@@ -158,7 +158,6 @@
                             <thead>
                                 <tr>
                                     <th class="col-domain">Domain</th>
-                                    <th title="Analysis status"></th>
                                     <th>Email Security</th>
                                     <th class="col-date">Date</th>
                                     <th>Actions</th>
@@ -177,17 +176,6 @@
                                                 {{end}}
                                             </div>
                                         </div>
-                                    </td>
-                                    <td>
-                                        {{if $a.AnalysisSuccess}}
-                                            <span class="badge bg-success" title="Analysis completed successfully">
-                                                <i class="fas fa-check"></i>
-                                            </span>
-                                        {{else}}
-                                            <span class="badge bg-danger" title="Analysis failed">
-                                                <i class="fas fa-times"></i>
-                                            </span>
-                                        {{end}}
                                     </td>
                                     <td>
                                         <div class="d-flex gap-1">
@@ -259,11 +247,6 @@
                             </div>
                         </div>
                         <div class="d-flex flex-wrap align-items-center gap-1 small">
-                            {{if $a.AnalysisSuccess}}
-                                <span class="badge bg-success u-fs-065rem" title="Success"><i class="fas fa-check"></i></span>
-                            {{else}}
-                                <span class="badge bg-danger u-fs-065rem" title="Failed"><i class="fas fa-times"></i></span>
-                            {{end}}
                             {{if eq $a.SpfStatus "success"}}
                                 <span class="badge bg-success u-fs-065rem">SPF</span>
                             {{else if or (eq $a.SpfStatus "warning") (eq $a.SpfStatus "error")}}

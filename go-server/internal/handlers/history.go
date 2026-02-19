@@ -35,7 +35,6 @@ type historyAnalysisItem struct {
         SpfStatus        string
         DmarcStatus      string
         DkimStatus       string
-        AnalysisSuccess  bool
         AnalysisDuration float64
         CreatedDate      string
         CreatedTime      string
@@ -80,7 +79,6 @@ func buildHistoryItem(a dbq.DomainAnalysis) historyAnalysisItem {
                 SpfStatus:        spfStatus,
                 DmarcStatus:      dmarcStatus,
                 DkimStatus:       dkimStatus,
-                AnalysisSuccess:  true,
                 AnalysisDuration: dur,
                 CreatedDate:      createdDate,
                 CreatedTime:      createdTime,
