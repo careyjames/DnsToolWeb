@@ -3558,9 +3558,13 @@
                         </span>
                         {{$ctStatus := mapGetStr "status" $ct}}
                         {{$ctUnique := mapGetFloat "unique_subdomains" $ct}}
-                        <span class="section-question">What infrastructure is exposed in certificate logs?
+                        <span class="section-question">What subdomains and infrastructure are exposed in certificate logs?
                             {{if and (eq $ctStatus "success") (gt $ctUnique 0)}}
-                                <span class="badge badge-recon-count ms-2"><i class="fas fa-crosshairs me-1"></i>{{mapGetInt "displayed_count" $ct}} of {{formatFloat 0 $ctUnique}} subdomains discovered</span>
+                                {{if or (mapGetBool "display_capped" $ct) (mapGetBool "was_truncated" $ct)}}
+                                <span class="badge badge-recon-count ms-2"><i class="fas fa-crosshairs me-1"></i>{{formatFloat 0 $ctUnique}} discovered — showing {{mapGetInt "displayed_count" $ct}} prioritized</span>
+                                {{else}}
+                                <span class="badge badge-recon-count ms-2"><i class="fas fa-crosshairs me-1"></i>{{formatFloat 0 $ctUnique}} subdomains discovered</span>
+                                {{end}}
                             {{else if and (eq $ctStatus "success") (eq $ctUnique 0)}}
                                 <span class="badge bg-secondary ms-2">None found</span>
                             {{else}}
