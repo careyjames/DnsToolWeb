@@ -14,6 +14,8 @@ func AnalysisTestCases() []TestCase {
         cases = append(cases, dmarcAnalysisCases()...)
         cases = append(cases, spfVerdictCases()...)
         cases = append(cases, emailAnswerCases()...)
+        cases = append(cases, dnssecVerdictCases()...)
+        cases = append(cases, enterpriseDNSCases()...)
         return cases
 }
 
@@ -398,6 +400,249 @@ func emailAnswerCases() []TestCase {
                                 result := analyzer.ExportBuildEmailAnswerStructured(false, "", 0, false, false, false)
                                 color := result["color"]
                                 return color, color == "danger"
+                        },
+                },
+        }
+}
+
+func dnssecVerdictCases() []TestCase {
+        return []TestCase{
+                {
+                        CaseID:     "dnssec-verdict-001",
+                        CaseName:   "DNSSEC signed = No tampering possible",
+                        Protocol:   "dnssec",
+                        Layer:      LayerAnalysis,
+                        RFCSection: "RFC 4033 §2",
+                        Expected:   "No",
+                        RunFn: func() (string, bool) {
+                                result := analyzer.ExportBuildDNSVerdict(true, false)
+                                answer := result["answer"].(string)
+                                return answer, answer == "No"
+                        },
+                },
+                {
+                        CaseID:     "dnssec-verdict-002",
+                        CaseName:   "DNSSEC signed verdict is Protected",
+                        Protocol:   "dnssec",
+                        Layer:      LayerAnalysis,
+                        RFCSection: "RFC 4033 §2",
+                        Expected:   "Protected",
+                        RunFn: func() (string, bool) {
+                                result := analyzer.ExportBuildDNSVerdict(true, false)
+                                label := result["label"].(string)
+                                return label, label == "Protected"
+                        },
+                },
+                {
+                        CaseID:     "dnssec-verdict-003",
+                        CaseName:   "DNSSEC broken = tampering possible (Yes)",
+                        Protocol:   "dnssec",
+                        Layer:      LayerAnalysis,
+                        RFCSection: "RFC 4033",
+                        Expected:   "Yes",
+                        RunFn: func() (string, bool) {
+                                result := analyzer.ExportBuildDNSVerdict(false, true)
+                                answer := result["answer"].(string)
+                                return answer, answer == "Yes"
+                        },
+                },
+                {
+                        CaseID:     "dnssec-verdict-004",
+                        CaseName:   "DNSSEC broken label is Exposed",
+                        Protocol:   "dnssec",
+                        Layer:      LayerAnalysis,
+                        RFCSection: "RFC 4033",
+                        Expected:   "Exposed",
+                        RunFn: func() (string, bool) {
+                                result := analyzer.ExportBuildDNSVerdict(false, true)
+                                label := result["label"].(string)
+                                return label, label == "Exposed"
+                        },
+                },
+                {
+                        CaseID:     "dnssec-verdict-005",
+                        CaseName:   "DNSSEC absent = Possible tampering",
+                        Protocol:   "dnssec",
+                        Layer:      LayerAnalysis,
+                        RFCSection: "RFC 4033",
+                        Expected:   "Possible",
+                        RunFn: func() (string, bool) {
+                                result := analyzer.ExportBuildDNSVerdict(false, false)
+                                answer := result["answer"].(string)
+                                return answer, answer == "Possible"
+                        },
+                },
+                {
+                        CaseID:     "dnssec-verdict-006",
+                        CaseName:   "DNSSEC absent label is Not Configured",
+                        Protocol:   "dnssec",
+                        Layer:      LayerAnalysis,
+                        RFCSection: "RFC 4033",
+                        Expected:   "Not Configured",
+                        RunFn: func() (string, bool) {
+                                result := analyzer.ExportBuildDNSVerdict(false, false)
+                                label := result["label"].(string)
+                                return label, label == "Not Configured"
+                        },
+                },
+                {
+                        CaseID:     "dnssec-verdict-007",
+                        CaseName:   "DNSSEC signed reason mentions cryptographic",
+                        Protocol:   "dnssec",
+                        Layer:      LayerAnalysis,
+                        RFCSection: "RFC 4033 §2",
+                        Expected:   "contains 'cryptographic'",
+                        RunFn: func() (string, bool) {
+                                result := analyzer.ExportBuildDNSVerdict(true, false)
+                                reason := result["reason"].(string)
+                                return reason, strings.Contains(reason, "cryptographic")
+                        },
+                },
+        }
+}
+
+func enterpriseDNSCases() []TestCase {
+        return []TestCase{
+                {
+                        CaseID:     "enterprise-dns-001",
+                        CaseName:   "All org-branded NS = dedicated infrastructure",
+                        Protocol:   "dnssec",
+                        Layer:      LayerAnalysis,
+                        RFCSection: "RFC 1035 §2.2",
+                        Expected:   "dedicated",
+                        RunFn: func() (string, bool) {
+                                result := analyzer.ExportClassifyEnterpriseDNS("apple.com", []string{
+                                        "a.ns.apple.com", "b.ns.apple.com", "c.ns.apple.com", "d.ns.apple.com",
+                                })
+                                pattern, _ := result["enterprise_pattern"].(string)
+                                return pattern, pattern == "dedicated"
+                        },
+                },
+                {
+                        CaseID:     "enterprise-dns-002",
+                        CaseName:   "Mixed org-branded + provider NS = mixed configuration",
+                        Protocol:   "dnssec",
+                        Layer:      LayerAnalysis,
+                        RFCSection: "RFC 1035 §2.2",
+                        Expected:   "mixed",
+                        RunFn: func() (string, bool) {
+                                result := analyzer.ExportClassifyEnterpriseDNS("example.com", []string{
+                                        "ns1.example.com", "ns2.example.com", "ns1.cloudflare.com",
+                                })
+                                pattern, _ := result["enterprise_pattern"].(string)
+                                return pattern, pattern == "mixed"
+                        },
+                },
+                {
+                        CaseID:     "enterprise-dns-003",
+                        CaseName:   "Multiple providers = multi-provider redundancy",
+                        Protocol:   "dnssec",
+                        Layer:      LayerAnalysis,
+                        RFCSection: "RFC 1035 §2.2",
+                        Expected:   "multi-provider",
+                        RunFn: func() (string, bool) {
+                                result := analyzer.ExportClassifyEnterpriseDNS("example.com", []string{
+                                        "ns1.cloudflare.com", "ns2.cloudflare.com",
+                                        "pdns1.ultradns.net", "pdns2.ultradns.net",
+                                })
+                                pattern, _ := result["enterprise_pattern"].(string)
+                                return pattern, pattern == "multi-provider"
+                        },
+                },
+                {
+                        CaseID:     "enterprise-dns-004",
+                        CaseName:   "Single provider = managed DNS",
+                        Protocol:   "dnssec",
+                        Layer:      LayerAnalysis,
+                        RFCSection: "RFC 1035 §2.2",
+                        Expected:   "managed",
+                        RunFn: func() (string, bool) {
+                                result := analyzer.ExportClassifyEnterpriseDNS("example.com", []string{
+                                        "ns1.cloudflare.com", "ns2.cloudflare.com",
+                                })
+                                pattern, _ := result["enterprise_pattern"].(string)
+                                return pattern, pattern == "managed"
+                        },
+                },
+                {
+                        CaseID:     "enterprise-dns-005",
+                        CaseName:   "Empty nameservers returns nil (no classification)",
+                        Protocol:   "dnssec",
+                        Layer:      LayerAnalysis,
+                        RFCSection: "RFC 1035",
+                        Expected:   "nil",
+                        RunFn: func() (string, bool) {
+                                result := analyzer.ExportClassifyEnterpriseDNS("example.com", []string{})
+                                return "nil", result == nil
+                        },
+                },
+                {
+                        CaseID:     "enterprise-dns-006",
+                        CaseName:   "Dedicated label includes org domain name",
+                        Protocol:   "dnssec",
+                        Layer:      LayerAnalysis,
+                        RFCSection: "RFC 1035 §2.2",
+                        Expected:   "contains 'apple.com'",
+                        RunFn: func() (string, bool) {
+                                result := analyzer.ExportClassifyEnterpriseDNS("apple.com", []string{
+                                        "a.ns.apple.com", "b.ns.apple.com",
+                                })
+                                detail, _ := result["enterprise_detail"].(string)
+                                return detail, strings.Contains(detail, "apple.com")
+                        },
+                },
+                {
+                        CaseID:     "enterprise-dns-007",
+                        CaseName:   "Akamai akam.net nameservers detected as managed provider",
+                        Protocol:   "dnssec",
+                        Layer:      LayerAnalysis,
+                        RFCSection: "RFC 1035",
+                        Expected:   "managed",
+                        RunFn: func() (string, bool) {
+                                result := analyzer.ExportClassifyEnterpriseDNS("example.com", []string{
+                                        "a1-1.akam.net", "a2-2.akam.net", "a3-3.akam.net",
+                                })
+                                pattern, _ := result["enterprise_pattern"].(string)
+                                return pattern, pattern == "managed"
+                        },
+                },
+                {
+                        CaseID:     "enterprise-dns-008",
+                        CaseName:   "Multi-label TLD handled correctly (co.uk)",
+                        Protocol:   "dnssec",
+                        Layer:      LayerAnalysis,
+                        RFCSection: "RFC 1035 §2.2",
+                        Expected:   "dedicated",
+                        RunFn: func() (string, bool) {
+                                result := analyzer.ExportClassifyEnterpriseDNS("bbc.co.uk", []string{
+                                        "ns1.bbc.co.uk", "ns2.bbc.co.uk",
+                                })
+                                pattern, _ := result["enterprise_pattern"].(string)
+                                return pattern, pattern == "dedicated"
+                        },
+                },
+                {
+                        CaseID:     "enterprise-dns-009",
+                        CaseName:   "registrableDomain extracts correct base for .com.au",
+                        Protocol:   "dnssec",
+                        Layer:      LayerAnalysis,
+                        RFCSection: "RFC 1035",
+                        Expected:   "example.com.au",
+                        RunFn: func() (string, bool) {
+                                result := analyzer.ExportRegistrableDomain("example.com.au")
+                                return result, result == "example.com.au"
+                        },
+                },
+                {
+                        CaseID:     "enterprise-dns-010",
+                        CaseName:   "NS provider detection identifies Route 53",
+                        Protocol:   "dnssec",
+                        Layer:      LayerAnalysis,
+                        RFCSection: "RFC 1035",
+                        Expected:   "contains 'Route 53'",
+                        RunFn: func() (string, bool) {
+                                result := analyzer.ExportClassifyNSProvider("ns-1234.awsdns-56.org")
+                                return result, strings.Contains(result, "Route 53")
                         },
                 },
         }
