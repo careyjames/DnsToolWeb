@@ -641,11 +641,38 @@ main.container {
     
     .results-header-actions {
         width: 100%;
+        flex-wrap: wrap;
+        gap: 0.4rem;
     }
     
-    .results-header-actions .btn {
+    .results-header-actions .btn-group {
+        width: 100%;
+        order: 1;
+    }
+    
+    .results-header-actions .btn-group .btn {
         flex: 1;
         justify-content: center;
+    }
+    
+    .results-header-actions .dropdown {
+        order: 2;
+        flex: 1;
+        min-width: 0;
+    }
+    
+    .results-header-actions .dropdown .btn {
+        width: 100%;
+        justify-content: center;
+    }
+    
+    .results-header-actions > a.btn {
+        flex: 1;
+        min-width: 0;
+        justify-content: center;
+        font-size: 0.8rem;
+        padding: 0.35rem 0.5rem;
+        order: 3;
     }
     
     .results-meta {
