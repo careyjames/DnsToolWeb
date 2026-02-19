@@ -93,7 +93,7 @@ The backend utilizes Go with Gin, `pgx` v5 for PostgreSQL, `sqlc` for type-safe 
 
 ### Frontend
 
-Server-rendered HTML with Go html/template, Bootstrap dark theme, custom CSS, client-side JavaScript. PWA, accessibility, mobile responsive. Dual intelligence products: Engineer's DNS Intelligence Report (technical) and Executive's DNS Intelligence Brief (board-ready), both with configurable FIRST TLP v2.0 (default: TLP:AMBER). Plain-language questions with data-driven badge answers. Big Questions for critical thinking.
+Server-rendered HTML with Go html/template, Bootstrap dark theme, custom CSS, client-side JavaScript. PWA, accessibility, mobile responsive. Dual intelligence products: Engineer's DNS Intelligence Report (technical) and Executive's DNS Intelligence Brief (board-ready), both with configurable FIRST TLP v2.0 (default: TLP:AMBER). Plain-language questions with data-driven badge answers. Big Questions for critical thinking. Interactive system architecture diagrams at /architecture (Mermaid-based, CSP-compliant).
 
 ### Privacy Controls for User-Provided Intelligence (v26.20.71)
 
@@ -243,7 +243,7 @@ Every `_oss.go` stub MUST:
 | `isBIMICapableProvider()` | `false` | Prevents false BIMI capability claims |
 | `isKnownDKIMProvider()` | `false` | Conservative — no false DKIM provider attribution |
 
-### Current Stub Files (11 boundary files)
+### Current Stub Files (12 boundary files)
 
 | # | File | OSS Stub | Intel Location |
 |---|------|----------|----------------|
@@ -253,11 +253,12 @@ Every `_oss.go` stub MUST:
 | 4 | `providers` | `providers_oss.go` | `dnstool-intel` |
 | 5 | `ip_investigation` | `ip_investigation_oss.go` | `dnstool-intel` |
 | 6 | `manifest` | `manifest_oss.go` | `dnstool-intel` |
-| 7 | `ai_surface/http` | `http_oss.go` | `dnstool-intel` |
-| 8 | `ai_surface/llms_txt` | `llms_txt_oss.go` | `dnstool-intel` |
-| 9 | `ai_surface/robots_txt` | `robots_txt_oss.go` | `dnstool-intel` |
-| 10 | `ai_surface/poisoning` | `poisoning_oss.go` | `dnstool-intel` |
-| 11 | `ai_surface/scanner` | `scanner_oss.go` | `dnstool-intel` |
+| 7 | `posture_diff` | `posture_diff_oss.go` | `dnstool-intel` |
+| 8 | `ai_surface/http` | `http_oss.go` | `dnstool-intel` |
+| 9 | `ai_surface/llms_txt` | `llms_txt_oss.go` | `dnstool-intel` |
+| 10 | `ai_surface/robots_txt` | `robots_txt_oss.go` | `dnstool-intel` |
+| 11 | `ai_surface/poisoning` | `poisoning_oss.go` | `dnstool-intel` |
+| 12 | `ai_surface/scanner` | `scanner_oss.go` | `dnstool-intel` |
 
 ### Pure Framework Files (no stub/intel split needed)
 

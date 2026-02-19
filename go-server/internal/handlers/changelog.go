@@ -13,7 +13,11 @@
 //   2. Use (or create) a named date constant below.
 //   3. Reference the constant — never inline a date string.
 //
-// Canonical date mapping (verified Feb 15, 2026):
+// Canonical date mapping (verified Feb 19, 2026):
+//   dateFeb19 — Architecture Diagrams, miekg/dns v2 Migration, CT Resilience,
+//               History Table Cleanup, Brand Verdict Overhaul, DKIM Selector Expansion
+//   dateFeb18 — Google OAuth 2.0 + PKCE, Security Redaction & Mission Statement
+//   dateFeb17 — BSL 1.1 License Migration, Boundary Integrity Test Suite
 //   dateFeb15 — Dual Intelligence Products (Engineer's DNS Intelligence Report & Executive's DNS Intelligence Brief), OpenPhish Threat
 //               Intelligence Attribution, Email Header Analyzer Homepage Promotion
 //   dateFeb14 — High-Speed Subdomain Discovery
@@ -27,6 +31,9 @@
 package handlers
 
 const (
+        dateFeb19 = "Feb 19, 2026"
+        dateFeb18 = "Feb 18, 2026"
+        dateFeb17 = "Feb 17, 2026"
         dateFeb15 = "Feb 15, 2026"
         dateFeb14 = "Feb 14, 2026"
         dateFeb13 = "Feb 13, 2026"
@@ -62,6 +69,86 @@ func GetRecentChangelog(n int) []ChangelogEntry {
 
 func GetChangelog() []ChangelogEntry {
         return []ChangelogEntry{
+                {
+                        Version:     "26.20.83",
+                        Date:        dateFeb19,
+                        Category:    "Architecture",
+                        Title:       "Interactive System Architecture Diagrams",
+                        Description: "New /architecture page with interactive Mermaid diagrams visualizing the full system: high-level overview (Client Layer → Process Management → Go/Gin → Engines → Storage), ICIE pipeline (Collection → Classification → Privacy Gate → Output), ICAE confidence engine, and Privacy Gate decision tree. Color-coded nodes (blue/green/purple/cyan/gold/red) with CSP-compliant post-render JavaScript applying SVG presentation attributes. Dark background with thin blue connector lines.",
+                        Icon:        "fas fa-sitemap",
+                },
+                {
+                        Version:     "26.20.76",
+                        Date:        dateFeb19,
+                        Category:    "Core",
+                        Title:       "DNS Library v2 Migration (miekg/dns)",
+                        Description: "Migrated from github.com/miekg/dns v1.1.72 to codeberg.org/miekg/dns v0.6.52 (v2). The v1 library is archived on GitHub; v2 is actively maintained on Codeberg with improved performance and modern API. Four source files updated with new Exchange, RR data access, and EDNS0 patterns. Aligns with Codeberg-canonical hosting strategy.",
+                        Icon:        "fas fa-bolt",
+                },
+                {
+                        Version:     "26.20.76",
+                        Date:        dateFeb19,
+                        Category:    "Reliability",
+                        Title:       "CT Log Resilience (Certspotter Fallback)",
+                        Description: "Added Certspotter API as a fallback Certificate Transparency source when crt.sh is unavailable (502/timeout). Expanded DNS subdomain probe list from ~130 to ~280 common subdomains. Probe concurrency increased from 20 to 30 workers with a 25-second timeout.",
+                        Icon:        "fas fa-shield-alt",
+                },
+                {
+                        Version:     "26.20.74",
+                        Date:        dateFeb19,
+                        Category:    "UX",
+                        Title:       "History Table Cleanup",
+                        Description: "Removed the redundant status column from the analysis history table. Failed analyses are already excluded from history (they appear in statistics only). The green checkmark column was wasting horizontal space without adding information.",
+                        Icon:        "fas fa-list",
+                },
+                {
+                        Version:     "26.20.71",
+                        Date:        dateFeb19,
+                        Category:    "Intelligence",
+                        Title:       "Brand Security Verdict Matrix Overhaul",
+                        Description: "Corrected the brand impersonation verdict logic. DMARC reject alone blocks email spoofing (RFC 7489 §6.3) but not visual impersonation via lookalike domains or unrestricted certificate issuance. New 8-branch verdict matrix considers DMARC policy + BIMI brand verification + CAA certificate restriction (RFC 8659 §4). Expanded from 5 to 8 golden rule test cases.",
+                        Icon:        "fas fa-check-double",
+                },
+                {
+                        Version:     "26.20.70",
+                        Date:        dateFeb19,
+                        Category:    "Intelligence",
+                        Title:       "DKIM Selector Expansion (81+ Selectors)",
+                        Description: "Expanded default DKIM selector list from 39 to 81+ selectors covering major ESPs: HubSpot, Salesforce, Klaviyo, Intercom, ActiveCampaign, Constant Contact, MailerLite, Drip, Customer.io, Freshdesk, and more. Enhanced provider-to-selector inference from SPF/MX records. Privacy mode classification updated for expanded known-selector list.",
+                        Icon:        "fas fa-key",
+                },
+                {
+                        Version:     "26.20.56",
+                        Date:        dateFeb18,
+                        Category:    "Security",
+                        Title:       "Google OAuth 2.0 + PKCE Authentication",
+                        Description: "Pure stdlib Google OAuth 2.0 implementation with PKCE (Proof Key for Code Exchange) — no external OAuth libraries. Advanced Protection compatible. Email verification enforced, ID token claims validated, rate-limited auth endpoints, no tokens stored server-side. One-time admin bootstrap via INITIAL_ADMIN_EMAIL. Route protection for sensitive endpoints (/export/json requires admin). All analysis remains no-login-required.",
+                        Icon:        "fas fa-user-shield",
+                },
+                {
+                        Version:     "26.19.43",
+                        Date:        dateFeb18,
+                        Category:    "Security",
+                        Title:       "Security Redaction & Mission Statement",
+                        Description: "Comprehensive security audit: removed server version exposure from HTTP headers, redacted internal paths from error responses, hardened SSRF prevention for internal IP ranges. Added mission statement to the Security Policy page defining scope, principles, and responsible disclosure process.",
+                        Icon:        "fas fa-lock",
+                },
+                {
+                        Version:     "26.19.18",
+                        Date:        dateFeb17,
+                        Category:    "Quality",
+                        Title:       "Boundary Integrity Test Suite (45 Deterministic Tests)",
+                        Description: "Comprehensive test suite protecting the two-repo architecture: 11 boundary files verified across 11 categories (file presence, build tags, stub function signatures, no intelligence leaks, package consistency, and more). Catches stub contract violations, duplicate symbols, and architecture drift before they reach production.",
+                        Icon:        "fas fa-cogs",
+                },
+                {
+                        Version:     "26.19.0",
+                        Date:        dateFeb17,
+                        Category:    "Licensing",
+                        Title:       "BSL 1.1 License Migration",
+                        Description: "Migrated from AGPL-3.0 to Business Source License 1.1 with a 3-year rolling Change Date converting to Apache-2.0. Explicit MSP/consultant carve-out permits security professionals to use the tool for client audits. All 111 Go source files updated. Both public and private repositories under BSL 1.1.",
+                        Icon:        "fas fa-balance-scale",
+                },
                 {
                         Version:     "26.17.2",
                         Date:        dateFeb15,

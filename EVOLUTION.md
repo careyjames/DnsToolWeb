@@ -1945,3 +1945,34 @@ Previously called "Session Sentinel." Renamed for identity and potential distrib
 - **History table fix**: Compacted Date column layout (single-line date+time), added `col-date`/`col-duration`/`col-domain` CSS classes with `white-space:nowrap` to prevent Actions column cutoff on narrower viewports.
 - **Version**: Bumped to 26.20.72.
 - **Full test suite**: All 13 Go test packages passing.
+
+### History Table Status Column Removed — v26.20.74
+- Removed redundant status column (green checkmark) from history table. Handler already filters to successful analyses only via `ListSuccessfulAnalyses`.
+- Result: History table now 4 columns: Domain, Email Security, Date, Actions.
+
+### miekg/dns v2 Migration + CT Resilience — v26.20.76
+- **DNS library migration**: `github.com/miekg/dns` v1.1.72 → `codeberg.org/miekg/dns` v0.6.52 (v2). Four source files updated.
+- **CT fallback**: Added Certspotter API as fallback when crt.sh fails. Subdomain probe list expanded from ~130 to ~280. Concurrency 20→30, timeout 15s→25s.
+- **Brand verdict fix**: quarantine + BIMI/VMC + CAA now shows correct "Unlikely/Well Protected" verdict.
+- **Safari overlay fix**: Removed setTimeout wrapper, direct form.submit() with re-entry guard.
+
+### Architecture Page — v26.20.77–83
+- **New page**: `/architecture` with interactive Mermaid diagrams visualizing 4 system views:
+  1. High-Level System Overview (Client → Process → Go/Gin → Engines → Storage)
+  2. ICIE Pipeline (Collection → Classification → Privacy Gate → Output)
+  3. ICAE Confidence Engine (maturity lifecycle)
+  4. Privacy Gate Decision Tree (Public/Private/Ephemeral)
+- **CSP-compliant rendering**: Mermaid's `classDef` blocked by CSP (inline styles). Solution: post-render JavaScript using `setAttribute()` to apply SVG presentation attributes instead of CSS styles.
+- **Color scheme**: Blue (#2563eb) core/RFC, green (#16a34a) storage/safe, purple (#9333ea) external, cyan (#0891b2) classify, gold (#ca8a04) gates, red (#dc2626) danger, indigo (#6366f1) inputs.
+- **Connector lines**: `fill='none'`, `stroke='#58a6ff'`, curve='linear' — thin blue lines replacing thick black shapes.
+- **Edge labels**: Dark background rects (#0d1117) with padding behind label text.
+- **Root cause of unstyled nav**: Architecture page was missing `{{template "head_css" .}}` — Bootstrap/custom/FA stylesheets never loaded. Fixed in v26.20.83.
+- **Skip link**: HTML `hidden` attribute used instead of CSS-based hiding (CSS wasn't loading due to above bug).
+- Footer navigation: Architecture link added alongside Sources, Changelog, Security Policy.
+- **Version**: 26.20.83
+
+### Changelog Updated — v26.20.83
+- Added 10 new changelog entries covering v26.19.0 through v26.20.83.
+- Key entries: BSL 1.1 migration, boundary integrity tests, Google OAuth 2.0, security redaction, DKIM expansion, brand verdict overhaul, CT resilience, architecture diagrams.
+- Updated PROJECT_CONTEXT.md: stub file count 11→12, architecture page mention.
+- Updated replit.md: version, architecture page, DNS library reference.
