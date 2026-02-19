@@ -1836,7 +1836,7 @@
                                     {{$brandLabel := mapGetStr "label" $brandVerdict}}
                                     {{if $brandAnswer}}
                                         <span class="intel-verdict">
-                                            <span class="intel-verdict-answer verdict-{{if eq $brandAnswer "No"}}success{{else if eq $brandAnswer "Yes"}}danger{{else}}warning{{end}}">{{$brandAnswer}}</span>
+                                            <span class="intel-verdict-answer verdict-{{if eq $brandAnswer "No"}}success{{else if eq $brandAnswer "Unlikely"}}success{{else if eq $brandAnswer "Yes"}}danger{{else}}warning{{end}}">{{$brandAnswer}}</span>
                                             {{if $brandReason}}<span class="intel-verdict-reason">{{$brandReason}}</span>{{end}}
                                         </span>
                                     {{else}}
@@ -3213,6 +3213,44 @@
                                         <small class="text-muted d-block mb-1">Parent zone nameservers ({{mapGetStr "parent_zone" $ns}}):</small>
                                         {{range $nsEntry := mapGetSlice "parent_ns" $ns}}
                                             <span class="badge bg-secondary me-1 mb-1">{{$nsEntry}}</span>
+                                        {{end}}
+                                    </div>
+                                {{end}}
+
+                                {{$enterprisePattern := mapGetStr "enterprise_pattern" $ns}}
+                                {{if $enterprisePattern}}
+                                    <div class="mt-2 small">
+                                        <div class="d-flex align-items-center mb-1">
+                                            <i class="fas fa-building me-1 text-info"></i>
+                                            <strong class="text-info">{{mapGetStr "enterprise_label" $ns}}</strong>
+                                        </div>
+                                        <div class="text-muted">{{mapGetStr "enterprise_detail" $ns}}</div>
+                                        {{if eq $enterprisePattern "mixed"}}
+                                            <div class="mt-1">
+                                                {{$dedicatedNS := mapGetSlice "dedicated_ns" $ns}}
+                                                {{$managedNS := mapGetSlice "managed_ns" $ns}}
+                                                {{if $dedicatedNS}}
+                                                    <small class="text-muted d-block mb-1">Dedicated (organization-branded):</small>
+                                                    {{range $d := $dedicatedNS}}
+                                                        <span class="badge bg-info bg-opacity-25 text-info me-1 mb-1">{{$d}}</span>
+                                                    {{end}}
+                                                {{end}}
+                                                {{if $managedNS}}
+                                                    <small class="text-muted d-block mb-1 mt-1">External provider:</small>
+                                                    {{range $m := $managedNS}}
+                                                        <span class="badge bg-secondary me-1 mb-1">{{$m}}</span>
+                                                    {{end}}
+                                                {{end}}
+                                            </div>
+                                        {{end}}
+                                        {{$dnsProviders := mapGetSlice "dns_providers" $ns}}
+                                        {{if $dnsProviders}}
+                                            <div class="mt-1">
+                                                <small class="text-muted">DNS provider(s): </small>
+                                                {{range $p := $dnsProviders}}
+                                                    <span class="badge bg-dark border border-secondary me-1">{{$p}}</span>
+                                                {{end}}
+                                            </div>
                                         {{end}}
                                     </div>
                                 {{end}}

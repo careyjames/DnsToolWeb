@@ -1138,6 +1138,10 @@
                             {{else}}
                             <span class="badge bg-secondary">{{default "Unknown" (mapGetStr "message" $ns)}}</span>
                             {{end}}
+                            {{$enterpriseLabel := mapGetStr "enterprise_label" $ns}}
+                            {{if $enterpriseLabel}}
+                            <span class="badge bg-info ms-1">{{$enterpriseLabel}}</span>
+                            {{end}}
                             {{else}}
                             <span class="text-muted">Not assessed</span>
                             {{end}}
