@@ -95,6 +95,19 @@ The backend utilizes Go with Gin, `pgx` v5 for PostgreSQL, `sqlc` for type-safe 
 
 Server-rendered HTML with Go html/template, Bootstrap dark theme, custom CSS, client-side JavaScript. PWA, accessibility, mobile responsive. Dual intelligence products: Engineer's DNS Intelligence Report (technical) and Executive's DNS Intelligence Brief (board-ready), both with configurable FIRST TLP v2.0 (default: TLP:AMBER). Plain-language questions with data-driven badge answers. Big Questions for critical thinking.
 
+### Privacy Controls for User-Provided Intelligence (v26.20.71)
+
+Three analysis modes protect user-submitted DKIM selectors:
+- **Public**: No custom selectors, or only known/default selectors (google, selector1, selector2, etc.) — saves to history, viewable by anyone.
+- **Private**: Authenticated user + genuinely novel selectors — saved with `private=true`, visible only to the owner in their Intelligence Reports. Returns 404 to unauthenticated users, 403 with informative message to authenticated non-owners.
+- **Ephemeral**: Anonymous user + genuinely novel selectors — analysis runs and displays results, but nothing is persisted to database. Banner explains results won't be saved.
+
+Known-selector bypass: `analyzer.AllSelectorsKnown()` compares user input against `defaultDKIMSelectors` (case-insensitive, whitespace-trimmed). Entering publicly known selectors like `google`, `selector1`, `selector2` does NOT trigger privacy mode.
+
+DB columns: `domain_analyses.private` (BOOLEAN), `domain_analyses.has_user_selectors` (BOOLEAN). All public history queries filter `private = FALSE`.
+
+Intelligence Reports page: `/dossier` (renamed from "Intelligence Dossier" to "Intelligence Reports" in v26.20.70).
+
 ---
 
 ## 4. External Dependencies

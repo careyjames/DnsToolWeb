@@ -78,7 +78,7 @@ func (h *AnalysisHandler) ViewAnalysisStatic(c *gin.Context) {
         }
 
         if !h.checkPrivateAccess(c, analysis.ID, analysis.Private) {
-                h.renderErrorPage(c, http.StatusNotFound, nonce, csrfToken, "danger", "Analysis not found")
+                h.renderRestrictedAccess(c, nonce, csrfToken)
                 return
         }
 
@@ -193,7 +193,7 @@ func (h *AnalysisHandler) ViewAnalysisExecutive(c *gin.Context) {
         }
 
         if !h.checkPrivateAccess(c, analysis.ID, analysis.Private) {
-                h.renderErrorPage(c, http.StatusNotFound, nonce, csrfToken, "danger", "Analysis not found")
+                h.renderRestrictedAccess(c, nonce, csrfToken)
                 return
         }
 
@@ -273,7 +273,7 @@ func (h *AnalysisHandler) Analyze(c *gin.Context) {
         }
 
         customSelectors := extractCustomSelectors(c)
-        hasUserSelectors := len(customSelectors) > 0
+        hasNovelSelectors := len(customSelectors) > 0 && !analyzer.AllSelectorsKnown(customSelectors)
         exposureChecks := c.PostForm("exposure_checks") == "1"
 
         isAuthenticated := false
@@ -285,7 +285,7 @@ func (h *AnalysisHandler) Analyze(c *gin.Context) {
                 }
         }
 
-        ephemeral := hasUserSelectors && !isAuthenticated
+        ephemeral := hasNovelSelectors && !isAuthenticated
 
         startTime := time.Now()
         ctx := c.Request.Context()
@@ -320,13 +320,13 @@ func (h *AnalysisHandler) Analyze(c *gin.Context) {
 
         var analysisID int32
         var timestamp string
-        isPrivate := hasUserSelectors && isAuthenticated
+        isPrivate := hasNovelSelectors && isAuthenticated
 
         if ephemeral {
                 slog.Info("Ephemeral analysis (custom DKIM selectors, unauthenticated) — not persisted", "domain", asciiDomain)
                 timestamp = time.Now().UTC().Format("2006-01-02 15:04:05 UTC")
         } else {
-                analysisID, timestamp = h.saveAnalysis(c.Request.Context(), domain, asciiDomain, results, analysisDuration, countryCode, countryName, isPrivate, hasUserSelectors)
+                analysisID, timestamp = h.saveAnalysis(c.Request.Context(), domain, asciiDomain, results, analysisDuration, countryCode, countryName, isPrivate, hasNovelSelectors)
         }
 
         if analysisID > 0 && isAuthenticated && userID > 0 {
@@ -416,6 +416,25 @@ func computeDriftFromPrev(currentHash string, prevHash *string, prevID int32, pr
                 }
         }
         return di
+}
+
+func (h *AnalysisHandler) renderRestrictedAccess(c *gin.Context, nonce, csrfToken any) {
+        auth, _ := c.Get("authenticated")
+        if auth != true {
+                h.renderErrorPage(c, http.StatusNotFound, nonce, csrfToken, "danger", "Analysis not found")
+                return
+        }
+        msg := "This report was created with user-provided intelligence and is restricted to its owner. " +
+                "If you believe you should have access, contact the person who shared this link with you."
+        errData := gin.H{
+                "AppVersion":    h.Config.AppVersion,
+                "CspNonce":      nonce,
+                "CsrfToken":    csrfToken,
+                "ActivePage":    "home",
+                "FlashMessages": []FlashMessage{{Category: "warning", Message: msg}},
+        }
+        mergeAuthData(c, h.Config, errData)
+        c.HTML(http.StatusForbidden, templateIndex, errData)
 }
 
 func (h *AnalysisHandler) renderErrorPage(c *gin.Context, status int, nonce, csrfToken any, category, message string) {
@@ -607,7 +626,15 @@ func (h *AnalysisHandler) APIAnalysis(c *gin.Context) {
         }
 
         if !h.checkPrivateAccess(c, analysis.ID, analysis.Private) {
-                c.JSON(http.StatusNotFound, gin.H{"error": "Analysis not found"})
+                auth, _ := c.Get("authenticated")
+                if auth == true {
+                        c.JSON(http.StatusForbidden, gin.H{
+                                "error":   "restricted",
+                                "message": "This report was created with user-provided intelligence and is restricted to its owner.",
+                        })
+                } else {
+                        c.JSON(http.StatusNotFound, gin.H{"error": "Analysis not found"})
+                }
                 return
         }
 

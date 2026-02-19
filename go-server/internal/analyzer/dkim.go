@@ -448,6 +448,30 @@ func analyzeDKIMKey(record string) map[string]any {
         return keyInfo
 }
 
+func AllSelectorsKnown(customSelectors []string) bool {
+        if len(customSelectors) == 0 {
+                return true
+        }
+        known := make(map[string]bool, len(defaultDKIMSelectors))
+        for _, s := range defaultDKIMSelectors {
+                known[s] = true
+        }
+        for _, cs := range customSelectors {
+                cs = strings.TrimSpace(strings.ToLower(cs))
+                cs = strings.TrimRight(cs, ".")
+                if cs == "" {
+                        continue
+                }
+                if !strings.HasSuffix(cs, domainkeySuffix) {
+                        cs = cs + domainkeySuffix
+                }
+                if !known[cs] {
+                        return false
+                }
+        }
+        return true
+}
+
 func buildSelectorList(customSelectors []string) []string {
         selectors := make([]string, 0, len(defaultDKIMSelectors)+len(customSelectors))
         if len(customSelectors) > 0 {
