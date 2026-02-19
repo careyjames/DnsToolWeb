@@ -58,12 +58,12 @@ graph TB
     Handlers -.->|"user-provided key"| SecurityTrails
     GoBinary -.->|"build tags"| IntelRepo
 
-    classDef default fill:#22476e,stroke:#5ba3e0,stroke-width:2px,color:#f0f6fc
-    classDef engine fill:#28608f,stroke:#58a6ff,stroke-width:2px,color:#fff,font-weight:bold
-    classDef storage fill:#28704a,stroke:#3fb950,stroke-width:2px,color:#fff,font-weight:bold
-    classDef external fill:#6b3da0,stroke:#d2a8ff,stroke-width:2px,color:#fff,font-weight:bold
-    classDef client fill:#2a5f8f,stroke:#79c0ff,stroke-width:2px,color:#fff,font-weight:bold
-    classDef app fill:#265580,stroke:#58a6ff,stroke-width:2px,color:#fff
+    classDef default fill:#2563eb,stroke:#60a5fa,stroke-width:2px,color:#f0f6fc
+    classDef engine fill:#2563eb,stroke:#60a5fa,stroke-width:2px,color:#fff,font-weight:bold
+    classDef storage fill:#16a34a,stroke:#4ade80,stroke-width:2px,color:#fff,font-weight:bold
+    classDef external fill:#9333ea,stroke:#c084fc,stroke-width:2px,color:#fff,font-weight:bold
+    classDef client fill:#2563eb,stroke:#60a5fa,stroke-width:2px,color:#fff,font-weight:bold
+    classDef app fill:#2563eb,stroke:#60a5fa,stroke-width:2px,color:#fff
     class ICIE,ICAE engine
     class PG storage
     class SecurityTrails,IntelRepo external
@@ -132,12 +132,12 @@ graph LR
     Privacy -->|"novel + anon"| Ephemeral
     Remediation --> Engineer & Executive & JSON
 
-    classDef default fill:#22476e,stroke:#5ba3e0,stroke-width:2px,color:#f0f6fc
-    classDef rfc fill:#28608f,stroke:#58a6ff,stroke-width:2px,color:#fff,font-weight:bold
-    classDef gate fill:#8a7415,stroke:#f1c40f,stroke-width:2px,color:#fff,font-weight:bold
-    classDef output fill:#28704a,stroke:#3fb950,stroke-width:2px,color:#fff,font-weight:bold
-    classDef classify fill:#1a7068,stroke:#1abc9c,stroke-width:2px,color:#fff,font-weight:bold
-    classDef input fill:#2a5f8f,stroke:#79c0ff,stroke-width:2px,color:#fff,font-weight:bold
+    classDef default fill:#2563eb,stroke:#60a5fa,stroke-width:2px,color:#f0f6fc
+    classDef rfc fill:#2563eb,stroke:#60a5fa,stroke-width:2px,color:#fff,font-weight:bold
+    classDef gate fill:#ca8a04,stroke:#facc15,stroke-width:2px,color:#fff,font-weight:bold
+    classDef output fill:#16a34a,stroke:#4ade80,stroke-width:2px,color:#fff,font-weight:bold
+    classDef classify fill:#0891b2,stroke:#22d3ee,stroke-width:2px,color:#fff,font-weight:bold
+    classDef input fill:#6366f1,stroke:#a5b4fc,stroke-width:2px,color:#fff,font-weight:bold
     class SPF,DMARC,DKIM,DNSSEC,DANE,MTASTS,CAA,SMTP2,CT2,SubD,BIMI,DNS rfc
     class Privacy,Public,Private,Ephemeral gate
     class Engineer,Executive,JSON output
@@ -187,10 +187,10 @@ graph TB
     Runner --> DB
     Scores --> Report
 
-    classDef default fill:#22476e,stroke:#5ba3e0,stroke-width:2px,color:#f0f6fc
-    classDef maturity fill:#28608f,stroke:#58a6ff,stroke-width:2px,color:#fff,font-weight:bold
-    classDef cases fill:#1a7068,stroke:#1abc9c,stroke-width:2px,color:#fff,font-weight:bold
-    classDef output fill:#28704a,stroke:#3fb950,stroke-width:2px,color:#fff,font-weight:bold
+    classDef default fill:#2563eb,stroke:#60a5fa,stroke-width:2px,color:#f0f6fc
+    classDef maturity fill:#2563eb,stroke:#60a5fa,stroke-width:2px,color:#fff,font-weight:bold
+    classDef cases fill:#0891b2,stroke:#22d3ee,stroke-width:2px,color:#fff,font-weight:bold
+    classDef output fill:#16a34a,stroke:#4ade80,stroke-width:2px,color:#fff,font-weight:bold
     class Dev,Verified,Consistent,Gold,Master maturity
     class SPFCases,DMARCCases,DNSSECCases cases
     class Scores,Report output
@@ -235,11 +235,11 @@ graph TB
     Tests -->|"verify no leaks"| PublicGo
     Tests -->|"verify stub contracts"| Stubs
 
-    classDef default fill:#22476e,stroke:#5ba3e0,stroke-width:2px,color:#f0f6fc
-    classDef public fill:#28608f,stroke:#58a6ff,stroke-width:2px,color:#fff,font-weight:bold
-    classDef private fill:#6b3da0,stroke:#d2a8ff,stroke-width:2px,color:#fff,font-weight:bold
-    classDef build fill:#28704a,stroke:#3fb950,stroke-width:2px,color:#fff,font-weight:bold
-    classDef sync fill:#8a7415,stroke:#f1c40f,stroke-width:2px,color:#fff,font-weight:bold
+    classDef default fill:#2563eb,stroke:#60a5fa,stroke-width:2px,color:#f0f6fc
+    classDef public fill:#2563eb,stroke:#60a5fa,stroke-width:2px,color:#fff,font-weight:bold
+    classDef private fill:#9333ea,stroke:#c084fc,stroke-width:2px,color:#fff,font-weight:bold
+    classDef build fill:#16a34a,stroke:#4ade80,stroke-width:2px,color:#fff,font-weight:bold
+    classDef sync fill:#ca8a04,stroke:#facc15,stroke-width:2px,color:#fff,font-weight:bold
     class PublicGo,Stubs,Templates2,Static,Tests,Scripts public
     class Intel,ProviderDB,Methodology,Commercial private
     class BuildOSS,BuildIntel build
@@ -299,12 +299,12 @@ graph TB
     None --> AtRisk
     Missing --> Exposed
 
-    classDef default fill:#22476e,stroke:#5ba3e0,stroke-width:2px,color:#f0f6fc
-    classDef safe fill:#28704a,stroke:#3fb950,stroke-width:2px,color:#fff,font-weight:bold
-    classDef warn fill:#8a7415,stroke:#f1c40f,stroke-width:2px,color:#fff,font-weight:bold
-    classDef danger fill:#8b3325,stroke:#f85149,stroke-width:2px,color:#fff,font-weight:bold
-    classDef rfc fill:#28608f,stroke:#58a6ff,stroke-width:2px,color:#fff,font-weight:bold
-    classDef check fill:#1a7068,stroke:#1abc9c,stroke-width:2px,color:#fff,font-weight:bold
+    classDef default fill:#2563eb,stroke:#60a5fa,stroke-width:2px,color:#f0f6fc
+    classDef safe fill:#16a34a,stroke:#4ade80,stroke-width:2px,color:#fff,font-weight:bold
+    classDef warn fill:#ca8a04,stroke:#facc15,stroke-width:2px,color:#fff,font-weight:bold
+    classDef danger fill:#dc2626,stroke:#f87171,stroke-width:2px,color:#fff,font-weight:bold
+    classDef rfc fill:#2563eb,stroke:#60a5fa,stroke-width:2px,color:#fff,font-weight:bold
+    classDef check fill:#0891b2,stroke:#22d3ee,stroke-width:2px,color:#fff,font-weight:bold
     class Protected,WellP safe
     class MostlyP,PartialP warn
     class AtRisk,Exposed danger
@@ -398,10 +398,10 @@ graph TB
     DB2 --> DBQ
     Middleware --> Config & Telemetry
 
-    classDef default fill:#22476e,stroke:#5ba3e0,stroke-width:2px,color:#f0f6fc
-    classDef core fill:#28608f,stroke:#58a6ff,stroke-width:2px,color:#fff,font-weight:bold
-    classDef engine fill:#1a7068,stroke:#1abc9c,stroke-width:2px,color:#fff,font-weight:bold
-    classDef infra fill:#6b3da0,stroke:#d2a8ff,stroke-width:2px,color:#fff,font-weight:bold
+    classDef default fill:#2563eb,stroke:#60a5fa,stroke-width:2px,color:#f0f6fc
+    classDef core fill:#2563eb,stroke:#60a5fa,stroke-width:2px,color:#fff,font-weight:bold
+    classDef engine fill:#0891b2,stroke:#22d3ee,stroke-width:2px,color:#fff,font-weight:bold
+    classDef infra fill:#9333ea,stroke:#c084fc,stroke-width:2px,color:#fff,font-weight:bold
     class Analyzer,AISurface,ICAE2 engine
     class Server,Handlers,Middleware core
     class DB2,DBQ,DNSClient2,Telemetry infra

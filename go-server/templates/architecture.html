@@ -33,28 +33,55 @@
             max-width: 100%;
             height: auto;
         }
-        .arch-legend {
-            display: flex;
-            gap: 1rem;
-            flex-wrap: wrap;
-            justify-content: center;
-            padding: 0.75rem 1.5rem;
-            border-top: 1px solid rgba(88,166,255,0.08);
-            background: rgba(88,166,255,0.02);
+
+        .mermaid svg .cluster rect {
+            fill: rgba(88,166,255,0.10) !important;
+            stroke: rgba(88,166,255,0.45) !important;
+            stroke-width: 2px !important;
+            rx: 8 !important;
         }
-        .arch-legend-item {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            font-size: 12px;
-            color: #8b949e;
+
+        .mermaid svg .cluster .nodeLabel,
+        .mermaid svg .cluster text,
+        .mermaid svg .cluster span {
+            color: #79c0ff !important;
+            fill: #79c0ff !important;
+            font-weight: bold !important;
         }
-        .arch-legend-swatch {
-            width: 14px;
-            height: 14px;
-            border-radius: 4px;
-            border: 1.5px solid;
-            flex-shrink: 0;
+
+        .mermaid svg .edgePath path.path {
+            stroke: #58a6ff !important;
+            stroke-width: 1.5px !important;
+        }
+
+        .mermaid svg .edgeLabel rect {
+            fill: #161b22 !important;
+            opacity: 0.9 !important;
+        }
+
+        .mermaid svg .edgeLabel span,
+        .mermaid svg .edgeLabel .label {
+            color: #a5d6ff !important;
+            fill: #a5d6ff !important;
+        }
+
+        .mermaid svg marker path {
+            fill: #58a6ff !important;
+            stroke: #58a6ff !important;
+        }
+
+        .mermaid svg .node .label,
+        .mermaid svg .node .nodeLabel,
+        .mermaid svg .nodeLabel {
+            color: #ffffff !important;
+            fill: #ffffff !important;
+        }
+
+        .mermaid svg .node foreignObject div,
+        .mermaid svg .node foreignObject span,
+        .mermaid svg .nodeLabel div,
+        .mermaid svg .nodeLabel span {
+            color: #ffffff !important;
         }
     </style>
 </head>
@@ -90,57 +117,31 @@
     <script nonce="{{.CspNonce}}" src="{{staticVersionURL "js/mermaid.min.js" .AppVersion}}"></script>
     <script nonce="{{.CspNonce}}">
         mermaid.initialize({
-            startOnLoad: true,
+            startOnLoad: false,
             theme: 'base',
             themeVariables: {
-                background: '#0d1117',
+                background: 'transparent',
                 fontFamily: '"Segoe UI", system-ui, -apple-system, sans-serif',
                 fontSize: '14px',
-
-                primaryColor: '#2d5a88',
-                primaryBorderColor: '#58a6ff',
-                primaryTextColor: '#f0f6fc',
-
-                secondaryColor: '#245a3a',
-                secondaryBorderColor: '#3fb950',
-                secondaryTextColor: '#f0f6fc',
-
-                tertiaryColor: '#4c2d70',
-                tertiaryBorderColor: '#bc8cff',
-                tertiaryTextColor: '#f0f6fc',
-
+                primaryColor: '#2563eb',
+                primaryBorderColor: '#60a5fa',
+                primaryTextColor: '#ffffff',
+                secondaryColor: '#16a34a',
+                secondaryBorderColor: '#4ade80',
+                secondaryTextColor: '#ffffff',
+                tertiaryColor: '#9333ea',
+                tertiaryBorderColor: '#c084fc',
+                tertiaryTextColor: '#ffffff',
                 lineColor: '#58a6ff',
-                textColor: '#e6edf3',
-
-                mainBkg: '#2d5a88',
-                nodeBorder: '#58a6ff',
-                nodeTextColor: '#f0f6fc',
-
-                clusterBkg: 'rgba(136,198,255,0.07)',
-                clusterBorder: 'rgba(88,166,255,0.35)',
-
+                textColor: '#ffffff',
+                mainBkg: '#2563eb',
+                nodeBorder: '#60a5fa',
+                nodeTextColor: '#ffffff',
+                clusterBkg: 'rgba(88,166,255,0.12)',
+                clusterBorder: 'rgba(88,166,255,0.5)',
                 titleColor: '#79c0ff',
                 edgeLabelBackground: '#161b22',
-                labelTextColor: '#e6edf3',
-
-                actorBkg: '#2d5a88',
-                actorBorder: '#58a6ff',
-                actorTextColor: '#f0f6fc',
-                actorLineColor: '#58a6ff',
-
-                signalColor: '#58a6ff',
-                signalTextColor: '#e6edf3',
-
-                noteBkgColor: '#245a3a',
-                noteBorderColor: '#3fb950',
-                noteTextColor: '#f0f6fc',
-
-                activationBkgColor: '#2d5a88',
-                activationBorderColor: '#58a6ff',
-
-                loopTextColor: '#e6edf3',
-                labelBoxBkgColor: '#161b22',
-                labelBoxBorderColor: '#30363d'
+                labelTextColor: '#e6edf3'
             },
             flowchart: {
                 htmlLabels: true,
@@ -150,16 +151,103 @@
                 rankSpacing: 60,
                 diagramPadding: 24,
                 useMaxWidth: true
-            },
-            sequence: {
-                actorMargin: 60,
-                messageMargin: 40,
-                boxMargin: 12,
-                noteMargin: 15,
-                mirrorActors: false,
-                useMaxWidth: true,
-                wrap: true
             }
+        });
+
+        var colorMap = {
+            engine:   {fill:'#2563eb', stroke:'#60a5fa'},
+            storage:  {fill:'#16a34a', stroke:'#4ade80'},
+            external: {fill:'#9333ea', stroke:'#c084fc'},
+            client:   {fill:'#0891b2', stroke:'#22d3ee'},
+            app:      {fill:'#1d4ed8', stroke:'#60a5fa'},
+            rfc:      {fill:'#2563eb', stroke:'#60a5fa'},
+            gate:     {fill:'#ca8a04', stroke:'#facc15'},
+            output:   {fill:'#16a34a', stroke:'#4ade80'},
+            classify: {fill:'#0891b2', stroke:'#22d3ee'},
+            input:    {fill:'#6366f1', stroke:'#a5b4fc'},
+            maturity: {fill:'#2563eb', stroke:'#60a5fa'},
+            cases:    {fill:'#0891b2', stroke:'#22d3ee'},
+            'public': {fill:'#2563eb', stroke:'#60a5fa'},
+            'private':{fill:'#9333ea', stroke:'#c084fc'},
+            build:    {fill:'#16a34a', stroke:'#4ade80'},
+            sync:     {fill:'#ca8a04', stroke:'#facc15'},
+            safe:     {fill:'#16a34a', stroke:'#4ade80'},
+            warn:     {fill:'#ca8a04', stroke:'#facc15'},
+            danger:   {fill:'#dc2626', stroke:'#f87171'},
+            check:    {fill:'#0891b2', stroke:'#22d3ee'},
+            core:     {fill:'#2563eb', stroke:'#60a5fa'},
+            infra:    {fill:'#9333ea', stroke:'#c084fc'}
+        };
+        var defaultColor = {fill:'#2563eb', stroke:'#60a5fa'};
+        var classOrder = ['safe','warn','danger','check','engine','storage','external','client',
+            'rfc','gate','output','classify','input','maturity','cases',
+            'public','private','build','sync','core','infra','app'];
+
+        function applyNodeColor(node) {
+            var cls = node.getAttribute('class') || '';
+            var color = null;
+            for (var i = 0; i < classOrder.length; i++) {
+                var re = new RegExp('\\b' + classOrder[i] + '\\b');
+                if (re.test(cls)) {
+                    color = colorMap[classOrder[i]];
+                    break;
+                }
+            }
+            if (!color) color = defaultColor;
+            var shapes = node.querySelectorAll('rect, polygon, circle, ellipse');
+            for (var j = 0; j < shapes.length; j++) {
+                shapes[j].setAttribute('fill', color.fill);
+                shapes[j].setAttribute('stroke', color.stroke);
+                shapes[j].setAttribute('stroke-width', '2');
+            }
+            var paths = node.querySelectorAll('path');
+            for (var k = 0; k < paths.length; k++) {
+                var d = paths[k].getAttribute('d') || '';
+                if (d.length > 10) {
+                    paths[k].setAttribute('fill', color.fill);
+                    paths[k].setAttribute('stroke', color.stroke);
+                    paths[k].setAttribute('stroke-width', '2');
+                }
+            }
+        }
+
+        function applyTextColor(svg) {
+            var labels = svg.querySelectorAll('.nodeLabel, .label text, .node text');
+            for (var i = 0; i < labels.length; i++) {
+                labels[i].setAttribute('fill', '#ffffff');
+            }
+            var foEls = svg.querySelectorAll('.nodeLabel div, .nodeLabel span, .node foreignObject div, .node foreignObject span');
+            for (var j = 0; j < foEls.length; j++) {
+                foEls[j].setAttribute('style', 'color:#ffffff !important');
+            }
+        }
+
+        mermaid.run().then(function() {
+            document.querySelectorAll('.mermaid svg').forEach(function(svg) {
+                svg.querySelectorAll('.node').forEach(applyNodeColor);
+
+                svg.querySelectorAll('.cluster rect').forEach(function(rect) {
+                    rect.setAttribute('fill', 'rgba(88,166,255,0.10)');
+                    rect.setAttribute('stroke', 'rgba(88,166,255,0.45)');
+                    rect.setAttribute('stroke-width', '2');
+                    rect.setAttribute('rx', '8');
+                });
+
+                svg.querySelectorAll('.cluster text, .cluster span').forEach(function(el) {
+                    el.setAttribute('fill', '#79c0ff');
+                });
+
+                svg.querySelectorAll('.edgePath path').forEach(function(p) {
+                    p.setAttribute('stroke', '#58a6ff');
+                    p.setAttribute('stroke-width', '1.5');
+                });
+
+                svg.querySelectorAll('marker path').forEach(function(p) {
+                    p.setAttribute('fill', '#58a6ff');
+                });
+
+                applyTextColor(svg);
+            });
         });
     </script>
 </body>
