@@ -3580,10 +3580,13 @@
                     <div class="mb-3">
                         <div class="d-flex flex-wrap align-items-center gap-2 mb-2">
                             {{$uniqueCerts := mapGetInt "unique_certs" $ct}}
+                            {{$totalCerts := mapGetInt "total_certs" $ct}}
                             {{if gt $uniqueCerts 0}}
                             <span class="badge bg-info-subtle text-info border border-info-subtle"><i class="fas fa-certificate me-1"></i>{{$uniqueCerts}} unique certificates</span>
+                            {{else if gt $totalCerts 0}}
+                            <span class="badge bg-info-subtle text-info border border-info-subtle"><i class="fas fa-certificate me-1"></i>{{$totalCerts}} certificates analyzed</span>
                             {{else}}
-                            <span class="badge bg-info-subtle text-info border border-info-subtle"><i class="fas fa-certificate me-1"></i>{{mapGetStr "total_certs" $ct}} certificates analyzed</span>
+                            <span class="badge bg-warning-subtle text-warning border border-warning-subtle" data-bs-toggle="tooltip" title="Certificate Transparency logs were unavailable during this analysis. Subdomains shown were discovered via DNS probing only. Re-analyze to retry CT lookup."><i class="fas fa-exclamation-triangle me-1"></i>CT logs unavailable</span>
                             {{end}}
                             <span class="badge bg-success-subtle text-success border border-success-subtle"><i class="fas fa-check me-1"></i>{{mapGetStr "current_count" $ct}} current</span>
                             <span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle"><i class="fas fa-history me-1"></i>{{mapGetStr "expired_count" $ct}} expired</span>
@@ -4307,20 +4310,26 @@
         {{if .ICAEMetrics}}
         <div class="card bg-dark border-secondary mt-5 mb-3 screen-only" id="icae-confidence">
             <div class="card-body py-3 px-4">
-                <div class="d-flex align-items-center mb-2">
-                    <i class="fas fa-check-circle text-info me-2"></i>
-                    <span class="text-muted small fw-bold text-uppercase u-icae-label">Intelligence Confidence Audit Engine</span>
+                <div class="d-flex align-items-center justify-content-between mb-2">
+                    <span>
+                        <i class="fas fa-check-circle text-info me-2"></i>
+                        <span class="text-muted small fw-bold text-uppercase u-icae-label">Intelligence Confidence Audit Engine</span>
+                    </span>
+                    <span class="badge bg-dark border border-secondary text-muted small" data-bs-toggle="tooltip" title="Overall system maturity across all {{.ICAEMetrics.TotalProtocols}} monitored protocols">{{.ICAEMetrics.OverallMaturityDisplay}}</span>
+                </div>
+                <div class="text-muted small mb-2">
+                    How confident are these results? Each protocol below is independently tested against RFC standards. Maturity levels reflect consecutive passing runs: Development → Verified → Consistent → Gold.
                 </div>
                 <div class="d-flex flex-wrap gap-2">
                     {{range .ICAEMetrics.Protocols}}
-                    <span class="badge bg-dark border border-secondary px-2 py-1" title="Collection: {{.CollectionDisplay}} ({{.CollectionRuns}} runs) · Analysis: {{.AnalysisDisplay}} ({{.AnalysisRuns}} runs)">
+                    <span class="badge bg-dark border border-secondary px-2 py-1" data-bs-toggle="tooltip" title="Collection: {{.CollectionDisplay}} ({{.CollectionRuns}} runs) · Analysis: {{.AnalysisDisplay}} ({{.AnalysisRuns}} runs)">
                         <span class="text-muted">{{.DisplayName}}</span>
                         <span class="ms-1 {{if eq .AnalysisLevel "gold"}}text-warning{{else if eq .AnalysisLevel "master_gold"}}text-warning{{else if eq .AnalysisLevel "consistent"}}text-info{{else if eq .AnalysisLevel "verified"}}text-success{{else}}text-secondary{{end}}">{{.AnalysisDisplay}}</span>
                     </span>
                     {{end}}
                 </div>
                 <div class="text-muted mt-2 u-icae-disclaimer">
-                    Per-protocol accuracy verified against RFC test fixtures. Collection + analysis layers tracked independently. No self-awarded badges.
+                    Per-protocol accuracy verified against RFC test fixtures. Collection + analysis layers tracked independently. Hover any protocol for details. No self-awarded badges.
                 </div>
             </div>
         </div>
