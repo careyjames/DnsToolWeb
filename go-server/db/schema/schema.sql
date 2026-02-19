@@ -151,3 +151,14 @@ CREATE TABLE ice_regressions (
 );
 
 CREATE INDEX ix_ice_regressions_protocol ON ice_regressions (protocol, layer, created_at);
+
+CREATE TABLE user_analyses (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    analysis_id INTEGER NOT NULL REFERENCES domain_analyses(id) ON DELETE CASCADE,
+    created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+    CONSTRAINT user_analyses_unique UNIQUE (user_id, analysis_id)
+);
+
+CREATE INDEX ix_user_analyses_user_id ON user_analyses (user_id, created_at DESC);
+CREATE INDEX ix_user_analyses_analysis_id ON user_analyses (analysis_id);

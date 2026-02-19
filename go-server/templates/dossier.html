@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="dark">
+<head>
+    {{template "head" .}}
+    <title>Intelligence Dossier - DNS Tool</title>
+    <meta name="description" content="Your tasked intelligence collections. View domains you have analyzed, track posture changes, and revisit your DNS security reports.">
+    <meta name="robots" content="noindex, nofollow">
+    {{template "critical_css" .}}
+    <style nonce="{{.CspNonce}}">
+        .text-center{text-align:center}
+        .my-4{margin-top:1.5rem;margin-bottom:1.5rem}
+        .mb-0{margin-bottom:0}
+        .mb-1{margin-bottom:.25rem}
+        .mb-2{margin-bottom:.5rem}
+        .mb-3{margin-bottom:1rem}
+        .mb-4{margin-bottom:1.5rem}
+        .mt-4{margin-top:1.5rem}
+        .mt-5{margin-top:3rem}
+        .py-2{padding-top:.5rem;padding-bottom:.5rem}
+        .py-3{padding-top:1rem;padding-bottom:1rem}
+        .py-5{padding-top:3rem;padding-bottom:3rem}
+        .px-3{padding-left:1rem;padding-right:1rem}
+        .me-1{margin-inline-end:.25rem}
+        .me-2{margin-inline-end:.5rem}
+        .ms-1{margin-inline-start:.25rem}
+        .ms-2{margin-inline-start:.5rem}
+        .ms-auto{margin-inline-start:auto}
+        .text-muted{color:#adb5bd!important}
+        .text-primary{color:#0d6efd!important}
+        .text-light{color:#f8f9fa!important}
+        .text-info{color:#0dcaf0!important}
+        .fw-medium{font-weight:500}
+        .small{font-size:.875em}
+        .d-flex{display:flex}
+        .d-none{display:none}
+        .gap-1{gap:.25rem}
+        .gap-2{gap:.5rem}
+        .flex-wrap{flex-wrap:wrap}
+        .flex-shrink-0{flex-shrink:0}
+        .align-items-center{align-items:center}
+        .align-items-start{align-items:start}
+        .justify-content-between{justify-content:space-between}
+        .justify-content-center{justify-content:center}
+        .min-width-0{min-width:0}
+        .text-truncate{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+        .form-control{display:block;width:100%;padding:.375rem .75rem;font-size:1rem;background-color:#2b3035;border:1px solid #495057;border-radius:.375rem;color:#dee2e6}
+        .btn{display:inline-block;padding:.375rem .75rem;font-size:1rem;border-radius:.375rem;text-decoration:none;cursor:pointer;border:1px solid transparent}
+        .btn-primary{background-color:var(--bs-primary);border-color:var(--bs-primary);color:#fff}
+        .btn-sm{padding:.25rem .5rem;font-size:.875rem}
+        .btn-outline-primary{color:#0d6efd;border-color:#0d6efd;background:transparent}
+        .btn-outline-success{color:#198754;border-color:#198754;background:transparent}
+        .btn-outline-warning{color:#ffc107;border-color:#ffc107;background:transparent}
+        .btn-outline-secondary{color:#6c757d;border-color:#6c757d;background:transparent}
+        .btn-group{display:inline-flex}
+        .btn-group>.btn{border-radius:0}.btn-group>.btn:first-child{border-top-left-radius:.375rem;border-bottom-left-radius:.375rem}.btn-group>.btn:last-child{border-top-right-radius:.375rem;border-bottom-right-radius:.375rem}
+        .input-group{display:flex;flex-wrap:wrap}
+        .input-group>.form-control{flex:1 1 auto;width:1%}
+        .input-group-text{display:flex;align-items:center;padding:.375rem .75rem;font-size:1rem;border:1px solid #495057;border-radius:.375rem}
+        .table{width:100%;margin-bottom:1rem;color:#dee2e6;border-collapse:collapse}
+        .table th,.table td{padding:.5rem;vertical-align:top;border-top:1px solid #495057}
+        .table thead th{vertical-align:bottom;border-bottom:2px solid #495057}
+        .table-hover tbody tr:hover{background-color:rgba(255,255,255,.075)}
+        .table-responsive{overflow-x:auto;-webkit-overflow-scrolling:touch}
+        .badge{display:inline-block;padding:.35em .65em;font-size:.75em;font-weight:700;border-radius:.25rem;color:#fff}
+        .bg-success{background-color:#198754!important}
+        .bg-warning{background-color:#ffc107!important;color:#000!important}
+        .bg-danger{background-color:#dc3545!important}
+        .bg-info{background-color:#0dcaf0!important}
+        .bg-secondary{background-color:#6c757d!important}
+        .pagination{display:flex;padding-left:0;list-style:none;gap:.25rem}
+        .page-item.active .page-link{background-color:#0d6efd;border-color:#0d6efd;color:#fff}
+        .page-item.disabled .page-link{color:#6c757d;pointer-events:none}
+        .page-link{padding:.375rem .75rem;color:#6ea8fe;text-decoration:none;background-color:#2b3035;border:1px solid #495057;border-radius:.375rem}
+        .h3{font-size:1.75rem;font-weight:500}
+        @media(min-width:768px){.d-md-none{display:none!important}.d-none.d-md-block{display:block!important}}
+        @media(max-width:767.98px){.d-md-none{display:block}.d-none.d-md-block{display:none!important}}
+        @media(min-width:576px){.d-none.d-sm-inline{display:inline!important}}
+        .navbar-nav{display:flex;list-style:none;margin:0;padding:0}
+        .nav-link{color:rgba(255,255,255,.55);text-decoration:none;padding:.5rem 1rem}
+        .row{display:flex;flex-wrap:wrap;margin:0 -.75rem}
+        .dossier-stat{text-align:center;padding:1rem}
+        .dossier-stat-value{font-size:1.5rem;font-weight:700;color:#58a6ff}
+        .dossier-stat-label{font-size:.8rem;text-transform:uppercase;letter-spacing:.05em;color:#8b949e}
+    </style>
+    {{template "head_css" .}}
+</head>
+<body>
+    {{template "nav" .}}
+
+    <main id="main-content" class="container my-4">
+        {{template "flash_messages" .}}
+
+        {{if .RequiresAuth}}
+        <div class="text-center py-5">
+            <i class="fas fa-briefcase fa-3x text-muted mb-3"></i>
+            <h1 class="h3 mb-2">Intelligence Dossier</h1>
+            <p class="text-muted mb-4">Sign in to access your tasked intelligence collections and track your domain security assessments.</p>
+            {{if .GoogleAuthEnabled}}
+            <a href="/auth/login" class="btn btn-primary">
+                <i class="fas fa-key me-2"></i>Sign In to Access Dossier
+            </a>
+            {{end}}
+        </div>
+        {{else}}
+
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h1 class="h3 mb-1">
+                    <i class="fas fa-briefcase me-2"></i>Intelligence Dossier
+                </h1>
+                <p class="text-muted mb-0">Your tasked intelligence collections &mdash; domain assessments initiated by <strong class="text-info">{{.UserName}}</strong></p>
+            </div>
+            <div class="d-flex gap-2">
+                <a href="/" class="btn btn-primary">
+                    <i class="fas fa-plus me-1"></i><span class="d-none d-sm-inline">New Assessment</span>
+                </a>
+            </div>
+        </div>
+
+        {{if gt .TotalReports 0}}
+        <div class="card mb-3">
+            <div class="card-body py-2">
+                <div class="d-flex align-items-center gap-2">
+                    <span class="badge bg-info"><i class="fas fa-file-alt me-1"></i>{{.TotalReports}} {{if eq .TotalReports 1}}Report{{else}}Reports{{end}}</span>
+                    <span class="text-muted small">Analyses correlated to your authenticated session</span>
+                </div>
+            </div>
+        </div>
+        {{end}}
+
+        <div class="card mb-4">
+            <div class="card-body py-2">
+                <form action="/dossier" method="GET" role="search" class="d-flex align-items-center gap-2">
+                    <div class="input-group">
+                        <span class="input-group-text bg-transparent border-secondary">
+                            <i class="fas fa-search text-muted"></i>
+                        </span>
+                        <input type="text" name="domain" class="form-control border-secondary" 
+                               placeholder="Search your assessed domains..." 
+                               aria-label="Search dossier by domain name"
+                               value="{{.SearchDomain}}"
+                               autocomplete="off" autocapitalize="none" spellcheck="false">
+                    </div>
+                    <button type="submit" class="btn btn-outline-primary flex-shrink-0">Search</button>
+                    {{if .SearchDomain}}
+                        <a href="/dossier" class="btn btn-outline-secondary flex-shrink-0" title="Clear search">
+                            <i class="fas fa-times"></i>
+                        </a>
+                    {{end}}
+                </form>
+            </div>
+        </div>
+
+        {{if .SearchDomain}}
+            <div class="mb-3">
+                <span class="text-muted">
+                    {{if eq .Pagination.Total 0}}
+                        No results found for "<strong>{{.SearchDomain}}</strong>"
+                    {{else if eq .Pagination.Total 1}}
+                        1 result for "<strong>{{.SearchDomain}}</strong>"
+                    {{else}}
+                        {{.Pagination.Total}} results for "<strong>{{.SearchDomain}}</strong>"
+                    {{end}}
+                </span>
+            </div>
+        {{end}}
+
+        {{if .Analyses}}
+            <div class="card d-none d-md-block">
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Domain</th>
+                                    <th>Email Security</th>
+                                    <th>Duration</th>
+                                    <th>Date</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {{range $i, $a := .Analyses}}
+                                <tr>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <i class="fas fa-globe text-primary me-2"></i>
+                                            <div>
+                                                <div class="fw-medium">{{$a.Domain}}</div>
+                                                {{if ne $a.AsciiDomain $a.Domain}}
+                                                    <small class="text-muted">{{$a.AsciiDomain}}</small>
+                                                {{end}}
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="d-flex gap-1">
+                                            {{if eq $a.SpfStatus "success"}}
+                                                <span class="badge bg-success" title="SPF configured">SPF</span>
+                                            {{else if or (eq $a.SpfStatus "warning") (eq $a.SpfStatus "error")}}
+                                                <span class="badge bg-danger" title="SPF missing or misconfigured"><i class="fas fa-times me-1"></i>SPF</span>
+                                            {{end}}
+                                            {{if eq $a.DmarcStatus "success"}}
+                                                <span class="badge bg-success" title="DMARC configured">DMARC</span>
+                                            {{else if or (eq $a.DmarcStatus "warning") (eq $a.DmarcStatus "error")}}
+                                                <span class="badge bg-danger" title="DMARC missing or misconfigured"><i class="fas fa-times me-1"></i>DMARC</span>
+                                            {{end}}
+                                            {{if or (eq $a.DkimStatus "success") (eq $a.DkimStatus "partial")}}
+                                                <span class="badge bg-success" title="DKIM found">DKIM</span>
+                                            {{else if eq $a.DkimStatus "info"}}
+                                                <span class="badge bg-info" title="DKIM not auto-discoverable (selectors unknown)">DKIM</span>
+                                            {{end}}
+                                        </div>
+                                    </td>
+                                    <td>
+                                        {{if $a.AnalysisDuration}}
+                                            {{formatFloat 2 $a.AnalysisDuration}}s
+                                        {{else}}
+                                            -
+                                        {{end}}
+                                    </td>
+                                    <td>
+                                        <div class="text-muted">
+                                            {{$a.CreatedDate}}<br>
+                                            <small>{{$a.CreatedTime}}</small>
+                                            {{if $a.ToolVersion}}
+                                                <br><small class="text-muted u-opacity-60">v{{$a.ToolVersion}}</small>
+                                            {{end}}
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="btn-group">
+                                            <a href="/analysis/{{$a.ID}}/view" 
+                                               class="btn btn-sm btn-outline-primary dossier-view-btn" title="View intelligence report">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                            <a href="/analyze?domain={{$a.Domain}}" 
+                                               class="btn btn-sm btn-outline-success dossier-reanalyze-btn" title="Re-assess now">
+                                                <i class="fas fa-sync-alt"></i>
+                                            </a>
+                                            <a href="/compare?domain={{$a.Domain}}" 
+                                               class="btn btn-sm btn-outline-warning" title="Compare assessments">
+                                                <i class="fas fa-code-compare"></i>
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {{end}}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div class="d-md-none">
+                {{range $i, $a := .Analyses}}
+                <div class="card mb-2">
+                    <div class="card-body py-2 px-3">
+                        <div class="d-flex justify-content-between align-items-start mb-1">
+                            <div class="d-flex align-items-center min-width-0">
+                                <i class="fas fa-globe text-primary me-2 flex-shrink-0"></i>
+                                <div class="min-width-0">
+                                    <div class="fw-medium text-truncate">{{$a.Domain}}</div>
+                                </div>
+                            </div>
+                            <div class="btn-group flex-shrink-0 ms-2">
+                                <a href="/analysis/{{$a.ID}}/view" 
+                                   class="btn btn-sm btn-outline-primary dossier-view-btn" title="View">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                <a href="/analyze?domain={{$a.Domain}}" 
+                                   class="btn btn-sm btn-outline-success dossier-reanalyze-btn" title="Re-assess">
+                                    <i class="fas fa-sync-alt"></i>
+                                </a>
+                            </div>
+                        </div>
+                        <div class="d-flex flex-wrap align-items-center gap-1 small">
+                            {{if eq $a.SpfStatus "success"}}
+                                <span class="badge bg-success u-fs-065rem">SPF</span>
+                            {{else if or (eq $a.SpfStatus "warning") (eq $a.SpfStatus "error")}}
+                                <span class="badge bg-danger u-fs-065rem"><i class="fas fa-times me-1"></i>SPF</span>
+                            {{end}}
+                            {{if eq $a.DmarcStatus "success"}}
+                                <span class="badge bg-success u-fs-065rem">DMARC</span>
+                            {{else if or (eq $a.DmarcStatus "warning") (eq $a.DmarcStatus "error")}}
+                                <span class="badge bg-danger u-fs-065rem"><i class="fas fa-times me-1"></i>DMARC</span>
+                            {{end}}
+                            {{if or (eq $a.DkimStatus "success") (eq $a.DkimStatus "partial")}}
+                                <span class="badge bg-success u-fs-065rem">DKIM</span>
+                            {{else if eq $a.DkimStatus "info"}}
+                                <span class="badge bg-info u-fs-065rem">DKIM</span>
+                            {{end}}
+                            <span class="text-muted ms-auto u-fs-070rem">
+                                {{$a.CreatedDate}} {{$a.CreatedTime}}
+                                {{if $a.AnalysisDuration}} &middot; {{formatFloat 1 $a.AnalysisDuration}}s{{end}}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+                {{end}}
+            </div>
+
+            {{if gt .Pagination.TotalPages 1}}
+                <nav aria-label="Intelligence dossier pagination" class="mt-4">
+                    <ul class="pagination justify-content-center">
+                        {{if .Pagination.HasPrev}}
+                            <li class="page-item">
+                                <a class="page-link" href="/dossier?page={{.Pagination.PrevPage}}{{if .SearchDomain}}&domain={{.SearchDomain}}{{end}}">
+                                    <i class="fas fa-chevron-left"></i> Previous
+                                </a>
+                            </li>
+                        {{end}}
+                        
+                        {{range $p := .Pagination.Pages}}
+                            {{if $p.IsGap}}
+                                <li class="page-item disabled">
+                                    <span class="page-link">...</span>
+                                </li>
+                            {{else}}
+                                {{if $p.IsActive}}
+                                    <li class="page-item active">
+                                        <span class="page-link">{{$p.Number}}</span>
+                                    </li>
+                                {{else}}
+                                    <li class="page-item">
+                                        <a class="page-link" href="/dossier?page={{$p.Number}}{{if $.SearchDomain}}&domain={{$.SearchDomain}}{{end}}">{{$p.Number}}</a>
+                                    </li>
+                                {{end}}
+                            {{end}}
+                        {{end}}
+                        
+                        {{if .Pagination.HasNext}}
+                            <li class="page-item">
+                                <a class="page-link" href="/dossier?page={{.Pagination.NextPage}}{{if .SearchDomain}}&domain={{.SearchDomain}}{{end}}">
+                                    Next <i class="fas fa-chevron-right"></i>
+                                </a>
+                            </li>
+                        {{end}}
+                    </ul>
+                </nav>
+            {{end}}
+        {{else}}
+            <div class="text-center py-5">
+                {{if .SearchDomain}}
+                    <i class="fas fa-search fa-3x text-muted mb-3"></i>
+                    <h4 class="text-muted">No Matching Collections</h4>
+                    <p class="text-muted mb-4">No intelligence reports found for "<strong>{{.SearchDomain}}</strong>" in your dossier.</p>
+                    <a href="/dossier" class="btn btn-outline-secondary me-2">
+                        <i class="fas fa-times me-2"></i>Clear Search
+                    </a>
+                    <a href="/analyze?domain={{.SearchDomain}}" class="btn btn-primary">
+                        <i class="fas fa-search me-2"></i>Assess {{.SearchDomain}}
+                    </a>
+                {{else}}
+                    <i class="fas fa-briefcase fa-3x text-muted mb-3"></i>
+                    <h4 class="text-muted">No Tasked Collections Yet</h4>
+                    <p class="text-muted mb-4">Your intelligence dossier is empty. Run a domain security assessment while signed in to begin building your collection.</p>
+                    <a href="/" class="btn btn-primary">
+                        <i class="fas fa-search me-2"></i>Start First Assessment
+                    </a>
+                {{end}}
+            </div>
+        {{end}}
+        {{end}}
+
+        {{template "footer" .}}
+    </main>
+
+    <div id="dossierViewOverlay" class="loading-overlay" role="status" aria-live="polite" aria-label="Loading stored results">
+        <div class="loading-content">
+            <div class="spinner-border text-primary mb-3 u-icon-3rem"><span class="visually-hidden">Loading...</span></div>
+            <div class="text-light fw-medium" id="dossierViewText">Loading intelligence report...</div>
+        </div>
+    </div>
+
+    <div id="dossierAnalyzeOverlay" class="loading-overlay" role="status" aria-live="polite" aria-busy="true" aria-label="Running domain assessment">
+        <div class="loading-content">
+            <div class="loading-spinner">
+                <i class="fas fa-globe fa-spin"></i>
+            </div>
+            <h4 class="mt-4 mb-2">Running Multi-Source Intelligence Audit</h4>
+            <p class="text-muted mb-0" id="dossierAnalyzeDomain"></p>
+            <div class="loading-elapsed mt-2">
+                <span class="text-muted small" id="dossierLoadingTimer">0s</span>
+            </div>
+            <div class="loading-dots mt-2">
+                <span></span><span></span><span></span>
+            </div>
+        </div>
+    </div>
+
+    {{template "scripts" .}}
+    <script nonce="{{.CspNonce}}">
+    (function(){
+        document.querySelectorAll('.dossier-view-btn').forEach(function(btn){
+            btn.addEventListener('click', function(e){
+                var overlay = document.getElementById('dossierViewOverlay');
+                if(overlay) overlay.classList.add('active');
+            });
+        });
+
+        document.querySelectorAll('.dossier-reanalyze-btn').forEach(function(btn){
+            btn.addEventListener('click', function(e){
+                e.preventDefault();
+                var href = btn.getAttribute('href');
+                var domain = href.split('domain=')[1] || '';
+                var overlay = document.getElementById('dossierAnalyzeOverlay');
+                var domainEl = document.getElementById('dossierAnalyzeDomain');
+                if(domainEl) domainEl.textContent = decodeURIComponent(domain);
+                if(overlay) overlay.classList.add('active');
+
+                var timerEl = document.getElementById('dossierLoadingTimer');
+                var start = Date.now();
+                if(timerEl){
+                    var interval = setInterval(function(){
+                        var elapsed = Math.floor((Date.now()-start)/1000);
+                        timerEl.textContent = elapsed + 's';
+                    }, 1000);
+                }
+
+                var form = document.createElement('form');
+                form.method = 'POST';
+                form.action = '/analyze';
+                var input = document.createElement('input');
+                input.type = 'hidden';
+                input.name = 'domain';
+                input.value = decodeURIComponent(domain);
+                form.appendChild(input);
+                var csrf = document.querySelector('meta[name="csrf-token"]');
+                if(csrf){
+                    var csrfInput = document.createElement('input');
+                    csrfInput.type = 'hidden';
+                    csrfInput.name = '_csrf';
+                    csrfInput.value = csrf.getAttribute('content');
+                    form.appendChild(csrfInput);
+                }
+                document.body.appendChild(form);
+                form.submit();
+            });
+        });
+    })();
+    </script>
+</body>
+</html>

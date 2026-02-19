@@ -275,6 +275,24 @@ func (h *AnalysisHandler) Analyze(c *gin.Context) {
 
         analysisID, timestamp := h.saveAnalysis(c.Request.Context(), domain, asciiDomain, results, analysisDuration, countryCode, countryName)
 
+        if analysisID > 0 {
+                if auth, exists := c.Get("authenticated"); exists && auth == true {
+                        if uid, ok := c.Get("user_id"); ok {
+                                if userID, ok := uid.(int32); ok {
+                                        go func() {
+                                                err := h.DB.Queries.InsertUserAnalysis(context.Background(), dbq.InsertUserAnalysisParams{
+                                                        UserID:     userID,
+                                                        AnalysisID: analysisID,
+                                                })
+                                                if err != nil {
+                                                        slog.Error("Failed to record user analysis association", "user_id", userID, "analysis_id", analysisID, "error", err)
+                                                }
+                                        }()
+                                }
+                        }
+                }
+        }
+
         icae.EvaluateAndRecord(context.Background(), h.DB.Queries, h.Config.AppVersion)
 
         verifyCommands := analyzer.GenerateVerificationCommands(asciiDomain, results)

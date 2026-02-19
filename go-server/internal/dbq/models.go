@@ -138,3 +138,10 @@ type User struct {
 	CreatedAt   pgtype.Timestamp `db:"created_at" json:"created_at"`
 	LastLoginAt pgtype.Timestamp `db:"last_login_at" json:"last_login_at"`
 }
+
+type UserAnalysis struct {
+	ID         int32            `db:"id" json:"id"`
+	UserID     int32            `db:"user_id" json:"user_id"`
+	AnalysisID int32            `db:"analysis_id" json:"analysis_id"`
+	CreatedAt  pgtype.Timestamp `db:"created_at" json:"created_at"`
+}

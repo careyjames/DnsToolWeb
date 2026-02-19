@@ -141,6 +141,9 @@ func main() {
 
         router.GET("/history", historyHandler.History)
 
+        dossierHandler := handlers.NewDossierHandler(database, cfg)
+        router.GET("/dossier", dossierHandler.Dossier)
+
         router.GET("/analysis/:id", analysisHandler.ViewAnalysis)
         router.GET("/analysis/:id/view", analysisHandler.ViewAnalysisStatic)
         router.GET("/analysis/:id/executive", analysisHandler.ViewAnalysisExecutive)
