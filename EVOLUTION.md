@@ -40,9 +40,9 @@ This file is the project's permanent breadcrumb trail — every session's decisi
 
 Investigated whether HTTP responses could include ANSI escape codes for terminal colorization when accessed via `curl`. Conclusion: **Not permitted.** RFC 7230 requires header field values to be visible US-ASCII (0x21-0x7E) plus SP/HTAB. ANSI escape codes (0x1B) violate the spec and break parsers, proxies, CDNs, and logging tools. HTML comments in the response body are the correct mechanism for `curl` discovery — they render as readable plain text in terminals.
 
-#### Siemens ProductCERT Connection
+#### Siemens ProductCERT — Independent Convergence
 
-The Easter egg approach extends the same transparency philosophy adopted from Siemens ProductCERT in v26.21.4 (cryptographic algorithm classification). Key lesson: *radical transparency, when backed by citations and standards, is a strength signal, not a weakness signal.* Applied here: the legal disclaimers don't weaken the Easter eggs — they strengthen them by showing we know exactly what we do (passive OSINT) and aren't afraid to say so, with RFC citations to back it up.
+DNS Tool's observation-based, standards-cited transparency model was developed independently — the project's "Accuracy First" principle and observation-based language predate the Siemens discovery. During v26.21.4 (cryptographic algorithm classification), we found that Siemens ProductCERT follows a strikingly similar approach: high-volume, machine-readable, standards-cited security disclosures treated as a signal of engineering maturity rather than vulnerability. This validated our existing direction rather than inspiring it. The same principle applies to the Easter egg disclaimers — citing RFC 1392 and describing exactly what the tool does (passive OSINT) is the honest, neutral-scientist approach we were already committed to.
 
 #### Complete Easter Egg Inventory
 
@@ -88,7 +88,7 @@ The Easter egg approach extends the same transparency philosophy adopted from Si
 #### Design Principles
 - **Observation-based language**: All classifications use RFC-cited factual observations, never fear-mongering ("MUST NOT use per RFC 8624 §3.1" not "unsafe" or "dangerous").
 - **PQC transparency**: Every classical algorithm carries identical quantum note: "Post-quantum DNSSEC standards in active IETF development but no PQC algorithms standardized yet."
-- **Enterprise transparency model**: Inspired by Siemens ProductCERT approach — high-volume, machine-readable, standards-cited disclosures as a signal of engineering maturity.
+- **Enterprise transparency model**: Independent convergence with Siemens ProductCERT approach — both projects arrived at high-volume, machine-readable, standards-cited disclosures as a signal of engineering maturity. DNS Tool's observation-based language predates the Siemens discovery; finding their model validated our existing direction.
 
 #### Files Changed
 - **New**: `go-server/internal/analyzer/crypto_policy.go` (classification engine)
