@@ -8,7 +8,7 @@
     
     /* Text: Off-white for reduced eye strain */
     --text-primary: rgba(230, 237, 243, 0.9);    /* ~#e6edf3 at 90% */
-    --text-secondary: rgba(139, 148, 158, 0.9);  /* Muted text */
+    --text-secondary: rgba(148, 157, 168, 0.95);  /* Muted text — WCAG AA 4.5:1 on #0d1117 */
     
     /* Code blocks */
     --code-bg: #161b22;
@@ -64,13 +64,20 @@ html {
 }
 
 .u-skip-link {
-    display: none;
+    position: absolute;
+    left: -9999px;
+    top: auto;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
 }
 .u-skip-link:focus {
-    display: block;
     position: fixed;
-    top: 4px;
     left: 4px;
+    top: 4px;
+    width: auto;
+    height: auto;
+    overflow: visible;
     padding: 0.5rem 1rem;
     background: var(--bg-tertiary);
     color: var(--status-info);
@@ -3110,7 +3117,7 @@ main.container {
     color: #495057;
 }
 .u-hash-label { font-size: 0.7rem; border: 1px solid rgba(255,193,7,0.4); color: #ffc107; background: transparent; }
-.u-color-gray-400 { color: #9ca3af; }
+.u-color-gray-400 { color: #a1a9b4; }
 .u-color-gray-500 { color: #6b7280; }
 .u-color-heading-light { color: #e5e7eb; }
 .u-link-dotted { cursor: pointer; text-decoration: underline; text-decoration-style: dotted; }

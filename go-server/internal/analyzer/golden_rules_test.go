@@ -1008,6 +1008,9 @@ func TestGoldenRuleWildcardNotFalsePositive(t *testing.T) {
 }
 
 func TestGoldenRuleSubdomainDiscoveryUnder60s(t *testing.T) {
+        if testing.Short() {
+                t.Skip("skipping network-dependent test in short mode")
+        }
         if os.Getenv("CI") != "" {
                 t.Skip("skipping network-dependent test in CI")
         }

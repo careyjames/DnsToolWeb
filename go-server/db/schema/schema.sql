@@ -183,3 +183,19 @@ CREATE TABLE user_analyses (
 
 CREATE INDEX ix_user_analyses_user_id ON user_analyses (user_id, created_at DESC);
 CREATE INDEX ix_user_analyses_analysis_id ON user_analyses (analysis_id);
+
+CREATE TABLE zone_imports (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    domain VARCHAR(255) NOT NULL,
+    sha256_hash VARCHAR(64) NOT NULL,
+    original_filename VARCHAR(255) NOT NULL,
+    file_size INTEGER NOT NULL,
+    record_count INTEGER NOT NULL DEFAULT 0,
+    retained BOOLEAN NOT NULL DEFAULT FALSE,
+    zone_data TEXT,
+    drift_summary JSONB,
+    created_at TIMESTAMP NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX ix_zone_imports_user_domain ON zone_imports (user_id, domain, created_at DESC);

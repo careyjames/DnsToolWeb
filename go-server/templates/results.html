@@ -190,6 +190,9 @@
                         <li><span class="dropdown-item-text small text-muted pe-3" data-bs-toggle="tooltip" title="FIRST TLP v2.0 standard">TLP (Traffic Light Protocol) governs dissemination of this intelligence product. Default: AMBER per FIRST/CISA standards for security posture reports. Full hierarchy: RED (recipient only) → AMBER+STRICT (organisation only) → AMBER (organisation and clients) → GREEN (community) → CLEAR (public). Per FIRST TLP v2.0.</span></li>
                     </ul>
                 </div>
+                <a href="/snapshot/{{.AsciiDomain}}" class="btn btn-outline-info btn-sm me-2" title="Download Observed Records Snapshot">
+                    <i class="fas fa-file-lines me-1"></i>Snapshot
+                </a>
                 <a href="/analyze?domain={{.AsciiDomain}}" id="reanalyzeBtn" class="btn btn-analyze" data-domain="{{.AsciiDomain}}"
                     {{if gt .WaitSeconds 0}}data-wait-seconds="{{.WaitSeconds}}" data-wait-reason="{{.WaitReason}}"{{end}}>
                     <i class="fas fa-sync-alt me-2"></i>Re-analyze

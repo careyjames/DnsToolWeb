@@ -124,6 +124,7 @@ func main() {
         statsHandler := handlers.NewStatsHandler(database, cfg)
         compareHandler := handlers.NewCompareHandler(database, cfg)
         exportHandler := handlers.NewExportHandler(database)
+        snapshotHandler := handlers.NewSnapshotHandler(database, cfg)
         staticHandler := handlers.NewStaticHandler(staticDir, cfg.AppVersion)
         proxyHandler := handlers.NewProxyHandler()
 
@@ -164,6 +165,8 @@ func main() {
         analyticsHandler := handlers.NewAnalyticsHandler(database, cfg)
         router.GET("/admin/analytics", middleware.RequireAdmin(), analyticsHandler.Dashboard)
 
+        router.GET("/snapshot/:domain", snapshotHandler.Snapshot)
+
         router.GET("/export/json", middleware.RequireAdmin(), exportHandler.ExportJSON)
         router.GET("/export/subdomains", analysisHandler.ExportSubdomainsCSV)
 
@@ -199,6 +202,10 @@ func main() {
 
         brandColorsHandler := handlers.NewBrandColorsHandler(cfg)
         router.GET("/brand-colors", brandColorsHandler.BrandColors)
+
+        zoneHandler := handlers.NewZoneHandler(database, cfg)
+        router.GET("/zone", middleware.RequireAuth(), zoneHandler.UploadForm)
+        router.POST("/zone/upload", middleware.RequireAuth(), zoneHandler.ProcessUpload)
 
         authHandler := handlers.NewAuthHandler(cfg, database.Pool)
         if cfg.GoogleClientID != "" {

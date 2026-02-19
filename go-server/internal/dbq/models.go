@@ -160,3 +160,17 @@ type UserAnalysis struct {
 	AnalysisID int32            `db:"analysis_id" json:"analysis_id"`
 	CreatedAt  pgtype.Timestamp `db:"created_at" json:"created_at"`
 }
+
+type ZoneImport struct {
+	ID               int32            `db:"id" json:"id"`
+	UserID           int32            `db:"user_id" json:"user_id"`
+	Domain           string           `db:"domain" json:"domain"`
+	Sha256Hash       string           `db:"sha256_hash" json:"sha256_hash"`
+	OriginalFilename string           `db:"original_filename" json:"original_filename"`
+	FileSize         int32            `db:"file_size" json:"file_size"`
+	RecordCount      int32            `db:"record_count" json:"record_count"`
+	Retained         bool             `db:"retained" json:"retained"`
+	ZoneData         *string          `db:"zone_data" json:"zone_data"`
+	DriftSummary     []byte           `db:"drift_summary" json:"drift_summary"`
+	CreatedAt        pgtype.Timestamp `db:"created_at" json:"created_at"`
+}
