@@ -349,44 +349,81 @@ func (a *Analyzer) fetchCTWithRetry(domain, ctProvider string) ([]ctEntry, bool,
 }
 
 type certspotterEntry struct {
+        ID        string   `json:"id"`
         DNSNames  []string `json:"dns_names"`
         NotBefore string   `json:"not_before"`
         NotAfter  string   `json:"not_after"`
 }
 
 func (a *Analyzer) fetchCertspotter(domain string) ([]ctEntry, bool) {
-        csURL := fmt.Sprintf("https://api.certspotter.com/v1/issuances?domain=%s&include_subdomains=true&expand=dns_names", domain)
-        csCtx, csCancel := context.WithTimeout(context.Background(), 30*time.Second)
-        defer csCancel()
+        const maxPages = 10
+        budgetCtx, budgetCancel := context.WithTimeout(context.Background(), 60*time.Second)
+        defer budgetCancel()
 
-        resp, err := a.HTTP.Get(csCtx, csURL)
-        if err != nil {
-                slog.Warn("Certspotter query failed", "domain", domain, "error", err)
+        var allEntries []ctEntry
+        cursor := ""
+
+        for page := 0; page < maxPages; page++ {
+                if budgetCtx.Err() != nil {
+                        break
+                }
+
+                csURL := fmt.Sprintf("https://api.certspotter.com/v1/issuances?domain=%s&include_subdomains=true&expand=dns_names", domain)
+                if cursor != "" {
+                        csURL += "&after=" + cursor
+                }
+
+                pageCtx, pageCancel := context.WithTimeout(budgetCtx, 15*time.Second)
+                resp, err := a.HTTP.Get(pageCtx, csURL)
+                if err != nil {
+                        slog.Warn("Certspotter query failed", "domain", domain, "page", page, "error", err)
+                        pageCancel()
+                        if page > 0 {
+                                break
+                        }
+                        return nil, false
+                }
+                body, err := a.HTTP.ReadBody(resp, 10<<20)
+                pageCancel()
+                if err != nil || resp.StatusCode != 200 {
+                        slog.Warn("Certspotter bad response", "domain", domain, "page", page, "status", resp.StatusCode)
+                        if page > 0 {
+                                break
+                        }
+                        return nil, false
+                }
+
+                var csEntries []certspotterEntry
+                if json.Unmarshal(body, &csEntries) != nil {
+                        if page > 0 {
+                                break
+                        }
+                        return nil, false
+                }
+
+                for _, cs := range csEntries {
+                        nameValue := strings.Join(cs.DNSNames, "\n")
+                        allEntries = append(allEntries, ctEntry{
+                                NameValue: nameValue,
+                                NotBefore: cs.NotBefore,
+                                NotAfter:  cs.NotAfter,
+                        })
+                }
+
+                if len(csEntries) < 100 {
+                        break
+                }
+
+                cursor = csEntries[len(csEntries)-1].ID
+                slog.Info("Certspotter pagination", "domain", domain, "page", page+1, "entries_so_far", len(allEntries))
+        }
+
+        if len(allEntries) == 0 {
                 return nil, false
         }
-        body, err := a.HTTP.ReadBody(resp, 10<<20)
-        if err != nil || resp.StatusCode != 200 {
-                slog.Warn("Certspotter bad response", "domain", domain, "status", resp.StatusCode)
-                return nil, false
-        }
 
-        var csEntries []certspotterEntry
-        if json.Unmarshal(body, &csEntries) != nil {
-                return nil, false
-        }
-
-        var ctEntries []ctEntry
-        for _, cs := range csEntries {
-                nameValue := strings.Join(cs.DNSNames, "\n")
-                ctEntries = append(ctEntries, ctEntry{
-                        NameValue: nameValue,
-                        NotBefore: cs.NotBefore,
-                        NotAfter:  cs.NotAfter,
-                })
-        }
-
-        slog.Info("Certspotter query succeeded", "domain", domain, "entries", len(ctEntries))
-        return ctEntries, true
+        slog.Info("Certspotter query succeeded", "domain", domain, "total_entries", len(allEntries))
+        return allEntries, true
 }
 
 func sortSubdomainsSmartOrder(subdomains []map[string]any) []map[string]any {

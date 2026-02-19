@@ -89,7 +89,7 @@ Novel selectors are detected by checking against 81+ known defaults. Common sele
 
 **ICIE** — Intelligence Classification & Interpretation Engine. Orchestrates concurrent DNS collection, protocol analysis, and verdict generation across 12+ protocol analyzers.
 
-**ICAE** — Intelligence Confidence Audit Engine. 45 deterministic test cases across 5 protocol families validate analysis accuracy. Maturity progression: development → verified → consistent → gold → master gold.
+**ICAE** — Intelligence Confidence Audit Engine. 45 deterministic test cases across 5 protocol families validate analysis accuracy. Maturity progression: development → verified → consistent → gold → gold master.
 
 Two-repo open-core model: public stubs compile cleanly without the private intelligence module (provider databases, scoring algorithms, remediation engine). Build tags (`//go:build intel` vs `!intel`) control which implementation compiles.
 

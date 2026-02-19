@@ -14,16 +14,16 @@ const (
         MaturityVerified    = "verified"
         MaturityConsistent  = "consistent"
         MaturityGold        = "gold"
-        MaturityMasterGold  = "master_gold"
+        MaturityGoldMaster  = "gold_master"
 
-        ThresholdVerified   = 100
-        ThresholdConsistent = 500
-        ThresholdGold       = 1000
-        ThresholdMasterGold = 5000
+        ThresholdVerified    = 100
+        ThresholdConsistent  = 500
+        ThresholdGold        = 1000
+        ThresholdGoldMaster  = 5000
 
         ConsistentDays  = 30
         GoldDays        = 90
-        MasterGoldDays  = 180
+        GoldMasterDays  = 180
 )
 
 var Protocols = []string{
@@ -48,7 +48,7 @@ var MaturityDisplayNames = map[string]string{
         MaturityVerified:    "Verified",
         MaturityConsistent:  "Consistent",
         MaturityGold:        "Gold",
-        MaturityMasterGold:  "Master Gold",
+        MaturityGoldMaster:  "Gold Master",
 }
 
 var MaturityOrder = map[string]int{
@@ -56,7 +56,7 @@ var MaturityOrder = map[string]int{
         MaturityVerified:    1,
         MaturityConsistent:  2,
         MaturityGold:        3,
-        MaturityMasterGold:  4,
+        MaturityGoldMaster:  4,
 }
 
 type TestCase struct {
@@ -153,8 +153,8 @@ func ComputeMaturity(consecutivePasses int, firstPassAt *time.Time, lastRegressi
                 return MaturityDevelopment
         }
 
-        if consecutivePasses >= ThresholdMasterGold && daysSinceFirst >= MasterGoldDays {
-                return MaturityMasterGold
+        if consecutivePasses >= ThresholdGoldMaster && daysSinceFirst >= GoldMasterDays {
+                return MaturityGoldMaster
         }
         if consecutivePasses >= ThresholdGold && daysSinceFirst >= GoldDays {
                 return MaturityGold
@@ -170,7 +170,7 @@ func ComputeMaturity(consecutivePasses int, firstPassAt *time.Time, lastRegressi
 }
 
 func OverallMaturity(protocols []ProtocolReport) string {
-        lowest := MaturityMasterGold
+        lowest := MaturityGoldMaster
         lowestOrder := MaturityOrder[lowest]
 
         for _, p := range protocols {

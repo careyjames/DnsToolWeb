@@ -2695,7 +2695,7 @@ main.container {
 .u-color-gold { color: #d4a855; }
 .u-color-amber { color: #e0c97a; }
 
-.badge.icae-master-gold {
+.badge.icae-gold-master {
   background: linear-gradient(135deg, #d4a855, #f0c040) !important;
   color: #1a1a1a !important;
   font-weight: 600;

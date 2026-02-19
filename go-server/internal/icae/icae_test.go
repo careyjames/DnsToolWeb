@@ -45,7 +45,7 @@ func TestComputeMaturity(t *testing.T) {
                 {"100 passes, 5 days", 100, 5, true, 0, false, MaturityVerified},
                 {"500 passes, 30 days", 500, 30, true, 0, false, MaturityConsistent},
                 {"1000 passes, 90 days", 1000, 90, true, 0, false, MaturityGold},
-                {"5000 passes, 180 days", 5000, 180, true, 0, false, MaturityMasterGold},
+                {"5000 passes, 180 days", 5000, 180, true, 0, false, MaturityGoldMaster},
                 {"1000 passes but recent regression", 1000, 90, true, 10, true, MaturityVerified},
                 {"500 passes, only 15 days", 500, 15, true, 0, false, MaturityVerified},
         }

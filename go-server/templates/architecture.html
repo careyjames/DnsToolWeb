@@ -11,19 +11,21 @@
 </head>
 <body class="bg-dark text-light">
     {{template "nav" .}}
-    <main class="container py-4" id="main-content">
-        <div class="text-center mb-4">
-            <h1 class="display-6 fw-bold"><i class="fas fa-project-diagram me-2 text-info"></i>System Architecture</h1>
-            <p class="text-muted">Interactive diagrams of DNS Tool&rsquo;s intelligence engines, request lifecycle, and package structure.</p>
+    <main class="container-fluid px-4 py-4" id="main-content" style="max-width: 1400px;">
+        <div class="text-center mb-5">
+            <h1 class="display-5 fw-bold"><i class="fas fa-project-diagram me-2 text-info"></i>System Architecture</h1>
+            <p class="lead text-muted">Interactive diagrams of DNS Tool&rsquo;s intelligence engines, request lifecycle, and package structure.</p>
         </div>
 
         {{range .Diagrams}}
-        <div class="card bg-dark border-secondary mb-4">
-            <div class="card-header border-secondary">
-                <h5 class="mb-0 text-info">{{.Title}}</h5>
+        <div class="card border-0 mb-5 shadow-lg" style="background: linear-gradient(135deg, #0d1117 0%, #161b22 100%); border: 1px solid rgba(88,166,255,0.15) !important;">
+            <div class="card-header border-0 py-3" style="background: linear-gradient(90deg, rgba(88,166,255,0.08) 0%, transparent 100%); border-bottom: 1px solid rgba(88,166,255,0.12) !important;">
+                <h5 class="mb-0 fw-semibold" style="color: #58a6ff;"><i class="fas fa-sitemap me-2 opacity-75"></i>{{.Title}}</h5>
             </div>
-            <div class="card-body p-3">
-                <pre class="mermaid">{{.Content}}</pre>
+            <div class="card-body p-4 text-center">
+                <div class="d-inline-block" style="min-width: 60%; max-width: 100%;">
+                    <pre class="mermaid">{{.Content}}</pre>
+                </div>
             </div>
         </div>
         {{end}}
@@ -43,29 +45,52 @@
             theme: 'dark',
             themeVariables: {
                 darkMode: true,
-                background: '#0d1117',
-                primaryColor: '#1a5276',
-                primaryBorderColor: '#2980b9',
-                primaryTextColor: '#c9d1d9',
-                secondaryColor: '#145a32',
-                tertiaryColor: '#7d3c98',
+                background: 'transparent',
+                primaryColor: '#1a3a5c',
+                primaryBorderColor: '#58a6ff',
+                primaryTextColor: '#e6edf3',
+                secondaryColor: '#1a3c2e',
+                secondaryBorderColor: '#3fb950',
+                secondaryTextColor: '#e6edf3',
+                tertiaryColor: '#3d2a5c',
+                tertiaryBorderColor: '#bc8cff',
+                tertiaryTextColor: '#e6edf3',
                 lineColor: '#58a6ff',
-                textColor: '#c9d1d9',
-                mainBkg: '#161b22',
-                nodeBorder: '#30363d',
-                clusterBkg: '#161b22',
-                clusterBorder: '#30363d',
+                textColor: '#e6edf3',
+                mainBkg: '#1a3a5c',
+                nodeBorder: '#58a6ff',
+                clusterBkg: 'rgba(88,166,255,0.04)',
+                clusterBorder: 'rgba(88,166,255,0.25)',
                 titleColor: '#58a6ff',
                 edgeLabelBackground: '#0d1117',
-                nodeTextColor: '#c9d1d9'
+                nodeTextColor: '#e6edf3',
+                labelTextColor: '#c9d1d9',
+                actorBkg: '#1a3a5c',
+                actorBorder: '#58a6ff',
+                actorTextColor: '#e6edf3',
+                signalColor: '#58a6ff',
+                signalTextColor: '#e6edf3',
+                noteBkgColor: '#1a3c2e',
+                noteBorderColor: '#3fb950',
+                noteTextColor: '#e6edf3',
+                activationBkgColor: '#1a3a5c',
+                activationBorderColor: '#58a6ff'
             },
             flowchart: {
                 htmlLabels: true,
-                curve: 'basis'
+                curve: 'basis',
+                padding: 15,
+                nodeSpacing: 50,
+                rankSpacing: 60,
+                diagramPadding: 20
             },
             sequence: {
-                actorMargin: 50,
-                messageMargin: 40
+                actorMargin: 60,
+                messageMargin: 40,
+                boxMargin: 10,
+                noteMargin: 15,
+                mirrorActors: false,
+                useMaxWidth: true
             }
         });
     </script>

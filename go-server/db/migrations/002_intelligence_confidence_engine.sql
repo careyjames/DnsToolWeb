@@ -7,7 +7,7 @@
 --   Layer 1 (collection): Did we successfully retrieve raw DNS data?
 --   Layer 2 (analysis):   Did we correctly classify and interpret per RFC?
 --
--- Maturity progression: development → verified → consistent → gold → master_gold
+-- Maturity progression: development → verified → consistent → gold → gold_master
 -- Regression detection: any test failure immediately degrades maturity level.
 
 CREATE TABLE IF NOT EXISTS ice_protocols (
@@ -78,7 +78,7 @@ CREATE TABLE IF NOT EXISTS ice_maturity (
     updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
     CONSTRAINT ice_maturity_unique UNIQUE (protocol, layer),
     CONSTRAINT ice_maturity_layer_check CHECK (layer IN ('collection', 'analysis')),
-    CONSTRAINT ice_maturity_level_check CHECK (maturity IN ('development', 'verified', 'consistent', 'gold', 'master_gold'))
+    CONSTRAINT ice_maturity_level_check CHECK (maturity IN ('development', 'verified', 'consistent', 'gold', 'gold_master'))
 );
 
 INSERT INTO ice_maturity (protocol, layer, maturity) VALUES

@@ -124,8 +124,28 @@ func TestBrandVerdictPartialGaps(t *testing.T) {
         verdicts := make(map[string]any)
         buildBrandVerdict(ps, verdicts)
         brand := verdicts["brand_impersonation"].(map[string]any)
+        if brand["answer"] != "Unlikely" {
+                t.Errorf("DMARC reject + BIMI/VMC (no CAA) should be 'Unlikely' — reject blocks email spoofing and BIMI/VMC verifies brand identity; CAA is a secondary vector, got: %s", brand["answer"])
+        }
+        if brand["label"] != "Well Protected" {
+                t.Errorf("expected 'Well Protected', got: %s", brand["label"])
+        }
+        if brand["color"] != "success" {
+                t.Errorf("expected success color for Well Protected brand verdict, got: %s", brand["color"])
+        }
+}
+
+func TestBrandVerdictRejectCAANoBIMI(t *testing.T) {
+        ps := protocolState{
+                dmarcPolicy: "reject",
+                bimiOK:      false,
+                caaOK:       true,
+        }
+        verdicts := make(map[string]any)
+        buildBrandVerdict(ps, verdicts)
+        brand := verdicts["brand_impersonation"].(map[string]any)
         if brand["answer"] != "Possible" {
-                t.Errorf("DMARC reject + BIMI - CAA should be 'Possible' (RFC 7489 blocks spoofing but missing CAA per RFC 8659 leaves cert vector open), got: %s", brand["answer"])
+                t.Errorf("DMARC reject + CAA (no BIMI) should be 'Possible' — email blocked but no visual brand verification, got: %s", brand["answer"])
         }
         if brand["label"] != "Mostly Protected" {
                 t.Errorf("expected 'Mostly Protected', got: %s", brand["label"])

@@ -156,7 +156,7 @@ graph TB
         Verified["Verified<br/>Basic validation"]
         Consistent["Consistent<br/>Repeated accuracy"]
         Gold["Gold<br/>Production-grade"]
-        Master["Master Gold<br/>Authoritative"]
+        Master["Gold Master<br/>Authoritative"]
     end
 
     subgraph "Storage"

@@ -3301,7 +3301,7 @@
                                     <i class="fas fa-check-double me-2 text-{{if $consensusReached}}success{{else}}warning{{end}}"></i>
                                     <span class="text-muted">
                                         <strong>Multi-Resolver Verification</strong>
-                                        <span class="badge u-badge-recon ms-1 no-print" data-bs-toggle="tooltip" title="Recon Advantage — Four independent resolvers (Cloudflare, Google, Quad9, OpenDNS) with majority-agreement consensus. Most tools query a single resolver."><i class="fas fa-terminal me-1"></i>Recon</span>:
+                                        <span class="badge u-badge-recon ms-1 no-print" data-bs-toggle="tooltip" title="Recon Advantage — Four independent resolvers (Cloudflare, Google, Quad9, OpenDNS) with majority-agreement consensus. Typical DNS tools rely on a single resolver without cross-validation."><i class="fas fa-terminal me-1"></i>Recon</span>:
                                         {{if $consensusReached}}
                                             <span class="text-success">Consensus reached</span> - 
                                             {{mapGetStr "resolvers_queried" $resolver_consensus}} resolvers (Cloudflare, Google, Quad9, OpenDNS) agree on DNS records
@@ -4415,7 +4415,7 @@
                     {{if .HasRuns}}
                     <span class="badge bg-dark border border-secondary px-2 py-1" data-bs-toggle="tooltip" title="Collection: {{.CollectionDisplay}} ({{.CollectionRuns}} runs) · Analysis: {{.AnalysisDisplay}} ({{.AnalysisRuns}} runs)">
                         <span class="text-muted">{{.DisplayName}}</span>
-                        <span class="ms-1 {{if eq .AnalysisLevel "gold"}}text-warning{{else if eq .AnalysisLevel "master_gold"}}text-warning{{else if eq .AnalysisLevel "consistent"}}text-info{{else if eq .AnalysisLevel "verified"}}text-success{{else}}text-secondary{{end}}">{{.AnalysisDisplay}}</span>
+                        <span class="ms-1 {{if eq .AnalysisLevel "gold"}}text-warning{{else if eq .AnalysisLevel "gold_master"}}text-warning{{else if eq .AnalysisLevel "consistent"}}text-info{{else if eq .AnalysisLevel "verified"}}text-success{{else}}text-secondary{{end}}">{{.AnalysisDisplay}}</span>
                     </span>
                     {{else}}
                     <span class="badge bg-dark border border-secondary border-opacity-50 px-2 py-1 opacity-50" data-bs-toggle="tooltip" title="{{.DisplayName}}: Awaiting test coverage — no automated test fixtures yet">
