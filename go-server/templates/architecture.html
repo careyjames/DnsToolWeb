@@ -9,6 +9,9 @@
     <meta property="og:type" content="website">
     <meta property="og:title" content="System Architecture - DNS Tool">
     <meta property="og:description" content="Interactive architecture diagrams of DNS Tool's intelligence engines, request lifecycle, and package structure.">
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:title" content="System Architecture - DNS Tool">
+    <meta name="twitter:description" content="Interactive architecture diagrams of DNS Tool's intelligence engines, request lifecycle, and package structure.">
     <style nonce="{{.CspNonce}}">
         .arch-diagram-card {
             background: linear-gradient(145deg, #0c1018 0%, #111720 50%, #0e141c 100%);
@@ -86,16 +89,26 @@
         .mermaid svg .nodeLabel span {
             color: #ffffff !important;
         }
+
+        .arch-main-container {
+            max-width: 1500px;
+        }
+        .arch-diagram-title {
+            color: #e6edf3;
+        }
+        .arch-diagram-icon {
+            color: #58a6ff;
+        }
     </style>
 </head>
 <body class="bg-dark text-light">
     {{template "nav" .}}
-    <main class="container-fluid px-3 px-md-5 py-3" id="main-content" style="max-width: 1500px;">
+    <main class="container-fluid px-3 px-md-5 py-3 arch-main-container" id="main-content">
         {{range .Diagrams}}
         <div class="card arch-diagram-card border-0 mb-5">
             <div class="arch-diagram-header">
-                <h5 class="mb-0 fw-semibold d-flex align-items-center" style="color: #e6edf3;">
-                    <i class="fas fa-sitemap me-2" style="color: #58a6ff;"></i>{{.Title}}
+                <h5 class="mb-0 fw-semibold d-flex align-items-center arch-diagram-title">
+                    <i class="fas fa-sitemap me-2 arch-diagram-icon"></i>{{.Title}}
                 </h5>
             </div>
             <div class="arch-diagram-body text-center">

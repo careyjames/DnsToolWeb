@@ -5,6 +5,12 @@
     <title>Executive's DNS Intelligence Brief — {{.Domain}} - DNS Tool</title>
     <meta name="description" content="Executive domain security brief for {{.Domain}}. OSINT-based, board-ready summary of email authentication, DNS security, and risk posture.">
     <meta name="robots" content="noindex, nofollow">
+    <meta property="og:title" content="Executive's DNS Intelligence Brief — {{.Domain}} - DNS Tool">
+    <meta property="og:description" content="Executive domain security brief for {{.Domain}}. OSINT-based, board-ready summary of email authentication, DNS security, and risk posture.">
+    <meta property="og:type" content="website">
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:title" content="Executive's DNS Intelligence Brief — {{.Domain}} - DNS Tool">
+    <meta name="twitter:description" content="Executive domain security brief for {{.Domain}}. OSINT-based, board-ready summary of email authentication, DNS security, and risk posture.">
     {{template "head_css" .}}
     {{template "critical_css" .}}
     <style nonce="{{.CspNonce}}">

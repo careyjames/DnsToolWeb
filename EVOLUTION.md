@@ -49,6 +49,41 @@ Initial decision was Codeberg as canonical with GitHub push mirrors. Full migrat
 
 ---
 
+## Session: February 19, 2026 (v26.20.86)
+
+### v26.20.85–86 — Admin Dashboard, SMTP Probe, Comprehensive Audit
+
+#### Admin Dashboard (v26.20.85)
+- **New route**: `/admin` — protected by `RequireAdmin()` middleware, admin-only access
+- **Stats cards**: Total users, total analyses, unique domains, private analyses, total sessions, active sessions
+- **Users table**: All registered users with email, name, role (admin badge), last login time
+- **Recent analyses table**: Last 25 analyses with domain links, success/fail status, duration, privacy/selector flags, country codes
+- **ICAE test runs table**: Last 10 ICAE runs with version, pass/fail counts, dates
+- **Export button**: Direct link to `/export/json` (NDJSON download) from admin dashboard
+- **NULL handling**: COALESCE for `last_login_at` (users who haven't logged in) and `country_code` (analyses without geo data)
+- **Nav integration**: Admin link with fa-shield icon in authenticated user dropdown, visible only to admin role
+- **Template**: Follows existing patterns (head, critical_css, nav, footer, scripts partials), CSP-compliant (no inline handlers/styles), `noindex nofollow`
+- **Implementation**: Raw SQL via `h.DB.Pool.Query` to avoid sqlc regeneration complexity
+
+#### JSON Export (v26.20.85)
+- **Route**: `/export/json` — protected by `RequireAdmin()`, streams NDJSON
+- **Behavior**: Paginated (100 records/batch), proper `Content-Disposition` for download, includes full_results JSON
+- **Handler**: `go-server/internal/handlers/export.go`
+
+#### SMTP Probe Enabled (v26.20.86)
+- **Discovery**: Port 25 outbound is OPEN from Replit (confirmed via direct TCP connection to Google MX)
+- **Change**: Set `SMTP_PROBE_MODE=force` environment variable
+- **Impact**: Transport security section now performs live STARTTLS probes against mail servers instead of showing "skipped" message
+
+#### Comprehensive Audit (v26.20.86)
+- **Security audit**: Rate limiter confirmed correctly per-route on POST handlers (analyze, investigate, email-header, auth). Admin routes protected by RequireAdmin(). CSRF middleware active. No SQL injection vectors (all admin queries are static strings).
+- **SEO audit**: Added missing OG/Twitter meta tags to `results_executive.html` and `architecture.html`. JSON-LD schema verified accurate. `robots.txt`, `llms.txt`, `llms-full.txt` all current. Sitemap served dynamically.
+- **CSP audit**: Fixed 3 inline `style=""` attributes in `architecture.html` (lines 93, 97, 98) — moved to nonce'd style block CSS classes.
+- **Documentation audit**: This EVOLUTION.md entry added. All docs cross-referenced against code.
+- **Template audit**: All templates use dark theme, CSP nonces, proper heading hierarchy. Skip link present. Font Awesome subset icons verified.
+
+---
+
 ## Session: February 19, 2026 (v26.20.76)
 
 ### v26.20.76 — miekg/dns v2 Migration + Bug Fixes + CT Resilience
