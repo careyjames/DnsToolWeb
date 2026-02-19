@@ -15,7 +15,7 @@ This file is the project's permanent breadcrumb trail — every session's decisi
 ### v26.20.87 — Remote SMTP Probe via Dedicated Probe Server
 
 #### What Changed
-1. **Deployed SMTP probe API on probe-us-01.dns-observe.com** — Python 3 HTTP service (`/opt/dns-probe/probe_api.py`) running as systemd unit (`dns-probe.service`), listening on 127.0.0.1:8025, reverse-proxied by Caddy on HTTPS.
+1. **Deployed SMTP probe API on probe-us-01.dns-observe.com** — Python 3 HTTP service (`/opt/dns-probe/probe_api.py`) running as systemd unit (`dns-probe.service`), listening on 127.0.0.1:8025, reverse-proxied by pre-existing Caddy on HTTPS (Caddy was already installed; only updated Caddyfile to route to probe service).
 2. **New probe mode: `remote`** — Go backend calls `PROBE_API_URL/probe/smtp` with MX hosts, receives structured JSON with TLS version, cipher, cert details. Falls back to local `force` probe if remote fails.
 3. **Config**: `PROBE_API_URL` (secret), `PROBE_SSH_HOST`, `PROBE_SSH_USER`, `PROBE_SSH_PRIVATE_KEY` (all secrets). `SMTP_PROBE_MODE=remote` auto-set when `PROBE_API_URL` is present.
 4. **Graceful fallback**: If remote probe API is unreachable, times out, or returns invalid data, the system falls back to direct local SMTP probing (same as `force` mode).
@@ -41,6 +41,21 @@ DNS Tool (Replit) → HTTPS POST → probe-us-01.dns-observe.com/probe/smtp
 - `PROBE_SSH_HOST` — probe-us-01.dns-observe.com
 - `PROBE_SSH_USER` — root
 - `PROBE_SSH_PRIVATE_KEY` — ED25519 deploy key
+
+#### Probe Server Infrastructure Notes
+- **Caddy**: Pre-existing on the server (not installed by us). Only the Caddyfile was updated to reverse-proxy HTTPS → 127.0.0.1:8025.
+- **Internal port 8025**: Bound to loopback only; not externally visible. Architect reviewed: acceptable for OPSEC since only port 443 is exposed externally. Could switch to Unix socket or 8080 if desired — no security difference since it's loopback-only.
+- **Port 25 outbound**: Confirmed working (live-tested against Google MX, Proton Mail). VPS providers generally allow outbound 25; provider-specific policy should be verified via support ticket.
+
+#### Probe Server Roadmap / Future Work
+- [ ] Automated health monitoring: periodic GET /health checks with alerting on failure
+- [ ] Provider policy documentation: confirm VPS provider's outbound port 25 policy in writing
+- [ ] API authentication: add shared secret or mTLS between DNS Tool and probe API (currently open on HTTPS)
+- [ ] Rate limiting on probe API: prevent abuse if URL is discovered
+- [ ] Multi-region probes: add probe-eu-01, probe-ap-01 for geographic diversity
+- [ ] Log rotation and monitoring on probe server (journald retention, disk alerts)
+- [ ] Consider Unix socket instead of TCP 8025 for Caddy→probe communication (minor OPSEC improvement)
+- [ ] Firewall hardening: ensure only 22 (SSH), 80 (Caddy redirect), 443 (HTTPS) are open; verify with nmap
 
 ---
 

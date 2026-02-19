@@ -32,11 +32,13 @@ OSINT platform for RFC-compliant domain security analysis. Go/Gin backend, Boots
 
 ## SMTP Probe Infrastructure (v26.20.87)
 - **Remote probe mode**: `SMTP_PROBE_MODE=remote` calls external probe API instead of local port 25.
-- **Probe server**: `probe-us-01.dns-observe.com` — Python 3 API (`/opt/dns-probe/probe_api.py`), systemd unit `dns-probe.service`, Caddy reverse proxy.
+- **Probe server**: `probe-us-01.dns-observe.com` — Python 3 API (`/opt/dns-probe/probe_api.py`), systemd unit `dns-probe.service`, pre-existing Caddy reverse proxy (only Caddyfile updated).
 - **Secrets**: `PROBE_API_URL`, `PROBE_SSH_HOST`, `PROBE_SSH_USER`, `PROBE_SSH_PRIVATE_KEY` (all configured).
 - **API endpoints**: POST `/probe/smtp` (with `{"hosts": [...]}`) and GET `/health`.
 - **Fallback**: If remote probe fails, falls back to local direct SMTP probing (`force` mode).
 - **SSH access**: `ssh -i <key> root@probe-us-01.dns-observe.com` — key requires newline reformatting from secret storage.
+- **OPSEC note**: Internal port 8025 bound to loopback only; only 443 exposed externally. Architect reviewed: acceptable.
+- **Roadmap**: See EVOLUTION.md "Probe Server Roadmap / Future Work" for planned improvements (API auth, health monitoring, multi-region, firewall hardening).
 
 ## Engines
 - **ICIE** — Intelligence Classification & Interpretation Engine (analysis logic)
