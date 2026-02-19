@@ -73,7 +73,6 @@
         .history-table td:last-child,.history-table th:last-child{white-space:nowrap}
         .history-table .col-date{white-space:nowrap;font-size:.8125rem}
         .history-table .col-domain{max-width:180px}
-        .history-table .col-duration{white-space:nowrap;text-align:center}
         .badge{display:inline-block;padding:.35em .65em;font-size:.75em;font-weight:700;border-radius:.25rem;color:#fff}
         .bg-success{background-color:#198754!important}
         .bg-warning{background-color:#ffc107!important;color:#000!important}
@@ -161,7 +160,6 @@
                                     <th class="col-domain">Domain</th>
                                     <th title="Analysis status"></th>
                                     <th>Email Security</th>
-                                    <th class="col-duration">Duration</th>
                                     <th class="col-date">Date</th>
                                     <th>Actions</th>
                                 </tr>
@@ -210,18 +208,9 @@
                                             {{end}}
                                         </div>
                                     </td>
-                                    <td class="col-duration">
-                                        {{if $a.AnalysisDuration}}
-                                            {{formatFloat 2 $a.AnalysisDuration}}s
-                                        {{else}}
-                                            -
-                                        {{end}}
-                                    </td>
                                     <td class="col-date">
                                         <span class="text-muted">{{$a.CreatedDate}} {{$a.CreatedTime}}</span>
-                                        {{if $a.ToolVersion}}
-                                            <br><small class="text-muted u-opacity-60">v{{$a.ToolVersion}}</small>
-                                        {{end}}
+                                        <br><small class="text-muted u-opacity-60">{{if $a.ToolVersion}}v{{$a.ToolVersion}}{{end}}{{if $a.AnalysisDuration}} &middot; {{formatFloat 1 $a.AnalysisDuration}}s{{end}}</small>
                                     </td>
                                     <td>
                                         <div class="btn-group">
@@ -271,9 +260,9 @@
                         </div>
                         <div class="d-flex flex-wrap align-items-center gap-1 small">
                             {{if $a.AnalysisSuccess}}
-                                <span class="badge bg-success u-fs-065rem"><i class="fas fa-check me-1"></i>OK</span>
+                                <span class="badge bg-success u-fs-065rem" title="Success"><i class="fas fa-check"></i></span>
                             {{else}}
-                                <span class="badge bg-danger u-fs-065rem"><i class="fas fa-times me-1"></i>Failed</span>
+                                <span class="badge bg-danger u-fs-065rem" title="Failed"><i class="fas fa-times"></i></span>
                             {{end}}
                             {{if eq $a.SpfStatus "success"}}
                                 <span class="badge bg-success u-fs-065rem">SPF</span>
