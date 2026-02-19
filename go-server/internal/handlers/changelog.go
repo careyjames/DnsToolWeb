@@ -70,6 +70,22 @@ func GetRecentChangelog(n int) []ChangelogEntry {
 func GetChangelog() []ChangelogEntry {
         return []ChangelogEntry{
                 {
+                        Version:     "26.20.88",
+                        Date:        dateFeb19,
+                        Category:    "Security",
+                        Title:       "Authenticated Multi-Port SMTP Probe API",
+                        Description: "Remote probe infrastructure upgraded to API v2 with shared-secret authentication, rate limiting (30 requests per 60 seconds per IP), and multi-port mail transport probing across ports 25 (SMTP), 465 (SMTPS), and 587 (submission). Banner capture provides additional server intelligence fingerprinting. Graceful fallback on 401 or 429 responses.",
+                        Icon:        "fas fa-satellite-dish",
+                },
+                {
+                        Version:     "26.20.87",
+                        Date:        dateFeb19,
+                        Category:    "Intelligence",
+                        Title:       "Remote SMTP Probe Infrastructure",
+                        Description: "Deployed dedicated probe server (probe-us-01.dns-observe.com) for live SMTP transport verification. Cloud platforms block outbound port 25 — the probe server has unrestricted access for direct STARTTLS handshakes, certificate chain validation, and cipher suite inspection. Falls back gracefully when probe is unavailable.",
+                        Icon:        "fas fa-server",
+                },
+                {
                         Version:     "26.20.83",
                         Date:        dateFeb19,
                         Category:    "Architecture",

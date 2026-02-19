@@ -61,6 +61,9 @@ func main() {
 
         router.Use(middleware.SessionLoader(database.Pool))
 
+        analyticsCollector := middleware.NewAnalyticsCollector(database.Pool)
+        router.Use(analyticsCollector.Middleware())
+
         rateLimiter := middleware.NewInMemoryRateLimiter()
         slog.Info("Rate limiter initialized", "backend", "in-memory", "max_requests", middleware.RateLimitMaxRequests, "window_seconds", middleware.RateLimitWindow)
 
@@ -157,6 +160,9 @@ func main() {
 
         adminHandler := handlers.NewAdminHandler(database, cfg)
         router.GET("/admin", middleware.RequireAdmin(), adminHandler.Dashboard)
+
+        analyticsHandler := handlers.NewAnalyticsHandler(database, cfg)
+        router.GET("/admin/analytics", middleware.RequireAdmin(), analyticsHandler.Dashboard)
 
         router.GET("/export/json", middleware.RequireAdmin(), exportHandler.ExportJSON)
         router.GET("/export/subdomains", analysisHandler.ExportSubdomainsCSV)

@@ -28,8 +28,12 @@ graph TB
     subgraph "Data Collection"
         DNSClient["Multi-Resolver DNS Client<br/>Cloudflare · Google · Quad9 · OpenDNS"]
         SMTP["SMTP Probe<br/>STARTTLS Verification"]
-        CT["Certificate Transparency<br/>crt.sh API"]
+        CT["Certificate Transparency<br/>crt.sh + Certspotter"]
         HTTP["HTTP Probes<br/>MTA-STS · security.txt · BIMI"]
+    end
+
+    subgraph "Remote Infrastructure"
+        ProbeServer["probe-us-01<br/>SMTP Probe API v2<br/>Ports 25 · 465 · 587"]
     end
 
     subgraph "Storage"
@@ -49,7 +53,8 @@ graph TB
     Handlers --> Templates
     Handlers --> ICIE
     ICIE --> DNSClient
-    ICIE --> SMTP
+    ICIE -->|"X-Probe-Key auth"| ProbeServer
+    ProbeServer -->|"TCP:25,465,587"| SMTP
     ICIE --> CT
     ICIE --> HTTP
     ICIE --> ICAE
@@ -70,6 +75,7 @@ graph TB
     class Browser client
     class Router,Auth,Handlers,Templates app
     class DNSClient,SMTP,CT,HTTP engine
+    class ProbeServer external
     class Gunicorn,GoBinary app
 ```
 
@@ -410,5 +416,5 @@ graph TB
 
 ---
 
-*Generated for DNS Tool v26.20.73 — February 19, 2026*
+*Generated for DNS Tool v26.20.88 — February 19, 2026*
 *Diagrams render natively on GitHub, GitLab, Codeberg, and VS Code with Mermaid plugins.*

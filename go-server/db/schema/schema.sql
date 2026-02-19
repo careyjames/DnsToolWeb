@@ -154,6 +154,25 @@ CREATE TABLE ice_regressions (
 
 CREATE INDEX ix_ice_regressions_protocol ON ice_regressions (protocol, layer, created_at);
 
+-- Privacy-Respecting Site Analytics
+-- No cookies, no PII, no IP addresses stored.
+-- Unique visitors counted via daily-rotating salted hash (ephemeral, never persisted).
+
+CREATE TABLE site_analytics (
+    id SERIAL PRIMARY KEY,
+    date DATE NOT NULL UNIQUE,
+    pageviews INTEGER NOT NULL DEFAULT 0,
+    unique_visitors INTEGER NOT NULL DEFAULT 0,
+    analyses_run INTEGER NOT NULL DEFAULT 0,
+    unique_domains_analyzed INTEGER NOT NULL DEFAULT 0,
+    referrer_sources JSONB NOT NULL DEFAULT '{}',
+    top_pages JSONB NOT NULL DEFAULT '{}',
+    created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX ix_site_analytics_date ON site_analytics (date);
+
 CREATE TABLE user_analyses (
     id SERIAL PRIMARY KEY,
     user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,

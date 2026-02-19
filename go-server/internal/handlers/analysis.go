@@ -343,6 +343,12 @@ func (h *AnalysisHandler) Analyze(c *gin.Context) {
 
         icae.EvaluateAndRecord(context.Background(), h.DB.Queries, h.Config.AppVersion)
 
+        if ac, exists := c.Get("analytics_collector"); exists {
+                if collector, ok := ac.(interface{ RecordAnalysis(string) }); ok {
+                        collector.RecordAnalysis(asciiDomain)
+                }
+        }
+
         verifyCommands := analyzer.GenerateVerificationCommands(asciiDomain, results)
         integrityHash := analyzer.ReportIntegrityHash(asciiDomain, analysisID, timestamp, h.Config.AppVersion, results)
         rfcCount := analyzer.CountVerifiedRFCs(results)
