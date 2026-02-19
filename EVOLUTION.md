@@ -1838,3 +1838,36 @@ Previously called "Session Sentinel." Renamed for identity and potential distrib
 - `"baseline_source"` field in manifest — `"explicit"` (user/push) vs `"auto-bootstrap"` (first run). Prevents confusing auto-snapshots with validated baselines.
 - Hash policy documentation completed: symlinks (hash target contents), missing files (MISSING marker), mode bits (ignored)
 - `"tool": "drift-cairn"` field in manifest for tool identification
+
+---
+
+## Session: February 19, 2026
+
+### DKIM Selector Expansion — v26.20.69–70
+- **Expanded `defaultDKIMSelectors`** from 39 to 81+ selectors covering major ESPs: HubSpot, Salesforce, Klaviyo, Intercom, ActiveCampaign, Constant Contact, MailerLite, Drip, Customer.io, Freshdesk, and more.
+- **Enhanced provider-to-selector inference** from SPF/MX records: selector families and provider-specific patterns now auto-suggest selectors based on detected mail infrastructure.
+- Privacy mode classification: `AllSelectorsKnown()` checks user-provided selectors against expanded list to determine Public vs Private/Ephemeral analysis type.
+
+### Brand Security Verdict Matrix Fix — v26.20.71
+- **Critical bug fix**: `buildBrandVerdict()` returned "Unlikely" for domains with DMARC p=reject but missing both BIMI and CAA — contradicting the reason text that stated visual impersonation remained possible.
+- **Root cause**: DMARC reject only blocks email spoofing (RFC 7489 §6.3). Without BIMI (brand verification) and CAA (certificate restriction per RFC 8659 §4), visual impersonation via lookalike domains and unrestricted certificate issuance remain open vectors.
+- **Corrected verdict matrix** (8 branches):
+  - p=reject + BIMI + CAA → "No" (Protected) — unchanged
+  - p=reject + one of BIMI/CAA → "Possible" (Mostly Protected) — was "Unlikely"
+  - p=reject + neither → "Possible" (Partially Protected, warning) — was "Unlikely"
+  - p=quarantine + BIMI + CAA → "Possible" (Mostly Protected) — was "Unlikely"
+  - p=quarantine + one of BIMI/CAA → "Likely" (At Risk) — was "Partially"
+  - p=quarantine + neither → "Likely" (At Risk) — was "Partially"
+  - p=none → "Likely" (At Risk) — unchanged
+  - Missing DMARC → "Yes" (Exposed) — unchanged
+- All reason text now explicitly cites RFC 7489 §6.3, BIMI Spec, and RFC 8659 §4.
+- Golden rules expanded from 5 to 8 brand verdict tests covering full matrix.
+- Template badge rendering updated: "Possible" → warning (yellow), "Likely" → danger (red).
+- `normalizeVerdictAnswers` in helpers.go updated for new label→answer mapping.
+- No ICAE cascading impact (ICAE doesn't test brand_impersonation).
+
+### Documentation Audit & Corrections — v26.20.72
+- **replit.md**: Updated ICAE test case count from 28 → 45; stub file count from 11 → 12 (added `posture_diff_oss.go`).
+- **History table fix**: Compacted Date column layout (single-line date+time), added `col-date`/`col-duration`/`col-domain` CSS classes with `white-space:nowrap` to prevent Actions column cutoff on narrower viewports.
+- **Version**: Bumped to 26.20.72.
+- **Full test suite**: All 13 Go test packages passing.

@@ -66,10 +66,14 @@
         .input-group>.form-control{flex:1 1 auto;width:1%}
         .input-group-text{display:flex;align-items:center;padding:.375rem .75rem;font-size:1rem;border:1px solid #495057;border-radius:.375rem}
         .table{width:100%;margin-bottom:1rem;color:#dee2e6;border-collapse:collapse}
-        .table th,.table td{padding:.5rem;vertical-align:top;border-top:1px solid #495057}
-        .table thead th{vertical-align:bottom;border-bottom:2px solid #495057}
+        .table th,.table td{padding:.4rem .5rem;vertical-align:middle;border-top:1px solid #495057}
+        .table thead th{vertical-align:bottom;border-bottom:2px solid #495057;white-space:nowrap}
         .table-hover tbody tr:hover{background-color:rgba(255,255,255,.075)}
         .table-responsive{overflow-x:auto;-webkit-overflow-scrolling:touch}
+        .history-table td:last-child,.history-table th:last-child{white-space:nowrap}
+        .history-table .col-date{white-space:nowrap;font-size:.8125rem}
+        .history-table .col-domain{max-width:180px}
+        .history-table .col-duration{white-space:nowrap;text-align:center}
         .badge{display:inline-block;padding:.35em .65em;font-size:.75em;font-weight:700;border-radius:.25rem;color:#fff}
         .bg-success{background-color:#198754!important}
         .bg-warning{background-color:#ffc107!important;color:#000!important}
@@ -151,14 +155,14 @@
             <div class="card d-none d-md-block">
                 <div class="card-body">
                     <div class="table-responsive">
-                        <table class="table table-hover mb-0">
+                        <table class="table table-hover mb-0 history-table">
                             <thead>
                                 <tr>
-                                    <th>Domain</th>
+                                    <th class="col-domain">Domain</th>
                                     <th>Status</th>
                                     <th>Email Security</th>
-                                    <th>Duration</th>
-                                    <th>Date</th>
+                                    <th class="col-duration">Duration</th>
+                                    <th class="col-date">Date</th>
                                     <th>Actions</th>
                                 </tr>
                             </thead>
@@ -206,21 +210,18 @@
                                             {{end}}
                                         </div>
                                     </td>
-                                    <td>
+                                    <td class="col-duration">
                                         {{if $a.AnalysisDuration}}
                                             {{formatFloat 2 $a.AnalysisDuration}}s
                                         {{else}}
                                             -
                                         {{end}}
                                     </td>
-                                    <td>
-                                        <div class="text-muted">
-                                            {{$a.CreatedDate}}<br>
-                                            <small>{{$a.CreatedTime}}</small>
-                                            {{if $a.ToolVersion}}
-                                                <br><small class="text-muted u-opacity-60">v{{$a.ToolVersion}}</small>
-                                            {{end}}
-                                        </div>
+                                    <td class="col-date">
+                                        <span class="text-muted">{{$a.CreatedDate}} {{$a.CreatedTime}}</span>
+                                        {{if $a.ToolVersion}}
+                                            <br><small class="text-muted u-opacity-60">v{{$a.ToolVersion}}</small>
+                                        {{end}}
                                     </td>
                                     <td>
                                         <div class="btn-group">

@@ -32,11 +32,11 @@ OSINT platform for RFC-compliant domain security analysis. Go/Gin backend, Boots
 
 ## Engines
 - **ICIE** — Intelligence Classification & Interpretation Engine (analysis logic)
-- **ICAE** — Intelligence Confidence Audit Engine (accuracy tracking). Package: `go-server/internal/icae/`. DB tables: `ice_*` (legacy prefix, not renamed). Two layers per protocol: collection + analysis. Maturity: development → verified → consistent → gold → master_gold. 28 deterministic test cases.
+- **ICAE** — Intelligence Confidence Audit Engine (accuracy tracking). Package: `go-server/internal/icae/`. DB tables: `ice_*` (legacy prefix, not renamed). Two layers per protocol: collection + analysis. Maturity: development → verified → consistent → gold → master_gold. 45 deterministic test cases.
 
 ## Architecture Quick Reference
 - **Build tags**: `//go:build intel` (private) / `//go:build !intel` (public OSS stubs)
-- **11 stub files**: edge_cdn, saas_txt, infrastructure, providers, ip_investigation, manifest, ai_surface/{http,llms_txt,robots_txt,poisoning,scanner}
+- **12 stub files**: edge_cdn, saas_txt, infrastructure, providers, ip_investigation, manifest, posture_diff, ai_surface/{http,llms_txt,robots_txt,poisoning,scanner}
 - **Intel repo sync**: `node scripts/github-intel-sync.mjs` — reads/writes `careyjames/dnstool-intel` via GitHub API. NEVER leave `_intel.go` files in this repo — push to Intel repo and delete locally.
 - **Reports**: "Engineer's DNS Intelligence Report" (technical) / "Executive's DNS Intelligence Brief" (board-ready)
 - **TLP**: FIRST TLP v2.0, default TLP:AMBER
