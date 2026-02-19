@@ -57,6 +57,8 @@ body {
     padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
     overflow-x: hidden;
     -webkit-text-size-adjust: 100%;
+    overscroll-behavior: none;
+    -webkit-overflow-scrolling: touch;
 }
 
 html {
@@ -594,10 +596,17 @@ main.container {
         min-height: 44px;
         display: inline-flex;
         align-items: center;
+        touch-action: manipulation;
     }
     
     a {
         -webkit-tap-highlight-color: rgba(0, 0, 0, 0.1);
+    }
+    
+    a.rfc-link, .u-integrity-link, .footer a, .text-muted a {
+        min-height: 44px;
+        display: inline-flex;
+        align-items: center;
     }
     
     .navbar-toggler {

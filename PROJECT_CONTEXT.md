@@ -399,6 +399,7 @@ After evaluating APA, Chicago/Turabian, IEEE, NIST SP 800, and ICD, the project 
 - **Favicon**: HTML `<link rel="icon">` uses `data:` URI (zero HTTP requests, no 404 possible). Navbar brand uses inline SVG shield.
 - **Column dividers**: `.section-col-divider` CSS class adds subtle vertical separators (`1px solid rgba(125,142,168,0.18)`) between multi-column analysis sections. Applied to: Email Security (SPF/DMARC/DKIM 3-col), MTA-STS/TLS-RPT (2-col), BIMI/CAA (2-col), DNSSEC/DANE (2-col). `:last-child` hides right border. Mobile (≤768px): switches to horizontal bottom borders. Bloomberg/GitHub-dark aesthetic — guides eye scanning without clutter.
 - **Mobile action bar**: Results page action buttons (Print, Executive, TLP selector, Snapshot, Re-analyze, New Domain) use `flex-wrap` on mobile with ordered layout: btn-group full-width row 1, TLP dropdown row 2, remaining buttons row 3. Prevents horizontal overflow on narrow screens.
+- **Apple/Safari compatibility**: `overscroll-behavior: none` (prevents rubber-band bounce), `-webkit-overflow-scrolling: touch` (momentum scrolling), `touch-action: manipulation` on buttons (eliminates double-tap zoom delay), 44px minimum touch targets on all interactive elements including small links (RFC links, footer links), `loading="lazy" decoding="async"` on non-critical images. Print images NOT lazy loaded. PWA: full Apple meta tags in `_head.html` (apple-touch-icon 4 sizes, mask-icon, apple-mobile-web-app-capable/status-bar-style/title).
 
 ### Subdomain Discovery Pipeline — CRITICAL INFRASTRUCTURE
 
