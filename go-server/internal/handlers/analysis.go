@@ -311,11 +311,13 @@ func (h *AnalysisHandler) Analyze(c *gin.Context) {
         postureHash := analyzer.CanonicalPostureHash(results)
 
         drift := driftInfo{}
-        prevRow, prevErr := h.DB.Queries.GetPreviousAnalysisForDrift(ctx, asciiDomain)
-        if prevErr == nil {
-                drift = computeDriftFromPrev(postureHash, prevRow.PostureHash, prevRow.ID, prevRow.CreatedAt.Valid, prevRow.CreatedAt.Time, prevRow.FullResults, results)
-                if drift.Detected {
-                        slog.Info("Posture drift detected", "domain", asciiDomain, "prev_hash", drift.PrevHash[:8], "new_hash", postureHash[:8], "changed_fields", len(drift.Fields))
+        if !devNull {
+                prevRow, prevErr := h.DB.Queries.GetPreviousAnalysisForDrift(ctx, asciiDomain)
+                if prevErr == nil {
+                        drift = computeDriftFromPrev(postureHash, prevRow.PostureHash, prevRow.ID, prevRow.CreatedAt.Valid, prevRow.CreatedAt.Time, prevRow.FullResults, results)
+                        if drift.Detected {
+                                slog.Info("Posture drift detected", "domain", asciiDomain, "prev_hash", drift.PrevHash[:8], "new_hash", postureHash[:8], "changed_fields", len(drift.Fields))
+                        }
                 }
         }
 

@@ -44,8 +44,8 @@
                 <i class="fas fa-terminal me-2 mt-1 text-info"></i>
                 <div>
                     <strong class="text-info"><code>&gt; ./dns-tool --output /dev/null</code></strong>
-                    <p class="mb-1 mt-1 text-light">This scan ran in <strong>/dev/null mode</strong>. Full analysis, zero persistence. No database writes, no history entry, no analytics increment, no statistics. This page is the only place these results exist.</p>
-                    <p class="mb-0 small text-muted"><i class="fas fa-biohazard me-1"></i>When you close this tab, these results are gone. No one will ever know this scan happened. Not even us.</p>
+                    <p class="mb-1 mt-1 text-light">This scan ran in <strong>/dev/null mode</strong>. Nothing was written to our database &mdash; no history entry, no analytics, no statistics, no account association. This page is the only record that exists within DNS Tool.</p>
+                    <p class="mb-0 small text-muted"><i class="fas fa-biohazard me-1"></i>When you close this tab, these results are gone. Standard network activity (DNS queries, CT log lookups) occurred normally during analysis.</p>
                 </div>
             </div>
         </div>
@@ -5073,7 +5073,7 @@
     <script nonce="{{.CspNonce}}">
     console.log('%c > ./dns-tool --output /dev/null', 'color: #58a6ff; font-family: monospace; font-size: 14px; font-weight: bold;');
     console.log('%c Cause I\'m a hacker, baby, I\'m gonna pwn you good,\n Exploit bad config like you knew I would.\n Cite those RFCs, baby, so my argument stood,\n If it\'s not in 1034 — it ain\'t understood.', 'color: #8b949e; font-family: monospace; font-size: 11px;');
-    console.log('%c Zero persistence. Zero footprint. Standards over swagger.', 'color: #3fb950; font-family: monospace; font-size: 11px;');
+    console.log('%c Zero persistence. Full analysis. Standards over swagger.', 'color: #3fb950; font-family: monospace; font-size: 11px;');
     </script>
     {{end}}
 </body>
