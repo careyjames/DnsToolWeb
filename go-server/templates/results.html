@@ -3133,6 +3133,7 @@
                                         DNSKEY exists but DS record not published at registrar. Add DS record to complete chain of trust.
                                     </div>
                                 {{else}}
+                                    {{$enterpriseDNSPattern := mapGetStr "enterprise_pattern" $ns}}
                                     {{if and $dns_infra (mapGetBool "explains_no_dnssec" $dns_infra)}}
                                     <div class="small text-info mb-2">
                                         <i class="fas fa-shield-alt me-1"></i>
@@ -3145,6 +3146,15 @@
                                         {{range $i, $item := $altItems}}{{if $i}}, {{end}}{{$item}}{{end}}
                                     </div>
                                     {{end}}
+                                    {{else if or (eq $enterpriseDNSPattern "dedicated") (eq $enterpriseDNSPattern "managed") (eq $enterpriseDNSPattern "multi-provider")}}
+                                    <div class="small text-info mb-2">
+                                        <i class="fas fa-building me-1"></i>
+                                        <strong>Enterprise DNS Context:</strong> Large organizations with dedicated DNS infrastructure often rely on network-layer controls (DDoS mitigation, anycast routing, TSIG-authenticated zone transfers) rather than DNSSEC. While DNSSEC provides cryptographic response authentication per <a href="https://datatracker.ietf.org/doc/html/rfc4033#section-2" target="_blank" rel="noopener" class="text-info">RFC 4033 &sect;2</a>, enterprise DNS operators may determine that their existing security controls provide sufficient protection for their threat model.
+                                    </div>
+                                    <div class="small text-muted mb-2">
+                                        <i class="fas fa-info-circle me-1"></i>
+                                        Domain does not use DNSSEC. This is a deliberate infrastructure decision &mdash; not an oversight. Enterprise DNS operators weigh deployment complexity against their existing security posture.
+                                    </div>
                                     {{else}}
                                     <div class="small text-muted mb-2">
                                         <i class="fas fa-info-circle me-1"></i>
