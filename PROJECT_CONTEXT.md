@@ -14,6 +14,19 @@ The project aims for an open-source model while protecting commercial viability,
 
 Philosophy: "As open-source as humanly possible while protecting ability to sell as a commercial product."
 
+### Core Principle: Accuracy First, Speed Follows
+
+The DNS Tool is built on the conviction that **accuracy is the prerequisite for speed, not its opposite**. In intelligence gathering and high-precision security work, rushing to conclusions produces noise, not signal. By investing in correctness at every layer — RFC-compliant parsing, deterministic test suites, SHA-256 custody chains, confidence scoring (ICAE), observation-based language — the tool naturally becomes faster, because there is no rework, no false positives to triage, and no trust deficit to overcome.
+
+This principle is reflected throughout the codebase:
+- **Collection discipline**: Every DNS record is validated against its RFC spec before interpretation. No shortcuts.
+- **Honest reporting**: Observation-based language ("observed," "detected," "no record found") rather than definitive claims. If we didn't see it, we don't say it.
+- **Confidence tracking**: The ICAE engine scores each finding's reliability, so users know what to trust and what needs further investigation.
+- **Custody and integrity**: Zone file imports carry SHA-256 hashes. Snapshots include integrity footers. The chain of evidence is always preserved.
+- **Test-driven boundaries**: 45+ deterministic golden-rule tests enforce that accuracy invariants hold before any code ships.
+
+The result: a tool that analysts trust enough to act on immediately — which is the fastest outcome of all.
+
 Every conclusion must be independently verifiable using standard commands. The tool operates with strict adherence to RFC standards and observation-based language — never making definitive claims beyond what the data shows.
 
 ---

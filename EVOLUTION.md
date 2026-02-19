@@ -10,6 +10,31 @@ This file is the project's permanent breadcrumb trail — every session's decisi
 
 ---
 
+## Session: February 19, 2026 (v26.20.89 — Zone Import, Snapshot, a11y, CI Fix, Philosophy)
+
+### v26.20.89 — Zone File Import, Observed Records Snapshot, Accessibility, CI Fix
+
+#### What Changed
+1. **Observed Records Snapshot (Reconstructed)**: New `/snapshot/:domain` endpoint exports BIND-like text file from stored analysis results. Includes $ORIGIN, disclaimers ("NOT authoritative zone file"), per-type record sections with resolver TTLs, SHA-256 integrity hash footer. Download button added to results page. Privacy-aware: blocks private reports.
+2. **Zone File Upload/Import**: Authenticated upload at `/zone` with miekg/dns v2 ZoneParser. In-memory processing by default, optional retention with explicit checkbox. SHA-256 custody chain (hash + timestamp + uploader) stored in `zone_imports` DB table. Four-way drift detection: Added (zone-only), Missing (live-only), Changed (different rdata), TTL-Only (same data, different TTL). 2MB file size limit enforced.
+3. **Accessibility fixes**: Skip link CSS changed from `display:none`/`hidden` to `position:absolute; left:-9999px` (keeps element in tab order for screen readers). `--text-secondary` color brightened from `rgba(139,148,158,0.9)` to `rgba(148,157,168,0.95)` for WCAG AA 4.5:1 contrast ratio. `.u-color-gray-400` adjusted from `#9ca3af` to `#a1a9b4`.
+4. **Expanded Exposure Checks UX**: Updated copy to "Deeper reconnaissance — actively checks..." with explicit scan-time warning using clock icon.
+5. **CI fix**: Removed `continue-on-error: true` from SonarCloud workflow test step (was masking failures). Added `-short` flag and `-timeout 120s` to `go test` in CI. Added `testing.Short()` skip to network-dependent `TestGoldenRuleSubdomainDiscoveryUnder60s`. All 11 test packages now pass cleanly in CI-equivalent mode.
+6. **"Accuracy First, Speed Follows" philosophy**: Documented core principle in PROJECT_CONTEXT.md — accuracy as prerequisite for speed, reflected in RFC-compliant parsing, deterministic tests, SHA-256 custody, ICAE confidence scoring, and observation-based language.
+
+#### New Files
+- `go-server/internal/handlers/snapshot.go` — Observed Records Snapshot handler
+- `go-server/internal/handlers/zone.go` — Zone file upload handler
+- `go-server/internal/zoneparse/parser.go` — BIND zone file parser (miekg/dns v2)
+- `go-server/internal/zoneparse/drift.go` — Four-way drift comparison engine
+- `go-server/templates/zone.html` — Zone import UI with sensitivity disclaimers
+- `go-server/db/queries/zone_imports.sql` — sqlc queries for zone_imports table
+
+#### Known Issue
+- **CT log availability**: crt.sh intermittently times out for very large domains (e.g., apple.com with thousands of certificates). When CT is unavailable, tool correctly reports "DNS probing only" with reduced subdomain count (e.g., 66 vs hundreds). Certspotter fallback may also be insufficient for huge domains. This is an upstream reliability issue, not a code bug — the honest reporting is accuracy-first by design.
+
+---
+
 ## Session: February 19, 2026 (Probe API v2 — Auth, Rate Limiting, Multi-Port)
 
 ### v26.20.88 — Probe API v2 with Authentication, Rate Limiting, and Multi-Port Probing
