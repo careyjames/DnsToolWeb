@@ -397,6 +397,8 @@ After evaluating APA, Chicago/Turabian, IEEE, NIST SP 800, and ICD, the project 
 - **Executive print**: Minimum body 11pt, small 9pt, code 8.5pt. Nothing below 8pt.
 - **Bootstrap overrides**: Override `--bs-btn-*` CSS variables, NOT direct `background-color`.
 - **Favicon**: HTML `<link rel="icon">` uses `data:` URI (zero HTTP requests, no 404 possible). Navbar brand uses inline SVG shield.
+- **Column dividers**: `.section-col-divider` CSS class adds subtle vertical separators (`1px solid rgba(125,142,168,0.18)`) between multi-column analysis sections. Applied to: Email Security (SPF/DMARC/DKIM 3-col), MTA-STS/TLS-RPT (2-col), BIMI/CAA (2-col), DNSSEC/DANE (2-col). `:last-child` hides right border. Mobile (≤768px): switches to horizontal bottom borders. Bloomberg/GitHub-dark aesthetic — guides eye scanning without clutter.
+- **Mobile action bar**: Results page action buttons (Print, Executive, TLP selector, Snapshot, Re-analyze, New Domain) use `flex-wrap` on mobile with ordered layout: btn-group full-width row 1, TLP dropdown row 2, remaining buttons row 3. Prevents horizontal overflow on narrow screens.
 
 ### Subdomain Discovery Pipeline — CRITICAL INFRASTRUCTURE
 
