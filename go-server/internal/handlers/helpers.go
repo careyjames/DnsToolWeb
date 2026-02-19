@@ -348,8 +348,8 @@ func ComputeSectionDiff(secA, secB map[string]interface{}, key, label, icon stri
 
         var detailChanges []DetailChange
         for _, k := range sortedKeys {
-                valA := secA[k]
-                valB := secB[k]
+                valA := normalizeForCompare(secA[k])
+                valB := normalizeForCompare(secB[k])
                 jsonA, _ := json.Marshal(valA)
                 jsonB, _ := json.Marshal(valB)
                 if string(jsonA) != string(jsonB) {
@@ -372,6 +372,38 @@ func ComputeSectionDiff(secA, secB map[string]interface{}, key, label, icon stri
                 Changed:       statusA != statusB || len(detailChanges) > 0,
                 DetailChanges: detailChanges,
         }
+}
+
+func normalizeForCompare(v interface{}) interface{} {
+        arr, ok := v.([]interface{})
+        if !ok || len(arr) < 2 {
+                return v
+        }
+        strs := make([]string, len(arr))
+        for i, elem := range arr {
+                switch e := elem.(type) {
+                case string:
+                        strs[i] = e
+                default:
+                        b, _ := json.Marshal(e)
+                        strs[i] = string(b)
+                }
+        }
+        sort.Strings(strs)
+        sorted := make([]interface{}, len(strs))
+        for i, s := range strs {
+                var parsed interface{}
+                if json.Unmarshal([]byte(s), &parsed) == nil {
+                        if _, isStr := arr[0].(string); isStr {
+                                sorted[i] = s
+                        } else {
+                                sorted[i] = parsed
+                        }
+                } else {
+                        sorted[i] = s
+                }
+        }
+        return sorted
 }
 
 func ComputeAllDiffs(resultsA, resultsB map[string]interface{}) []SectionDiff {
