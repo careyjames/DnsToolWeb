@@ -10,7 +10,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/careyjames/DnsToolWeb/releases"><img src="https://img.shields.io/badge/version-26.20.74-blue?style=flat-square" alt="Version"></a>
+  <a href="#"><img src="https://img.shields.io/badge/version-26.20.74-blue?style=flat-square" alt="Version"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-BUSL--1.1-orange?style=flat-square" alt="License"></a>
   <img src="https://img.shields.io/badge/Go-1.23-00ADD8?style=flat-square&logo=go" alt="Go">
   <img src="https://img.shields.io/badge/PostgreSQL-15+-336791?style=flat-square&logo=postgresql" alt="PostgreSQL">
@@ -23,6 +23,9 @@
   <a href="DOCS.md">Technical Docs</a> &middot;
   <a href="docs/FEATURE_INVENTORY.md">Feature Inventory</a>
 </p>
+
+> **Canonical Repository**: [codeberg.org/careybalboa/dns-tool-webapp](https://codeberg.org/careybalboa/dns-tool-webapp)
+> GitHub mirror: [github.com/careyjames/DnsToolWeb](https://github.com/careyjames/DnsToolWeb) (read-only)
 
 ---
 
@@ -119,8 +122,8 @@ Every release runs the full suite. Results are stored and tracked over time with
 
 ```bash
 # Clone
-git clone https://github.com/careyjames/DnsToolWeb.git
-cd DnsToolWeb
+git clone https://codeberg.org/careybalboa/dns-tool-webapp.git
+cd dns-tool-webapp
 
 # Set environment
 export DATABASE_URL="postgresql://user:pass@localhost:5432/dnstool"
