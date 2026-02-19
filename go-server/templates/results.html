@@ -34,9 +34,9 @@
         {{if .DevNull}}
         <div class="alert alert-dark border-0 mb-3 u-devnull-banner">
             <div class="d-flex align-items-start">
-                <i class="fas fa-terminal me-2 mt-1 text-info"></i>
+                <i class="fas fa-terminal me-2 mt-1 text-danger"></i>
                 <div>
-                    <strong class="text-info"><code>&gt; ./dns-tool --output /dev/null</code></strong>
+                    <strong class="text-danger"><code>&gt; ./dns-tool --output /dev/null</code></strong>
                     <p class="mb-1 mt-1 text-light">This scan ran in <strong>/dev/null mode</strong>. Nothing was written to our database &mdash; no history entry, no analytics, no statistics, no account association. This page is the only record that exists within DNS Tool.</p>
                     <p class="mb-0 small text-muted"><i class="fas fa-biohazard me-1"></i>When you close this tab, these results are gone. Standard network activity (DNS queries, CT log lookups) occurred normally during analysis.</p>
                 </div>
