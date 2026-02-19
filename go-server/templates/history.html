@@ -159,7 +159,7 @@
                             <thead>
                                 <tr>
                                     <th class="col-domain">Domain</th>
-                                    <th>Status</th>
+                                    <th title="Analysis status"></th>
                                     <th>Email Security</th>
                                     <th class="col-duration">Duration</th>
                                     <th class="col-date">Date</th>
@@ -182,12 +182,12 @@
                                     </td>
                                     <td>
                                         {{if $a.AnalysisSuccess}}
-                                            <span class="badge bg-success">
-                                                <i class="fas fa-check me-1"></i>Success
+                                            <span class="badge bg-success" title="Analysis completed successfully">
+                                                <i class="fas fa-check"></i>
                                             </span>
                                         {{else}}
-                                            <span class="badge bg-danger">
-                                                <i class="fas fa-times me-1"></i>Failed
+                                            <span class="badge bg-danger" title="Analysis failed">
+                                                <i class="fas fa-times"></i>
                                             </span>
                                         {{end}}
                                     </td>
@@ -204,9 +204,9 @@
                                                 <span class="badge bg-danger" title="DMARC missing or misconfigured"><i class="fas fa-times me-1"></i>DMARC</span>
                                             {{end}}
                                             {{if or (eq $a.DkimStatus "success") (eq $a.DkimStatus "partial")}}
-                                                <span class="badge bg-success" title="DKIM found">DKIM</span>
+                                                <span class="badge bg-success" title="DKIM signing verified">DKIM</span>
                                             {{else if eq $a.DkimStatus "info"}}
-                                                <span class="badge bg-info" title="DKIM not auto-discoverable (selectors unknown)">DKIM</span>
+                                                <span class="badge bg-info" title="DKIM may be configured but selectors were not discoverable — provide your DKIM selector for a definitive check">DKIM</span>
                                             {{end}}
                                         </div>
                                     </td>
