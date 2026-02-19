@@ -16,6 +16,12 @@ func AnalysisTestCases() []TestCase {
         cases = append(cases, emailAnswerCases()...)
         cases = append(cases, dnssecVerdictCases()...)
         cases = append(cases, enterpriseDNSCases()...)
+        cases = append(cases, dkimAnalysisCases()...)
+        cases = append(cases, caaAnalysisCases()...)
+        cases = append(cases, mtaStsAnalysisCases()...)
+        cases = append(cases, tlsrptAnalysisCases()...)
+        cases = append(cases, bimiAnalysisCases()...)
+        cases = append(cases, daneAnalysisCases()...)
         return cases
 }
 

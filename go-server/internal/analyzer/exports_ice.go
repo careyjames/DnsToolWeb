@@ -63,3 +63,61 @@ func ExportClassifyNSProvider(ns string) string {
 func ExportRegistrableDomain(domain string) string {
         return registrableDomain(domain)
 }
+
+func ExportAnalyzeDKIMKey(record string) map[string]any {
+        return analyzeDKIMKey(record)
+}
+
+func ExportClassifySelectorProvider(selectorName, primaryProvider string) string {
+        return classifySelectorProvider(selectorName, primaryProvider)
+}
+
+func ExportIdentifyCAIssuer(record string) string {
+        return identifyCAIssuer(record)
+}
+
+func ExportParseCAARecords(records []string) ([]string, []string, bool, bool) {
+        parsed := parseCAARecords(records)
+        return collectMapKeys(parsed.issueSet), collectMapKeys(parsed.issuewildSet), parsed.hasWildcard, parsed.hasIodef
+}
+
+func ExportBuildCAAMessage(issuers, wildcardIssuers []string, hasWildcard bool) string {
+        return buildCAAMessage(issuers, wildcardIssuers, hasWildcard)
+}
+
+func ExportFilterSTSRecords(records []string) []string {
+        return filterSTSRecords(records)
+}
+
+func ExportExtractSTSID(record string) *string {
+        return extractSTSID(record)
+}
+
+func ExportDetermineMTASTSModeStatus(mode string, policyData map[string]any) (string, string) {
+        return determineMTASTSModeStatus(mode, policyData)
+}
+
+func ExportParseMTASTSPolicyLines(policyText string) (string, int, []string, bool) {
+        f := parseMTASTSPolicyLines(policyText)
+        return f.mode, f.maxAge, f.mx, f.hasVersion
+}
+
+func ExportFilterBIMIRecords(records []string) []string {
+        return filterBIMIRecords(records)
+}
+
+func ExportExtractBIMIURLs(record string) (*string, *string) {
+        return extractBIMIURLs(record)
+}
+
+func ExportParseTLSAEntry(entry string, mxHost, tlsaName string) (map[string]any, bool) {
+        return parseTLSAEntry(entry, mxHost, tlsaName)
+}
+
+func ExportExtractMXHosts(mxRecords []string) []string {
+        return extractMXHosts(mxRecords)
+}
+
+func ExportBuildDANEVerdict(allTLSA []map[string]any, hostsWithDANE, mxHosts []string, mxCapability map[string]any) (string, string, []string) {
+        return buildDANEVerdict(allTLSA, hostsWithDANE, mxHosts, mxCapability)
+}
