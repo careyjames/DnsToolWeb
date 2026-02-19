@@ -55,8 +55,10 @@
         }
 
         .mermaid svg .edgeLabel rect {
-            fill: #161b22 !important;
-            opacity: 0.9 !important;
+            fill: #0d1117 !important;
+            opacity: 1 !important;
+            rx: 4 !important;
+            ry: 4 !important;
         }
 
         .mermaid svg .edgeLabel span,
@@ -87,10 +89,10 @@
 </head>
 <body class="bg-dark text-light">
     {{template "nav" .}}
-    <main class="container-fluid px-3 px-md-5 py-4" id="main-content" style="max-width: 1500px;">
-        <div class="text-center mb-5">
-            <h1 class="display-5 fw-bold"><i class="fas fa-project-diagram me-2 text-info"></i>System Architecture</h1>
-            <p class="lead text-muted mb-0">Interactive diagrams of DNS Tool&rsquo;s intelligence engines, request lifecycle, and package structure.</p>
+    <main class="container-fluid px-3 px-md-5 py-3" id="main-content" style="max-width: 1500px;">
+        <div class="text-center mb-4">
+            <h1 class="h2 fw-bold mb-1"><i class="fas fa-project-diagram me-2 text-info"></i>System Architecture</h1>
+            <p class="text-secondary small mb-0">Interactive diagrams of DNS Tool&rsquo;s intelligence engines, request lifecycle, and package structure.</p>
         </div>
 
         {{range .Diagrams}}
@@ -252,6 +254,23 @@
                     p.setAttribute('stroke', '#58a6ff');
                     p.setAttribute('stroke-width', '1.5');
                     p.setAttribute('fill', 'none');
+                });
+
+                svg.querySelectorAll('.edgeLabel rect').forEach(function(rect) {
+                    rect.setAttribute('fill', '#0d1117');
+                    rect.setAttribute('opacity', '1');
+                    rect.setAttribute('rx', '4');
+                    rect.setAttribute('ry', '4');
+                    var w = parseFloat(rect.getAttribute('width') || 0);
+                    var h = parseFloat(rect.getAttribute('height') || 0);
+                    var x = parseFloat(rect.getAttribute('x') || 0);
+                    var y = parseFloat(rect.getAttribute('y') || 0);
+                    if (w > 0 && h > 0) {
+                        rect.setAttribute('width', String(w + 8));
+                        rect.setAttribute('height', String(h + 4));
+                        rect.setAttribute('x', String(x - 4));
+                        rect.setAttribute('y', String(y - 2));
+                    }
                 });
 
                 applyTextColor(svg);
