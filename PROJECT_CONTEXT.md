@@ -149,39 +149,42 @@ Two-repository design with Go build tags (`//go:build intel` / `//go:build !inte
 - **DNS Tool Web** (public): Full framework + `_oss.go` stubs (empty maps, safe defaults)
 - **dnstool-intel** (private): `_intel.go` files with proprietary provider databases
 
-### Repository Locations (Codeberg Canonical, GitHub Mirror)
+### Repository Locations (GitHub Canonical, Codeberg Mirror)
 
-| Repo | Codeberg (canonical) | GitHub (mirror) | Visibility |
-|------|---------------------|-----------------|------------|
-| Web App | `careybalboa/dns-tool-webapp` | `careyjames/DnsToolWeb` (read-only mirror) | Public |
-| CLI | `careybalboa/dns-tool-cli` (archived) | `careyjames/dns-tool` (archived) | Public |
-| Intel | `careybalboa/dns-tool-intel` | `careyjames/dnstool-intel` (read-only mirror) | Private |
+| Repo | GitHub (canonical) | Codeberg (mirror) | Visibility |
+|------|-------------------|-------------------|------------|
+| Web App | `careyjames/DnsToolWeb` | `careybalboa/dns-tool-webapp` (read-only mirror) | Public |
+| CLI | `careyjames/dns-tool` (archived) | `careybalboa/dns-tool-cli` (archived) | Public |
+| Intel | `careyjames/dnstool-intel` | `careybalboa/dns-tool-intel` (read-only mirror) | Private |
 
-**Codeberg→GitHub push mirrors** are configured with `sync_on_commit=true` + 8-hour interval. Changes pushed to Codeberg automatically propagate to GitHub. GitHub repos display "read-only mirror" notices pointing to Codeberg.
+**GitHub→Codeberg sync** via GitHub Actions workflow (`.github/workflows/mirror-codeberg.yml`). Every push to GitHub triggers a mirror push to Codeberg. Codeberg repos display "read-only mirror" notices pointing to GitHub. Issues and PRs are disabled on Codeberg.
 
-**SonarCloud** continues running on GitHub mirror (`sonarcloud.yml` workflow) — it requires GitHub integration for PR decoration and checks. The push mirror keeps it fed.
+**SonarCloud** runs on GitHub (`sonarcloud.yml` workflow) with full PR decoration and checks — no longer dependent on mirror lag.
 
 ### Sync Scripts
 
-Three sync scripts for managing repos from Replit:
+Sync scripts for managing repos from Replit:
 
 ```bash
-# Codeberg webapp sync (canonical)
+# GitHub Intel sync (canonical)
+node scripts/github-intel-sync.mjs list|read|push|delete|commits
+
+# Codeberg webapp sync (mirror management)
 node scripts/codeberg-webapp-sync.mjs list|read|push|delete|commits|status
 
-# Codeberg Intel sync (canonical)
+# Codeberg Intel sync (mirror management)
 node scripts/codeberg-intel-sync.mjs list|read|push|delete|commits
 
-# GitHub Intel sync (mirror — for SonarCloud/CI integration)
-node scripts/github-intel-sync.mjs list|read|push|delete|commits
+# Manual full-repo sync: GitHub → Codeberg (all branches + tags)
+./scripts/github-to-codeberg-sync.sh
 ```
 
 ### Intel Repo Workflow
 
 **MANDATORY WORKFLOW for `_intel.go` files**:
 1. Write the `_intel.go` file locally (for testing/development)
-2. Push to Codeberg: `node scripts/codeberg-intel-sync.mjs push <local-path> <remote-path> "commit message"`
-3. Push to GitHub mirror: `node scripts/github-intel-sync.mjs push <local-path> <remote-path> "commit message"`
+2. Push to GitHub: `node scripts/github-intel-sync.mjs push <local-path> <remote-path> "commit message"`
+3. Push to Codeberg mirror: `node scripts/codeberg-intel-sync.mjs push <local-path> <remote-path> "commit message"`
 4. DELETE the local file immediately — do not leave it in the webapp repo
 5. Verify: `find go-server -name "*_intel*"` should return nothing
 
@@ -202,9 +205,10 @@ node scripts/github-intel-sync.mjs list|read|push|delete|commits
 
 ### CI/CD
 
-- **Codeberg**: Forgejo Actions CI (`.forgejo/workflows/ci.yml`) — Go build, test, smoke test with PostgreSQL service
-- **GitHub**: SonarCloud analysis (`.github/workflows/sonarcloud.yml`) — runs on mirror pushes
+- **GitHub**: SonarCloud analysis (`.github/workflows/sonarcloud.yml`) — primary CI with PR decoration
+- **GitHub**: Codeberg mirror sync (`.github/workflows/mirror-codeberg.yml`) — pushes all branches/tags on commit
 - **GitHub**: Cross-browser E2E tests (`.github/workflows/cross-browser-tests.yml`) — suspended
+- **Codeberg**: Forgejo Actions CI (`.forgejo/workflows/ci.yml`) — redundant build verification
 
 ### Three-File Pattern
 

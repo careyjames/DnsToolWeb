@@ -10,43 +10,42 @@ This file is the project's permanent breadcrumb trail — every session's decisi
 
 ---
 
-## Session: February 19, 2026 (Codeberg Migration)
+## Session: February 19, 2026 (Codeberg Migration → GitHub Reversal)
 
-### Codeberg Migration — Canonical Repository Strategy
+### Phase 1: Codeberg Migration (Completed, Then Reversed)
 
-#### Decision: Codeberg as Canonical, GitHub as Mirror
-- **Rationale**: Align hosting with open-source values. Codeberg is nonprofit, GDPR-compliant, community-governed. GitHub remains as mirror for SonarCloud CI integration and discoverability.
-- **Strategy**: Codeberg→GitHub push mirrors (sync_on_commit + 8h interval). All development, issues, and contributions happen on Codeberg.
+Initial decision was Codeberg as canonical with GitHub push mirrors. Full migration completed with commit history preserved, Forgejo Actions CI, and sync scripts.
 
-#### Three-Repo Setup on Codeberg (careybalboa)
-1. **dns-tool-webapp** (public) — Full webapp codebase migrated from `careyjames/DnsToolWeb` with complete commit history
-   - Description: RFC-compliant domain security analysis — OSINT DNS intelligence platform
-   - Topics: dns, security, osint, dmarc, spf, dkim, email-security, golang, cybersecurity, bsl-1-1
-   - Website: https://dnstool.it-help.tech
-   - Push mirror → `careyjames/DnsToolWeb` on GitHub
-2. **dns-tool-cli** (public, archived) — Original CLI imported from `careyjames/dns-tool` with full history, archived pending rewrite
-3. **dns-tool-intel** (private) — Intelligence modules migrated from `careyjames/dnstool-intel` with full history
-   - Push mirror → `careyjames/dnstool-intel` on GitHub
+### Phase 2: Strategic Reversal — GitHub Canonical, Codeberg Mirror
 
-#### GitHub Changes
-- `careyjames/dns-tool` — Archived with redirect notice to Codeberg
-- `careyjames/DnsToolWeb` — README replaced with "read-only mirror" notice pointing to Codeberg
-- `careyjames/dnstool-intel` — README updated with "read-only mirror" notice pointing to Codeberg
+#### Decision: GitHub as Canonical, Codeberg as Mirror
+- **Rationale**: Industry adoption requires GitHub. Dependabot, CodeQL, SonarCloud PR decoration, macOS/Windows CI runners, GitHub Actions marketplace, discoverability. Mac IDE compatibility and standard developer workflow. Codeberg remains as read-only mirror for sovereignty signal.
+- **Strategy**: GitHub→Codeberg push via GitHub Actions workflow (`.github/workflows/mirror-codeberg.yml`). All development, issues, and contributions happen on GitHub.
 
-#### CI/CD
-- **Codeberg**: Forgejo Actions CI (`.forgejo/workflows/ci.yml`) — Go build, test, PostgreSQL service, smoke test
-- **GitHub**: SonarCloud analysis continues on mirror (`.github/workflows/sonarcloud.yml`)
-- **GitHub**: Cross-browser E2E tests remain suspended (`.github/workflows/cross-browser-tests.yml`)
+#### What Changed
+1. **Deleted Codeberg→GitHub push mirrors** — removed from all three repos
+2. **Deleted Codeberg repos** — dns-tool-webapp, dns-tool-cli, dns-tool-intel all deleted
+3. **Recreated Codeberg repos** as regular repos (not mirrors — Codeberg disabled pull mirror creation via API)
+4. **Set Codeberg repo metadata** — issues/PRs/wiki disabled, descriptions say "Mirror of github.com/..."
+5. **Codeberg READMEs** — all point to GitHub as canonical with "read-only mirror" notice
+6. **GitHub READMEs restored** — full professional README on DnsToolWeb and dnstool-intel (no more "mirror" notices)
+7. **GitHub Actions workflow** — `.github/workflows/mirror-codeberg.yml` pushes all branches/tags on every commit
+8. **Manual sync script** — `scripts/github-to-codeberg-sync.sh` for full-repo mirror sync
 
-#### New Sync Script
-- `scripts/codeberg-webapp-sync.mjs` — Forgejo API sync for webapp repo (list, read, push, delete, commits, status)
-- Complements existing `codeberg-intel-sync.mjs` and `github-intel-sync.mjs`
+#### Repo Configuration
+| Repo | GitHub (canonical) | Codeberg (mirror) | Visibility |
+|------|-------------------|-------------------|------------|
+| Web App | `careyjames/DnsToolWeb` | `careybalboa/dns-tool-webapp` | Public |
+| CLI | `careyjames/dns-tool` (archived) | `careybalboa/dns-tool-cli` (archived) | Public |
+| Intel | `careyjames/dnstool-intel` | `careybalboa/dns-tool-intel` | Private |
 
-#### Gaps vs GitHub (Accepted)
-- No Dependabot or CodeQL security scanning (use SonarCloud on GitHub mirror)
-- No GitHub Sponsors or Discussions
-- CI is Linux-only (no macOS/Windows runners)
-- Codeberg has smaller community but aligns with project values
+#### GitHub Setup Required (One-Time)
+1. Add `CODEBERG_TOKEN` secret to GitHub repos (Settings → Secrets → Actions) — use the Codeberg Forgejo API token
+2. Push `.github/workflows/mirror-codeberg.yml` from local clone (Replit GitHub token lacks `workflow` scope)
+
+#### CI/CD (Final)
+- **GitHub**: SonarCloud analysis (primary), Codeberg mirror sync, cross-browser tests (suspended)
+- **Codeberg**: Forgejo Actions CI remains as redundant build verification
 
 ---
 
