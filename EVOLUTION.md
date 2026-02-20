@@ -119,6 +119,13 @@ Applied production-grade cleanup based on technical audit:
 - Generic handler added `document.body.classList.add('loading')` (sets `pointer-events: none`) and then navigated via `location.href` — competing with history page's dedicated fetch-based handler
 - Fix: Added `if (link.classList.contains('history-reanalyze-btn')) return;` guard to skip buttons that have their own handlers
 
+#### Chrome Scroll Fix — pointer-events: none on body (v26.21.40)
+
+- **Root cause**: `.loading` CSS class applied `pointer-events: none` to `<body>`. Chrome does not dispatch wheel/trackpad scroll events to elements with `pointer-events: none`, completely blocking scroll during loading states.
+- **Why it was redundant**: The `.loading-overlay` (full-viewport, `z-index: 9999`, `pointer-events: auto`) already captures all pointer events when active — body-level blocking was unnecessary.
+- **Fix**: Removed `pointer-events: none` from `.loading` body rule. Applied `pointer-events: none; cursor: not-allowed` selectively to interactive elements (`a`, `button`, `input`, `select`, `textarea`, `[role="button"]`) under `.loading` — preserves scroll while preventing clicks on controls.
+- **Lesson**: Never apply `pointer-events: none` to document root elements (`html`, `body`) — it kills scroll in Chrome. Use targeted selectors for interactive elements instead.
+
 ---
 
 ## Session: February 20, 2026 (v26.21.36 — Quality Gates & Lighthouse Research)

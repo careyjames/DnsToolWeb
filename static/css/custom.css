@@ -1033,10 +1033,15 @@ main.container {
 
 .loading {
     opacity: 0.6;
-    pointer-events: none;
 }
 
-.loading .btn {
+.loading a,
+.loading button,
+.loading input,
+.loading select,
+.loading textarea,
+.loading [role="button"] {
+    pointer-events: none;
     cursor: not-allowed;
 }
 
