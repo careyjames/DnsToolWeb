@@ -4641,13 +4641,17 @@
         {{end}}
 
         {{if .VerificationCommands}}
-        <div class="card border-info border-opacity-50 mt-4 screen-only u-bg-secondary" id="verify-commands">
+        <div class="card border-danger border-opacity-50 mt-4 screen-only u-bg-secondary" id="verify-commands">
             <div class="card-header d-flex align-items-center justify-content-between u-row-clickable" role="button" tabindex="0" data-bs-toggle="collapse" data-bs-target="#verifyCommandsBody" aria-expanded="false" aria-controls="verifyCommandsBody">
                 <h5 class="mb-0 u-color-text-bright">
-                    <i class="fas fa-terminal me-2 u-color-info"></i>Verify It Yourself
+                    <i class="fas fa-terminal me-2 text-danger"></i>Verify It Yourself
                     <span class="badge ms-2 u-badge-info-outline">Transparency</span>
+                    <span class="badge ms-2 u-badge-danger-outline">Source-Verifiable</span>
                 </h5>
-                <i class="fas fa-chevron-down u-text-muted-md"></i>
+                <div class="d-flex align-items-center gap-2">
+                    {{if .AnalysisID}}<a href="/api/analysis/{{.AnalysisID}}?download=1" class="btn btn-sm btn-outline-danger border-0 no-print" title="Download raw intelligence data (JSON)"><i class="fas fa-file-code me-1"></i><span class="d-none d-md-inline">Raw Intelligence</span></a>{{end}}
+                    <i class="fas fa-chevron-down u-text-muted-md"></i>
+                </div>
             </div>
             <div class="collapse" id="verifyCommandsBody">
                 <div class="card-body">
@@ -4664,8 +4668,8 @@
                     {{end}}
                     <div class="mb-2">
                         <div class="d-flex align-items-center justify-content-between mb-1">
-                            <span class="small u-color-text"><i class="fas fa-terminal me-1 u-color-muted"></i>{{.Description}}{{if .RFC}} <span class="badge ms-1 u-badge-blue-outline">{{.RFC}}</span>{{end}}</span>
-                            <button class="btn btn-sm btn-outline-info border-0 copy-cmd-btn u-badge-compact" data-cmd="{{.Command}}" title="Copy command">
+                            <span class="small u-color-text"><i class="fas fa-terminal me-1 text-danger opacity-50"></i>{{.Description}}{{if .RFC}} <span class="badge ms-1 u-badge-blue-outline">{{.RFC}}</span>{{end}}</span>
+                            <button class="btn btn-sm btn-outline-danger border-0 copy-cmd-btn u-badge-compact" data-cmd="{{.Command}}" title="Copy command">
                                 <i class="fas fa-copy"></i>
                             </button>
                         </div>
@@ -4755,7 +4759,7 @@
 
         {{if .VerificationCommands}}
         <div class="print-only u-page-break">
-            <h4 class="u-color-info-mb"><i class="fas fa-terminal me-2"></i>Appendix: Verification Commands</h4>
+            <h4 class="u-color-danger-mb"><i class="fas fa-terminal me-2"></i>Appendix: Verification Commands</h4>
             <p class="u-meta-label">
                 The core DNS queries behind this report can be independently verified using these standard terminal commands (dig, openssl, curl). DNS Tool adds multi-resolver consensus, RFC-based evaluation, and cross-referencing on top of the raw data shown here.
             </p>

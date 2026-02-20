@@ -702,6 +702,11 @@ func (h *AnalysisHandler) APIAnalysis(c *gin.Context) {
                 json.Unmarshal(analysis.CtSubdomains, &ctSubdomains)
         }
 
+        if c.Query("download") == "1" || c.Request.Header.Get("Accept") == "application/octet-stream" {
+                filename := fmt.Sprintf("dns-intelligence-%s.json", analysis.AsciiDomain)
+                c.Header("Content-Disposition", fmt.Sprintf(`attachment; filename="%s"`, filename))
+        }
+
         c.JSON(http.StatusOK, gin.H{
                 "id":                analysis.ID,
                 "domain":            analysis.Domain,

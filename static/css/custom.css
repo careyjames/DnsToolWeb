@@ -3227,6 +3227,13 @@ main.container {
     border: 1px solid rgba(88, 166, 255, 0.3);
     font-size: 0.7rem;
 }
+.u-badge-danger-outline {
+    background-color: rgba(248, 81, 73, 0.15);
+    color: #f8837a;
+    border: 1px solid rgba(248, 81, 73, 0.3);
+    font-size: 0.7rem;
+}
+.u-color-danger-mb { color: #f85149; margin-bottom: 0.5rem; }
 
 /* --------------------------------------------
    BORDERS
