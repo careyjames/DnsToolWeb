@@ -40,7 +40,8 @@ func LoadReportMetrics(ctx context.Context, queries DBTX) *ReportMetrics {
                 colData, hasCol := maturityMap[proto][LayerCollection]
                 analData, hasAnal := maturityMap[proto][LayerAnalysis]
 
-                if hasCol {
+                if hasCol && colData.TotalRuns > 0 {
+                        pr.HasCollection = true
                         pr.CollectionLevel = colData.Maturity
                         pr.CollectionDisplay = MaturityDisplayNames[colData.Maturity]
                         pr.CollectionRuns = int(colData.TotalRuns)
@@ -51,7 +52,8 @@ func LoadReportMetrics(ctx context.Context, queries DBTX) *ReportMetrics {
                         pr.CollectionDisplay = MaturityDisplayNames[MaturityDevelopment]
                 }
 
-                if hasAnal {
+                if hasAnal && analData.TotalRuns > 0 {
+                        pr.HasAnalysis = true
                         pr.AnalysisLevel = analData.Maturity
                         pr.AnalysisDisplay = MaturityDisplayNames[analData.Maturity]
                         pr.AnalysisRuns = int(analData.TotalRuns)
@@ -71,8 +73,7 @@ func LoadReportMetrics(ctx context.Context, queries DBTX) *ReportMetrics {
                         pr.AnalysisDisplay = MaturityDisplayNames[MaturityDevelopment]
                 }
 
-                hasRuns := (hasCol && colData.TotalRuns > 0) || (hasAnal && analData.TotalRuns > 0)
-                pr.HasRuns = hasRuns
+                pr.HasRuns = pr.HasCollection || pr.HasAnalysis
 
                 protocols = append(protocols, pr)
         }

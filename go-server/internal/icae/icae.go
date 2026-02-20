@@ -123,10 +123,12 @@ type ProtocolReport struct {
         CollectionDisplay string
         CollectionRuns    int
         CollectionPasses  int
+        HasCollection     bool
         AnalysisLevel     string
         AnalysisDisplay   string
         AnalysisRuns      int
         AnalysisPasses    int
+        HasAnalysis       bool
         HasRuns           bool
         LastRegressionAt  string
         LastEvaluatedAt   string
@@ -201,18 +203,35 @@ func ComputeMaturity(consecutivePasses int, firstPassAt *time.Time, lastRegressi
 func OverallMaturity(protocols []ProtocolReport) string {
         lowest := MaturityGoldMaster
         lowestOrder := MaturityOrder[lowest]
+        hasAnyData := false
 
         for _, p := range protocols {
-                for _, level := range []string{p.CollectionLevel, p.AnalysisLevel} {
-                        order, ok := MaturityOrder[level]
+                if p.HasCollection {
+                        hasAnyData = true
+                        order, ok := MaturityOrder[p.CollectionLevel]
                         if !ok {
                                 return MaturityDevelopment
                         }
                         if order < lowestOrder {
                                 lowestOrder = order
-                                lowest = level
+                                lowest = p.CollectionLevel
                         }
                 }
+                if p.HasAnalysis {
+                        hasAnyData = true
+                        order, ok := MaturityOrder[p.AnalysisLevel]
+                        if !ok {
+                                return MaturityDevelopment
+                        }
+                        if order < lowestOrder {
+                                lowestOrder = order
+                                lowest = p.AnalysisLevel
+                        }
+                }
+        }
+
+        if !hasAnyData {
+                return MaturityDevelopment
         }
 
         return lowest
