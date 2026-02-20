@@ -65,14 +65,14 @@
         .input-group{display:flex;flex-wrap:wrap}
         .input-group>.form-control{flex:1 1 auto;width:1%}
         .input-group-text{display:flex;align-items:center;padding:.375rem .75rem;font-size:1rem;border:1px solid #495057;border-radius:.375rem}
-        .table{width:100%;margin-bottom:1rem;color:#dee2e6;border-collapse:collapse}
+        .table{width:100%;margin-bottom:1rem;color:#dee2e6;border-collapse:collapse;table-layout:fixed}
         .table th,.table td{padding:.4rem .5rem;vertical-align:middle;border-top:1px solid #495057}
         .table thead th{vertical-align:bottom;border-bottom:2px solid #495057;white-space:nowrap}
         .table-hover tbody tr:hover{background-color:rgba(255,255,255,.075)}
         .table-responsive{overflow-x:auto;-webkit-overflow-scrolling:touch}
         .history-table td:last-child,.history-table th:last-child{white-space:nowrap}
         .history-table .col-date{white-space:nowrap;font-size:.8125rem}
-        .history-table .col-domain{max-width:180px}
+        .history-table .col-domain{max-width:320px;overflow:hidden;text-overflow:ellipsis}
         .badge{display:inline-block;padding:.35em .65em;font-size:.75em;font-weight:700;border-radius:.25rem;color:#fff}
         .bg-success{background-color:#198754!important}
         .bg-warning{background-color:#ffc107!important;color:#000!important}
@@ -157,22 +157,22 @@
                         <table class="table table-hover mb-0 history-table">
                             <thead>
                                 <tr>
-                                    <th class="col-domain">Domain</th>
-                                    <th>Email Security</th>
-                                    <th class="col-date">Date</th>
-                                    <th>Actions</th>
+                                    <th style="width:40%">Domain</th>
+                                    <th style="width:22%">Email Security</th>
+                                    <th class="col-date" style="width:23%">Date</th>
+                                    <th style="width:15%">Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {{range $i, $a := .Analyses}}
                                 <tr>
-                                    <td>
-                                        <div class="d-flex align-items-center">
-                                            <i class="fas fa-globe text-primary me-2"></i>
-                                            <div>
-                                                <div class="fw-medium">{{$a.Domain}}</div>
+                                    <td class="col-domain">
+                                        <div class="d-flex align-items-center min-width-0">
+                                            <i class="fas fa-globe text-primary me-2 flex-shrink-0"></i>
+                                            <div class="min-width-0">
+                                                <div class="fw-medium text-truncate" title="{{$a.Domain}}">{{$a.Domain}}</div>
                                                 {{if ne $a.AsciiDomain $a.Domain}}
-                                                    <small class="text-muted">{{$a.AsciiDomain}}</small>
+                                                    <small class="text-muted text-truncate d-block">{{$a.AsciiDomain}}</small>
                                                 {{end}}
                                             </div>
                                         </div>
