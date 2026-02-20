@@ -4,6 +4,7 @@ package icae
 
 import (
         "context"
+        "fmt"
         "log/slog"
         "time"
 
@@ -76,6 +77,7 @@ func LoadReportMetrics(ctx context.Context, queries DBTX) *ReportMetrics {
                         }
                         pr.DaysElapsed = daysElapsed
                         pr.NextTierName, pr.NextTierPasses, pr.NextTierDays, pr.PassesMet, pr.DaysMet, pr.AtMaxTier = ComputeNextTier(analData.Maturity, int(analData.ConsecutivePasses), daysElapsed)
+                        pr.NextTierPct = NextTierPct(analData.Maturity, int(analData.ConsecutivePasses), daysElapsed)
                 } else {
                         pr.AnalysisLevel = MaturityDevelopment
                         pr.AnalysisDisplay = MaturityDisplayNames[MaturityDevelopment]
@@ -89,10 +91,43 @@ func LoadReportMetrics(ctx context.Context, queries DBTX) *ReportMetrics {
         }
 
         evaluatedCount := 0
+        totalPasses := 0
+        totalRuns := 0
+        var earliestFirstPass string
+        var maxDays int
+        var regressions []RegressionEvent
+
         for _, p := range protocols {
                 if p.HasRuns {
                         evaluatedCount++
                 }
+                totalPasses += p.AnalysisPasses
+                totalRuns += p.AnalysisRuns
+                if p.FirstPassAt != "" {
+                        if earliestFirstPass == "" || p.FirstPassAt < earliestFirstPass {
+                                earliestFirstPass = p.FirstPassAt
+                        }
+                }
+                if p.DaysElapsed > maxDays {
+                        maxDays = p.DaysElapsed
+                }
+        }
+
+        for _, row := range rows {
+                if row.LastRegressionAt.Valid {
+                        runsSince := int(row.ConsecutivePasses)
+                        regressions = append(regressions, RegressionEvent{
+                                Protocol:    row.Protocol,
+                                DisplayName: ProtocolDisplayNames[row.Protocol],
+                                OccurredAt:  row.LastRegressionAt.Time.Format("2006-01-02"),
+                                RunsSince:   runsSince,
+                        })
+                }
+        }
+
+        passRate := "0.0"
+        if totalRuns > 0 {
+                passRate = fmt.Sprintf("%.1f", float64(totalPasses)/float64(totalRuns)*100)
         }
 
         overall := OverallMaturity(protocols)
@@ -109,6 +144,12 @@ func LoadReportMetrics(ctx context.Context, queries DBTX) *ReportMetrics {
                 EvaluatedCount:         evaluatedCount,
                 OverallMaturity:        overall,
                 OverallMaturityDisplay: MaturityDisplayNames[overall],
+                TotalPasses:            totalPasses,
+                TotalRuns:              totalRuns,
+                PassRate:               passRate,
+                FirstPassAt:            earliestFirstPass,
+                DaysRunning:            maxDays,
+                Regressions:            regressions,
         }
 
         return metrics

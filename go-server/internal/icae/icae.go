@@ -114,6 +114,44 @@ type ReportMetrics struct {
         EvaluatedCount         int
         OverallMaturity        string
         OverallMaturityDisplay string
+        TotalPasses            int
+        TotalRuns              int
+        PassRate               string
+        FirstPassAt            string
+        DaysRunning            int
+        Regressions            []RegressionEvent
+}
+
+type RegressionEvent struct {
+        Protocol    string
+        DisplayName string
+        OccurredAt  string
+        RunsSince   int
+}
+
+func NextTierPct(currentLevel string, consecutivePasses int, daysSinceFirst int) int {
+        _, nextPasses, nextDays, _, _, atMax := ComputeNextTier(currentLevel, consecutivePasses, daysSinceFirst)
+        if atMax {
+                return 100
+        }
+        passPct := 0
+        if nextPasses > 0 {
+                passPct = (consecutivePasses * 100) / nextPasses
+                if passPct > 100 {
+                        passPct = 100
+                }
+        }
+        dayPct := 100
+        if nextDays > 0 {
+                dayPct = (daysSinceFirst * 100) / nextDays
+                if dayPct > 100 {
+                        dayPct = 100
+                }
+        }
+        if passPct < dayPct {
+                return passPct
+        }
+        return dayPct
 }
 
 type ProtocolReport struct {
@@ -142,6 +180,7 @@ type ProtocolReport struct {
         DaysMet           bool
         DaysElapsed       int
         AtMaxTier         bool
+        NextTierPct       int
 }
 
 func ComputeNextTier(currentLevel string, consecutivePasses int, daysSinceFirst int) (nextName string, nextPasses int, nextDays int, passesMet bool, daysMet bool, atMax bool) {

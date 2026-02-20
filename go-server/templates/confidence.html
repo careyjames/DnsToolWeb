@@ -47,6 +47,29 @@
 
         {{if .ICAEMetrics}}
 
+        <div class="icae-summary-bar mb-4">
+            <div class="icae-summary-item">
+                <span class="icae-summary-value">{{.ICAEMetrics.TotalPasses}}</span>
+                <span class="icae-summary-label">Total Passes</span>
+            </div>
+            <div class="icae-summary-item">
+                <span class="icae-summary-value">{{.ICAEMetrics.PassRate}}%</span>
+                <span class="icae-summary-label">Pass Rate</span>
+            </div>
+            <div class="icae-summary-item">
+                <span class="icae-summary-value">{{.ICAEMetrics.EvaluatedCount}}/{{.ICAEMetrics.TotalProtocols}}</span>
+                <span class="icae-summary-label">Protocols</span>
+            </div>
+            <div class="icae-summary-item">
+                <span class="icae-summary-value">{{.ICAEMetrics.DaysRunning}}d</span>
+                <span class="icae-summary-label">Running</span>
+            </div>
+            <div class="icae-summary-item">
+                <span class="icae-summary-value">{{len .ICAEMetrics.Regressions}}</span>
+                <span class="icae-summary-label">Regressions</span>
+            </div>
+        </div>
+
         <div class="card bg-dark border-secondary mb-4">
             <div class="card-body pb-2">
                 <div class="d-flex flex-wrap align-items-center justify-content-between mb-3">
@@ -136,6 +159,7 @@
                         <span class="icae-cal-progress-label"><i class="fas fa-arrow-up me-1"></i>Next: {{.NextTierName}}</span>
                         <span class="icae-cal-progress-item {{if .PassesMet}}icae-cal-met{{else}}icae-cal-unmet{{end}}">{{if .PassesMet}}<i class="fas fa-check-circle me-1"></i>{{else}}<i class="fas fa-hourglass-half me-1"></i>{{end}}{{.AnalysisPasses}}/{{.NextTierPasses}} passes</span>
                         {{if gt .NextTierDays 0}}<span class="icae-cal-progress-item {{if .DaysMet}}icae-cal-met{{else}}icae-cal-unmet{{end}}">{{if .DaysMet}}<i class="fas fa-check-circle me-1"></i>{{else}}<i class="fas fa-hourglass-half me-1"></i>{{end}}{{.DaysElapsed}}/{{.NextTierDays}} days</span>{{end}}
+                        <span class="icae-tier-meter"><span class="icae-tier-meter-fill" style="width:{{.NextTierPct}}%"></span><span class="icae-tier-meter-label">{{.NextTierPct}}%</span></span>
                     </div>
                     {{end}}
                 </div>
@@ -151,6 +175,44 @@
                 </div>
             </div>
         </div>
+
+        {{if .ICAEMetrics.Regressions}}
+        <div class="card bg-dark border-secondary mb-4">
+            <div class="card-body">
+                <h2 class="h5 fw-bold mb-3"><i class="fas fa-exclamation-triangle me-2 text-warning"></i>Regression Event Log</h2>
+                <p class="text-muted small mb-3">Regressions occur when a previously passing test case fails, resetting the consecutive pass counter. Each event is recorded with the protocol affected and recovery progress.</p>
+                <div class="table-responsive">
+                    <table class="table table-dark table-sm mb-0">
+                        <thead>
+                            <tr>
+                                <th>Protocol</th>
+                                <th>Regression Date</th>
+                                <th>Runs Since Recovery</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {{range .ICAEMetrics.Regressions}}
+                            <tr>
+                                <td><span class="fw-semibold text-info">{{.DisplayName}}</span></td>
+                                <td>{{.OccurredAt}}</td>
+                                <td>{{.RunsSince}}</td>
+                                <td>{{if ge .RunsSince 100}}<span class="text-success"><i class="fas fa-check-circle me-1"></i>Recovered</span>{{else}}<span class="text-warning"><i class="fas fa-sync-alt me-1"></i>Rebuilding</span>{{end}}</td>
+                            </tr>
+                            {{end}}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        {{else}}
+        <div class="card bg-dark border-secondary mb-4">
+            <div class="card-body py-3">
+                <h2 class="h5 fw-bold mb-2"><i class="fas fa-shield-alt me-2 text-success"></i>Regression Event Log</h2>
+                <p class="text-muted small mb-0"><i class="fas fa-check-circle me-1 text-success"></i>No regressions recorded. All protocols have maintained continuous passing status since first evaluation.</p>
+            </div>
+        </div>
+        {{end}}
 
         <div class="card bg-dark border-secondary mb-5">
             <div class="card-body">
