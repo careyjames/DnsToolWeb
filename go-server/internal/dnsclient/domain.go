@@ -11,9 +11,8 @@ import (
 )
 
 var (
-        labelRegex    = regexp.MustCompile(`^[a-zA-Z0-9-]+$`)
-        tldRegex      = regexp.MustCompile(`^[a-zA-Z]{2,}$`)
-        hexLabelRegex = regexp.MustCompile(`^[0-9a-f]+$`)
+        labelRegex = regexp.MustCompile(`^[a-zA-Z0-9-]+$`)
+        tldRegex   = regexp.MustCompile(`^[a-zA-Z]{2,}$`)
 )
 
 func DomainToASCII(domain string) (string, error) {
@@ -72,38 +71,7 @@ func ValidateDomain(domain string) bool {
                 return false
         }
 
-        if looksLikeSSRFProbe(ascii) {
-                return false
-        }
-
         return validateTLD(labels[len(labels)-1])
-}
-
-var ssrfPatterns = []string{
-        "ssrf", "qualysperiscope", "oastify", "burpcollaborator",
-        "interact.sh", "canarytokens", "dnslog", "ceye.io",
-        "bxss.me", "xss.ht",
-}
-
-func looksLikeSSRFProbe(domain string) bool {
-        lower := strings.ToLower(domain)
-        for _, pat := range ssrfPatterns {
-                if strings.Contains(lower, pat) {
-                        return true
-                }
-        }
-
-        labels := strings.Split(lower, ".")
-        longHexCount := 0
-        for _, label := range labels {
-                if len(label) >= 20 && hexLabelRegex.MatchString(label) {
-                        longHexCount++
-                }
-        }
-        if longHexCount >= 2 {
-                return true
-        }
-        return false
 }
 
 func validateLabels(labels []string) bool {
