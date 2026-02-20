@@ -83,6 +83,9 @@ func dateTimeFuncs() template.FuncMap {
                 "formatDateTime":     formatDateTime,
                 "formatDateMonthDay": formatDateMonthDay,
                 "formatDuration":     formatDuration,
+                "currentYear": func() int {
+                        return time.Now().Year()
+                },
         }
 }
 
