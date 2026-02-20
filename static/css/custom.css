@@ -668,13 +668,12 @@ main.container {
     
     .results-header-actions .dropdown {
         order: 2;
-        flex: 1;
-        min-width: 0;
+        flex: 0 0 auto;
     }
     
     .results-header-actions .dropdown .btn {
-        width: 100%;
         justify-content: center;
+        white-space: nowrap;
     }
     
     .results-header-actions > a.btn {
@@ -1319,6 +1318,7 @@ main.container {
 
 .btn.btn-tlp-red {
     color: #ff2b2b !important;
+    -webkit-text-fill-color: #ff2b2b !important;
     border-color: rgba(255, 43, 43, 0.6) !important;
     transition: all 0.2s ease;
 }
@@ -1330,6 +1330,7 @@ main.container {
 }
 .btn.btn-tlp-amber-strict {
     color: rgba(255, 192, 0, 0.85) !important;
+    -webkit-text-fill-color: rgba(255, 192, 0, 0.85) !important;
     border-color: rgba(255, 192, 0, 0.6) !important;
     transition: all 0.2s ease;
 }
@@ -1339,8 +1340,10 @@ main.container {
     color: #ffc000 !important;
     border-color: rgba(255, 192, 0, 0.85) !important;
 }
-.btn.btn-tlp-amber {
+.btn.btn-tlp-amber,
+.btn.btn-tlp-amber.dropdown-toggle {
     color: rgba(255, 192, 0, 0.75) !important;
+    -webkit-text-fill-color: rgba(255, 192, 0, 0.75) !important;
     border-color: rgba(255, 192, 0, 0.5) !important;
     transition: all 0.2s ease;
 }
@@ -1352,6 +1355,7 @@ main.container {
 }
 .btn.btn-tlp-green {
     color: #33a532 !important;
+    -webkit-text-fill-color: #33a532 !important;
     border-color: rgba(51, 165, 50, 0.6) !important;
     transition: all 0.2s ease;
 }
@@ -1363,6 +1367,7 @@ main.container {
 }
 .btn.btn-tlp-clear {
     color: #adb5bd !important;
+    -webkit-text-fill-color: #adb5bd !important;
     border-color: rgba(108, 117, 125, 0.6) !important;
     transition: all 0.2s ease;
 }
@@ -3099,7 +3104,7 @@ footer a.text-muted:hover { text-decoration-color: rgba(173, 181, 189, 0.8); }
     border-radius: 0.375rem;
     letter-spacing: 0.02em;
 }
-.icae-level-dev { background: rgba(108, 117, 125, 0.25); color: #adb5bd; border: 1px solid rgba(108, 117, 125, 0.4); }
+.icae-level-dev { background: rgba(106, 127, 153, 0.2); color: #8b9fb7; border: 1px solid rgba(106, 127, 153, 0.4); }
 .icae-level-verified { background: rgba(25, 135, 84, 0.2); color: #75b798; border: 1px solid rgba(25, 135, 84, 0.4); }
 .icae-level-consistent { background: rgba(13, 202, 240, 0.15); color: #6edff6; border: 1px solid rgba(13, 202, 240, 0.35); }
 .icae-level-gold { background: rgba(212, 168, 85, 0.2); color: #d4a855; border: 1px solid rgba(212, 168, 85, 0.4); }
@@ -3133,7 +3138,7 @@ footer a.text-muted:hover { text-decoration-color: rgba(173, 181, 189, 0.8); }
     display: inline-block;
     flex-shrink: 0;
 }
-.icae-dot-dev { background: #adb5bd; box-shadow: 0 0 6px rgba(173, 181, 189, 0.6), 0 0 12px rgba(173, 181, 189, 0.2); }
+.icae-dot-dev { background: #7b8fa8; box-shadow: 0 0 6px rgba(123, 143, 168, 0.7), 0 0 12px rgba(123, 143, 168, 0.25); }
 .icae-dot-verified { background: #20c997; box-shadow: 0 0 6px rgba(32, 201, 151, 0.7), 0 0 14px rgba(32, 201, 151, 0.3); }
 .icae-dot-consistent { background: #0dcaf0; box-shadow: 0 0 8px rgba(13, 202, 240, 0.7), 0 0 16px rgba(13, 202, 240, 0.3); }
 .icae-dot-gold { background: #d4a855; box-shadow: 0 0 8px rgba(212, 168, 85, 0.8), 0 0 16px rgba(212, 168, 85, 0.3); }
@@ -3151,7 +3156,7 @@ footer a.text-muted:hover { text-decoration-color: rgba(173, 181, 189, 0.8); }
     border-radius: 2px;
     transition: width 0.6s ease;
 }
-.icae-fill-dev { background: linear-gradient(90deg, #6c757d, #868e96); }
+.icae-fill-dev { background: linear-gradient(90deg, #6a7f99, #8ba3bf); }
 .icae-fill-verified { background: linear-gradient(90deg, #198754, #20c997); }
 .icae-fill-consistent { background: linear-gradient(90deg, #0dcaf0, #67d6ed); }
 .icae-fill-gold { background: linear-gradient(90deg, #d4a855, #f0c040); }
@@ -3170,7 +3175,7 @@ footer a.text-muted:hover { text-decoration-color: rgba(173, 181, 189, 0.8); }
     text-transform: uppercase;
     letter-spacing: 0.03em;
 }
-.icae-stat-dev { color: #adb5bd; }
+.icae-stat-dev { color: #8b9fb7; }
 .icae-stat-verified { color: #75b798; }
 .icae-stat-consistent { color: #6edff6; }
 .icae-stat-gold { color: #d4a855; }
