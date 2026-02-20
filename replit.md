@@ -15,7 +15,7 @@ OSINT platform for RFC-compliant domain security analysis. Go/Gin backend, Boots
 3. **Version bumps**: Update `AppVersion` in `go-server/internal/config/config.go`
 4. **Build**: `./build.sh` compiles to `./dns-tool-server`; `main.py` is the gunicorn trampoline.
 5. **CSP**: No inline onclick/onchange/style="". Use addEventListener in nonce'd script blocks.
-6. **Safari**: Use showOverlay() for animated overlays — WebKit animation restart bug.
+6. **Safari scan navigation**: NEVER use `location.href` to start a scan that shows an overlay with timer/phases — WebKit kills running JS on navigation, freezing the overlay at 0s. Use `fetch()` + `document.write()` + `history.replaceState()` instead. Always call `showOverlay()` (double-rAF animation restart) before starting the fetch. Pattern: index.html and history.html.
 7. **SecurityTrails**: User-key-only. NEVER call automatically. 50 req/month hard limit.
 8. **Reality Check**: Every claim must be backed by implemented code. Use "on the roadmap" for future items.
 9. **Font Awesome**: WOFF2 subset only. Check CSS rule exists before using new icons.

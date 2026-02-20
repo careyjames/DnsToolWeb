@@ -272,7 +272,23 @@ Key stub defaults:
 
 ## Safari/iOS Compatibility — TOP PRIORITY
 
-- **Overlay animations**: Every `classList.remove('d-none')` on animated overlays MUST use `showOverlay()` — WebKit doesn't restart CSS animations from `display:none`
+Two distinct WebKit bugs affect scan overlays. Both must be addressed any time you write scan navigation code:
+
+### Bug 1: Animation Restart
+WebKit does not restart CSS animations when an element transitions from `display:none` to visible. **Fix**: Always call `showOverlay()` (in `static/js/main.js`) which uses double-rAF + reflow to force animation restart.
+
+### Bug 2: Timer Freeze on Navigation (Critical)
+Using `location.href` (or `window.location`) to start a scan kills all running JS timers during WebKit's page navigation. The scan overlay timer freezes at 0s and phases stop rotating.
+
+**Required pattern** — fetch-based navigation (see `index.html`, `history.html`):
+1. `showOverlay(overlay)` — activate overlay + fix animations
+2. `startStatusCycle(overlay)` — start timer + phase rotation
+3. `fetch(url)` to submit the scan (keeps JS alive during request)
+4. On response: `document.open(); document.write(html); document.close();`
+5. Update URL: `history.replaceState(null, '', resp.url)`
+6. `.catch(() => location.href = url)` — graceful fallback
+
+**NEVER** use `location.href` for any scan action that shows an overlay with timer/phases.
 - Always test Safari compatibility for frontend changes
 
 ## SecurityTrails — NEVER CALL AUTOMATICALLY

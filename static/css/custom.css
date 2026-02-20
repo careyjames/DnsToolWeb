@@ -3062,7 +3062,34 @@ footer a.text-muted:hover { text-decoration-color: rgba(173, 181, 189, 0.8); }
 .u-icae-label { letter-spacing: 0.05em; }
 .u-icae-disclaimer { font-size: 0.7rem; }
 
-/* ICAE Redesign — Protocol Cards with Progress Bars */
+/* ICAE Container — DRI-Inspired Premium Treatment */
+.icae-card {
+    position: relative;
+    background: linear-gradient(145deg, #161b22 0%, #0d1117 50%, #0f1923 100%);
+    border: 1px solid rgba(210, 168, 79, 0.15);
+    border-radius: 0.5rem;
+    overflow: hidden;
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(210, 168, 79, 0.06);
+}
+.icae-accent-bar {
+    height: 3px;
+    background: linear-gradient(90deg, rgba(210, 168, 79, 0.08) 0%, rgba(210, 168, 79, 0.55) 50%, rgba(210, 168, 79, 0.08) 100%);
+}
+.icae-card-body { padding: 1.25rem 1.5rem; }
+.icae-header-icon { color: rgba(210, 168, 79, 0.6); }
+.icae-section-badge {
+    display: inline-block;
+    font-size: 0.62rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    color: rgba(210, 168, 79, 0.7);
+    border: 1px solid rgba(210, 168, 79, 0.2);
+    padding: 0.2rem 0.6rem;
+    border-radius: 2px;
+}
+
+/* ICAE Protocol Cards with Progress Bars */
 .icae-overall-badge {
     font-size: 0.75rem;
     font-weight: 600;

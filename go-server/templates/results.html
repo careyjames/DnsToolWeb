@@ -4464,12 +4464,13 @@
         {{end}}
 
         {{if .ICAEMetrics}}
-        <div class="card bg-dark border-secondary mt-5 mb-3 screen-only" id="icae-confidence">
-            <div class="card-body py-3 px-4">
+        <div class="icae-card mt-5 mb-3 screen-only" id="icae-confidence">
+            <div class="icae-accent-bar"></div>
+            <div class="icae-card-body">
                 <div class="d-flex align-items-center justify-content-between mb-3">
                     <span>
-                        <i class="fas fa-shield-alt text-info me-2"></i>
-                        <span class="text-muted small fw-bold text-uppercase u-icae-label">Intelligence Confidence Audit Engine</span>
+                        <i class="fas fa-crosshairs me-2 icae-header-icon" aria-hidden="true"></i>
+                        <span class="icae-section-badge">Intelligence Confidence Audit Engine</span>
                     </span>
                     <span class="badge icae-overall-badge {{if eq .ICAEMetrics.OverallMaturity "gold_master"}}icae-level-gold-master{{else if eq .ICAEMetrics.OverallMaturity "gold"}}icae-level-gold{{else if eq .ICAEMetrics.OverallMaturity "consistent"}}icae-level-consistent{{else if eq .ICAEMetrics.OverallMaturity "verified"}}icae-level-verified{{else}}icae-level-dev{{end}}">{{.ICAEMetrics.OverallMaturityDisplay}} · {{.ICAEMetrics.EvaluatedCount}}/{{.ICAEMetrics.TotalProtocols}} Evaluated</span>
                 </div>

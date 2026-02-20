@@ -28,6 +28,29 @@ globalThis.addEventListener('pageshow', function(e) {
     }
 });
 
+/*
+ * Safari/WebKit Scan Overlay — Two Bugs, Two Fixes
+ *
+ * BUG 1 — Animation restart: WebKit does not restart CSS animations
+ * when an element transitions from display:none to visible. The
+ * double-rAF below forces a reflow so spinners/dots animate.
+ *
+ * BUG 2 — Timer freeze on navigation: Using location.href to start
+ * a scan triggers a full-page navigation. WebKit kills all running
+ * JS timers during navigation, so the overlay timer freezes at 0s.
+ *
+ * REQUIRED PATTERN for any scan action that shows an overlay:
+ *   1. Call showOverlay(overlay) — activates overlay + fixes animations
+ *   2. Call startStatusCycle(overlay) — starts timer + phase rotation
+ *   3. Use fetch(url) to submit the scan (keeps JS alive)
+ *   4. On response: document.open(); document.write(html); document.close();
+ *   5. Update URL: history.replaceState(null, '', resp.url)
+ *   6. Fallback: .catch → location.href (graceful degradation)
+ *
+ * NEVER use location.href or window.location to start a scan that
+ * depends on an active overlay timer. See index.html and history.html
+ * for reference implementations.
+ */
 function showOverlay(overlay) {
     if (!overlay) return;
     overlay.classList.add('is-active');
