@@ -96,7 +96,7 @@ func evaluateSPFState(spf map[string]any) (spfOK, spfWarning, spfMissing, spfHar
                 spfMissing = true
         }
 
-        mechanism, _ := spf["mechanism"].(string)
+        mechanism, _ := spf["all_mechanism"].(string)
         mechanism = strings.TrimSpace(mechanism)
         switch mechanism {
         case "-all":
