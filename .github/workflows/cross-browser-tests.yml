@@ -85,14 +85,14 @@ jobs:
           SESSION_SECRET: "ci-test-session-secret-not-for-production"
           BASE_URL: http://localhost:5000
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v6
         if: ${{ !cancelled() }}
         with:
           name: playwright-report-${{ matrix.browser }}
           path: playwright-report/
           retention-days: 14
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v6
         if: ${{ !cancelled() }}
         with:
           name: test-results-${{ matrix.browser }}
