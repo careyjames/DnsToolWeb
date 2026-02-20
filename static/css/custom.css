@@ -154,41 +154,91 @@ code {
     letter-spacing: 0.08em;
 }
 
-.icae-hero-badges { gap: 0.35rem !important; }
+.icae-hero-badges { gap: 0.5rem !important; }
 .icae-badge {
     display: inline-flex;
     align-items: center;
-    gap: 0.3rem;
-    padding: 0.2rem 0.55rem;
-    border-radius: 3px;
-    font-size: 0.72rem;
+    gap: 0.4rem;
+    padding: 0.35rem 0.75rem;
+    border-radius: 999px;
+    font-size: 0.8rem;
     font-weight: 600;
-    letter-spacing: 0.04em;
-    color: #c9d1d9;
-    background: rgba(125, 142, 168, 0.12);
-    border: 1px solid rgba(125, 142, 168, 0.2);
+    letter-spacing: 0.03em;
+    color: #e6edf3;
+    background: rgba(22, 27, 34, 0.85);
+    border: 1px solid rgba(125, 142, 168, 0.35);
     cursor: default;
-    transition: border-color 0.2s;
+    transition: border-color 0.25s, box-shadow 0.25s, transform 0.15s;
 }
-.icae-badge:hover { border-color: rgba(125, 142, 168, 0.45); }
+.icae-badge:hover {
+    border-color: rgba(125, 142, 168, 0.6);
+    transform: translateY(-1px);
+}
 .icae-dot {
     display: inline-block;
-    width: 6px;
-    height: 6px;
+    width: 8px;
+    height: 8px;
     border-radius: 50%;
     background: #6c757d;
+    box-shadow: 0 0 4px rgba(108, 117, 125, 0.5);
+    flex-shrink: 0;
 }
-.icae-badge-development .icae-dot { background: #6c757d; }
-.icae-badge-verified .icae-dot { background: #58a6ff; }
-.icae-badge-consistent .icae-dot { background: #3fb950; }
-.icae-badge-gold .icae-dot { background: #d4a855; }
-.icae-badge-gold_master .icae-dot { background: #b0cfe0; }
+.icae-badge-development .icae-dot {
+    background: #7b8fa8;
+    box-shadow: 0 0 6px rgba(123, 143, 168, 0.6);
+}
+.icae-badge-verified .icae-dot {
+    background: #58a6ff;
+    box-shadow: 0 0 6px rgba(88, 166, 255, 0.7), 0 0 12px rgba(88, 166, 255, 0.3);
+}
+.icae-badge-consistent .icae-dot {
+    background: #3fb950;
+    box-shadow: 0 0 6px rgba(63, 185, 80, 0.7), 0 0 12px rgba(63, 185, 80, 0.3);
+}
+.icae-badge-gold .icae-dot {
+    background: #d4a855;
+    box-shadow: 0 0 8px rgba(212, 168, 85, 0.8), 0 0 14px rgba(212, 168, 85, 0.35);
+}
+.icae-badge-gold_master .icae-dot {
+    background: linear-gradient(135deg, #b0cfe0, #e0ecf4);
+    box-shadow: 0 0 10px rgba(192, 216, 232, 0.9), 0 0 20px rgba(176, 207, 224, 0.4);
+}
 
-.icae-badge-development { border-color: rgba(108, 117, 125, 0.3); }
-.icae-badge-verified { border-color: rgba(88, 166, 255, 0.3); }
-.icae-badge-consistent { border-color: rgba(63, 185, 80, 0.3); }
-.icae-badge-gold { border-color: rgba(212, 168, 85, 0.3); }
-.icae-badge-gold_master { border-color: rgba(176, 207, 224, 0.3); }
+.icae-badge-development {
+    border-color: rgba(123, 143, 168, 0.35);
+}
+.icae-badge-development:hover {
+    border-color: rgba(123, 143, 168, 0.6);
+    box-shadow: 0 0 8px rgba(123, 143, 168, 0.15);
+}
+.icae-badge-verified {
+    border-color: rgba(88, 166, 255, 0.35);
+}
+.icae-badge-verified:hover {
+    border-color: rgba(88, 166, 255, 0.6);
+    box-shadow: 0 0 10px rgba(88, 166, 255, 0.15);
+}
+.icae-badge-consistent {
+    border-color: rgba(63, 185, 80, 0.35);
+}
+.icae-badge-consistent:hover {
+    border-color: rgba(63, 185, 80, 0.6);
+    box-shadow: 0 0 10px rgba(63, 185, 80, 0.15);
+}
+.icae-badge-gold {
+    border-color: rgba(212, 168, 85, 0.4);
+}
+.icae-badge-gold:hover {
+    border-color: rgba(212, 168, 85, 0.65);
+    box-shadow: 0 0 12px rgba(212, 168, 85, 0.2);
+}
+.icae-badge-gold_master {
+    border-color: rgba(176, 207, 224, 0.4);
+}
+.icae-badge-gold_master:hover {
+    border-color: rgba(176, 207, 224, 0.65);
+    box-shadow: 0 0 14px rgba(176, 207, 224, 0.25);
+}
 
 .icae-hero-label { text-align: center; }
 
