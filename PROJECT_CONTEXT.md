@@ -435,9 +435,7 @@ Implementation details are in the intel repo. Key public-facing behaviors:
 
 DNS Tool includes discoverable content for the security research and hacker communities. All content carries legal disclaimers citing RFC 1392 (IETF Internet Users' Glossary, 1993). Curious engineers are encouraged to explore.
 
-**Implementation note**: `htmlComment()` in `go-server/internal/templates/funcs.go` — sanitizes `--` to em dashes (comment injection prevention). Static strings only, never user input. All community signals are CSP-compliant and RFC 7230 compliant where applicable.
-
-**INTENTIONAL design elements**: Some UI elements use reduced opacity or subtle placement by design. These are deliberate community signals — do NOT "fix" their visibility.
+**INTENTIONAL design elements**: Some UI elements use reduced opacity or subtle placement by design. These are deliberate community signals — do NOT alter their visibility or "fix" them.
 
 ---
 

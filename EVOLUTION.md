@@ -16,17 +16,15 @@ This file is the project's permanent breadcrumb trail — every session's decisi
 
 #### What Changed
 
-1. **htmlComment() template function**: Go's `html/template` silently strips all HTML comments for security. Created `htmlComment()` in `go-server/internal/templates/funcs.go` that returns `template.HTML` type, bypassing the stripping. Sanitizes `--` to em dashes to prevent comment injection. Used ONLY with static strings.
+1. **Community signals**: Discoverable content added for security researchers and curious engineers. All content carries RFC 1392 legal disclaimers and follows observation-based language standards. Details intentionally omitted from public documentation — the discovery is the point.
 
-2. **Community signals**: Discoverable content added for security researchers and curious engineers. All content carries RFC 1392 legal disclaimers and follows observation-based language standards. Details intentionally omitted from public documentation — the discovery is the point.
+2. **/dev/null auto-enables Expanded Exposure Checks**: When `/dev/null` checkbox is ticked, JavaScript auto-enables the exposure checks checkbox. Copy updated to: "Maximum intelligence, zero persistence. Automatically enables Expanded Exposure Checks for full reconnaissance." User can still manually uncheck.
 
-3. **/dev/null auto-enables Expanded Exposure Checks**: When `/dev/null` checkbox is ticked, JavaScript auto-enables the exposure checks checkbox. Copy updated to: "Maximum intelligence, zero persistence. Automatically enables Expanded Exposure Checks for full reconnaissance." User can still manually uncheck.
+3. **/dev/null copy accuracy**: Replaced overpromising language ("no one will ever know", "zero footprint") with precise scoping: "Nothing written to our database" (scoped), "Standard network activity occurs normally" (honest). No absolute privacy claims.
 
-4. **/dev/null copy accuracy**: Replaced overpromising language ("no one will ever know", "zero footprint") with precise scoping: "Nothing written to our database" (scoped), "Standard network activity occurs normally" (honest). No absolute privacy claims.
+4. **/dev/null drift isolation**: Authenticated users in devNull mode now skip drift lookup entirely, preventing historical data reads in a privacy-focused scan mode.
 
-5. **/dev/null drift isolation**: Authenticated users in devNull mode now skip drift lookup entirely, preventing historical data reads in a privacy-focused scan mode.
-
-6. **CT log test fix**: `TestGoldenRuleSubdomainDiscoveryUnder60s` changed from asserting specific subdomain names to validating structural properties (non-empty name, correct suffix), making it deterministic against external CT data changes.
+5. **CT log test fix**: `TestGoldenRuleSubdomainDiscoveryUnder60s` changed from asserting specific subdomain names to validating structural properties (non-empty name, correct suffix), making it deterministic against external CT data changes.
 
 #### ANSI Art / Terminal Colors — Research Conclusion
 
@@ -41,7 +39,7 @@ DNS Tool's observation-based, standards-cited transparency model was developed i
 Some UI elements use reduced opacity or subtle placement by design. These are deliberate community signals — do NOT alter their visibility.
 
 #### Files Changed
-- **Modified**: `go-server/internal/templates/funcs.go`, `go-server/templates/index.html`, `go-server/templates/results.html`, `go-server/templates/architecture.html`, `go-server/internal/handlers/analysis.go`, `go-server/internal/analyzer/golden_rules_test.go`, `go-server/internal/config/config.go`, `PROJECT_CONTEXT.md`, `replit.md`
+- **Modified**: Template files (community signals), handler logic (devNull enhancements), test files, config, documentation
 
 ---
 
