@@ -44,6 +44,8 @@ func LoadReportMetrics(ctx context.Context, queries DBTX) *ReportMetrics {
                         pr.CollectionLevel = colData.Maturity
                         pr.CollectionDisplay = MaturityDisplayNames[colData.Maturity]
                         pr.CollectionRuns = int(colData.TotalRuns)
+                        pr.CollectionPasses = int(colData.ConsecutivePasses)
+                        pr.CollectionBarPct = runsToBarPct(int(colData.ConsecutivePasses))
                 } else {
                         pr.CollectionLevel = MaturityDevelopment
                         pr.CollectionDisplay = MaturityDisplayNames[MaturityDevelopment]
@@ -53,6 +55,17 @@ func LoadReportMetrics(ctx context.Context, queries DBTX) *ReportMetrics {
                         pr.AnalysisLevel = analData.Maturity
                         pr.AnalysisDisplay = MaturityDisplayNames[analData.Maturity]
                         pr.AnalysisRuns = int(analData.TotalRuns)
+                        pr.AnalysisPasses = int(analData.ConsecutivePasses)
+                        pr.AnalysisBarPct = runsToBarPct(int(analData.ConsecutivePasses))
+                        if t := TimestampToTimePtr(analData.LastRegressionAt); t != nil {
+                                pr.LastRegressionAt = *t
+                        }
+                        if t := TimestampToTimePtr(analData.LastEvaluatedAt); t != nil {
+                                pr.LastEvaluatedAt = *t
+                        }
+                        if t := TimestampToTimePtr(analData.FirstPassAt); t != nil {
+                                pr.FirstPassAt = *t
+                        }
                 } else {
                         pr.AnalysisLevel = MaturityDevelopment
                         pr.AnalysisDisplay = MaturityDisplayNames[MaturityDevelopment]

@@ -38,46 +38,90 @@
 
         {{if .ICAEMetrics}}
 
-        <div class="text-center mb-4">
-            <span class="icae-overall-badge icae-overall-badge-{{.ICAEMetrics.OverallMaturity}}">
-                <span class="icae-dot icae-dot-color-{{.ICAEMetrics.OverallMaturity}}"></span>
-                Overall Maturity: {{.ICAEMetrics.OverallMaturityDisplay}}
-            </span>
-            <span class="text-muted ms-2 u-fs-075em">
-                {{.ICAEMetrics.EvaluatedCount}} of {{.ICAEMetrics.TotalProtocols}} protocols evaluated
-            </span>
-        </div>
+        <div class="card bg-dark border-secondary mb-4">
+            <div class="card-body pb-2">
+                <div class="d-flex flex-wrap align-items-center justify-content-between mb-3">
+                    <h2 class="h5 fw-bold mb-0"><i class="fas fa-tachometer-alt me-2 text-info"></i>Calibration Status Panel</h2>
+                    <span class="icae-overall-badge icae-overall-badge-{{.ICAEMetrics.OverallMaturity}}">
+                        <span class="icae-dot icae-dot-inline icae-dot-color-{{.ICAEMetrics.OverallMaturity}}"></span>
+                        {{.ICAEMetrics.OverallMaturityDisplay}}
+                        <span class="text-muted u-fs-075em ms-1">{{.ICAEMetrics.EvaluatedCount}}/{{.ICAEMetrics.TotalProtocols}}</span>
+                    </span>
+                </div>
+                <div class="icae-cal-threshold-labels d-flex mb-1">
+                    <span class="icae-cal-tick" style="width:20%">0</span>
+                    <span class="icae-cal-tick" style="width:20%">100</span>
+                    <span class="icae-cal-tick" style="width:20%">500</span>
+                    <span class="icae-cal-tick" style="width:20%">1K</span>
+                    <span class="icae-cal-tick" style="width:20%">5K</span>
+                </div>
+                <div class="icae-cal-band-labels d-flex mb-3">
+                    <span class="icae-cal-band icae-cal-band-dev" style="width:20%">DEV</span>
+                    <span class="icae-cal-band icae-cal-band-verified" style="width:20%">VER</span>
+                    <span class="icae-cal-band icae-cal-band-consistent" style="width:20%">CON</span>
+                    <span class="icae-cal-band icae-cal-band-gold" style="width:20%">GOLD</span>
+                    <span class="icae-cal-band icae-cal-band-gm" style="width:20%">GM</span>
+                </div>
 
-        <div class="table-responsive mb-5">
-            <table class="table table-dark table-hover align-middle">
-                <thead>
-                    <tr>
-                        <th>Protocol</th>
-                        <th class="text-center">Collection</th>
-                        <th class="text-center">Analysis</th>
-                        <th class="text-center">Audit Runs</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {{range .ICAEMetrics.Protocols}}
-                    <tr>
-                        <td class="fw-semibold">
-                            <span class="icae-dot icae-dot-inline icae-dot-color-{{.AnalysisLevel}}"></span>
-                            {{.DisplayName}}
-                        </td>
-                        <td class="text-center">
-                            <span class="badge icae-maturity-badge-deep icae-maturity-deep-{{.CollectionLevel}}">{{.CollectionDisplay}}</span>
-                        </td>
-                        <td class="text-center">
-                            <span class="badge icae-maturity-badge-deep icae-maturity-deep-{{.AnalysisLevel}}">{{.AnalysisDisplay}}</span>
-                        </td>
-                        <td class="text-center text-muted">
-                            {{if .HasRuns}}{{.AnalysisRuns}}{{else}}&mdash;{{end}}
-                        </td>
-                    </tr>
+                {{range .ICAEMetrics.Protocols}}
+                <div class="icae-cal-strip mb-2">
+                    <div class="d-flex align-items-center mb-1">
+                        <span class="icae-dot icae-dot-inline icae-dot-color-{{.AnalysisLevel}} me-2"></span>
+                        <span class="icae-cal-proto-name">{{.DisplayName}}</span>
+                        <span class="badge icae-maturity-badge-deep icae-maturity-deep-{{.AnalysisLevel}} ms-2">{{.AnalysisDisplay}}</span>
+                        {{if .HasRuns}}<span class="icae-cal-runs ms-auto">{{.AnalysisPasses}} passes &middot; {{.AnalysisRuns}} runs</span>{{end}}
+                    </div>
+                    <div class="icae-cal-dual-bars">
+                        <div class="d-flex align-items-center gap-2 mb-1">
+                            <span class="icae-cal-layer-label">COL</span>
+                            <div class="icae-cal-track">
+                                <div class="icae-cal-track-segments">
+                                    <span class="icae-cal-seg icae-cal-seg-dev"></span>
+                                    <span class="icae-cal-seg icae-cal-seg-ver"></span>
+                                    <span class="icae-cal-seg icae-cal-seg-con"></span>
+                                    <span class="icae-cal-seg icae-cal-seg-gold"></span>
+                                    <span class="icae-cal-seg icae-cal-seg-gm"></span>
+                                </div>
+                                <div class="icae-cal-fill icae-cal-fill-{{.CollectionLevel}}" style="width:{{.CollectionBarPct}}%"></div>
+                                {{if gt .CollectionBarPct 0}}<div class="icae-cal-needle" style="left:{{.CollectionBarPct}}%"></div>{{end}}
+                            </div>
+                            <span class="badge icae-maturity-badge-deep icae-maturity-deep-{{.CollectionLevel}} icae-cal-layer-badge">{{.CollectionDisplay}}</span>
+                        </div>
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="icae-cal-layer-label">ANL</span>
+                            <div class="icae-cal-track">
+                                <div class="icae-cal-track-segments">
+                                    <span class="icae-cal-seg icae-cal-seg-dev"></span>
+                                    <span class="icae-cal-seg icae-cal-seg-ver"></span>
+                                    <span class="icae-cal-seg icae-cal-seg-con"></span>
+                                    <span class="icae-cal-seg icae-cal-seg-gold"></span>
+                                    <span class="icae-cal-seg icae-cal-seg-gm"></span>
+                                </div>
+                                <div class="icae-cal-fill icae-cal-fill-{{.AnalysisLevel}}" style="width:{{.AnalysisBarPct}}%"></div>
+                                {{if gt .AnalysisBarPct 0}}<div class="icae-cal-needle" style="left:{{.AnalysisBarPct}}%"></div>{{end}}
+                            </div>
+                            <span class="badge icae-maturity-badge-deep icae-maturity-deep-{{.AnalysisLevel}} icae-cal-layer-badge">{{.AnalysisDisplay}}</span>
+                        </div>
+                    </div>
+                    {{if or .LastRegressionAt .FirstPassAt .LastEvaluatedAt}}
+                    <div class="icae-cal-meta">
+                        {{if .LastRegressionAt}}<span class="icae-cal-regression"><i class="fas fa-exclamation-triangle me-1"></i>Last regression: {{.LastRegressionAt}}</span>{{end}}
+                        {{if .FirstPassAt}}<span class="icae-cal-meta-item"><i class="fas fa-play-circle me-1"></i>First pass: {{.FirstPassAt}}</span>{{end}}
+                        {{if .LastEvaluatedAt}}<span class="icae-cal-meta-item"><i class="fas fa-clock me-1"></i>Last evaluated: {{.LastEvaluatedAt}}</span>{{end}}
+                    </div>
                     {{end}}
-                </tbody>
-            </table>
+                </div>
+                {{end}}
+
+                <div class="icae-cal-legend mt-3 pt-2 border-top border-secondary">
+                    <span class="icae-cal-legend-label">Threshold Scale:</span>
+                    <span class="icae-cal-legend-item"><span class="icae-cal-leg-swatch icae-cal-leg-dev"></span>Development &lt;100</span>
+                    <span class="icae-cal-legend-item"><span class="icae-cal-leg-swatch icae-cal-leg-ver"></span>Verified 100+</span>
+                    <span class="icae-cal-legend-item"><span class="icae-cal-leg-swatch icae-cal-leg-con"></span>Consistent 500+</span>
+                    <span class="icae-cal-legend-item"><span class="icae-cal-leg-swatch icae-cal-leg-gold"></span>Gold 1K+</span>
+                    <span class="icae-cal-legend-item"><span class="icae-cal-leg-swatch icae-cal-leg-gm"></span>Gold Master 5K+</span>
+                </div>
+            </div>
         </div>
 
         <div class="card bg-dark border-secondary mb-5">

@@ -122,10 +122,38 @@ type ProtocolReport struct {
         CollectionLevel   string
         CollectionDisplay string
         CollectionRuns    int
+        CollectionPasses  int
         AnalysisLevel     string
         AnalysisDisplay   string
         AnalysisRuns      int
+        AnalysisPasses    int
         HasRuns           bool
+        LastRegressionAt  string
+        LastEvaluatedAt   string
+        FirstPassAt       string
+        CollectionBarPct  int
+        AnalysisBarPct    int
+}
+
+func runsToBarPct(runs int) int {
+        switch {
+        case runs <= 0:
+                return 0
+        case runs < ThresholdVerified:
+                return 1 + (runs*19)/ThresholdVerified
+        case runs < ThresholdConsistent:
+                return 20 + ((runs-ThresholdVerified)*20)/(ThresholdConsistent-ThresholdVerified)
+        case runs < ThresholdGold:
+                return 40 + ((runs-ThresholdConsistent)*20)/(ThresholdGold-ThresholdConsistent)
+        case runs < ThresholdGoldMaster:
+                return 60 + ((runs-ThresholdGold)*20)/(ThresholdGoldMaster-ThresholdGold)
+        default:
+                pct := 80 + ((runs-ThresholdGoldMaster)*20)/ThresholdGoldMaster
+                if pct > 100 {
+                        pct = 100
+                }
+                return pct
+        }
 }
 
 func ComputeMaturity(consecutivePasses int, firstPassAt *time.Time, lastRegressionAt *time.Time) string {
