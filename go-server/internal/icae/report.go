@@ -32,11 +32,19 @@ func LoadReportMetrics(ctx context.Context, queries DBTX) *ReportMetrics {
                 maturityMap[row.Protocol][row.Layer] = row
         }
 
+        caseCounts := CountCasesByProtocol()
+
         var protocols []ProtocolReport
         for _, proto := range Protocols {
                 pr := ProtocolReport{
                         Protocol:    proto,
                         DisplayName: ProtocolDisplayNames[proto],
+                }
+
+                if cc, ok := caseCounts[proto]; ok {
+                        pr.CollectionCases = cc.Collection
+                        pr.AnalysisCases = cc.Analysis
+                        pr.TotalCases = cc.Total
                 }
 
                 colData, hasCol := maturityMap[proto][LayerCollection]
@@ -137,6 +145,9 @@ func LoadReportMetrics(ctx context.Context, queries DBTX) *ReportMetrics {
                 byKey[p.Protocol] = p
         }
 
+        totalCollectionCases := len(CollectionTestCases())
+        totalAnalysisCases := len(AnalysisTestCases())
+
         metrics := &ReportMetrics{
                 Protocols:              protocols,
                 ByKey:                  byKey,
@@ -150,6 +161,9 @@ func LoadReportMetrics(ctx context.Context, queries DBTX) *ReportMetrics {
                 FirstPassAt:            earliestFirstPass,
                 DaysRunning:            maxDays,
                 Regressions:            regressions,
+                TotalCollectionCases:   totalCollectionCases,
+                TotalAnalysisCases:     totalAnalysisCases,
+                TotalAllCases:          totalCollectionCases + totalAnalysisCases,
         }
 
         return metrics

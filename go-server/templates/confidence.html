@@ -65,6 +65,10 @@
                 <span class="icae-summary-label">Running</span>
             </div>
             <div class="icae-summary-item">
+                <span class="icae-summary-value">{{.ICAEMetrics.TotalAllCases}}</span>
+                <span class="icae-summary-label">Total Cases</span>
+            </div>
+            <div class="icae-summary-item">
                 <span class="icae-summary-value">{{len .ICAEMetrics.Regressions}}</span>
                 <span class="icae-summary-label">Regressions</span>
             </div>
@@ -223,7 +227,7 @@
                     <div class="col-md-6">
                         <div class="card bg-dark border-secondary h-100">
                             <div class="card-body py-2 px-3">
-                                <h3 class="h6 fw-bold mb-1"><span class="text-info">SPF</span> <span class="text-muted u-fs-075em">&mdash; 14 test cases</span></h3>
+                                <h3 class="h6 fw-bold mb-1"><span class="text-info">SPF</span> <span class="text-muted u-fs-075em">&mdash; {{with index .ICAEMetrics.ByKey "spf"}}{{.TotalCases}} total ({{.AnalysisCases}} analysis + {{.CollectionCases}} collection){{end}} test cases</span></h3>
                                 <p class="text-muted small mb-1">Validates qualifier classification (~all, -all, +all, ?all), DNS lookup counting (<a href="https://datatracker.ietf.org/doc/html/rfc7208#section-4.6.4" class="text-info" target="_blank" rel="noopener">RFC 7208 &sect;4.6.4</a>), 10-lookup limit enforcement, no-mail intent detection, multiple-record error handling (<a href="https://datatracker.ietf.org/doc/html/rfc7208#section-3.2" class="text-info" target="_blank" rel="noopener">&sect;3.2</a>), record classification (valid vs. spf-like), and cross-protocol RFC 7489 &sect;10.1 premature rejection warnings.</p>
                                 <p class="text-muted small mb-0"><strong>Methodology:</strong> Deterministic input &rarr; expected output. No live DNS. Pure logic validation.</p>
                             </div>
@@ -232,7 +236,7 @@
                     <div class="col-md-6">
                         <div class="card bg-dark border-secondary h-100">
                             <div class="card-body py-2 px-3">
-                                <h3 class="h6 fw-bold mb-1"><span class="text-info">DMARC</span> <span class="text-muted u-fs-075em">&mdash; 11 test cases</span></h3>
+                                <h3 class="h6 fw-bold mb-1"><span class="text-info">DMARC</span> <span class="text-muted u-fs-075em">&mdash; {{with index .ICAEMetrics.ByKey "dmarc"}}{{.TotalCases}} total ({{.AnalysisCases}} analysis + {{.CollectionCases}} collection){{end}} test cases</span></h3>
                                 <p class="text-muted small mb-1">Validates policy enforcement logic (reject/quarantine/none per <a href="https://datatracker.ietf.org/doc/html/rfc7489#section-6.3" class="text-info" target="_blank" rel="noopener">RFC 7489 &sect;6.3</a>), partial percentage coverage, SPF-only exposure, DMARC-without-SPF gaps, null MX no-mail domains (<a href="https://datatracker.ietf.org/doc/html/rfc7505" class="text-info" target="_blank" rel="noopener">RFC 7505</a>), and structured color/severity mapping for spoofability assessment.</p>
                                 <p class="text-muted small mb-0"><strong>Methodology:</strong> Combinatorial policy matrix &rarr; expected verdict + severity color.</p>
                             </div>
@@ -241,7 +245,7 @@
                     <div class="col-md-6">
                         <div class="card bg-dark border-secondary h-100">
                             <div class="card-body py-2 px-3">
-                                <h3 class="h6 fw-bold mb-1"><span class="text-info">DKIM</span> <span class="text-muted u-fs-075em">&mdash; 7 test cases</span></h3>
+                                <h3 class="h6 fw-bold mb-1"><span class="text-info">DKIM</span> <span class="text-muted u-fs-075em">&mdash; {{with index .ICAEMetrics.ByKey "dkim"}}{{.TotalCases}} total ({{.AnalysisCases}} analysis + {{.CollectionCases}} collection){{end}} test cases</span></h3>
                                 <p class="text-muted small mb-1">Validates RSA key strength classification (1024-bit weak, 2048-bit adequate per <a href="https://datatracker.ietf.org/doc/html/rfc8301" class="text-info" target="_blank" rel="noopener">RFC 8301</a>), Ed25519 key type parsing (<a href="https://datatracker.ietf.org/doc/html/rfc8463" class="text-info" target="_blank" rel="noopener">RFC 8463</a>), revoked key detection (empty p= per <a href="https://datatracker.ietf.org/doc/html/rfc6376#section-3.6.1" class="text-info" target="_blank" rel="noopener">RFC 6376 &sect;3.6.1</a>), test mode flag detection (t=y), and provider fingerprinting (Google, Microsoft 365).</p>
                                 <p class="text-muted small mb-0"><strong>Methodology:</strong> Synthetic DKIM records &rarr; expected key analysis + provider classification.</p>
                             </div>
@@ -250,7 +254,7 @@
                     <div class="col-md-6">
                         <div class="card bg-dark border-secondary h-100">
                             <div class="card-body py-2 px-3">
-                                <h3 class="h6 fw-bold mb-1"><span class="text-info">DNSSEC</span> <span class="text-muted u-fs-075em">&mdash; 17 test cases</span></h3>
+                                <h3 class="h6 fw-bold mb-1"><span class="text-info">DNSSEC</span> <span class="text-muted u-fs-075em">&mdash; {{with index .ICAEMetrics.ByKey "dnssec"}}{{.TotalCases}} total ({{.AnalysisCases}} analysis + {{.CollectionCases}} collection){{end}} test cases</span></h3>
                                 <p class="text-muted small mb-1">Validates chain-of-trust verdicts (signed/unsigned/broken per <a href="https://datatracker.ietf.org/doc/html/rfc4033#section-2" class="text-info" target="_blank" rel="noopener">RFC 4033 &sect;2</a>), tampering exposure assessment, DS digest classification (SHA-256 per <a href="https://datatracker.ietf.org/doc/html/rfc8624#section-3.3" class="text-info" target="_blank" rel="noopener">RFC 8624 &sect;3.3</a>), enterprise DNS provider detection (Cloudflare, AWS Route 53, Google Cloud DNS, Azure, Akamai, NS1 per <a href="https://datatracker.ietf.org/doc/html/rfc1035" class="text-info" target="_blank" rel="noopener">RFC 1035</a>), and inheritance chain classification.</p>
                                 <p class="text-muted small mb-0"><strong>Methodology:</strong> Simulated NS/DS inputs &rarr; expected verdict + provider fingerprint.</p>
                             </div>
@@ -259,7 +263,7 @@
                     <div class="col-md-6">
                         <div class="card bg-dark border-secondary h-100">
                             <div class="card-body py-2 px-3">
-                                <h3 class="h6 fw-bold mb-1"><span class="text-info">DANE/TLSA</span> <span class="text-muted u-fs-075em">&mdash; 5 test cases</span></h3>
+                                <h3 class="h6 fw-bold mb-1"><span class="text-info">DANE/TLSA</span> <span class="text-muted u-fs-075em">&mdash; {{with index .ICAEMetrics.ByKey "dane"}}{{.TotalCases}} total ({{.AnalysisCases}} analysis + {{.CollectionCases}} collection){{end}} test cases</span></h3>
                                 <p class="text-muted small mb-1">Validates TLSA usage type parsing (DANE-EE usage 3 per <a href="https://datatracker.ietf.org/doc/html/rfc7672#section-3.1" class="text-info" target="_blank" rel="noopener">RFC 7672 &sect;3.1</a>), deprecated usage recommendations (usage 0 triggers RFC 7672 advisory), MX host extraction (<a href="https://datatracker.ietf.org/doc/html/rfc5321#section-5" class="text-info" target="_blank" rel="noopener">RFC 5321 &sect;5</a>), full-coverage verdict logic, and no-TLSA informational classification.</p>
                                 <p class="text-muted small mb-0"><strong>Methodology:</strong> Synthetic TLSA + MX inputs &rarr; expected verdict + coverage status.</p>
                             </div>
@@ -268,7 +272,7 @@
                     <div class="col-md-6">
                         <div class="card bg-dark border-secondary h-100">
                             <div class="card-body py-2 px-3">
-                                <h3 class="h6 fw-bold mb-1"><span class="text-info">MTA-STS</span> <span class="text-muted u-fs-075em">&mdash; 5 test cases</span></h3>
+                                <h3 class="h6 fw-bold mb-1"><span class="text-info">MTA-STS</span> <span class="text-muted u-fs-075em">&mdash; {{with index .ICAEMetrics.ByKey "mta_sts"}}{{.TotalCases}} total ({{.AnalysisCases}} analysis + {{.CollectionCases}} collection){{end}} test cases</span></h3>
                                 <p class="text-muted small mb-1">Validates mode enforcement logic (enforce=success, testing=warning per <a href="https://datatracker.ietf.org/doc/html/rfc8461#section-5" class="text-info" target="_blank" rel="noopener">RFC 8461 &sect;5</a>), policy line parsing (version, mode, max_age, mx per <a href="https://datatracker.ietf.org/doc/html/rfc8461#section-3.2" class="text-info" target="_blank" rel="noopener">&sect;3.2</a>), STS record filtering (<a href="https://datatracker.ietf.org/doc/html/rfc8461#section-3.1" class="text-info" target="_blank" rel="noopener">&sect;3.1</a>), and policy ID extraction.</p>
                                 <p class="text-muted small mb-0"><strong>Methodology:</strong> Synthetic DNS records + policy bodies &rarr; expected parsed fields.</p>
                             </div>
@@ -277,7 +281,7 @@
                     <div class="col-md-6">
                         <div class="card bg-dark border-secondary h-100">
                             <div class="card-body py-2 px-3">
-                                <h3 class="h6 fw-bold mb-1"><span class="text-info">CAA</span> <span class="text-muted u-fs-075em">&mdash; 5 test cases</span></h3>
+                                <h3 class="h6 fw-bold mb-1"><span class="text-info">CAA</span> <span class="text-muted u-fs-075em">&mdash; {{with index .ICAEMetrics.ByKey "caa"}}{{.TotalCases}} total ({{.AnalysisCases}} analysis + {{.CollectionCases}} collection){{end}} test cases</span></h3>
                                 <p class="text-muted small mb-1">Validates CA issuer identification (Let&rsquo;s Encrypt, DigiCert per <a href="https://datatracker.ietf.org/doc/html/rfc8659#section-4" class="text-info" target="_blank" rel="noopener">RFC 8659 &sect;4</a>), issuewild detection (<a href="https://datatracker.ietf.org/doc/html/rfc8659#section-4.3" class="text-info" target="_blank" rel="noopener">&sect;4.3</a>), iodef record detection (<a href="https://datatracker.ietf.org/doc/html/rfc8659#section-4.4" class="text-info" target="_blank" rel="noopener">&sect;4.4</a>), and human-readable message construction.</p>
                                 <p class="text-muted small mb-0"><strong>Methodology:</strong> Synthetic CAA records &rarr; expected parsed issuers + flags.</p>
                             </div>
@@ -286,7 +290,7 @@
                     <div class="col-md-6">
                         <div class="card bg-dark border-secondary h-100">
                             <div class="card-body py-2 px-3">
-                                <h3 class="h6 fw-bold mb-1"><span class="text-info">BIMI</span> <span class="text-muted u-fs-075em">&mdash; 4 test cases</span></h3>
+                                <h3 class="h6 fw-bold mb-1"><span class="text-info">BIMI</span> <span class="text-muted u-fs-075em">&mdash; {{with index .ICAEMetrics.ByKey "bimi"}}{{.TotalCases}} total ({{.AnalysisCases}} analysis + {{.CollectionCases}} collection){{end}} test cases</span></h3>
                                 <p class="text-muted small mb-1">Validates record filtering (v=BIMI1 per <a href="https://datatracker.ietf.org/doc/html/rfc9495#section-3" class="text-info" target="_blank" rel="noopener">RFC 9495 &sect;3</a>), logo URL extraction, VMC (Verified Mark Certificate) URL extraction, and absent-VMC null handling.</p>
                                 <p class="text-muted small mb-0"><strong>Methodology:</strong> Synthetic BIMI records &rarr; expected parsed URLs + null checks.</p>
                             </div>
@@ -295,7 +299,7 @@
                     <div class="col-md-6">
                         <div class="card bg-dark border-secondary h-100">
                             <div class="card-body py-2 px-3">
-                                <h3 class="h6 fw-bold mb-1"><span class="text-info">TLS-RPT</span> <span class="text-muted u-fs-075em">&mdash; 3 test cases</span></h3>
+                                <h3 class="h6 fw-bold mb-1"><span class="text-info">TLS-RPT</span> <span class="text-muted u-fs-075em">&mdash; {{with index .ICAEMetrics.ByKey "tlsrpt"}}{{.TotalCases}} total ({{.AnalysisCases}} analysis + {{.CollectionCases}} collection){{end}} test cases</span></h3>
                                 <p class="text-muted small mb-1">Validates cryptographic key classification for DKIM (2048-bit RSA adequate per <a href="https://datatracker.ietf.org/doc/html/rfc8301" class="text-info" target="_blank" rel="noopener">RFC 8301</a>, Ed25519 strong) and DS digest type classification (SHA-256 per <a href="https://datatracker.ietf.org/doc/html/rfc8624#section-3.3" class="text-info" target="_blank" rel="noopener">RFC 8624 &sect;3.3</a>).</p>
                                 <p class="text-muted small mb-0"><strong>Methodology:</strong> Known algorithm + key size inputs &rarr; expected strength label.</p>
                             </div>
@@ -316,6 +320,7 @@
             <div class="card-body">
                 <h2 class="h5 fw-bold mb-3"><i class="fas fa-layer-group me-2 text-info"></i>Maturity Levels</h2>
                 <p class="text-muted small mb-3">Modeled after the <strong>Capability Maturity Model (CMM)</strong> developed at Carnegie Mellon&rsquo;s Software Engineering Institute. Five tiers of sustained accuracy&nbsp;&mdash; earned through deterministic test runs, never self-assigned.</p>
+                <p class="text-muted small mb-3">The dual-threshold system (consecutive passes AND elapsed time) prevents maturity inflation. A burst of 5,000 runs in one day cannot achieve Gold Master &mdash; the 180-day time requirement ensures tests have run across multiple code versions, infrastructure changes, and resolver conditions. This mirrors how real-world confidence is earned: through sustained performance, not a single marathon session.</p>
                 <div class="row g-3">
                     <div class="col-md-6">
                         <div class="d-flex align-items-start gap-2 mb-3">
@@ -369,7 +374,7 @@
                         <div class="card bg-dark border-secondary h-100">
                             <div class="card-body">
                                 <h3 class="h6 fw-bold"><i class="fas fa-database me-1 text-info"></i> Collection Layer</h3>
-                                <p class="text-muted small mb-0">Validates that raw DNS records are retrieved correctly — the right queries, the right record types, proper timeout handling.</p>
+                                <p class="text-muted small mb-0">Validates that DNS records are queried, retrieved, parsed, and filtered correctly. Tests cover multi-resolver consensus algorithms (5-resolver agreement checks), record type extraction (MX hosts, CAA issuers), record filtering (identifying valid BIMI, MTA-STS, SPF records from TXT noise), TLSA parsing, NS provider classification, and DKIM key parsing. Currently {{if .ICAEMetrics}}{{.ICAEMetrics.TotalCollectionCases}}{{else}}0{{end}} test cases.</p>
                             </div>
                         </div>
                     </div>
@@ -377,7 +382,7 @@
                         <div class="card bg-dark border-secondary h-100">
                             <div class="card-body">
                                 <h3 class="h6 fw-bold"><i class="fas fa-search-plus me-1 text-info"></i> Analysis Layer</h3>
-                                <p class="text-muted small mb-0">Validates that collected data is interpreted correctly — RFC compliance checks, security assessment logic, risk classification.</p>
+                                <p class="text-muted small mb-0">Validates that collected data is interpreted correctly against RFC standards. Tests cover SPF qualifier classification, DMARC policy enforcement logic, DKIM key strength assessment, DNSSEC chain-of-trust verdicts, brand impersonation verdicts, CAA issuer identification, DANE coverage assessment, and regression guards from every past accuracy bug. Currently {{if .ICAEMetrics}}{{.ICAEMetrics.TotalAnalysisCases}}{{else}}0{{end}} test cases.</p>
                             </div>
                         </div>
                     </div>

@@ -23,6 +23,7 @@ func AnalysisTestCases() []TestCase {
         cases = append(cases, bimiAnalysisCases()...)
         cases = append(cases, daneAnalysisCases()...)
         cases = append(cases, regressionCases()...)
+        cases = append(cases, FixtureTestCases()...)
         return cases
 }
 

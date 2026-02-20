@@ -30,6 +30,29 @@ func TestICAEAnalysisCases(t *testing.T) {
         }
 }
 
+func TestICAECollectionCases(t *testing.T) {
+        cases := CollectionTestCases()
+        if len(cases) == 0 {
+                t.Fatal("expected collection test cases, got 0")
+        }
+
+        runner := NewRunner("test", "000000", "unit")
+        runner.Register(cases...)
+
+        summary := runner.Run()
+
+        t.Logf("ICAE Collection: %d cases, %d passed, %d failed (%.1f%%)",
+                summary.TotalCases, summary.TotalPassed, summary.TotalFailed,
+                float64(summary.TotalPassed)/float64(summary.TotalCases)*100)
+
+        for _, r := range summary.Results {
+                if !r.Passed {
+                        t.Errorf("FAIL [%s] %s: expected %q, got %q",
+                                r.CaseID, r.CaseName, r.Expected, r.Actual)
+                }
+        }
+}
+
 func TestComputeMaturity(t *testing.T) {
         tests := []struct {
                 name              string

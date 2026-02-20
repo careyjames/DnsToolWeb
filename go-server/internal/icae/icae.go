@@ -120,6 +120,9 @@ type ReportMetrics struct {
         FirstPassAt            string
         DaysRunning            int
         Regressions            []RegressionEvent
+        TotalCollectionCases   int
+        TotalAnalysisCases     int
+        TotalAllCases          int
 }
 
 type RegressionEvent struct {
@@ -181,6 +184,32 @@ type ProtocolReport struct {
         DaysElapsed       int
         AtMaxTier         bool
         NextTierPct       int
+        CollectionCases   int
+        AnalysisCases     int
+        TotalCases        int
+}
+
+type ProtocolCaseCounts struct {
+        Collection int
+        Analysis   int
+        Total      int
+}
+
+func CountCasesByProtocol() map[string]ProtocolCaseCounts {
+        counts := make(map[string]ProtocolCaseCounts)
+        for _, tc := range AnalysisTestCases() {
+                c := counts[tc.Protocol]
+                c.Analysis++
+                c.Total++
+                counts[tc.Protocol] = c
+        }
+        for _, tc := range CollectionTestCases() {
+                c := counts[tc.Protocol]
+                c.Collection++
+                c.Total++
+                counts[tc.Protocol] = c
+        }
+        return counts
 }
 
 func ComputeNextTier(currentLevel string, consecutivePasses int, daysSinceFirst int) (nextName string, nextPasses int, nextDays int, passesMet bool, daysMet bool, atMax bool) {
