@@ -118,6 +118,43 @@ func TestOverallMaturity(t *testing.T) {
         })
 }
 
+func TestComputeNextTier(t *testing.T) {
+        tests := []struct {
+                name      string
+                level     string
+                passes    int
+                days      int
+                wantName  string
+                wantMax   bool
+                wantPMet  bool
+                wantDMet  bool
+        }{
+                {"dev to verified", MaturityDevelopment, 50, 0, "Verified", false, false, true},
+                {"dev passes met", MaturityDevelopment, 100, 0, "Verified", false, true, true},
+                {"verified needs time", MaturityVerified, 510, 1, "Consistent", false, true, false},
+                {"verified both met", MaturityVerified, 510, 30, "Consistent", false, true, true},
+                {"consistent needs passes", MaturityConsistent, 800, 90, "Gold", false, false, true},
+                {"gold master is max", MaturityGoldMaster, 10000, 365, "", true, true, true},
+        }
+        for _, tt := range tests {
+                t.Run(tt.name, func(t *testing.T) {
+                        name, _, _, pMet, dMet, atMax := ComputeNextTier(tt.level, tt.passes, tt.days)
+                        if name != tt.wantName {
+                                t.Errorf("nextName: got %q, want %q", name, tt.wantName)
+                        }
+                        if atMax != tt.wantMax {
+                                t.Errorf("atMax: got %v, want %v", atMax, tt.wantMax)
+                        }
+                        if pMet != tt.wantPMet {
+                                t.Errorf("passesMet: got %v, want %v", pMet, tt.wantPMet)
+                        }
+                        if dMet != tt.wantDMet {
+                                t.Errorf("daysMet: got %v, want %v", dMet, tt.wantDMet)
+                        }
+                })
+        }
+}
+
 func TestIsDegraded(t *testing.T) {
         if !IsDegraded(MaturityGold, MaturityVerified) {
                 t.Error("Gold -> Verified should be degraded")

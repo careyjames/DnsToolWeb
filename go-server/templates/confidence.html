@@ -66,19 +66,19 @@
                             </div>
                             <div class="icae-cal-scale-cell icae-cal-band-verified">
                                 <span class="icae-cal-scale-label">Verified</span>
-                                <span class="icae-cal-scale-range">100+</span>
+                                <span class="icae-cal-scale-range">100+ passes</span>
                             </div>
                             <div class="icae-cal-scale-cell icae-cal-band-consistent">
                                 <span class="icae-cal-scale-label">Consistent</span>
-                                <span class="icae-cal-scale-range">500+</span>
+                                <span class="icae-cal-scale-range">500+ &amp; 30d</span>
                             </div>
                             <div class="icae-cal-scale-cell icae-cal-band-gold">
                                 <span class="icae-cal-scale-label">Gold</span>
-                                <span class="icae-cal-scale-range">1,000+</span>
+                                <span class="icae-cal-scale-range">1K+ &amp; 90d</span>
                             </div>
                             <div class="icae-cal-scale-cell icae-cal-band-gm">
                                 <span class="icae-cal-scale-label">Gold Master</span>
-                                <span class="icae-cal-scale-range">5,000+</span>
+                                <span class="icae-cal-scale-range">5K+ &amp; 180d</span>
                             </div>
                         </div>
                     </div>
@@ -131,16 +131,23 @@
                         {{if .LastEvaluatedAt}}<span class="icae-cal-meta-item"><i class="fas fa-clock me-1"></i>Last evaluated: {{.LastEvaluatedAt}}</span>{{end}}
                     </div>
                     {{end}}
+                    {{if and .HasRuns (not .AtMaxTier)}}
+                    <div class="icae-cal-progress">
+                        <span class="icae-cal-progress-label"><i class="fas fa-arrow-up me-1"></i>Next: {{.NextTierName}}</span>
+                        <span class="icae-cal-progress-item {{if .PassesMet}}icae-cal-met{{else}}icae-cal-unmet{{end}}">{{if .PassesMet}}<i class="fas fa-check-circle me-1"></i>{{else}}<i class="fas fa-hourglass-half me-1"></i>{{end}}{{.AnalysisPasses}}/{{.NextTierPasses}} passes</span>
+                        {{if gt .NextTierDays 0}}<span class="icae-cal-progress-item {{if .DaysMet}}icae-cal-met{{else}}icae-cal-unmet{{end}}">{{if .DaysMet}}<i class="fas fa-check-circle me-1"></i>{{else}}<i class="fas fa-hourglass-half me-1"></i>{{end}}{{.DaysElapsed}}/{{.NextTierDays}} days</span>{{end}}
+                    </div>
+                    {{end}}
                 </div>
                 {{end}}
 
                 <div class="icae-cal-legend mt-3 pt-2 border-top border-secondary">
-                    <span class="icae-cal-legend-label">Threshold Scale:</span>
+                    <span class="icae-cal-legend-label">Dual Threshold (passes + time):</span>
                     <span class="icae-cal-legend-item"><span class="icae-cal-leg-swatch icae-cal-leg-dev"></span>Development &lt;100</span>
                     <span class="icae-cal-legend-item"><span class="icae-cal-leg-swatch icae-cal-leg-ver"></span>Verified 100+</span>
-                    <span class="icae-cal-legend-item"><span class="icae-cal-leg-swatch icae-cal-leg-con"></span>Consistent 500+</span>
-                    <span class="icae-cal-legend-item"><span class="icae-cal-leg-swatch icae-cal-leg-gold"></span>Gold 1K+</span>
-                    <span class="icae-cal-legend-item"><span class="icae-cal-leg-swatch icae-cal-leg-gm"></span>Gold Master 5K+</span>
+                    <span class="icae-cal-legend-item"><span class="icae-cal-leg-swatch icae-cal-leg-con"></span>Consistent 500+ &amp; 30d</span>
+                    <span class="icae-cal-legend-item"><span class="icae-cal-leg-swatch icae-cal-leg-gold"></span>Gold 1K+ &amp; 90d</span>
+                    <span class="icae-cal-legend-item"><span class="icae-cal-leg-swatch icae-cal-leg-gm"></span>Gold Master 5K+ &amp; 180d</span>
                 </div>
             </div>
         </div>

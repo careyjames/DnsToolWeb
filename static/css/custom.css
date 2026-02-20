@@ -4105,6 +4105,30 @@ footer a.text-muted:hover { text-decoration-color: rgba(173, 181, 189, 0.8); }
     color: #6c757d;
 }
 
+.icae-cal-progress {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.65rem;
+    margin-top: 3px;
+    padding-left: 34px;
+}
+.icae-cal-progress-label {
+    color: #8ab4f8;
+    font-weight: 600;
+    white-space: nowrap;
+}
+.icae-cal-progress-item {
+    white-space: nowrap;
+}
+.icae-cal-met {
+    color: #4caf50;
+}
+.icae-cal-unmet {
+    color: #ffa726;
+}
+
 .icae-cal-legend {
     display: flex;
     align-items: center;

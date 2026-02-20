@@ -5,6 +5,7 @@ package icae
 import (
         "context"
         "log/slog"
+        "time"
 
         "dnstool/go-server/internal/dbq"
 
@@ -68,9 +69,18 @@ func LoadReportMetrics(ctx context.Context, queries DBTX) *ReportMetrics {
                         if t := TimestampToTimePtr(analData.FirstPassAt); t != nil {
                                 pr.FirstPassAt = *t
                         }
+
+                        daysElapsed := 0
+                        if analData.FirstPassAt.Valid {
+                                daysElapsed = int(time.Since(analData.FirstPassAt.Time).Hours() / 24)
+                        }
+                        pr.DaysElapsed = daysElapsed
+                        pr.NextTierName, pr.NextTierPasses, pr.NextTierDays, pr.PassesMet, pr.DaysMet, pr.AtMaxTier = ComputeNextTier(analData.Maturity, int(analData.ConsecutivePasses), daysElapsed)
                 } else {
                         pr.AnalysisLevel = MaturityDevelopment
                         pr.AnalysisDisplay = MaturityDisplayNames[MaturityDevelopment]
+                        pr.NextTierName = MaturityDisplayNames[MaturityVerified]
+                        pr.NextTierPasses = ThresholdVerified
                 }
 
                 pr.HasRuns = pr.HasCollection || pr.HasAnalysis
