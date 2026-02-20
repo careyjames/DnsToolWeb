@@ -283,6 +283,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     document.querySelectorAll('a[href^="/analyze?domain="]').forEach(function(link) {
         if (link.id === 'reanalyzeBtn') return;
+        if (link.classList.contains('history-reanalyze-btn')) return;
         link.addEventListener('click', function(e) {
             e.preventDefault();
             const overlay = document.getElementById('loadingOverlay');
