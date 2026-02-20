@@ -196,7 +196,7 @@ func GetChangelog() []ChangelogEntry {
                         Version:     "26.19.18",
                         Date:        dateFeb17,
                         Category:    "Quality",
-                        Title:       "Boundary Integrity Test Suite (45 Deterministic Tests)",
+                        Title:       "Boundary Integrity Test Suite",
                         Description: "Comprehensive test suite protecting the two-repo architecture: 11 boundary files verified across 11 categories (file presence, build tags, stub function signatures, no intelligence leaks, package consistency, and more). Catches stub contract violations, duplicate symbols, and architecture drift before they reach production.",
                         Icon:        "fas fa-cogs",
                 },
