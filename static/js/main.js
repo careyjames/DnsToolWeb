@@ -248,10 +248,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 headers: { 'X-Requested-With': 'fetch' },
                 redirect: 'follow'
             }).then(function(resp) {
-                if (resp.redirected) {
-                    globalThis.location.href = resp.url;
-                    return;
-                }
                 return resp.text().then(function(html) {
                     document.open();
                     document.write(html);
@@ -296,7 +292,21 @@ document.addEventListener('DOMContentLoaded', function() {
                 startStatusCycle(overlay);
             }
             document.body.classList.add('loading');
-            setTimeout(function() { globalThis.location.href = link.href; }, 80);
+            fetch(link.href, {
+                headers: { 'X-Requested-With': 'fetch' },
+                redirect: 'follow'
+            }).then(function(resp) {
+                return resp.text().then(function(html) {
+                    document.open();
+                    document.write(html);
+                    document.close();
+                    if (resp.url && resp.url !== globalThis.location.href) {
+                        globalThis.history.replaceState(null, '', resp.url);
+                    }
+                });
+            }).catch(function() {
+                globalThis.location.href = link.href;
+            });
         });
     });
 

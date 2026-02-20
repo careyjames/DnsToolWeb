@@ -9,7 +9,7 @@ import (
 )
 
 var (
-        Version   = "26.21.43"
+        Version   = "26.21.44"
         GitCommit = "dev"
         BuildTime = "unknown"
 )
@@ -30,6 +30,7 @@ type Config struct {
         GoogleRedirectURL  string
         InitialAdminEmail string
         BaseURL            string
+        IsDevEnvironment   bool
 }
 
 var sectionTuningMap = map[string]string{
@@ -88,10 +89,12 @@ func Load() (*Config, error) {
                 }
         }
 
-        baseURL := os.Getenv("BASE_URL")
+        baseURLRaw := os.Getenv("BASE_URL")
+        baseURL := baseURLRaw
         if baseURL == "" {
                 baseURL = "https://dnstool.it-help.tech"
         }
+        isDevEnv := baseURLRaw == "" || baseURL != "https://dnstool.it-help.tech"
 
         googleRedirectURL := os.Getenv("GOOGLE_REDIRECT_URL")
         if googleRedirectURL == "" {
@@ -114,5 +117,6 @@ func Load() (*Config, error) {
                 GoogleRedirectURL:   googleRedirectURL,
                 InitialAdminEmail:   strings.TrimSpace(os.Getenv("INITIAL_ADMIN_EMAIL")),
                 BaseURL:             baseURL,
+                IsDevEnvironment:    isDevEnv,
         }, nil
 }

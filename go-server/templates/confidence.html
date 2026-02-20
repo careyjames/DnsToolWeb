@@ -37,6 +37,14 @@
             </p>
         </div>
 
+        {{if .IsDev}}
+        <div class="alert alert-info border-info mb-4 py-2 small">
+            <i class="fas fa-info-circle me-2"></i><strong>Development Environment</strong> &mdash;
+            This database has accumulated fewer ICAE runs than production. Maturity levels shown here reflect development data only.
+            Production confidence data is available at <a href="https://dnstool.it-help.tech/confidence" class="text-info fw-semibold" target="_blank" rel="noopener">dnstool.it-help.tech/confidence</a>.
+        </div>
+        {{end}}
+
         {{if .ICAEMetrics}}
 
         <div class="card bg-dark border-secondary mb-4">

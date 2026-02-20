@@ -718,6 +718,59 @@ main.container {
     gap: 0;
 }
 
+.tech-footprint-strip {
+    padding: 0.5rem 0.75rem;
+    background: rgba(22, 27, 34, 0.6);
+    border: 1px solid var(--border-default);
+    border-radius: 0.5rem;
+}
+.tech-fp-label {
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--accent-steel);
+    white-space: nowrap;
+}
+.tech-fp-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.2rem 0.5rem;
+    border-radius: 0.25rem;
+    font-size: 0.72rem;
+    font-weight: 500;
+    text-decoration: none;
+    white-space: nowrap;
+    transition: background-color 0.15s, border-color 0.15s;
+}
+.tech-fp-badge:hover {
+    text-decoration: none;
+}
+.tech-fp-dns {
+    color: var(--status-info);
+    background: rgba(88, 166, 255, 0.1);
+    border: 1px solid rgba(88, 166, 255, 0.25);
+}
+.tech-fp-dns:hover { background: rgba(88, 166, 255, 0.18); color: var(--status-info); }
+.tech-fp-mail {
+    color: var(--status-success);
+    background: rgba(63, 185, 80, 0.1);
+    border: 1px solid rgba(63, 185, 80, 0.25);
+}
+.tech-fp-mail:hover { background: rgba(63, 185, 80, 0.18); color: var(--status-success); }
+.tech-fp-cdn {
+    color: #c084fc;
+    background: rgba(192, 132, 252, 0.1);
+    border: 1px solid rgba(192, 132, 252, 0.25);
+}
+.tech-fp-cdn:hover { background: rgba(192, 132, 252, 0.18); color: #c084fc; }
+.tech-fp-saas {
+    color: var(--status-warning);
+    background: rgba(227, 179, 65, 0.1);
+    border: 1px solid rgba(227, 179, 65, 0.25);
+}
+.tech-fp-saas:hover { background: rgba(227, 179, 65, 0.18); color: var(--status-warning); }
+
 
 /* ============================================
    DOMAIN SUMMARY RESPONSIVE COLUMNS
