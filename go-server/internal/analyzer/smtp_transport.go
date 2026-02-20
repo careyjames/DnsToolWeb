@@ -274,7 +274,7 @@ func runRemoteProbe(ctx context.Context, apiURL string, apiKey string, mxHosts [
                 return runLiveProbe(ctx, mxHosts, probe)
         }
 
-        probeCtx, cancel := context.WithTimeout(ctx, 25*time.Second)
+        probeCtx, cancel := context.WithTimeout(context.Background(), 35*time.Second)
         defer cancel()
 
         req, err := http.NewRequestWithContext(probeCtx, "POST", apiURL+"/probe/smtp", bytes.NewReader(reqBody))
