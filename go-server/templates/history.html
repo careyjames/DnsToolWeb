@@ -186,7 +186,7 @@
                                             {{end}}
                                             {{if eq $a.DmarcStatus "success"}}
                                                 <span class="badge bg-success" title="DMARC configured">DMARC</span>
-                                            {{else if or (eq $a.DmarcStatus "warning") (eq $a.DmarcStatus "error")}}
+                                            {{else if or (eq $a.DmarcStatus "warning") (eq $a.DmarcStatus "error") (eq $a.DmarcStatus "missing")}}
                                                 <span class="badge bg-danger" title="DMARC missing or misconfigured"><i class="fas fa-times me-1"></i>DMARC</span>
                                             {{end}}
                                             {{if or (eq $a.DkimStatus "success") (eq $a.DkimStatus "partial")}}
@@ -254,7 +254,7 @@
                             {{end}}
                             {{if eq $a.DmarcStatus "success"}}
                                 <span class="badge bg-success u-fs-065rem">DMARC</span>
-                            {{else if or (eq $a.DmarcStatus "warning") (eq $a.DmarcStatus "error")}}
+                            {{else if or (eq $a.DmarcStatus "warning") (eq $a.DmarcStatus "error") (eq $a.DmarcStatus "missing")}}
                                 <span class="badge bg-danger u-fs-065rem"><i class="fas fa-times me-1"></i>DMARC</span>
                             {{end}}
                             {{if or (eq $a.DkimStatus "success") (eq $a.DkimStatus "partial")}}

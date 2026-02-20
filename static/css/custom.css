@@ -801,6 +801,10 @@ main.container {
 .text-muted {
     opacity: 0.8;
 }
+.card.bg-dark .text-muted {
+    color: #adb5bd !important;
+    opacity: 1;
+}
 
 /* RFC Info Links - Enhanced Visual Affordance */
 .rfc-link {

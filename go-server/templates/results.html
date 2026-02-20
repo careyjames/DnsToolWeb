@@ -1185,9 +1185,11 @@
                                     {{end}}
                                 </div>
                                 <div class="mb-2">
-                                    <span class="badge bg-{{if eq $dmarcStatus "success"}}success{{else if eq $dmarcStatus "error"}}danger{{else}}warning{{end}}">
+                                    <span class="badge bg-{{if eq $dmarcStatus "success"}}success{{else if eq $dmarcStatus "error"}}danger{{else if eq $dmarcStatus "missing"}}warning{{else}}warning{{end}}">
                                         {{if mapGetBool "no_mail_recommendation" $dmarc}}
                                             Recommended
+                                        {{else if eq $dmarcStatus "missing"}}
+                                            Warning
                                         {{else}}
                                             {{title $dmarcStatus}}
                                         {{end}}

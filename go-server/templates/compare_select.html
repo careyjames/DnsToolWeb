@@ -74,7 +74,7 @@
                                     <td>
                                         {{if eq $a.DmarcStatus "success"}}
                                             <span class="badge bg-success">DMARC</span>
-                                        {{else if or (eq $a.DmarcStatus "warning") (eq $a.DmarcStatus "error")}}
+                                        {{else if or (eq $a.DmarcStatus "warning") (eq $a.DmarcStatus "error") (eq $a.DmarcStatus "missing")}}
                                             <span class="badge bg-danger"><i class="fas fa-times me-1"></i>DMARC</span>
                                         {{else}}
                                             <span class="text-muted">-</span>
