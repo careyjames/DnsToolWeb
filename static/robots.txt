@@ -3,27 +3,25 @@
 #
 # Philosophy: Open intelligence benefits everyone.
 # Reports cite RFCs, use open standards, and are independently verifiable.
-# DNS operational model unchanged since 1983.
 #
-# AI Policy: We permit AI crawling, training, and inference on our content.
-# We intentionally do NOT use Content-Usage or Content-Signal directives here
-# because neither is a ratified standard yet (Content-Usage is an active IETF
-# working group draft; Content-Signal is Cloudflare proprietary). Using
-# unratified directives causes Lighthouse to flag "Unknown directive" errors,
-# which conflicts with our mandatory quality gates. Our AI Surface Scanner
-# still detects and reports these directives on scanned domains — that is
-# intelligence gathering, not endorsement. When a standard is ratified, we
-# will adopt it immediately.
+# AI Policy: We permit AI crawling, training, and inference on all content.
+# We intentionally do NOT use Content-Usage or Content-Signal directives
+# because neither is a ratified standard yet (Content-Usage is an active
+# IETF working group draft; Content-Signal is Cloudflare proprietary).
+# When a standard is ratified, we will adopt it immediately.
+# Our AI Surface Scanner detects these directives on scanned domains.
+#
+# Per RFC 9309: User-agent: * with Allow: / welcomes all crawlers.
+# No bot-specific blocks needed — the wildcard covers everyone.
 
 User-agent: *
 Allow: /
 Disallow: /api/
-Disallow: /analysis/
 Disallow: /export/
 
 Sitemap: https://dnstool.it-help.tech/sitemap.xml
 
-# AI documentation available at:
-# /llms.txt (root path per llmstxt.org spec)
+# AI documentation:
+# /llms.txt (root path per llmstxt.org convention)
 # /.well-known/llms.txt (additional discovery path)
 # /.well-known/llms-full.txt
