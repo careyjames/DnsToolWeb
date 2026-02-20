@@ -42,6 +42,7 @@ Every conclusion must be independently verifiable using standard commands. The t
 - **MANDATORY POST-EDIT RULE**: After ANY Go code changes, run `go test ./go-server/... -count=1` before considering the work done. This runs the boundary integrity tests that catch intelligence leaks, stub contract breakage, duplicate symbols, and architecture violations. Regressions cost $100-200/day — never skip this step.
 - **REALITY CHECK RULE (v26.19.20)**: Every homepage claim, schema statement, and documentation assertion must be backed by implemented code. Do NOT claim features that are stubs or planned. Use language like "on the roadmap" for future items, "context" instead of "verification" for informational features (e.g., MPIC).
 - **BREADCRUMBS**: `EVOLUTION.md` is the project's permanent breadcrumb trail — every session's decisions, changes, lessons, and rationale. `replit.md` is the quick-reference config. Both must be updated every session. If `replit.md` resets, restore from `EVOLUTION.md`.
+- **QUALITY GATES (MANDATORY)**: Lighthouse scores must be maintained at: Performance ≥98 (target 100), Best Practices = 100, Accessibility = 100, SEO = 100. Mozilla Observatory must stay at 130 or higher. Never ship a regression in any of these. Best Practices < 100 means a real broken UX error. Accessibility < 100 means broken markup that must be fixed. Security posture (Observatory) only moves forward, never backwards.
 
 ---
 

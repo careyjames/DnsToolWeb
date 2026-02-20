@@ -43,6 +43,33 @@ Every change must satisfy this checklist before it ships.
 - [ ] Go binary rebuilt and tested
 - [ ] Workflow restarted and running without errors
 
+## Quality Gates — Lighthouse & Observatory (MANDATORY)
+
+Every change must maintain or improve these scores. **Never ship a regression.**
+
+| Tool | Category | Target | Acceptable |
+|------|----------|--------|------------|
+| Lighthouse | Performance | 100 | 98–100 (network variance) |
+| Lighthouse | Best Practices | 100 | 100 (errors = broken UX) |
+| Lighthouse | Accessibility | 100 | 100 (no excuses) |
+| Lighthouse | SEO | 100 | 100 (no excuses) |
+| Mozilla Observatory | Security | 130 | 130 (never go backwards) |
+
+- [ ] Lighthouse Performance ≥ 98 (preferably 100)
+- [ ] Lighthouse Best Practices = 100
+- [ ] Lighthouse Accessibility = 100
+- [ ] Lighthouse SEO = 100
+- [ ] Mozilla Observatory ≥ 130
+
+**Rules:**
+1. Best Practices < 100 means a real error exists that affects user experience — fix it.
+2. Accessibility < 100 means broken markup — missing labels, contrast, ARIA — fix it.
+3. SEO < 100 means missing metadata, structural issues — fix it.
+4. Performance 98–100 is acceptable due to network variance; consistent 100 is the goal.
+5. Observatory score must never decrease. Security posture only moves forward.
+6. **Test URL**: `https://pagespeed.web.dev/` against `https://dnstool.it-help.tech`
+7. **Observatory URL**: `https://observatory.mozilla.org/` against `dnstool.it-help.tech`
+
 ## Standards
 
 - [ ] Every conclusion is RFC-cited or authority-backed

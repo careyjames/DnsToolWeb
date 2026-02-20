@@ -92,6 +92,33 @@ npx csso static/css/custom.css -o static/css/custom.min.css
 ### Version Bump — MANDATORY EVERY TIME (cache-busting)
 **After EVERY change (Go, CSS, templates — no exceptions)**, bump the patch number in `AppVersion` in `go-server/internal/config/config.go`. The version string busts browser caches for all static assets. If you don't bump it, the user cannot test your changes — they'll see stale cached content. This is non-negotiable and must happen before rebuild.
 
+### Quality Gates — Lighthouse & Observatory (NEVER REGRESS)
+
+Every change must maintain or improve these scores. Shipping a regression is unacceptable.
+
+| Tool | Category | Target | Notes |
+|------|----------|--------|-------|
+| Lighthouse | Performance | 100 | 98–100 acceptable (network variance) |
+| Lighthouse | Best Practices | 100 | Must be 100. < 100 = real UX error |
+| Lighthouse | Accessibility | 100 | Must be 100. No broken markup |
+| Lighthouse | SEO | 100 | Must be 100. No missing metadata |
+| Mozilla Observatory | Security | 130 | Never decrease. Only forward |
+
+**After ANY template/CSS/HTML changes**, verify you haven't broken:
+- Missing `aria-label` or `alt` attributes
+- Form inputs without associated labels
+- Color contrast violations
+- Missing `<meta>` tags (description, viewport)
+- Broken heading hierarchy
+- Non-composited CSS animations (use `transform`/`opacity` for animations)
+
+**Anti-patterns that cause regressions:**
+- `<input>` without `<label>` or `aria-label` → Accessibility drops
+- Missing `lang` attribute on `<html>` → SEO drops
+- Missing `meta description` → SEO drops
+- Console errors in production → Best Practices drops
+- `border-color` transitions (non-composited) → Performance warning
+
 ### Public-Facing Docs — Update After Feature/Section Changes
 
 When adding, removing, or reordering report sections or features, these files must all stay in sync:
