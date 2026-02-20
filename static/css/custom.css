@@ -4165,23 +4165,30 @@ footer a.text-muted:hover { text-decoration-color: rgba(173, 181, 189, 0.8); }
     background: #1a1d23;
     border: 1px solid #2d3139;
     border-radius: 8px;
-    padding: 0.75rem 0.5rem;
+    padding: 0.75rem 0.25rem;
+    overflow: hidden;
 }
 .icae-summary-value {
     display: block;
-    font-size: 1.5rem;
+    font-size: clamp(1rem, 3vw, 1.5rem);
     font-weight: 700;
     color: #e9ecef;
     line-height: 1.2;
     font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 .icae-summary-label {
     display: block;
-    font-size: 0.65rem;
+    font-size: 0.6rem;
     color: #6c757d;
     text-transform: uppercase;
-    letter-spacing: 0.08em;
+    letter-spacing: 0.04em;
     margin-top: 2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 .icae-tier-meter {
     position: relative;
