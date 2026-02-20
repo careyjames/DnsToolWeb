@@ -153,14 +153,14 @@ func spfAnalysisCases() []TestCase {
                 },
                 {
                         CaseID:     "spf-analysis-010",
-                        CaseName:   "No SPF record classified as warning",
+                        CaseName:   "No SPF record classified as missing",
                         Protocol:   "spf",
                         Layer:      LayerAnalysis,
                         RFCSection: "RFC 7208",
-                        Expected:   "warning",
+                        Expected:   "missing",
                         RunFn: func() (string, bool) {
                                 status, _ := analyzer.ExportBuildSPFVerdict(0, nil, false, nil, nil)
-                                return status, status == "warning"
+                                return status, status == "missing"
                         },
                 },
                 {

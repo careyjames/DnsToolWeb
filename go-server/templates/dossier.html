@@ -197,7 +197,7 @@
                                         <div class="d-flex gap-1">
                                             {{if eq $a.SpfStatus "success"}}
                                                 <span class="badge bg-success" title="SPF configured">SPF</span>
-                                            {{else if or (eq $a.SpfStatus "warning") (eq $a.SpfStatus "error")}}
+                                            {{else if or (eq $a.SpfStatus "warning") (eq $a.SpfStatus "error") (eq $a.SpfStatus "missing")}}
                                                 <span class="badge bg-danger" title="SPF missing or misconfigured"><i class="fas fa-times me-1"></i>SPF</span>
                                             {{end}}
                                             {{if eq $a.DmarcStatus "success"}}
@@ -277,7 +277,7 @@
                         <div class="d-flex flex-wrap align-items-center gap-1 small">
                             {{if eq $a.SpfStatus "success"}}
                                 <span class="badge bg-success u-fs-065rem">SPF</span>
-                            {{else if or (eq $a.SpfStatus "warning") (eq $a.SpfStatus "error")}}
+                            {{else if or (eq $a.SpfStatus "warning") (eq $a.SpfStatus "error") (eq $a.SpfStatus "missing")}}
                                 <span class="badge bg-danger u-fs-065rem"><i class="fas fa-times me-1"></i>SPF</span>
                             {{end}}
                             {{if eq $a.DmarcStatus "success"}}

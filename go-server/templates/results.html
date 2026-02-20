@@ -1021,7 +1021,7 @@
                                 </div>
                                 <div class="mb-2">
                                     <span class="badge bg-{{if eq $spfStatus "success"}}success{{else if eq $spfStatus "error"}}danger{{else}}warning{{end}}">
-                                        {{title $spfStatus}}
+                                        {{if eq $spfStatus "missing"}}Warning{{else}}{{title $spfStatus}}{{end}}
                                     </span>
                                     {{$spfPerm := mapGetStr "permissiveness" $spf}}
                                     {{if $spfPerm}}
@@ -1456,7 +1456,8 @@
                         </div>
                         
                         <!-- Second Row: MTA-STS and TLS-RPT -->
-                        <div class="row mt-4 pt-3 border-top mta-sts-tlsrpt-row">
+                        <hr class="section-separator">
+                        <div class="row mt-3 mta-sts-tlsrpt-row">
                             <!-- MTA-STS Analysis -->
                             <div class="col-md-6 mb-3 mb-md-0 section-col-divider">
                                 <p class="d-flex align-items-center flex-wrap">
@@ -1823,6 +1824,7 @@
 
                         {{$hasMtaSts := and $mta_sts (eq (mapGetStr "status" $mta_sts) "success")}}
                         {{$hasDnssec := and $dnssec (eq (mapGetStr "status" $dnssec) "success")}}
+                        <hr class="section-separator">
                         <div class="small mt-3 p-2 rounded {{if and $hasDane $hasMtaSts}}u-transport-dane-mta{{else if $hasDane}}u-transport-dane{{else if $hasMtaSts}}u-transport-mta{{else}}u-transport-neutral{{end}}">
                             <strong><i class="fas fa-balance-scale me-1"></i>Email Transport Security</strong>
                             <p class="mb-1 mt-1">Two mechanisms protect email in transit. DANE is the primary standard; MTA-STS is the alternative for domains that cannot deploy DNSSEC:</p>
@@ -1910,6 +1912,7 @@
                             </div>
                         {{end}}
                         {{end}}
+                        <hr class="section-separator">
                         <div class="row">
                             <!-- BIMI Analysis -->
                             <div class="col-md-6 mb-3 mb-md-0 section-col-divider">

@@ -946,6 +946,8 @@
                             <span class="badge bg-success">Configured</span>
                             {{else if eq $spfStatus "warning"}}
                             <span class="badge bg-warning">Partial</span>
+                            {{else if eq $spfStatus "missing"}}
+                            <span class="badge bg-danger">Missing</span>
                             {{else}}
                             <span class="badge bg-danger">Missing</span>
                             {{end}}

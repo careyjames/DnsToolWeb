@@ -545,11 +545,20 @@ main.container {
    analysis sections (SPF / DMARC / DKIM, etc.)
    ============================================ */
 .section-col-divider {
-    border-right: 1px solid rgba(125, 142, 168, 0.18);
+    border-right: 1px solid rgba(125, 142, 168, 0.35);
+    padding-right: 1rem;
 }
 
 .section-col-divider:last-child {
     border-right: none;
+    padding-right: 0;
+}
+
+.section-separator {
+    border: 0;
+    height: 1px;
+    background: linear-gradient(to right, transparent, rgba(125, 142, 168, 0.35), transparent);
+    margin: 1.25rem 0;
 }
 
 /* ============================================
@@ -691,9 +700,10 @@ main.container {
 
     .section-col-divider {
         border-right: none;
-        border-bottom: 1px solid rgba(125, 142, 168, 0.12);
+        border-bottom: 1px solid rgba(125, 142, 168, 0.25);
         padding-bottom: 0.75rem;
         margin-bottom: 0.75rem;
+        padding-right: 0;
     }
 
     .section-col-divider:last-child {
