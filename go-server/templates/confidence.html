@@ -48,19 +48,27 @@
                         <span class="text-muted u-fs-075em ms-1">{{.ICAEMetrics.EvaluatedCount}}/{{.ICAEMetrics.TotalProtocols}}</span>
                     </span>
                 </div>
-                <div class="icae-cal-threshold-labels d-flex mb-1">
-                    <span class="icae-cal-tick" style="width:20%">0</span>
-                    <span class="icae-cal-tick" style="width:20%">100</span>
-                    <span class="icae-cal-tick" style="width:20%">500</span>
-                    <span class="icae-cal-tick" style="width:20%">1K</span>
-                    <span class="icae-cal-tick" style="width:20%">5K</span>
-                </div>
-                <div class="icae-cal-band-labels d-flex mb-3">
-                    <span class="icae-cal-band icae-cal-band-dev" style="width:20%">DEV</span>
-                    <span class="icae-cal-band icae-cal-band-verified" style="width:20%">VER</span>
-                    <span class="icae-cal-band icae-cal-band-consistent" style="width:20%">CON</span>
-                    <span class="icae-cal-band icae-cal-band-gold" style="width:20%">GOLD</span>
-                    <span class="icae-cal-band icae-cal-band-gm" style="width:20%">GM</span>
+                <div class="icae-cal-ruler-wrap mb-3">
+                    <div class="d-flex align-items-end gap-2">
+                        <span class="icae-cal-layer-label">&nbsp;</span>
+                        <div class="icae-cal-ruler flex-fill">
+                            <div class="icae-cal-threshold-labels d-flex">
+                                <span class="icae-cal-tick" style="width:20%">0</span>
+                                <span class="icae-cal-tick" style="width:20%">100</span>
+                                <span class="icae-cal-tick" style="width:20%">500</span>
+                                <span class="icae-cal-tick" style="width:20%">1K</span>
+                                <span class="icae-cal-tick" style="width:20%">5K</span>
+                            </div>
+                            <div class="icae-cal-band-labels d-flex mt-1">
+                                <span class="icae-cal-band icae-cal-band-dev" style="width:20%">DEV</span>
+                                <span class="icae-cal-band icae-cal-band-verified" style="width:20%">VER</span>
+                                <span class="icae-cal-band icae-cal-band-consistent" style="width:20%">CON</span>
+                                <span class="icae-cal-band icae-cal-band-gold" style="width:20%">GOLD</span>
+                                <span class="icae-cal-band icae-cal-band-gm" style="width:20%">GM</span>
+                            </div>
+                        </div>
+                        <span class="icae-cal-layer-badge" style="visibility:hidden">Development</span>
+                    </div>
                 </div>
 
                 {{range .ICAEMetrics.Protocols}}
@@ -330,7 +338,7 @@
                         <div class="card bg-dark border-secondary h-100">
                             <div class="card-body py-2 px-3">
                                 <h3 class="h6 fw-bold mb-1"><i class="fas fa-satellite-dish me-1 text-info"></i> Remote Probe Failover</h3>
-                                <p class="text-muted small mb-0">SMTP probing uses remote infrastructure (probe-us-01) for reliable port 25/465/587 access. If the remote probe fails (network, auth, rate limit), the system falls back to local direct probing. Rate limiting: 30 requests per 60 seconds per client.</p>
+                                <p class="text-muted small mb-0">SMTP probing uses dedicated remote infrastructure (US region) for reliable port 25/465/587 access. If the remote probe is unavailable (network, auth, rate limit), the system falls back to local direct probing. Rate limiting: 30 requests per 60 seconds per client.</p>
                             </div>
                         </div>
                     </div>

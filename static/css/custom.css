@@ -3837,14 +3837,21 @@ footer a.text-muted:hover { text-decoration-color: rgba(173, 181, 189, 0.8); }
 }
 
 /* ── Calibration Console ── */
+.icae-cal-ruler-wrap {
+    padding: 0 0.75rem;
+}
+.icae-cal-ruler {
+    position: relative;
+}
 .icae-cal-tick {
     font-size: 0.65rem;
     font-weight: 600;
-    color: #6c757d;
+    color: #8b949e;
     font-variant-numeric: tabular-nums;
     letter-spacing: 0.03em;
-    border-left: 1px solid rgba(108, 117, 125, 0.4);
-    padding-left: 4px;
+    border-left: 1px solid rgba(139, 148, 158, 0.5);
+    padding-left: 3px;
+    padding-bottom: 2px;
 }
 .icae-cal-band {
     font-size: 0.6rem;
