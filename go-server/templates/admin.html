@@ -133,6 +133,37 @@
                     </div>
                 </div>
 
+                {{if .ICAEMetrics}}
+                <div class="card mt-4">
+                    <div class="card-body">
+                        <h2 class="h5 mb-3"><i class="fas fa-chart-bar me-2"></i>Intelligence Confidence Levels</h2>
+                        <div class="small text-muted mb-3">ICAE per-protocol confidence at a glance &mdash; overall: <strong class="icae-maturity-{{.ICAEMetrics.OverallMaturity}}">{{.ICAEMetrics.OverallMaturityDisplay}}</strong></div>
+                        <div class="table-responsive">
+                            <table class="table table-sm table-dark mb-0">
+                                <thead>
+                                    <tr>
+                                        <th>Protocol</th>
+                                        <th>Collection</th>
+                                        <th>Analysis</th>
+                                        <th>Runs</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {{range .ICAEMetrics.Protocols}}
+                                    <tr>
+                                        <td><strong>{{.DisplayName}}</strong></td>
+                                        <td><span class="icae-badge icae-badge-{{.CollectionLevel}}">{{.CollectionDisplay}} <span class="icae-dot"></span></span></td>
+                                        <td><span class="icae-badge icae-badge-{{.AnalysisLevel}}">{{.AnalysisDisplay}} <span class="icae-dot"></span></span></td>
+                                        <td>{{if .HasRuns}}{{.AnalysisRuns}}{{else}}<span class="text-muted">&mdash;</span>{{end}}</td>
+                                    </tr>
+                                    {{end}}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                {{end}}
+
                 {{if .ICAERuns}}
                 <div class="card mt-4">
                     <div class="card-body">

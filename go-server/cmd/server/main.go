@@ -108,7 +108,7 @@ func main() {
         dnsHistoryCache := analyzer.NewDNSHistoryCache(24 * time.Hour)
         slog.Info("DNS history cache initialized", "ttl", "24h")
 
-        homeHandler := handlers.NewHomeHandler(cfg)
+        homeHandler := handlers.NewHomeHandler(cfg, database)
         healthHandler := handlers.NewHealthHandler(database, dnsAnalyzer)
         historyHandler := handlers.NewHistoryHandler(database, cfg)
         analysisHandler := handlers.NewAnalysisHandler(database, cfg, dnsAnalyzer, dnsHistoryCache)

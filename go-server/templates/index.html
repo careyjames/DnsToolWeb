@@ -221,9 +221,22 @@
                 <p class="hero-subtitle mx-auto mb-2">
                     Producing <span class="text-info">Engineer's DNS Intelligence Reports</span> and <span class="text-info">Executive's DNS Intelligence Briefs</span> with <span class="text-info">posture&nbsp;scoring</span>
                 </p>
+                {{if .ICAEMetrics}}
+                <div class="hero-protocols mb-4" aria-label="Intelligence Confidence Audit Engine — per-protocol confidence levels">
+                    <div class="d-flex flex-wrap justify-content-center gap-1 icae-hero-badges">
+                        {{range .ICAEMetrics.Protocols}}
+                        <span class="icae-badge icae-badge-{{.AnalysisLevel}}" title="{{.DisplayName}} — Intelligence Confidence: {{.AnalysisDisplay}}{{if .HasRuns}} ({{.AnalysisRuns}} audit runs){{end}}">{{.DisplayName}} <span class="icae-dot"></span></span>
+                        {{end}}
+                    </div>
+                    <div class="icae-hero-label mt-2">
+                        <span class="text-muted u-fs-075em"><i class="fas fa-flask me-1"></i>Intelligence Confidence Audit Engine &mdash; {{.ICAEMetrics.OverallMaturityDisplay}}</span>
+                    </div>
+                </div>
+                {{else}}
                 <p class="hero-protocols mb-4">
                     SPF &middot; DKIM &middot; DMARC &middot; DANE/TLSA &middot; DNSSEC &middot; BIMI &middot; MTA-STS &middot; TLS-RPT &middot; CAA
                 </p>
+                {{end}}
             </div>
 
             {{template "flash_messages" .}}

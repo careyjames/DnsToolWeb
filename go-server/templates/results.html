@@ -2379,20 +2379,20 @@
                         <!-- Content-Usage Directive (IETF AI Preferences Draft) -->
                         {{if $aiRobots}}
                         {{$contentUsage := mapGetMap "content_usage" $aiRobots}}
-                        {{if and $contentUsage (mapGetBool "found" $contentUsage)}}
                         <div class="mb-3">
                             <h6 class="text-info"><i class="fas fa-file-contract me-1"></i> Content-Usage Directive
                                 <a href="https://datatracker.ietf.org/doc/draft-ietf-aipref-attach/" target="_blank" rel="noopener" class="ms-2 text-muted rfc-link" data-bs-toggle="tooltip" data-bs-html="true" title="<strong>IETF AI Preferences — Active Draft</strong><br>Experimental directive allowing sites to express AI training and inference preferences via robots.txt. Adoption is emerging and enforcement varies by crawler."><i class="fas fa-info-circle"></i><span class="rfc-label">IETF Draft</span></a>
                             </h6>
+                            {{if and $contentUsage (mapGetBool "found" $contentUsage)}}
                             <div class="protocol-question mb-2">
                                 <span class="protocol-question-text">Does the site express AI content-usage preferences?</span>
                                 {{if mapGetBool "ai_denied" $contentUsage}}
-                                    <span class="badge bg-success">AI Usage Denied</span>
+                                    <span class="badge bg-danger">AI Training Denied</span>
                                 {{else}}
-                                    <span class="badge bg-info">Directive Present</span>
+                                    <span class="badge bg-success">AI Training Permitted</span>
                                 {{end}}
                             </div>
-                            <div class="alert {{if mapGetBool "ai_denied" $contentUsage}}alert-success{{else}}alert-info{{end}} py-2 small">
+                            <div class="alert {{if mapGetBool "ai_denied" $contentUsage}}alert-warning{{else}}alert-success{{end}} py-2 small">
                                 <i class="fas fa-file-alt me-1"></i>
                                 <strong>Content-Usage directive observed:</strong>
                                 <code>{{mapGetStr "raw" $contentUsage}}</code>
@@ -2400,8 +2400,22 @@
                                     This is an experimental IETF draft directive. Presence is observed; enforcement depends on individual crawler compliance.
                                 </div>
                             </div>
+                            {{else}}
+                            <div class="protocol-question mb-2">
+                                <span class="protocol-question-text">Does the site express AI content-usage preferences?</span>
+                                <span class="badge bg-secondary">Not Configured</span>
+                            </div>
+                            <div class="alert alert-secondary py-2 small border-0 u-bg-subtle-muted">
+                                <i class="fas fa-info-circle me-1 text-info"></i>
+                                <strong>No Content-Usage directive detected.</strong>
+                                The <a href="https://datatracker.ietf.org/doc/draft-ietf-aipref-attach/" target="_blank" rel="noopener" class="text-info">IETF AI Preferences draft</a> defines a <code>Content-Usage:</code> directive for robots.txt that lets site owners explicitly declare whether their content may be used for AI training and inference.
+                                <div class="mt-2">
+                                    <strong>Example:</strong> Add <code>Content-Usage: ai=n</code> to robots.txt to deny AI training, or <code>Content-Usage: ai=y</code> to explicitly permit it.
+                                    Without this directive, AI crawler behavior depends on individual crawler policies and User-agent rules.
+                                </div>
+                            </div>
+                            {{end}}
                         </div>
-                        {{end}}
                         {{end}}
 
                         <!-- AI Recommendation Poisoning IOCs -->

@@ -11,6 +11,7 @@ import (
 
         "dnstool/go-server/internal/config"
         "dnstool/go-server/internal/db"
+        "dnstool/go-server/internal/icae"
 
         "github.com/gin-gonic/gin"
 )
@@ -86,6 +87,8 @@ func (h *AdminHandler) Dashboard(c *gin.Context) {
         icaeRuns := h.fetchICAERuns(ctx)
         scannerAlerts := h.fetchScannerAlerts(ctx)
 
+        icaeMetrics := icae.LoadReportMetrics(ctx, h.DB.Queries)
+
         data := gin.H{
                 "AppVersion":      h.Config.AppVersion,
                 "MaintenanceNote": h.Config.MaintenanceNote,
@@ -97,6 +100,7 @@ func (h *AdminHandler) Dashboard(c *gin.Context) {
                 "Stats":           stats,
                 "ICAERuns":        icaeRuns,
                 "ScannerAlerts":   scannerAlerts,
+                "ICAEMetrics":     icaeMetrics,
         }
         mergeAuthData(c, h.Config, data)
         c.HTML(http.StatusOK, "admin.html", data)
