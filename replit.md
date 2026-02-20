@@ -6,6 +6,7 @@ OSINT platform for RFC-compliant domain security analysis. Go/Gin backend, Boots
 ## Key Files
 - **PROJECT_CONTEXT.md** — Canonical project context (stable, comprehensive). READ THIS FIRST.
 - **EVOLUTION.md** — Permanent breadcrumb trail. Backup if this file resets.
+- **AUTHORITIES.md** — Authoritative Sources Registry. Every standard/RFC/authority we cite. Verify here before claiming anything is a "standard."
 - **DOCS.md** — Technical documentation
 - **DOD.md** — Definition of Done checklist
 

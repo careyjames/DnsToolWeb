@@ -84,7 +84,7 @@ Contains cards for each email authentication protocol:
 - Percentage enforcement (pct=)
 - Reporting addresses (rua=, ruf=)
 - Alignment modes (adkim=, aspf=)
-- DMARCbis readiness: np= (non-existent subdomain policy), t= (testing mode, replaces pct=), psd= (public suffix domain) — these are tags from the upcoming DMARCbis standard (draft-ietf-dmarc-dmarcbis)
+- DMARCbis readiness: np= (non-existent subdomain policy), t= (testing mode, replaces pct=), psd= (public suffix domain) — these are tags from the DMARCbis draft (draft-ietf-dmarc-dmarcbis, active IETF working group draft)
 
 **Email Security Providers (Gold Badges)**
 - DMARC monitoring services detected from reporting addresses
@@ -275,7 +275,7 @@ When reporting results back to a user, focus on:
 4. **Actionable gaps**: What's missing and what should they fix first?
 5. **Provider attribution**: Who manages their email security? Are they using a DMARC monitoring service?
 6. **Advanced protections**: DNSSEC, DANE, MTA-STS, BIMI, CAA — these are differentiators
-7. **DMARCbis readiness**: Are they prepared for the upcoming DMARC standard changes?
+7. **DMARCbis readiness**: Are they prepared for the DMARCbis draft changes (active IETF working group draft)?
 
 ### Priority Order for Recommendations
 If a domain is missing protections, recommend in this order:

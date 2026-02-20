@@ -5,7 +5,15 @@
 # Reports cite RFCs, use open standards, and are independently verifiable.
 # DNS operational model unchanged since 1983.
 #
-# Content-Usage: active IETF working group draft (not a ratified standard; advisory only)
+# AI Policy: We permit AI crawling, training, and inference on our content.
+# We intentionally do NOT use Content-Usage or Content-Signal directives here
+# because neither is a ratified standard yet (Content-Usage is an active IETF
+# working group draft; Content-Signal is Cloudflare proprietary). Using
+# unratified directives causes Lighthouse to flag "Unknown directive" errors,
+# which conflicts with our mandatory quality gates. Our AI Surface Scanner
+# still detects and reports these directives on scanned domains — that is
+# intelligence gathering, not endorsement. When a standard is ratified, we
+# will adopt it immediately.
 
 User-agent: *
 Allow: /
@@ -13,13 +21,9 @@ Disallow: /api/
 Disallow: /analysis/
 Disallow: /export/
 
-Content-Usage: ai=allow
-Content-Usage: ai-training=allow
-Content-Usage: ai-inference=allow
-
-# Sitemap
 Sitemap: https://dnstool.it-help.tech/sitemap.xml
 
 # AI documentation available at:
-# /.well-known/llms.txt
+# /llms.txt (root path per llmstxt.org spec)
+# /.well-known/llms.txt (additional discovery path)
 # /.well-known/llms-full.txt

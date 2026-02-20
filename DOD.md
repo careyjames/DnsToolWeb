@@ -90,9 +90,10 @@ The anti-pattern is: build fast, get an idea working, then clean up. The correct
 
 **The tests, quality gates, and documentation exist to prevent rework. Use them.**
 
-## Standards
+## Standards (see AUTHORITIES.md)
 
-- [ ] Every conclusion is RFC-cited or authority-backed
+- [ ] Every conclusion is RFC-cited or authority-backed (verify in AUTHORITIES.md)
+- [ ] Drafts labeled as drafts — never use IETF status terms for non-IETF documents
 - [ ] Every detection is independently verifiable with standard commands
 - [ ] No clever tricks — boring, explicit, testable code
 - [ ] No new dependencies without justification

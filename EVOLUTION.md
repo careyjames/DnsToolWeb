@@ -10,6 +10,81 @@ This file is the project's permanent breadcrumb trail — every session's decisi
 
 ---
 
+## Session: February 20, 2026 (v26.21.39 — Authoritative Sources Registry & Codebase Accuracy Audit)
+
+### v26.21.39 — Authoritative Sources, Gotchas Framework, Codebase Accuracy Audit
+
+#### Authoritative Sources Registry (AUTHORITIES.md)
+
+Created `AUTHORITIES.md` — the canonical reference of every standards body, RFC, regulatory authority, and data source this project relies on. Every claim in code, templates, documentation, and UI copy must trace back to an entry here.
+
+**Organized by:**
+1. Standards bodies (IETF, NIST, CISA, FIRST, CA/Browser Forum, BIMI Group)
+2. IETF RFCs by functional area (email auth, DNS infrastructure, web/AI governance, misc)
+3. Quality gate authorities (Lighthouse, Observatory, SonarCloud)
+4. Data sources (Team Cymru, OpenPhish, SecurityTrails, crt.sh, RDAP, ip-api.com)
+5. Non-standard/proprietary directives we track (Content-Usage, Content-Signal, llms.txt, security.txt)
+6. Verification checklist — 5-point check before citing any source
+7. Update protocol — when and how to maintain the registry
+
+**Key rule**: Before implementing any feature that references a standard, verify its current status at the authoritative URL. Drafts change, RFCs get obsoleted, assumptions rot.
+
+#### robots.txt — Content-Usage Removed (Lighthouse Fix)
+
+**Problem**: Content-Usage directives (`ai=allow`, `ai-training=allow`, `ai-inference=allow`) in our robots.txt caused Lighthouse to flag "Unknown directive" errors, tanking SEO score.
+
+**Root cause**: Content-Usage is an active IETF working group draft (draft-ietf-aipref-attach), NOT a ratified standard. Lighthouse only recognizes RFC 9309 directives. Using an unratified directive in production violated our own quality gates.
+
+**Fix**: Removed all Content-Usage directives from our robots.txt. Added detailed comment explaining our position: we permit AI crawling but refuse to use unratified directives that break quality gates. Our AI Surface Scanner still detects Content-Usage on scanned domains — that's intelligence gathering, not endorsement.
+
+**Result**: robots.txt now contains only RFC 9309-compliant directives. 25 lines → 30 lines (added explanatory comments).
+
+#### Deep Codebase Accuracy Audit — Findings & Fixes
+
+Systematic audit of all templates, docs, and code for overstated claims:
+
+1. **llms.txt "Proposed Standard" → "Community Convention"**: `results.html` tooltip said "llms.txt Proposed Standard" with an RFC 8615 link. RFC 8615 defines .well-known/ mechanics, not llms.txt. llmstxt.org is a community convention, not an IETF standard. Fixed tooltip and removed false RFC 8615 association.
+
+2. **"validation" → "analysis"/"detection"**: `llms.txt` described capabilities as "email authentication validation" and "DNSSEC chain verification." As a passive OSINT tool, we detect and analyze — we don't validate (that implies we hold private keys). Fixed to "analysis" and "detection."
+
+3. **"ensure you always see" → "provide the most current data available"**: FAQ text overpromised by saying we "ensure" current data. DNS results are subject to resolver caching and TTLs. Fixed to "provide the most current data available to public resolvers."
+
+4. **"upcoming DMARCbis standard" → "DMARCbis draft"**: llms-full.txt called DMARCbis an "upcoming standard." It's an active IETF working group draft. Fixed.
+
+5. **RFC 9904 verified**: Sub-agent flagged RFC 9904 as potentially non-existent. Verified it IS real — published November 2025, Standards Track, obsoletes RFC 8624. Our "RFC 8624 / RFC 9904" citation is correct.
+
+---
+
+### Embarrassing Gotchas — Root Cause Analysis & Prevention
+
+This section documents mistakes that should never happen again. Each entry includes what went wrong, why, and the prevention rule.
+
+#### Gotcha #1: Content-Usage in robots.txt (Feb 2026)
+
+**What happened**: We added `Content-Usage: train-ai=y` to our robots.txt, citing it as an "IETF standard." It wasn't — it was (and still is) an active working group draft. This tanked our Lighthouse SEO score with "Unknown directive" errors.
+
+**Why it happened**: We adopted the directive without checking its ratification status on IETF datatracker. We trusted our own enthusiasm for being "forward-thinking" over the actual standards process.
+
+**Prevention rule**: **AUTHORITIES.md Verification Checklist, item 1**: Before using any directive in production, check https://datatracker.ietf.org for RFC status. "Internet-Draft" = NOT ratified = do NOT deploy in production if it breaks quality gates. Detect it on other domains, yes. Use it ourselves, no — not until it's ratified.
+
+#### Gotcha #2: llms.txt Called "Proposed Standard" with RFC 8615 Link (Feb 2026)
+
+**What happened**: The results template tooltip for llms.txt said "Proposed Standard" and linked to RFC 8615. This implies llms.txt is an IETF-track proposal backed by RFC 8615. Neither is true — llms.txt is a community convention from llmstxt.org, and RFC 8615 only defines the .well-known/ path mechanics.
+
+**Why it happened**: We conflated the .well-known/ path (RFC 8615) with the content served at that path (llms.txt). We also used "Proposed Standard" (an IETF status term) for a non-IETF document.
+
+**Prevention rule**: **AUTHORITIES.md Verification Checklist, item 3**: RFC 8615 defines .well-known/ mechanics — it does NOT define llms.txt. And **item 4**: If it's from a single vendor or community site and not an IETF/W3C standard, label it "community convention" or "vendor-specific." Never use IETF status terms ("Proposed Standard," "Experimental") for non-IETF documents.
+
+#### Gotcha #3: Overpromising Capability Language (Ongoing)
+
+**What happened**: Documentation and UI copy used words like "validation," "verification," "ensure" when the tool actually "detects," "observes," and "analyzes." As a passive OSINT tool querying public DNS, we cannot "validate" (that implies authority) or "ensure" (that implies guarantee).
+
+**Why it happened**: Marketing instinct overrides technical accuracy. "Validates SPF" sounds better than "analyzes SPF records." But it's wrong.
+
+**Prevention rule**: **AUTHORITIES.md Verification Checklist, item 5**: Use observation-based language. "Detected," "observed," "present" — never "compliant," "validated," or "ensures" unless we actually perform the action (e.g., SMTP STARTTLS probing IS verification because we connect and check).
+
+---
+
 ## Session: February 20, 2026 (v26.21.38 — robots.txt Cleanup & Content-Usage Corrections)
 
 ### v26.21.38 — robots.txt Precision Pass & Content-Usage Parser Update
@@ -1719,10 +1794,10 @@ Full cross-check of public-facing docs (llms.txt, llms-full.txt, FEATURE_INVENTO
 - Safe type assertion for `email_confidence` to prevent panics
 
 ### AI Surface Scanner RFC Citations (v26.19.24–25)
-- **llms.txt subsection**: Added llmstxt.org "Proposed Standard" link + RFC 8615 (Well-Known URIs)
+- **llms.txt subsection**: Added llmstxt.org community convention link (not an IETF standard)
 - **robots.txt subsection**: Added RFC 9309 (Robots Exclusion Protocol) + IETF AIPREF working group draft
 - Tooltip descriptions explain each standard's scope and status
-- Labels distinguish clearly: "RFC 9309" (ratified), "IETF Draft" (not yet ratified), "Proposed Standard" (community proposal)
+- Labels distinguish clearly: "RFC 9309" (ratified), "IETF Draft" (not yet ratified), "llmstxt.org" (community convention)
 
 ### IETF AIPREF vs llmstxt.org — Architect Analysis
 - **Not competing**: They solve different problems
