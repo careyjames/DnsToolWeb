@@ -251,6 +251,57 @@
             </div>
         </div>
 
+        <div class="card bg-dark border-secondary mb-4">
+            <div class="card-body">
+                <h2 class="h5 fw-bold mb-3"><i class="fas fa-clock me-2 text-info"></i>Timeout &amp; Efficiency Strategy</h2>
+                <p class="text-muted small mb-3">DNS Tool manages timeout budgets across multiple concurrent lookups to maximize intelligence coverage while respecting external service constraints.</p>
+                <div class="row g-3 mb-3">
+                    <div class="col-md-4">
+                        <div class="card bg-dark border-secondary h-100">
+                            <div class="card-body py-2 px-3">
+                                <h3 class="h6 fw-bold mb-1"><i class="fas fa-bolt me-1 text-warning"></i> Parallel Execution</h3>
+                                <p class="text-muted small mb-0">DNS, SPF, DMARC, DKIM, DNSSEC, CT logs, MTA-STS, TLS-RPT, BIMI, CAA, infrastructure, and security.txt are dispatched concurrently. DANE and SMTP run sequentially after MX resolution. Total analysis targets 10&ndash;30 seconds for most domains.</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card bg-dark border-secondary h-100">
+                            <div class="card-body py-2 px-3">
+                                <h3 class="h6 fw-bold mb-1"><i class="fas fa-hourglass-half me-1 text-info"></i> Per-Section Budgets</h3>
+                                <p class="text-muted small mb-0">Each section has independent timeout budgets: DNS lookups (5s per resolver), CT log queries (15s with cooldown), SMTP transport probes (10s per host per port), and HTTP fetches for MTA-STS/BIMI/security.txt (3&ndash;5s each). No single section can block the entire analysis.</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card bg-dark border-secondary h-100">
+                            <div class="card-body py-2 px-3">
+                                <h3 class="h6 fw-bold mb-1"><i class="fas fa-shield-alt me-1 text-success"></i> Graceful Degradation</h3>
+                                <p class="text-muted small mb-0">When a section times out or errors, the analysis continues with remaining sections. Timed-out sections are flagged with a partial-failure banner so you know exactly which data may be incomplete. Re-analysis retries failed sections.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <div class="card bg-dark border-secondary h-100">
+                            <div class="card-body py-2 px-3">
+                                <h3 class="h6 fw-bold mb-1"><i class="fas fa-satellite-dish me-1 text-info"></i> Remote Probe Failover</h3>
+                                <p class="text-muted small mb-0">SMTP probing uses remote infrastructure (probe-us-01) for reliable port 25/465/587 access. If the remote probe fails (network, auth, rate limit), the system falls back to local direct probing. Rate limiting: 30 requests per 60 seconds per client.</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card bg-dark border-secondary h-100">
+                            <div class="card-body py-2 px-3">
+                                <h3 class="h6 fw-bold mb-1"><i class="fas fa-chart-line me-1 text-warning"></i> Efficiency Tracking</h3>
+                                <p class="text-muted small mb-0">The ICAE Collection layer audits timeout handling as part of protocol correctness. Proper timeout behavior (returning informational status vs. crashing, logging appropriately, enabling re-analysis) is tested alongside data accuracy. Timeout patterns feed into maturity progression.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <div class="card bg-dark border-secondary">
             <div class="card-body">
                 <h2 class="h5 fw-bold mb-3"><i class="fas fa-shield-alt me-2 text-info"></i>Why This Matters</h2>

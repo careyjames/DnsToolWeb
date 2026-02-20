@@ -85,15 +85,16 @@
         {{end}}
 
         {{if .IsPublicSuffix}}
-        <div class="alert alert-warning border-0 mb-3">
+        <div class="alert alert-info border-0 mb-3">
             <div class="d-flex align-items-start">
-                <i class="fas fa-globe me-2 mt-1"></i>
+                <i class="fas fa-globe-americas me-2 mt-1"></i>
                 <div>
-                    <strong>Public Suffix Detected</strong> &mdash; <strong>{{.Domain}}</strong> is a shared registry suffix (like <code>co.uk</code>, <code>com.au</code>, or <code>co.jp</code>), not a registrable domain.
+                    <strong>Registry Zone Health Intelligence</strong> &mdash; <strong>{{.Domain}}</strong> is a shared registry suffix.
                     <div class="mt-1 small">
-                        Individual organizations register domains <em>under</em> public suffixes &mdash; for example, <code>example.co.uk</code> rather than <code>co.uk</code> itself.
-                        DNS security records (SPF, DMARC, DKIM) are configured on registrable domains, not on the suffix.
-                        Try scanning a full domain like <code>bbc.co.uk</code> or <code>example.com.au</code> for meaningful results.
+                        This report focuses on zone infrastructure health: DNSSEC signing, nameserver diversity, certificate authority policy, and delegation security. Email authentication protocols (SPF, DMARC, DKIM) are not applicable to registry suffixes &mdash; they apply to domains registered under this zone.
+                    </div>
+                    <div class="mt-1 small">
+                        Registry operators, ICANN, and ccTLD authorities can use this view to assess zone security posture.
                     </div>
                 </div>
             </div>
@@ -153,7 +154,7 @@
                         <img src="/static/images/owl-of-athena.png" alt="DNS Tool" class="print-brand-logo">
                         <span class="print-brand-name">DNS Tool</span>
                     </div>
-                    <div class="print-report-title">Engineer's DNS Intelligence Report</div>
+                    <div class="print-report-title">{{if .IsPublicSuffix}}Registry Zone Health Report{{else}}Engineer's DNS Intelligence Report{{end}}</div>
                 </div>
                 <div class="print-header-right">
                     <div class="print-report-meta">
@@ -175,7 +176,7 @@
         <!-- Screen Header -->
         <div class="results-header mb-4 screen-only">
             <div class="results-header-info">
-                <h1 class="h3 mb-1">Engineer's DNS Intelligence Report</h1>
+                <h1 class="h3 mb-1">{{if .IsPublicSuffix}}Registry Zone Health Report{{else}}Engineer's DNS Intelligence Report{{end}}</h1>
                 <div class="domain-display">
                     <span class="domain-name-prominent">{{.Domain}}</span>
                     {{if ne .AsciiDomain .Domain}}
@@ -319,7 +320,7 @@
         
         
         <!-- Global Posture Score -->
-        {{if $posture}}
+        {{if and $posture (not .IsPublicSuffix)}}
         {{$postureColor := mapGetStr "color" $posture}}
         {{$postureIcon := mapGetStr "icon" $posture}}
         {{$postureState := mapGetStr "state" $posture}}
@@ -366,6 +367,42 @@
         </div>
         
         
+        {{if .IsPublicSuffix}}
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card border-info bg-info bg-opacity-10">
+                    <div class="card-body py-3">
+                        <div class="d-flex align-items-center">
+                            <i class="fas fa-globe-americas fa-2x text-info me-3"></i>
+                            <div>
+                                <span class="fw-semibold">Registry Zone Health</span>
+                                <div class="d-flex align-items-center mt-1 flex-wrap gap-2">
+                                    {{if $dnssec}}
+                                    {{$dnssecStatus := mapGetStr "status" $dnssec}}
+                                    <span class="badge bg-{{if eq $dnssecStatus "secure"}}success{{else if eq $dnssecStatus "insecure"}}warning{{else}}secondary{{end}}"><i class="fas fa-key me-1"></i>DNSSEC: {{title $dnssecStatus}}</span>
+                                    {{end}}
+                                    {{if $caa}}
+                                    {{$caaStatus := mapGetStr "status" $caa}}
+                                    <span class="badge bg-{{if eq $caaStatus "success"}}success{{else}}warning{{end}}"><i class="fas fa-lock me-1"></i>CAA: {{if eq $caaStatus "success"}}Configured{{else}}Not Set{{end}}</span>
+                                    {{end}}
+                                    {{if $dane}}
+                                    {{$daneStatus := mapGetStr "status" $dane}}
+                                    <span class="badge bg-{{if eq $daneStatus "success"}}success{{else}}secondary{{end}}"><i class="fas fa-certificate me-1"></i>DANE: {{title $daneStatus}}</span>
+                                    {{end}}
+                                    {{if $ns}}
+                                    {{$nsCount := mapGetFloat "ns_count" $ns}}
+                                    <span class="badge bg-{{if ge $nsCount 2.0}}success{{else}}warning{{end}}"><i class="fas fa-server me-1"></i>{{formatFloat 0 $nsCount}} Nameservers</span>
+                                    {{end}}
+                                </div>
+                                <small class="text-muted d-block mt-1">Zone infrastructure protocols applicable to registry suffixes</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {{end}}
+
         <!-- Partial Failure Banner - Shows if any sections timed out or failed -->
         {{if $section_status}}
         {{$failed_sections := list}}
@@ -718,6 +755,7 @@
             </div>
         </div>
 
+        {{if not .IsPublicSuffix}}
         <div class="row section-email-security" id="section-email">
             <!-- Email Security Section -->
             <div class="col-12 mb-4">
@@ -1724,6 +1762,8 @@
         </div>
 
 
+        {{end}}
+
         <hr class="section-separator-major">
 
         <!-- DANE/TLSA & Email Transport Security Section -->
@@ -1737,7 +1777,7 @@
                             {{if .ICAEMetrics}}{{with index .ICAEMetrics.ByKey "dane"}}<a href="/confidence" class="badge icae-maturity-badge-deep icae-maturity-deep-{{.AnalysisLevel}} icae-results-badge ms-1 no-print" data-bs-toggle="tooltip" title="ICAE: {{.AnalysisDisplay}}">{{.AnalysisDisplay}}</a>{{end}}{{end}}
                             <span class="badge u-badge-recon ms-2 no-print" data-bs-toggle="tooltip" title="Recon Advantage — DANE/TLSA certificate pinning analysis. A protocol most DNS tools skip entirely."><i class="fas fa-terminal me-1"></i>Recon</span>
                             {{if and .SectionTuning (index .SectionTuning "dane")}}<span class="badge u-section-tuning ms-2"><i class="fas fa-wrench me-1"></i>{{index .SectionTuning "dane"}}</span>{{end}}
-                            <span class="section-question">Can mail servers prove identity without a public CA?
+                            <span class="section-question">{{if .IsPublicSuffix}}Does this zone publish DANE / TLSA records?{{else}}Can mail servers prove identity without a public CA?{{end}}
                                 {{$daneStatus := mapGetStr "status" $dane}}
                                 {{$hasDane := mapGetBool "has_dane" $dane}}
                                 {{$daneDeployable := mapGetStr "dane_deployable" $dane}}
@@ -1901,9 +1941,9 @@
                 <div class="card">
                     <div class="card-header">
                         <h5 class="mb-0 d-flex align-items-center justify-content-between flex-wrap">
-                            <span><i class="fas fa-certificate me-2"></i>Brand Security</span>
+                            <span><i class="fas fa-certificate me-2"></i>{{if .IsPublicSuffix}}Certificate Authority Policy{{else}}Brand Security{{end}}</span>
                             {{if and .SectionTuning (index .SectionTuning "brand")}}<span class="badge u-section-tuning ms-2"><i class="fas fa-wrench me-1"></i>{{index .SectionTuning "brand"}}</span>{{end}}
-                            <span class="section-question">Can this brand be convincingly faked?
+                            <span class="section-question">{{if .IsPublicSuffix}}Does this zone restrict certificate issuance?{{else}}Can this brand be convincingly faked?{{end}}
                                 {{if $posture}}
                                 {{$verdicts := mapGetMap "verdicts" $posture}}
                                 {{$brandVerdict := mapGetMap "brand_impersonation" $verdicts}}
@@ -1940,9 +1980,11 @@
                             </div>
                         {{end}}
                         {{end}}
+                        {{if not .IsPublicSuffix}}
                         <hr class="section-separator">
+                        {{end}}
                         <div class="row">
-                            <!-- BIMI Analysis -->
+                            {{if not .IsPublicSuffix}}
                             <div class="col-md-6 mb-3 mb-md-0 section-col-divider">
                                 {{$bimiStatus := mapGetStr "status" $bimi}}
                                 <p class="d-flex align-items-center">
@@ -2021,9 +2063,9 @@
                                     </div>
                                 {{end}}
                             </div>
+                            {{end}}
 
-                            <!-- CAA Analysis -->
-                            <div class="col-md-6">
+                            <div class="{{if .IsPublicSuffix}}col-12{{else}}col-md-6{{end}}">
                                 {{$caaStatus := mapGetStr "status" $caa}}
                                 <p class="d-flex align-items-center">
                                     <i class="fas fa-lock me-2"></i>CAA
@@ -2738,7 +2780,7 @@
         {{end}}
 
         <!-- Mail Transport Security Section -->
-        {{if and $smtp (ne (mapGetStr "status" $smtp) "n/a")}}
+        {{if and (not .IsPublicSuffix) $smtp (ne (mapGetStr "status" $smtp) "n/a")}}
         <div class="row section-smtp-transport" id="section-smtp">
             <div class="col-12 mb-4">
                 <div class="card">
@@ -3165,9 +3207,9 @@
                 <div class="card">
                     <div class="card-header">
                         <h5 class="mb-0 d-flex align-items-center justify-content-between flex-wrap">
-                            <span><i class="fas fa-shield-alt me-2"></i>Domain Security</span>
+                            <span><i class="fas fa-shield-alt me-2"></i>{{if .IsPublicSuffix}}Zone Signing &amp; DNSSEC{{else}}Domain Security{{end}}</span>
                             {{if and .SectionTuning (index .SectionTuning "dnssec")}}<span class="badge u-section-tuning ms-2"><i class="fas fa-wrench me-1"></i>{{index .SectionTuning "dnssec"}}</span>{{end}}
-                            <span class="section-question">Can DNS responses be tampered with in transit?
+                            <span class="section-question">{{if .IsPublicSuffix}}Is this zone cryptographically signed?{{else}}Can DNS responses be tampered with in transit?{{end}}
                                 {{if $posture}}
                                 {{$verdicts := mapGetMap "verdicts" $posture}}
                                 {{$dnsVerdict := mapGetMap "dns_tampering" $verdicts}}
@@ -3734,7 +3776,7 @@
             </div>
         </div>
 
-        <!-- Subdomain Discovery (Certificate Transparency) -->
+        {{if not .IsPublicSuffix}}
         <div class="row mt-4">
         <div class="col-12">
             <div class="card">
@@ -4108,6 +4150,25 @@
             </div>
         </div>
         </div>
+{{else}}
+        <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0 d-flex align-items-center">
+                        <span><i class="fas fa-sitemap me-2"></i>Subdomain Discovery</span>
+                        <span class="badge bg-secondary ms-2">Not Applicable</span>
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="text-muted">
+                        <i class="fas fa-info-circle me-2"></i>Certificate Transparency subdomain enumeration is not applicable for registry suffixes. For <strong>{{.Domain}}</strong>, CT logs would show registered domains under this zone rather than organizational subdomains. To analyze a specific domain's exposure, scan a registrable domain like <code>example.{{.Domain}}</code>.
+                    </div>
+                </div>
+            </div>
+        </div>
+        </div>
+{{end}}
 
         <!-- Propagation Delta Summary -->
         <div class="row mt-4 mb-3">
