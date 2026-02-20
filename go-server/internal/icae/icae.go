@@ -293,22 +293,11 @@ func ComputeMaturity(consecutivePasses int, firstPassAt *time.Time, lastRegressi
 func OverallMaturity(protocols []ProtocolReport) string {
         lowest := MaturityGoldMaster
         lowestOrder := MaturityOrder[lowest]
-        hasAnyData := false
+        hasAnyAnalysis := false
 
         for _, p := range protocols {
-                if p.HasCollection {
-                        hasAnyData = true
-                        order, ok := MaturityOrder[p.CollectionLevel]
-                        if !ok {
-                                return MaturityDevelopment
-                        }
-                        if order < lowestOrder {
-                                lowestOrder = order
-                                lowest = p.CollectionLevel
-                        }
-                }
                 if p.HasAnalysis {
-                        hasAnyData = true
+                        hasAnyAnalysis = true
                         order, ok := MaturityOrder[p.AnalysisLevel]
                         if !ok {
                                 return MaturityDevelopment
@@ -320,7 +309,7 @@ func OverallMaturity(protocols []ProtocolReport) string {
                 }
         }
 
-        if !hasAnyData {
+        if !hasAnyAnalysis {
                 return MaturityDevelopment
         }
 

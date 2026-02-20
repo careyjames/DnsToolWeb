@@ -106,7 +106,7 @@ func LoadReportMetrics(ctx context.Context, queries DBTX) *ReportMetrics {
         var regressions []RegressionEvent
 
         for _, p := range protocols {
-                if p.HasRuns {
+                if p.HasAnalysis {
                         evaluatedCount++
                 }
                 totalPasses += p.AnalysisPasses
