@@ -75,10 +75,45 @@
                 <div>
                     <span>You are analyzing the subdomain <strong>{{.Domain}}</strong>.
                     <a href="/analyze?domain={{.RootDomain}}" class="alert-link text-info">Analyze the root domain <strong>{{.RootDomain}}</strong> instead?</a></span>
+                    {{with .SubdomainEmailScope}}
+                    <div class="mt-2 small">
+                        <div class="d-flex flex-wrap gap-2 align-items-center mb-1">
+                            <span class="text-info-emphasis fw-semibold">Email Security Scope:</span>
+                            {{if eq .SPFScope "local"}}
+                                <span class="badge bg-success bg-opacity-25 border border-success border-opacity-25"><i class="fas fa-check me-1"></i>SPF: Local Record</span>
+                            {{else}}
+                                <span class="badge bg-secondary bg-opacity-25 border border-secondary border-opacity-25"><i class="fas fa-minus me-1"></i>SPF: No Local Record</span>
+                            {{end}}
+                            {{if eq .DMARCScope "local"}}
+                                <span class="badge bg-success bg-opacity-25 border border-success border-opacity-25"><i class="fas fa-check me-1"></i>DMARC: Local Record</span>
+                            {{else if eq .DMARCScope "inherited"}}
+                                <span class="badge bg-info bg-opacity-25 border border-info border-opacity-25"><i class="fas fa-arrow-up me-1"></i>DMARC: Inherited from {{.ParentDomain}}</span>
+                            {{else}}
+                                <span class="badge bg-warning bg-opacity-25 border border-warning border-opacity-25"><i class="fas fa-exclamation-triangle me-1"></i>DMARC: No Coverage</span>
+                            {{end}}
+                            {{if .HasLocalEmail}}
+                                <span class="badge bg-info bg-opacity-10 border border-info border-opacity-25"><i class="fas fa-envelope me-1"></i>MX Records Present</span>
+                            {{end}}
+                        </div>
+                        {{if and (ne .SPFScope "local") (ne .DMARCScope "local")}}
+                            <div class="text-warning-emphasis u-opacity-75 mt-1">
+                                <i class="fas fa-info-circle me-1"></i>This subdomain has no locally configured email security records.
+                                {{if eq .DMARCScope "inherited"}}DMARC protection is inherited from the organizational domain ({{.ParentDomain}}) per <a href="https://datatracker.ietf.org/doc/html/rfc7489#section-6.6.3" target="_blank" rel="noopener" class="text-info">RFC 7489 &sect;6.6.3</a>.{{end}}
+                                {{if .HasLocalEmail}}Since this subdomain has MX records, consider publishing subdomain-specific SPF and DMARC records for explicit protection.{{end}}
+                                Analyzing <a href="/analyze?domain={{.ParentDomain}}" class="text-info">{{.ParentDomain}}</a> shows the organizational domain&rsquo;s full email security posture.
+                            </div>
+                        {{else if and (eq .SPFScope "local") (eq .DMARCScope "inherited")}}
+                            <div class="text-info-emphasis u-opacity-75 mt-1">
+                                <i class="fas fa-info-circle me-1"></i>SPF is configured locally. DMARC policy is inherited from <strong>{{.ParentDomain}}</strong> per <a href="https://datatracker.ietf.org/doc/html/rfc7489#section-6.6.3" target="_blank" rel="noopener" class="text-info">RFC 7489 &sect;6.6.3</a> &mdash; this is standard behavior.
+                            </div>
+                        {{end}}
+                    </div>
+                    {{else}}
                     <div class="mt-1 small text-info-emphasis u-opacity-75">
                         Email security records (SPF, DMARC, DKIM, MTA-STS) are typically configured at the root domain level.
                         A subdomain like <strong>www</strong> or a DKIM selector like <strong>google._domainkey</strong> inherits policies from its parent &mdash; analyzing <strong>{{.RootDomain}}</strong> gives the full picture.
                     </div>
+                    {{end}}
                 </div>
             </div>
         </div>
@@ -1086,6 +1121,11 @@
                                     {{if gt $lookupCount 0}}
                                         <span class="badge bg-{{if gt $lookupCount 10}}danger{{else if gte $lookupCount 8}}warning{{else}}secondary{{end}} ms-1" data-bs-toggle="tooltip" title="DNS lookup limit is 10">{{formatFloat 0 $lookupCount}}/10 lookups</span>
                                     {{end}}
+                                    {{with $.SubdomainEmailScope}}
+                                        {{if eq .SPFScope "local"}}
+                                            <span class="badge bg-success bg-opacity-10 border border-success border-opacity-25 ms-1 u-fs-060rem" data-bs-toggle="tooltip" title="{{.SPFNote}}"><i class="fas fa-check me-1"></i>Local</span>
+                                        {{end}}
+                                    {{end}}
                                 </div>
                                 <p class="text-muted mb-2 small">{{mapGetStr "message" $spf}}</p>
                                 {{$spfRecords := mapGetSlice "valid_records" $spf}}
@@ -1256,6 +1296,13 @@
                                     {{$dmarcPct := mapGetFloat "pct" $dmarc}}
                                     {{if and (gt $dmarcPct 0) (lt $dmarcPct 100)}}
                                         <span class="badge bg-warning ms-1">{{formatFloat 0 $dmarcPct}}% enforced</span>
+                                    {{end}}
+                                    {{with $.SubdomainEmailScope}}
+                                        {{if eq .DMARCScope "local"}}
+                                            <span class="badge bg-success bg-opacity-10 border border-success border-opacity-25 ms-1 u-fs-060rem" data-bs-toggle="tooltip" title="{{.DMARCNote}}"><i class="fas fa-check me-1"></i>Local</span>
+                                        {{else if eq .DMARCScope "inherited"}}
+                                            <span class="badge bg-info bg-opacity-10 border border-info border-opacity-25 ms-1 u-fs-060rem" data-bs-toggle="tooltip" title="{{.DMARCNote}}"><i class="fas fa-arrow-up me-1"></i>Inherited</span>
+                                        {{end}}
                                     {{end}}
                                 </div>
                                 <p class="text-muted mb-2 small">{{mapGetStr "message" $dmarc}}</p>

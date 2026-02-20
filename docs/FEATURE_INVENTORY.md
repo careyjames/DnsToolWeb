@@ -33,7 +33,7 @@ The tool performs RFC-compliant parsing and validation of these protocols:
 ## Infrastructure Analysis
 
 - DNS record lookups (A, AAAA, MX, TXT, NS, CNAME, CAA, SOA, SRV)
-- Multi-resolver consensus (Cloudflare, Google, Quad9, OpenDNS)
+- Multi-resolver consensus (Cloudflare, Google, Quad9, OpenDNS, DNS4EU)
 - Authoritative vs. resolver propagation comparison
 - Registrar/RDAP lookup with caching
 - Multi-layer subdomain discovery with intelligent caching (proprietary pipeline)

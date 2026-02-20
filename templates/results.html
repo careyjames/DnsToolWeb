@@ -1373,7 +1373,7 @@
                                         <strong>Multi-Resolver Verification:</strong>
                                         {% if results.resolver_consensus.consensus_reached %}
                                             <span class="text-success">Consensus reached</span> - 
-                                            {{ results.resolver_consensus.resolvers_queried }} resolvers (Cloudflare, Google, Quad9, OpenDNS) agree on DNS records
+                                            {{ results.resolver_consensus.resolvers_queried }} resolvers (Cloudflare, Google, Quad9, OpenDNS, DNS4EU) agree on DNS records
                                         {% else %}
                                             <span class="text-warning">Discrepancy detected</span> - 
                                             Some resolvers returned different results
@@ -1958,7 +1958,7 @@
             <div class="card-body py-3 px-4">
                 <h6 class="text-muted mb-2" style="font-size: 0.8rem;"><i class="fas fa-flask me-1"></i>DATA FRESHNESS &amp; METHODOLOGY</h6>
                 <p class="text-muted mb-2" style="font-size: 0.75rem; line-height: 1.6;">
-                    All security-critical records (SPF, DMARC, DKIM, DANE/TLSA, DNSSEC, MTA-STS, TLS-RPT, BIMI, CAA) are queried <strong>live</strong> from authoritative nameservers and cross-referenced against 4 independent public DNS resolvers (Cloudflare, Google, Quad9, OpenDNS) at the time of each analysis. No security verdict uses cached data.
+                    All security-critical records (SPF, DMARC, DKIM, DANE/TLSA, DNSSEC, MTA-STS, TLS-RPT, BIMI, CAA) are queried <strong>live</strong> from authoritative nameservers and cross-referenced against 5 independent public DNS resolvers (Cloudflare, Google, Quad9, OpenDNS, DNS4EU) at the time of each analysis. No security verdict uses cached data.
                 </p>
                 <p class="text-muted mb-2" style="font-size: 0.75rem; line-height: 1.6;">
                     <strong>Registrar data</strong> (RDAP) is cached for up to 24 hours because domain ownership and registration details change infrequently. <strong>Certificate Transparency logs</strong> (subdomain discovery via <a href="https://datatracker.ietf.org/doc/html/rfc6962" target="_blank" rel="noopener" class="text-info">RFC 6962</a>) are cached for 1 hour because CT entries are append-only historical records. Sections using cached data are marked with a <span class="badge bg-secondary bg-opacity-50 border border-secondary border-opacity-25" style="font-size: 0.55rem;">CACHED</span> badge; live queries show <span class="badge bg-success bg-opacity-25 border border-success border-opacity-25" style="font-size: 0.55rem;">LIVE</span>.

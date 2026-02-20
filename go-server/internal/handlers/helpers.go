@@ -3,11 +3,14 @@
 package handlers
 
 import (
+        "context"
         "encoding/json"
         "fmt"
         "math"
         "sort"
         "strings"
+
+        "dnstool/go-server/internal/dnsclient"
 
         "golang.org/x/net/publicsuffix"
 )
@@ -458,4 +461,84 @@ func isPublicSuffixDomain(domain string) bool {
                 }
         }
         return false
+}
+
+type subdomainEmailScope struct {
+        IsSubdomain   bool   `json:"is_subdomain"`
+        ParentDomain  string `json:"parent_domain"`
+        SPFScope      string `json:"spf_scope"`
+        DMARCScope    string `json:"dmarc_scope"`
+        SPFNote       string `json:"spf_note"`
+        DMARCNote     string `json:"dmarc_note"`
+        HasLocalEmail bool   `json:"has_local_email"`
+}
+
+func computeSubdomainEmailScope(ctx context.Context, dns *dnsclient.Client, domain, rootDomain string, results map[string]any) subdomainEmailScope {
+        scope := subdomainEmailScope{
+                IsSubdomain:  true,
+                ParentDomain: rootDomain,
+        }
+
+        spf, _ := results["spf_analysis"].(map[string]any)
+        dmarc, _ := results["dmarc_analysis"].(map[string]any)
+
+        spfStatus, _ := spf["status"].(string)
+        dmarcStatus, _ := dmarc["status"].(string)
+
+        subHasSPF := spfStatus == "success" || spfStatus == "warning"
+        subHasDMARC := dmarcStatus == "success" || dmarcStatus == "warning"
+
+        orgDMARCRecords := dns.QueryDNS(ctx, "TXT", fmt.Sprintf("_dmarc.%s", rootDomain))
+        orgHasDMARC := false
+        orgDMARCPolicy := ""
+        for _, r := range orgDMARCRecords {
+                lower := strings.ToLower(strings.TrimSpace(r))
+                if lower == "v=dmarc1" || strings.HasPrefix(lower, "v=dmarc1;") || strings.HasPrefix(lower, "v=dmarc1 ") {
+                        orgHasDMARC = true
+                        if idx := strings.Index(lower, "p="); idx >= 0 {
+                                rest := lower[idx+2:]
+                                if semi := strings.IndexByte(rest, ';'); semi >= 0 {
+                                        orgDMARCPolicy = strings.TrimSpace(rest[:semi])
+                                } else {
+                                        orgDMARCPolicy = strings.TrimSpace(rest)
+                                }
+                        }
+                        break
+                }
+        }
+
+        if subHasSPF {
+                scope.SPFScope = "local"
+                scope.SPFNote = "SPF record published at this subdomain"
+        } else {
+                scope.SPFScope = "none"
+                scope.SPFNote = "No SPF record at this subdomain — SPF does not inherit from parent domains"
+        }
+
+        if subHasDMARC {
+                scope.DMARCScope = "local"
+                scope.DMARCNote = "DMARC record published at this subdomain"
+        } else if orgHasDMARC {
+                scope.DMARCScope = "inherited"
+                policyNote := ""
+                if orgDMARCPolicy != "" {
+                        policyNote = fmt.Sprintf(" (p=%s)", orgDMARCPolicy)
+                }
+                scope.DMARCNote = fmt.Sprintf("No subdomain DMARC record — organizational domain policy from %s%s applies per RFC 7489 §6.6.3", rootDomain, policyNote)
+        } else {
+                scope.DMARCScope = "none"
+                scope.DMARCNote = fmt.Sprintf("No DMARC record at this subdomain or organizational domain %s", rootDomain)
+        }
+
+        basic, _ := results["basic_records"].(map[string]any)
+        if basic != nil {
+                switch mx := basic["MX"].(type) {
+                case []string:
+                        scope.HasLocalEmail = len(mx) > 0
+                case []any:
+                        scope.HasLocalEmail = len(mx) > 0
+                }
+        }
+
+        return scope
 }

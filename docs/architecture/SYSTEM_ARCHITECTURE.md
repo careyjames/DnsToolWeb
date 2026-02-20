@@ -27,7 +27,7 @@ graph TB
     end
 
     subgraph "Data Collection"
-        DNSClient["Multi-Resolver DNS Client<br/>Cloudflare · Google · Quad9 · OpenDNS"]
+        DNSClient["Multi-Resolver DNS Client<br/>Cloudflare · Google · Quad9 · OpenDNS · DNS4EU"]
         SMTP["SMTP Probe<br/>STARTTLS Verification"]
         CT["Certificate Transparency<br/>crt.sh + Certspotter"]
         HTTP["HTTP Probes<br/>MTA-STS · security.txt · BIMI"]

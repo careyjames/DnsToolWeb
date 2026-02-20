@@ -45,7 +45,7 @@ Every piece of intelligence has a source. Sources have different authority level
 |------|----------------|---------|-------------------|
 | **Tier 1: Authoritative DNS** | Highest | NS-delegated authoritative nameservers, SOA records | Always — this IS the domain's declared configuration |
 | **Tier 2: Protocol Records** | High | SPF TXT, DMARC TXT, DKIM TXT, CAA, TLSA, MTA-STS, DNSSEC (DNSKEY/DS) | For their specific protocol — RFC-defined semantics |
-| **Tier 3: Resolver Consensus** | High | Multi-resolver validation (Cloudflare, Google, Quad9, OpenDNS) | When authoritative data is unavailable or for propagation validation |
+| **Tier 3: Resolver Consensus** | High | Multi-resolver validation (Cloudflare, Google, Quad9, OpenDNS, DNS4EU) | When authoritative data is unavailable or for propagation validation |
 | **Tier 4: Registry Data** | Medium-High | RDAP (primary), WHOIS (fallback) | For registrar/registration data; RDAP > WHOIS always |
 | **Tier 5: Certificate Intelligence** | Medium | Certificate Transparency logs | For subdomain discovery, CA authorization validation |
 | **Tier 6: Infrastructure Inference** | Medium | NS patterns, MX patterns, CNAME targets, A/AAAA records | For provider identification — inferred, not declared |
@@ -61,7 +61,7 @@ When sources conflict, apply these rules in order:
 1. **Authoritative DNS > Resolver cache** — If the authoritative nameserver says one thing and a recursive resolver says another, authoritative wins (the resolver may be stale).
 2. **RDAP > WHOIS** — RDAP is the IETF-standardized successor (RFC 7482/7483). WHOIS is legacy, often unreliable, and increasingly restricted.
 3. **Direct observation > inference** — A DKIM record we queried directly is more authoritative than a DKIM provider we inferred from SPF includes.
-4. **Multiple-resolver consensus > single resolver** — If 3/4 resolvers agree and 1 disagrees, the consensus is authoritative.
+4. **Multiple-resolver consensus > single resolver** — If 4/5 resolvers agree and 1 disagrees, the consensus is authoritative.
 5. **Live data > cached/historical data** — Current DNS state trumps SecurityTrails history for "what is the domain doing RIGHT NOW."
 6. **RFC-defined semantics > vendor interpretation** — If an RFC says `p=reject` means reject, that's what it means. We don't soften or reinterpret.
 

@@ -129,7 +129,7 @@ Intelligence Reports page: `/dossier` (renamed from "Intelligence Dossier" to "I
 
 | Service | Purpose | Constraints |
 |---------|---------|-------------|
-| **DNS Resolvers** (Cloudflare, Google, Quad9, OpenDNS/Cisco Umbrella) | Multi-resolver consensus DNS queries | Public, no API key |
+| **DNS Resolvers** (Cloudflare, Google, Quad9, OpenDNS/Cisco Umbrella, DNS4EU) | Multi-resolver consensus DNS queries | Public, no API key |
 | **IANA RDAP** | Registry data lookups | Multi-endpoint, parallel attempts, exponential backoff |
 | **ip-api.com** | Visitor IP-to-country lookups | Public tier |
 | **crt.sh** | Certificate Transparency logs | Independent context with timeout and size limits |

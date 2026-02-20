@@ -155,7 +155,7 @@ Every analysis generates a SHA-256 integrity hash binding domain, analysis ID, t
 
 2. **Concurrent DNS Lookups**: Goroutines enable parallel queries across multiple resolvers with rapid aggregation.
 
-3. **Multi-Resolver Consensus**: Queries Cloudflare, Google, Quad9, and OpenDNS. Consensus-based results reduce resolver-specific anomalies.
+3. **Multi-Resolver Consensus**: Queries Cloudflare, Google, Quad9, OpenDNS, and DNS4EU. Five-resolver consensus reduces resolver-specific anomalies and includes EU-sovereign infrastructure.
 
 4. **CSP with Nonces**: Content Security Policy headers include per-request nonces for inline scripts, blocking XSS attacks while allowing necessary inline code.
 
@@ -215,7 +215,7 @@ Maximum 8 requests per minute per IP. Wait 60 seconds and retry.
 - CSRF protection via middleware
 - In-memory rate limiting (Redis-ready)
 - Server-rendered Go templates
-- Multi-resolver consensus (Cloudflare, Google, Quad9, OpenDNS)
+- Multi-resolver consensus (Cloudflare, Google, Quad9, OpenDNS, DNS4EU)
 - AI Surface Scanner with prompt injection detection
 - Email Header Analyzer with RFC parsing
 - Multi-layer subdomain discovery with intelligent caching

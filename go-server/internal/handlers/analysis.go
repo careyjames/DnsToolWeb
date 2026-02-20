@@ -133,6 +133,13 @@ func (h *AnalysisHandler) ViewAnalysisStatic(c *gin.Context) {
         }
 
         isSub, rootDom := extractRootDomain(analysis.AsciiDomain)
+
+        var emailScope *subdomainEmailScope
+        if isSub && rootDom != "" {
+                es := computeSubdomainEmailScope(ctx, h.Analyzer.DNS, analysis.AsciiDomain, rootDom, results)
+                emailScope = &es
+        }
+
         viewData := gin.H{
                 "AppVersion":           h.Config.AppVersion,
                 "CspNonce":             nonce,
@@ -164,6 +171,7 @@ func (h *AnalysisHandler) ViewAnalysisStatic(c *gin.Context) {
                 "DriftPrevID":          drift.PrevID,
                 "DriftFields":          drift.Fields,
                 "IsPublicSuffix":       isPublicSuffixDomain(analysis.AsciiDomain),
+                "SubdomainEmailScope":  emailScope,
         }
         if icaeMetrics := icae.LoadReportMetrics(ctx, h.DB.Queries); icaeMetrics != nil {
                 viewData["ICAEMetrics"] = icaeMetrics
@@ -378,6 +386,13 @@ func (h *AnalysisHandler) Analyze(c *gin.Context) {
 
         isSub, rootDom := extractRootDomain(asciiDomain)
         isPublicSuffix := isPublicSuffixDomain(asciiDomain)
+
+        var emailScope *subdomainEmailScope
+        if isSub && rootDom != "" {
+                es := computeSubdomainEmailScope(ctx, h.Analyzer.DNS, asciiDomain, rootDom, results)
+                emailScope = &es
+        }
+
         analyzeData := gin.H{
                 "AppVersion":           h.Config.AppVersion,
                 "CspNonce":             nonce,
@@ -412,6 +427,7 @@ func (h *AnalysisHandler) Analyze(c *gin.Context) {
                 "DevNull":              devNull,
                 "IsPrivateReport":      isPrivate,
                 "IsPublicSuffix":       isPublicSuffix,
+                "SubdomainEmailScope":  emailScope,
         }
         if icaeMetrics := icae.LoadReportMetrics(ctx, h.DB.Queries); icaeMetrics != nil {
                 analyzeData["ICAEMetrics"] = icaeMetrics
