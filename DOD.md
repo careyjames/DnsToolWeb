@@ -35,11 +35,29 @@ Every change must satisfy this checklist before it ships.
 - [ ] No proprietary intelligence exposed in public-facing docs
 - [ ] Observation-based language used (never definitive claims)
 
+## Mobile UI Verification — MANDATORY for CSS/Template Changes
+
+Any change to CSS or HTML templates MUST be verified at narrow viewport (375px, iPhone SE). Mobile regressions are recurring and expensive.
+
+- [ ] Action bars and button rows: labels don't wrap or overlap at 375px width
+- [ ] All buttons have `white-space: nowrap` — text never breaks inside a button
+- [ ] Flex rows with 3+ items use `flex-wrap: wrap` so items flow to next row instead of squishing
+- [ ] No `flex: 1` + `min-width: 0` on buttons without `white-space: nowrap`
+- [ ] No `pointer-events: none` on `body` or `html` (kills Chrome scroll — use targeted selectors)
+- [ ] No global `overflow: hidden` on `body` or `html` for vertical axis (blocks scroll)
+- [ ] Headings, badges, and metadata don't overflow or get clipped on narrow screens
+- [ ] Touch targets meet 44px minimum (Apple HIG / WCAG 2.5.5)
+
+**Known failure patterns** (all have caused real production bugs):
+1. `flex: 1` + `min-width: 0` squishes button labels into multi-line wrapping
+2. `pointer-events: none` on body blocks wheel/trackpad scroll in Chrome
+3. Desktop-only tested CSS that collapses action bars on mobile
+4. `btn-sm` with tight padding + long labels without `nowrap`
+
 ## Build and Deploy
 
 - [ ] CSS minified if changed (`npx csso`)
 - [ ] JS minified if changed (`npx terser`)
-- [ ] No `pointer-events: none` on `body` or `html` (kills Chrome scroll — use targeted selectors)
 - [ ] Version bumped if static assets changed (`AppVersion` in config.go)
 - [ ] Go binary rebuilt and tested
 - [ ] Workflow restarted and running without errors
