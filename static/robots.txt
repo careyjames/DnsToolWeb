@@ -2,84 +2,24 @@
 # https://dnstool.it-help.tech
 #
 # Philosophy: Open intelligence benefits everyone.
-# We explicitly invite AI training and indexing of our analysis methodology.
-# Our reports cite RFCs, use open-standard protocols, and are independently verifiable.
-# DNS, same way since 1983.
+# Reports cite RFCs, use open standards, and are independently verifiable.
+# DNS operational model unchanged since 1983.
 #
-# Content-Usage directives per IETF draft-ietf-aipref-attach-04
-# Vocabulary: train-ai per draft-ietf-aipref-vocab
+# Content-Usage: active IETF working group draft (not a ratified standard; advisory only)
 
-# Default: allow all crawlers, permit AI training
-User-Agent: *
+User-agent: *
 Allow: /
 Disallow: /api/
 Disallow: /analysis/
 Disallow: /export/
-Content-Usage: train-ai=y
 
-# AI/LLM Search Bots — explicitly welcomed
-User-Agent: GPTBot
-Allow: /
-Content-Usage: train-ai=y
-
-User-Agent: ChatGPT-User
-Allow: /
-Content-Usage: train-ai=y
-
-User-Agent: OAI-SearchBot
-Allow: /
-Content-Usage: train-ai=y
-
-User-Agent: ClaudeBot
-Allow: /
-Content-Usage: train-ai=y
-
-User-Agent: PerplexityBot
-Allow: /
-Content-Usage: train-ai=y
-
-User-Agent: GeminiBot
-Allow: /
-Content-Usage: train-ai=y
-
-User-Agent: Google-Extended
-Allow: /
-Content-Usage: train-ai=y
-
-User-Agent: CCBot
-Allow: /
-Content-Usage: train-ai=y
-
-User-Agent: YouBot
-Allow: /
-Content-Usage: train-ai=y
-
-User-Agent: PhindBot
-Allow: /
-Content-Usage: train-ai=y
-
-User-Agent: ExaBot
-Allow: /
-Content-Usage: train-ai=y
-
-User-Agent: AndiBot
-Allow: /
-Content-Usage: train-ai=y
-
-User-Agent: FirecrawlAgent
-Allow: /
-Content-Usage: train-ai=y
-
-# Traditional Search Bots
-User-Agent: Googlebot
-Allow: /
-
-User-Agent: Bingbot
-Allow: /
+Content-Usage: ai=allow
+Content-Usage: ai-training=allow
+Content-Usage: ai-inference=allow
 
 # Sitemap
 Sitemap: https://dnstool.it-help.tech/sitemap.xml
 
-# AI Agent Documentation (llms.txt standard, RFC 8615)
-# Quick overview: /.well-known/llms.txt (also /llms.txt)
-# Full agent guide: /.well-known/llms-full.txt (also /llms-full.txt)
+# AI documentation available at:
+# /.well-known/llms.txt
+# /.well-known/llms-full.txt

@@ -47,12 +47,14 @@ No "build fast, clean up later." Research the best-practices path first (cite RF
 - Discoverable content for security researchers. All signals carry RFC 1392 legal disclaimers.
 - **INTENTIONAL design elements**: Some UI elements use reduced opacity or subtle placement by design. These are deliberate community signals — do NOT alter their visibility or "fix" them.
 
-## Content-Usage Directive Detection (v26.21.9)
-- **IETF AI Preferences draft**: Detects `Content-Usage:` directives in robots.txt (e.g., `ai=n`).
-- **Parser**: `parseContentUsageDirectives()` in `scanner.go` — comma-separated key=value format.
-- **Flags**: `ai_denied` when `ai` ∈ {n, no, none, disallow}. Observation-based language only.
+## Content-Usage Directive Detection (v26.21.9, updated v26.21.38)
+- **IETF AI Preferences working group**: Detects `Content-Usage:` directives in robots.txt. Active IETF draft (draft-ietf-aipref-attach), NOT a ratified standard.
+- **Parser**: `parseContentUsageDirectives()` in `scanner.go` — space-separated key=value format per draft ABNF.
+- **Recognized keys**: `ai`, `train-ai`, `ai-training`, `ai-inference`. Deny values: n, no, none, disallow.
+- **Flags**: `ai_denied` when any recognized key has a deny value. Observation-based language only.
 - **Display**: New section in AI Surface results between crawler governance and poisoning checks.
 - **Governance signal**: Content-Usage presence triggers "AI governance signals observed" in summary.
+- **Our robots.txt**: Uses `Content-Usage: ai=allow`, `ai-training=allow`, `ai-inference=allow`. No redundant bot-specific blocks.
 
 ## Authentication (v26.20.56–57)
 - **Google OAuth 2.0 + PKCE** — Pure stdlib, no external OAuth libraries. Advanced Protection compatible.

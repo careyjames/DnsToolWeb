@@ -2500,7 +2500,7 @@
                                 <strong>Content-Usage directive observed:</strong>
                                 <code>{{mapGetStr "raw" $contentUsage}}</code>
                                 <div class="mt-1 text-muted u-fs-085em">
-                                    This is an experimental IETF draft directive. Presence is observed; enforcement depends on individual crawler compliance.
+                                    Content-Usage is an active IETF working group draft (not yet a ratified standard). Presence is observed; enforcement depends on individual crawler compliance.
                                 </div>
                             </div>
                             {{else}}
@@ -2511,9 +2511,9 @@
                             <div class="alert alert-secondary py-2 small border-0 u-bg-subtle-muted">
                                 <i class="fas fa-info-circle me-1 text-info"></i>
                                 <strong>No Content-Usage directive detected.</strong>
-                                The <a href="https://datatracker.ietf.org/doc/draft-ietf-aipref-attach/" target="_blank" rel="noopener" class="text-info">IETF AI Preferences draft</a> defines a <code>Content-Usage:</code> directive for robots.txt that lets site owners explicitly declare whether their content may be used for AI training and inference.
+                                The <a href="https://datatracker.ietf.org/doc/draft-ietf-aipref-attach/" target="_blank" rel="noopener" class="text-info">IETF AI Preferences working group</a> is developing a <code>Content-Usage:</code> directive for robots.txt that lets site owners declare whether their content may be used for AI training and inference. This is an active draft, not yet a ratified standard.
                                 <div class="mt-2">
-                                    <strong>Example:</strong> Add <code>Content-Usage: ai=n</code> to robots.txt to deny AI training, or <code>Content-Usage: ai=y</code> to explicitly permit it.
+                                    <strong>Example:</strong> Add <code>Content-Usage: ai=no</code> to robots.txt to deny AI training, or <code>Content-Usage: ai=allow</code> to explicitly permit it.
                                     Without this directive, AI crawler behavior depends on individual crawler policies and User-agent rules.
                                 </div>
                             </div>

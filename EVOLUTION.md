@@ -10,6 +10,42 @@ This file is the project's permanent breadcrumb trail — every session's decisi
 
 ---
 
+## Session: February 20, 2026 (v26.21.38 — robots.txt Cleanup & Content-Usage Corrections)
+
+### v26.21.38 — robots.txt Precision Pass & Content-Usage Parser Update
+
+#### robots.txt Cleanup
+
+Applied production-grade cleanup based on technical audit:
+
+**Removed:**
+- 13 redundant bot-specific `User-agent` blocks (GPTBot, ChatGPT-User, OAI-SearchBot, ClaudeBot, PerplexityBot, GeminiBot, Google-Extended, CCBot, YouBot, PhindBot, ExaBot, AndiBot, FirecrawlAgent, Googlebot, Bingbot) — all redundant because `User-agent: * / Allow: /` already permits everything
+- False IETF draft citations in comments (`per IETF draft-ietf-aipref-attach-04`, `Vocabulary: train-ai per draft-ietf-aipref-vocab`) — these are active working drafts, not ratified standards
+- `train-ai=y` syntax replaced with `ai=allow` / `ai-training=allow` / `ai-inference=allow` — more semantically readable and aligned with emerging vocabulary
+- `llms.txt standard, RFC 8615` comment — RFC 8615 defines .well-known/ URI mechanics, not an AI file standard
+
+**Result:** 86 lines → 25 lines. Technically accurate, forward-compatible, scanner-detectable.
+
+#### Content-Usage Parser Update
+
+- Added `ai-training` and `ai-inference` to the recognized key list in `parseContentUsageDirectives()` alongside existing `ai` and `train-ai`
+- All four keys now trigger `ai_denied` flag when set to deny values (n, no, none, disallow)
+
+#### Results Template Language Tightening
+
+- Changed "experimental IETF draft directive" → "active IETF working group draft (not yet a ratified standard)"
+- Changed "defines a Content-Usage: directive" → "is developing a Content-Usage: directive"
+- Updated example syntax from `ai=n`/`ai=y` to `ai=no`/`ai=allow`
+
+#### History Page Scroll Fix (v26.21.38)
+
+- Fixed Chrome scroll blocking on history page caused by dual click handler conflict
+- `main.js` generic `a[href^="/analyze?domain="]` handler was also attaching to history page's own `history-reanalyze-btn` buttons
+- Generic handler added `document.body.classList.add('loading')` (sets `pointer-events: none`) and then navigated via `location.href` — competing with history page's dedicated fetch-based handler
+- Fix: Added `if (link.classList.contains('history-reanalyze-btn')) return;` guard to skip buttons that have their own handlers
+
+---
+
 ## Session: February 20, 2026 (v26.21.36 — Quality Gates & Lighthouse Research)
 
 ### v26.21.36 — Accessibility, SEO & Quality Gate Framework

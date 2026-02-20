@@ -326,7 +326,7 @@ func parseContentUsageDirectives(content string) map[string]any {
         result["parameters"] = params
 
         denyValues := map[string]bool{"n": true, "no": true, "none": true, "disallow": true}
-        for _, key := range []string{"ai", "train-ai"} {
+        for _, key := range []string{"ai", "train-ai", "ai-training", "ai-inference"} {
                 if val, ok := params[key]; ok && denyValues[val] {
                         result["ai_denied"] = true
                 }
