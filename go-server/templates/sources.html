@@ -19,9 +19,6 @@
     {{template "critical_css" .}}
     {{template "head_css" .}}
     <style nonce="{{.CspNonce}}">
-        .u-color-amber { color: #ffc000; }
-        .src-color-chip-wrap { background: var(--bg-secondary); border: 1px solid var(--border-default); }
-        .src-color-dot { width: 14px; height: 14px; display: inline-block; border-radius: 50%; }
         {{range $i, $c := .TLPColors}}#src-tlp-dot-{{$i}} { background: {{$c.Value}}; }
         {{end}}
         {{range $i, $c := .CVSSColors}}#src-cvss-dot-{{$i}} { background: {{$c.Value}}; }
@@ -183,8 +180,8 @@
 
                 <div class="card bg-dark border-info mt-4">
                     <div class="card-body">
-                        <h5 class="card-title"><i class="fas fa-clipboard-check me-2 text-info"></i>The Audit Engine</h5>
-                        <p class="text-muted small mb-3">The <strong class="text-info">Intelligence Confidence Audit Engine (ICAE)</strong> continuously validates that the Intelligence Engine delivers accurate, RFC-compliant intelligence. Every release runs against a deterministic test suite anchored to specific RFC sections &mdash; if analysis accuracy regresses, we know before you do.</p>
+                        <h5 class="card-title"><a href="/confidence" class="text-decoration-none text-white"><i class="fas fa-clipboard-check me-2 text-info"></i>The Audit Engine <i class="fas fa-arrow-right ms-1 u-fs-070em text-info"></i></a></h5>
+                        <p class="text-muted small mb-3">The <a href="/confidence" class="text-info fw-semibold text-decoration-none">Intelligence Confidence Audit Engine (ICAE)</a> continuously validates that the Intelligence Engine delivers accurate, RFC-compliant intelligence. Every release runs against a deterministic test suite anchored to specific RFC sections &mdash; if analysis accuracy regresses, we know before you do.</p>
                         <div class="row">
                             <div class="col-md-6 mb-3 mb-md-0">
                                 <h6 class="text-info">RFC-Grounded Test Coverage</h6>
@@ -202,11 +199,11 @@
                                 <p class="text-muted small mb-2">Each protocol earns a maturity grade based on sustained accuracy over time &mdash; not marketing, not self-assessment, but measured pass rates:</p>
                                 <table class="table table-sm table-borderless mb-2">
                                     <tbody>
-                                        <tr><td class="small py-1"><span class="badge bg-secondary">Development</span></td><td class="text-muted small py-1">&lt; 50% pass rate</td></tr>
-                                        <tr><td class="small py-1"><span class="badge bg-info text-dark">Verified</span></td><td class="text-muted small py-1">50&ndash;70% pass rate</td></tr>
-                                        <tr><td class="small py-1"><span class="badge bg-primary">Consistent</span></td><td class="text-muted small py-1">70&ndash;90% pass rate</td></tr>
-                                        <tr><td class="small py-1"><span class="badge bg-warning text-dark">Gold</span></td><td class="text-muted small py-1">90&ndash;99% pass rate</td></tr>
-                                        <tr><td class="small py-1"><span class="badge icae-gold-master">Gold Master</span></td><td class="text-muted small py-1">100% sustained</td></tr>
+                                        <tr><td class="small py-1"><span class="badge icae-maturity-badge-deep icae-maturity-deep-development">Development</span></td><td class="text-muted small py-1">&lt; 50% pass rate</td></tr>
+                                        <tr><td class="small py-1"><span class="badge icae-maturity-badge-deep icae-maturity-deep-verified">Verified</span></td><td class="text-muted small py-1">50&ndash;70% pass rate</td></tr>
+                                        <tr><td class="small py-1"><span class="badge icae-maturity-badge-deep icae-maturity-deep-consistent">Consistent</span></td><td class="text-muted small py-1">70&ndash;90% pass rate</td></tr>
+                                        <tr><td class="small py-1"><span class="badge icae-maturity-badge-deep icae-maturity-deep-gold">Gold</span></td><td class="text-muted small py-1">90&ndash;99% pass rate</td></tr>
+                                        <tr><td class="small py-1"><span class="badge icae-maturity-badge-deep icae-maturity-deep-gold_master">Gold Master</span></td><td class="text-muted small py-1">100% sustained</td></tr>
                                     </tbody>
                                 </table>
                                 <p class="text-muted small mb-0">Regressions are tracked per protocol with automatic detection. If a previously passing test case fails, it&rsquo;s flagged immediately &mdash; not buried in logs.</p>

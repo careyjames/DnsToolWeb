@@ -39,7 +39,8 @@
         {{if .ICAEMetrics}}
 
         <div class="text-center mb-4">
-            <span class="badge bg-secondary fs-6 px-3 py-2">
+            <span class="icae-overall-badge icae-overall-badge-{{.ICAEMetrics.OverallMaturity}}">
+                <span class="icae-dot icae-dot-color-{{.ICAEMetrics.OverallMaturity}}"></span>
                 Overall Maturity: {{.ICAEMetrics.OverallMaturityDisplay}}
             </span>
             <span class="text-muted ms-2 u-fs-075em">
@@ -65,10 +66,10 @@
                             {{.DisplayName}}
                         </td>
                         <td class="text-center">
-                            <span class="badge icae-maturity-badge icae-maturity-{{.CollectionLevel}}">{{.CollectionDisplay}}</span>
+                            <span class="badge icae-maturity-badge-deep icae-maturity-deep-{{.CollectionLevel}}">{{.CollectionDisplay}}</span>
                         </td>
                         <td class="text-center">
-                            <span class="badge icae-maturity-badge icae-maturity-{{.AnalysisLevel}}">{{.AnalysisDisplay}}</span>
+                            <span class="badge icae-maturity-badge-deep icae-maturity-deep-{{.AnalysisLevel}}">{{.AnalysisDisplay}}</span>
                         </td>
                         <td class="text-center text-muted">
                             {{if .HasRuns}}{{.AnalysisRuns}}{{else}}&mdash;{{end}}
@@ -89,6 +90,7 @@
         <div class="card bg-dark border-secondary mb-4">
             <div class="card-body">
                 <h2 class="h5 fw-bold mb-3"><i class="fas fa-layer-group me-2 text-info"></i>Maturity Levels</h2>
+                <p class="text-muted small mb-3">Modeled after the <strong>Capability Maturity Model (CMM)</strong> developed at Carnegie Mellon&rsquo;s Software Engineering Institute. Five tiers of sustained accuracy&nbsp;&mdash; earned through deterministic test runs, never self-assigned.</p>
                 <div class="row g-3">
                     <div class="col-md-6">
                         <div class="d-flex align-items-start gap-2 mb-3">
@@ -149,7 +151,7 @@
                     <div class="col-md-6">
                         <div class="card bg-dark border-secondary h-100">
                             <div class="card-body">
-                                <h3 class="h6 fw-bold"><i class="fas fa-brain me-1 text-info"></i> Analysis Layer</h3>
+                                <h3 class="h6 fw-bold"><i class="fas fa-search-plus me-1 text-info"></i> Analysis Layer</h3>
                                 <p class="text-muted small mb-0">Validates that collected data is interpreted correctly — RFC compliance checks, security assessment logic, risk classification.</p>
                             </div>
                         </div>
