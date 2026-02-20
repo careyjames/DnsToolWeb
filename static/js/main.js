@@ -252,6 +252,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     document.open();
                     document.write(html);
                     document.close();
+                    globalThis.scrollTo(0, 0);
                     if (resp.url && resp.url !== globalThis.location.href) {
                         globalThis.history.replaceState(null, '', resp.url);
                     }
@@ -300,6 +301,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     document.open();
                     document.write(html);
                     document.close();
+                    globalThis.scrollTo(0, 0);
                     if (resp.url && resp.url !== globalThis.location.href) {
                         globalThis.history.replaceState(null, '', resp.url);
                     }

@@ -31,13 +31,14 @@ No "build fast, clean up later." Research the best-practices path first (cite RF
 3. **Version bumps**: Update `AppVersion` in `go-server/internal/config/config.go`
 4. **Build**: `./build.sh` compiles to `./dns-tool-server`; `main.py` is the gunicorn trampoline.
 5. **CSP**: No inline onclick/onchange/style="". Use addEventListener in nonce'd script blocks.
-6. **Safari scan navigation**: NEVER use `location.href` to start a scan that shows an overlay with timer/phases — WebKit kills running JS on navigation, freezing the overlay at 0s. Use `fetch()` + `document.write()` + `history.replaceState()` instead. Always call `showOverlay()` (double-rAF animation restart) before starting the fetch. Pattern: index.html and history.html.
+6. **Safari scan navigation**: NEVER use `location.href` to start a scan that shows an overlay with timer/phases — WebKit kills running JS on navigation, freezing the overlay at 0s. Use `fetch()` + `document.write()` + `history.replaceState()` instead. Always call `showOverlay()` (double-rAF animation restart) before starting the fetch. After `document.close()`, always call `globalThis.scrollTo(0, 0)` to reset scroll position. Pattern: main.js, results.html, history.html, dossier.html.
 7. **SecurityTrails**: User-key-only. NEVER call automatically. 50 req/month hard limit.
 8. **Reality Check**: Every claim must be backed by implemented code. Use "on the roadmap" for future items.
 9. **Font Awesome**: WOFF2 subset only. Check CSS rule exists before using new icons.
 10. **Stubs**: `_oss.go` files return safe non-nil defaults, never errors.
 11. **Capitalization**: NIST/Chicago title case for all user-facing headings, badges, trust indicators. Never camelCase in UI copy.
 12. **pointer-events**: NEVER apply `pointer-events: none` to `body` or `html` — kills Chrome wheel/trackpad scroll. Use targeted selectors on interactive elements instead.
+14. **Print-only elements**: ALL print-only elements (`.print-report-header`, `.print-domain-banner`, `.print-report-footer`) MUST have `display: none !important` in the screen stylesheet. They are shown via `display: block !important` inside `@media print`. Without the screen hide rule, `document.write()` loads show the print header on screen (the CSS race condition). Never add print-only template content without a corresponding screen hide rule.
 13. **Mobile verification**: EVERY CSS/template change must be verified at 375px width. Buttons need `white-space: nowrap`. No `flex: 1` + `min-width: 0` on buttons without `nowrap`. See DOD.md "Mobile UI Verification" checklist.
 
 ## /dev/null Ephemeral Scan (v26.21.11)

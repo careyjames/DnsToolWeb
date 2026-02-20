@@ -1541,7 +1541,10 @@ main.container {
     color: var(--text-primary);
 }
 
-.print-only {
+.print-only,
+.print-report-header,
+.print-domain-banner,
+.print-report-footer {
     display: none !important;
 }
 
