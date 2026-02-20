@@ -506,6 +506,7 @@ main.container {
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
+    flex-wrap: wrap;
     gap: 1rem;
     padding-bottom: 1rem;
     border-bottom: 1px solid rgba(125, 142, 168, 0.12);
@@ -515,7 +516,8 @@ main.container {
 .results-header-actions {
     display: flex;
     gap: 0.5rem;
-    flex-shrink: 0;
+    flex-wrap: wrap;
+    min-width: 0;
 }
 
 .results-meta {
@@ -3125,18 +3127,18 @@ footer a.text-muted:hover { text-decoration-color: rgba(173, 181, 189, 0.8); }
 }
 
 .icae-maturity-dot {
-    width: 8px;
-    height: 8px;
+    width: 10px;
+    height: 10px;
     border-radius: 50%;
     display: inline-block;
     flex-shrink: 0;
 }
-.icae-dot-dev { background: #6c757d; box-shadow: 0 0 4px rgba(108, 117, 125, 0.5); }
-.icae-dot-verified { background: #198754; box-shadow: 0 0 4px rgba(25, 135, 84, 0.6); }
-.icae-dot-consistent { background: #0dcaf0; box-shadow: 0 0 6px rgba(13, 202, 240, 0.5); }
-.icae-dot-gold { background: #d4a855; box-shadow: 0 0 6px rgba(212, 168, 85, 0.6); }
-.icae-dot-gold-master { background: linear-gradient(135deg, #d4a855, #f0c040); box-shadow: 0 0 8px rgba(240, 192, 64, 0.8); }
-.icae-dot-pending { background: #495057; }
+.icae-dot-dev { background: #adb5bd; box-shadow: 0 0 6px rgba(173, 181, 189, 0.6), 0 0 12px rgba(173, 181, 189, 0.2); }
+.icae-dot-verified { background: #20c997; box-shadow: 0 0 6px rgba(32, 201, 151, 0.7), 0 0 14px rgba(32, 201, 151, 0.3); }
+.icae-dot-consistent { background: #0dcaf0; box-shadow: 0 0 8px rgba(13, 202, 240, 0.7), 0 0 16px rgba(13, 202, 240, 0.3); }
+.icae-dot-gold { background: #d4a855; box-shadow: 0 0 8px rgba(212, 168, 85, 0.8), 0 0 16px rgba(212, 168, 85, 0.3); }
+.icae-dot-gold-master { background: linear-gradient(135deg, #d4a855, #f0c040); box-shadow: 0 0 10px rgba(240, 192, 64, 0.9), 0 0 20px rgba(240, 192, 64, 0.4); }
+.icae-dot-pending { background: #343a40; box-shadow: none; }
 
 .icae-progress-track {
     height: 4px;
@@ -3204,8 +3206,8 @@ footer a.text-muted:hover { text-decoration-color: rgba(173, 181, 189, 0.8); }
     color: #adb5bd;
 }
 .icae-legend-dot {
-    width: 6px;
-    height: 6px;
+    width: 8px;
+    height: 8px;
     border-radius: 50%;
     display: inline-block;
 }
