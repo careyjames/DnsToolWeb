@@ -307,6 +307,11 @@ func (h *AnalysisHandler) Analyze(c *gin.Context) {
 
         h.enrichResultsNoHistory(c, asciiDomain, results)
 
+        domainExists := true
+        if de, ok := results["domain_exists"].(bool); ok && !de {
+                domainExists = false
+        }
+
         clientIP := c.ClientIP()
         countryCode, countryName := lookupCountry(clientIP)
 
@@ -315,7 +320,7 @@ func (h *AnalysisHandler) Analyze(c *gin.Context) {
         postureHash := analyzer.CanonicalPostureHash(results)
 
         drift := driftInfo{}
-        if !devNull {
+        if !devNull && domainExists {
                 prevRow, prevErr := h.DB.Queries.GetPreviousAnalysisForDrift(ctx, asciiDomain)
                 if prevErr == nil {
                         drift = computeDriftFromPrev(postureHash, prevRow.PostureHash, prevRow.ID, prevRow.CreatedAt.Valid, prevRow.CreatedAt.Time, prevRow.FullResults, results)
@@ -329,9 +334,11 @@ func (h *AnalysisHandler) Analyze(c *gin.Context) {
         var timestamp string
         isPrivate := hasNovelSelectors && isAuthenticated
 
-        if ephemeral {
+        if ephemeral || !domainExists {
                 if devNull {
                         slog.Info("/dev/null scan — full analysis, zero persistence", "domain", asciiDomain)
+                } else if !domainExists {
+                        slog.Info("Non-existent/undelegated domain — not persisted", "domain", asciiDomain)
                 } else {
                         slog.Info("Ephemeral analysis (custom DKIM selectors, unauthenticated) — not persisted", "domain", asciiDomain)
                 }
@@ -352,11 +359,11 @@ func (h *AnalysisHandler) Analyze(c *gin.Context) {
                 }()
         }
 
-        if !ephemeral {
+        if !ephemeral && domainExists {
                 icae.EvaluateAndRecord(context.Background(), h.DB.Queries, h.Config.AppVersion)
         }
 
-        if !ephemeral {
+        if !ephemeral && domainExists {
                 if ac, exists := c.Get("analytics_collector"); exists {
                         if collector, ok := ac.(interface{ RecordAnalysis(string) }); ok {
                                 collector.RecordAnalysis(asciiDomain)
