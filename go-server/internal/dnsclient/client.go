@@ -31,6 +31,7 @@ var DefaultResolvers = []ResolverConfig{
         {Name: "Google", IP: "8.8.8.8", DoH: "https://dns.google/resolve"},
         {Name: "Quad9", IP: "9.9.9.9"},
         {Name: "OpenDNS", IP: "208.67.222.222"},
+        {Name: "DNS4EU", IP: "86.54.11.100", DoH: "https://unfiltered.joindns4.eu/dns-query"},
 }
 
 var UserAgent = "DNSTool-DomainSecurityAudit/1.0 (+https://dnstool.it-help.tech)"

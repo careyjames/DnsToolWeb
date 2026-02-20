@@ -3461,10 +3461,10 @@
                                     <i class="fas fa-check-double me-2 text-{{if $consensusReached}}success{{else}}warning{{end}}"></i>
                                     <span class="text-muted">
                                         <strong>Multi-Resolver Verification</strong>
-                                        <span class="badge u-badge-recon ms-1 no-print" data-bs-toggle="tooltip" title="Recon Advantage — Four independent resolvers (Cloudflare, Google, Quad9, OpenDNS) with majority-agreement consensus. Typical DNS tools rely on a single resolver without cross-validation."><i class="fas fa-terminal me-1"></i>Recon</span>:
+                                        <span class="badge u-badge-recon ms-1 no-print" data-bs-toggle="tooltip" title="Recon Advantage — Five independent resolvers (Cloudflare, Google, Quad9, OpenDNS, DNS4EU) with majority-agreement consensus. Typical DNS tools rely on a single resolver without cross-validation."><i class="fas fa-terminal me-1"></i>Recon</span>:
                                         {{if $consensusReached}}
                                             <span class="text-success">Consensus reached</span> - 
-                                            {{mapGetStr "resolvers_queried" $resolver_consensus}} resolvers (Cloudflare, Google, Quad9, OpenDNS) agree on DNS records
+                                            {{mapGetStr "resolvers_queried" $resolver_consensus}} resolvers (Cloudflare, Google, Quad9, OpenDNS, DNS4EU) agree on DNS records
                                         {{else}}
                                             <span class="text-warning">Discrepancy detected</span> - 
                                             Some resolvers returned different results
@@ -4464,7 +4464,7 @@
             <div class="card-body py-3 px-4">
                 <p class="text-muted mb-2 fw-semibold u-fs-080rem"><i class="fas fa-flask me-1"></i>DATA FRESHNESS &amp; METHODOLOGY</p>
                 <p class="text-muted mb-2 u-fs-075rem-lh16">
-                    All security-critical records (SPF, DMARC, DKIM, DANE/TLSA, DNSSEC, MTA-STS, TLS-RPT, BIMI, CAA) are queried <strong>live</strong> from authoritative nameservers and cross-referenced against 4 independent public DNS resolvers (Cloudflare, Google, Quad9, OpenDNS) at the time of each analysis. No security verdict uses cached data.
+                    All security-critical records (SPF, DMARC, DKIM, DANE/TLSA, DNSSEC, MTA-STS, TLS-RPT, BIMI, CAA) are queried <strong>live</strong> from authoritative nameservers and cross-referenced against 5 independent public DNS resolvers (Cloudflare, Google, Quad9, OpenDNS, DNS4EU) at the time of each analysis. No security verdict uses cached data.
                 </p>
                 <p class="text-muted mb-2 u-fs-075rem-lh16">
                     <strong>Registrar data</strong> (RDAP) is cached for up to 24 hours because domain ownership and registration details change infrequently. <strong>Certificate Transparency logs</strong> (subdomain discovery via <a href="https://datatracker.ietf.org/doc/html/rfc6962" target="_blank" rel="noopener" class="text-info">RFC 6962</a>) are cached for 1 hour because CT entries are append-only historical records. Sections using cached data are marked with a <span class="badge bg-secondary bg-opacity-50 border border-secondary border-opacity-25 u-fs-055rem">CACHED</span> badge; live queries show <span class="badge bg-success bg-opacity-25 border border-success border-opacity-25 u-fs-055rem">LIVE</span>.
@@ -4710,7 +4710,7 @@
             <div class="scan-checklist mt-3" id="scanChecklist">
                 <div class="scan-phase" data-delay="0">
                     <i class="fas fa-circle-notch fa-spin scan-icon scan-pending"></i>
-                    <span>DNS records &mdash; Cloudflare, Google, Quad9, OpenDNS</span>
+                    <span>DNS records &mdash; Cloudflare, Google, Quad9, OpenDNS, DNS4EU</span>
                 </div>
                 <div class="scan-phase" data-delay="1200">
                     <i class="fas fa-circle-notch fa-spin scan-icon scan-pending"></i>

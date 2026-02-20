@@ -29,7 +29,7 @@
         "@type": "WebApplication",
         "name": "DNS Tool — Domain Security Intelligence | OSINT Reports",
         "alternateName": ["DNS Security Intelligence", "Domain Security Audit", "DNS OSINT Tool", "SPF Checker", "DMARC Lookup", "DKIM Validator", "DNSSEC Checker", "DANE Checker", "TLSA Lookup", "Email Security Audit Tool", "Email Security Management Detector", "MTA-STS Checker", "TLS-RPT Checker", "IP Intelligence Tool", "Email Header Analyzer", "Subdomain Discovery Tool"],
-        "description": "OSINT-based domain security audit producing Engineer's DNS Intelligence Reports and Executive's DNS Intelligence Briefs. All analysis uses open-source intelligence — publicly available DNS records, certificate transparency logs, RDAP registry data, and web resources. Analyzes SPF, DKIM, DMARC, DANE/TLSA, DNSSEC, BIMI, MTA-STS, TLS-RPT, and CAA from multiple intelligence sources (Cloudflare, Google, Quad9, OpenDNS). Email Header Analyzer for spoofing detection with OpenPhish integration. IP Intelligence with ASN attribution and geolocation. AI Surface Scanner for llms.txt and crawler governance. Configurable TLP classification (AMBER/GREEN/CLEAR). Multi-layer subdomain discovery via Certificate Transparency and DNS intelligence. Posture drift detection via canonical hashing. All analysis uses open-standard protocols.",
+        "description": "OSINT-based domain security audit producing Engineer's DNS Intelligence Reports and Executive's DNS Intelligence Briefs. All analysis uses open-source intelligence — publicly available DNS records, certificate transparency logs, RDAP registry data, and web resources. Analyzes SPF, DKIM, DMARC, DANE/TLSA, DNSSEC, BIMI, MTA-STS, TLS-RPT, and CAA from multiple intelligence sources (Cloudflare, Google, Quad9, OpenDNS, DNS4EU). Email Header Analyzer for spoofing detection with OpenPhish integration. IP Intelligence with ASN attribution and geolocation. AI Surface Scanner for llms.txt and crawler governance. Configurable TLP classification (AMBER/GREEN/CLEAR). Multi-layer subdomain discovery via Certificate Transparency and DNS intelligence. Posture drift detection via canonical hashing. All analysis uses open-standard protocols.",
         "url": "https://dnstool.it-help.tech",
         "applicationCategory": "SecurityApplication",
         "operatingSystem": "Web Browser",
@@ -106,7 +106,7 @@
                 "name": "Do I need to create an account?",
                 "acceptedAnswer": {
                     "@type": "Answer",
-                    "text": "No. DNS Tool requires no login for any analysis. Paste a domain, click Analyze, and get your intelligence report immediately. Optional sign-in via Google is available for advanced features but is never required. We keep a history of analyzed domains and visitor country for usage statistics, but we never collect tracking cookies. Every analysis queries DNS records in real-time from multiple resolvers (Cloudflare, Google, Quad9, OpenDNS) to ensure you always see the most current data."
+                    "text": "No. DNS Tool requires no login for any analysis. Paste a domain, click Analyze, and get your intelligence report immediately. Optional sign-in via Google is available for advanced features but is never required. We keep a history of analyzed domains and visitor country for usage statistics, but we never collect tracking cookies. Every analysis queries DNS records in real-time from multiple resolvers (Cloudflare, Google, Quad9, OpenDNS, DNS4EU) to ensure you always see the most current data."
                 }
             },
             {
@@ -162,7 +162,7 @@
                 "name": "How do I know the results are accurate? Can I verify them?",
                 "acceptedAnswer": {
                     "@type": "Answer",
-                    "text": "DNS Tool uses exclusively open-standard protocols that anyone can verify independently. We publish our complete intelligence sources inventory at /sources, documenting every data source, methodology, rate limit, and verification approach. Our analysis uses 4 independent DNS resolvers with majority-agreement consensus, reverse DNS (PTR) for hosting detection, Team Cymru for ASN attribution, and standard SMTP probing — all using protocols verifiable with standard tools (dig, openssl, curl) available on macOS, Linux, and Windows (via WSL)."
+                    "text": "DNS Tool uses exclusively open-standard protocols that anyone can verify independently. We publish our complete intelligence sources inventory at /sources, documenting every data source, methodology, rate limit, and verification approach. Our analysis uses 5 independent DNS resolvers with majority-agreement consensus, reverse DNS (PTR) for hosting detection, Team Cymru for ASN attribution, and standard SMTP probing — all using protocols verifiable with standard tools (dig, openssl, curl) available on macOS, Linux, and Windows (via WSL)."
                 }
             },
             {
@@ -665,7 +665,7 @@
                         </h3>
                         <div id="faq5" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
                             <div class="accordion-body text-muted small">
-                                No. DNS Tool requires no login for any analysis. Paste a domain, click Analyze, and get your intelligence report immediately. Optional sign-in via Google is available for advanced features but is never required. We keep a history of analyzed domains and visitor country for usage statistics, but we never collect tracking cookies. Every analysis queries DNS records in real-time from multiple resolvers (Cloudflare, Google, Quad9, OpenDNS) to ensure you always see the most current data. Built by <a href="https://www.it-help.tech" target="_blank" rel="noopener" class="text-info">IT Help San Diego Inc.</a>&mdash;a San Diego-based IT consultancy providing remote DNS configuration and troubleshooting, email deliverability consulting, and network security for organizations worldwide. Our team offers on-demand support without retainers or contracts.
+                                No. DNS Tool requires no login for any analysis. Paste a domain, click Analyze, and get your intelligence report immediately. Optional sign-in via Google is available for advanced features but is never required. We keep a history of analyzed domains and visitor country for usage statistics, but we never collect tracking cookies. Every analysis queries DNS records in real-time from multiple resolvers (Cloudflare, Google, Quad9, OpenDNS, DNS4EU) to ensure you always see the most current data. Built by <a href="https://www.it-help.tech" target="_blank" rel="noopener" class="text-info">IT Help San Diego Inc.</a>&mdash;a San Diego-based IT consultancy providing remote DNS configuration and troubleshooting, email deliverability consulting, and network security for organizations worldwide. Our team offers on-demand support without retainers or contracts.
                             </div>
                         </div>
                     </div>
@@ -677,7 +677,7 @@
                         </h3>
                         <div id="faq6" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
                             <div class="accordion-body text-muted small">
-                                Most DNS tools show raw records — and most skip advanced protocols entirely. DNS Tool goes further with a complete security intelligence report: multi-resolver consensus verification across Cloudflare, Google, Quad9, and OpenDNS; email authentication scoring; DKIM key strength analysis; <strong>DANE/TLSA certificate pinning analysis</strong> for mail transport (a protocol most tools ignore); <strong>DMARCbis readiness checks</strong> for upcoming DMARC standard changes; enterprise DNS provider detection; email security management provider identification (DMARC monitoring, SPF flattening, TLS-RPT reporting); SMTP transport encryption checks; BIMI brand verification; <strong>CAA analysis with MPIC context</strong>; and a CVSS-aligned risk level (Critical / High / Medium / Low / Informational) with per-section remediation designed for both technical and executive audiences. Compare analyses over time, export results as JSON, and discover subdomains via Certificate Transparency logs. Every query fetches fresh data — we never show cached results.
+                                Most DNS tools show raw records — and most skip advanced protocols entirely. DNS Tool goes further with a complete security intelligence report: multi-resolver consensus verification across Cloudflare, Google, Quad9, OpenDNS, and DNS4EU; email authentication scoring; DKIM key strength analysis; <strong>DANE/TLSA certificate pinning analysis</strong> for mail transport (a protocol most tools ignore); <strong>DMARCbis readiness checks</strong> for upcoming DMARC standard changes; enterprise DNS provider detection; email security management provider identification (DMARC monitoring, SPF flattening, TLS-RPT reporting); SMTP transport encryption checks; BIMI brand verification; <strong>CAA analysis with MPIC context</strong>; and a CVSS-aligned risk level (Critical / High / Medium / Low / Informational) with per-section remediation designed for both technical and executive audiences. Compare analyses over time, export results as JSON, and discover subdomains via Certificate Transparency logs. Every query fetches fresh data — we never show cached results.
                             </div>
                         </div>
                     </div>
@@ -847,7 +847,7 @@
             <div class="scan-checklist mt-3" id="scanChecklist" aria-hidden="true">
                 <div class="scan-phase" data-delay="0">
                     <i class="fas fa-circle-notch fa-spin scan-icon scan-pending" aria-hidden="true"></i>
-                    <span>DNS records &mdash; Cloudflare, Google, Quad9, OpenDNS</span>
+                    <span>DNS records &mdash; Cloudflare, Google, Quad9, OpenDNS, DNS4EU</span>
                 </div>
                 <div class="scan-phase" data-delay="1200">
                     <i class="fas fa-circle-notch fa-spin scan-icon scan-pending" aria-hidden="true"></i>
