@@ -84,10 +84,11 @@ go test ./go-server/... -count=1
 ```
 This runs boundary integrity tests that catch intelligence leaks, stub contract breakage, duplicate symbols, and architecture violations. **Never skip this.**
 
-### After CSS changes
+### After CSS changes — MANDATORY (server loads minified file only)
 ```bash
 npx csso static/css/custom.css -o static/css/custom.min.css
 ```
+**The Go server and all templates load `custom.min.css`, NOT `custom.css`.** If you edit `custom.css` and do not run this minification command, your changes will NOT appear on the site. This has caused deployed bugs multiple times. Run this command EVERY TIME you touch `custom.css`, no exceptions. Verify by checking that the minified file's modification timestamp is newer than the source file.
 
 ### Version Bump — MANDATORY EVERY TIME (cache-busting)
 **After EVERY change (Go, CSS, templates — no exceptions)**, bump the patch number in `AppVersion` in `go-server/internal/config/config.go`. The version string busts browser caches for all static assets. If you don't bump it, the user cannot test your changes — they'll see stale cached content. This is non-negotiable and must happen before rebuild.

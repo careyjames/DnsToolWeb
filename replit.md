@@ -27,7 +27,7 @@ No "build fast, clean up later." Research the best-practices path first (cite RF
 
 ## Critical Rules (Summary)
 1. **After ANY Go code changes**: Run `go test ./go-server/... -count=1` before considering work done.
-2. **After CSS changes**: Run `npx csso static/css/custom.css -o static/css/custom.min.css`
+2. **After CSS changes**: Run `npx csso static/css/custom.css -o static/css/custom.min.css` — **server loads minified file only; skip this and changes won't appear**
 3. **Version bumps**: Update `AppVersion` in `go-server/internal/config/config.go`
 4. **Build**: `./build.sh` compiles to `./dns-tool-server`; `main.py` is the gunicorn trampoline.
 5. **CSP**: No inline onclick/onchange/style="". Use addEventListener in nonce'd script blocks.

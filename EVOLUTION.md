@@ -10,6 +10,30 @@ This file is the project's permanent breadcrumb trail — every session's decisi
 
 ---
 
+## Session: February 20, 2026 (v26.21.42 — Chrome Scroll Fix, SW Cache Hardening, Mobile Regression Prevention)
+
+### v26.21.42 — Chrome Scroll Belt-and-Suspenders + SW Network-First
+
+#### Changes
+- **Explicit `overflow-y: auto`** on body and html — eliminates ambiguity in Chrome's overflow computation when `overflow-x: hidden` is set
+- **Changed `overscroll-behavior: none` → `overscroll-behavior-x: none`** — only prevent horizontal overscroll, explicitly leave vertical scroll untouched
+- **Service worker: network-first for versioned assets** — changed from stale-while-revalidate (cache || network) to network-first (network with cache fallback). Ensures fresh CSS/JS always wins when online. Old SW cached stale CSS containing the `pointer-events: none` bug, causing users to see the scroll-blocking version even after the fix was deployed.
+- **CSS minification directive strengthened** — added explicit warning that server loads minified file only; forgetting `npx csso` means changes don't appear on the live site.
+
+#### Root Cause (Scroll Bug Persistence)
+The v26.21.40 CSS fix was correct, but users' service workers cached the OLD CSS (with `pointer-events: none` on body). The SW's stale-while-revalidate strategy served cached CSS before checking the network. Since the CSS URL included `?v=` version parameter, the old URL matched the old cache. The new SW (with new version) would eventually install and clear old caches, but there was a window where stale CSS persisted.
+
+### v26.21.41 — Mobile Button Wrapping Fix + Regression Prevention Framework
+
+#### Changes
+- Added `white-space: nowrap` to action buttons preventing label wrapping on iPhone (375px)
+- Added DOD.md "Mobile UI Verification" checklist (8 mandatory checks, 4 known failure patterns)
+- Added anti-patterns #15-16 to SKILL.md
+- Added Gotcha #5 to EVOLUTION.md
+- Added Critical Rule #13 to replit.md
+
+---
+
 ## Session: February 20, 2026 (v26.21.39 — Authoritative Sources Registry & Codebase Accuracy Audit)
 
 ### v26.21.39 — Authoritative Sources, Gotchas Framework, Codebase Accuracy Audit

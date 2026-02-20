@@ -56,13 +56,15 @@ body {
     background-color: var(--bg-primary);
     padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
     overflow-x: hidden;
+    overflow-y: auto;
     -webkit-text-size-adjust: 100%;
-    overscroll-behavior: none;
+    overscroll-behavior-x: none;
     -webkit-overflow-scrolling: touch;
 }
 
 html {
     overflow-x: clip;
+    overflow-y: auto;
 }
 
 .u-skip-link {
@@ -3533,8 +3535,69 @@ footer a.text-muted:hover { text-decoration-color: rgba(173, 181, 189, 0.8); }
     padding: 0.15em 0.55em;
     white-space: nowrap;
 }
+.u-status-beta {
+    font-size: 0.6rem;
+    font-weight: 600;
+    vertical-align: middle;
+    letter-spacing: 0.02em;
+    background: rgba(56, 132, 244, 0.10);
+    color: #58a6ff;
+    border: 1px solid rgba(88, 166, 255, 0.35);
+    border-radius: 999px;
+    padding: 0.15em 0.55em;
+    white-space: nowrap;
+}
+.u-status-active {
+    font-size: 0.6rem;
+    font-weight: 600;
+    vertical-align: middle;
+    letter-spacing: 0.02em;
+    background: rgba(63, 185, 80, 0.10);
+    color: #3fb950;
+    border: 1px solid rgba(63, 185, 80, 0.35);
+    border-radius: 999px;
+    padding: 0.15em 0.55em;
+    white-space: nowrap;
+}
+.u-status-maintenance {
+    font-size: 0.6rem;
+    font-weight: 600;
+    vertical-align: middle;
+    letter-spacing: 0.02em;
+    background: rgba(209, 160, 52, 0.10);
+    color: #d4a843;
+    border: 1px solid rgba(232, 197, 71, 0.35);
+    border-radius: 999px;
+    padding: 0.15em 0.55em;
+    white-space: nowrap;
+}
+.u-status-experimental {
+    font-size: 0.6rem;
+    font-weight: 600;
+    vertical-align: middle;
+    letter-spacing: 0.02em;
+    background: rgba(163, 113, 247, 0.10);
+    color: #a371f7;
+    border: 1px solid rgba(163, 113, 247, 0.35);
+    border-radius: 999px;
+    padding: 0.15em 0.55em;
+    white-space: nowrap;
+}
+.u-status-deprecated {
+    font-size: 0.6rem;
+    font-weight: 600;
+    vertical-align: middle;
+    letter-spacing: 0.02em;
+    background: rgba(220, 53, 69, 0.10);
+    color: #f85149;
+    border: 1px solid rgba(248, 81, 73, 0.35);
+    border-radius: 999px;
+    padding: 0.15em 0.55em;
+    white-space: nowrap;
+}
 @media print {
-    .u-section-tuning { display: none; }
+    .u-section-tuning, .u-status-beta, .u-status-active,
+    .u-status-maintenance, .u-status-experimental, .u-status-deprecated { display: none; }
 }
 
 /* ============================================

@@ -9,7 +9,7 @@ import (
 )
 
 var (
-        Version   = "26.21.41"
+        Version   = "26.21.42"
         GitCommit = "dev"
         BuildTime = "unknown"
 )
@@ -37,10 +37,10 @@ var sectionTuningMap = map[string]string{
         // "dane":         "Accuracy Tuning",
         // "brand": "Accuracy Tuning",
         // "securitytxt":  "Accuracy Tuning",
-        // "ai":   "Accuracy Tuning",
+        "ai": "Beta",
         // "secrets":      "Accuracy Tuning",
         // "web-exposure": "Accuracy Tuning",
-        // "smtp": "Accuracy Tuning",
+        "smtp": "Beta",
         // "infra": "Accuracy Tuning",
         // "dnssec":       "Accuracy Tuning",
         // "traffic":      "Accuracy Tuning",

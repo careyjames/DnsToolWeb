@@ -679,16 +679,50 @@ func htmlComment(s string) template.HTML {
 
 func displayFuncs() template.FuncMap {
         return template.FuncMap{
-                "statusBadgeClass": statusBadgeClass,
-                "statusColor":      statusColor,
-                "countryFlag":      countryFlag,
-                "staticURL":        staticURL,
-                "staticVersionURL": staticVersionURL,
-                "toJSON":           toJSON,
-                "toStr":            toStr,
-                "pluralize":        pluralize,
-                "htmlComment":      htmlComment,
+                "statusBadgeClass":  statusBadgeClass,
+                "statusColor":       statusColor,
+                "sectionStatusCSS":  sectionStatusCSS,
+                "sectionStatusIcon": sectionStatusIcon,
+                "countryFlag":       countryFlag,
+                "staticURL":         staticURL,
+                "staticVersionURL":  staticVersionURL,
+                "toJSON":            toJSON,
+                "toStr":             toStr,
+                "pluralize":         pluralize,
+                "htmlComment":       htmlComment,
         }
+}
+
+var sectionStatusCSSMap = map[string]string{
+        "beta":               "u-status-beta",
+        "active development": "u-status-active",
+        "maintenance":        "u-status-maintenance",
+        "experimental":       "u-status-experimental",
+        "deprecated":         "u-status-deprecated",
+        "accuracy tuning":    "u-section-tuning",
+}
+
+var sectionStatusIconMap = map[string]string{
+        "beta":               "fa-flask",
+        "active development": "fa-code",
+        "maintenance":        "fa-wrench",
+        "experimental":       "fa-microscope",
+        "deprecated":         "fa-archive",
+        "accuracy tuning":    "fa-wrench",
+}
+
+func sectionStatusCSS(status string) string {
+        if c, ok := sectionStatusCSSMap[strings.ToLower(status)]; ok {
+                return c
+        }
+        return "u-section-tuning"
+}
+
+func sectionStatusIcon(status string) string {
+        if c, ok := sectionStatusIconMap[strings.ToLower(status)]; ok {
+                return c
+        }
+        return "fa-wrench"
 }
 
 func toFloat64(v interface{}) float64 {
