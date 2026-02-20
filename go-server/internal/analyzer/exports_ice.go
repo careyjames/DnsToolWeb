@@ -121,3 +121,24 @@ func ExportExtractMXHosts(mxRecords []string) []string {
 func ExportBuildDANEVerdict(allTLSA []map[string]any, hostsWithDANE, mxHosts []string, mxCapability map[string]any) (string, string, []string) {
         return buildDANEVerdict(allTLSA, hostsWithDANE, mxHosts, mxCapability)
 }
+
+func ExportIsHostedEmailProvider(domain string) bool {
+        return isHostedEmailProvider(domain)
+}
+
+func ExportIsBIMICapableProvider(domain string) bool {
+        return isBIMICapableProvider(domain)
+}
+
+func ExportBuildBrandVerdict(dmarcMissing bool, dmarcPolicy string, bimiOK, caaOK bool) map[string]any {
+        ps := protocolState{
+                dmarcMissing: dmarcMissing,
+                dmarcPolicy:  dmarcPolicy,
+                bimiOK:       bimiOK,
+                caaOK:        caaOK,
+        }
+        verdicts := map[string]any{}
+        buildBrandVerdict(ps, verdicts)
+        result, _ := verdicts["brand_impersonation"].(map[string]any)
+        return result
+}

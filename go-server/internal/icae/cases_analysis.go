@@ -22,6 +22,7 @@ func AnalysisTestCases() []TestCase {
         cases = append(cases, tlsrptAnalysisCases()...)
         cases = append(cases, bimiAnalysisCases()...)
         cases = append(cases, daneAnalysisCases()...)
+        cases = append(cases, regressionCases()...)
         return cases
 }
 

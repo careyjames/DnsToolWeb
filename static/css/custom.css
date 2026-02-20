@@ -368,19 +368,19 @@ code {
     border-radius: 50%;
     flex-shrink: 0;
 }
-.icae-hero-maturity-badge.icae-level-dev { border-color: rgba(160, 180, 216, 0.45); }
+.icae-hero-maturity-badge.icae-level-dev { background: rgba(22, 27, 34, 0.85); color: #e6edf3; border-color: rgba(160, 180, 216, 0.45); }
 .icae-hero-maturity-badge.icae-level-dev::before { background: #a0b4d8; box-shadow: 0 0 1px 1px rgba(160, 180, 216, 0.6), 0 0 5px rgba(160, 180, 216, 0.5); }
 .icae-hero-maturity-badge.icae-level-dev:hover { border-color: rgba(160, 180, 216, 0.7); box-shadow: 0 0 8px rgba(160, 180, 216, 0.2); }
-.icae-hero-maturity-badge.icae-level-verified { border-color: rgba(88, 166, 255, 0.35); }
+.icae-hero-maturity-badge.icae-level-verified { background: rgba(22, 27, 34, 0.85); color: #e6edf3; border-color: rgba(88, 166, 255, 0.35); }
 .icae-hero-maturity-badge.icae-level-verified::before { background: #6bb5ff; box-shadow: 0 0 1px 1px rgba(107, 181, 255, 0.6), 0 0 5px rgba(107, 181, 255, 0.5); }
 .icae-hero-maturity-badge.icae-level-verified:hover { border-color: rgba(88, 166, 255, 0.6); box-shadow: 0 0 10px rgba(88, 166, 255, 0.15); }
-.icae-hero-maturity-badge.icae-level-consistent { border-color: rgba(63, 185, 80, 0.35); }
+.icae-hero-maturity-badge.icae-level-consistent { background: rgba(22, 27, 34, 0.85); color: #e6edf3; border-color: rgba(63, 185, 80, 0.35); }
 .icae-hero-maturity-badge.icae-level-consistent::before { background: #56d364; box-shadow: 0 0 1px 1px rgba(86, 211, 100, 0.6), 0 0 5px rgba(86, 211, 100, 0.5); }
 .icae-hero-maturity-badge.icae-level-consistent:hover { border-color: rgba(63, 185, 80, 0.6); box-shadow: 0 0 10px rgba(63, 185, 80, 0.15); }
-.icae-hero-maturity-badge.icae-level-gold { border-color: rgba(212, 168, 85, 0.4); }
+.icae-hero-maturity-badge.icae-level-gold { background: rgba(22, 27, 34, 0.85); color: #e6edf3; border-color: rgba(212, 168, 85, 0.4); }
 .icae-hero-maturity-badge.icae-level-gold::before { background: #e0b85c; box-shadow: 0 0 1px 1px rgba(224, 184, 92, 0.6), 0 0 5px rgba(224, 184, 92, 0.5); }
 .icae-hero-maturity-badge.icae-level-gold:hover { border-color: rgba(212, 168, 85, 0.65); box-shadow: 0 0 12px rgba(212, 168, 85, 0.2); }
-.icae-hero-maturity-badge.icae-level-gold-master { border-color: rgba(232, 213, 163, 0.4); }
+.icae-hero-maturity-badge.icae-level-gold-master { background: rgba(22, 27, 34, 0.85); color: #e6edf3; border-color: rgba(232, 213, 163, 0.4); }
 .icae-hero-maturity-badge.icae-level-gold-master::before { background: linear-gradient(135deg, #f0ddb3, #faf3e3); box-shadow: 0 0 1px 1px rgba(240, 221, 179, 0.7), 0 0 6px rgba(240, 221, 179, 0.5); }
 .icae-hero-maturity-badge.icae-level-gold-master:hover { border-color: rgba(232, 213, 163, 0.65); box-shadow: 0 0 14px rgba(232, 213, 163, 0.25); }
 

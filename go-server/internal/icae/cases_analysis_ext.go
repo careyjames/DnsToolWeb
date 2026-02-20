@@ -353,6 +353,194 @@ func bimiAnalysisCases() []TestCase {
         }
 }
 
+func regressionCases() []TestCase {
+        return []TestCase{
+                {
+                        CaseID:     "provider-regression-001",
+                        CaseName:   "Stub isHostedEmailProvider returns true (conservative default prevents DANE recs for hosted providers)",
+                        Protocol:   "dane",
+                        Layer:      LayerAnalysis,
+                        RFCSection: "RFC 7672 §1.3",
+                        Expected:   "true",
+                        RunFn: func() (string, bool) {
+                                result := analyzer.ExportIsHostedEmailProvider("example.com")
+                                return fmt.Sprintf("%v", result), result == true
+                        },
+                },
+                {
+                        CaseID:     "provider-regression-002",
+                        CaseName:   "Stub isBIMICapableProvider returns false (conservative default prevents false BIMI capability claims)",
+                        Protocol:   "bimi",
+                        Layer:      LayerAnalysis,
+                        RFCSection: "RFC 9495 §3",
+                        Expected:   "false",
+                        RunFn: func() (string, bool) {
+                                result := analyzer.ExportIsBIMICapableProvider("example.com")
+                                return fmt.Sprintf("%v", result), result == false
+                        },
+                },
+                {
+                        CaseID:     "brand-regression-001",
+                        CaseName:   "Brand verdict: quarantine + BIMI + CAA = Unlikely / Well Protected",
+                        Protocol:   "dmarc",
+                        Layer:      LayerAnalysis,
+                        RFCSection: "RFC 7489 §6.3",
+                        Expected:   "answer=Unlikely, label=Well Protected",
+                        RunFn: func() (string, bool) {
+                                result := analyzer.ExportBuildBrandVerdict(false, "quarantine", true, true)
+                                answer, _ := result["answer"].(string)
+                                label, _ := result["label"].(string)
+                                actual := fmt.Sprintf("answer=%s, label=%s", answer, label)
+                                return actual, answer == "Unlikely" && label == "Well Protected"
+                        },
+                },
+                {
+                        CaseID:     "brand-regression-002",
+                        CaseName:   "Brand verdict: reject + BIMI + CAA = No / Protected",
+                        Protocol:   "dmarc",
+                        Layer:      LayerAnalysis,
+                        RFCSection: "RFC 7489 §6.3",
+                        Expected:   "answer=No, label=Protected",
+                        RunFn: func() (string, bool) {
+                                result := analyzer.ExportBuildBrandVerdict(false, "reject", true, true)
+                                answer, _ := result["answer"].(string)
+                                label, _ := result["label"].(string)
+                                actual := fmt.Sprintf("answer=%s, label=%s", answer, label)
+                                return actual, answer == "No" && label == "Protected"
+                        },
+                },
+                {
+                        CaseID:     "brand-regression-003",
+                        CaseName:   "Brand verdict: reject + no BIMI + no CAA = Possible / Partially Protected",
+                        Protocol:   "dmarc",
+                        Layer:      LayerAnalysis,
+                        RFCSection: "RFC 7489 §6.3",
+                        Expected:   "answer=Possible, label=Partially Protected",
+                        RunFn: func() (string, bool) {
+                                result := analyzer.ExportBuildBrandVerdict(false, "reject", false, false)
+                                answer, _ := result["answer"].(string)
+                                label, _ := result["label"].(string)
+                                actual := fmt.Sprintf("answer=%s, label=%s", answer, label)
+                                return actual, answer == "Possible" && label == "Partially Protected"
+                        },
+                },
+                {
+                        CaseID:     "brand-regression-004",
+                        CaseName:   "Brand verdict: missing DMARC = Yes / Exposed",
+                        Protocol:   "dmarc",
+                        Layer:      LayerAnalysis,
+                        RFCSection: "RFC 7489 §6.3",
+                        Expected:   "answer=Yes, label=Exposed",
+                        RunFn: func() (string, bool) {
+                                result := analyzer.ExportBuildBrandVerdict(true, "", false, false)
+                                answer, _ := result["answer"].(string)
+                                label, _ := result["label"].(string)
+                                actual := fmt.Sprintf("answer=%s, label=%s", answer, label)
+                                return actual, answer == "Yes" && label == "Exposed"
+                        },
+                },
+                {
+                        CaseID:     "mta_sts-regression-001",
+                        CaseName:   "MTA-STS enforce mode returns success status",
+                        Protocol:   "mta_sts",
+                        Layer:      LayerAnalysis,
+                        RFCSection: "RFC 8461 §5",
+                        Expected:   "success",
+                        RunFn: func() (string, bool) {
+                                policyData := map[string]any{"mx": []string{"mail.example.com"}}
+                                status, _ := analyzer.ExportDetermineMTASTSModeStatus("enforce", policyData)
+                                return status, status == "success"
+                        },
+                },
+                {
+                        CaseID:     "mta_sts-regression-002",
+                        CaseName:   "MTA-STS testing mode returns warning status",
+                        Protocol:   "mta_sts",
+                        Layer:      LayerAnalysis,
+                        RFCSection: "RFC 8461 §5",
+                        Expected:   "warning",
+                        RunFn: func() (string, bool) {
+                                policyData := map[string]any{"mx": []string{"mail.example.com"}}
+                                status, _ := analyzer.ExportDetermineMTASTSModeStatus("testing", policyData)
+                                return status, status == "warning"
+                        },
+                },
+                {
+                        CaseID:     "mta_sts-regression-003",
+                        CaseName:   "MTA-STS none mode returns warning status (disabled policy)",
+                        Protocol:   "mta_sts",
+                        Layer:      LayerAnalysis,
+                        RFCSection: "RFC 8461 §5",
+                        Expected:   "warning",
+                        RunFn: func() (string, bool) {
+                                policyData := map[string]any{"mx": []string{}}
+                                status, _ := analyzer.ExportDetermineMTASTSModeStatus("none", policyData)
+                                return status, status == "warning"
+                        },
+                },
+                {
+                        CaseID:     "bimi-regression-001",
+                        CaseName:   "Only valid BIMI records (v=BIMI1) are filtered in",
+                        Protocol:   "bimi",
+                        Layer:      LayerAnalysis,
+                        RFCSection: "RFC 9495 §3",
+                        Expected:   "1 valid record",
+                        RunFn: func() (string, bool) {
+                                records := analyzer.ExportFilterBIMIRecords([]string{
+                                        "v=BIMI1; l=https://example.com/logo.svg",
+                                        "v=spf1 include:x ~all",
+                                        "random-txt-record",
+                                })
+                                actual := fmt.Sprintf("%d valid record", len(records))
+                                return actual, len(records) == 1
+                        },
+                },
+                {
+                        CaseID:     "bimi-regression-002",
+                        CaseName:   "Empty BIMI input returns zero records",
+                        Protocol:   "bimi",
+                        Layer:      LayerAnalysis,
+                        RFCSection: "RFC 9495 §3",
+                        Expected:   "0",
+                        RunFn: func() (string, bool) {
+                                records := analyzer.ExportFilterBIMIRecords([]string{})
+                                actual := fmt.Sprintf("%d", len(records))
+                                return actual, len(records) == 0
+                        },
+                },
+                {
+                        CaseID:     "dane-regression-001",
+                        CaseName:   "DANE verdict with valid TLSA covering all MX = success",
+                        Protocol:   "dane",
+                        Layer:      LayerAnalysis,
+                        RFCSection: "RFC 7672",
+                        Expected:   "success",
+                        RunFn: func() (string, bool) {
+                                tlsa := []map[string]any{
+                                        {"mx_host": "mail.example.com", "usage": 3, "matching_type": 1},
+                                }
+                                status, _, _ := analyzer.ExportBuildDANEVerdict(tlsa, []string{"mail.example.com"}, []string{"mail.example.com"}, nil)
+                                return status, status == "success"
+                        },
+                },
+                {
+                        CaseID:     "dane-regression-002",
+                        CaseName:   "DANE verdict with partial MX coverage = partial",
+                        Protocol:   "dane",
+                        Layer:      LayerAnalysis,
+                        RFCSection: "RFC 7672",
+                        Expected:   "warning",
+                        RunFn: func() (string, bool) {
+                                tlsa := []map[string]any{
+                                        {"mx_host": "mail1.example.com", "usage": 3, "matching_type": 1},
+                                }
+                                status, _, _ := analyzer.ExportBuildDANEVerdict(tlsa, []string{"mail1.example.com"}, []string{"mail1.example.com", "mail2.example.com"}, nil)
+                                return status, status == "warning"
+                        },
+                },
+        }
+}
+
 func daneAnalysisCases() []TestCase {
         return []TestCase{
                 {
