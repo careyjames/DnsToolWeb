@@ -8,7 +8,7 @@
     
     /* Text: Off-white for reduced eye strain */
     --text-primary: rgba(230, 237, 243, 0.9);    /* ~#e6edf3 at 90% */
-    --text-secondary: rgba(148, 157, 168, 0.95);  /* Muted text — WCAG AA 4.5:1 on #0d1117 */
+    --text-secondary: #9ca3af;  /* Muted text — WCAG AA 4.5:1+ on #0d1117 (ratio ~6.3:1) */
     
     /* Code blocks */
     --code-bg: #161b22;
@@ -53,6 +53,7 @@ body {
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     text-rendering: optimizeLegibility;
+    color: #e6edf3;
     background-color: var(--bg-primary);
     padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
     overflow-x: hidden;
@@ -990,7 +991,8 @@ main.container {
 }
 
 .text-muted {
-    opacity: 0.8;
+    color: #9ca3af !important;
+    opacity: 1;
 }
 .card.bg-dark .text-muted {
     color: #adb5bd !important;
@@ -1390,15 +1392,15 @@ main.container {
     color: #ffffff;
 }
 
-/* Warning badges - Soft amber (caution, review needed) */
+/* Warning badges - Amber (caution, review needed). Dark text for WCAG AA contrast */
 .badge.bg-warning {
     background-color: var(--status-warning) !important;
-    color: #ffffff;
+    color: #1a1a2e !important;
 }
 
-/* Danger badges - Muted red (critical, error, misconfigured) */
+/* Danger badges - Red (critical, error, misconfigured). WCAG AA: #fff on #dc2626 = 4.6:1 */
 .badge.bg-danger {
-    background-color: var(--status-danger) !important;
+    background-color: #dc2626 !important;
     color: #ffffff;
 }
 
