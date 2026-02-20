@@ -3806,3 +3806,32 @@ footer a.text-muted:hover { text-decoration-color: rgba(173, 181, 189, 0.8); }
     letter-spacing: 0.05em;
     opacity: 0.6;
 }
+
+.sources-audit-table td {
+    word-break: break-word;
+    overflow-wrap: anywhere;
+    max-width: 0;
+}
+.sources-audit-table td:first-child {
+    white-space: nowrap;
+    width: 65px;
+    max-width: none;
+}
+
+.icae-results-badge {
+    font-size: 0.65rem;
+    padding: 0.15em 0.45em;
+    vertical-align: middle;
+    text-decoration: none;
+    transition: opacity 0.2s;
+}
+.icae-results-badge:hover {
+    opacity: 0.85;
+}
+
+.section-separator-major {
+    border: 0;
+    height: 2px;
+    background: linear-gradient(to right, transparent, rgba(23, 162, 184, 0.25), rgba(125, 142, 168, 0.4), rgba(23, 162, 184, 0.25), transparent);
+    margin: 0.5rem 0 1.5rem 0;
+}

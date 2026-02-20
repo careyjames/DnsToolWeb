@@ -72,8 +72,15 @@ func LoadReportMetrics(ctx context.Context, queries DBTX) *ReportMetrics {
         }
 
         overall := OverallMaturity(protocols)
+
+        byKey := make(map[string]ProtocolReport, len(protocols))
+        for _, p := range protocols {
+                byKey[p.Protocol] = p
+        }
+
         metrics := &ReportMetrics{
                 Protocols:              protocols,
+                ByKey:                  byKey,
                 TotalProtocols:         len(protocols),
                 EvaluatedCount:         evaluatedCount,
                 OverallMaturity:        overall,

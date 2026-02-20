@@ -107,6 +107,7 @@ type ProtocolMaturity struct {
 
 type ReportMetrics struct {
         Protocols              []ProtocolReport
+        ByKey                  map[string]ProtocolReport
         LastRunAt              *time.Time
         LastRunVersion         string
         TotalProtocols         int
