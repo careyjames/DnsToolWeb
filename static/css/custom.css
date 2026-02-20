@@ -343,7 +343,20 @@ code {
     box-shadow: 0 0 14px rgba(232, 213, 163, 0.25);
 }
 
-.icae-hero-label { text-align: center; }
+.icae-hero-label { text-align: center; display: flex; align-items: center; justify-content: center; gap: 0.5rem; flex-wrap: wrap; }
+.icae-hero-maturity-badge {
+    display: inline-block;
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    padding: 0.15rem 0.55rem;
+    border-radius: 0.25rem;
+    text-decoration: none;
+    vertical-align: middle;
+    transition: opacity 0.15s ease;
+}
+.icae-hero-maturity-badge:hover { opacity: 0.85; text-decoration: none; }
 
 /* Search Card */
 .search-card {

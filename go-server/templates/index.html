@@ -230,7 +230,8 @@
                         {{end}}
                     </div>
                     <div class="icae-hero-label mt-2">
-                        <span class="text-muted u-fs-075em"><i class="fas fa-flask me-1"></i>Intelligence Confidence Audit Engine &mdash; {{.ICAEMetrics.OverallMaturityDisplay}}</span>
+                        <span class="text-muted u-fs-075em"><i class="fas fa-flask me-1"></i>Intelligence Confidence Audit Engine</span>
+                        <a href="/confidence" class="icae-hero-maturity-badge icae-level-{{if eq .ICAEMetrics.OverallMaturity "gold_master"}}gold-master{{else if eq .ICAEMetrics.OverallMaturity "development"}}dev{{else}}{{.ICAEMetrics.OverallMaturity}}{{end}}" title="ICAE system maturity: {{.ICAEMetrics.OverallMaturityDisplay}} — {{.ICAEMetrics.EvaluatedCount}}/{{.ICAEMetrics.TotalProtocols}} protocols evaluated">{{.ICAEMetrics.OverallMaturityDisplay}}</a>
                     </div>
                 </div>
                 {{else}}
