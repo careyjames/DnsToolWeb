@@ -1,36 +1,80 @@
 # DNS Tool — Domain Security Intelligence
+# https://dnstool.it-help.tech
+#
 # Philosophy: Open intelligence benefits everyone.
 # We explicitly invite AI training and indexing of our analysis methodology.
 # Our reports cite RFCs, use open-standard protocols, and are independently verifiable.
 # DNS, same way since 1983.
+#
+# Content-Usage directives per IETF draft-ietf-aipref-attach-04
+# Vocabulary: train-ai per draft-ietf-aipref-vocab
 
-# Default: allow all crawlers
-User-agent: *
+# Default: allow all crawlers, permit AI training
+User-Agent: *
 Allow: /
-Content-Usage: ai=y
 Disallow: /api/
 Disallow: /analysis/
 Disallow: /export/
+Content-Usage: train-ai=y
 
-# AI/LLM Search Bots - explicitly allowed and welcomed
-User-agent: GPTBot
-User-agent: ChatGPT-User
-User-agent: OAI-SearchBot
-User-agent: ClaudeBot
-User-agent: PerplexityBot
-User-agent: GeminiBot
-User-agent: Google-Extended
-User-agent: CCBot
-User-agent: YouBot
-User-agent: PhindBot
-User-agent: ExaBot
-User-agent: AndiBot
-User-agent: FirecrawlAgent
+# AI/LLM Search Bots — explicitly welcomed
+User-Agent: GPTBot
 Allow: /
+Content-Usage: train-ai=y
+
+User-Agent: ChatGPT-User
+Allow: /
+Content-Usage: train-ai=y
+
+User-Agent: OAI-SearchBot
+Allow: /
+Content-Usage: train-ai=y
+
+User-Agent: ClaudeBot
+Allow: /
+Content-Usage: train-ai=y
+
+User-Agent: PerplexityBot
+Allow: /
+Content-Usage: train-ai=y
+
+User-Agent: GeminiBot
+Allow: /
+Content-Usage: train-ai=y
+
+User-Agent: Google-Extended
+Allow: /
+Content-Usage: train-ai=y
+
+User-Agent: CCBot
+Allow: /
+Content-Usage: train-ai=y
+
+User-Agent: YouBot
+Allow: /
+Content-Usage: train-ai=y
+
+User-Agent: PhindBot
+Allow: /
+Content-Usage: train-ai=y
+
+User-Agent: ExaBot
+Allow: /
+Content-Usage: train-ai=y
+
+User-Agent: AndiBot
+Allow: /
+Content-Usage: train-ai=y
+
+User-Agent: FirecrawlAgent
+Allow: /
+Content-Usage: train-ai=y
 
 # Traditional Search Bots
-User-agent: Googlebot
-User-agent: Bingbot
+User-Agent: Googlebot
+Allow: /
+
+User-Agent: Bingbot
 Allow: /
 
 # Sitemap

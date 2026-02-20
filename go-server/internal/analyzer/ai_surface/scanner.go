@@ -285,9 +285,12 @@ func parseContentUsageDirectives(content string) map[string]any {
                 "parameters": map[string]string{},
         }
 
-        scanner := bufio.NewScanner(strings.NewReader(content))
-        for scanner.Scan() {
-                line := strings.TrimSpace(scanner.Text())
+        var rawLines []string
+        params := map[string]string{}
+
+        sc := bufio.NewScanner(strings.NewReader(content))
+        for sc.Scan() {
+                line := strings.TrimSpace(sc.Text())
                 if strings.HasPrefix(line, "#") || line == "" {
                         continue
                 }
@@ -302,22 +305,31 @@ func parseContentUsageDirectives(content string) map[string]any {
                 }
 
                 result["found"] = true
-                result["raw"] = value
+                rawLines = append(rawLines, value)
 
-                params := map[string]string{}
-                for _, part := range strings.Split(value, ",") {
-                        part = strings.TrimSpace(part)
-                        if idx := strings.Index(part, "="); idx > 0 {
-                                key := strings.TrimSpace(strings.ToLower(part[:idx]))
-                                val := strings.TrimSpace(strings.ToLower(part[idx+1:]))
+                tokens := strings.Fields(value)
+                for _, tok := range tokens {
+                        if strings.HasPrefix(tok, "/") {
+                                continue
+                        }
+                        if idx := strings.Index(tok, "="); idx > 0 {
+                                key := strings.ToLower(tok[:idx])
+                                val := strings.ToLower(tok[idx+1:])
                                 params[key] = val
-                                if key == "ai" && (val == "n" || val == "no" || val == "none" || val == "disallow") {
-                                        result["ai_denied"] = true
-                                }
                         }
                 }
-                result["parameters"] = params
-                break
+        }
+
+        if len(rawLines) > 0 {
+                result["raw"] = strings.Join(rawLines, "; ")
+        }
+        result["parameters"] = params
+
+        denyValues := map[string]bool{"n": true, "no": true, "none": true, "disallow": true}
+        for _, key := range []string{"ai", "train-ai"} {
+                if val, ok := params[key]; ok && denyValues[val] {
+                        result["ai_denied"] = true
+                }
         }
 
         return result
