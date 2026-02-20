@@ -1,6 +1,6 @@
 # Licensing Model (Open Core)
 
-`DnsToolWeb` is licensed under **Business Source License 1.1 (BUSL-1.1)** with a rolling Change Date of **three years from the publication of each version**, after which it converts to **Apache-2.0**.
+`dns-tool-web` is licensed under **Business Source License 1.1 (BUSL-1.1)** with a rolling Change Date of **three years from the publication of each version**, after which it converts to **Apache-2.0**.
 
 ## What this means
 
@@ -55,7 +55,7 @@ This repository contains the public web application:
 
 ## What is in the private repo
 
-The private repository (`dnstool-intel`) contains the proprietary intelligence that powers active features in the running product. Every item below is a feature users see today — the public repo provides the framework and safe defaults, while the private repo supplies the databases, patterns, and algorithms that produce real intelligence. Also licensed under **BSL 1.1** with the same terms and Change Date.
+The private repository (`dns-tool-intel`) contains the proprietary intelligence that powers active features in the running product. Every item below is a feature users see today — the public repo provides the framework and safe defaults, while the private repo supplies the databases, patterns, and algorithms that produce real intelligence. Also licensed under **BSL 1.1** with the same terms and Change Date.
 
 ### Provider Intelligence (providers.go)
 - DMARC monitoring provider detection databases (vendor identification from rua/ruf domains)

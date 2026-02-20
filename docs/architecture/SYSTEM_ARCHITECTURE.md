@@ -43,7 +43,7 @@ graph TB
 
     subgraph "External (Optional)"
         SecurityTrails["SecurityTrails API<br/>User-key only · 50 req/mo"]
-        IntelRepo["dnstool-intel<br/>Private GitHub Repo"]
+        IntelRepo["dns-tool-intel<br/>Private GitHub Repo"]
     end
 
     Browser -->|"HTTPS"| Gunicorn
@@ -210,7 +210,7 @@ graph TB
 
 ```mermaid
 graph TB
-    subgraph "Public Repo: DnsToolWeb"
+    subgraph "Public Repo: dns-tool-web"
         direction TB
         PublicGo["Go Source<br/>All framework code"]
         Stubs["12 OSS Stub Files<br/>//go:build !intel"]
@@ -220,7 +220,7 @@ graph TB
         Scripts["Build & Deploy Scripts"]
     end
 
-    subgraph "Private Repo: dnstool-intel"
+    subgraph "Private Repo: dns-tool-intel"
         direction TB
         Intel["Intelligence Modules<br/>//go:build intel"]
         ProviderDB["Provider Databases<br/>ESP detection · DKIM maps"]

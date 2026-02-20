@@ -160,15 +160,15 @@ Intelligence Reports page: `/dossier` (renamed from "Intelligence Dossier" to "I
 
 Two-repository design with Go build tags (`//go:build intel` / `//go:build !intel`):
 - **DNS Tool Web** (public): Full framework + `_oss.go` stubs (empty maps, safe defaults)
-- **dnstool-intel** (private): `_intel.go` files with proprietary provider databases
+- **dns-tool-intel** (private): `_intel.go` files with proprietary provider databases
 
 ### Repository Locations (GitHub Canonical, Codeberg Mirror)
 
 | Repo | GitHub (canonical) | Codeberg (mirror) | Visibility |
 |------|-------------------|-------------------|------------|
-| Web App | `careyjames/DnsToolWeb` | `careybalboa/dns-tool-webapp` (read-only mirror) | Public |
+| Web App | `careyjames/dns-tool-web` | `careybalboa/dns-tool-web` (read-only mirror) | Public |
 | CLI | `careyjames/dns-tool-cli` | `careybalboa/dns-tool-cli` (read-only mirror) | Public |
-| Intel | `careyjames/dnstool-intel` | `careybalboa/dns-tool-intel` (read-only mirror) | Private |
+| Intel | `careyjames/dns-tool-intel` | `careybalboa/dns-tool-intel` (read-only mirror) | Private |
 
 **GitHub→Codeberg sync** via GitHub Actions workflow (`.github/workflows/mirror-codeberg.yml`). Every push to GitHub triggers a mirror push to Codeberg. Codeberg repos display "read-only mirror" notices pointing to GitHub. Issues and PRs are disabled on Codeberg.
 
@@ -266,18 +266,18 @@ Every `_oss.go` stub MUST:
 
 | # | File | OSS Stub | Intel Location |
 |---|------|----------|----------------|
-| 1 | `edge_cdn` | `edge_cdn_oss.go` | `dnstool-intel` |
-| 2 | `saas_txt` | `saas_txt_oss.go` | `dnstool-intel` |
-| 3 | `infrastructure` | `infrastructure_oss.go` | `dnstool-intel` |
-| 4 | `providers` | `providers_oss.go` | `dnstool-intel` |
-| 5 | `ip_investigation` | `ip_investigation_oss.go` | `dnstool-intel` |
-| 6 | `manifest` | `manifest_oss.go` | `dnstool-intel` |
-| 7 | `posture_diff` | `posture_diff_oss.go` | `dnstool-intel` |
-| 8 | `ai_surface/http` | `http_oss.go` | `dnstool-intel` |
-| 9 | `ai_surface/llms_txt` | `llms_txt_oss.go` | `dnstool-intel` |
-| 10 | `ai_surface/robots_txt` | `robots_txt_oss.go` | `dnstool-intel` |
-| 11 | `ai_surface/poisoning` | `poisoning_oss.go` | `dnstool-intel` |
-| 12 | `ai_surface/scanner` | `scanner_oss.go` | `dnstool-intel` |
+| 1 | `edge_cdn` | `edge_cdn_oss.go` | `dns-tool-intel` |
+| 2 | `saas_txt` | `saas_txt_oss.go` | `dns-tool-intel` |
+| 3 | `infrastructure` | `infrastructure_oss.go` | `dns-tool-intel` |
+| 4 | `providers` | `providers_oss.go` | `dns-tool-intel` |
+| 5 | `ip_investigation` | `ip_investigation_oss.go` | `dns-tool-intel` |
+| 6 | `manifest` | `manifest_oss.go` | `dns-tool-intel` |
+| 7 | `posture_diff` | `posture_diff_oss.go` | `dns-tool-intel` |
+| 8 | `ai_surface/http` | `http_oss.go` | `dns-tool-intel` |
+| 9 | `ai_surface/llms_txt` | `llms_txt_oss.go` | `dns-tool-intel` |
+| 10 | `ai_surface/robots_txt` | `robots_txt_oss.go` | `dns-tool-intel` |
+| 11 | `ai_surface/poisoning` | `poisoning_oss.go` | `dns-tool-intel` |
+| 12 | `ai_surface/scanner` | `scanner_oss.go` | `dns-tool-intel` |
 
 ### Pure Framework Files (no stub/intel split needed)
 
@@ -296,7 +296,7 @@ Every `_oss.go` stub MUST:
 
 ### Intel Transfer Status
 
-✅ All 11 `_intel.go` files transferred to `careyjames/dnstool-intel` private repo (2026-02-17). No `_intel.go` files exist in the public repo — boundary integrity tests verify this.
+✅ All 11 `_intel.go` files transferred to `careyjames/dns-tool-intel` private repo (2026-02-17). No `_intel.go` files exist in the public repo — boundary integrity tests verify this.
 
 ---
 

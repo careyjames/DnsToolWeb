@@ -2,7 +2,7 @@
 
 > **Generated:** 2026-02-17  
 > **Scope:** All 10 stub files + 3 "removed from stub registry" files  
-> **Purpose:** Classify every exported/unexported symbol to guide the two-repo split (public `DnsToolWeb` vs private `dnstool-intel`)
+> **Purpose:** Classify every exported/unexported symbol to guide the two-repo split (public `dns-tool-web` vs private `dns-tool-intel`)
 
 ---
 
@@ -419,6 +419,6 @@ The following minimal intelligence can safely remain in the public repo for demo
 5. **Low Priority**: `confidence.go`, `dkim_state.go`, `manifest.go` are pure framework — no action needed
 
 ### Intel Transfer Status (2026-02-17)
-- ✅ All 11 `_intel.go` files transferred to `careyjames/dnstool-intel` private repo
+- ✅ All 11 `_intel.go` files transferred to `careyjames/dns-tool-intel` private repo
 - ✅ `docs/intel-staging/` deleted from public repo
 - ✅ OSS build (`go build ./go-server/cmd/server/`) passes cleanly

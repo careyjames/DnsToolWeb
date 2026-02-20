@@ -355,20 +355,20 @@ Initial decision was Codeberg as canonical with GitHub push mirrors. Full migrat
 
 #### What Changed
 1. **Deleted Codeberg→GitHub push mirrors** — removed from all three repos
-2. **Deleted Codeberg repos** — dns-tool-webapp, dns-tool-cli, dns-tool-intel all deleted
+2. **Deleted Codeberg repos** — dns-tool-web, dns-tool-cli, dns-tool-intel all deleted
 3. **Recreated Codeberg repos** as regular repos (not mirrors — Codeberg disabled pull mirror creation via API)
 4. **Set Codeberg repo metadata** — issues/PRs/wiki disabled, descriptions say "Mirror of github.com/..."
 5. **Codeberg READMEs** — all point to GitHub as canonical with "read-only mirror" notice
-6. **GitHub READMEs restored** — full professional README on DnsToolWeb and dnstool-intel (no more "mirror" notices)
+6. **GitHub READMEs restored** — full professional README on dns-tool-web and dns-tool-intel (no more "mirror" notices)
 7. **GitHub Actions workflow** — `.github/workflows/mirror-codeberg.yml` pushes all branches/tags on every commit
 8. **Manual sync script** — `scripts/github-to-codeberg-sync.sh` for full-repo mirror sync
 
 #### Repo Configuration
 | Repo | GitHub (canonical) | Codeberg (mirror) | Visibility |
 |------|-------------------|-------------------|------------|
-| Web App | `careyjames/DnsToolWeb` | `careybalboa/dns-tool-webapp` | Public |
+| Web App | `careyjames/dns-tool-web` | `careybalboa/dns-tool-web` | Public |
 | CLI | `careyjames/dns-tool-cli` | `careybalboa/dns-tool-cli` (read-only mirror) | Public |
-| Intel | `careyjames/dnstool-intel` | `careybalboa/dns-tool-intel` | Private |
+| Intel | `careyjames/dns-tool-intel` | `careybalboa/dns-tool-intel` | Private |
 
 #### GitHub Setup Required (One-Time)
 1. Add `CODEBERG_TOKEN` secret to GitHub repos (Settings → Secrets → Actions) — use the Codeberg Forgejo API token
@@ -474,7 +474,7 @@ Initial decision was Codeberg as canonical with GitHub push mirrors. Full migrat
 - **Result**: History table now 4 columns: Domain, Email Security, Date, Actions
 
 #### GitHub README.md Created
-- **Decision**: Create comprehensive README.md for the public DnsToolWeb repo
+- **Decision**: Create comprehensive README.md for the public dns-tool-web repo
 - **Content**: Owl of Athena logo, version/license/Go/PostgreSQL/RFC badges, dual report types, core capabilities (email triad, transport, brand, infrastructure, privacy), architecture overview with ICIE/ICAE engines, self-auditing section (45 test cases across 5 protocols), quick start guide, environment variables, project structure, RFC citation table, license summary
 - **Design**: Centered header with badges, tables for structured data, ASCII architecture diagram, links to architecture diagrams and docs
 
@@ -493,9 +493,9 @@ Initial decision was Codeberg as canonical with GitHub push mirrors. Full migrat
 
 ### License Migration (AGPL → BSL 1.1)
 - **Decision**: Migrate all source files from AGPL-3.0 to BSL 1.1 (Business Source License)
-- **Rationale**: AGPL created legal tension with the proprietary private companion repo (`dnstool-intel`) and hindered acquisition/commercial potential. User quote: "As open-source as humanly possible while protecting ability to sell as a commercial product."
+- **Rationale**: AGPL created legal tension with the proprietary private companion repo (`dns-tool-intel`) and hindered acquisition/commercial potential. User quote: "As open-source as humanly possible while protecting ability to sell as a commercial product."
 - **Scope**: All 111 Go source files updated with BUSL-1.1 headers. LICENSE file replaced. LICENSING.md created.
-- **Both repos** (public `DnsToolWeb` and private `dnstool-intel`) now BSL 1.1.
+- **Both repos** (public `dns-tool-web` and private `dns-tool-intel`) now BSL 1.1.
 - **Change License**: Apache-2.0 (what it converts to after the Change Date)
 
 ### License Hardening (Additional Use Grant)
@@ -581,7 +581,7 @@ All documentation files verified accurate:
 - Contact: licensing@it-help.tech
 
 **Repo Sync**:
-- Both LICENSE and LICENSING.md pushed to private repo (dnstool-intel) and verified byte-identical
+- Both LICENSE and LICENSING.md pushed to private repo (dns-tool-intel) and verified byte-identical
 
 ### Session continuation: February 14, 2026 — Subdomain Discovery Enhancement
 
@@ -1256,7 +1256,7 @@ This table is a compact summary of all documented failures. For detailed root ca
 | 2026-02-16 | Registrar name never saved to database despite RDAP success | `getStringFromResults(results, "registrar_info", "registrar_name")` used wrong key — the result map uses `"registrar"`, not `"registrar_name"`. Every scan since the field was added had empty `registrar_name` in the database. | **Fix (v26.19.11)**: Changed to `getStringFromResults(results, "registrar_info", "registrar")`. Confirmed: scan #746 now saves "Amazon Registrar, Inc." to the database. Note: production RDAP failures (scan #942) are transient networking issues in Replit's deployment environment, not code bugs. |
 | 2026-02-16 | RDAP transient production failures despite multi-endpoint — double DNS resolution, no retries, stale connections | Three root causes compared to Python CLI: (1) SSRF `ValidateURLTarget` resolves RDAP hostname via `net.LookupHost()` BEFORE the HTTP client resolves again — double DNS resolution in constrained networks. (2) Each endpoint got exactly one attempt — no retry with backoff. (3) Long-running server's connection pool had stale connections vs. Python CLI's fresh-process approach. | **Fix (v26.19.12)**: (1) Created dedicated `NewRDAPHTTPClient()` with `DisableKeepAlives: true` (fresh connections like CLI), 15s timeout, `GetDirect()` method that bypasses SSRF preflight for known-safe RDAP endpoints + sends `Accept: application/rdap+json`. (2) Parallel endpoint attempts — all endpoints fire simultaneously, first success wins, others cancelled. (3) Retry with exponential backoff per endpoint (up to 2 retries, 200ms/400ms). (4) Removed registrar from "Partial Results" error banner — contextual data failures shouldn't alarm users. Registrar box still shows "Unknown" visually for internal testing, and WARN-level logging catches failures. **ICIE alignment**: RDAP is Tier 4 contextual intelligence, not Tier 1-2 security protocol — its failure should not be presented as a security analysis error. |
 | 2026-02-17 | Stub architecture audit and DKIM selector extraction bug | commands.go DKIM extraction tried to cast selectors as `[]any` but dkim.go returns `map[string]any`; DMARC external report auth looked under `dmarc` key instead of top-level `dmarc_report_auth`; selector names include `._domainkey` suffix causing doubled paths in verification commands; stub registry listed 3 files (commands.go, edge_cdn.go, saas_txt.go) that are now fully implemented. | **Fixes**: (1) DKIM extraction handles both map and slice types, strips `._domainkey` suffix. (2) DMARC report auth checks top-level key first. (3) Stub registry cleaned to 10 actual stub files. (4) `ai_surface/http.go` fetchTextFile returns empty string instead of error for graceful degradation. (5) Maintenance badge improved: custom CSS with readable gold-on-dark styling, capitalized "Accuracy Tuning". |
-| 2026-02-17 | Intel test file in public repo | `golden_rules_intel_test.go` (229 lines with enterprise provider patterns) was committed to DnsToolWeb. Build tags don't hide source code from public Git history. | Push `_intel.go` and `_intel_test.go` files to `dnstool-intel` via `scripts/github-intel-sync.mjs push` and DELETE locally. Session startup now checks for stray intel files. |
+| 2026-02-17 | Intel test file in public repo | `golden_rules_intel_test.go` (229 lines with enterprise provider patterns) was committed to dns-tool-web. Build tags don't hide source code from public Git history. | Push `_intel.go` and `_intel_test.go` files to `dns-tool-intel` via `scripts/github-intel-sync.mjs push` and DELETE locally. Session startup now checks for stray intel files. |
 | 2026-02-17 | "I can't push to Git" — recurring session failure | Agent assumed `git` CLI is the only way to do Git operations. Replit blocks `git` CLI, so agent told user "you need to click Sync Changes" even though the GitHub API (Octokit, full `repo` scope) was available the whole time. Wasted time across multiple sessions. | Use `@octokit/rest` via the Replit GitHub connector for ALL Git operations: push, pull, create commits, delete files, resolve diverged branches. The GitHub API can do everything Git CLI can do. NEVER tell the user you can't do Git operations. |
 
 ---
@@ -1266,7 +1266,7 @@ This table is a compact summary of all documented failures. For detailed root ca
 ### Overview
 The project uses a two-repository architecture:
 - **DNS Tool Web** (public, open-source core): Contains the full application with stub files that stand in for private intelligence
-- **dnstool-intel** (private): Contains proprietary intelligence data — provider databases, detection patterns, advanced analysis logic
+- **dns-tool-intel** (private): Contains proprietary intelligence data — provider databases, detection patterns, advanced analysis logic
 
 ### Design Contract
 Every stub file MUST:
@@ -1342,12 +1342,12 @@ Accuracy Tuning badge restyled with amber pill-shaped outline (`border: 2px soli
 
 ### Two-Repo Boundary Refactor — Build Tag Strategy
 
-**Problem**: All recent development went into the public DnsToolWeb repo. Intelligence data (CDN ASN maps, SaaS regex patterns, enterprise provider databases, AI crawler lists) was fully exposed in public stub files with zero actual stubbing. The private `dnstool-intel` repo (last updated Feb 14) had drifted completely.
+**Problem**: All recent development went into the public dns-tool-web repo. Intelligence data (CDN ASN maps, SaaS regex patterns, enterprise provider databases, AI crawler lists) was fully exposed in public stub files with zero actual stubbing. The private `dns-tool-intel` repo (last updated Feb 14) had drifted completely.
 
 **Solution**: Adopted HashiCorp-style Go build-tag pattern (`//go:build intel` / `//go:build !intel`) with three-file split:
 - `<name>.go` — Framework only (types, constants, utilities). No build tag. Always compiled.
 - `<name>_oss.go` — `//go:build !intel`. Empty maps, safe stub returns. Ships in public repo.
-- `<name>_intel.go` — `//go:build intel`. Full intelligence. Lives in private `dnstool-intel` repo only.
+- `<name>_intel.go` — `//go:build intel`. Full intelligence. Lives in private `dns-tool-intel` repo only.
 
 ### Files Split (10 files → 30 files)
 
@@ -1378,7 +1378,7 @@ Accuracy Tuning badge restyled with amber pill-shaped outline (`border: 2px soli
 - `docs/BUILD_TAG_STRATEGY.md` — Build-tag strategy, three-file pattern specification, CI matrix
 
 ### Intel Staging
-All `_intel.go` files staged at `docs/intel-staging/` for transfer to private `dnstool-intel` repo:
+All `_intel.go` files staged at `docs/intel-staging/` for transfer to private `dns-tool-intel` repo:
 - `edge_cdn_intel.go`, `saas_txt_intel.go`, `infrastructure_intel.go`, `providers_intel.go`, `ip_investigation_intel.go`, `manifest_intel.go`
 - `ai_surface/http_intel.go`, `ai_surface/llms_txt_intel.go`, `ai_surface/robots_txt_intel.go`, `ai_surface/poisoning_intel.go`
 
@@ -1386,7 +1386,7 @@ All `_intel.go` files staged at `docs/intel-staging/` for transfer to private `d
 `ai_surface/scanner.go` was refactored: `aiCrawlers` var removed, replaced with `GetAICrawlers()` function call. `scanner_oss.go` returns empty slice, `scanner_intel.go` (in private repo) returns full 15-crawler list. All 11 boundary files now fully split.
 
 ### Intel Transfer (completed 2026-02-17)
-All 11 `_intel.go` files transferred to `careyjames/dnstool-intel` private repo via GitHub API. `docs/intel-staging/` deleted from public repo. No intelligence data remains in public repo.
+All 11 `_intel.go` files transferred to `careyjames/dns-tool-intel` private repo via GitHub API. `docs/intel-staging/` deleted from public repo. No intelligence data remains in public repo.
 
 ### Sync Workflow for Private Repo (completed 2026-02-17)
 All files transferred via GitHub API. Manual copy no longer needed.
@@ -1763,7 +1763,7 @@ Full cross-check of public-facing docs (llms.txt, llms-full.txt, FEATURE_INVENTO
 - `TestMailPostureClassificationProtected` — full mail domain = protected
 
 ### SKILL.md Updates
-- Clarified two-repo boundary: agent works ONLY in DnsToolWeb, cannot push to remotes
+- Clarified two-repo boundary: agent works ONLY in dns-tool-web, cannot push to remotes
 - Added no-mail domain classification documentation with three-tier table
 
 ### Files Changed
@@ -1782,19 +1782,19 @@ Full cross-check of public-facing docs (llms.txt, llms-full.txt, FEATURE_INVENTO
 
 ### Cross-Repo Sync Mechanism Established
 
-- **Discovery**: The GitHub integration (Octokit, `repo` scope) can directly read/write to `careyjames/dnstool-intel` via the GitHub API. Previous sessions (Feb 17 Part 1) used this to push `_intel.go` files — but the mechanism wasn't documented anywhere, causing confusion in subsequent sessions.
+- **Discovery**: The GitHub integration (Octokit, `repo` scope) can directly read/write to `careyjames/dns-tool-intel` via the GitHub API. Previous sessions (Feb 17 Part 1) used this to push `_intel.go` files — but the mechanism wasn't documented anywhere, causing confusion in subsequent sessions.
 - **Script created**: `scripts/github-intel-sync.mjs` — CLI tool for listing, reading, pushing, and deleting files in the Intel repo via the GitHub Contents API. Commands: `list`, `read <path>`, `push <local> <remote> [msg]`, `delete <path> [msg]`, `commits [n]`.
 - **Authentication**: Uses Replit's connector API to get a GitHub access token automatically. No separate API key needed — the existing GitHub integration handles it.
 
 ### golden_rules_intel_test.go Moved to Private Repo
 
-- **Problem**: `golden_rules_intel_test.go` (229 lines) was sitting in the public DnsToolWeb repo. Although it had `//go:build intel` so it wouldn't compile in OSS builds, the source code was visible — containing enterprise provider pattern tests (AWS, Cloudflare, Azure detection patterns).
-- **Action**: Pushed to `careyjames/dnstool-intel` at `go-server/internal/analyzer/golden_rules_intel_test.go` (commit f318696), then deleted from DnsToolWeb working directory.
+- **Problem**: `golden_rules_intel_test.go` (229 lines) was sitting in the public dns-tool-web repo. Although it had `//go:build intel` so it wouldn't compile in OSS builds, the source code was visible — containing enterprise provider pattern tests (AWS, Cloudflare, Azure detection patterns).
+- **Action**: Pushed to `careyjames/dns-tool-intel` at `go-server/internal/analyzer/golden_rules_intel_test.go` (commit f318696), then deleted from dns-tool-web working directory.
 - **Verification**: `go test ./go-server/... -count=1` passes — all tests still green without the intel test file.
 
 ### Public Repo Audit — Clean
 
-- No `_intel.go` files remain in DnsToolWeb
+- No `_intel.go` files remain in dns-tool-web
 - All `_oss.go` stubs properly tagged `//go:build !intel`
 - Today's changes (remediation.go, posture.go, results.html) are framework-only — no proprietary provider databases or intelligence patterns
 
@@ -1812,7 +1812,7 @@ The two-repo architecture works when the sync mechanism is documented. Without d
 | File | What Changed |
 |------|-------------|
 | `scripts/github-intel-sync.mjs` | NEW — GitHub API helper for Intel repo read/write/push/delete |
-| `go-server/internal/analyzer/golden_rules_intel_test.go` | DELETED from DnsToolWeb (moved to Intel repo) |
+| `go-server/internal/analyzer/golden_rules_intel_test.go` | DELETED from dns-tool-web (moved to Intel repo) |
 | `.agents/skills/dns-tool/SKILL.md` | Cross-repo sync documentation; sync script usage |
 | `EVOLUTION.md` | Session breadcrumb |
 
@@ -1826,7 +1826,7 @@ The two-repo architecture works when the sync mechanism is documented. Without d
 
 #### DRIFT_ENGINE.md Moved to Private Repo
 - **Problem**: `DRIFT_ENGINE.md` contained the full 4-phase commercial roadmap (Foundation → Detection → Timeline UI → Alerting/Webhooks/Monitoring)
-- **Action**: Pushed full document to `dnstool-intel` repo, replaced local with public-safe summary (Phase 1-2A status only, "roadmap available under commercial license" note)
+- **Action**: Pushed full document to `dns-tool-intel` repo, replaced local with public-safe summary (Phase 1-2A status only, "roadmap available under commercial license" note)
 
 #### Phase 2B — Structured Drift Diff
 - **New file**: `posture_diff.go` — `ComputePostureDiff(prev, curr)` compares two analysis result maps field-by-field, returns `[]PostureDiffField` with Label/Previous/Current/Severity
@@ -1858,7 +1858,7 @@ The two-repo architecture works when the sync mechanism is documented. Without d
 ### Files Changed
 | File | What Changed |
 |------|-------------|
-| `DRIFT_ENGINE.md` | Replaced with public-safe summary (full roadmap moved to dnstool-intel) |
+| `DRIFT_ENGINE.md` | Replaced with public-safe summary (full roadmap moved to dns-tool-intel) |
 | `go-server/internal/analyzer/posture_diff.go` | NEW — Structured drift diff computation |
 | `go-server/internal/analyzer/posture_diff_oss.go` | NEW — OSS severity classification stub |
 | `go-server/db/queries/domain_analyses.sql` | Two new drift queries (full_results + ID) |
@@ -1875,16 +1875,16 @@ The two-repo architecture works when the sync mechanism is documented. Without d
 
 ### Git Push Architecture Fix (CRITICAL — Recurring Problem)
 
-**Problem**: Multiple sessions pushed DnsToolWeb changes to GitHub via the GitHub API (create blob → create tree → create commit → update ref). This created remote commits that the local `.git` didn't know about. Replit's Git tab auto-detected the divergence and tried to rebase local checkpoint commits onto the new remote HEAD, hitting conflicts (e.g., SKILL.md) and getting permanently stuck in "Unsupported state: you are in the middle of a rebase." The user had to manually `rm -rf .git/rebase-merge` to recover. This wasted over an hour across sessions.
+**Problem**: Multiple sessions pushed dns-tool-web changes to GitHub via the GitHub API (create blob → create tree → create commit → update ref). This created remote commits that the local `.git` didn't know about. Replit's Git tab auto-detected the divergence and tried to rebase local checkpoint commits onto the new remote HEAD, hitting conflicts (e.g., SKILL.md) and getting permanently stuck in "Unsupported state: you are in the middle of a rebase." The user had to manually `rm -rf .git/rebase-merge` to recover. This wasted over an hour across sessions.
 
 **Root cause**: API-created commits bypass the local git index. The local branch still points to the old HEAD while the remote has moved forward. Replit's auto-sync triggers a rebase of local checkpoint commits on top of the new remote HEAD — any conflicting file (common with SKILL.md, EVOLUTION.md) causes the rebase to stall.
 
 **Fix**: Updated SKILL.md "Git Operations" section with two-repo/two-method rule:
-- **DnsToolWeb (public)**: NEVER push via GitHub API. User pushes via Replit Git tab.
-- **dnstool-intel (private)**: Always use GitHub API via `scripts/github-intel-sync.mjs`. Remote-only repo, no local divergence risk.
+- **dns-tool-web (public)**: NEVER push via GitHub API. User pushes via Replit Git tab.
+- **dns-tool-intel (private)**: Always use GitHub API via `scripts/github-intel-sync.mjs`. Remote-only repo, no local divergence risk.
 - **Recovery**: `rm -rf .git/rebase-merge` if stuck rebase occurs.
 
-**Lesson**: The previous SKILL.md instructions *actively caused* this problem by documenting API pushes to DnsToolWeb as "the solution" for Git issues. The instructions themselves were the root cause.
+**Lesson**: The previous SKILL.md instructions *actively caused* this problem by documenting API pushes to dns-tool-web as "the solution" for Git issues. The instructions themselves were the root cause.
 
 ### Drift Diff Aligned with Posture Hash
 - Extended `posture_diff.go` to diff ALL fields contributing to the posture hash: added DKIM Selectors, CAA Tags, SPF Records, DMARC Records, DANE Present
@@ -1917,7 +1917,7 @@ The two-repo architecture works when the sync mechanism is documented. Without d
 - `static/llms.txt`, `static/llms-full.txt` — Removed pipeline details
 - `go-server/templates/index.html` — Replaced specific layer count with "Multi-layer" in JSON-LD schema and persona card
 
-**Intel repo sync**: Created `INTEL_METHODOLOGY.md` with ALL redacted details (full pipeline sequence with 10 numbered steps, function names, probe counts, goroutine concurrency, transport specifics, performance characteristics, golden rule test descriptions) and pushed to `careyjames/dnstool-intel` private repo. Local copy deleted.
+**Intel repo sync**: Created `INTEL_METHODOLOGY.md` with ALL redacted details (full pipeline sequence with 10 numbered steps, function names, probe counts, goroutine concurrency, transport specifics, performance characteristics, golden rule test descriptions) and pushed to `careyjames/dns-tool-intel` private repo. Local copy deleted.
 
 **SKILL.md hardened**: Added "Methodology Protection" section with:
 - Banned content list (function names, probe counts, layer counts, timing, concurrency)
@@ -2036,7 +2036,7 @@ git checkout main
 
 ### Session: February 18, 2026 — SonarCloud Queue Triage & Cleanup
 
-**Task**: Audit the SonarCloud queue files (`attached_assets/sonar-careyjames_DnsToolWeb-replit-queue*.md`) — the project's active backlog — and fix remaining issues.
+**Task**: Audit the SonarCloud queue files (`attached_assets/sonar-careyjames_dns-tool-web-replit-queue*.md`) — the project's active backlog — and fix remaining issues.
 
 **Key Finding**: The majority of SonarCloud issues from prior sessions were ALREADY FIXED. The queue files are historical snapshots, not live data. Comprehensive scan confirmed:
 
@@ -2101,22 +2101,22 @@ git checkout main
 
 ### Repo Sync Completed — Both Repos Current (Feb 18, 2026)
 
-**DnsToolWeb (public)**: 11 commits pushed via PAT (`02409f2..2bb5d6c`). All changes are public framework refactoring.
+**dns-tool-web (public)**: 11 commits pushed via PAT (`02409f2..2bb5d6c`). All changes are public framework refactoring.
 
-**dnstool-intel (private)**: Audited — 44 files present, all 11 `_intel.go` boundary files accounted for, golden rules intel test present, methodology docs present. Last commit: Feb 18 (methodology audit script). No sync needed — no intel-side changes this session.
+**dns-tool-intel (private)**: Audited — 44 files present, all 11 `_intel.go` boundary files accounted for, golden rules intel test present, methodology docs present. Last commit: Feb 18 (methodology audit script). No sync needed — no intel-side changes this session.
 
 ### Repo Sync Law — Written Into SKILL.md
 
-**Problem**: Recurring git disasters from wrong push methods. API pushes to DnsToolWeb caused rebase collisions. Git panel pushes caused lock file conflicts. Intel files left in public repo exposed IP.
+**Problem**: Recurring git disasters from wrong push methods. API pushes to dns-tool-web caused rebase collisions. Git panel pushes caused lock file conflicts. Intel files left in public repo exposed IP.
 
 **Solution**: Formalized "Repo Sync Law" in SKILL.md with:
 - Mandatory pre-push checklist (intel file scan, test suite, health check)
-- Explicit NEVER rules for DnsToolWeb (no API push, no Git panel)
+- Explicit NEVER rules for dns-tool-web (no API push, no Git panel)
 - Post-intel-push checklist (delete local file, verify clean state)
 - Sync verification commands for both repos
 - Incident history table documenting WHY these rules exist
 
-**Key rule**: DnsToolWeb = PAT push only. dnstool-intel = GitHub API only. Zero exceptions.
+**Key rule**: dns-tool-web = PAT push only. dns-tool-intel = GitHub API only. Zero exceptions.
 
 ### Files Changed
 | File | What Changed |

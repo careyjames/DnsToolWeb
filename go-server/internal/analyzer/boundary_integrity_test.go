@@ -155,7 +155,7 @@ func TestBoundaryIntegrity_NoIntelInPublicRepo(t *testing.T) {
         for _, b := range analyzerBoundaries {
                 t.Run(b.Name+"_no_intel_file", func(t *testing.T) {
                         if _, err := os.Stat(b.IntelFile); err == nil {
-                                t.Errorf("INTEL FILE %s FOUND IN PUBLIC REPO for boundary %s — must only exist in private dnstool-intel repo", b.IntelFile, b.Name)
+                                t.Errorf("INTEL FILE %s FOUND IN PUBLIC REPO for boundary %s — must only exist in private dns-tool-intel repo", b.IntelFile, b.Name)
                         }
                 })
         }
@@ -165,7 +165,7 @@ func TestBoundaryIntegrity_NoIntelInPublicRepo(t *testing.T) {
                         return nil
                 }
                 if strings.HasSuffix(path, "_intel.go") {
-                        t.Errorf("INTEL FILE %s FOUND IN PUBLIC REPO — all _intel.go files must only exist in private dnstool-intel repo", path)
+                        t.Errorf("INTEL FILE %s FOUND IN PUBLIC REPO — all _intel.go files must only exist in private dns-tool-intel repo", path)
                 }
                 return nil
         })
@@ -454,8 +454,8 @@ func TestBoundaryIntegrity_NoIntelStagingDirectory(t *testing.T) {
         paths := []string{
                 "../../docs/intel-staging",
                 "../../../docs/intel-staging",
-                "../../../dnstool-intel-staging",
-                "../../../../dnstool-intel-staging",
+                "../../../dns-tool-intel-staging",
+                "../../../../dns-tool-intel-staging",
         }
         for _, p := range paths {
                 if info, err := os.Stat(p); err == nil && info.IsDir() {

@@ -38,7 +38,7 @@ The platform monitors all file operations from the agent process tree. Writing t
 6. Read `EVOLUTION.md` — permanent breadcrumb trail, backup if `replit.md` resets
 7. Check the "Failures & Lessons Learned" section in `EVOLUTION.md` before making changes
 8. If `replit.md` appears truncated or reset, restore key pointers from `PROJECT_CONTEXT.md` and `EVOLUTION.md`
-9. Run `find go-server -name "*_intel*"` — if ANY `_intel.go` or `_intel_test.go` files exist locally, they must be pushed to `dnstool-intel` via the sync script and deleted immediately
+9. Run `find go-server -name "*_intel*"` — if ANY `_intel.go` or `_intel_test.go` files exist locally, they must be pushed to `dns-tool-intel` via the sync script and deleted immediately
 
 ## Agent Do / Don't (One-Screen Reference)
 
@@ -129,12 +129,12 @@ The launch chain is: `gunicorn → main.py → os.execvp("./dns-tool-server")`. 
 ## Two-Repo Build-Tag Architecture
 
 Two repositories with Go build tags:
-- **DnsToolWeb** (public): Framework code + `_oss.go` stubs — **this is the repo we work in**
-- **dnstool-intel** (private): `_intel.go` files with proprietary intelligence
+- **dns-tool-web** (public): Framework code + `_oss.go` stubs — **this is the repo we work in**
+- **dns-tool-intel** (private): `_intel.go` files with proprietary intelligence
 
 ### Cross-Repo Sync via GitHub API
 
-The Replit GitHub integration (Octokit) has full `repo` scope, enabling direct read/write to `careyjames/dnstool-intel` via the GitHub API.
+The Replit GitHub integration (Octokit) has full `repo` scope, enabling direct read/write to `careyjames/dns-tool-intel` via the GitHub API.
 
 **Sync script**: `scripts/github-intel-sync.mjs`
 ```bash
@@ -145,28 +145,28 @@ node scripts/github-intel-sync.mjs delete <path> [message]           # Delete fi
 node scripts/github-intel-sync.mjs commits [count]                   # Show recent commits
 ```
 
-**When to use**: Push `_intel.go` files (provider databases, intelligence code) to the Intel repo. Never commit `_intel.go` files to DnsToolWeb — they expose proprietary patterns even with build tags (source code is visible in public Git history).
+**When to use**: Push `_intel.go` files (provider databases, intelligence code) to the Intel repo. Never commit `_intel.go` files to dns-tool-web — they expose proprietary patterns even with build tags (source code is visible in public Git history).
 
-**CRITICAL**: If you create or modify `_intel.go` files, push them to `dnstool-intel` via the sync script and DELETE them from the local DnsToolWeb working directory. Files with `//go:build intel` tags won't compile in the OSS build but their source code is visible in the public repo history.
+**CRITICAL**: If you create or modify `_intel.go` files, push them to `dns-tool-intel` via the sync script and DELETE them from the local dns-tool-web working directory. Files with `//go:build intel` tags won't compile in the OSS build but their source code is visible in the public repo history.
 
 ### Repo Sync Law — Two Repos, Two Methods, Zero Exceptions
 
 This is the ONLY permitted way to push code. Violations have caused hours of git corruption, stalled rebases, and lost work. These rules are non-negotiable.
 
-#### DnsToolWeb (public) — PAT Push ONLY
+#### dns-tool-web (public) — PAT Push ONLY
 
 ```bash
 bash scripts/git-push.sh
 ```
 
-Secret `CAREY_PAT_ALL3_REPOS` is a GitHub Personal Access Token with full permissions (including `workflow` scope) for all three repos: `DnsToolWeb`, `dnstool-intel`, and `it-help-tech-site`.
+Secret `CAREY_PAT_ALL3_REPOS` is a GitHub Personal Access Token with full permissions (including `workflow` scope) for all three repos: `dns-tool-web`, `dns-tool-intel`, and `it-help-tech-site`.
 
 **MANDATORY pre-push checklist**:
 1. `go test ./go-server/... -count=1` — must pass (includes boundary integrity)
 2. `bash scripts/git-push.sh` — this script enforces 3 hard safety gates before pushing:
    - **GATE 1**: Lock files — HARD STOP only for **push-blocking** locks (`index.lock`, `HEAD.lock`, `config.lock`, `shallow.lock`). Background locks like `maintenance.lock` and `refs/remotes/*.lock` are logged as INFO and do NOT block the push.
    - **GATE 2**: Rebase state — HARD STOP if interrupted rebase detected.
-   - **GATE 3**: Intel files — HARD STOP if any `_intel.go` files found in public repo.
+   - **GATE 3**: Intel files — HARD STOP if any `_intel.go` files found in dns-tool-web repo.
    - After push, sync is verified via `git ls-remote` (read-only) — no `.git` writes needed.
 
 **Lock file classification**:
@@ -183,7 +183,7 @@ Secret `CAREY_PAT_ALL3_REPOS` is a GitHub Personal Access Token with full permis
 3. User confirms clean state
 4. Agent retries the push
 
-**NEVER do these for DnsToolWeb**:
+**NEVER do these for dns-tool-web**:
 - NEVER push via GitHub API (createBlob/createTree/createCommit/updateRef) — this creates remote commits the local `.git` doesn't know about, causing rebase collisions that corrupt git state
 - NEVER tell the user "I can't push to Git" — the PAT is always available
 - NEVER dismiss lock files as "cosmetic" — they are production blockers that compound into hours of lost work
@@ -192,9 +192,9 @@ Secret `CAREY_PAT_ALL3_REPOS` is a GitHub Personal Access Token with full permis
 
 **If Git panel shows stale "X commits ahead"**: The tracking ref (`origin/main`) is stale because the agent cannot update `.git` refs. Fix: user runs `bash scripts/git-panel-reset.sh` from Shell tab (clears locks, fetches, updates tracking ref). Or `bash scripts/git-health-check.sh` (which now auto-fetches after clearing locks).
 
-For force push (diverged branches only): `git push --force https://${CAREY_PAT_ALL3_REPOS}@github.com/careyjames/DnsToolWeb.git main`
+For force push (diverged branches only): `git push --force https://${CAREY_PAT_ALL3_REPOS}@github.com/careyjames/dns-tool-web.git main`
 
-#### dnstool-intel (private) — GitHub API ONLY
+#### dns-tool-intel (private) — GitHub API ONLY
 
 ```bash
 node scripts/github-intel-sync.mjs push <local> <remote> [message]
@@ -214,10 +214,10 @@ This is a remote-only repo. No local clone exists. API operations don't cause di
 #### Sync Verification (run after any push to either repo)
 
 ```bash
-# DnsToolWeb sync check (read-only — works from agent or Shell):
+# dns-tool-web sync check (read-only — works from agent or Shell):
 bash scripts/git-push.sh                                   # Reports SYNC STATUS: VERIFIED MATCH if synced
 # Or manually:
-git ls-remote https://${CAREY_PAT_ALL3_REPOS}@github.com/careyjames/DnsToolWeb.git refs/heads/main
+git ls-remote https://${CAREY_PAT_ALL3_REPOS}@github.com/careyjames/dns-tool-web.git refs/heads/main
 git rev-parse HEAD                                         # Compare these two SHAs
 
 # Intel repo:
@@ -232,11 +232,11 @@ go test ./go-server/internal/analyzer/ -run Boundary -v    # Boundary tests pass
 
 | Date | What Went Wrong | Root Cause | Hours Lost |
 |------|----------------|------------|------------|
-| Feb 17 | Rebase stalled, "Unsupported state" error | API push to DnsToolWeb created remote commits local didn't know about | 1+ |
+| Feb 17 | Rebase stalled, "Unsupported state" error | API push to dns-tool-web created remote commits local didn't know about | 1+ |
 | Feb 18 | Recurring PUSH_REJECTED, stale lock files | Replit Git panel OAuth + background maintenance conflict. Lock files dismissed as "cosmetic" instead of treated as production failures. | 1+ |
 | Feb 18 | Lock files left after push, tracking ref stale | `git-health-check.sh` didn't cover `gitsafe-backup/` paths. Cleanup ran AFTER push instead of BEFORE. Agent blocked from `.git` modifications. | Compounding |
 | Feb 18 | `maintenance.lock` blocking ALL pushes from agent | Gate 1 treated ALL locks as push-blockers. Replit's `maintenance.lock` is always present but doesn't block `git push`. FIX: Smart lock classification — only `index/HEAD/config/shallow.lock` block. Sync via `git ls-remote` (read-only). | 1+ |
-| Feb 17 | `golden_rules_intel_test.go` exposed in public repo | `_intel.go` file committed to DnsToolWeb (visible in Git history even with build tags) | N/A (IP risk) |
+| Feb 17 | `golden_rules_intel_test.go` exposed in public repo | `_intel.go` file committed to dns-tool-web (visible in Git history even with build tags) | N/A (IP risk) |
 | Feb 18 | SKILL.md itself contained methodology details | Public repo file documenting proprietary pipeline | N/A (IP risk) |
 | Feb 19 | Git panel stuck on "Resolve merge conflicts" forever | `git-health-check.sh --repair` and `git-panel-reset.sh` never checked for MERGE_HEAD/MERGE_MSG/MERGE_MODE. FIX: Both scripts now detect and abort interrupted merges. | 0.5+ |
 
@@ -378,8 +378,8 @@ Grep for shortened variants before committing. Past regressions: "Executive's In
 ## Known Regression Pitfalls
 
 These have caused repeated regressions — check EVOLUTION.md "Failures & Lessons Learned" for details:
-- **Intel files left in public repo** — `_intel.go` and `_intel_test.go` files committed to DnsToolWeb expose proprietary patterns in public Git history even with build tags. Always push to dnstool-intel via sync script and delete locally. (Feb 2026 incident: `golden_rules_intel_test.go` with enterprise provider patterns was public.)
-- **"I can't push to Git"** — WRONG. Use `bash scripts/git-push.sh` (PAT push) for DnsToolWeb. Use `node scripts/github-intel-sync.mjs` for dnstool-intel. NEVER use the GitHub API (createBlob/createTree/createCommit/updateRef) to push to DnsToolWeb — this caused rebase corruption in Feb 2026. See "Repo Sync Law" section above.
+- **Intel files left in public repo** — `_intel.go` and `_intel_test.go` files committed to dns-tool-web expose proprietary patterns in public Git history even with build tags. Always push to dns-tool-intel via sync script and delete locally. (Feb 2026 incident: `golden_rules_intel_test.go` with enterprise provider patterns was public.)
+- **"I can't push to Git"** — WRONG. Use `bash scripts/git-push.sh` (PAT push) for dns-tool-web. Use `node scripts/github-intel-sync.mjs` for dns-tool-intel. NEVER use the GitHub API (createBlob/createTree/createCommit/updateRef) to push to dns-tool-web — this caused rebase corruption in Feb 2026. See "Repo Sync Law" section above.
 - CSP inline handlers added then silently failing (recurring v26.14–v26.16)
 - Font Awesome icons used without checking subset CSS rules exist
 - PDF/print font sizes dropping below minimums (recurring v26.15–v26.16)
@@ -419,7 +419,7 @@ When describing subdomain discovery, use ONLY these vague, high-level phrases:
 Do NOT enumerate individual discovery sources in sequence — describing individual layers together reconstructs the pipeline.
 
 ### Where Proprietary Details Belong
-- **Private intel repo only** (`careyjames/dnstool-intel`): `INTEL_METHODOLOGY.md` has everything
+- **Private intel repo only** (`careyjames/dns-tool-intel`): `INTEL_METHODOLOGY.md` has everything
 - **Go source code** (`subdomains.go`): Function names in compiled source are fine — BSL-licensed implementation
 - **NEVER in**: Any `.md`, `.html`, `.txt` file in this public repo. This includes SKILL.md itself, PROJECT_CONTEXT.md, EVOLUTION.md, DOCS.md, FEATURE_INVENTORY.md, llms.txt, templates, replit.md
 
@@ -456,7 +456,7 @@ The drift engine detects posture changes between analyses. Key files:
 - `posture_hash.go` — Canonical SHA-256 posture hashing (public, framework-level)
 - `posture_diff.go` — Structured diff computation: compares two analysis results, returns which fields changed (public)
 - `posture_diff_oss.go` — OSS severity classification for drift fields (public stub, `!intel` build tag)
-- `DRIFT_ENGINE.md` — Public summary only. Full roadmap lives in the private `dnstool-intel` repo.
+- `DRIFT_ENGINE.md` — Public summary only. Full roadmap lives in the private `dns-tool-intel` repo.
 
 ### Drift diff architecture
 - **Public** (`posture_diff.go`): `ComputePostureDiff(prev, curr map[string]any) []PostureDiffField` — raw field-by-field comparison
@@ -484,6 +484,6 @@ The drift engine detects posture changes between analyses. Key files:
 8. **Don't forget CSS minification** — `npx csso` after every CSS edit
 9. **Don't hardcode foreign keys** — violates FK constraints
 10. **Don't use `style=""`** — CSP blocks inline styles
-11. **NEVER leave `_intel.go` or `_intel_test.go` files in DnsToolWeb** — push to `dnstool-intel` via `node scripts/github-intel-sync.mjs push` and delete locally. Build tags don't hide source code from public Git history. This has caused a real proprietary data leak (Feb 2026).
+11. **NEVER leave `_intel.go` or `_intel_test.go` files in dns-tool-web** — push to `dns-tool-intel` via `node scripts/github-intel-sync.mjs push` and delete locally. Build tags don't hide source code from public Git history. This has caused a real proprietary data leak (Feb 2026).
 12. **Don't assume the Intel repo is inaccessible** — the GitHub integration gives full read/write access via `scripts/github-intel-sync.mjs`. Use it.
 13. **NEVER write pipeline implementation details in public docs** — No function names, probe counts, layer counts, pipeline sequences, or timing details in any `.md`, `.html`, or `.txt` file. Use approved language from the "Methodology Protection" section above. Run the audit grep before ending any session. This has caused a real methodology exposure incident (Feb 2026).

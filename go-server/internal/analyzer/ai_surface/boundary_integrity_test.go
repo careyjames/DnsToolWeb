@@ -102,7 +102,7 @@ func TestAISurfaceBoundary_NoIntelInPublicRepo(t *testing.T) {
 	for _, b := range aiSurfaceBoundaries {
 		t.Run(b.Name+"_no_intel_file", func(t *testing.T) {
 			if _, err := os.Stat(b.IntelFile); err == nil {
-				t.Errorf("INTEL FILE %s FOUND IN PUBLIC REPO for boundary %s — must only exist in private dnstool-intel repo", b.IntelFile, b.Name)
+				t.Errorf("INTEL FILE %s FOUND IN PUBLIC REPO for boundary %s — must only exist in private dns-tool-intel repo", b.IntelFile, b.Name)
 			}
 		})
 	}

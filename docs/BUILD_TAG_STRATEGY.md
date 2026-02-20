@@ -2,7 +2,7 @@
 
 > **Date:** 2026-02-17
 > **Status:** Research / Design (no code changes)
-> **Scope:** DnsToolWeb (public, BSL 1.1) + dnstool-intel (private, BSL 1.1)
+> **Scope:** dns-tool-web (public, BSL 1.1) + dns-tool-intel (private, BSL 1.1)
 > **References:** BOUNDARY_MATRIX.md, STUB_AUDIT.md, LICENSING.md
 
 ---
@@ -81,7 +81,7 @@ GitLab uses an `ee/` directory in a single Ruby/Rails repo:
 **Usage:**
 ```go
 //go:build !intel     ← public stub file (compiled when building from public repo alone)
-//go:build intel      ← private intelligence file (compiled when building with dnstool-intel)
+//go:build intel      ← private intelligence file (compiled when building with dns-tool-intel)
 ```
 
 **Build commands:**
@@ -101,9 +101,9 @@ Current file names like `infrastructure.go` contain both framework code (types, 
 
 | File | Build Tag | Contents | Repo |
 |------|-----------|----------|------|
-| `infrastructure.go` | None (always compiled) | Types, interfaces, constants, utility functions — the API contract | Public (DnsToolWeb) |
-| `infrastructure_oss.go` | `//go:build !intel` | Stub implementations returning safe defaults; empty maps | Public (DnsToolWeb) |
-| `infrastructure_intel.go` | `//go:build intel` | Full provider databases, detection algorithms, scoring logic | Private (dnstool-intel) |
+| `infrastructure.go` | None (always compiled) | Types, interfaces, constants, utility functions — the API contract | Public (dns-tool-web) |
+| `infrastructure_oss.go` | `//go:build !intel` | Stub implementations returning safe defaults; empty maps | Public (dns-tool-web) |
+| `infrastructure_intel.go` | `//go:build intel` | Full provider databases, detection algorithms, scoring logic | Private (dns-tool-intel) |
 
 **Naming rules:**
 1. The base file (`infrastructure.go`) has no build tag and defines the shared contract (types, interfaces, exported function signatures via delegation).
@@ -121,8 +121,8 @@ Since Go requires all files in the same package to be in the same directory, the
 
 ```bash
 # Build script (internal CI only)
-git clone git@github.com:careyjames/DnsToolWeb.git  workdir
-git clone git@github.com:careyjames/dnstool-intel.git  intel
+git clone git@github.com:careyjames/dns-tool-web.git  workdir
+git clone git@github.com:careyjames/dns-tool-intel.git  intel
 
 # Symlink intel files into the public repo's package directories
 ln -sf $(pwd)/intel/analyzer/infrastructure_intel.go \
@@ -151,7 +151,7 @@ Not suitable here. Go workspaces (`go.work`) operate at the module level, not th
 
 ### 2.4 Build Pipeline
 
-#### Public Build (GitHub Actions on DnsToolWeb)
+#### Public Build (GitHub Actions on dns-tool-web)
 
 ```yaml
 # .github/workflows/build-public.yml
@@ -162,14 +162,14 @@ Not suitable here. Go workspaces (`go.work`) operate at the module level, not th
     # No -tags intel → _oss.go files compiled, _intel.go files excluded
 ```
 
-#### Internal Build (Private CI, e.g., GitHub Actions on dnstool-intel)
+#### Internal Build (Private CI, e.g., GitHub Actions on dns-tool-intel)
 
 ```yaml
 # .github/workflows/build-internal.yml
 - name: Checkout public repo
   uses: actions/checkout@v4
   with:
-    repository: careyjames/DnsToolWeb
+    repository: careyjames/dns-tool-web
     path: workdir
 
 - name: Checkout private repo
@@ -284,7 +284,7 @@ func zoneCapability(zoneKey string) string { return zoneKey + " management" }
 
 // Copyright (c) 2024-2026 IT Help San Diego Inc.
 // Licensed under BUSL-1.1 — See LICENSE for terms.
-// Stub implementations. See github.com/careyjames/dnstool-intel for the full version.
+// Stub implementations. See github.com/careyjames/dns-tool-intel for the full version.
 package analyzer
 
 import (
@@ -398,10 +398,10 @@ func matchEnterpriseProvider(nsList []string) *infraMatch {
 
 ### 3.3 Complete Directory Layout (Both Repos)
 
-#### Public Repo: `careyjames/DnsToolWeb`
+#### Public Repo: `careyjames/dns-tool-web`
 
 ```
-DnsToolWeb/
+dns-tool-web/
 ├── go-server/
 │   ├── cmd/server/main.go
 │   ├── internal/
@@ -442,10 +442,10 @@ DnsToolWeb/
 └── ...
 ```
 
-#### Private Repo: `careyjames/dnstool-intel`
+#### Private Repo: `careyjames/dns-tool-intel`
 
 ```
-dnstool-intel/
+dns-tool-intel/
 ├── analyzer/
 │   ├── infrastructure_intel.go                # //go:build intel
 │   ├── providers_intel.go                     # //go:build intel
@@ -547,7 +547,7 @@ steps:
     if: matrix.edition == 'intel'
     uses: actions/checkout@v4
     with:
-      repository: careyjames/dnstool-intel
+      repository: careyjames/dns-tool-intel
       ssh-key: ${{ secrets.INTEL_DEPLOY_KEY }}
       path: intel
 

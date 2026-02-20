@@ -1,7 +1,7 @@
 // Copyright (c) 2024-2026 IT Help San Diego Inc.
 // Licensed under BUSL-1.1 — See LICENSE for terms.
 // Tests for this package are maintained in the private repository.
-// See github.com/careyjames/dnstool-intel for the full test suite.
+// See github.com/careyjames/dns-tool-intel for the full test suite.
 package analyzer
 
 import (
@@ -743,7 +743,7 @@ func TestGoldenRuleStubRegistryComplete(t *testing.T) {
                 t.Fatalf("failed to walk analyzer directory: %v", err)
         }
 
-        t.Logf("Stub registry: %d files are known stubs from dnstool-intel private repo", len(knownStubFiles))
+        t.Logf("Stub registry: %d files are known stubs from dns-tool-intel private repo", len(knownStubFiles))
 }
 
 func TestGoldenRuleNoProviderIntelligenceInPublicFiles(t *testing.T) {
@@ -810,14 +810,14 @@ func TestGoldenRuleNoProviderIntelligenceInPublicFiles(t *testing.T) {
 
                 for _, pattern := range forbiddenPairPatterns {
                         if strings.Contains(lower, pattern) {
-                                t.Errorf("LEAKED PROVIDER INTELLIGENCE in %s: found pattern %q — provider capability lists belong in dnstool-intel stubs only", path, pattern)
+                                t.Errorf("LEAKED PROVIDER INTELLIGENCE in %s: found pattern %q — provider capability lists belong in dns-tool-intel stubs only", path, pattern)
                         }
                 }
 
                 if path == "remediation.go" || path == "posture.go" || path == "scoring.go" {
                         for _, name := range capabilityProviderNames {
                                 if strings.Contains(lower, `"`+name+`"`) {
-                                        t.Errorf("LEAKED PROVIDER NAME in %s: found %q — provider capability data belongs in dnstool-intel stubs only", path, name)
+                                        t.Errorf("LEAKED PROVIDER NAME in %s: found %q — provider capability data belongs in dns-tool-intel stubs only", path, name)
                                 }
                         }
                 }

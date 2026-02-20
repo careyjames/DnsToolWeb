@@ -28,10 +28,10 @@ sync_repo() {
   echo "  ✓ ${cb_repo} synced"
 }
 
-sync_repo "DnsToolWeb" "dns-tool-webapp"
+sync_repo "dns-tool-web" "dns-tool-web"
 sync_repo "dns-tool-cli" "dns-tool-cli"
 
 echo ""
 echo "Public repos synced. For dns-tool-intel (private), run:"
-echo "  git clone --bare https://github.com/careyjames/dnstool-intel.git /tmp/intel-sync"
+echo "  git clone --bare https://github.com/careyjames/dns-tool-intel.git /tmp/intel-sync"
 echo "  git -C /tmp/intel-sync push --mirror https://careybalboa:\${CODEBERG_FORGEJO_API}@codeberg.org/careybalboa/dns-tool-intel.git"

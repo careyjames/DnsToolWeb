@@ -66,16 +66,16 @@ OSINT platform for RFC-compliant domain security analysis. Go/Gin backend, Boots
 - **ICAE** — Intelligence Confidence Audit Engine (accuracy tracking). Package: `go-server/internal/icae/`. DB tables: `ice_*` (legacy prefix, not renamed). Two layers per protocol: collection + analysis. Maturity: development → verified → consistent → gold → gold_master. 45 deterministic test cases.
 
 ## Repositories (GitHub Canonical, Codeberg Mirror)
-- **Webapp**: `careyjames/DnsToolWeb` (GitHub, canonical) → `careybalboa/dns-tool-webapp` (Codeberg, read-only mirror)
-- **Intel**: `careyjames/dnstool-intel` (GitHub, canonical) → `careybalboa/dns-tool-intel` (Codeberg, mirror)
+- **Webapp**: `careyjames/dns-tool-web` (GitHub, canonical) → `careybalboa/dns-tool-web` (Codeberg, read-only mirror)
+- **Intel**: `careyjames/dns-tool-intel` (GitHub, canonical) → `careybalboa/dns-tool-intel` (Codeberg, mirror)
 - **CLI**: `careyjames/dns-tool-cli` (GitHub, canonical) → `careybalboa/dns-tool-cli` (Codeberg, read-only mirror)
 - GitHub→Codeberg sync via `.github/workflows/mirror-codeberg.yml`. SonarCloud runs on GitHub (primary).
 
 ## Architecture Quick Reference
 - **Build tags**: `//go:build intel` (private) / `//go:build !intel` (public OSS stubs)
 - **12 stub files**: edge_cdn, saas_txt, infrastructure, providers, ip_investigation, manifest, posture_diff, ai_surface/{http,llms_txt,robots_txt,poisoning,scanner}
-- **Intel repo sync (GitHub)**: `node scripts/github-intel-sync.mjs` — reads/writes `careyjames/dnstool-intel` via GitHub API (canonical).
-- **Webapp sync (Codeberg)**: `node scripts/codeberg-webapp-sync.mjs` — reads/writes `careybalboa/dns-tool-webapp` via Forgejo API (mirror).
+- **Intel repo sync (GitHub)**: `node scripts/github-intel-sync.mjs` — reads/writes `careyjames/dns-tool-intel` via GitHub API (canonical).
+- **Webapp sync (Codeberg)**: `node scripts/codeberg-webapp-sync.mjs` — reads/writes `careybalboa/dns-tool-web` via Forgejo API (mirror).
 - **Intel repo sync (Codeberg)**: `node scripts/codeberg-intel-sync.mjs` — reads/writes `careybalboa/dns-tool-intel` via Forgejo API (mirror). Uses `CODEBERG_FORGEJO_API` token.
 - **Manual sync**: `./scripts/github-to-codeberg-sync.sh` — full-repo mirror (all branches + tags).
 - NEVER leave `_intel.go` files in this repo — push to Intel repo and delete locally.

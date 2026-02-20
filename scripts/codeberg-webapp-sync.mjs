@@ -2,7 +2,7 @@ import { readFileSync } from 'fs';
 
 const CODEBERG_API = 'https://codeberg.org/api/v1';
 const REPO_OWNER = 'careybalboa';
-const REPO_NAME = 'dns-tool-webapp';
+const REPO_NAME = 'dns-tool-web';
 const BRANCH = 'main';
 
 function getToken() {

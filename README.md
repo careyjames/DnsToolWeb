@@ -1,7 +1,7 @@
 # DNS Tool — Domain Security Intelligence Platform
 
 [![License: BSL 1.1](https://img.shields.io/badge/License-BSL%201.1-blue.svg)](LICENSE)
-[![SonarCloud](https://sonarcloud.io/api/project_badges/measure?project=careyjames_DnsToolWeb&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=careyjames_DnsToolWeb)
+[![SonarCloud](https://sonarcloud.io/api/project_badges/measure?project=careyjames_dns-tool-web&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=careyjames_dns-tool-web)
 
 > **Decision-ready intelligence, not just DNS data.**
 
@@ -38,7 +38,7 @@ Two report formats:
 
 ## Mirrors
 
-This repository is the canonical source. A read-only mirror is maintained at [codeberg.org/careybalboa/dns-tool-webapp](https://codeberg.org/careybalboa/dns-tool-webapp).
+This repository is the canonical source. A read-only mirror is maintained at [codeberg.org/careybalboa/dns-tool-web](https://codeberg.org/careybalboa/dns-tool-web).
 
 ## License
 
