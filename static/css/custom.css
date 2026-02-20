@@ -4028,7 +4028,7 @@ footer a.text-muted:hover { text-decoration-color: rgba(173, 181, 189, 0.8); }
     font-weight: 700;
     color: #6c757d;
     letter-spacing: 0.06em;
-    width: 28px;
+    width: 56px;
     flex-shrink: 0;
     text-align: right;
 }
