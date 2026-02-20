@@ -132,9 +132,12 @@ function hideOverlayAndReset(overlay, btn) {
 
 function isValidDomain(domain) {
     if (!domain) return false;
-    const d = domain.replace(/^\./, '').replace(/\.$/, '');
+    const d = domain.replace(/^\.+/, '').replace(/\.+$/, '');
     if (d.length > 253 || d.length === 0) return false;
     const labels = d.split('.');
+    if (labels.length === 1) {
+        return /^[a-zA-Z]{2,}$/.test(labels[0]) || labels[0].startsWith('xn--');
+    }
     for (const label of labels) {
         if (label.length === 0 || label.length > 63) return false;
         if (label.startsWith('-') || label.endsWith('-')) return false;

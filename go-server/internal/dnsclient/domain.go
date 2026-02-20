@@ -44,6 +44,7 @@ func ValidateDomain(domain string) bool {
         }
 
         domain = strings.TrimSpace(domain)
+        domain = strings.TrimLeft(domain, ".")
         domain = strings.TrimRight(domain, ".")
         if domain == "" {
                 return false
@@ -59,8 +60,9 @@ func ValidateDomain(domain string) bool {
         }
 
         labels := strings.Split(ascii, ".")
-        if len(labels) < 2 {
-                return false
+
+        if len(labels) == 1 {
+                return validateTLD(labels[0])
         }
 
         if len(labels) > maxLabelDepth {
@@ -72,6 +74,16 @@ func ValidateDomain(domain string) bool {
         }
 
         return validateTLD(labels[len(labels)-1])
+}
+
+func IsTLDInput(domain string) bool {
+        d := strings.TrimSpace(domain)
+        d = strings.TrimLeft(d, ".")
+        d = strings.TrimRight(d, ".")
+        if d == "" {
+                return false
+        }
+        return !strings.Contains(d, ".") && validateTLD(d)
 }
 
 func validateLabels(labels []string) bool {
