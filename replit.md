@@ -10,13 +10,19 @@ OSINT platform for RFC-compliant domain security analysis. Go/Gin backend, Boots
 - **DOD.md** — Definition of Done checklist
 
 ## Quality Gates — MANDATORY (Never Regress)
-| Lighthouse | Target | Notes |
-|------------|--------|-------|
-| Performance | 100 | 98–100 acceptable (network variance) |
-| Best Practices | 100 | < 100 = real UX error, fix immediately |
-| Accessibility | 100 | < 100 = broken markup, fix immediately |
-| SEO | 100 | < 100 = missing metadata, fix immediately |
+| Tool | Target | Notes |
+|------|--------|-------|
+| Lighthouse Performance | 100 | 98–100 acceptable (network variance) |
+| Lighthouse Best Practices | 100 | < 100 = real UX error, fix immediately |
+| Lighthouse Accessibility | 100 | < 100 = broken markup, fix immediately |
+| Lighthouse SEO | 100 | < 100 = missing metadata, fix immediately |
 | **Observatory** | **130** | **Never decrease. Security only moves forward.** |
+| **SonarCloud Reliability** | **A** | **Zero new bugs. Non-negotiable.** |
+| **SonarCloud Security** | **A** | **Zero new vulnerabilities. Non-negotiable.** |
+| **SonarCloud Maintainability** | **A** | **Zero new code smells. Non-negotiable.** |
+
+## Development Process — Research First, Build Correctly
+No "build fast, clean up later." Research the best-practices path first (cite RFCs, standards). Design before implementing. Write tests first. Check quality gates during development, not after. The tests, quality gates, and documentation exist to prevent rework — use them.
 
 ## Critical Rules (Summary)
 1. **After ANY Go code changes**: Run `go test ./go-server/... -count=1` before considering work done.

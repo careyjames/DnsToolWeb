@@ -10,6 +10,51 @@ This file is the project's permanent breadcrumb trail — every session's decisi
 
 ---
 
+## Session: February 20, 2026 (v26.21.36 — Quality Gates & Lighthouse Research)
+
+### v26.21.36 — Accessibility, SEO & Quality Gate Framework
+
+#### Quality Gate Expansion: SonarCloud A-Rating
+
+Added SonarCloud A-rating (Reliability, Security, Maintainability) as a mandatory, non-negotiable quality gate across all four reference files (DOD.md, SKILL.md, PROJECT_CONTEXT.md, replit.md). This joins Lighthouse and Mozilla Observatory as the three pillars of quality enforcement.
+
+**Key principle codified**: Research first, build correctly. No "build fast, clean up later." The tests, quality gates, and documentation exist to prevent rework — use them.
+
+#### Lighthouse Accessibility & SEO Fixes (92 → 100 target)
+
+**Accessibility fixes:**
+- Added `aria-label` to footer owl image link (`_footer.html`) — discernible link name
+- Converted overlay `<h4>Running Multi-Source Intelligence Audit</h4>` to `<p class="h4" role="status">` across 4 templates (index, history, dossier, results) — eliminates heading hierarchy skip without changing visual appearance
+
+**SEO fixes:**
+- Added `<meta name="robots" content="index, follow">` to all public-facing pages (index, history, architecture, changelog, confidence, sources) — previously missing, causing Lighthouse SEO audit failure
+- Pages that intentionally block indexing (results, admin, compare, dossier, brand_colors) already had `noindex, nofollow` and remain unchanged
+
+#### Content-Usage vs Content-Signal — Lighthouse/Google Gap (Research Finding)
+
+**Two competing robots.txt AI preference directives exist:**
+
+1. **`Content-Usage`** — IETF aipref working group standard (draft-ietf-aipref-attach-04, Oct 2025). Uses vocabulary from draft-ietf-aipref-vocab. Syntax: `Content-Usage: train-ai=y`. This is what DNS Tool uses and detects.
+
+2. **`Content-Signal`** — Cloudflare proprietary directive (contentsignals.org, Oct 2025). Already deployed on 3.8M Cloudflare-managed sites. Syntax: `Content-Signal: search=yes,ai-train=no`.
+
+**Lighthouse situation (as of Feb 20, 2026):**
+- Lighthouse PR #16767 merged **January 12, 2026** — but it ONLY added `Content-Signal` (Cloudflare's directive), NOT `Content-Usage` (the IETF standard)
+- As of **February 18, 2026**, the fix has NOT been deployed to PageSpeed Insights production — users still report "Unknown directive" errors for `Content-Signal`
+- `Content-Usage` is not recognized by Lighthouse at all — no PR exists for it
+- **Result**: Both directives are flagged as "Unknown directive" by PageSpeed Insights
+
+**Assessment**: Two different Google-adjacent teams (Lighthouse/Chrome DevTools vs the IETF working group that Google participates in) are not coordinating. Lighthouse only knows about Cloudflare's proprietary `Content-Signal`, while the actual IETF standard being developed is `Content-Usage`. The Lighthouse team merged support for the Cloudflare directive on Jan 12 but hasn't deployed it to production, and hasn't addressed the IETF standard at all.
+
+**DNS Tool's position**: We use `Content-Usage` because it's the IETF standard track. The Lighthouse SEO penalty is a false positive caused by Lighthouse not yet recognizing this emerging standard. This does NOT affect actual SEO — search engines gracefully ignore unrecognized robots.txt directives per RFC 9309.
+
+**Action items (not yet implemented):**
+- Consider filing a Lighthouse issue/PR to add `Content-Usage` recognition (tracks the actual IETF standard)
+- Monitor Lighthouse deployment of PR #16767 for `Content-Signal` support
+- Document in our AI Surface Scanner's detection output that `Content-Usage` is the IETF standard vs `Content-Signal` is the Cloudflare proprietary equivalent
+
+---
+
 ## Session: February 20, 2026 (v26.21.21 — Scanner Detection System)
 
 ### v26.21.21 — Scanner Detection & Classification System

@@ -92,7 +92,7 @@ npx csso static/css/custom.css -o static/css/custom.min.css
 ### Version Bump — MANDATORY EVERY TIME (cache-busting)
 **After EVERY change (Go, CSS, templates — no exceptions)**, bump the patch number in `AppVersion` in `go-server/internal/config/config.go`. The version string busts browser caches for all static assets. If you don't bump it, the user cannot test your changes — they'll see stale cached content. This is non-negotiable and must happen before rebuild.
 
-### Quality Gates — Lighthouse & Observatory (NEVER REGRESS)
+### Quality Gates — Lighthouse, Observatory & SonarCloud (NEVER REGRESS)
 
 Every change must maintain or improve these scores. Shipping a regression is unacceptable.
 
@@ -103,21 +103,39 @@ Every change must maintain or improve these scores. Shipping a regression is una
 | Lighthouse | Accessibility | 100 | Must be 100. No broken markup |
 | Lighthouse | SEO | 100 | Must be 100. No missing metadata |
 | Mozilla Observatory | Security | 130 | Never decrease. Only forward |
+| SonarCloud | Reliability | A | Zero new bugs |
+| SonarCloud | Security | A | Zero new vulnerabilities |
+| SonarCloud | Maintainability | A | Zero new code smells |
+
+**SonarCloud enforcement:**
+- CI runs on every push to main/develop and on PRs (`sonarcloud.yml`)
+- Quality Gate must pass: Reliability A, Security A, Maintainability A
+- No new bugs, vulnerabilities, or code smells
+- Security hotspots must be reviewed, not left open
+- A-rating is non-negotiable — foundational code quality, not retroactive cleanup
+
+**Development process — research first, build correctly:**
+1. Research the best-practices path before writing code (cite RFCs, standards)
+2. Design boundaries, error paths, data flows before implementing
+3. Write or update tests first, implement to pass them
+4. Check quality gates during development, not after
+5. Smallest correct change — not the fastest, not the most impressive
 
 **After ANY template/CSS/HTML changes**, verify you haven't broken:
 - Missing `aria-label` or `alt` attributes
 - Form inputs without associated labels
 - Color contrast violations
-- Missing `<meta>` tags (description, viewport)
+- Missing `<meta>` tags (description, viewport, robots)
 - Broken heading hierarchy
 - Non-composited CSS animations (use `transform`/`opacity` for animations)
 
 **Anti-patterns that cause regressions:**
 - `<input>` without `<label>` or `aria-label` → Accessibility drops
 - Missing `lang` attribute on `<html>` → SEO drops
-- Missing `meta description` → SEO drops
+- Missing `meta description` or `meta robots` → SEO drops
 - Console errors in production → Best Practices drops
 - `border-color` transitions (non-composited) → Performance warning
+- Building fast then cleaning up → Technical debt, rework, broken gates
 
 ### Public-Facing Docs — Update After Feature/Section Changes
 

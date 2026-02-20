@@ -43,7 +43,7 @@ Every change must satisfy this checklist before it ships.
 - [ ] Go binary rebuilt and tested
 - [ ] Workflow restarted and running without errors
 
-## Quality Gates — Lighthouse & Observatory (MANDATORY)
+## Quality Gates — Lighthouse, Observatory & SonarCloud (MANDATORY)
 
 Every change must maintain or improve these scores. **Never ship a regression.**
 
@@ -54,12 +54,18 @@ Every change must maintain or improve these scores. **Never ship a regression.**
 | Lighthouse | Accessibility | 100 | 100 (no excuses) |
 | Lighthouse | SEO | 100 | 100 (no excuses) |
 | Mozilla Observatory | Security | 130 | 130 (never go backwards) |
+| SonarCloud | Reliability | A | A (zero new bugs) |
+| SonarCloud | Security | A | A (zero new vulnerabilities) |
+| SonarCloud | Maintainability | A | A (zero new code smells) |
 
 - [ ] Lighthouse Performance ≥ 98 (preferably 100)
 - [ ] Lighthouse Best Practices = 100
 - [ ] Lighthouse Accessibility = 100
 - [ ] Lighthouse SEO = 100
 - [ ] Mozilla Observatory ≥ 130
+- [ ] SonarCloud Quality Gate passes (Reliability A, Security A, Maintainability A)
+- [ ] No new bugs, vulnerabilities, or code smells introduced
+- [ ] Security hotspots reviewed (not left unreviewed)
 
 **Rules:**
 1. Best Practices < 100 means a real error exists that affects user experience — fix it.
@@ -67,8 +73,22 @@ Every change must maintain or improve these scores. **Never ship a regression.**
 3. SEO < 100 means missing metadata, structural issues — fix it.
 4. Performance 98–100 is acceptable due to network variance; consistent 100 is the goal.
 5. Observatory score must never decrease. Security posture only moves forward.
-6. **Test URL**: `https://pagespeed.web.dev/` against `https://dnstool.it-help.tech`
-7. **Observatory URL**: `https://observatory.mozilla.org/` against `dnstool.it-help.tech`
+6. SonarCloud A-rating is non-negotiable. Code quality is foundational, not retroactive.
+7. **Test URL**: `https://pagespeed.web.dev/` against `https://dnstool.it-help.tech`
+8. **Observatory URL**: `https://observatory.mozilla.org/` against `dnstool.it-help.tech`
+9. **SonarCloud**: Enforced via CI on GitHub (`sonarcloud.yml`). Quality Gate must pass before merge.
+
+## Development Process — Research First, Build Correctly
+
+The anti-pattern is: build fast, get an idea working, then clean up. The correct process is:
+
+- [ ] **Research before coding** — find the best-practices path, cite RFCs or authority sources
+- [ ] **Design before implementing** — identify boundaries, error paths, data flows
+- [ ] **Let tests guide** — write or update tests first, then implement to pass them
+- [ ] **Quality gates are guardrails, not afterthoughts** — check them during development, not after
+- [ ] **Smallest correct change** — not the fastest change, not the most impressive change
+
+**The tests, quality gates, and documentation exist to prevent rework. Use them.**
 
 ## Standards
 
