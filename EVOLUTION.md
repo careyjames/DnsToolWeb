@@ -2579,6 +2579,19 @@ Previously called "Session Sentinel." Renamed for identity and potential distrib
 - Footer navigation: Architecture link added alongside Sources, Changelog, Security Policy.
 - **Version**: 26.20.83
 
+### Print-Only CSS Race Condition Fix — v26.21.44
+- **Root cause**: `.print-report-header`, `.print-domain-banner`, `.print-report-footer` had NO `display: none` rule for screen view. On normal page loads, they rendered with zero visible height (no content dimensions outside `@media print`). But when loaded via `document.write()`, external stylesheets load asynchronously — the HTML renders before `@media print` rules apply, causing print elements to flash on screen and block the visual layout.
+- **Fix**: Added explicit `display: none !important` for all three print-only wrapper classes in the screen stylesheet. They are shown via `display: block !important` inside `@media print`.
+- **Scroll reset**: Added `globalThis.scrollTo(0, 0)` after every `document.close()` call across all four files using the `fetch()+document.write()` pattern (main.js, results.html, history.html, dossier.html).
+- **Rule added**: replit.md Rule 14 — "Never add print-only template content without a corresponding screen hide rule."
+- **Lesson**: `document.write()` creates a CSS race condition that normal navigation does not. Any element that should be hidden on screen MUST have an explicit screen-level hide rule, not just an `@media print` show rule. The absence of a screen rule means the element is visible during the stylesheet loading gap.
+
+### Development Process Hardened — v26.21.44
+- **SKILL.md rewritten**: Expanded 5-line development process into mandatory 4-phase protocol (Research → Design → Implement → Verify). Each phase has specific checkpoints that must be completed BEFORE advancing.
+- **Known race conditions documented**: CSS `document.write()` flash, `.loading-overlay` state, `pointer-events` scroll death.
+- **Anti-pattern catalog expanded**: Added print-only flash, pointer-events scroll kill, Safari overlay freeze to the list of known regressions with root causes.
+- **Core principle**: Clean code comes from clean thinking. If a quality gate catches something, the process was skipped. Research and design happen before implementation, not after.
+
 ### Changelog Updated — v26.20.83
 - Added 10 new changelog entries covering v26.19.0 through v26.20.83.
 - Key entries: BSL 1.1 migration, boundary integrity tests, Google OAuth 2.0, security redaction, DKIM expansion, brand verdict overhaul, CT resilience, architecture diagrams.

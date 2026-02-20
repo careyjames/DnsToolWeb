@@ -115,28 +115,58 @@ Every change must maintain or improve these scores. Shipping a regression is una
 - Security hotspots must be reviewed, not left open
 - A-rating is non-negotiable — foundational code quality, not retroactive cleanup
 
-**Development process — research first, build correctly:**
-1. Research the best-practices path before writing code (cite RFCs, standards)
-2. Design boundaries, error paths, data flows before implementing
-3. Write or update tests first, implement to pass them
-4. Check quality gates during development, not after
-5. Smallest correct change — not the fastest, not the most impressive
+**Development Process — Research First, Build Correctly (MANDATORY)**
 
-**After ANY template/CSS/HTML changes**, verify you haven't broken:
-- Missing `aria-label` or `alt` attributes
-- Form inputs without associated labels
-- Color contrast violations
-- Missing `<meta>` tags (description, viewport, robots)
-- Broken heading hierarchy
-- Non-composited CSS animations (use `transform`/`opacity` for animations)
+This is not a suggestion. This is the engineering discipline required for this project. Clean code comes from clean thinking — research, design, then implement. Never the reverse. If SonarCloud, Lighthouse, or Observatory catches something, it means the process was skipped.
 
-**Anti-patterns that cause regressions:**
+**Phase 1 — Research (BEFORE writing any code)**
+1. Identify every protocol, standard, or browser behavior involved in the change.
+2. Read the authoritative sources: RFCs, MDN, WHATWG, OWASP, NIST. Check `AUTHORITIES.md`.
+3. Understand how the feature behaves across Chrome, Safari, Firefox, and mobile.
+4. Identify CSS rendering order, `document.write()` race conditions, `@media` scope, CSP constraints.
+5. Check the "Failures & Lessons Learned" section in `EVOLUTION.md` — has this exact mistake been made before?
+6. Check the Critical Rules in `replit.md` — does this change touch a documented danger zone?
+
+**Phase 2 — Design (BEFORE writing any code)**
+1. Map the full data flow: template → CSS → JS → browser rendering pipeline.
+2. Identify all elements affected: screen vs print, light vs dark, desktop vs mobile (375px).
+3. For CSS: verify every new class has both a screen rule AND a print rule if it appears in both contexts. Print-only elements MUST have `display: none !important` in the screen stylesheet.
+4. For JS: verify `document.write()` pages load CSS synchronously (no flash of unstyled content). Verify `scrollTo(0,0)` after every `document.close()`.
+5. For templates: verify no inline styles, no inline event handlers, all elements have accessibility attributes.
+6. Write the test assertions BEFORE writing the implementation.
+
+**Phase 3 — Implement (smallest correct change)**
+1. Write the code to pass the pre-defined tests.
+2. Check every quality gate AS YOU BUILD, not after:
+   - Accessibility: `aria-label`, `alt`, `<label>`, heading hierarchy, contrast ratios
+   - SEO: `<meta>` tags, `lang` attribute, structured data
+   - Performance: composited animations only (`transform`/`opacity`), no layout thrash
+   - Security: CSP compliance, no inline scripts/styles, nonce usage
+   - Best Practices: no console errors, proper HTTPS, valid HTML
+3. Run `go test` after Go changes. Run `csso` after CSS changes. Rebuild. Verify.
+4. Verify at 375px width for mobile. Verify in both screen and print contexts.
+
+**Phase 4 — Verify (BEFORE declaring done)**
+1. The change must not introduce ANY new SonarCloud issues (bugs, vulnerabilities, smells).
+2. The change must not decrease ANY Lighthouse category below 100 (98 acceptable for Performance only).
+3. The change must not decrease Observatory score below 130.
+4. If you cannot verify a quality gate, state that explicitly — do not assume it passes.
+
+**Known CSS Race Conditions (from past failures):**
+- `document.write()` replaces the entire DOM. External stylesheets load asynchronously. Print-only elements without explicit screen `display: none` will flash on screen during the loading gap.
+- `.loading-overlay` transitions depend on class state. After `document.write()`, the new page's overlay must start in the hidden state (`opacity: 0; visibility: hidden; pointer-events: none`).
+- `pointer-events: none` on `body` or `html` kills Chrome wheel/trackpad scrolling. Only target specific interactive elements.
+
+**Anti-patterns that have caused regressions (learn from history):**
 - `<input>` without `<label>` or `aria-label` → Accessibility drops
 - Missing `lang` attribute on `<html>` → SEO drops
 - Missing `meta description` or `meta robots` → SEO drops
 - Console errors in production → Best Practices drops
 - `border-color` transitions (non-composited) → Performance warning
-- Building fast then cleaning up → Technical debt, rework, broken gates
+- Print-only elements without screen hide rule → Flash of unstyled content after `document.write()`
+- `pointer-events: none` on body/html → Chrome scroll death
+- `location.href` during overlay animation → Safari/WebKit kills JS, overlay freezes
+- Building fast then cleaning up → Technical debt, rework, broken gates — THIS IS THE ROOT CAUSE OF MOST REGRESSIONS
 
 ### Public-Facing Docs — Update After Feature/Section Changes
 
