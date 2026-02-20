@@ -83,6 +83,14 @@ This section documents mistakes that should never happen again. Each entry inclu
 
 **Prevention rule**: **AUTHORITIES.md Verification Checklist, item 5**: Use observation-based language. "Detected," "observed," "present" — never "compliant," "validated," or "ensures" unless we actually perform the action (e.g., SMTP STARTTLS probing IS verification because we connect and check).
 
+#### Gotcha #4: pointer-events: none on body Kills Chrome Scroll (Feb 2026)
+
+**What happened**: The `.loading` CSS class applied `pointer-events: none` to `<body>`. In Chrome, this completely blocked wheel/trackpad scrolling during any loading state (re-analyze, new scan, link clicks). Users on macOS Chrome (where trackpad is the primary scroll method) could not scroll at all.
+
+**Why it happened**: `pointer-events: none` seemed like a clean way to prevent all interaction during loading. We didn't test scroll behavior specifically — only click behavior. Chrome's implementation treats wheel events as pointer events, so blocking pointer events on body kills scroll. The loading overlay already handled interaction blocking, making the body-level rule redundant.
+
+**Prevention rule**: **NEVER apply `pointer-events: none` to document root elements (`html`, `body`).** It kills scroll in Chrome. Apply it to specific interactive element selectors (`a`, `button`, `input`, `select`, `textarea`, `[role="button"]`) instead. The loading overlay (full-viewport, `z-index: 9999`, `pointer-events: auto`) already captures all pointer events — body-level blocking is always redundant when an overlay is active.
+
 ---
 
 ## Session: February 20, 2026 (v26.21.38 — robots.txt Cleanup & Content-Usage Corrections)

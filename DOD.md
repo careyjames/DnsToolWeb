@@ -39,6 +39,7 @@ Every change must satisfy this checklist before it ships.
 
 - [ ] CSS minified if changed (`npx csso`)
 - [ ] JS minified if changed (`npx terser`)
+- [ ] No `pointer-events: none` on `body` or `html` (kills Chrome scroll — use targeted selectors)
 - [ ] Version bumped if static assets changed (`AppVersion` in config.go)
 - [ ] Go binary rebuilt and tested
 - [ ] Workflow restarted and running without errors

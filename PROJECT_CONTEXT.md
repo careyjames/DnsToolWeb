@@ -395,6 +395,7 @@ After evaluating APA, Chicago/Turabian, IEEE, NIST SP 800, and ICD, the project 
 - **CSP inline styles**: Inline `style=""` blocked. Use CSS utility classes.
 - **Safari overlay animation**: Every `classList.remove('d-none')` on animated overlays MUST use `showOverlay()` — WebKit doesn't restart CSS animations from `display:none`.
 - **Font Awesome subset**: WOFF2 subset, NOT full FA. Check CSS rule exists before using icons. Run `python3 go-server/scripts/audit_icons.py` to verify.
+- **pointer-events: none**: NEVER apply to `body` or `html` — Chrome does not dispatch wheel/trackpad scroll events to elements with `pointer-events: none`, completely blocking page scroll. Use targeted selectors on interactive elements (`a`, `button`, `input`, `select`, `textarea`, `[role="button"]`) instead.
 - **DOM safety**: `createElement` + `textContent` + `appendChild`. Never `innerHTML` with dynamic data.
 - **Executive print**: Minimum body 11pt, small 9pt, code 8.5pt. Nothing below 8pt.
 - **Bootstrap overrides**: Override `--bs-btn-*` CSS variables, NOT direct `background-color`.

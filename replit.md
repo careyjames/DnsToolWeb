@@ -37,6 +37,7 @@ No "build fast, clean up later." Research the best-practices path first (cite RF
 9. **Font Awesome**: WOFF2 subset only. Check CSS rule exists before using new icons.
 10. **Stubs**: `_oss.go` files return safe non-nil defaults, never errors.
 11. **Capitalization**: NIST/Chicago title case for all user-facing headings, badges, trust indicators. Never camelCase in UI copy.
+12. **pointer-events**: NEVER apply `pointer-events: none` to `body` or `html` — kills Chrome wheel/trackpad scroll. Use targeted selectors on interactive elements instead.
 
 ## /dev/null Ephemeral Scan (v26.21.11)
 - **User-selectable checkbox** in Advanced Options: `/dev/null Scan` — full analysis, zero persistence.
