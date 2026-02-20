@@ -3840,32 +3840,43 @@ footer a.text-muted:hover { text-decoration-color: rgba(173, 181, 189, 0.8); }
 .icae-cal-ruler-wrap {
     padding: 0 0.75rem;
 }
-.icae-cal-ruler {
-    position: relative;
+.icae-cal-scale {
+    border: 1px solid rgba(108, 117, 125, 0.3);
+    border-radius: 6px;
+    overflow: hidden;
 }
-.icae-cal-tick {
-    font-size: 0.65rem;
-    font-weight: 600;
-    color: #8b949e;
-    font-variant-numeric: tabular-nums;
-    letter-spacing: 0.03em;
-    border-left: 1px solid rgba(139, 148, 158, 0.5);
-    padding-left: 3px;
-    padding-bottom: 2px;
+.icae-cal-scale-row {
+    display: flex;
 }
-.icae-cal-band {
-    font-size: 0.6rem;
+.icae-cal-scale-cell {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 0.45rem 0.25rem;
+    border-right: 1px solid rgba(108, 117, 125, 0.25);
+}
+.icae-cal-scale-cell:last-child {
+    border-right: none;
+}
+.icae-cal-scale-label {
+    font-size: 0.7rem;
     font-weight: 700;
-    letter-spacing: 0.06em;
-    text-align: center;
-    padding: 2px 0;
-    border-radius: 2px;
+    letter-spacing: 0.04em;
+    line-height: 1.2;
 }
-.icae-cal-band-dev { background: rgba(160, 180, 216, 0.12); color: rgba(160, 180, 216, 0.6); }
-.icae-cal-band-verified { background: rgba(107, 181, 255, 0.12); color: rgba(107, 181, 255, 0.6); }
-.icae-cal-band-consistent { background: rgba(86, 211, 100, 0.12); color: rgba(86, 211, 100, 0.6); }
-.icae-cal-band-gold { background: rgba(224, 184, 92, 0.12); color: rgba(224, 184, 92, 0.6); }
-.icae-cal-band-gm { background: rgba(240, 221, 179, 0.12); color: rgba(240, 221, 179, 0.6); }
+.icae-cal-scale-range {
+    font-size: 0.6rem;
+    font-weight: 500;
+    opacity: 0.7;
+    margin-top: 1px;
+}
+.icae-cal-band-dev { background: rgba(160, 180, 216, 0.10); color: #a0b4d8; }
+.icae-cal-band-verified { background: rgba(107, 181, 255, 0.10); color: #6bb5ff; }
+.icae-cal-band-consistent { background: rgba(86, 211, 100, 0.10); color: #56d364; }
+.icae-cal-band-gold { background: rgba(224, 184, 92, 0.10); color: #e0b85c; }
+.icae-cal-band-gm { background: rgba(240, 221, 179, 0.10); color: #f0ddb3; }
 
 .icae-cal-strip {
     background: rgba(33, 37, 41, 0.5);
