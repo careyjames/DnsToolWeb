@@ -10,6 +10,40 @@ This file is the project's permanent breadcrumb trail — every session's decisi
 
 ---
 
+## Session: February 20, 2026 (v26.21.17 — Hidden Prompt Detection Enhancement)
+
+### v26.21.17 — Expanded AI Surface Hidden Prompt Detection
+
+#### What Changed
+
+1. **Scanner gap closed**: `scanForHiddenPrompts()` in `ai_surface/scanner.go` now detects 8 hiding techniques (up from 4). Added detection for `opacity:0`, `font-size:0`, `color:transparent`, and `text-indent:-9999`. Refactored from simple substring matching to compiled regex patterns for precision.
+
+2. **Zero false positives by design**: Regex patterns use careful boundary matching (e.g., `opacity:0` only flags when followed by a non-digit, non-dot character — so `opacity:0.5` and `opacity:0.8` are safe). Existing dual-gate architecture preserved: a hiding pattern is only flagged when prompt injection keywords exist within 500 characters.
+
+3. **Expanded prompt keyword list**: Added 6 new injection keywords: "disregard", "forget your", "new instructions", "do not reveal", "override", "jailbreak" (total: 12 keywords).
+
+4. **Deduplication**: Results are now deduplicated by method+keyword pair, preventing duplicate artifacts when the same hiding pattern appears multiple times.
+
+5. **Off-screen detection broadened**: Regex now matches `position:fixed` (not just `absolute`), catches `top:-9999` (not just `left:`), and handles any 4+ digit negative offset.
+
+6. **Comprehensive test coverage**: 9 test functions with 40+ test cases including:
+   - Per-pattern detection verification (opacity, font-size, transparent, text-indent)
+   - 9 real-world safe CSS scenarios (Bootstrap modals, hamburger menus, fade animations, image replacement, tooltip hidden, SR-only text, CSS transitions, font-size spacing, complex pages) — all confirmed zero false positives
+   - Malicious combination detection
+   - Expanded keyword coverage
+   - Deduplication verification
+
+7. **Community signal inventory**: Full Easter egg/community signal inventory pushed to private Intel repo (`docs/community-signals-inventory.md`) — removed from all public documentation.
+
+#### Files Changed
+- **Modified**: `go-server/internal/analyzer/ai_surface/scanner.go` (regex patterns, refactored detection), `go-server/internal/config/config.go` (version bump)
+- **Added**: `go-server/internal/analyzer/ai_surface/hidden_prompts_test.go` (40+ test cases)
+
+#### Architectural Note
+The scanner gap was identified when analyzing our own 50% opacity community signal. The dual-gate design (hiding pattern + prompt keyword proximity) ensures normal CSS is never flagged — only content that combines a hiding technique with AI prompt injection language triggers detection.
+
+---
+
 ## Session: February 19, 2026 (v26.21.11 — Community Signals, /dev/null Enhancements, RFC 1392 Compliance)
 
 ### v26.21.11 — Community Signals & /dev/null Enhancements

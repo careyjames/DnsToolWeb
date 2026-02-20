@@ -7,10 +7,25 @@ import (
         "io"
         "log/slog"
         "net/http"
+        "regexp"
         "strings"
 
         "dnstool/go-server/internal/dnsclient"
 )
+
+var hiddenPatternRegexes = []struct {
+        re     *regexp.Regexp
+        method string
+}{
+        {regexp.MustCompile(`display\s*:\s*none`), "CSS display:none"},
+        {regexp.MustCompile(`visibility\s*:\s*hidden`), "CSS visibility:hidden"},
+        {regexp.MustCompile(`position\s*:\s*(absolute|fixed)[^}]{0,100}(left|top)\s*:\s*-\d{4,}`), "Off-screen positioning"},
+        {regexp.MustCompile(`aria-hidden\s*=\s*"true"`), "ARIA hidden attribute"},
+        {regexp.MustCompile(`opacity\s*:\s*0[^.0-9]`), "CSS zero opacity"},
+        {regexp.MustCompile(`font-size\s*:\s*0[^.0-9]`), "CSS zero font-size"},
+        {regexp.MustCompile(`color\s*:\s*transparent`), "CSS transparent color"},
+        {regexp.MustCompile(`text-indent\s*:\s*-\d{4,}`), "Off-screen text-indent"},
+}
 
 type Scanner struct {
         HTTP *dnsclient.SafeHTTPClient
@@ -442,45 +457,39 @@ func (s *Scanner) checkPoisoning(ctx context.Context, domain string, evidence *[
         return result
 }
 
+var promptKeywords = []string{
+        "you are a", "ignore previous", "system prompt",
+        "act as", "pretend you", "respond as if",
+        "disregard", "forget your", "new instructions",
+        "do not reveal", "override", "jailbreak",
+}
+
 func scanForHiddenPrompts(content string) []map[string]any {
         artifacts := []map[string]any{}
-
-        hiddenPatterns := []struct {
-                pattern string
-                method  string
-        }{
-                {"display:none", "CSS hidden element"},
-                {"visibility:hidden", "CSS visibility hidden"},
-                {"position:absolute;left:-9999", "Off-screen positioning"},
-                {"aria-hidden=\"true\"", "ARIA hidden"},
-        }
-
-        promptKeywords := []string{
-                "you are a", "ignore previous", "system prompt",
-                "act as", "pretend you", "respond as if",
-        }
+        seen := map[string]bool{}
 
         lower := strings.ToLower(content)
-        for _, hp := range hiddenPatterns {
-                if !strings.Contains(lower, hp.pattern) {
-                        continue
-                }
-                idx := strings.Index(lower, hp.pattern)
-                if idx < 0 {
-                        continue
-                }
-                start := idx
-                end := idx + 500
-                if end > len(lower) {
-                        end = len(lower)
-                }
-                nearby := lower[start:end]
-                for _, kw := range promptKeywords {
-                        if strings.Contains(nearby, kw) {
-                                artifacts = append(artifacts, map[string]any{
-                                        "method": hp.method,
-                                        "detail": fmt.Sprintf("Hidden element with prompt keyword '%s' detected near %s pattern", kw, hp.method),
-                                })
+        for _, hp := range hiddenPatternRegexes {
+                locs := hp.re.FindAllStringIndex(lower, -1)
+                for _, loc := range locs {
+                        start := loc[0]
+                        end := start + 500
+                        if end > len(lower) {
+                                end = len(lower)
+                        }
+                        nearby := lower[start:end]
+                        for _, kw := range promptKeywords {
+                                if strings.Contains(nearby, kw) {
+                                        key := hp.method + "|" + kw
+                                        if seen[key] {
+                                                continue
+                                        }
+                                        seen[key] = true
+                                        artifacts = append(artifacts, map[string]any{
+                                                "method": hp.method,
+                                                "detail": fmt.Sprintf("Hidden element with prompt keyword '%s' detected near %s pattern", kw, hp.method),
+                                        })
+                                }
                         }
                 }
         }
