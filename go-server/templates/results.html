@@ -84,6 +84,22 @@
         </div>
         {{end}}
 
+        {{if .IsPublicSuffix}}
+        <div class="alert alert-warning border-0 mb-3">
+            <div class="d-flex align-items-start">
+                <i class="fas fa-globe me-2 mt-1"></i>
+                <div>
+                    <strong>Public Suffix Detected</strong> &mdash; <strong>{{.Domain}}</strong> is a shared registry suffix (like <code>co.uk</code>, <code>com.au</code>, or <code>co.jp</code>), not a registrable domain.
+                    <div class="mt-1 small">
+                        Individual organizations register domains <em>under</em> public suffixes &mdash; for example, <code>example.co.uk</code> rather than <code>co.uk</code> itself.
+                        DNS security records (SPF, DMARC, DKIM) are configured on registrable domains, not on the suffix.
+                        Try scanning a full domain like <code>bbc.co.uk</code> or <code>example.com.au</code> for meaningful results.
+                    </div>
+                </div>
+            </div>
+        </div>
+        {{end}}
+
         {{$results := .Results}}
         {{$spf := mapGetMap "spf_analysis" $results}}
         {{$dmarc := mapGetMap "dmarc_analysis" $results}}

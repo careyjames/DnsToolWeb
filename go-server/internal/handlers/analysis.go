@@ -163,6 +163,7 @@ func (h *AnalysisHandler) ViewAnalysisStatic(c *gin.Context) {
                 "DriftPrevTime":        drift.PrevTime,
                 "DriftPrevID":          drift.PrevID,
                 "DriftFields":          drift.Fields,
+                "IsPublicSuffix":       isPublicSuffixDomain(analysis.AsciiDomain),
         }
         if icaeMetrics := icae.LoadReportMetrics(ctx, h.DB.Queries); icaeMetrics != nil {
                 viewData["ICAEMetrics"] = icaeMetrics
@@ -376,6 +377,7 @@ func (h *AnalysisHandler) Analyze(c *gin.Context) {
         rfcCount := analyzer.CountVerifiedRFCs(results)
 
         isSub, rootDom := extractRootDomain(asciiDomain)
+        isPublicSuffix := isPublicSuffixDomain(asciiDomain)
         analyzeData := gin.H{
                 "AppVersion":           h.Config.AppVersion,
                 "CspNonce":             nonce,
@@ -409,6 +411,7 @@ func (h *AnalysisHandler) Analyze(c *gin.Context) {
                 "Ephemeral":            ephemeral,
                 "DevNull":              devNull,
                 "IsPrivateReport":      isPrivate,
+                "IsPublicSuffix":       isPublicSuffix,
         }
         if icaeMetrics := icae.LoadReportMetrics(ctx, h.DB.Queries); icaeMetrics != nil {
                 analyzeData["ICAEMetrics"] = icaeMetrics

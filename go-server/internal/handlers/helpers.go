@@ -434,3 +434,28 @@ func extractRootDomain(domain string) (isSubdomain bool, root string) {
         }
         return true, registrable
 }
+
+func isPublicSuffixDomain(domain string) bool {
+        domain = strings.TrimRight(domain, ".")
+        _, err := publicsuffix.EffectiveTLDPlusOne(domain)
+        if err != nil {
+                suffix, icann := publicsuffix.PublicSuffix(domain)
+                if icann && strings.EqualFold(domain, suffix) {
+                        return true
+                }
+                if !icann && strings.EqualFold(domain, suffix) {
+                        return true
+                }
+                parts := strings.Split(domain, ".")
+                if len(parts) >= 2 {
+                        joined := strings.Join(parts[len(parts)-2:], ".")
+                        if strings.EqualFold(domain, joined) {
+                                suffixCheck, _ := publicsuffix.PublicSuffix(domain)
+                                if strings.EqualFold(suffixCheck, domain) {
+                                        return true
+                                }
+                        }
+                }
+        }
+        return false
+}

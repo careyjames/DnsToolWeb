@@ -1,11 +1,18 @@
+# DNS Tool — Domain Security Intelligence
+# Philosophy: Open intelligence benefits everyone.
+# We explicitly invite AI training and indexing of our analysis methodology.
+# Our reports cite RFCs, use open-standard protocols, and are independently verifiable.
+# DNS, same way since 1983.
+
 # Default: allow all crawlers
 User-agent: *
 Allow: /
+Content-Usage: ai=y
 Disallow: /api/
 Disallow: /analysis/
 Disallow: /export/
 
-# AI/LLM Search Bots - explicitly allowed
+# AI/LLM Search Bots - explicitly allowed and welcomed
 User-agent: GPTBot
 User-agent: ChatGPT-User
 User-agent: OAI-SearchBot
