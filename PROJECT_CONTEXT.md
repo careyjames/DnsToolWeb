@@ -396,6 +396,7 @@ After evaluating APA, Chicago/Turabian, IEEE, NIST SP 800, and ICD, the project 
 - **Safari overlay animation**: Every `classList.remove('d-none')` on animated overlays MUST use `showOverlay()` — WebKit doesn't restart CSS animations from `display:none`.
 - **Font Awesome subset**: WOFF2 subset, NOT full FA. Check CSS rule exists before using icons. Run `python3 go-server/scripts/audit_icons.py` to verify.
 - **pointer-events: none**: NEVER apply to `body` or `html` — Chrome does not dispatch wheel/trackpad scroll events to elements with `pointer-events: none`, completely blocking page scroll. Use targeted selectors on interactive elements (`a`, `button`, `input`, `select`, `textarea`, `[role="button"]`) instead.
+- **Mobile verification (375px)**: MANDATORY for every CSS/template change. Verify at 375px (iPhone SE) width. Action bars, button rows, badges, headings must not wrap, overlap, or overflow. All buttons must have `white-space: nowrap`. Never use `flex: 1` + `min-width: 0` on buttons without `nowrap`. Use `flex-wrap: wrap` so items flow to next row instead of squishing.
 - **DOM safety**: `createElement` + `textContent` + `appendChild`. Never `innerHTML` with dynamic data.
 - **Executive print**: Minimum body 11pt, small 9pt, code 8.5pt. Nothing below 8pt.
 - **Bootstrap overrides**: Override `--bs-btn-*` CSS variables, NOT direct `background-color`.

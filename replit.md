@@ -38,6 +38,7 @@ No "build fast, clean up later." Research the best-practices path first (cite RF
 10. **Stubs**: `_oss.go` files return safe non-nil defaults, never errors.
 11. **Capitalization**: NIST/Chicago title case for all user-facing headings, badges, trust indicators. Never camelCase in UI copy.
 12. **pointer-events**: NEVER apply `pointer-events: none` to `body` or `html` — kills Chrome wheel/trackpad scroll. Use targeted selectors on interactive elements instead.
+13. **Mobile verification**: EVERY CSS/template change must be verified at 375px width. Buttons need `white-space: nowrap`. No `flex: 1` + `min-width: 0` on buttons without `nowrap`. See DOD.md "Mobile UI Verification" checklist.
 
 ## /dev/null Ephemeral Scan (v26.21.11)
 - **User-selectable checkbox** in Advanced Options: `/dev/null Scan` — full analysis, zero persistence.

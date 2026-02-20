@@ -91,6 +91,14 @@ This section documents mistakes that should never happen again. Each entry inclu
 
 **Prevention rule**: **NEVER apply `pointer-events: none` to document root elements (`html`, `body`).** It kills scroll in Chrome. Apply it to specific interactive element selectors (`a`, `button`, `input`, `select`, `textarea`, `[role="button"]`) instead. The loading overlay (full-viewport, `z-index: 9999`, `pointer-events: auto`) already captures all pointer events — body-level blocking is always redundant when an overlay is active.
 
+#### Gotcha #5: Mobile Button Labels Wrapping/Squishing (Feb 2026)
+
+**What happened**: On iPhone (375px), the results page action buttons (Snapshot, Re-analyze, New Domain) had their labels wrapping onto two lines inside each button. The buttons were squeezed to unreadable widths. Shipped to production without being caught.
+
+**Why it happened**: The mobile CSS used `flex: 1` + `min-width: 0` on buttons, which tells the browser "shrink these as much as you need." Without `white-space: nowrap`, the text broke inside the button instead of the buttons flowing to the next row. We tested on desktop and tablet but never checked iPhone width (375px).
+
+**Prevention rule**: **Every CSS/template change must be verified at 375px width.** All buttons MUST have `white-space: nowrap`. Flex button rows MUST use `flex-wrap: wrap` so items flow to the next row instead of squishing. Never combine `flex: 1` + `min-width: 0` on labeled buttons without `nowrap`. See DOD.md "Mobile UI Verification" checklist — this is now a mandatory gate.
+
 ---
 
 ## Session: February 20, 2026 (v26.21.38 — robots.txt Cleanup & Content-Usage Corrections)
