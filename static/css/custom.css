@@ -2801,7 +2801,7 @@ main.container {
 .u-color-amber { color: #e0c97a; }
 
 .badge.icae-gold-master {
-  background: linear-gradient(135deg, #d4a855, #f0c040) !important;
+  background: linear-gradient(135deg, #8cb8d4, #b0cfe0, #d8e8f0) !important;
   color: #1a1a1a !important;
   font-weight: 600;
 }
@@ -3122,7 +3122,7 @@ footer a.text-muted:hover { text-decoration-color: rgba(173, 181, 189, 0.8); }
 .icae-level-verified { background: rgba(25, 135, 84, 0.2); color: #75b798; border: 1px solid rgba(25, 135, 84, 0.4); }
 .icae-level-consistent { background: rgba(13, 202, 240, 0.15); color: #6edff6; border: 1px solid rgba(13, 202, 240, 0.35); }
 .icae-level-gold { background: rgba(212, 168, 85, 0.2); color: #d4a855; border: 1px solid rgba(212, 168, 85, 0.4); }
-.icae-level-gold-master { background: linear-gradient(135deg, rgba(212, 168, 85, 0.25), rgba(240, 192, 64, 0.25)); color: #f0c040; border: 1px solid rgba(240, 192, 64, 0.5); }
+.icae-level-gold-master { background: linear-gradient(135deg, rgba(192, 216, 232, 0.2), rgba(224, 232, 240, 0.15)); color: #c8dce8; border: 1px solid rgba(192, 216, 232, 0.5); text-shadow: 0 0 6px rgba(200, 220, 232, 0.3); }
 
 .icae-protocol-card {
     background: rgba(33, 37, 41, 0.6);
@@ -3156,7 +3156,7 @@ footer a.text-muted:hover { text-decoration-color: rgba(173, 181, 189, 0.8); }
 .icae-dot-verified { background: #20c997; box-shadow: 0 0 6px rgba(32, 201, 151, 0.7), 0 0 14px rgba(32, 201, 151, 0.3); }
 .icae-dot-consistent { background: #0dcaf0; box-shadow: 0 0 8px rgba(13, 202, 240, 0.7), 0 0 16px rgba(13, 202, 240, 0.3); }
 .icae-dot-gold { background: #d4a855; box-shadow: 0 0 8px rgba(212, 168, 85, 0.8), 0 0 16px rgba(212, 168, 85, 0.3); }
-.icae-dot-gold-master { background: linear-gradient(135deg, #d4a855, #f0c040); box-shadow: 0 0 10px rgba(240, 192, 64, 0.9), 0 0 20px rgba(240, 192, 64, 0.4); }
+.icae-dot-gold-master { background: linear-gradient(135deg, #b0cfe0, #e0ecf4); box-shadow: 0 0 10px rgba(192, 216, 232, 0.9), 0 0 22px rgba(200, 220, 232, 0.5), 0 0 36px rgba(176, 207, 224, 0.2); }
 .icae-dot-pending { background: #343a40; box-shadow: none; }
 
 .icae-progress-track {
@@ -3174,7 +3174,7 @@ footer a.text-muted:hover { text-decoration-color: rgba(173, 181, 189, 0.8); }
 .icae-fill-verified { background: linear-gradient(90deg, #198754, #20c997); }
 .icae-fill-consistent { background: linear-gradient(90deg, #0dcaf0, #67d6ed); }
 .icae-fill-gold { background: linear-gradient(90deg, #d4a855, #f0c040); }
-.icae-fill-gold-master { background: linear-gradient(90deg, #d4a855, #f0c040, #ffe066); }
+.icae-fill-gold-master { background: linear-gradient(90deg, #8cb8d4, #b0cfe0, #d8e8f0); }
 .icae-fill-pending { background: transparent; }
 .icae-w-0 { width: 0%; }
 .icae-w-20 { width: 20%; }
@@ -3193,7 +3193,7 @@ footer a.text-muted:hover { text-decoration-color: rgba(173, 181, 189, 0.8); }
 .icae-stat-verified { color: #75b798; }
 .icae-stat-consistent { color: #6edff6; }
 .icae-stat-gold { color: #d4a855; }
-.icae-stat-gold-master { color: #f0c040; }
+.icae-stat-gold-master { color: #c8dce8; }
 .icae-stat-pending { color: #6c757d; }
 
 .icae-runs {
@@ -3607,4 +3607,9 @@ footer a.text-muted:hover { text-decoration-color: rgba(173, 181, 189, 0.8); }
 }
 .crypto-pqc-note {
     font-size: 0.75rem;
+}
+.u-footer-tagline {
+    font-size: 0.75rem;
+    letter-spacing: 0.05em;
+    opacity: 0.6;
 }
