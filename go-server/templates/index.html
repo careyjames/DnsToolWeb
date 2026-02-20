@@ -255,7 +255,7 @@
                                        class="form-control search-input" 
                                        id="domain" 
                                        name="domain" 
-                                       placeholder="example.com" 
+                                       placeholder="example.com or .tech" 
                                        autocomplete="off"
                                        autofocus
                                        aria-label="Domain to analyze"
@@ -271,7 +271,7 @@
                             </div>
                             <div class="form-text search-hint mt-2">
                                 <i class="fas fa-info-circle me-1" aria-hidden="true"></i>
-                                Enter the raw domain (e.g., <strong>example.com</strong>) &mdash; no https://. Pro tip: <strong>www</strong> is just a subdomain, the same way DKIM selectors like <strong>google._domainkey</strong> are.
+                                Enter a domain (e.g., <strong>example.com</strong>) or a top-level zone (e.g., <strong>tech</strong>, <strong>co.uk</strong>) &mdash; no https://. TLDs produce a <strong>Registry Zone Health Report</strong>.
                             </div>
                             <div class="mt-2">
                                 <button type="button" class="btn btn-link small text-muted text-decoration-none p-0 border-0" data-bs-toggle="collapse" data-bs-target="#advancedOptions" aria-expanded="{{if .DKIMExpand}}true{{else}}false{{end}}" aria-controls="advancedOptions">

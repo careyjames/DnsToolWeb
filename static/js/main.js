@@ -132,16 +132,15 @@ function hideOverlayAndReset(overlay, btn) {
 
 function isValidDomain(domain) {
     if (!domain) return false;
-    const d = domain.replace(/\.$/, '');
+    const d = domain.replace(/^\./, '').replace(/\.$/, '');
     if (d.length > 253 || d.length === 0) return false;
     const labels = d.split('.');
-    if (labels.length < 2) return false;
     for (const label of labels) {
         if (label.length === 0 || label.length > 63) return false;
         if (label.startsWith('-') || label.endsWith('-')) return false;
     }
-    const tld = labels[labels.length - 1];
-    if (/^\d+$/.test(tld)) return false;
+    const lastLabel = labels[labels.length - 1];
+    if (/^\d+$/.test(lastLabel)) return false;
     const hasNonAscii = /[^\u0020-\u007F]/.test(d);
     if (!hasNonAscii) {
         for (const label of labels) {
@@ -204,7 +203,7 @@ document.addEventListener('DOMContentLoaded', function() {
         domainForm.addEventListener('submit', function(e) {
             if (analysisSubmitted) return;
             e.preventDefault();
-            const domain = domainInput.value.trim().toLowerCase();
+            const domain = domainInput.value.trim().toLowerCase().replace(/^\./, '');
             domainInput.value = domain;
             
             if (!domain) {
