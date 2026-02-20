@@ -5,172 +5,175 @@
 package dbq
 
 import (
-	"encoding/json"
+        "encoding/json"
 
-	"github.com/jackc/pgx/v5/pgtype"
+        "github.com/jackc/pgx/v5/pgtype"
 )
 
 type AnalysisStat struct {
-	ID                 int32            `db:"id" json:"id"`
-	Date               pgtype.Date      `db:"date" json:"date"`
-	TotalAnalyses      *int32           `db:"total_analyses" json:"total_analyses"`
-	SuccessfulAnalyses *int32           `db:"successful_analyses" json:"successful_analyses"`
-	FailedAnalyses     *int32           `db:"failed_analyses" json:"failed_analyses"`
-	UniqueDomains      *int32           `db:"unique_domains" json:"unique_domains"`
-	AvgAnalysisTime    *float64         `db:"avg_analysis_time" json:"avg_analysis_time"`
-	CreatedAt          pgtype.Timestamp `db:"created_at" json:"created_at"`
-	UpdatedAt          pgtype.Timestamp `db:"updated_at" json:"updated_at"`
+        ID                 int32            `db:"id" json:"id"`
+        Date               pgtype.Date      `db:"date" json:"date"`
+        TotalAnalyses      *int32           `db:"total_analyses" json:"total_analyses"`
+        SuccessfulAnalyses *int32           `db:"successful_analyses" json:"successful_analyses"`
+        FailedAnalyses     *int32           `db:"failed_analyses" json:"failed_analyses"`
+        UniqueDomains      *int32           `db:"unique_domains" json:"unique_domains"`
+        AvgAnalysisTime    *float64         `db:"avg_analysis_time" json:"avg_analysis_time"`
+        CreatedAt          pgtype.Timestamp `db:"created_at" json:"created_at"`
+        UpdatedAt          pgtype.Timestamp `db:"updated_at" json:"updated_at"`
 }
 
 type DataGovernanceEvent struct {
-	ID            int32            `db:"id" json:"id"`
-	EventType     string           `db:"event_type" json:"event_type"`
-	Description   string           `db:"description" json:"description"`
-	Scope         *string          `db:"scope" json:"scope"`
-	AffectedCount *int32           `db:"affected_count" json:"affected_count"`
-	Reason        string           `db:"reason" json:"reason"`
-	Operator      string           `db:"operator" json:"operator"`
-	Metadata      []byte           `db:"metadata" json:"metadata"`
-	CreatedAt     pgtype.Timestamp `db:"created_at" json:"created_at"`
+        ID            int32            `db:"id" json:"id"`
+        EventType     string           `db:"event_type" json:"event_type"`
+        Description   string           `db:"description" json:"description"`
+        Scope         *string          `db:"scope" json:"scope"`
+        AffectedCount *int32           `db:"affected_count" json:"affected_count"`
+        Reason        string           `db:"reason" json:"reason"`
+        Operator      string           `db:"operator" json:"operator"`
+        Metadata      []byte           `db:"metadata" json:"metadata"`
+        CreatedAt     pgtype.Timestamp `db:"created_at" json:"created_at"`
 }
 
 type DomainAnalysis struct {
-	ID                   int32            `db:"id" json:"id"`
-	Domain               string           `db:"domain" json:"domain"`
-	AsciiDomain          string           `db:"ascii_domain" json:"ascii_domain"`
-	BasicRecords         json.RawMessage  `db:"basic_records" json:"basic_records"`
-	AuthoritativeRecords json.RawMessage  `db:"authoritative_records" json:"authoritative_records"`
-	SpfStatus            *string          `db:"spf_status" json:"spf_status"`
-	SpfRecords           json.RawMessage  `db:"spf_records" json:"spf_records"`
-	DmarcStatus          *string          `db:"dmarc_status" json:"dmarc_status"`
-	DmarcPolicy          *string          `db:"dmarc_policy" json:"dmarc_policy"`
-	DmarcRecords         json.RawMessage  `db:"dmarc_records" json:"dmarc_records"`
-	DkimStatus           *string          `db:"dkim_status" json:"dkim_status"`
-	DkimSelectors        json.RawMessage  `db:"dkim_selectors" json:"dkim_selectors"`
-	RegistrarName        *string          `db:"registrar_name" json:"registrar_name"`
-	RegistrarSource      *string          `db:"registrar_source" json:"registrar_source"`
-	AnalysisSuccess      *bool            `db:"analysis_success" json:"analysis_success"`
-	ErrorMessage         *string          `db:"error_message" json:"error_message"`
-	AnalysisDuration     *float64         `db:"analysis_duration" json:"analysis_duration"`
-	CreatedAt            pgtype.Timestamp `db:"created_at" json:"created_at"`
-	UpdatedAt            pgtype.Timestamp `db:"updated_at" json:"updated_at"`
-	CountryCode          *string          `db:"country_code" json:"country_code"`
-	CountryName          *string          `db:"country_name" json:"country_name"`
-	CtSubdomains         json.RawMessage  `db:"ct_subdomains" json:"ct_subdomains"`
-	FullResults          json.RawMessage  `db:"full_results" json:"full_results"`
-	PostureHash          *string          `db:"posture_hash" json:"posture_hash"`
-	Private              bool             `db:"private" json:"private"`
-	HasUserSelectors     bool             `db:"has_user_selectors" json:"has_user_selectors"`
+        ID                   int32            `db:"id" json:"id"`
+        Domain               string           `db:"domain" json:"domain"`
+        AsciiDomain          string           `db:"ascii_domain" json:"ascii_domain"`
+        BasicRecords         json.RawMessage  `db:"basic_records" json:"basic_records"`
+        AuthoritativeRecords json.RawMessage  `db:"authoritative_records" json:"authoritative_records"`
+        SpfStatus            *string          `db:"spf_status" json:"spf_status"`
+        SpfRecords           json.RawMessage  `db:"spf_records" json:"spf_records"`
+        DmarcStatus          *string          `db:"dmarc_status" json:"dmarc_status"`
+        DmarcPolicy          *string          `db:"dmarc_policy" json:"dmarc_policy"`
+        DmarcRecords         json.RawMessage  `db:"dmarc_records" json:"dmarc_records"`
+        DkimStatus           *string          `db:"dkim_status" json:"dkim_status"`
+        DkimSelectors        json.RawMessage  `db:"dkim_selectors" json:"dkim_selectors"`
+        RegistrarName        *string          `db:"registrar_name" json:"registrar_name"`
+        RegistrarSource      *string          `db:"registrar_source" json:"registrar_source"`
+        AnalysisSuccess      *bool            `db:"analysis_success" json:"analysis_success"`
+        ErrorMessage         *string          `db:"error_message" json:"error_message"`
+        AnalysisDuration     *float64         `db:"analysis_duration" json:"analysis_duration"`
+        CreatedAt            pgtype.Timestamp `db:"created_at" json:"created_at"`
+        UpdatedAt            pgtype.Timestamp `db:"updated_at" json:"updated_at"`
+        CountryCode          *string          `db:"country_code" json:"country_code"`
+        CountryName          *string          `db:"country_name" json:"country_name"`
+        CtSubdomains         json.RawMessage  `db:"ct_subdomains" json:"ct_subdomains"`
+        FullResults          json.RawMessage  `db:"full_results" json:"full_results"`
+        PostureHash          *string          `db:"posture_hash" json:"posture_hash"`
+        Private              bool             `db:"private" json:"private"`
+        HasUserSelectors     bool             `db:"has_user_selectors" json:"has_user_selectors"`
+        ScanFlag             bool             `db:"scan_flag" json:"scan_flag"`
+        ScanSource           *string          `db:"scan_source" json:"scan_source"`
+        ScanIP               *string          `db:"scan_ip" json:"scan_ip"`
 }
 
 type IceMaturity struct {
-	ID                int32            `db:"id" json:"id"`
-	Protocol          string           `db:"protocol" json:"protocol"`
-	Layer             string           `db:"layer" json:"layer"`
-	Maturity          string           `db:"maturity" json:"maturity"`
-	TotalRuns         int32            `db:"total_runs" json:"total_runs"`
-	ConsecutivePasses int32            `db:"consecutive_passes" json:"consecutive_passes"`
-	FirstPassAt       pgtype.Timestamp `db:"first_pass_at" json:"first_pass_at"`
-	LastRegressionAt  pgtype.Timestamp `db:"last_regression_at" json:"last_regression_at"`
-	LastEvaluatedAt   pgtype.Timestamp `db:"last_evaluated_at" json:"last_evaluated_at"`
-	UpdatedAt         pgtype.Timestamp `db:"updated_at" json:"updated_at"`
+        ID                int32            `db:"id" json:"id"`
+        Protocol          string           `db:"protocol" json:"protocol"`
+        Layer             string           `db:"layer" json:"layer"`
+        Maturity          string           `db:"maturity" json:"maturity"`
+        TotalRuns         int32            `db:"total_runs" json:"total_runs"`
+        ConsecutivePasses int32            `db:"consecutive_passes" json:"consecutive_passes"`
+        FirstPassAt       pgtype.Timestamp `db:"first_pass_at" json:"first_pass_at"`
+        LastRegressionAt  pgtype.Timestamp `db:"last_regression_at" json:"last_regression_at"`
+        LastEvaluatedAt   pgtype.Timestamp `db:"last_evaluated_at" json:"last_evaluated_at"`
+        UpdatedAt         pgtype.Timestamp `db:"updated_at" json:"updated_at"`
 }
 
 type IceProtocol struct {
-	ID          int32            `db:"id" json:"id"`
-	Protocol    string           `db:"protocol" json:"protocol"`
-	DisplayName string           `db:"display_name" json:"display_name"`
-	RfcRefs     []string         `db:"rfc_refs" json:"rfc_refs"`
-	CreatedAt   pgtype.Timestamp `db:"created_at" json:"created_at"`
+        ID          int32            `db:"id" json:"id"`
+        Protocol    string           `db:"protocol" json:"protocol"`
+        DisplayName string           `db:"display_name" json:"display_name"`
+        RfcRefs     []string         `db:"rfc_refs" json:"rfc_refs"`
+        CreatedAt   pgtype.Timestamp `db:"created_at" json:"created_at"`
 }
 
 type IceRegression struct {
-	ID               int32            `db:"id" json:"id"`
-	Protocol         string           `db:"protocol" json:"protocol"`
-	Layer            string           `db:"layer" json:"layer"`
-	RunID            int32            `db:"run_id" json:"run_id"`
-	PreviousMaturity string           `db:"previous_maturity" json:"previous_maturity"`
-	NewMaturity      string           `db:"new_maturity" json:"new_maturity"`
-	FailedCases      []string         `db:"failed_cases" json:"failed_cases"`
-	Notes            *string          `db:"notes" json:"notes"`
-	CreatedAt        pgtype.Timestamp `db:"created_at" json:"created_at"`
+        ID               int32            `db:"id" json:"id"`
+        Protocol         string           `db:"protocol" json:"protocol"`
+        Layer            string           `db:"layer" json:"layer"`
+        RunID            int32            `db:"run_id" json:"run_id"`
+        PreviousMaturity string           `db:"previous_maturity" json:"previous_maturity"`
+        NewMaturity      string           `db:"new_maturity" json:"new_maturity"`
+        FailedCases      []string         `db:"failed_cases" json:"failed_cases"`
+        Notes            *string          `db:"notes" json:"notes"`
+        CreatedAt        pgtype.Timestamp `db:"created_at" json:"created_at"`
 }
 
 type IceResult struct {
-	ID         int32            `db:"id" json:"id"`
-	RunID      int32            `db:"run_id" json:"run_id"`
-	Protocol   string           `db:"protocol" json:"protocol"`
-	Layer      string           `db:"layer" json:"layer"`
-	CaseID     string           `db:"case_id" json:"case_id"`
-	CaseName   string           `db:"case_name" json:"case_name"`
-	Passed     bool             `db:"passed" json:"passed"`
-	Expected   *string          `db:"expected" json:"expected"`
-	Actual     *string          `db:"actual" json:"actual"`
-	RfcSection *string          `db:"rfc_section" json:"rfc_section"`
-	Notes      *string          `db:"notes" json:"notes"`
-	CreatedAt  pgtype.Timestamp `db:"created_at" json:"created_at"`
+        ID         int32            `db:"id" json:"id"`
+        RunID      int32            `db:"run_id" json:"run_id"`
+        Protocol   string           `db:"protocol" json:"protocol"`
+        Layer      string           `db:"layer" json:"layer"`
+        CaseID     string           `db:"case_id" json:"case_id"`
+        CaseName   string           `db:"case_name" json:"case_name"`
+        Passed     bool             `db:"passed" json:"passed"`
+        Expected   *string          `db:"expected" json:"expected"`
+        Actual     *string          `db:"actual" json:"actual"`
+        RfcSection *string          `db:"rfc_section" json:"rfc_section"`
+        Notes      *string          `db:"notes" json:"notes"`
+        CreatedAt  pgtype.Timestamp `db:"created_at" json:"created_at"`
 }
 
 type IceTestRun struct {
-	ID          int32            `db:"id" json:"id"`
-	AppVersion  string           `db:"app_version" json:"app_version"`
-	GitCommit   string           `db:"git_commit" json:"git_commit"`
-	RunType     string           `db:"run_type" json:"run_type"`
-	TotalCases  int32            `db:"total_cases" json:"total_cases"`
-	TotalPassed int32            `db:"total_passed" json:"total_passed"`
-	TotalFailed int32            `db:"total_failed" json:"total_failed"`
-	DurationMs  int32            `db:"duration_ms" json:"duration_ms"`
-	CreatedAt   pgtype.Timestamp `db:"created_at" json:"created_at"`
+        ID          int32            `db:"id" json:"id"`
+        AppVersion  string           `db:"app_version" json:"app_version"`
+        GitCommit   string           `db:"git_commit" json:"git_commit"`
+        RunType     string           `db:"run_type" json:"run_type"`
+        TotalCases  int32            `db:"total_cases" json:"total_cases"`
+        TotalPassed int32            `db:"total_passed" json:"total_passed"`
+        TotalFailed int32            `db:"total_failed" json:"total_failed"`
+        DurationMs  int32            `db:"duration_ms" json:"duration_ms"`
+        CreatedAt   pgtype.Timestamp `db:"created_at" json:"created_at"`
 }
 
 type Session struct {
-	ID         string           `db:"id" json:"id"`
-	UserID     int32            `db:"user_id" json:"user_id"`
-	CreatedAt  pgtype.Timestamp `db:"created_at" json:"created_at"`
-	ExpiresAt  pgtype.Timestamp `db:"expires_at" json:"expires_at"`
-	LastSeenAt pgtype.Timestamp `db:"last_seen_at" json:"last_seen_at"`
+        ID         string           `db:"id" json:"id"`
+        UserID     int32            `db:"user_id" json:"user_id"`
+        CreatedAt  pgtype.Timestamp `db:"created_at" json:"created_at"`
+        ExpiresAt  pgtype.Timestamp `db:"expires_at" json:"expires_at"`
+        LastSeenAt pgtype.Timestamp `db:"last_seen_at" json:"last_seen_at"`
 }
 
 type SiteAnalytic struct {
-	ID                    int32            `db:"id" json:"id"`
-	Date                  pgtype.Date      `db:"date" json:"date"`
-	Pageviews             int32            `db:"pageviews" json:"pageviews"`
-	UniqueVisitors        int32            `db:"unique_visitors" json:"unique_visitors"`
-	AnalysesRun           int32            `db:"analyses_run" json:"analyses_run"`
-	UniqueDomainsAnalyzed int32            `db:"unique_domains_analyzed" json:"unique_domains_analyzed"`
-	ReferrerSources       []byte           `db:"referrer_sources" json:"referrer_sources"`
-	TopPages              []byte           `db:"top_pages" json:"top_pages"`
-	CreatedAt             pgtype.Timestamp `db:"created_at" json:"created_at"`
-	UpdatedAt             pgtype.Timestamp `db:"updated_at" json:"updated_at"`
+        ID                    int32            `db:"id" json:"id"`
+        Date                  pgtype.Date      `db:"date" json:"date"`
+        Pageviews             int32            `db:"pageviews" json:"pageviews"`
+        UniqueVisitors        int32            `db:"unique_visitors" json:"unique_visitors"`
+        AnalysesRun           int32            `db:"analyses_run" json:"analyses_run"`
+        UniqueDomainsAnalyzed int32            `db:"unique_domains_analyzed" json:"unique_domains_analyzed"`
+        ReferrerSources       []byte           `db:"referrer_sources" json:"referrer_sources"`
+        TopPages              []byte           `db:"top_pages" json:"top_pages"`
+        CreatedAt             pgtype.Timestamp `db:"created_at" json:"created_at"`
+        UpdatedAt             pgtype.Timestamp `db:"updated_at" json:"updated_at"`
 }
 
 type User struct {
-	ID          int32            `db:"id" json:"id"`
-	Email       string           `db:"email" json:"email"`
-	Name        string           `db:"name" json:"name"`
-	GoogleSub   string           `db:"google_sub" json:"google_sub"`
-	Role        string           `db:"role" json:"role"`
-	CreatedAt   pgtype.Timestamp `db:"created_at" json:"created_at"`
-	LastLoginAt pgtype.Timestamp `db:"last_login_at" json:"last_login_at"`
+        ID          int32            `db:"id" json:"id"`
+        Email       string           `db:"email" json:"email"`
+        Name        string           `db:"name" json:"name"`
+        GoogleSub   string           `db:"google_sub" json:"google_sub"`
+        Role        string           `db:"role" json:"role"`
+        CreatedAt   pgtype.Timestamp `db:"created_at" json:"created_at"`
+        LastLoginAt pgtype.Timestamp `db:"last_login_at" json:"last_login_at"`
 }
 
 type UserAnalysis struct {
-	ID         int32            `db:"id" json:"id"`
-	UserID     int32            `db:"user_id" json:"user_id"`
-	AnalysisID int32            `db:"analysis_id" json:"analysis_id"`
-	CreatedAt  pgtype.Timestamp `db:"created_at" json:"created_at"`
+        ID         int32            `db:"id" json:"id"`
+        UserID     int32            `db:"user_id" json:"user_id"`
+        AnalysisID int32            `db:"analysis_id" json:"analysis_id"`
+        CreatedAt  pgtype.Timestamp `db:"created_at" json:"created_at"`
 }
 
 type ZoneImport struct {
-	ID               int32            `db:"id" json:"id"`
-	UserID           int32            `db:"user_id" json:"user_id"`
-	Domain           string           `db:"domain" json:"domain"`
-	Sha256Hash       string           `db:"sha256_hash" json:"sha256_hash"`
-	OriginalFilename string           `db:"original_filename" json:"original_filename"`
-	FileSize         int32            `db:"file_size" json:"file_size"`
-	RecordCount      int32            `db:"record_count" json:"record_count"`
-	Retained         bool             `db:"retained" json:"retained"`
-	ZoneData         *string          `db:"zone_data" json:"zone_data"`
-	DriftSummary     []byte           `db:"drift_summary" json:"drift_summary"`
-	CreatedAt        pgtype.Timestamp `db:"created_at" json:"created_at"`
+        ID               int32            `db:"id" json:"id"`
+        UserID           int32            `db:"user_id" json:"user_id"`
+        Domain           string           `db:"domain" json:"domain"`
+        Sha256Hash       string           `db:"sha256_hash" json:"sha256_hash"`
+        OriginalFilename string           `db:"original_filename" json:"original_filename"`
+        FileSize         int32            `db:"file_size" json:"file_size"`
+        RecordCount      int32            `db:"record_count" json:"record_count"`
+        Retained         bool             `db:"retained" json:"retained"`
+        ZoneData         *string          `db:"zone_data" json:"zone_data"`
+        DriftSummary     []byte           `db:"drift_summary" json:"drift_summary"`
+        CreatedAt        pgtype.Timestamp `db:"created_at" json:"created_at"`
 }

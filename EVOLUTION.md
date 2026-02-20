@@ -10,6 +10,47 @@ This file is the project's permanent breadcrumb trail — every session's decisi
 
 ---
 
+## Session: February 20, 2026 (v26.21.21 — Scanner Detection System)
+
+### v26.21.21 — Scanner Detection & Classification System
+
+#### What Changed
+
+1. **Scanner classifier package** (`go-server/internal/scanner/`): New package with domain pattern matching (16 known scanner domains: Qualys, Burp Collaborator, OAST, Interactsh, Shodan, Censys, etc.), CISA Cyber Hygiene IP list matching, and hex-label heuristic for automated probe patterns.
+
+2. **CISA IP list daily refresh**: Background goroutine fetches `https://rules.ncats.cyber.dhs.gov/all.txt` at startup and every 24 hours. Parses CIDRs and single IPs (IPv4/IPv6). Thread-safe via RWMutex. Currently loads ~424 entries.
+
+3. **Database migration**: Added `scan_flag BOOLEAN NOT NULL DEFAULT FALSE`, `scan_source VARCHAR(100)`, `scan_ip VARCHAR(45)` to `domain_analyses` table.
+
+4. **Analysis pipeline integration**: `saveAnalysis()` now accepts `scanner.Classification`, sets `scan_flag`, `scan_source`, `scan_ip` at insert time. Classification runs before save (domain pattern → CISA IP → heuristic).
+
+5. **Public history filtering**: All history/search/count/export queries now include `AND scan_flag = FALSE`, ensuring scanner submissions never appear in public-facing history or export endpoints.
+
+6. **Admin panel Scanner Alerts**: New section in admin dashboard showing classified scanner probes with source attribution and IP. Scanner count in stats bar. Scan badge (red satellite-dish icon) on recent analyses flagged as scans.
+
+7. **Test coverage**: 3 test functions covering known domain classification (10 scanner domains), legitimate domain non-classification (5 domains), and hex heuristic detection. All 12 Go test packages pass.
+
+#### Design Decisions
+
+- **Classify, don't block**: Scanner submissions are accepted and analyzed normally but flagged. This preserves legitimate security audit results while keeping public history clean.
+- **Known domain patterns first**: Regex matching against well-known scanner domains is the most reliable signal. CISA IP matching catches government scanners. Hex heuristic is a fallback for unknown automated probes.
+- **Admin-only visibility**: Scanner alerts are only visible in the admin panel. No scanner data leaks to public-facing pages.
+
+#### Files Changed
+- `go-server/internal/scanner/classifier.go` (new)
+- `go-server/internal/scanner/cisa.go` (new)
+- `go-server/internal/scanner/classifier_test.go` (new)
+- `go-server/internal/dbq/models.go` (3 new fields)
+- `go-server/internal/dbq/domain_analyses.sql.go` (scan columns, filter queries, new ListScannerAlerts/CountScannerAlerts)
+- `go-server/db/queries/domain_analyses.sql` (scan columns, filter queries, new queries)
+- `go-server/internal/handlers/analysis.go` (scanner import, classify call, saveAnalysis signature)
+- `go-server/internal/handlers/admin.go` (AdminScannerAlert struct, fetchScannerAlerts, scan stats)
+- `go-server/templates/admin.html` (scanner alerts banner, table, scan badge)
+- `go-server/cmd/server/main.go` (scanner.StartCISARefresh import/call)
+- `go-server/internal/config/config.go` (version bump to 26.21.21)
+
+---
+
 ## Session: February 20, 2026 (v26.21.17 — Hidden Prompt Detection Enhancement)
 
 ### v26.21.17 — Expanded AI Surface Hidden Prompt Detection

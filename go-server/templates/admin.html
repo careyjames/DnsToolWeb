@@ -81,6 +81,17 @@
             </div>
         </div>
 
+        {{if .Stats.ScannerAlerts}}
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="alert alert-warning d-flex align-items-center mb-0 py-2" role="alert">
+                    <i class="fas fa-radar me-2"></i>
+                    <span><strong>{{.Stats.ScannerAlerts}}</strong> scanner-originated submission{{if gt .Stats.ScannerAlerts 1}}s{{end}} detected and classified (excluded from public history)</span>
+                </div>
+            </div>
+        </div>
+        {{end}}
+
         <div class="row">
             <div class="col-lg-5 mb-4">
                 <div class="card">
@@ -161,6 +172,38 @@
             </div>
 
             <div class="col-lg-7 mb-4">
+                {{if .ScannerAlerts}}
+                <div class="card mb-4">
+                    <div class="card-body">
+                        <h2 class="h5 mb-3"><i class="fas fa-satellite-dish me-2"></i>Scanner Alerts</h2>
+                        <div class="table-responsive">
+                            <table class="table table-sm table-dark mb-0">
+                                <thead>
+                                    <tr>
+                                        <th>Domain</th>
+                                        <th>Source</th>
+                                        <th>IP</th>
+                                        <th>Date</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {{range .ScannerAlerts}}
+                                    <tr>
+                                        <td>
+                                            <a href="/analysis/{{.ID}}" class="text-info text-decoration-none">{{.Domain}}</a>
+                                        </td>
+                                        <td><span class="badge bg-warning text-dark">{{.Source}}</span></td>
+                                        <td><code class="text-muted">{{.IP}}</code></td>
+                                        <td><small>{{.CreatedAt}}</small></td>
+                                    </tr>
+                                    {{end}}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                {{end}}
+
                 <div class="card">
                     <div class="card-body">
                         <h2 class="h5 mb-3"><i class="fas fa-history me-2"></i>Recent Analyses</h2>
@@ -191,6 +234,7 @@
                                         </td>
                                         <td><small>{{.Duration}}</small></td>
                                         <td>
+                                            {{if .ScanFlag}}<span class="badge bg-danger" title="Scanner: {{.ScanSource}}"><i class="fas fa-satellite-dish"></i></span>{{end}}
                                             {{if .Private}}<span class="badge bg-warning text-dark" title="Private">P</span>{{end}}
                                             {{if .HasUserSelectors}}<span class="badge bg-secondary" title="Custom DKIM Selectors">S</span>{{end}}
                                             {{if .CountryCode}}<small class="text-muted">{{.CountryCode}}</small>{{end}}

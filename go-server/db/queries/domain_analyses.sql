@@ -9,7 +9,7 @@ LIMIT 1;
 
 -- name: ListSuccessfulAnalyses :many
 SELECT * FROM domain_analyses
-WHERE full_results IS NOT NULL AND analysis_success = TRUE AND private = FALSE
+WHERE full_results IS NOT NULL AND analysis_success = TRUE AND private = FALSE AND scan_flag = FALSE
 ORDER BY created_at DESC
 LIMIT $1 OFFSET $2;
 
@@ -18,19 +18,21 @@ SELECT * FROM domain_analyses
 WHERE full_results IS NOT NULL
   AND analysis_success = TRUE
   AND private = FALSE
+  AND scan_flag = FALSE
   AND (domain ILIKE $1 OR ascii_domain ILIKE $1)
 ORDER BY created_at DESC
 LIMIT $2 OFFSET $3;
 
 -- name: CountSuccessfulAnalyses :one
 SELECT COUNT(*) FROM domain_analyses
-WHERE full_results IS NOT NULL AND analysis_success = TRUE AND private = FALSE;
+WHERE full_results IS NOT NULL AND analysis_success = TRUE AND private = FALSE AND scan_flag = FALSE;
 
 -- name: CountSearchSuccessfulAnalyses :one
 SELECT COUNT(*) FROM domain_analyses
 WHERE full_results IS NOT NULL
   AND analysis_success = TRUE
   AND private = FALSE
+  AND scan_flag = FALSE
   AND (domain ILIKE $1 OR ascii_domain ILIKE $1);
 
 -- name: ListAnalysesByDomain :many
@@ -53,9 +55,10 @@ INSERT INTO domain_analyses (
     country_code, country_name,
     analysis_success, error_message, analysis_duration,
     posture_hash, private, has_user_selectors,
+    scan_flag, scan_source, scan_ip,
     created_at
 ) VALUES (
-    $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, NOW()
+    $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, NOW()
 ) RETURNING id, created_at;
 
 -- name: UpdateAnalysis :exec
@@ -107,9 +110,19 @@ LIMIT $1;
 SELECT id, domain, ascii_domain, created_at, updated_at,
        analysis_duration, country_code, country_name, full_results
 FROM domain_analyses
-WHERE full_results IS NOT NULL AND analysis_success = TRUE AND private = FALSE
+WHERE full_results IS NOT NULL AND analysis_success = TRUE AND private = FALSE AND scan_flag = FALSE
 ORDER BY created_at DESC
 LIMIT $1 OFFSET $2;
+
+-- name: ListScannerAlerts :many
+SELECT id, domain, scan_source, scan_ip, analysis_success, created_at
+FROM domain_analyses
+WHERE scan_flag = TRUE
+ORDER BY created_at DESC
+LIMIT $1;
+
+-- name: CountScannerAlerts :one
+SELECT COUNT(*) FROM domain_analyses WHERE scan_flag = TRUE;
 
 -- name: GetPreviousPostureHash :one
 SELECT posture_hash, created_at FROM domain_analyses

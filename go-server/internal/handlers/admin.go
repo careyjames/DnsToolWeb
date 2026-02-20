@@ -42,6 +42,8 @@ type AdminAnalysis struct {
         CountryCode      string
         Private          bool
         HasUserSelectors bool
+        ScanFlag         bool
+        ScanSource       string
 }
 
 type AdminStats struct {
@@ -51,6 +53,16 @@ type AdminStats struct {
         PrivateAnalyses int64
         TotalSessions   int64
         ActiveSessions  int64
+        ScannerAlerts   int64
+}
+
+type AdminScannerAlert struct {
+        ID        int32
+        Domain    string
+        Source    string
+        IP       string
+        Success  bool
+        CreatedAt string
 }
 
 type AdminICAERun struct {
@@ -72,6 +84,7 @@ func (h *AdminHandler) Dashboard(c *gin.Context) {
         recentAnalyses := h.fetchRecentAnalyses(ctx)
         stats := h.fetchStats(ctx)
         icaeRuns := h.fetchICAERuns(ctx)
+        scannerAlerts := h.fetchScannerAlerts(ctx)
 
         data := gin.H{
                 "AppVersion":      h.Config.AppVersion,
@@ -83,6 +96,7 @@ func (h *AdminHandler) Dashboard(c *gin.Context) {
                 "RecentAnalyses":  recentAnalyses,
                 "Stats":           stats,
                 "ICAERuns":        icaeRuns,
+                "ScannerAlerts":   scannerAlerts,
         }
         mergeAuthData(c, h.Config, data)
         c.HTML(http.StatusOK, "admin.html", data)
@@ -115,7 +129,8 @@ func (h *AdminHandler) fetchUsers(ctx context.Context) []AdminUser {
 func (h *AdminHandler) fetchRecentAnalyses(ctx context.Context) []AdminAnalysis {
         rows, err := h.DB.Pool.Query(ctx,
                 `SELECT id, domain, analysis_success, analysis_duration, created_at,
-                        COALESCE(country_code, ''), private, has_user_selectors
+                        COALESCE(country_code, ''), private, has_user_selectors,
+                        scan_flag, COALESCE(scan_source, '')
                  FROM domain_analyses
                  ORDER BY created_at DESC LIMIT 25`)
         if err != nil {
@@ -131,7 +146,7 @@ func (h *AdminHandler) fetchRecentAnalyses(ctx context.Context) []AdminAnalysis 
                 var duration *float64
                 var createdAt time.Time
                 if err := rows.Scan(&a.ID, &a.Domain, &success, &duration, &createdAt,
-                        &a.CountryCode, &a.Private, &a.HasUserSelectors); err != nil {
+                        &a.CountryCode, &a.Private, &a.HasUserSelectors, &a.ScanFlag, &a.ScanSource); err != nil {
                         continue
                 }
                 if success != nil {
@@ -156,6 +171,7 @@ func (h *AdminHandler) fetchStats(ctx context.Context) AdminStats {
         _ = h.DB.Pool.QueryRow(ctx, `SELECT COUNT(*) FROM domain_analyses WHERE private = TRUE`).Scan(&s.PrivateAnalyses)
         _ = h.DB.Pool.QueryRow(ctx, `SELECT COUNT(*) FROM sessions`).Scan(&s.TotalSessions)
         _ = h.DB.Pool.QueryRow(ctx, `SELECT COUNT(*) FROM sessions WHERE expires_at > NOW()`).Scan(&s.ActiveSessions)
+        _ = h.DB.Pool.QueryRow(ctx, `SELECT COUNT(*) FROM domain_analyses WHERE scan_flag = TRUE`).Scan(&s.ScannerAlerts)
         return s
 }
 
@@ -181,4 +197,34 @@ func (h *AdminHandler) fetchICAERuns(ctx context.Context) []AdminICAERun {
                 runs = append(runs, r)
         }
         return runs
+}
+
+func (h *AdminHandler) fetchScannerAlerts(ctx context.Context) []AdminScannerAlert {
+        rows, err := h.DB.Pool.Query(ctx,
+                `SELECT id, domain, COALESCE(scan_source, 'Unknown'), COALESCE(scan_ip, ''),
+                        analysis_success, created_at
+                 FROM domain_analyses
+                 WHERE scan_flag = TRUE
+                 ORDER BY created_at DESC LIMIT 25`)
+        if err != nil {
+                slog.Error("Admin: failed to fetch scanner alerts", "error", err)
+                return nil
+        }
+        defer rows.Close()
+
+        var alerts []AdminScannerAlert
+        for rows.Next() {
+                var a AdminScannerAlert
+                var success *bool
+                var createdAt time.Time
+                if err := rows.Scan(&a.ID, &a.Domain, &a.Source, &a.IP, &success, &createdAt); err != nil {
+                        continue
+                }
+                if success != nil {
+                        a.Success = *success
+                }
+                a.CreatedAt = createdAt.Format("2006-01-02 15:04")
+                alerts = append(alerts, a)
+        }
+        return alerts
 }

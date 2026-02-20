@@ -21,6 +21,7 @@ import (
         "dnstool/go-server/internal/dnsclient"
         "dnstool/go-server/internal/handlers"
         "dnstool/go-server/internal/middleware"
+        "dnstool/go-server/internal/scanner"
         tmplFuncs "dnstool/go-server/internal/templates"
 
         "github.com/gin-contrib/gzip"
@@ -101,6 +102,8 @@ func main() {
 
         analyzer.InitIETFMetadata()
         analyzer.ScheduleRFCRefresh()
+
+        scanner.StartCISARefresh()
 
         dnsHistoryCache := analyzer.NewDNSHistoryCache(24 * time.Hour)
         slog.Info("DNS history cache initialized", "ttl", "24h")

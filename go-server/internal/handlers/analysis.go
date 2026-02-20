@@ -18,6 +18,7 @@ import (
         "dnstool/go-server/internal/dbq"
         "dnstool/go-server/internal/dnsclient"
         "dnstool/go-server/internal/icae"
+        "dnstool/go-server/internal/scanner"
 
         "github.com/gin-gonic/gin"
 )
@@ -306,7 +307,10 @@ func (h *AnalysisHandler) Analyze(c *gin.Context) {
 
         h.enrichResultsNoHistory(c, asciiDomain, results)
 
-        countryCode, countryName := lookupCountry(c.ClientIP())
+        clientIP := c.ClientIP()
+        countryCode, countryName := lookupCountry(clientIP)
+
+        scanClass := scanner.Classify(asciiDomain, clientIP)
 
         postureHash := analyzer.CanonicalPostureHash(results)
 
@@ -333,7 +337,7 @@ func (h *AnalysisHandler) Analyze(c *gin.Context) {
                 }
                 timestamp = time.Now().UTC().Format("2006-01-02 15:04:05 UTC")
         } else {
-                analysisID, timestamp = h.saveAnalysis(c.Request.Context(), domain, asciiDomain, results, analysisDuration, countryCode, countryName, isPrivate, hasNovelSelectors)
+                analysisID, timestamp = h.saveAnalysis(c.Request.Context(), domain, asciiDomain, results, analysisDuration, countryCode, countryName, isPrivate, hasNovelSelectors, scanClass)
         }
 
         if analysisID > 0 && isAuthenticated && userID > 0 {
@@ -694,7 +698,7 @@ func (h *AnalysisHandler) APIAnalysis(c *gin.Context) {
         })
 }
 
-func (h *AnalysisHandler) saveAnalysis(ctx context.Context, domain, asciiDomain string, results map[string]any, duration float64, countryCode, countryName string, private, hasUserSelectors bool) (int32, string) {
+func (h *AnalysisHandler) saveAnalysis(ctx context.Context, domain, asciiDomain string, results map[string]any, duration float64, countryCode, countryName string, private, hasUserSelectors bool, scanClass scanner.Classification) (int32, string) {
         results["_tool_version"] = h.Config.AppVersion
         fullResultsJSON, _ := json.Marshal(results)
 
@@ -730,6 +734,14 @@ func (h *AnalysisHandler) saveAnalysis(ctx context.Context, domain, asciiDomain 
                 cn = &countryName
         }
 
+        var scanSource, scanIP *string
+        if scanClass.IsScan {
+                scanSource = &scanClass.Source
+        }
+        if scanClass.IP != "" {
+                scanIP = &scanClass.IP
+        }
+
         params := dbq.InsertAnalysisParams{
                 Domain:               domain,
                 AsciiDomain:          asciiDomain,
@@ -754,6 +766,9 @@ func (h *AnalysisHandler) saveAnalysis(ctx context.Context, domain, asciiDomain 
                 PostureHash:          &postureHash,
                 Private:              private,
                 HasUserSelectors:     hasUserSelectors,
+                ScanFlag:             scanClass.IsScan,
+                ScanSource:           scanSource,
+                ScanIP:               scanIP,
         }
 
         row, err := h.DB.Queries.InsertAnalysis(ctx, params)
