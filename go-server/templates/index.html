@@ -225,7 +225,7 @@
                 <div class="hero-protocols mb-4" aria-label="Intelligence Confidence Audit Engine — per-protocol confidence levels">
                     <div class="d-flex flex-wrap justify-content-center gap-1 icae-hero-badges">
                         {{range .ICAEMetrics.Protocols}}
-                        <span class="icae-badge icae-badge-{{.AnalysisLevel}}" title="{{.DisplayName}} — Intelligence Confidence: {{.AnalysisDisplay}}{{if .HasRuns}} ({{.AnalysisRuns}} audit runs){{end}}">{{.DisplayName}} <span class="icae-dot"></span></span>
+                        <a href="/confidence" class="icae-badge icae-badge-{{.AnalysisLevel}}" title="{{.DisplayName}} — Intelligence Confidence: {{.AnalysisDisplay}}{{if .HasRuns}} ({{.AnalysisRuns}} audit runs){{end}}">{{.DisplayName}} <span class="icae-dot"></span></a>
                         {{end}}
                     </div>
                     <div class="icae-hero-label mt-2">

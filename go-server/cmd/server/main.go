@@ -188,6 +188,9 @@ func main() {
         faqHandler := handlers.NewFAQHandler(cfg)
         router.GET("/faq/subdomains", faqHandler.SubdomainDiscovery)
 
+        confidenceHandler := handlers.NewConfidenceHandler(cfg, database)
+        router.GET("/confidence", confidenceHandler.Confidence)
+
         securityPolicyHandler := handlers.NewSecurityPolicyHandler(cfg)
         router.GET("/security-policy", securityPolicyHandler.SecurityPolicy)
 

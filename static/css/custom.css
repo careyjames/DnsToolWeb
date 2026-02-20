@@ -184,8 +184,8 @@ code {
     flex-shrink: 0;
 }
 .icae-badge-development .icae-dot {
-    background: #7b8fa8;
-    box-shadow: 0 0 6px rgba(123, 143, 168, 0.6);
+    background: #8b9dc3;
+    box-shadow: 0 0 6px rgba(139, 157, 195, 0.7), 0 0 10px rgba(139, 157, 195, 0.3);
 }
 .icae-badge-verified .icae-dot {
     background: #58a6ff;
@@ -205,12 +205,35 @@ code {
 }
 
 .icae-badge-development {
-    border-color: rgba(123, 143, 168, 0.35);
+    border-color: rgba(139, 157, 195, 0.35);
 }
 .icae-badge-development:hover {
-    border-color: rgba(123, 143, 168, 0.6);
-    box-shadow: 0 0 8px rgba(123, 143, 168, 0.15);
+    border-color: rgba(139, 157, 195, 0.6);
+    box-shadow: 0 0 8px rgba(139, 157, 195, 0.2);
 }
+
+.icae-badge { text-decoration: none; }
+.icae-badge:hover { color: #e6edf3; text-decoration: none; }
+
+.icae-dot-inline {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+.icae-dot-color-development { background: #8b9dc3; box-shadow: 0 0 6px rgba(139, 157, 195, 0.7); }
+.icae-dot-color-verified { background: #58a6ff; box-shadow: 0 0 6px rgba(88, 166, 255, 0.7), 0 0 12px rgba(88, 166, 255, 0.3); }
+.icae-dot-color-consistent { background: #3fb950; box-shadow: 0 0 6px rgba(63, 185, 80, 0.7), 0 0 12px rgba(63, 185, 80, 0.3); }
+.icae-dot-color-gold { background: #d4a855; box-shadow: 0 0 8px rgba(212, 168, 85, 0.8), 0 0 14px rgba(212, 168, 85, 0.35); }
+.icae-dot-color-gold_master { background: linear-gradient(135deg, #b0cfe0, #e0ecf4); box-shadow: 0 0 10px rgba(192, 216, 232, 0.9), 0 0 20px rgba(176, 207, 224, 0.4); }
+
+.icae-maturity-badge { font-size: 0.75rem; font-weight: 500; }
+.icae-maturity-development { background: rgba(139, 157, 195, 0.15); color: #8b9dc3; }
+.icae-maturity-verified { background: rgba(88, 166, 255, 0.15); color: #58a6ff; }
+.icae-maturity-consistent { background: rgba(63, 185, 80, 0.15); color: #3fb950; }
+.icae-maturity-gold { background: rgba(212, 168, 85, 0.15); color: #d4a855; }
+.icae-maturity-gold_master { background: rgba(176, 207, 224, 0.15); color: #b0cfe0; }
 .icae-badge-verified {
     border-color: rgba(88, 166, 255, 0.35);
 }
@@ -2832,6 +2855,8 @@ main.container {
 .u-fs-072em { font-size: 0.72em; }
 .u-fs-072rem { font-size: 0.72rem; }
 .u-fs-075em { font-size: 0.75em; }
+.u-max-w-900 { max-width: 900px; }
+.u-max-w-640 { max-width: 640px; }
 .u-fs-075rem { font-size: 0.75rem; }
 .u-fs-078em { font-size: 0.78em; }
 .u-fs-080em { font-size: 0.8em; }
