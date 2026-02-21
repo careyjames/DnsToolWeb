@@ -136,7 +136,7 @@ type RegressionEvent struct {
 }
 
 func NextTierPct(currentLevel string, consecutivePasses int, daysSinceFirst int) int {
-        _, nextPasses, nextDays, _, _, atMax := ComputeNextTier(currentLevel, consecutivePasses, daysSinceFirst)
+        _, _, nextPasses, nextDays, _, _, atMax := ComputeNextTier(currentLevel, consecutivePasses, daysSinceFirst)
         if atMax {
                 return 100
         }
@@ -182,6 +182,7 @@ type ProtocolReport struct {
         CollectionBarPct  int
         AnalysisBarPct    int
         NextTierName      string
+        NextTierKey       string
         NextTierPasses    int
         NextTierDays      int
         PassesMet         bool
@@ -190,6 +191,7 @@ type ProtocolReport struct {
         AtMaxTier         bool
         NextTierPct       int
         ColNextTierName   string
+        ColNextTierKey    string
         ColNextTierPasses int
         ColNextTierDays   int
         ColPassesMet      bool
@@ -225,18 +227,18 @@ func CountCasesByProtocol() map[string]ProtocolCaseCounts {
         return counts
 }
 
-func ComputeNextTier(currentLevel string, consecutivePasses int, daysSinceFirst int) (nextName string, nextPasses int, nextDays int, passesMet bool, daysMet bool, atMax bool) {
+func ComputeNextTier(currentLevel string, consecutivePasses int, daysSinceFirst int) (nextName string, nextKey string, nextPasses int, nextDays int, passesMet bool, daysMet bool, atMax bool) {
         switch currentLevel {
         case MaturityDevelopment:
-                return MaturityDisplayNames[MaturityVerified], ThresholdVerified, 0, consecutivePasses >= ThresholdVerified, true, false
+                return MaturityDisplayNames[MaturityVerified], "verified", ThresholdVerified, 0, consecutivePasses >= ThresholdVerified, true, false
         case MaturityVerified:
-                return MaturityDisplayNames[MaturityConsistent], ThresholdConsistent, ConsistentDays, consecutivePasses >= ThresholdConsistent, daysSinceFirst >= ConsistentDays, false
+                return MaturityDisplayNames[MaturityConsistent], "consistent", ThresholdConsistent, ConsistentDays, consecutivePasses >= ThresholdConsistent, daysSinceFirst >= ConsistentDays, false
         case MaturityConsistent:
-                return MaturityDisplayNames[MaturityGold], ThresholdGold, GoldDays, consecutivePasses >= ThresholdGold, daysSinceFirst >= GoldDays, false
+                return MaturityDisplayNames[MaturityGold], "gold", ThresholdGold, GoldDays, consecutivePasses >= ThresholdGold, daysSinceFirst >= GoldDays, false
         case MaturityGold:
-                return MaturityDisplayNames[MaturityGoldMaster], ThresholdGoldMaster, GoldMasterDays, consecutivePasses >= ThresholdGoldMaster, daysSinceFirst >= GoldMasterDays, false
+                return MaturityDisplayNames[MaturityGoldMaster], "gold-master", ThresholdGoldMaster, GoldMasterDays, consecutivePasses >= ThresholdGoldMaster, daysSinceFirst >= GoldMasterDays, false
         default:
-                return "", 0, 0, true, true, true
+                return "", "", 0, 0, true, true, true
         }
 }
 

@@ -205,7 +205,7 @@ func TestComputeNextTier(t *testing.T) {
         }
         for _, tt := range tests {
                 t.Run(tt.name, func(t *testing.T) {
-                        name, _, _, pMet, dMet, atMax := ComputeNextTier(tt.level, tt.passes, tt.days)
+                        name, _, _, _, pMet, dMet, atMax := ComputeNextTier(tt.level, tt.passes, tt.days)
                         if name != tt.wantName {
                                 t.Errorf("nextName: got %q, want %q", name, tt.wantName)
                         }

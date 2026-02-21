@@ -63,12 +63,13 @@ func LoadReportMetrics(ctx context.Context, queries DBTX) *ReportMetrics {
                                 colDaysElapsed = int(time.Since(colData.FirstPassAt.Time).Hours() / 24)
                         }
                         pr.ColDaysElapsed = colDaysElapsed
-                        pr.ColNextTierName, pr.ColNextTierPasses, pr.ColNextTierDays, pr.ColPassesMet, pr.ColDaysMet, pr.ColAtMaxTier = ComputeNextTier(colData.Maturity, int(colData.ConsecutivePasses), colDaysElapsed)
+                        pr.ColNextTierName, pr.ColNextTierKey, pr.ColNextTierPasses, pr.ColNextTierDays, pr.ColPassesMet, pr.ColDaysMet, pr.ColAtMaxTier = ComputeNextTier(colData.Maturity, int(colData.ConsecutivePasses), colDaysElapsed)
                         pr.ColNextTierPct = NextTierPct(colData.Maturity, int(colData.ConsecutivePasses), colDaysElapsed)
                 } else {
                         pr.CollectionLevel = MaturityDevelopment
                         pr.CollectionDisplay = MaturityDisplayNames[MaturityDevelopment]
                         pr.ColNextTierName = MaturityDisplayNames[MaturityVerified]
+                        pr.ColNextTierKey = "verified"
                         pr.ColNextTierPasses = ThresholdVerified
                 }
 
@@ -94,12 +95,13 @@ func LoadReportMetrics(ctx context.Context, queries DBTX) *ReportMetrics {
                                 daysElapsed = int(time.Since(analData.FirstPassAt.Time).Hours() / 24)
                         }
                         pr.DaysElapsed = daysElapsed
-                        pr.NextTierName, pr.NextTierPasses, pr.NextTierDays, pr.PassesMet, pr.DaysMet, pr.AtMaxTier = ComputeNextTier(analData.Maturity, int(analData.ConsecutivePasses), daysElapsed)
+                        pr.NextTierName, pr.NextTierKey, pr.NextTierPasses, pr.NextTierDays, pr.PassesMet, pr.DaysMet, pr.AtMaxTier = ComputeNextTier(analData.Maturity, int(analData.ConsecutivePasses), daysElapsed)
                         pr.NextTierPct = NextTierPct(analData.Maturity, int(analData.ConsecutivePasses), daysElapsed)
                 } else {
                         pr.AnalysisLevel = MaturityDevelopment
                         pr.AnalysisDisplay = MaturityDisplayNames[MaturityDevelopment]
                         pr.NextTierName = MaturityDisplayNames[MaturityVerified]
+                        pr.NextTierKey = "verified"
                         pr.NextTierPasses = ThresholdVerified
                 }
 
