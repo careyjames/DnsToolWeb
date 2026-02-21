@@ -32,8 +32,9 @@
             </p>
             <p class="text-muted mt-2 mx-auto u-max-w-640">
                 Operational confidence posture for every DNS intelligence protocol.
-                Maturity levels are assessed from observed performance &mdash; consecutive deterministic passes
-                plus time-in-service &mdash; with no manual assignment, no self-grading, no marketing claims.
+                ICAE assessments are derived from deterministic pass thresholds plus time-in-service,
+                with no manual overrides or self-grading. Every result is cryptographically hashed
+                and retained &mdash; a tamper-evident, historically verifiable audit trail.
             </p>
         </div>
 
@@ -43,11 +44,11 @@
         <div class="icae-summary-bar mb-4">
             <div class="icae-summary-item">
                 <span class="icae-summary-value">{{.ICAEMetrics.TotalPasses}}</span>
-                <span class="icae-summary-label">Analysis</span>
+                <span class="icae-summary-label icae-cal-progress-label-analysis">Analysis</span>
             </div>
             <div class="icae-summary-item">
                 <span class="icae-summary-value">{{.ICAEMetrics.CollectionPasses}}</span>
-                <span class="icae-summary-label">Collection</span>
+                <span class="icae-summary-label icae-cal-progress-label-collection">Collection</span>
             </div>
             <div class="icae-summary-item">
                 <span class="icae-summary-value">{{.ICAEMetrics.PassRate}}%</span>
@@ -186,8 +187,8 @@
                 </div>
                 <div class="text-muted small mt-2 pt-2 border-top border-secondary">
                     <i class="fas fa-info-circle me-1"></i><strong>Effective Maturity</strong> = min(Analysis, Collection).
-                    A protocol&rsquo;s headline badge reflects the lower of its two layers &mdash; both collection and analysis
-                    must independently earn each maturity level. No layer is exempted.
+                    A protocol&rsquo;s assessed level reflects the lower of its two layers &mdash; both collection and analysis
+                    must independently reach each threshold. No layer is exempted.
                 </div>
             </div>
         </div>
@@ -457,11 +458,11 @@
             <div class="card-body">
                 <h2 class="h5 fw-bold mb-3"><i class="fas fa-shield-alt me-2 text-info"></i>Why This Matters</h2>
                 <p class="text-muted mb-2">
-                    Most security tools grade your domain without telling you how confident they are in their own results.
-                    DNS Tool is different: the ICAE provides full transparency into our analytical accuracy.
+                    Most security tools grade your domain without disclosing how confident they are in their own results.
+                    DNS Tool is different: the ICAE provides full transparency into analytical accuracy.
                 </p>
                 <p class="text-muted mb-0">
-                    When you see a maturity badge next to a protocol, you know exactly how many audit runs back that confidence.
+                    Every protocol&rsquo;s confidence level is backed by a verifiable count of consecutive audit passes.
                     No black boxes. No hand-waving. Every claim backed by deterministic test cases.
                 </p>
             </div>
