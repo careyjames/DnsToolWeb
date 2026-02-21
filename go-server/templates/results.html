@@ -4671,10 +4671,10 @@
                     <p class="small mb-3 text-muted fst-italic"><i class="fas fa-folder-open me-1"></i>Tip: <code class="u-color-link">cd ~/Downloads</code> first (or wherever you saved the files).</p>
                     <div class="mb-2">
                         <div class="d-flex align-items-center justify-content-between mb-1">
-                            <span class="small u-color-text"><i class="fas fa-terminal me-1 text-danger opacity-50"></i>OpenSSL (macOS, Linux, WSL)</span>
-                            <button class="btn btn-sm btn-outline-danger border-0 copy-cmd-btn u-badge-compact" data-cmd="openssl dgst -sha3-512 dns-intelligence-{{.AsciiDomain}}.json" title="Copy command"><i class="fas fa-copy"></i></button>
+                            <span class="small u-color-text"><i class="fas fa-terminal me-1 text-danger opacity-50"></i>OpenSSL + Sidecar (macOS, Linux, WSL)</span>
+                            <button class="btn btn-sm btn-outline-danger border-0 copy-cmd-btn u-badge-compact" data-cmd="cat dns-intelligence-{{.AsciiDomain}}.json.sha3 && echo '---' && openssl dgst -sha3-512 dns-intelligence-{{.AsciiDomain}}.json" title="Copy command"><i class="fas fa-copy"></i></button>
                         </div>
-                        <pre class="p-2 rounded small mb-0 u-code-block"><code>openssl dgst -sha3-512 dns-intelligence-{{.AsciiDomain}}.json</code></pre>
+                        <pre class="p-2 rounded small mb-0 u-code-block"><code>cat dns-intelligence-{{.AsciiDomain}}.json.sha3 && echo '---' && openssl dgst -sha3-512 dns-intelligence-{{.AsciiDomain}}.json</code></pre>
                     </div>
                     <div class="mb-2">
                         <div class="d-flex align-items-center justify-content-between mb-1">
