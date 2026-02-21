@@ -112,22 +112,23 @@
                 </div>
 
                 <div class="about-card p-4 mb-4">
-                    <p class="mb-2">DNS Tool exists because of a simple frustration: having to pull up RFCs to prove things to people.</p>
-                    <p class="mb-0 text-muted">Clients would question a DNS configuration. Peers would push back on a security recommendation. Every time, the answer was the same &mdash; open the RFC, find the section, show the specification. After doing that hundreds of times across 25+ years in IT and security, the obvious question became: <em>why isn&rsquo;t there a tool that just does this automatically?</em></p>
+                    <p class="mb-2">DNS Tool exists because of a simple reality: when something breaks, someone has to prove what happened.</p>
+                    <p class="mb-2 text-muted">Across 25+ years in IT and security, the pattern repeated itself &mdash; something goes down, executives want answers, and the explanation had better come with verifiable facts. A graphic designer edits the website and breaks DNS. A vendor change cascades into a mail outage. Every time, it was either going to be your fault for no reason, or you found the real cause and proved it.</p>
+                    <p class="mb-0 text-muted">That pressure &mdash; needing to pull up RFCs, run dig commands, craft one-liners, and produce evidence under fire &mdash; is why this tool exists. After doing that hundreds of times, the obvious question became: <em>why isn&rsquo;t there a tool that just does this automatically?</em></p>
                 </div>
 
                 <h2 class="h5 mb-3 text-info"><i class="fas fa-clock-rotate-left me-2"></i>The Long Road Here</h2>
 
                 <div class="about-timeline-item">
                     <div class="about-timeline-dot"></div>
-                    <div class="about-era">Circa 1980 &middot; Where It Started</div>
+                    <div class="about-era">Circa 1980 &middot; Memphis, Tennessee</div>
                     <p class="mb-0 text-muted">A father and son bought parts at Radio Shack and built a computer in a closet. That was the first time the builder behind this tool touched a keyboard. The fascination never stopped.</p>
                 </div>
 
                 <div class="about-timeline-item">
                     <div class="about-timeline-dot"></div>
-                    <div class="about-era">The Next Two Decades &middot; Going Deep</div>
-                    <p class="mb-0 text-muted">Years of IT work &mdash; networks, servers, clients, and the slow accumulation of knowledge that only comes from being the person who gets called when things break. DNS was always there, quietly underpinning everything, same protocol since 1983.</p>
+                    <div class="about-era">The Next Two Decades &middot; Nashville, Tennessee</div>
+                    <p class="mb-0 text-muted">Years of IT work &mdash; networks, servers, clients, and the slow accumulation of knowledge that only comes from being the person who gets called when things break. And when things broke, someone had to explain why to executives who wanted answers. DNS was always there, quietly underpinning everything, same protocol since 1983.</p>
                 </div>
 
                 <div class="about-timeline-item">
@@ -140,18 +141,19 @@
                     <div class="about-timeline-dot"></div>
                     <div class="about-era">The Offensive Security Era</div>
                     <p class="mb-1 text-muted"><a href="https://hak5.org/" target="_blank" rel="noopener" class="text-info">Hak5</a> was the next catalyst. OMG cables, Bash Bunnies, and the hands-on offensive security work that teaches you to think like an adversary. Understanding attack vectors changes how you evaluate defenses &mdash; you stop accepting &ldquo;it&rsquo;s probably fine&rdquo; and start demanding proof.</p>
+                    <p class="mb-1 text-muted small">High-profile clients &mdash; the kind who needed to understand lockdown mode, why their credentials leaked, and how an attacker could walk into their office with a cable that looks like a charger &mdash; needed live demonstrations, not slide decks. The offensive tools made those demonstrations possible and turned abstract threats into something tangible.</p>
                     <p class="mb-0 text-muted small">That work led to a <a href="https://payloadhub.com/blogs/payloads/mac_exfil?_pos=1&_sid=53d35434c&_ss=r" target="_blank" rel="noopener" class="text-info">Hak5 Payload Award</a> for an exfiltration payload (mac_exfil). A different discipline entirely, but part of the same path &mdash; understanding how systems actually work, not how they&rsquo;re supposed to work.</p>
                 </div>
 
                 <div class="about-timeline-item">
                     <div class="about-timeline-dot"></div>
                     <div class="about-era">The Python Era &middot; Early DNS Tool</div>
-                    <p class="mb-0 text-muted">The earliest version of this tool was a Python CLI &mdash; a terminal app that pulled back limited DNS results. It was rough, but it was the seed. The idea was already clear: automate the RFC lookups, query the records, tell people what they actually have instead of what they think they have.</p>
+                    <p class="mb-0 text-muted">The earliest version of this tool was a Python CLI &mdash; a terminal app that pulled back DNS results in one quick scroll. Out in the field doing DMARC audits for clients, the alternative was running a dozen dig commands and crafting one-liners. The CLI was basic &mdash; no RFC citations, no intelligence analysis &mdash; but it was the seed: type a domain, get an honest answer about what&rsquo;s actually configured.</p>
                 </div>
 
                 <div class="about-timeline-item">
                     <div class="about-timeline-dot"></div>
-                    <div class="about-era">Today &middot; San Diego</div>
+                    <div class="about-era">February 2025 &middot; San Diego</div>
                     <p class="mb-0 text-muted">That CLI became what you see now &mdash; a Go-powered intelligence platform that queries five independent DNS resolvers for consensus, cryptographically hashes every analysis with SHA-3-512, cites the RFC for every finding, and produces reports that would hold up at a DEF CON presentation or a board meeting. The reports are the r&eacute;sum&eacute;.</p>
                 </div>
 
@@ -173,9 +175,14 @@
                         <p class="mb-0 text-muted mt-1">For building a community that proves you can teach technical skills without being hostile about it. The <a href="https://www.raspberrypi.org/" target="_blank" rel="noopener" class="text-info">Raspberry Pi community</a> is proof that intellectual generosity produces better engineers than gatekeeping ever will.</p>
                     </div>
 
-                    <div>
+                    <div class="mb-3">
                         <strong class="text-info">Hak5</strong>
                         <p class="mb-0 text-muted mt-1">For the hardware, the community, and the mindset. <a href="https://hak5.org/" target="_blank" rel="noopener" class="text-info">Hak5</a> tools teach you to think like an adversary, which is exactly the perspective that makes a defensive tool worth using.</p>
+                    </div>
+
+                    <div>
+                        <strong class="text-info">Fyodor</strong> <span class="text-muted small">&middot; <a href="https://nmap.org/" target="_blank" rel="noopener" class="text-info">Nmap</a></span>
+                        <p class="mb-0 text-muted mt-1">For creating <a href="https://nmap.org/" target="_blank" rel="noopener" class="text-info">Nmap</a> &mdash; the tool that taught a generation of security professionals what network reconnaissance actually looks like. Nmap was a major part of the path that led here. We&rsquo;ve corresponded, and his work remains an inspiration.</p>
                     </div>
                 </div>
 
