@@ -223,19 +223,11 @@
                     Producing <span class="text-info">Engineer's DNS Intelligence Reports</span> and <span class="text-info">Executive's DNS Intelligence Briefs</span> with <span class="text-info">posture&nbsp;scoring</span>
                 </p>
                 {{if .ICAEMetrics}}
-                <div class="icae-hero-card mb-3" aria-label="Intelligence Confidence Level — per-protocol confidence">
-                    <div class="icae-hero-heading">
-                        <a href="/confidence" class="icae-confidence-label" title="Intelligence Confidence Level — {{.ICAEMetrics.EvaluatedCount}}/{{.ICAEMetrics.TotalProtocols}} protocols under audit"><i class="fas fa-satellite-dish me-1"></i> Intelligence Confidence Level</a>
-                    </div>
-                    <div class="icae-hero-heading">
-                        <a href="/confidence" class="icae-hero-maturity-badge icae-level-{{if eq .ICAEMetrics.OverallMaturity "gold_master"}}gold-master{{else if eq .ICAEMetrics.OverallMaturity "development"}}dev{{else}}{{.ICAEMetrics.OverallMaturity}}{{end}}" title="ICAE system maturity: {{.ICAEMetrics.OverallMaturityDisplay}} — {{.ICAEMetrics.EvaluatedCount}}/{{.ICAEMetrics.TotalProtocols}} protocols evaluated">{{.ICAEMetrics.OverallMaturityDisplay}}</a>
-                    </div>
-                    <div class="d-flex flex-wrap justify-content-center gap-1 icae-hero-badges mt-1">
-                        {{range .ICAEMetrics.Protocols}}
-                        <a href="/confidence" class="icae-badge icae-badge-{{.EffectiveLevel}}" title="{{.DisplayName}} — Intelligence Confidence: {{.EffectiveDisplay}}{{if .HasRuns}} ({{.AnalysisRuns}} audit runs){{end}}">{{.DisplayName}} <span class="icae-dot"></span></a>
-                        {{end}}
-                    </div>
-                </div>
+                <a href="/confidence" class="icae-hero-card mb-3" aria-label="Intelligence Confidence Level — per-protocol confidence" title="View Intelligence Confidence Audit Engine details">
+                    <span class="icae-hero-title"><i class="fas fa-satellite-dish"></i> Intelligence Confidence</span>
+                    <span class="icae-hero-maturity icae-level-{{if eq .ICAEMetrics.OverallMaturity "gold_master"}}gold-master{{else if eq .ICAEMetrics.OverallMaturity "development"}}dev{{else}}{{.ICAEMetrics.OverallMaturity}}{{end}}">{{.ICAEMetrics.OverallMaturityDisplay}}</span>
+                    <span class="icae-hero-protocols">{{range $i, $p := .ICAEMetrics.Protocols}}{{if $i}} · {{end}}<span class="icae-proto" title="{{$p.DisplayName}}: {{$p.EffectiveDisplay}}">{{$p.DisplayName}}<span class="icae-dot icae-dot-{{$p.EffectiveLevel}}"></span></span>{{end}}</span>
+                </a>
                 {{else}}
                 <p class="hero-protocols mb-3">
                     SPF &middot; DKIM &middot; DMARC &middot; DANE/TLSA &middot; DNSSEC &middot; BIMI &middot; MTA-STS &middot; TLS-RPT &middot; CAA

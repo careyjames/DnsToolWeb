@@ -191,18 +191,91 @@ code {
     letter-spacing: 0.08em;
 }
 .icae-hero-card {
+    display: block;
     text-align: center;
-    background: rgba(22, 27, 34, 0.55);
-    border: 1px solid rgba(125, 142, 168, 0.12);
-    border-radius: 0.75rem;
-    padding: 0.85rem 1.5rem 0.75rem;
-    max-width: 38rem;
+    text-decoration: none;
+    color: #8b949e;
+    background: rgba(22, 27, 34, 0.45);
+    border: 1px solid rgba(125, 142, 168, 0.1);
+    border-radius: 0.5rem;
+    padding: 0.6rem 1.25rem;
+    max-width: 34rem;
     margin-left: auto;
     margin-right: auto;
+    transition: border-color 0.25s, background 0.25s;
 }
-.icae-hero-heading {
-    margin-bottom: 0.35rem;
+.icae-hero-card:hover {
+    border-color: rgba(125, 142, 168, 0.25);
+    background: rgba(22, 27, 34, 0.6);
+    text-decoration: none;
+    color: #8b949e;
 }
+.icae-hero-title {
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    color: rgba(230, 237, 243, 0.4);
+}
+.icae-hero-title .fas {
+    font-size: 0.6rem;
+    opacity: 0.5;
+}
+.icae-hero-maturity {
+    display: inline-block;
+    font-size: 0.68rem;
+    font-weight: 600;
+    letter-spacing: 0.03em;
+    padding: 0.1rem 0.5rem;
+    border-radius: 999px;
+    margin-left: 0.4rem;
+    color: #e6edf3;
+    background: rgba(22, 27, 34, 0.85);
+    border: 1px solid rgba(125, 142, 168, 0.3);
+    vertical-align: middle;
+}
+.icae-hero-maturity::before {
+    content: '';
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    margin-right: 0.3rem;
+    vertical-align: middle;
+}
+.icae-hero-maturity.icae-level-dev { border-color: rgba(74, 85, 104, 0.45); }
+.icae-hero-maturity.icae-level-dev::before { background: #4a5568; }
+.icae-hero-maturity.icae-level-verified { border-color: rgba(88, 166, 255, 0.35); }
+.icae-hero-maturity.icae-level-verified::before { background: #6bb5ff; box-shadow: 0 0 4px rgba(107, 181, 255, 0.5); }
+.icae-hero-maturity.icae-level-consistent { border-color: rgba(63, 185, 80, 0.35); }
+.icae-hero-maturity.icae-level-consistent::before { background: #56d364; box-shadow: 0 0 4px rgba(86, 211, 100, 0.5); }
+.icae-hero-maturity.icae-level-gold { border-color: rgba(212, 168, 85, 0.4); }
+.icae-hero-maturity.icae-level-gold::before { background: #e0b85c; box-shadow: 0 0 4px rgba(224, 184, 92, 0.5); }
+.icae-hero-maturity.icae-level-gold-master { border-color: rgba(232, 213, 163, 0.4); }
+.icae-hero-maturity.icae-level-gold-master::before { background: linear-gradient(135deg, #f0ddb3, #faf3e3); box-shadow: 0 0 4px rgba(240, 221, 179, 0.5); }
+.icae-hero-protocols {
+    display: block;
+    margin-top: 0.4rem;
+    font-size: 0.78rem;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+    color: rgba(230, 237, 243, 0.5);
+    line-height: 1.8;
+}
+.icae-proto { white-space: nowrap; }
+.icae-proto .icae-dot {
+    width: 6px;
+    height: 6px;
+    margin-left: 0.2rem;
+    vertical-align: middle;
+    position: relative;
+    top: -1px;
+}
+.icae-dot-development { background: #4a5568; box-shadow: none; }
+.icae-dot-verified { background: #6bb5ff; box-shadow: 0 0 3px rgba(107, 181, 255, 0.5); }
+.icae-dot-consistent { background: #56d364; box-shadow: 0 0 3px rgba(86, 211, 100, 0.5); }
+.icae-dot-gold { background: #e0b85c; box-shadow: 0 0 3px rgba(224, 184, 92, 0.5); }
+.icae-dot-gold_master { background: linear-gradient(135deg, #f0ddb3, #faf3e3); box-shadow: 0 0 3px rgba(240, 221, 179, 0.5); }
 
 .icae-hero-badges { gap: 0.5rem !important; }
 .icae-badge {
