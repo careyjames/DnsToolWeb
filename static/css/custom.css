@@ -2010,7 +2010,7 @@ body.covert-mode .hero-title {
     }
 }
 body.covert-mode .u-hero-tagline {
-    color: rgba(200, 180, 180, 0.65);
+    color: rgba(180, 150, 150, 0.45);
 }
 body.covert-mode .u-hero-tagline .text-info {
     color: #c43c3c !important;
@@ -2071,7 +2071,9 @@ body.covert-mode .form-control,
 body.covert-mode .form-select {
     background-color: #0a0c10 !important;
     border-color: rgba(140, 40, 40, 0.3) !important;
-    color: #d0c8c8 !important;
+    color: rgba(196, 100, 100, 0.75) !important;
+    font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', 'JetBrains Mono', 'Consolas', 'Monaco', monospace !important;
+    letter-spacing: 0.04em;
 }
 body.covert-mode .form-control:focus,
 body.covert-mode .form-select:focus {
