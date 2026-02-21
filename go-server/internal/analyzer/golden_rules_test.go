@@ -1554,6 +1554,61 @@ func TestMailPostureClassificationNoMailIntent(t *testing.T) {
         }
 }
 
+func TestDetectMisplacedDMARCNone(t *testing.T) {
+        rootTXT := []string{
+                "v=spf1 include:_spf.google.com ~all",
+                "google-site-verification=abc123",
+        }
+        result := DetectMisplacedDMARC(rootTXT)
+        if result["detected"] != false {
+                t.Error("should not detect misplaced DMARC when none present in root TXT")
+        }
+}
+
+func TestDetectMisplacedDMARCReject(t *testing.T) {
+        rootTXT := []string{
+                "v=spf1 include:_spf.google.com ~all",
+                "v=DMARC1;p=reject;pct=100;rua=mailto:your email address",
+        }
+        result := DetectMisplacedDMARC(rootTXT)
+        if result["detected"] != true {
+                t.Fatal("should detect misplaced DMARC record in root TXT")
+        }
+        if result["policy_hint"] != "reject" {
+                t.Errorf("policy_hint should be reject, got %v", result["policy_hint"])
+        }
+        records, ok := result["records"].([]string)
+        if !ok || len(records) != 1 {
+                t.Fatalf("should have exactly 1 misplaced record, got %v", result["records"])
+        }
+        msg, _ := result["message"].(string)
+        if msg == "" {
+                t.Error("message should not be empty")
+        }
+}
+
+func TestDetectMisplacedDMARCCaseInsensitive(t *testing.T) {
+        rootTXT := []string{"V=DMARC1; p=none;"}
+        result := DetectMisplacedDMARC(rootTXT)
+        if result["detected"] != true {
+                t.Error("should detect case-insensitive v=DMARC1")
+        }
+        if result["policy_hint"] != "none" {
+                t.Errorf("policy_hint should be none, got %v", result["policy_hint"])
+        }
+}
+
+func TestDetectMisplacedDMARCNoPolicy(t *testing.T) {
+        rootTXT := []string{"v=DMARC1"}
+        result := DetectMisplacedDMARC(rootTXT)
+        if result["detected"] != true {
+                t.Error("should detect bare v=DMARC1 record")
+        }
+        if result["policy_hint"] != "" {
+                t.Errorf("policy_hint should be empty for bare v=DMARC1, got %v", result["policy_hint"])
+        }
+}
+
 func TestMailPostureClassificationProtected(t *testing.T) {
         mf := mailFlags{hasMX: true, hasSPF: true, hasDMARC: true, hasDKIM: true, dmarcReject: true, dmarcPolicy: "reject"}
         mc := classifyMailPosture(mf, 0, "example.com", protocolState{})

@@ -333,6 +333,16 @@
                             {{if $dmarcRecord}}
                             <div class="code-block font-monospace small mb-2">{{$dmarcRecord}}</div>
                             {{end}}
+                            {{$misplacedDMARC := toMap (mapGet "misplaced_dmarc" $dmarc)}}
+                            {{if and $misplacedDMARC (mapGetBool "detected" $misplacedDMARC)}}
+                            <div class="alert alert-danger py-2 mb-2 small">
+                                <i class="fas fa-ghost me-1"></i><strong>Ghost DMARC Record</strong> &mdash; a <code>v=DMARC1</code> record is sitting in the root TXT zone instead of <code>_dmarc.{{.Domain}}</code>. Mail receivers ignore it completely. {{$policyHint := mapGetStr "policy_hint" $misplacedDMARC}}{{$activePolicy := mapGetStr "policy" $dmarc}}{{if and $policyHint $activePolicy (ne $policyHint $activePolicy)}}The owner thinks they have <strong>p={{$policyHint}}</strong> but the active policy is <strong>p={{$activePolicy}}</strong>. Classic misconfiguration &mdash; the security posture they believe they have does not exist.{{else if and $policyHint (not $activePolicy)}}The owner thinks they have <strong>p={{$policyHint}}</strong> but there is no valid DMARC record at <code>_dmarc.{{.Domain}}</code>. Zero enforcement.{{end}}
+                                {{$misplacedRecords := mapGetSlice "records" $misplacedDMARC}}
+                                {{if $misplacedRecords}}
+                                <div class="code-block font-monospace small mt-1">{{index $misplacedRecords 0}}</div>
+                                {{end}}
+                            </div>
+                            {{end}}
                             <details class="small text-muted">
                                 <summary class="font-monospace">RFC 7489 &mdash; DMARC</summary>
                                 <p class="mt-1 mb-0">DMARC ties SPF and DKIM together with a policy that tells receiving servers what to do with unauthenticated mail. p=none is monitoring only &mdash; attackers love it.</p>

@@ -272,6 +272,32 @@ func (a *Analyzer) AnalyzeDMARC(ctx context.Context, domain string) map[string]a
         return result
 }
 
+func DetectMisplacedDMARC(rootTXTRecords []string) map[string]any {
+        var found []string
+        for _, record := range rootTXTRecords {
+                lower := strings.ToLower(strings.TrimSpace(record))
+                if lower == "v=dmarc1" || strings.HasPrefix(lower, "v=dmarc1;") || strings.HasPrefix(lower, "v=dmarc1 ") {
+                        found = append(found, record)
+                }
+        }
+        if len(found) == 0 {
+                return map[string]any{
+                        "detected": false,
+                }
+        }
+        tags := parseDMARCTags(found[0])
+        policy := ""
+        if tags.policy != nil {
+                policy = *tags.policy
+        }
+        return map[string]any{
+                "detected":    true,
+                "records":     found,
+                "policy_hint": policy,
+                "message":     "DMARC record found in root TXT records — this is ignored by mail receivers. DMARC records must be published at _dmarc.<domain> per RFC 7489 §6.1.",
+        }
+}
+
 func ExtractMailtoDomains(ruaString string) []string {
         if ruaString == "" {
                 return nil

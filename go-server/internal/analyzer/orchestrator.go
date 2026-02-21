@@ -82,6 +82,22 @@ func (a *Analyzer) AnalyzeDomain(ctx context.Context, domain string, customDKIMS
         slog.Info(logTaskCompleted, "task", "smtp_transport", "domain", domain, "elapsed_ms", fmt.Sprintf("%.0f", float64(time.Since(smtpStart).Milliseconds())))
 
         enrichBasicRecords(basic, resultsMap)
+
+        rootTXT, _ := basic["TXT"].([]string)
+        misplacedDMARC := DetectMisplacedDMARC(rootTXT)
+        if misplacedDMARC["detected"] == true {
+                if dmarcResult, ok := resultsMap["dmarc"].(map[string]any); ok {
+                        dmarcResult["misplaced_dmarc"] = misplacedDMARC
+                        if msg, ok := misplacedDMARC["message"].(string); ok && msg != "" {
+                                existingIssues, _ := dmarcResult["issues"].([]string)
+                                if existingIssues == nil {
+                                        existingIssues = []string{}
+                                }
+                                dmarcResult["issues"] = append(existingIssues, msg)
+                        }
+                }
+        }
+
         propagationStatus := buildPropagationStatus(basic, auth)
         sectionStatus := buildSectionStatus(resultsMap)
         spfAnalysis := getMapResult(resultsMap, "spf")

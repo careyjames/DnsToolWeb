@@ -1422,6 +1422,25 @@
                                         {{end}}
                                     </div>
                                 {{end}}
+                                {{$misplacedDMARC := toMap (mapGet "misplaced_dmarc" $dmarc)}}
+                                {{if and $misplacedDMARC (mapGetBool "detected" $misplacedDMARC)}}
+                                    <div class="mt-2 p-2 bg-danger bg-opacity-10 border border-danger border-opacity-25 rounded small">
+                                        <i class="fas fa-exclamation-circle text-danger me-1"></i>
+                                        <strong class="text-danger">Misplaced DMARC Record Detected</strong>
+                                        <span class="text-muted d-block mt-1">A <code>v=DMARC1</code> record was found in the root domain TXT records instead of at <code>_dmarc.{{.Domain}}</code>. Per <a href="https://datatracker.ietf.org/doc/html/rfc7489#section-6.1" target="_blank" rel="noopener" class="text-danger">RFC 7489 §6.1</a>, DMARC records must be published at the <code>_dmarc</code> subdomain. Mail receivers (Gmail, Outlook, Yahoo) will ignore this record.</span>
+                                        {{$policyHint := mapGetStr "policy_hint" $misplacedDMARC}}
+                                        {{$activePolicy := mapGetStr "policy" $dmarc}}
+                                        {{if and $policyHint $activePolicy}}
+                                            <span class="text-danger d-block mt-1"><i class="fas fa-ghost me-1"></i>The misplaced record contains <strong>p={{$policyHint}}</strong> — {{if ne $policyHint $activePolicy}}this contradicts the active policy <strong>p={{$activePolicy}}</strong> at <code>_dmarc.{{.Domain}}</code>. The domain owner may believe they have p={{$policyHint}} enforcement when they actually have p={{$activePolicy}}.{{else}}this matches the active policy but is still being ignored.{{end}}</span>
+                                        {{else if $policyHint}}
+                                            <span class="text-danger d-block mt-1"><i class="fas fa-ghost me-1"></i>The misplaced record contains <strong>p={{$policyHint}}</strong> but no valid DMARC record exists at <code>_dmarc.{{.Domain}}</code>. This domain has no active DMARC enforcement.</span>
+                                        {{end}}
+                                        {{$misplacedRecords := mapGetSlice "records" $misplacedDMARC}}
+                                        {{if $misplacedRecords}}
+                                            <div class="mt-1 font-monospace u-fs-075rem text-muted">{{index $misplacedRecords 0}}</div>
+                                        {{end}}
+                                    </div>
+                                {{end}}
                                 {{$rufNote := toMap (mapGet "ruf_note" $dmarc)}}
                                 {{if $rufNote}}
                                     {{$rufStatus := mapGetStr "status" $rufNote}}
