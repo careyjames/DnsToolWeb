@@ -227,7 +227,13 @@
                     <a href="/confidence" class="icae-hero-statement" title="View Intelligence Confidence Audit Engine details">
                         <i class="fas fa-satellite-dish"></i> Intelligence Confidence: <span class="icae-hero-maturity icae-level-{{if eq .ICAEMetrics.OverallMaturity "gold_master"}}gold-master{{else if eq .ICAEMetrics.OverallMaturity "development"}}dev{{else}}{{.ICAEMetrics.OverallMaturity}}{{end}}">{{.ICAEMetrics.OverallMaturityDisplay}}</span>
                     </a>
-                    <div class="icae-hero-protocols">{{range $i, $p := .ICAEMetrics.Protocols}}{{if $i}} &middot; {{end}}<span class="icae-proto" title="{{$p.DisplayName}}: {{$p.EffectiveDisplay}}">{{$p.DisplayName}}<span class="icae-dot icae-dot-{{$p.EffectiveLevel}}"></span></span>{{end}}</div>
+                    <div class="icae-hero-protocols">
+                        <div class="d-flex flex-wrap justify-content-center gap-1">
+                            {{range .ICAEMetrics.Protocols}}
+                            <a href="/confidence" class="icae-badge icae-badge-{{.EffectiveLevel}}" title="{{.DisplayName}} — Intelligence Confidence: {{.EffectiveDisplay}}{{if .HasRuns}} ({{.AnalysisRuns}} audit runs){{end}}">{{.DisplayName}} <span class="icae-dot"></span></a>
+                            {{end}}
+                        </div>
+                    </div>
                 </div>
                 {{else}}
                 <p class="hero-protocols mb-3">
