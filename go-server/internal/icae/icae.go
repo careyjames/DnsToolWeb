@@ -186,6 +186,14 @@ type ProtocolReport struct {
         DaysElapsed       int
         AtMaxTier         bool
         NextTierPct       int
+        ColNextTierName   string
+        ColNextTierPasses int
+        ColNextTierDays   int
+        ColPassesMet      bool
+        ColDaysMet        bool
+        ColDaysElapsed    int
+        ColAtMaxTier      bool
+        ColNextTierPct    int
         CollectionCases   int
         AnalysisCases     int
         TotalCases        int

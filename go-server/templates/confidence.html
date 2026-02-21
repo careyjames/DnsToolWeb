@@ -50,11 +50,11 @@
         <div class="icae-summary-bar mb-4">
             <div class="icae-summary-item">
                 <span class="icae-summary-value">{{.ICAEMetrics.TotalPasses}}</span>
-                <span class="icae-summary-label">Analysis Passes</span>
+                <span class="icae-summary-label">Analysis</span>
             </div>
             <div class="icae-summary-item">
                 <span class="icae-summary-value">{{.ICAEMetrics.CollectionPasses}}</span>
-                <span class="icae-summary-label">Collection Passes</span>
+                <span class="icae-summary-label">Collection</span>
             </div>
             <div class="icae-summary-item">
                 <span class="icae-summary-value">{{.ICAEMetrics.PassRate}}%</span>
@@ -164,12 +164,20 @@
                         {{if .LastEvaluatedAt}}<span class="icae-cal-meta-item"><i class="fas fa-clock me-1"></i>Last evaluated: {{.LastEvaluatedAt}}</span>{{end}}
                     </div>
                     {{end}}
-                    {{if and .HasRuns (not .AtMaxTier)}}
+                    {{if and .HasAnalysis (not .AtMaxTier)}}
                     <div class="icae-cal-progress">
-                        <span class="icae-cal-progress-label"><i class="fas fa-arrow-up me-1"></i>Next: {{.NextTierName}}</span>
+                        <span class="icae-cal-progress-label"><i class="fas fa-arrow-up me-1"></i>Analysis → {{.NextTierName}}</span>
                         <span class="icae-cal-progress-item {{if .PassesMet}}icae-cal-met{{else}}icae-cal-unmet{{end}}">{{if .PassesMet}}<i class="fas fa-check-circle me-1"></i>{{else}}<i class="fas fa-clock me-1"></i>{{end}}{{.AnalysisPasses}}/{{.NextTierPasses}} passes</span>
                         {{if gt .NextTierDays 0}}<span class="icae-cal-progress-item {{if .DaysMet}}icae-cal-met{{else}}icae-cal-unmet{{end}}">{{if .DaysMet}}<i class="fas fa-check-circle me-1"></i>{{else}}<i class="fas fa-clock me-1"></i>{{end}}{{.DaysElapsed}}/{{.NextTierDays}} days</span>{{end}}
                         <span class="icae-tier-meter"><span class="icae-tier-meter-fill" style="width:{{.NextTierPct}}%"></span><span class="icae-tier-meter-label">{{.NextTierPct}}%</span></span>
+                    </div>
+                    {{end}}
+                    {{if and .HasCollection (not .ColAtMaxTier)}}
+                    <div class="icae-cal-progress">
+                        <span class="icae-cal-progress-label"><i class="fas fa-arrow-up me-1"></i>Collection → {{.ColNextTierName}}</span>
+                        <span class="icae-cal-progress-item {{if .ColPassesMet}}icae-cal-met{{else}}icae-cal-unmet{{end}}">{{if .ColPassesMet}}<i class="fas fa-check-circle me-1"></i>{{else}}<i class="fas fa-clock me-1"></i>{{end}}{{.CollectionPasses}}/{{.ColNextTierPasses}} passes</span>
+                        {{if gt .ColNextTierDays 0}}<span class="icae-cal-progress-item {{if .ColDaysMet}}icae-cal-met{{else}}icae-cal-unmet{{end}}">{{if .ColDaysMet}}<i class="fas fa-check-circle me-1"></i>{{else}}<i class="fas fa-clock me-1"></i>{{end}}{{.ColDaysElapsed}}/{{.ColNextTierDays}} days</span>{{end}}
+                        <span class="icae-tier-meter"><span class="icae-tier-meter-fill" style="width:{{.ColNextTierPct}}%"></span><span class="icae-tier-meter-label">{{.ColNextTierPct}}%</span></span>
                     </div>
                     {{end}}
                 </div>

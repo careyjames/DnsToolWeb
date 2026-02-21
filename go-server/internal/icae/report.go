@@ -57,9 +57,19 @@ func LoadReportMetrics(ctx context.Context, queries DBTX) *ReportMetrics {
                         pr.CollectionRuns = int(colData.TotalRuns)
                         pr.CollectionPasses = int(colData.ConsecutivePasses)
                         pr.CollectionBarPct = runsToBarPct(int(colData.ConsecutivePasses))
+
+                        colDaysElapsed := 0
+                        if colData.FirstPassAt.Valid {
+                                colDaysElapsed = int(time.Since(colData.FirstPassAt.Time).Hours() / 24)
+                        }
+                        pr.ColDaysElapsed = colDaysElapsed
+                        pr.ColNextTierName, pr.ColNextTierPasses, pr.ColNextTierDays, pr.ColPassesMet, pr.ColDaysMet, pr.ColAtMaxTier = ComputeNextTier(colData.Maturity, int(colData.ConsecutivePasses), colDaysElapsed)
+                        pr.ColNextTierPct = NextTierPct(colData.Maturity, int(colData.ConsecutivePasses), colDaysElapsed)
                 } else {
                         pr.CollectionLevel = MaturityDevelopment
                         pr.CollectionDisplay = MaturityDisplayNames[MaturityDevelopment]
+                        pr.ColNextTierName = MaturityDisplayNames[MaturityVerified]
+                        pr.ColNextTierPasses = ThresholdVerified
                 }
 
                 if hasAnal && analData.TotalRuns > 0 {
