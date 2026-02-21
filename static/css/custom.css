@@ -2525,6 +2525,8 @@ body.covert-mode .hero-section::before {
 }
 body.covert-mode footer .u-rounded-circle {
     filter: grayscale(1) brightness(0.4) sepia(1) hue-rotate(330deg) saturate(3) contrast(1.1);
+    border-color: rgba(204, 40, 40, 0.6);
+    box-shadow: 0 0 0 2px rgba(180, 30, 30, 0.2);
 }
 body.covert-mode footer .u-text-footer {
     color: rgba(204, 40, 40, 0.6);
@@ -4628,6 +4630,10 @@ body.covert-mode .proto-dkim.bg-info {
 .u-border-left-warning { border-left: 3px solid var(--bs-warning) !important; }
 /* Bootstrap has .rounded-circle */
 .u-rounded-circle { border-radius: 50%; }
+footer .u-rounded-circle {
+    border: 2px solid rgba(88, 166, 255, 0.5);
+    box-shadow: 0 0 0 2px rgba(88, 166, 255, 0.15);
+}
 .u-valign-n3 { vertical-align: -3px; }
 .u-fs-xs { font-size: 0.7rem; }
 .u-fs-xxs { font-size: 0.75rem; }
