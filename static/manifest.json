@@ -1,6 +1,6 @@
 {
   "id": "/",
-  "name": "DNS Tool - Domain Security Audit",
+  "name": "DNS Tool",
   "short_name": "DNS Tool",
   "description": "Domain security audit — no login required. Producing Engineer's DNS Intelligence Reports and Executive's DNS Intelligence Briefs. SPF, DKIM, DMARC, DANE/TLSA, DNSSEC, BIMI, MTA-STS, TLS-RPT, CAA. Email Header Analyzer, IP Intelligence, AI Surface Scanner. TLP classification.",
   "start_url": "/",
