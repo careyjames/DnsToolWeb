@@ -2437,6 +2437,104 @@ body.covert-mode .dri-examples {
 body.covert-mode .fa-compass.text-info {
     color: #c43c3c !important;
 }
+body.covert-mode .icae-summary-bar {
+    border-color: rgba(140, 40, 40, 0.2) !important;
+    background: rgba(14, 16, 21, 0.9) !important;
+}
+body.covert-mode .icae-summary-value {
+    color: rgba(200, 170, 170, 0.7) !important;
+}
+body.covert-mode .icae-summary-label {
+    color: rgba(160, 130, 130, 0.5) !important;
+}
+body.covert-mode .icae-cal-progress-label-analysis {
+    color: rgba(196, 100, 100, 0.7) !important;
+}
+body.covert-mode .icae-cal-progress-label-collection {
+    color: rgba(196, 100, 100, 0.7) !important;
+}
+body.covert-mode .icae-cal-proto-name {
+    color: rgba(200, 170, 170, 0.8) !important;
+}
+body.covert-mode .icae-cal-runs {
+    color: rgba(160, 130, 130, 0.5) !important;
+}
+body.covert-mode .icae-cal-layer-label {
+    color: rgba(160, 130, 130, 0.55) !important;
+}
+body.covert-mode .icae-cal-layer-runs {
+    color: rgba(160, 130, 130, 0.45) !important;
+}
+body.covert-mode .icae-cal-meta-item {
+    color: rgba(160, 130, 130, 0.5) !important;
+}
+body.covert-mode .icae-cal-progress-label {
+    color: rgba(160, 130, 130, 0.55) !important;
+}
+body.covert-mode .icae-cal-progress-item {
+    color: rgba(160, 130, 130, 0.55) !important;
+}
+body.covert-mode .icae-cal-met {
+    color: rgba(86, 211, 100, 0.5) !important;
+}
+body.covert-mode .icae-cal-legend-label {
+    color: rgba(160, 130, 130, 0.5) !important;
+}
+body.covert-mode .icae-cal-legend-item {
+    color: rgba(160, 130, 130, 0.5) !important;
+}
+body.covert-mode .icae-hash-stat-value {
+    color: rgba(200, 170, 170, 0.7) !important;
+}
+body.covert-mode .icae-hash-stat-label {
+    color: rgba(160, 130, 130, 0.5) !important;
+}
+body.covert-mode .icae-cal-strip {
+    border-color: rgba(140, 40, 40, 0.12) !important;
+}
+body.covert-mode .u-max-w-900 h1 {
+    color: rgba(200, 170, 170, 0.85) !important;
+}
+body.covert-mode .u-max-w-900 h2 {
+    color: rgba(200, 170, 170, 0.8) !important;
+}
+body.covert-mode .u-max-w-900 h3 {
+    color: rgba(200, 170, 170, 0.75) !important;
+}
+body.covert-mode .u-max-w-900 .text-info {
+    color: rgba(196, 100, 100, 0.6) !important;
+}
+body.covert-mode .u-max-w-900 a.text-info {
+    color: rgba(196, 100, 100, 0.7) !important;
+}
+body.covert-mode .u-max-w-900 .card {
+    border-color: rgba(140, 40, 40, 0.15) !important;
+    background: rgba(14, 16, 21, 0.85) !important;
+}
+body.covert-mode .u-max-w-900 .fw-bold {
+    color: rgba(200, 170, 170, 0.8) !important;
+}
+body.covert-mode .u-max-w-900 .fw-semibold {
+    color: rgba(200, 170, 170, 0.7) !important;
+}
+body.covert-mode .u-max-w-900 strong {
+    color: rgba(200, 170, 170, 0.75) !important;
+}
+body.covert-mode .u-max-w-900 .table-dark {
+    --bs-table-bg: rgba(14, 16, 21, 0.9) !important;
+    --bs-table-color: rgba(200, 170, 170, 0.65) !important;
+    --bs-table-border-color: rgba(140, 40, 40, 0.12) !important;
+}
+body.covert-mode .u-max-w-900 .table-dark th {
+    color: rgba(200, 170, 170, 0.6) !important;
+}
+body.covert-mode .icae-tier-meter {
+    background: rgba(140, 40, 40, 0.1) !important;
+    border-color: rgba(140, 40, 40, 0.15) !important;
+}
+body.covert-mode .icae-tier-meter-label {
+    color: rgba(160, 130, 130, 0.5) !important;
+}
 body.covert-mode .fa-layer-group.text-info,
 body.covert-mode .fa-check-double.text-info,
 body.covert-mode .fa-shield-halved.text-info {
