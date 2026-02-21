@@ -96,7 +96,15 @@
             <div class="col-lg-5 mb-4">
                 <div class="card">
                     <div class="card-body">
-                        <h2 class="h5 mb-3"><i class="fas fa-users me-2"></i>Registered Users</h2>
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h2 class="h5 mb-0"><i class="fas fa-users me-2"></i>Registered Users</h2>
+                            <form method="POST" action="/ops/sessions/purge-expired" class="d-inline">
+                                <input type="hidden" name="csrf_token" value="{{.CsrfToken}}">
+                                <button type="submit" class="btn btn-outline-secondary btn-sm" title="Remove all expired sessions from the database">
+                                    <i class="fas fa-broom me-1"></i>Purge Expired Sessions
+                                </button>
+                            </form>
+                        </div>
                         {{if .Users}}
                         <div class="table-responsive">
                             <table class="table table-sm table-dark mb-0">
@@ -104,6 +112,7 @@
                                     <tr>
                                         <th>User</th>
                                         <th>Role</th>
+                                        <th>Sessions</th>
                                         <th>Last Login</th>
                                         <th>Actions</th>
                                     </tr>
@@ -120,6 +129,12 @@
                                             <span class="badge bg-info text-dark">Admin</span>
                                             {{else}}
                                             <span class="badge bg-secondary">User</span>
+                                            {{end}}
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-success" title="Active sessions">{{.ActiveSessions}}</span>
+                                            {{if gt .SessionCount .ActiveSessions}}
+                                            <span class="badge bg-secondary" title="Total sessions (including expired)">{{.SessionCount}}</span>
                                             {{end}}
                                         </td>
                                         <td><small>{{.LastLoginAt}}</small></td>

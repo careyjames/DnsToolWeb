@@ -28,8 +28,11 @@ const (
         googleUserInfoURL = "https://www.googleapis.com/oauth2/v3/userinfo"
         oauthStateCookie  = "_oauth_state"
         oauthCVCookie     = "_oauth_cv"
+        oauthNonceCookie  = "_oauth_nonce"
         sessionCookieName = "_dns_session"
         sessionMaxAge     = 30 * 24 * 60 * 60
+        oauthHTTPTimeout  = 10 * time.Second
+        iatMaxSkew        = 5 * time.Minute
 )
 
 type AuthHandler struct {
@@ -82,11 +85,19 @@ func (h *AuthHandler) Login(c *gin.Context) {
                 return
         }
 
+        nonce, err := generateRandomBase64URL(32)
+        if err != nil {
+                slog.Error("Failed to generate OIDC nonce", "error", err)
+                c.Redirect(http.StatusFound, "/")
+                return
+        }
+
         codeChallenge := computeCodeChallenge(codeVerifier)
 
-        c.SetCookie(oauthStateCookie, state, 600, "/", "", true, true)
         c.SetSameSite(http.SameSiteLaxMode)
+        c.SetCookie(oauthStateCookie, state, 600, "/", "", true, true)
         c.SetCookie(oauthCVCookie, codeVerifier, 600, "/", "", true, true)
+        c.SetCookie(oauthNonceCookie, nonce, 600, "/", "", true, true)
 
         params := url.Values{
                 "client_id":             {h.Config.GoogleClientID},
@@ -98,6 +109,7 @@ func (h *AuthHandler) Login(c *gin.Context) {
                 "code_challenge_method": {"S256"},
                 "access_type":           {"online"},
                 "prompt":                {"select_account"},
+                "nonce":                 {nonce},
         }
 
         authURL := googleAuthURL + "?" + params.Encode()
@@ -126,6 +138,13 @@ func (h *AuthHandler) Callback(c *gin.Context) {
                 return
         }
 
+        nonceCookie, err := c.Cookie(oauthNonceCookie)
+        if err != nil || nonceCookie == "" {
+                slog.Warn("OAuth callback: missing nonce cookie")
+                c.Redirect(http.StatusFound, "/")
+                return
+        }
+
         code := c.Query("code")
         if code == "" {
                 slog.Warn("OAuth callback: missing authorization code")
@@ -140,7 +159,7 @@ func (h *AuthHandler) Callback(c *gin.Context) {
                 return
         }
 
-        if err := h.validateIDTokenClaims(tokenData); err != nil {
+        if err := h.validateIDTokenClaims(tokenData, nonceCookie); err != nil {
                 slog.Error("OAuth callback: ID token validation failed", "error", err)
                 c.Redirect(http.StatusFound, "/")
                 return
@@ -247,9 +266,11 @@ func (h *AuthHandler) Callback(c *gin.Context) {
                 return
         }
 
+        c.SetSameSite(http.SameSiteLaxMode)
         c.SetCookie(sessionCookieName, sessionID, sessionMaxAge, "/", "", true, true)
         c.SetCookie(oauthStateCookie, "", -1, "/", "", true, true)
         c.SetCookie(oauthCVCookie, "", -1, "/", "", true, true)
+        c.SetCookie(oauthNonceCookie, "", -1, "/", "", true, true)
 
         slog.Info("User authenticated", "email", email, "role", user.Role, "user_id", user.ID)
 
@@ -272,7 +293,7 @@ func (h *AuthHandler) Logout(c *gin.Context) {
         c.Redirect(http.StatusFound, "/")
 }
 
-func (h *AuthHandler) validateIDTokenClaims(tokenData map[string]any) error {
+func (h *AuthHandler) validateIDTokenClaims(tokenData map[string]any, expectedNonce string) error {
         idTokenStr, ok := tokenData["id_token"].(string)
         if !ok || idTokenStr == "" {
                 return nil
@@ -303,12 +324,35 @@ func (h *AuthHandler) validateIDTokenClaims(tokenData map[string]any) error {
                 return fmt.Errorf("invalid audience: %s", aud)
         }
 
+        now := time.Now()
+
         exp, _ := claims["exp"].(float64)
-        if exp > 0 && time.Now().Unix() > int64(exp) {
+        if exp > 0 && now.Unix() > int64(exp) {
                 return fmt.Errorf("id_token expired at %v", time.Unix(int64(exp), 0))
         }
 
+        if iat, ok := claims["iat"].(float64); ok && iat > 0 {
+                issuedAt := time.Unix(int64(iat), 0)
+                if now.Before(issuedAt.Add(-iatMaxSkew)) {
+                        return fmt.Errorf("id_token issued in the future: iat=%v", issuedAt)
+                }
+        }
+
+        if expectedNonce != "" {
+                tokenNonce, _ := claims["nonce"].(string)
+                if tokenNonce == "" {
+                        return fmt.Errorf("id_token missing nonce claim")
+                }
+                if tokenNonce != expectedNonce {
+                        return fmt.Errorf("id_token nonce mismatch")
+                }
+        }
+
         return nil
+}
+
+var oauthHTTPClient = &http.Client{
+        Timeout: oauthHTTPTimeout,
 }
 
 func (h *AuthHandler) exchangeCode(code, codeVerifier string) (map[string]any, error) {
@@ -321,7 +365,7 @@ func (h *AuthHandler) exchangeCode(code, codeVerifier string) (map[string]any, e
                 "code_verifier": {codeVerifier},
         }
 
-        resp, err := http.PostForm(googleTokenURL, data)
+        resp, err := oauthHTTPClient.PostForm(googleTokenURL, data)
         if err != nil {
                 return nil, fmt.Errorf("token request failed: %w", err)
         }
@@ -351,7 +395,7 @@ func (h *AuthHandler) fetchUserInfo(accessToken string) (map[string]any, error) 
         }
         req.Header.Set("Authorization", "Bearer "+accessToken)
 
-        resp, err := http.DefaultClient.Do(req)
+        resp, err := oauthHTTPClient.Do(req)
         if err != nil {
                 return nil, fmt.Errorf("userinfo request failed: %w", err)
         }

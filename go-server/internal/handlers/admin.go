@@ -26,12 +26,14 @@ func NewAdminHandler(database *db.Database, cfg *config.Config) *AdminHandler {
 }
 
 type AdminUser struct {
-        ID          int32
-        Email       string
-        Name        string
-        Role        string
-        CreatedAt   string
-        LastLoginAt string
+        ID             int32
+        Email          string
+        Name           string
+        Role           string
+        CreatedAt      string
+        LastLoginAt    string
+        SessionCount   int
+        ActiveSessions int
 }
 
 type AdminAnalysis struct {
@@ -108,8 +110,16 @@ func (h *AdminHandler) Dashboard(c *gin.Context) {
 
 func (h *AdminHandler) fetchUsers(ctx context.Context) []AdminUser {
         rows, err := h.DB.Pool.Query(ctx,
-                `SELECT id, email, name, role, created_at, COALESCE(last_login_at, created_at)
-                 FROM users ORDER BY last_login_at DESC NULLS LAST`)
+                `SELECT u.id, u.email, u.name, u.role, u.created_at, COALESCE(u.last_login_at, u.created_at),
+                        COALESCE(s.total, 0), COALESCE(s.active, 0)
+                 FROM users u
+                 LEFT JOIN (
+                     SELECT user_id,
+                            COUNT(*) AS total,
+                            COUNT(*) FILTER (WHERE expires_at > NOW()) AS active
+                     FROM sessions GROUP BY user_id
+                 ) s ON s.user_id = u.id
+                 ORDER BY u.last_login_at DESC NULLS LAST`)
         if err != nil {
                 slog.Error("Admin: failed to fetch users", "error", err)
                 return nil
@@ -120,7 +130,8 @@ func (h *AdminHandler) fetchUsers(ctx context.Context) []AdminUser {
         for rows.Next() {
                 var u AdminUser
                 var createdAt, lastLoginAt time.Time
-                if err := rows.Scan(&u.ID, &u.Email, &u.Name, &u.Role, &createdAt, &lastLoginAt); err != nil {
+                if err := rows.Scan(&u.ID, &u.Email, &u.Name, &u.Role, &createdAt, &lastLoginAt,
+                        &u.SessionCount, &u.ActiveSessions); err != nil {
                         continue
                 }
                 u.CreatedAt = createdAt.Format("2006-01-02 15:04")
@@ -304,5 +315,19 @@ func (h *AdminHandler) ResetUserSessions(c *gin.Context) {
         }
 
         slog.Info("Admin: sessions reset for user", "user_id", userID)
+        c.Redirect(http.StatusSeeOther, "/ops")
+}
+
+func (h *AdminHandler) PurgeExpiredSessions(c *gin.Context) {
+        result, err := h.DB.Pool.Exec(c.Request.Context(),
+                `DELETE FROM sessions WHERE expires_at <= NOW()`)
+        if err != nil {
+                slog.Error("Admin: failed to purge expired sessions", "error", err)
+                c.String(http.StatusInternalServerError, "Failed to purge sessions")
+                return
+        }
+
+        count := result.RowsAffected()
+        slog.Info("Admin: expired sessions purged", "count", count)
         c.Redirect(http.StatusSeeOther, "/ops")
 }
