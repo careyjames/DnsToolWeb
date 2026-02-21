@@ -91,7 +91,7 @@
                 "name": "What do SPF, DKIM, and DMARC mean?",
                 "acceptedAnswer": {
                     "@type": "Answer",
-                    "text": "SPF (Sender Policy Framework) lists which mail servers are authorized to send email for your domain. DKIM (DomainKeys Identified Mail) adds a cryptographic signature to emails proving they haven't been tampered with. DMARC (Domain-based Message Authentication) tells receiving mail servers what to do when SPF or DKIM checks fail."
+                    "text": "SPF (Sender Policy Framework) lists which mail servers are authorized to send email for your domain. DKIM (DomainKeys Identified Mail) adds a cryptographic signature to emails designed to detect tampering. DMARC (Domain-based Message Authentication) tells receiving mail servers what to do when SPF or DKIM checks fail."
                 }
             },
             {
@@ -99,7 +99,7 @@
                 "name": "What is DNSSEC and why does it matter?",
                 "acceptedAnswer": {
                     "@type": "Answer",
-                    "text": "DNSSEC (DNS Security Extensions) adds cryptographic signatures to DNS responses, proving they haven't been tampered with in transit. Without DNSSEC, attackers could redirect your domain's traffic to malicious servers through DNS hijacking or cache poisoning."
+                    "text": "DNSSEC (DNS Security Extensions) adds cryptographic signatures to DNS responses, designed to detect tampering in transit. Without DNSSEC, attackers could redirect your domain's traffic to malicious servers through DNS hijacking or cache poisoning."
                 }
             },
             {
@@ -115,7 +115,7 @@
                 "name": "How is this different from other DNS lookup tools?",
                 "acceptedAnswer": {
                     "@type": "Answer",
-                    "text": "Most DNS tools show raw records — and most skip advanced protocols entirely. DNS Tool provides a complete security intelligence report including multi-resolver consensus verification, email authentication scoring, DKIM key strength analysis, DANE/TLSA certificate pinning analysis for mail transport (a protocol most tools ignore), DMARCbis readiness checks, enterprise DNS provider detection, email security management provider identification (DMARC monitoring, SPF flattening, TLS-RPT reporting), SMTP transport encryption checks, BIMI brand verification, CAA analysis with MPIC context, Certificate Transparency subdomain discovery, IP investigation, PTR-based hosting detection, Team Cymru ASN attribution, JSON export, and a CVSS-aligned risk level (Critical / High / Medium / Low / Informational) with per-section remediation designed for both technical and executive audiences. Select sections include confidence indicators (Observed, Inferred) showing the evidence basis for each conclusion. Our full intelligence sources are documented at /sources."
+                    "text": "Most DNS tools show raw records — and most skip advanced protocols entirely. DNS Tool provides a comprehensive security intelligence report including multi-resolver consensus verification, email authentication scoring, DKIM key strength analysis, DANE/TLSA certificate pinning analysis for mail transport (a protocol most tools ignore), DMARCbis readiness checks, enterprise DNS provider detection, email security management provider identification (DMARC monitoring, SPF flattening, TLS-RPT reporting), SMTP transport encryption checks, BIMI brand verification, CAA analysis with MPIC context, Certificate Transparency subdomain discovery, IP investigation, PTR-based hosting detection, Team Cymru ASN attribution, JSON export, and a CVSS-aligned risk level (Critical / High / Medium / Low / Informational) with per-section remediation designed for both technical and executive audiences. Select sections include confidence indicators (Observed, Inferred) showing the evidence basis for each conclusion. Our full intelligence sources are documented at /sources."
                 }
             },
             {
@@ -643,7 +643,7 @@
                         </h3>
                         <div id="faq3" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
                             <div class="accordion-body text-muted small">
-                                <strong>SPF</strong> (Sender Policy Framework) lists which mail servers are authorized to send email for your domain. <strong>DKIM</strong> (DomainKeys Identified Mail) adds a cryptographic signature to emails proving they haven't been tampered with. <strong>DMARC</strong> (Domain-based Message Authentication) tells receiving mail servers what to do when SPF or DKIM checks fail — it can monitor, quarantine, or reject suspicious emails. Together, these three protocols form the foundation of email authentication and spoofing prevention.
+                                <strong>SPF</strong> (Sender Policy Framework) lists which mail servers are authorized to send email for your domain. <strong>DKIM</strong> (DomainKeys Identified Mail) adds a cryptographic signature to emails designed to detect tampering. <strong>DMARC</strong> (Domain-based Message Authentication) tells receiving mail servers what to do when SPF or DKIM checks fail — it can monitor, quarantine, or reject suspicious emails. Together, these three protocols form the foundation of email authentication and spoofing prevention.
                             </div>
                         </div>
                     </div>
@@ -655,7 +655,7 @@
                         </h3>
                         <div id="faq4" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
                             <div class="accordion-body text-muted small">
-                                DNSSEC (DNS Security Extensions) adds cryptographic signatures to DNS responses, proving they haven't been tampered with in transit. Without DNSSEC, attackers could redirect your domain's traffic to malicious servers through DNS hijacking or cache poisoning. DNS Tool validates the full DNSSEC chain of trust and checks the AD (Authenticated Data) flag across multiple resolvers. Many enterprise organizations use alternative security measures like enterprise-grade DNS providers with built-in DDoS protection when DNSSEC is not deployed.
+                                DNSSEC (DNS Security Extensions) adds cryptographic signatures to DNS responses, designed to detect tampering in transit. Without DNSSEC, attackers could redirect your domain's traffic to malicious servers through DNS hijacking or cache poisoning. DNS Tool validates the full DNSSEC chain of trust and checks the AD (Authenticated Data) flag across multiple resolvers. Many enterprise organizations use alternative security measures like enterprise-grade DNS providers with built-in DDoS protection when DNSSEC is not deployed.
                             </div>
                         </div>
                     </div>
@@ -679,7 +679,7 @@
                         </h3>
                         <div id="faq6" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
                             <div class="accordion-body text-muted small">
-                                Most DNS tools show raw records — and most skip advanced protocols entirely. DNS Tool goes further with a complete security intelligence report: multi-resolver consensus verification across Cloudflare, Google, Quad9, OpenDNS, and DNS4EU; email authentication scoring; DKIM key strength analysis; <strong>DANE/TLSA certificate pinning analysis</strong> for mail transport (a protocol most tools ignore); <strong>DMARCbis readiness checks</strong> for upcoming DMARC standard changes; enterprise DNS provider detection; email security management provider identification (DMARC monitoring, SPF flattening, TLS-RPT reporting); SMTP transport encryption checks; BIMI brand verification; <strong>CAA analysis with MPIC context</strong>; and a CVSS-aligned risk level (Critical / High / Medium / Low / Informational) with per-section remediation designed for both technical and executive audiences. Compare analyses over time, export results as JSON, and discover subdomains via Certificate Transparency logs. Every query fetches fresh data — we never show cached results.
+                                Most DNS tools show raw records — and most skip advanced protocols entirely. DNS Tool goes further with a comprehensive security intelligence report: multi-resolver consensus verification across Cloudflare, Google, Quad9, OpenDNS, and DNS4EU; email authentication scoring; DKIM key strength analysis; <strong>DANE/TLSA certificate pinning analysis</strong> for mail transport (a protocol most tools ignore); <strong>DMARCbis readiness checks</strong> for evolving DMARC standard changes; enterprise DNS provider detection; email security management provider identification (DMARC monitoring, SPF flattening, TLS-RPT reporting); SMTP transport encryption checks; BIMI brand verification; <strong>CAA analysis with MPIC context</strong>; and a CVSS-aligned risk level (Critical / High / Medium / Low / Informational) with per-section remediation designed for both technical and executive audiences. Compare analyses over time, export results as JSON, and discover subdomains via Certificate Transparency logs. Every query fetches fresh data — we never show cached results.
                             </div>
                         </div>
                     </div>

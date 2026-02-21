@@ -10,6 +10,100 @@ This file is the project's permanent breadcrumb trail — every session's decisi
 
 ---
 
+## Session: February 20–21, 2026 (v26.21.43–v26.21.55 — SHA-3-512 Migration, Download Verification, ICAE Visual Overhaul, Audit Log)
+
+### v26.21.43–v26.21.44 — Cryptographic Hash Migration: SHA-256 → SHA-3-512
+
+#### Changes
+- **`integrity_hash.go`**: `ReportIntegrityHash()` migrated from `crypto/sha256` (`sha256.Sum256`) to `golang.org/x/crypto/sha3` (`sha3.Sum512`). Output now 128-char hex (512-bit) instead of 64-char (256-bit).
+- **`posture_hash.go`**: `CanonicalPostureHash()` now uses `sha3.Sum512`. New `CanonicalPostureHashLegacySHA256()` function added for backward compatibility with existing records.
+- **`posture_hash_test.go`**: All golden-rule test expectations updated to SHA-3-512 hashes.
+- **Backward compat**: ICAE hash audit detects hash length (64 chars = legacy SHA-256, 128 chars = SHA-3-512) and uses the appropriate recomputation function.
+
+#### Rationale
+SHA-3 (Keccak) is NIST FIPS 202. Provides defense-in-depth against future SHA-2 weaknesses. All new analyses produce SHA-3-512 hashes; legacy records remain verifiable via the backward-compatible path.
+
+### v26.21.45 — ICAE Hash Integrity Audit Engine
+
+#### New Files
+- **`go-server/internal/icae/hash_audit.go`**: `HashAuditResult` struct + `AuditHashIntegrity()` function. Queries recent hashed analyses, recomputes posture hashes from stored JSON, compares against stored values. Calculates integrity percentage. Logs warnings for mismatches.
+- **`go-server/internal/icae/icae.go`**: Added `HashAudit *HashAuditResult` to `ReportMetrics` struct.
+
+#### Confidence Page
+- New "Hash Integrity Audit" card on `/confidence` page showing: Audited, Verified (green), Mismatched (red if >0), Integrity %. Uses new `.icae-hash-stat` CSS component.
+
+### v26.21.46 — Accountability Log
+
+#### New Files
+- **`go-server/internal/handlers/audit_log.go`**: Route `/confidence/audit-log` with pagination (50 entries/page). Shows every hashed analysis with domain, timestamp (UTC), and SHA-3-512 posture hash.
+- **`go-server/templates/audit_log.html`**: Dark-themed table, pagination controls, footer explaining deterministic canonical serialization.
+
+### v26.21.47–v26.21.48 — ICAE Two-Layer Visual Distinction
+
+#### Changes
+- **Collection layer**: `#4dd0e1` (muted cyan) → `#00e5ff` (vivid cyan) with `font-weight: 700`
+- **Analysis layer**: `#ce93d8` (muted purple) → `#ea80fc` (vivid magenta) with `font-weight: 700`
+- 10 new per-tier fill gradient rules for each layer (collection + analysis × 5 maturity tiers)
+- Color-matched progress needles with matching glow effects
+- Layer-specific track backgrounds with colored borders
+- `confidence.html`: Only the layer name word gets the color class, not the arrow/target text
+
+### v26.21.49–v26.21.50 — Download & Verify Intelligence (Kali-Style)
+
+#### New Feature
+- **`analysis.go`**: Refactored `APIAnalysis()` into `buildAnalysisJSON()` + `loadAnalysisForAPI()` helpers. Deterministic JSON serialization with `sha3.Sum512` over exact bytes. `X-SHA3-512` response header on downloads.
+- **New endpoint**: `/api/analysis/{id}/checksum` — JSON format (default) or `.sha3` sidecar file (with `?format=sha3`).
+- **Kali-style sidecar** (`.sha3` file): Contains hacker poem Easter egg + RFC 1392 "hacker" definition + algorithm ID + verify command + standard checksum line. Compatible with `sha3sum --check`.
+
+#### Easter Egg: Hacker Poem
+```
+# Cause I'm a hacker, baby, I'm gonna pwn you good,
+# Diff your zone to the spec like you knew I would.
+# Cite those RFCs, baby, so my argument stood,
+# Standards over swagger — that's understood.
+#
+# — DNS Tool / If it's not in RFC 1034, it ain't understood.
+```
+Plus RFC 1392 disclaimer: "'Hacker' per RFC 1392 (IETF Internet Users' Glossary, 1993): 'A person who delights in having an intimate understanding of the internal workings of a system, computers and computer networks in particular.' That's us. That's always been us."
+
+#### Results Template
+- New "Download & Verify Intelligence" card with SHA-3-512 badge, two exposed buttons (Download Raw Intelligence + Download Checksum), expandable verification commands (OpenSSL + Sidecar, Python 3, sha3sum)
+- "Show verification commands" clickable hint below download buttons
+- `cd ~/Downloads` tip for non-technical users
+
+### v26.21.51–v26.21.52 — Reproduce the Evidence Card + Posture Drift UX
+
+#### Changes
+- **Card rename**: "Verify It Yourself" → "Reproduce the Evidence" — differentiates from download integrity verification. Card 1 is file integrity (did the download arrive intact?). Card 2 is data transparency (can you reproduce our findings independently?).
+- **Updated description**: "Every finding in this report is backed by DNS queries you can run yourself. These vetted one-liners reproduce the exact checks used to build this report for **{domain}**."
+- **Posture drift**: Added human-readable explanation when hash changes without specific protocol status diffs: "The posture hash changed due to differences in DNS record values, ordering, or TTLs..."
+- **Public suffix guard**: Test Send Recommendation now gated by `{{if and .DomainExists (not .IsPublicSuffix)}}` — prevents recommending test sends for TLDs.
+
+### v26.21.53 — OpenSSL + Sidecar Combo Command
+
+#### Changes
+- First verification command changed from standalone `openssl dgst -sha3-512` to combined `cat .sha3 && echo '---' && openssl dgst -sha3-512` — shows hacker poem + expected hash + separator + computed hash in one terminal session. Users see both outputs for visual comparison.
+
+### v26.21.54 — Expand Affordance UX
+
+#### Changes
+- "Download & Verify Intelligence" card: Added explicit "Show verification commands ▾" clickable text below download buttons with red terminal icon
+- "Reproduce the Evidence" card: Simplified chevron-in-header (no competing buttons)
+
+### v26.21.55 — Placeholder Fix + RFC Consistency Audit
+
+#### Changes
+- Homepage placeholder: `example.com or .com` → `example.com or com` (no leading dot; users enter TLDs without the dot)
+- RFC consistency audit confirmed: "DNS, same way since 1983" (RFC 882/883 origin) and "If it's not in RFC 1034, it ain't understood" (canonical spec) are complementary, not contradictory. Heritage vs. authority — both factually correct.
+
+#### Hacker Poem Appearances
+The poem now appears in three places:
+1. `index.html` HTML comment (view-source Easter egg)
+2. `.sha3` sidecar file (download verification)
+3. `analysis.go` (server-side generation of sidecar)
+
+---
+
 ## Session: February 20, 2026 (v26.21.42 — Chrome Scroll Fix, SW Cache Hardening, Mobile Regression Prevention)
 
 ### v26.21.42 — Chrome Scroll Belt-and-Suspenders + SW Network-First
@@ -1596,7 +1690,7 @@ All files transferred via GitHub API. Manual copy no longer needed.
 
 ---
 
-## Session: 2026-02-17 (continued) — Boundary Integrity Test Suite
+## Session: February 17, 2026 (continued) — Boundary Integrity Test Suite
 
 ### Problem
 After major two-repo refactoring, Ahrefs SEO health dropped from 100% to 44%. Big architectural changes are risky — regressions cost $100-200/day. Need automated guardrails to prevent boundary violations, intelligence leaks, and stub contract breakage.

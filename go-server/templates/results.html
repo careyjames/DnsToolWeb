@@ -402,7 +402,7 @@
                                 <li>No authoritative DNS data is available for this domain</li>
                                 <li>Security posture cannot be evaluated without DNS records</li>
                                 <li>The domain may never have been registered, or has expired</li>
-                                <li>If this is your domain, check your registrar to ensure it's active</li>
+                                <li>If this is your domain, check your registrar to confirm it's active</li>
                             </ul>
                         </div>
                     </div>
@@ -999,7 +999,7 @@
                                         <i class="fas fa-graduation-cap text-info me-2 mt-1"></i>
                                         <div>
                                             <strong class="d-block mb-1">It looks like this is meant to be a no-mail domain.</strong>
-                                            <span class="text-muted">Three RFC specifications define how to properly declare a domain does not send or receive email. Completing all three ensures every mail server knows this domain should never originate email &mdash; preventing spoofing attacks.</span>
+                                            <span class="text-muted">Three RFC specifications define how to properly declare a domain does not send or receive email. Completing all three signals to receiving mail servers that this domain should never originate email &mdash; preventing spoofing attacks.</span>
                                         </div>
                                     </div>
                                     <div class="ms-4 mb-2">
@@ -1237,7 +1237,7 @@
                                     <div class="mt-2 p-2 bg-info bg-opacity-10 border border-info border-opacity-25 rounded small">
                                         <i class="fas fa-info-circle text-info me-1"></i>
                                         <strong class="text-info">~all is the industry standard.</strong>
-                                        <span class="text-muted">Google, Apple, and most providers default to soft fail. CISA (BOD 18-01) and RFC 7489 §10.1 confirm that DMARC policy — not SPF alone — is the primary enforcement control. Using ~all ensures DKIM can always be evaluated before a DMARC decision is made.
+                                        <span class="text-muted">Google, Apple, and most providers default to soft fail. CISA (BOD 18-01) and RFC 7489 §10.1 confirm that DMARC policy — not SPF alone — is the primary enforcement control. Using ~all allows DKIM to be evaluated before a DMARC decision is made.
                                         {{if eq $dmarcPolicy "reject"}}
                                             <strong class="text-success">This domain uses ~all + DMARC reject: the strongest compatible security stance, aligned with CISA and RFC guidance.</strong>
                                         {{else if eq $dmarcPolicy "quarantine"}}
@@ -1252,7 +1252,7 @@
                                     <div class="mt-2 p-2 bg-warning bg-opacity-10 border border-warning border-opacity-25 rounded small">
                                         <i class="fas fa-exclamation-triangle text-warning me-1"></i>
                                         <strong class="text-warning">SPF hard fail (-all): compliance-strong, but can short-circuit DMARC.</strong>
-                                        <span class="text-muted">RFC 7489 §10.1 notes that -all can cause some receivers to reject mail during the SMTP transaction — before DKIM is checked and before DMARC can evaluate the result. A message that would pass DMARC via DKIM alignment may be rejected prematurely. For most domains, ~all + DMARC p=reject is the strongest compatible posture — it ensures every authentication method (SPF, DKIM, DMARC) is fully evaluated before a decision is made.
+                                        <span class="text-muted">RFC 7489 §10.1 notes that -all can cause some receivers to reject mail during the SMTP transaction — before DKIM is checked and before DMARC can evaluate the result. A message that would pass DMARC via DKIM alignment may be rejected prematurely. For most domains, ~all + DMARC p=reject is the strongest compatible posture — it allows every authentication method (SPF, DKIM, DMARC) to be fully evaluated before a decision is made.
                                         {{if and .Domain (hasSuffix ".gov" .Domain)}}
                                             <br><strong class="text-info"><i class="fas fa-landmark me-1"></i>Federal compliance context:</strong> <span class="text-info">CISA BOD 18-01 requires valid SPF records for federal civilian agency domains. The directive doesn't explicitly specify -all vs ~all, but -all is widespread federal practice as defense-in-depth. This domain's use of -all follows that convention.</span>
                                         {{end}}
@@ -1887,7 +1887,7 @@
                             {{if .ICAEMetrics}}{{with index .ICAEMetrics.ByKey "dane"}}<a href="/confidence" class="badge icae-maturity-badge-deep icae-maturity-deep-{{.EffectiveLevel}} icae-results-badge ms-1 no-print" data-bs-toggle="tooltip" title="ICAE: {{.EffectiveDisplay}}">{{.EffectiveDisplay}}</a>{{end}}{{end}}
                             <span class="badge u-badge-recon ms-2 no-print" data-bs-toggle="tooltip" title="Recon Advantage — DANE/TLSA certificate pinning analysis. A protocol most DNS tools skip entirely."><i class="fas fa-terminal me-1"></i>Recon</span>
                             {{if and .SectionTuning (index .SectionTuning "dane")}}{{with index .SectionTuning "dane"}}<span class="badge {{sectionStatusCSS .}} ms-2"><i class="fas {{sectionStatusIcon .}} me-1"></i>{{.}}</span>{{end}}{{end}}
-                            <span class="section-question">{{if .IsPublicSuffix}}Does this zone publish DANE / TLSA records?{{else}}Can mail servers prove identity without a public CA?{{end}}
+                            <span class="section-question">{{if .IsPublicSuffix}}Does this zone publish DANE / TLSA records?{{else}}Can mail servers establish identity without a public CA?{{end}}
                                 {{$daneStatus := mapGetStr "status" $dane}}
                                 {{$hasDane := mapGetBool "has_dane" $dane}}
                                 {{$daneDeployable := mapGetStr "dane_deployable" $dane}}
@@ -2009,7 +2009,7 @@
                                 <li><strong>MTA-STS</strong> (<a href="https://datatracker.ietf.org/doc/html/rfc8461" target="_blank" rel="noopener" class="text-info">RFC 8461</a>) &mdash; HTTPS-based policy requiring TLS for mail delivery. Works without DNSSEC but relies on CA trust and is vulnerable on first use (<a href="https://datatracker.ietf.org/doc/html/rfc8461#section-10" target="_blank" rel="noopener" class="text-info">&sect;10</a>). Created for domains where &ldquo;deploying DNSSEC is undesirable or impractical&rdquo; (<a href="https://datatracker.ietf.org/doc/html/rfc8461#section-2" target="_blank" rel="noopener" class="text-info">&sect;2</a>).</li>
                             </ul>
                             {{if and $hasDane $hasMtaSts}}
-                                <span class="text-success"><i class="fas fa-check-circle me-1"></i><strong>This domain deploys both DANE and MTA-STS &mdash; defense in depth.</strong></span> DANE provides cryptographic certificate binding via DNSSEC, while MTA-STS ensures compatibility with senders that don't validate DNSSEC. Per <a href="https://datatracker.ietf.org/doc/html/rfc8461#section-2" target="_blank" rel="noopener" class="text-info">RFC 8461</a>, DANE takes precedence &mdash; MTA-STS must not override a failing DANE validation.
+                                <span class="text-success"><i class="fas fa-check-circle me-1"></i><strong>This domain deploys both DANE and MTA-STS &mdash; defense in depth.</strong></span> DANE provides cryptographic certificate binding via DNSSEC, while MTA-STS provides compatibility with senders that don't validate DNSSEC. Per <a href="https://datatracker.ietf.org/doc/html/rfc8461#section-2" target="_blank" rel="noopener" class="text-info">RFC 8461</a>, DANE takes precedence &mdash; MTA-STS must not override a failing DANE validation.
                             {{else if and $hasDane (not $hasMtaSts)}}
                                 <span class="text-success"><i class="fas fa-check-circle me-1"></i><strong>This domain uses DNSSEC + DANE &mdash; the strongest cryptographic transport security.</strong></span> DANE binds TLS certificates to DNSSEC-signed DNS records, creating a verifiable chain of trust from root to mail server (<a href="https://datatracker.ietf.org/doc/html/rfc7672#section-1.3" target="_blank" rel="noopener" class="text-info">RFC 7672 &sect;1.3</a>). MTA-STS could complement this for senders that don't validate DNSSEC, but DANE alone provides the highest level of protection available.
                             {{else if and $hasMtaSts (not $hasDane)}}
@@ -3362,7 +3362,7 @@
                                 {{$chainOfTrust := mapGetStr "chain_of_trust" $dnssec}}
                                 <p class="d-flex align-items-center flex-wrap">
                                     <i class="fas fa-key me-2"></i>DNSSEC
-                                    <a href="https://datatracker.ietf.org/doc/html/rfc4033#section-2" target="_blank" rel="noopener" class="ms-2 text-muted rfc-link" data-bs-toggle="tooltip" data-bs-html="true" title="<strong>DNS Security Extensions</strong><br>Cryptographic signatures that prove DNS responses are authentic and untampered. §2 covers DNSSEC concepts." aria-label="Learn about DNSSEC - RFC 4033 §2"><i class="fas fa-info-circle"></i><span class="rfc-label">RFC 4033 §2</span></a>
+                                    <a href="https://datatracker.ietf.org/doc/html/rfc4033#section-2" target="_blank" rel="noopener" class="ms-2 text-muted rfc-link" data-bs-toggle="tooltip" data-bs-html="true" title="<strong>DNS Security Extensions</strong><br>Cryptographic signatures designed to authenticate DNS responses and detect tampering. §2 covers DNSSEC concepts." aria-label="Learn about DNSSEC - RFC 4033 §2"><i class="fas fa-info-circle"></i><span class="rfc-label">RFC 4033 §2</span></a>
                                     {{if .ICAEMetrics}}{{with index .ICAEMetrics.ByKey "dnssec"}}<a href="/confidence" class="badge icae-maturity-badge-deep icae-maturity-deep-{{.EffectiveLevel}} icae-results-badge ms-1 no-print" data-bs-toggle="tooltip" title="ICAE: {{.EffectiveDisplay}}">{{.EffectiveDisplay}}</a>{{end}}{{end}}
                                     <span class="badge bg-{{if eq $dnssecStatus "success"}}success{{else}}warning{{end}} ms-2">
                                         {{if and (eq $dnssecStatus "success") (eq $chainOfTrust "inherited")}}Inherited{{else if eq $dnssecStatus "success"}}Signed{{else}}Unsigned{{end}}

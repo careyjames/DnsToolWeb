@@ -100,7 +100,10 @@ The backend utilizes Go with Gin, `pgx` v5 for PostgreSQL, `sqlc` for type-safe 
 - OpenPhish phishing URL feed integration
 - Email Header Analyzer: SPF/DKIM/DMARC verification, multi-format (.eml/.json/.mbox/.txt), third-party spam vendor detection (Proofpoint/Barracuda/Microsoft SCL/Mimecast), subject line scam analysis (phone numbers/payment amounts/homoglyphs/scam phrases), brand mismatch with homoglyph normalization, BCC detection, educational "Understanding This Attack" callout
 - Public exposure checks, expanded exposure checks (opt-in)
-- Report integrity hash (SHA-256), posture hash for drift detection
+- Report integrity hash (SHA-3-512, NIST FIPS 202 Keccak), posture hash for drift detection (backward-compatible legacy SHA-256 recomputation)
+- Download verification: Kali-style JSON download + .sha3 sidecar file with hacker poem Easter egg (RFC 1392 reference)
+- Accountability Log: `/confidence/audit-log` with paginated hash integrity audit trail
+- Hash Integrity Audit Engine: automated recomputation and verification of stored posture hashes
 - Enterprise DNS Detection, Analysis Integrity Standard, Remediation Engine ("Priority Actions")
 - ICIE (Intelligence Classification and Interpretation Engine)
 - Per-section maintenance tags system
