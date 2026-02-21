@@ -93,6 +93,12 @@ func main() {
         }
         router.GET("/static/*filepath", serveStatic)
         router.HEAD("/static/*filepath", serveStatic)
+        faviconHandler := func(c *gin.Context) {
+                c.Header(headerCacheControl, "public, max-age=86400")
+                c.File(filepath.Join(staticDir, "icons", "favicon-48x48.png"))
+        }
+        router.GET("/favicon.ico", faviconHandler)
+        router.HEAD("/favicon.ico", faviconHandler)
 
         dnsAnalyzer := analyzer.New()
         dnsAnalyzer.SMTPProbeMode = cfg.SMTPProbeMode
