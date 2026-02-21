@@ -2096,8 +2096,74 @@ body.covert-mode .table {
 body.covert-mode .text-info {
     color: #c43c3c !important;
 }
+body.covert-mode .text-success {
+    color: rgba(25, 135, 84, 0.45) !important;
+}
+body.covert-mode .text-danger {
+    color: rgba(220, 53, 69, 0.45) !important;
+}
+body.covert-mode .text-warning {
+    color: rgba(196, 120, 60, 0.45) !important;
+}
+body.covert-mode .text-light {
+    color: rgba(200, 170, 170, 0.6) !important;
+}
 body.covert-mode .text-muted {
     color: rgba(200, 170, 170, 0.45) !important;
+}
+body.covert-mode .card.border-success {
+    border-color: rgba(25, 135, 84, 0.2) !important;
+}
+body.covert-mode .card.border-warning {
+    border-color: rgba(196, 120, 60, 0.2) !important;
+}
+body.covert-mode .card.border-danger {
+    border-color: rgba(220, 53, 69, 0.2) !important;
+}
+body.covert-mode .card.border-info {
+    border-color: rgba(140, 40, 40, 0.2) !important;
+}
+body.covert-mode .bg-opacity-10 {
+    --bs-bg-opacity: 0.04 !important;
+}
+body.covert-mode .section-question {
+    color: rgba(200, 170, 170, 0.55) !important;
+}
+body.covert-mode .card-header {
+    background-color: rgba(14, 8, 8, 0.6) !important;
+    border-bottom-color: rgba(140, 40, 40, 0.12) !important;
+}
+body.covert-mode .results-header h1,
+body.covert-mode .results-header .h3 {
+    color: rgba(196, 60, 60, 0.7) !important;
+}
+body.covert-mode .domain-name-prominent {
+    color: rgba(200, 170, 170, 0.6) !important;
+}
+body.covert-mode .alert-info {
+    background-color: rgba(140, 40, 40, 0.08) !important;
+    border-color: rgba(140, 40, 40, 0.2) !important;
+    color: rgba(200, 170, 170, 0.6) !important;
+}
+body.covert-mode .alert-warning {
+    background-color: rgba(140, 80, 40, 0.08) !important;
+    border-color: rgba(140, 80, 40, 0.2) !important;
+    color: rgba(200, 170, 170, 0.6) !important;
+}
+body.covert-mode .fw-semibold {
+    color: rgba(200, 170, 170, 0.55);
+}
+body.covert-mode .scan-phase.done .scan-icon {
+    color: rgba(196, 60, 60, 0.6) !important;
+}
+body.covert-mode .scan-pending {
+    color: rgba(196, 60, 60, 0.3) !important;
+}
+body.covert-mode .scan-phase.active-phase span {
+    color: rgba(200, 170, 170, 0.65) !important;
+}
+body.covert-mode .scan-phase:not(.visible):not(.done) span {
+    color: rgba(140, 100, 100, 0.35) !important;
 }
 body.covert-mode .bg-dark {
     background-color: #0e1015 !important;
