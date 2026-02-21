@@ -211,7 +211,10 @@ code {
     color: #8b949e;
 }
 .icae-hero-statement {
-    display: block;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.35rem;
     margin-bottom: 0.45rem;
     font-size: 0.72rem;
     font-weight: 600;
@@ -230,17 +233,16 @@ code {
     opacity: 0.45;
 }
 .icae-hero-maturity {
-    display: inline-block;
+    display: inline-flex;
+    align-items: center;
     font-size: 0.72rem;
     font-weight: 600;
     letter-spacing: 0.03em;
     padding: 0.1rem 0.55rem;
     border-radius: 999px;
-    margin-left: 0.25rem;
     color: #e6edf3;
     background: rgba(22, 27, 34, 0.85);
     border: 1px solid rgba(125, 142, 168, 0.3);
-    vertical-align: baseline;
 }
 .icae-hero-maturity::before {
     content: '';
