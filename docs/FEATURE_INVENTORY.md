@@ -1,6 +1,6 @@
 # DNS Tool — Feature Overview
 
-**Last Updated:** February 17, 2026 (v26.19.23)
+**Last Updated:** February 21, 2026 (v26.23.46)
 **Implementation:** Go/Gin
 
 ---
@@ -70,6 +70,7 @@ The tool performs RFC-compliant parsing and validation of these protocols:
 - Configurable TLP classification (default: TLP:AMBER, with TLP:RED, TLP:AMBER+STRICT, TLP:GREEN and TLP:CLEAR options) aligned with CISA Cyber Hygiene practice and FIRST TLP v2.0
 - Report integrity hash (SHA-256 fingerprint binding domain, analysis ID, timestamp, tool version, and results data) with copy-to-clipboard and header preview
 - Posture drift detection foundation (canonical SHA-256 hashing for longitudinal monitoring)
+- ICAE Intelligence Confidence Matrix with tier-colored next-tier progress labels and two-layer (Collection + Analysis) auditing
 - Changelog page
 - Security policy page
 - Sources and methodology reference
@@ -82,6 +83,9 @@ The tool performs RFC-compliant parsing and validation of these protocols:
 - Multi-resolver DNS client with DoH fallback and UDP fast-probe
 - Provider health telemetry
 - Concurrent analysis orchestrator with master deadline
+- Google OAuth 2.0 with PKCE (S256) — OIDC nonce for replay protection, `iat` validation with 5-minute clock skew tolerance, 10-second HTTP client timeouts, SameSite=Lax on all auth cookies
+- Admin panel: session management dashboard with per-user session counts (active/total), purge expired sessions, per-user session reset, user deletion (admin deletion blocked), CSRF-protected actions
+- Privacy-preserving site analytics: IP+User-Agent fingerprinting with daily-rotating SHA-256 salt (no cookies, no PII), incremental 60-second flushes with additive SQL merge
 
 ## Design Philosophy
 

@@ -506,5 +506,5 @@ graph TB
 
 ---
 
-*Generated for DNS Tool v26.23.44 — February 21, 2026*
+*Generated for DNS Tool v26.23.46 — February 21, 2026*
 *Diagrams render natively on GitHub, GitLab, Codeberg, and VS Code with Mermaid plugins.*
