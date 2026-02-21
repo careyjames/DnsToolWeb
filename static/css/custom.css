@@ -2995,6 +2995,34 @@ body.covert-mode .loading-overlay .loading-spinner i.covert-hide {
 body.covert-mode .loading-overlay .h4.covert-show {
     color: #cc2020;
 }
+body.covert-mode .proto-spf.bg-success {
+    background-color: #1a2540 !important;
+    color: #5580bb !important;
+}
+body.covert-mode .proto-spf.bg-danger {
+    background-color: #1a2540 !important;
+    color: #5580bb !important;
+}
+body.covert-mode .proto-dmarc.bg-success {
+    background-color: #2a1215 !important;
+    color: #a03030 !important;
+}
+body.covert-mode .proto-dmarc.bg-danger {
+    background-color: #2a1215 !important;
+    color: #a03030 !important;
+}
+body.covert-mode .proto-dkim.bg-success {
+    background-color: #142018 !important;
+    color: #3d7a4a !important;
+}
+body.covert-mode .proto-dkim.bg-danger {
+    background-color: #142018 !important;
+    color: #3d7a4a !important;
+}
+body.covert-mode .proto-dkim.bg-info {
+    background-color: #142018 !important;
+    color: #3d7a4a !important;
+}
 .u-badge-recon-btn {
     border-color: rgba(196, 60, 60, 0.4) !important;
     color: #cc2020 !important;

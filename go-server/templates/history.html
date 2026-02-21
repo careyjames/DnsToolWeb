@@ -181,19 +181,19 @@
                                     <td>
                                         <div class="d-flex gap-1">
                                             {{if eq $a.SpfStatus "success"}}
-                                                <span class="badge bg-success" title="SPF configured">SPF</span>
+                                                <span class="badge bg-success proto-spf" title="SPF configured">SPF</span>
                                             {{else if or (eq $a.SpfStatus "warning") (eq $a.SpfStatus "error") (eq $a.SpfStatus "missing")}}
-                                                <span class="badge bg-danger" title="SPF missing or misconfigured"><i class="fas fa-times me-1"></i>SPF</span>
+                                                <span class="badge bg-danger proto-spf" title="SPF missing or misconfigured"><i class="fas fa-times me-1"></i>SPF</span>
                                             {{end}}
                                             {{if eq $a.DmarcStatus "success"}}
-                                                <span class="badge bg-success" title="DMARC configured">DMARC</span>
+                                                <span class="badge bg-success proto-dmarc" title="DMARC configured">DMARC</span>
                                             {{else if or (eq $a.DmarcStatus "warning") (eq $a.DmarcStatus "error") (eq $a.DmarcStatus "missing")}}
-                                                <span class="badge bg-danger" title="DMARC missing or misconfigured"><i class="fas fa-times me-1"></i>DMARC</span>
+                                                <span class="badge bg-danger proto-dmarc" title="DMARC missing or misconfigured"><i class="fas fa-times me-1"></i>DMARC</span>
                                             {{end}}
                                             {{if or (eq $a.DkimStatus "success") (eq $a.DkimStatus "partial")}}
-                                                <span class="badge bg-success" title="DKIM signing verified">DKIM</span>
+                                                <span class="badge bg-success proto-dkim" title="DKIM signing verified">DKIM</span>
                                             {{else if eq $a.DkimStatus "info"}}
-                                                <span class="badge bg-info" title="DKIM may be configured but selectors were not discoverable — provide your DKIM selector for a definitive check">DKIM</span>
+                                                <span class="badge bg-info proto-dkim" title="DKIM may be configured but selectors were not discoverable — provide your DKIM selector for a definitive check">DKIM</span>
                                             {{end}}
                                         </div>
                                     </td>
@@ -249,19 +249,19 @@
                         </div>
                         <div class="d-flex flex-wrap align-items-center gap-1 small">
                             {{if eq $a.SpfStatus "success"}}
-                                <span class="badge bg-success u-fs-065rem">SPF</span>
+                                <span class="badge bg-success u-fs-065rem proto-spf">SPF</span>
                             {{else if or (eq $a.SpfStatus "warning") (eq $a.SpfStatus "error") (eq $a.SpfStatus "missing")}}
-                                <span class="badge bg-danger u-fs-065rem"><i class="fas fa-times me-1"></i>SPF</span>
+                                <span class="badge bg-danger u-fs-065rem proto-spf"><i class="fas fa-times me-1"></i>SPF</span>
                             {{end}}
                             {{if eq $a.DmarcStatus "success"}}
-                                <span class="badge bg-success u-fs-065rem">DMARC</span>
+                                <span class="badge bg-success u-fs-065rem proto-dmarc">DMARC</span>
                             {{else if or (eq $a.DmarcStatus "warning") (eq $a.DmarcStatus "error") (eq $a.DmarcStatus "missing")}}
-                                <span class="badge bg-danger u-fs-065rem"><i class="fas fa-times me-1"></i>DMARC</span>
+                                <span class="badge bg-danger u-fs-065rem proto-dmarc"><i class="fas fa-times me-1"></i>DMARC</span>
                             {{end}}
                             {{if or (eq $a.DkimStatus "success") (eq $a.DkimStatus "partial")}}
-                                <span class="badge bg-success u-fs-065rem">DKIM</span>
+                                <span class="badge bg-success u-fs-065rem proto-dkim">DKIM</span>
                             {{else if eq $a.DkimStatus "info"}}
-                                <span class="badge bg-info u-fs-065rem">DKIM</span>
+                                <span class="badge bg-info u-fs-065rem proto-dkim">DKIM</span>
                             {{end}}
                             <span class="text-muted ms-auto u-fs-070rem">
                                 {{$a.CreatedDate}} {{$a.CreatedTime}}
