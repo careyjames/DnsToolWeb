@@ -2273,6 +2273,16 @@ body.covert-mode .hero-section::before {
 body.covert-mode footer .u-rounded-circle {
     filter: saturate(0.3) brightness(0.8);
 }
+body.covert-mode footer .u-text-footer {
+    color: rgba(196, 100, 100, 0.6);
+}
+body.covert-mode .u-covert-hide {
+    display: none;
+}
+body.covert-mode .u-actionable-intel {
+    color: #d35d5d;
+    text-shadow: 0 0 8px rgba(196, 60, 60, 0.4);
+}
 body.covert-mode .search-label {
     color: rgba(200, 170, 170, 0.7);
 }
