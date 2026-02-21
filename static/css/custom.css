@@ -1024,9 +1024,6 @@ main.container {
     .u-maintenance-tag {
         font-size: 0.5rem;
         padding: 0.1em 0.35em;
-        max-width: 7.5rem;
-        overflow: hidden;
-        text-overflow: ellipsis;
         white-space: nowrap;
     }
     
