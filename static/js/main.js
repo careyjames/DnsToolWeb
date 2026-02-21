@@ -1,7 +1,7 @@
 (function() {
-    var saved = null;
-    try { saved = localStorage.getItem('covertMode'); } catch(e) {}
-    if (saved === '1') document.body.classList.add('covert-mode');
+    if (document.documentElement.classList.contains('covert-mode')) {
+        document.body.classList.add('covert-mode');
+    }
 })();
 
 if ('serviceWorker' in navigator) {

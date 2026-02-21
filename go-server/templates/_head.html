@@ -1,4 +1,5 @@
 {{define "head"}}
+<script nonce="{{.CspNonce}}">try{if(localStorage.getItem('covertMode')==='1')document.documentElement.classList.add('covert-mode')}catch(e){}</script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="theme-color" content="#0d1117" media="(prefers-color-scheme: dark)">
@@ -29,6 +30,7 @@
 {{define "critical_css"}}
 <style nonce="{{.CspNonce}}">
 *,::after,::before{box-sizing:border-box}
+html.covert-mode,html.covert-mode body{background-color:#0a0c10!important}
 body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text",system-ui,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;background-color:#0d1117;color:rgba(230,237,243,0.9);line-height:1.5;-webkit-font-smoothing:antialiased}
 .navbar{display:flex;padding:.5rem 1rem;background-color:#0d1117}
 .navbar-brand{color:#fff;text-decoration:none;font-size:1.25rem;padding:.3125rem 0}
