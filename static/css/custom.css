@@ -1024,7 +1024,7 @@ main.container {
     .u-maintenance-tag {
         font-size: 0.5rem;
         padding: 0.1em 0.35em;
-        max-width: 6rem;
+        max-width: 7.5rem;
         overflow: hidden;
         text-overflow: ellipsis;
         white-space: nowrap;
@@ -2436,6 +2436,37 @@ body.covert-mode .dri-examples {
 }
 body.covert-mode .fa-compass.text-info {
     color: #c43c3c !important;
+}
+body.covert-mode .navbar-toggler {
+    border-color: rgba(196, 60, 60, 0.4) !important;
+}
+body.covert-mode .navbar-toggler-icon {
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='rgba(196, 60, 60, 0.7)' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e") !important;
+}
+body.covert-mode .navbar-toggler:focus {
+    box-shadow: 0 0 0 0.2rem rgba(196, 60, 60, 0.25) !important;
+}
+body.covert-mode .tooltip-inner {
+    background-color: #1a0a0a !important;
+    color: rgba(196, 100, 100, 0.85) !important;
+    border: 1px solid rgba(196, 60, 60, 0.3) !important;
+    text-shadow: 0 0 4px rgba(196, 60, 60, 0.2);
+}
+body.covert-mode .tooltip .tooltip-arrow::before {
+    border-top-color: rgba(196, 60, 60, 0.3) !important;
+    border-bottom-color: rgba(196, 60, 60, 0.3) !important;
+}
+body.covert-mode .bs-tooltip-top .tooltip-arrow::before {
+    border-top-color: rgba(196, 60, 60, 0.3) !important;
+}
+body.covert-mode .bs-tooltip-bottom .tooltip-arrow::before {
+    border-bottom-color: rgba(196, 60, 60, 0.3) !important;
+}
+body.covert-mode .bs-tooltip-start .tooltip-arrow::before {
+    border-left-color: rgba(196, 60, 60, 0.3) !important;
+}
+body.covert-mode .bs-tooltip-end .tooltip-arrow::before {
+    border-right-color: rgba(196, 60, 60, 0.3) !important;
 }
 body.covert-mode .icae-summary-bar {
     border-color: rgba(140, 40, 40, 0.2) !important;
