@@ -221,6 +221,11 @@ document.addEventListener('DOMContentLoaded', function() {
         domainForm.addEventListener('submit', function(e) {
             if (analysisSubmitted) return;
             e.preventDefault();
+            var covertField = document.getElementById('covertField');
+            if (covertField) {
+                var isCovert = document.body.classList.contains('covert-mode') ? '1' : '0';
+                covertField.value = isCovert;
+            }
             const domain = domainInput.value.trim().toLowerCase().replace(/^\./, '');
             domainInput.value = domain;
             

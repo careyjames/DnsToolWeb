@@ -1,0 +1,877 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="dark">
+<head>
+    {{template "head" .}}
+    <title>Recon Report — {{.Domain}} - DNS Tool</title>
+    <meta name="description" content="Red team recon report for {{.Domain}}. Attack surface analysis: SPF, DKIM, DMARC, DANE, DNSSEC, MTA-STS, BIMI, CAA.">
+    <meta name="robots" content="noindex, nofollow">
+    {{template "head_css" .}}
+    {{template "critical_css" .}}
+    <style nonce="{{.CspNonce}}">
+        .print-report-header { display: none; }
+        .print-report-footer { display: none; }
+    </style>
+</head>
+<body class="covert-mode">
+    {{template "nav" .}}
+
+    <main id="main-content" class="container my-4">
+        {{template "flash_messages" .}}
+
+        <div class="alert border-0 mb-3" style="background: rgba(196, 60, 60, 0.12); border-left: 3px solid #c43c3c !important;" role="alert">
+            <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+                <div class="d-flex align-items-start">
+                    <i class="fas fa-biohazard me-2 mt-1" style="color: #c43c3c;"></i>
+                    <div>
+                        <strong style="color: #e87070;">COVERT MODE ACTIVE</strong>
+                        <span class="text-muted ms-1">&mdash; Recon perspective. All data is identical to the standard report.</span>
+                        <div class="small text-muted mt-1"><i class="fas fa-moon me-1"></i>Optimized for low-light tactical environments</div>
+                    </div>
+                </div>
+                {{if .AnalysisID}}
+                <a href="/analysis/{{.AnalysisID}}/view" class="btn btn-sm btn-outline-secondary text-nowrap">
+                    <i class="fas fa-eye me-1"></i>Exit Covert Mode
+                </a>
+                {{end}}
+            </div>
+        </div>
+
+        {{if .Ephemeral}}
+        {{if .DevNull}}
+        <div class="alert alert-dark border-0 mb-3 u-devnull-banner">
+            <div class="d-flex align-items-start">
+                <i class="fas fa-terminal me-2 mt-1 text-danger"></i>
+                <div>
+                    <strong class="text-danger"><code>&gt; ./dns-tool --output /dev/null</code></strong>
+                    <p class="mb-1 mt-1 text-light">This scan ran in <strong>/dev/null mode</strong>. Nothing was written to our database &mdash; no history entry, no analytics, no statistics, no account association.</p>
+                    <p class="mb-0 small text-muted"><i class="fas fa-biohazard me-1"></i>When you close this tab, these results are gone.</p>
+                </div>
+            </div>
+        </div>
+        {{else}}
+        <div class="alert alert-warning border-0 mb-3 u-bg-warn-soft">
+            <div class="d-flex align-items-start">
+                <i class="fas fa-shield-alt me-2 mt-1 text-warning"></i>
+                <div>
+                    <strong>Ephemeral Results &mdash; Not Saved</strong>
+                    <p class="mb-0 mt-1 small">Custom DKIM selectors detected. Sign in to persist results.</p>
+                </div>
+            </div>
+        </div>
+        {{end}}
+        {{end}}
+
+        {{$results := .Results}}
+        {{$spf := mapGetMap "spf_analysis" $results}}
+        {{$dmarc := mapGetMap "dmarc_analysis" $results}}
+        {{$dkim := mapGetMap "dkim_analysis" $results}}
+        {{$bimi := mapGetMap "bimi_analysis" $results}}
+        {{$dnssec := mapGetMap "dnssec_analysis" $results}}
+        {{$caa := mapGetMap "caa_analysis" $results}}
+        {{$dane := mapGetMap "dane_analysis" $results}}
+        {{$mta_sts := mapGetMap "mta_sts_analysis" $results}}
+        {{$tlsrpt := mapGetMap "tlsrpt_analysis" $results}}
+        {{$posture := mapGetMap "posture" $results}}
+        {{$remediation := mapGetMap "remediation" $results}}
+        {{$hosting := mapGetMap "hosting_summary" $results}}
+        {{$registrar := mapGetMap "registrar_info" $results}}
+        {{$basic := mapGetMap "basic_records" $results}}
+        {{$ns := mapGetMap "ns_delegation_analysis" $results}}
+        {{$dns_infra := mapGetMap "dns_infrastructure" $results}}
+        {{$esm := mapGetMap "email_security_mgmt" $results}}
+        {{$mp := mapGetMap "mail_posture" $results}}
+        {{$resolver_consensus := mapGetMap "resolver_consensus" $results}}
+        {{$smtp := mapGetMap "smtp_transport" $results}}
+        {{$ct := mapGetMap "ct_subdomains" $results}}
+        {{$auth_records := mapGetMap "authoritative_records" $results}}
+        {{$secret_exposure := mapGetMap "secret_exposure" $results}}
+        {{$web_exposure := mapGetMap "web_exposure" $results}}
+        {{$security_txt := mapGetMap "security_txt" $results}}
+        {{$ai_surface := mapGetMap "ai_surface" $results}}
+        {{$edge_cdn := mapGetMap "edge_cdn" $results}}
+        {{$saas_txt := mapGetMap "saas_txt" $results}}
+        {{$dangling_dns := mapGetMap "dangling_dns" $results}}
+        {{$https_svcb := mapGetMap "https_svcb" $results}}
+        {{$asn_info := mapGetMap "asn_info" $results}}
+        {{$cds_cdnskey := mapGetMap "cds_cdnskey" $results}}
+        {{$smimea := mapGetMap "smimea_openpgpkey" $results}}
+
+        <div class="results-header mb-4">
+            <div class="results-header-info">
+                <h1 class="h3 mb-1"><i class="fas fa-crosshairs me-2"></i>Recon Report</h1>
+                <div class="domain-display">
+                    <span class="domain-name-prominent font-monospace">{{.Domain}}</span>
+                    {{if ne .AsciiDomain .Domain}}
+                        <span class="badge bg-secondary ms-2 font-monospace">ASCII: {{.AsciiDomain}}</span>
+                    {{end}}
+                </div>
+                {{if or .AnalysisTimestamp (gt .AnalysisDuration 0)}}
+                <div class="small text-muted results-meta u-opacity-70 font-monospace">
+                    {{if .AnalysisTimestamp}}<i class="fas fa-clock me-1"></i><span>{{.AnalysisTimestamp}}</span>{{end}}
+                    {{if and .AnalysisTimestamp (gt .AnalysisDuration 0)}}<span class="mx-1">·</span>{{end}}
+                    {{if gt .AnalysisDuration 0}}<i class="fas fa-stopwatch me-1"></i><span>{{formatFloat 1 .AnalysisDuration}}s</span>{{end}}
+                    {{if .ToolVersion}}
+                        <span class="mx-1">·</span><i class="fas fa-tag me-1"></i><span>v{{.ToolVersion}}</span>
+                    {{end}}
+                </div>
+                {{end}}
+            </div>
+            <div class="results-header-actions">
+                {{if .AnalysisID}}
+                <a href="/analysis/{{.AnalysisID}}/view" class="btn btn-outline-secondary me-2" title="Switch to standard engineer view">
+                    <i class="fas fa-eye me-1"></i>Standard View
+                </a>
+                {{end}}
+                <button type="button" class="btn btn-outline-info me-2" onclick="window.print()" title="Print this Recon Report">
+                    <i class="fas fa-print me-1"></i>Print
+                </button>
+                <a href="/analyze?domain={{.AsciiDomain}}" id="reanalyzeBtn" class="btn btn-analyze" data-domain="{{.AsciiDomain}}"
+                    {{if gt .WaitSeconds 0}}data-wait-seconds="{{.WaitSeconds}}" data-wait-reason="{{.WaitReason}}"{{end}}>
+                    <i class="fas fa-sync-alt me-2"></i>Re-scan
+                </a>
+                <a href="/" class="btn btn-outline-primary">
+                    <i class="fas fa-search me-2"></i>New Target
+                </a>
+            </div>
+        </div>
+
+        {{if not .DomainExists}}
+        <div class="card border-info mb-4">
+            <div class="card-body text-center py-5">
+                <div class="mb-4">
+                    <i class="fas fa-skull-crossbones fa-4x text-muted opacity-75"></i>
+                </div>
+                <h2 class="h3 mb-3">
+                    <span class="badge bg-secondary px-4 py-2">
+                        <i class="fas fa-ghost me-2"></i>Target Not Found
+                    </span>
+                </h2>
+                <p class="lead text-muted mb-4 font-monospace">{{default "Domain does not resolve. No DNS delegation detected." (mapGetStr "domain_status_message" $results)}}</p>
+                <div class="row justify-content-center">
+                    <div class="col-lg-8">
+                        <div class="alert alert-info border-info mb-0 text-light u-bg-info-15">
+                            <p class="alert-heading mb-2 fw-semibold"><i class="fas fa-terminal me-2"></i>Recon Assessment</p>
+                            <ul class="text-start mb-0 small font-monospace">
+                                <li>No authoritative DNS data &mdash; domain is dark</li>
+                                <li>Possibly unregistered, expired, or undelegated</li>
+                                <li>No attack surface to evaluate</li>
+                                <li>Consider WHOIS/RDAP for historical registration data</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                <div class="mt-4">
+                    <a href="/" class="btn btn-primary btn-lg">
+                        <i class="fas fa-crosshairs me-2"></i>New Target
+                    </a>
+                </div>
+            </div>
+        </div>
+        {{else}}
+
+        {{if and $posture (not .IsPublicSuffix)}}
+        {{$postureColor := mapGetStr "color" $posture}}
+        {{$postureIcon := mapGetStr "icon" $posture}}
+        {{$postureState := mapGetStr "state" $posture}}
+        {{$postureCritical := mapGetSlice "critical_issues" $posture}}
+        {{$postureRecs := mapGetSlice "recommendations" $posture}}
+        {{$postureMonitoring := mapGetSlice "monitoring" $posture}}
+        {{$postureConfiguredCount := len (mapGetSlice "configured" $posture)}}
+        {{$postureAbsentCount := len (mapGetSlice "absent" $posture)}}
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card border-{{$postureColor}} bg-{{$postureColor}} bg-opacity-10">
+                    <div class="card-body py-3">
+                        <div class="d-flex align-items-center justify-content-between flex-wrap">
+                            <div class="d-flex align-items-center">
+                                <i class="fas fa-crosshairs fa-2x text-{{$postureColor}} me-3"></i>
+                                <div>
+                                    <span class="fw-semibold"><i class="fas fa-user-secret me-1"></i>Target Assessment</span>
+                                    <div class="d-flex align-items-center mt-1">
+                                        <span class="fw-semibold me-2 font-monospace">Target Hardness:</span>
+                                        <span class="badge bg-{{$postureColor}} fs-6 px-3 py-2">{{if eq $postureColor "success"}}Hardened{{else if eq $postureColor "warning"}}Moderate{{else if eq $postureColor "danger"}}Soft Target{{else}}{{$postureState}}{{end}}</span>
+                                    </div>
+                                    <small class="d-block mt-1 font-monospace">
+                                        {{if gt $postureConfiguredCount 0}}<span class="text-success"><i class="fas fa-shield-alt me-1"></i>{{$postureConfiguredCount}} defensive layers</span>{{end}}
+                                        {{if and (gt $postureConfiguredCount 0) (gt $postureAbsentCount 0)}}<span class="mx-1">|</span>{{end}}
+                                        {{if gt $postureAbsentCount 0}}<span class="text-danger"><i class="fas fa-bug me-1"></i>{{$postureAbsentCount}} attack surface gaps</span>{{end}}
+                                    </small>
+                                </div>
+                            </div>
+                            {{if or $postureCritical $postureRecs $postureMonitoring}}
+                            <div class="mt-2 mt-md-0 font-monospace">
+                                {{if $postureCritical}}
+                                    <span class="text-danger d-block small"><i class="fas fa-skull-crossbones me-1"></i>{{len $postureCritical}} exploitable</span>
+                                {{end}}
+                                {{if $postureRecs}}
+                                    <span class="text-warning d-block small"><i class="fas fa-exclamation-triangle me-1"></i>{{len $postureRecs}} weakness{{if gt (len $postureRecs) 1}}es{{end}}</span>
+                                {{end}}
+                                {{if $postureMonitoring}}
+                                    <span class="text-info d-block small"><i class="fas fa-eye me-1"></i>{{len $postureMonitoring}} monitoring</span>
+                                {{end}}
+                            </div>
+                            {{end}}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {{end}}
+
+        {{if .IsPublicSuffix}}
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card border-info bg-info bg-opacity-10">
+                    <div class="card-body py-3">
+                        <div class="d-flex align-items-center">
+                            <i class="fas fa-globe-americas fa-2x text-info me-3"></i>
+                            <div>
+                                <span class="fw-semibold">Registry Zone &mdash; Limited Recon Value</span>
+                                <div class="small text-muted mt-1 font-monospace">This is a shared registry suffix. Email security protocols are not applicable. Infrastructure-level analysis only.</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {{end}}
+
+        {{if not .IsPublicSuffix}}
+        <div class="row" id="section-email">
+            <div class="col-12 mb-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0 d-flex align-items-center justify-content-between flex-wrap">
+                            <span><i class="fas fa-skull-crossbones me-2"></i>Email Spoofability</span>
+                            <span class="section-question font-monospace">Can you spoof email from this domain?
+                                {{if $posture}}
+                                {{$verdicts := mapGetMap "verdicts" $posture}}
+                                {{$emailShort := mapGetStr "email_answer_short" $verdicts}}
+                                {{$emailColor := mapGetStr "email_answer_color" $verdicts}}
+                                {{$emailReason := mapGetStr "email_answer_reason" $verdicts}}
+                                {{if $emailShort}}
+                                    <span class="intel-verdict">
+                                        <span class="intel-verdict-answer verdict-{{$emailColor}}">{{$emailShort}}</span>
+                                        {{if $emailReason}}<span class="intel-verdict-reason">{{$emailReason}}</span>{{end}}
+                                    </span>
+                                {{end}}
+                                {{end}}
+                            </span>
+                        </h5>
+                    </div>
+                    <div class="card-body">
+
+                        <div class="mb-4">
+                            <h6 class="fw-semibold font-monospace"><i class="fas fa-terminal me-1"></i>SPF &mdash; Sender Policy Framework</h6>
+                            {{$spfStatus := mapGetStr "status" $spf}}
+                            {{$spfRecord := mapGetStr "record" $spf}}
+                            <div class="alert {{if eq $spfStatus "success"}}alert-success{{else}}alert-danger{{end}} py-2 mb-2 small">
+                                {{if eq $spfStatus "success"}}
+                                <i class="fas fa-shield-alt me-1"></i>SPF is configured &mdash; sender authorization restricts spoofing
+                                {{else}}
+                                <i class="fas fa-bug me-1"></i>No SPF record &mdash; any server can claim to send from this domain
+                                {{end}}
+                            </div>
+                            {{if $spfRecord}}
+                            <div class="code-block font-monospace small mb-2">{{$spfRecord}}</div>
+                            {{end}}
+                            <details class="small text-muted">
+                                <summary class="font-monospace">RFC 7208 &mdash; Sender Policy Framework</summary>
+                                <p class="mt-1 mb-0">SPF allows domain owners to specify which mail servers are authorized to send email on behalf of their domain. Without SPF, any server can forge the envelope sender.</p>
+                            </details>
+                        </div>
+
+                        <div class="mb-4">
+                            <h6 class="fw-semibold font-monospace"><i class="fas fa-terminal me-1"></i>DKIM &mdash; DomainKeys Identified Mail</h6>
+                            {{$dkimStatus := mapGetStr "status" $dkim}}
+                            <div class="alert {{if eq $dkimStatus "success"}}alert-success{{else if eq $dkimStatus "partial"}}alert-warning{{else}}alert-info{{end}} py-2 mb-2 small">
+                                <i class="fas fa-fingerprint me-1"></i>DKIM selectors reveal mail infrastructure
+                                {{if eq $dkimStatus "success"}} &mdash; signatures found{{else if eq $dkimStatus "partial"}} &mdash; partial coverage{{else}} &mdash; limited discovery{{end}}
+                            </div>
+                            {{$selectors := mapGetSlice "selectors" $dkim}}
+                            {{if $selectors}}
+                            <div class="mb-2">
+                                {{range $selectors}}
+                                {{$sel := toMap .}}
+                                {{if $sel}}
+                                <div class="d-flex align-items-center gap-2 mb-1">
+                                    <code class="small">{{mapGetStr "selector" $sel}}</code>
+                                    {{$keyLen := mapGetFloat "key_length" $sel}}
+                                    {{if gt $keyLen 0}}<span class="badge bg-secondary small">{{formatFloat 0 $keyLen}}-bit</span>{{end}}
+                                    {{$selStatus := mapGetStr "status" $sel}}
+                                    {{if eq $selStatus "found"}}<span class="badge bg-success small">found</span>{{end}}
+                                </div>
+                                {{end}}
+                                {{end}}
+                            </div>
+                            {{end}}
+                            <details class="small text-muted">
+                                <summary class="font-monospace">RFC 6376 &mdash; DomainKeys Identified Mail</summary>
+                                <p class="mt-1 mb-0">DKIM provides cryptographic authentication of email messages. Selector names often reveal email providers (e.g., google, selector1 = Microsoft 365).</p>
+                            </details>
+                        </div>
+
+                        <div class="mb-2">
+                            <h6 class="fw-semibold font-monospace"><i class="fas fa-terminal me-1"></i>DMARC &mdash; Domain-based Message Authentication</h6>
+                            {{$dmarcStatus := mapGetStr "status" $dmarc}}
+                            {{$dmarcPolicy := mapGetStr "policy" $dmarc}}
+                            {{$dmarcRecord := mapGetStr "record" $dmarc}}
+                            <div class="alert {{if eq $dmarcPolicy "reject"}}alert-success{{else if eq $dmarcPolicy "quarantine"}}alert-warning{{else}}alert-danger{{end}} py-2 mb-2 small">
+                                {{if eq $dmarcPolicy "reject"}}
+                                <i class="fas fa-shield-alt me-1"></i>DMARC p=reject &mdash; hard enforcement. Spoofing will be rejected.
+                                {{else if eq $dmarcPolicy "quarantine"}}
+                                <i class="fas fa-exclamation-triangle me-1"></i>DMARC p=quarantine &mdash; some protection, but mail may still reach spam
+                                {{else if eq $dmarcPolicy "none"}}
+                                <i class="fas fa-bug me-1"></i>DMARC p=none &mdash; monitoring only, no enforcement. Spoofing is trivial.
+                                {{else}}
+                                <i class="fas fa-skull-crossbones me-1"></i>No DMARC &mdash; domain has zero email authentication enforcement
+                                {{end}}
+                            </div>
+                            {{if $dmarcRecord}}
+                            <div class="code-block font-monospace small mb-2">{{$dmarcRecord}}</div>
+                            {{end}}
+                            <details class="small text-muted">
+                                <summary class="font-monospace">RFC 7489 &mdash; DMARC</summary>
+                                <p class="mt-1 mb-0">DMARC ties SPF and DKIM together with a policy that tells receiving servers what to do with unauthenticated mail. p=none is monitoring only &mdash; attackers love it.</p>
+                            </details>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row" id="section-dane">
+            <div class="col-12 mb-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0 d-flex align-items-center justify-content-between flex-wrap">
+                            <span><i class="fas fa-user-secret me-2"></i>Transport Security</span>
+                            <span class="section-question font-monospace">Can you intercept email in transit?</span>
+                        </h5>
+                    </div>
+                    <div class="card-body">
+
+                        <div class="mb-4">
+                            <h6 class="fw-semibold font-monospace"><i class="fas fa-terminal me-1"></i>DANE / TLSA</h6>
+                            {{$daneStatus := mapGetStr "status" $dane}}
+                            <div class="alert {{if eq $daneStatus "success"}}alert-success{{else}}alert-warning{{end}} py-2 mb-2 small">
+                                {{if eq $daneStatus "success"}}
+                                <i class="fas fa-lock me-1"></i>DANE TLSA records pin certificates via DNSSEC &mdash; MITM requires compromising the DNS chain
+                                {{else}}
+                                <i class="fas fa-unlock me-1"></i>No DANE &mdash; TLS is opportunistic and can be downgraded
+                                {{end}}
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <h6 class="fw-semibold font-monospace"><i class="fas fa-terminal me-1"></i>MTA-STS</h6>
+                            {{$mtaStsStatus := mapGetStr "status" $mta_sts}}
+                            {{$mtaStsMode := mapGetStr "mode" $mta_sts}}
+                            <div class="alert {{if eq $mtaStsMode "enforce"}}alert-success{{else if eq $mtaStsMode "testing"}}alert-info{{else}}alert-warning{{end}} py-2 mb-2 small">
+                                {{if eq $mtaStsMode "enforce"}}
+                                <i class="fas fa-shield-alt me-1"></i>MTA-STS enforce mode &mdash; senders required to use TLS
+                                {{else if eq $mtaStsMode "testing"}}
+                                <i class="fas fa-flask me-1"></i>MTA-STS testing mode &mdash; reporting only, no enforcement
+                                {{else if eq $mtaStsStatus "success"}}
+                                <i class="fas fa-info-circle me-1"></i>MTA-STS configured
+                                {{else}}
+                                <i class="fas fa-unlock me-1"></i>MTA-STS not enforced &mdash; STARTTLS stripping possible
+                                {{end}}
+                            </div>
+                        </div>
+
+                        <div class="mb-2">
+                            <h6 class="fw-semibold font-monospace"><i class="fas fa-terminal me-1"></i>TLS-RPT</h6>
+                            {{$tlsrptStatus := mapGetStr "status" $tlsrpt}}
+                            <div class="alert {{if eq $tlsrptStatus "success"}}alert-success{{else}}alert-secondary{{end}} py-2 mb-2 small">
+                                {{if eq $tlsrptStatus "success"}}
+                                <i class="fas fa-chart-line me-1"></i>TLS-RPT configured &mdash; TLS failures are reported to the domain owner
+                                {{else}}
+                                <i class="fas fa-eye-slash me-1"></i>No TLS-RPT &mdash; TLS failures go unnoticed by the domain owner
+                                {{end}}
+                            </div>
+                            <details class="small text-muted">
+                                <summary class="font-monospace">RFC 8460 &mdash; SMTP TLS Reporting</summary>
+                                <p class="mt-1 mb-0">TLS-RPT enables reporting of TLS negotiation failures. Without it, STARTTLS downgrade attacks leave no trace.</p>
+                            </details>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row" id="section-brand">
+            <div class="col-12 mb-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0 d-flex align-items-center justify-content-between flex-wrap">
+                            <span><i class="fas fa-mask me-2"></i>Brand &amp; Certificate Security</span>
+                            <span class="section-question font-monospace">Can you fake this brand's identity?</span>
+                        </h5>
+                    </div>
+                    <div class="card-body">
+
+                        <div class="mb-4">
+                            <h6 class="fw-semibold font-monospace"><i class="fas fa-terminal me-1"></i>BIMI</h6>
+                            {{$bimiStatus := mapGetStr "status" $bimi}}
+                            <div class="alert {{if eq $bimiStatus "success"}}alert-success{{else}}alert-secondary{{end}} py-2 mb-2 small">
+                                {{if eq $bimiStatus "success"}}
+                                <i class="fas fa-certificate me-1"></i>BIMI configured &mdash; brand logo verified in email clients. Harder to impersonate visually.
+                                {{else}}
+                                <i class="fas fa-eye-slash me-1"></i>No BIMI &mdash; no verified brand logo in email clients. Visual impersonation is easy.
+                                {{end}}
+                            </div>
+                        </div>
+
+                        <div class="mb-2">
+                            <h6 class="fw-semibold font-monospace"><i class="fas fa-terminal me-1"></i>CAA &mdash; Certificate Authority Authorization</h6>
+                            {{$caaStatus := mapGetStr "status" $caa}}
+                            {{$caaRecords := mapGetSlice "records" $caa}}
+                            <div class="alert {{if eq $caaStatus "success"}}alert-success{{else}}alert-warning{{end}} py-2 mb-2 small">
+                                {{if eq $caaStatus "success"}}
+                                <i class="fas fa-lock me-1"></i>CAA restricts certificate issuance to authorized CAs
+                                {{else}}
+                                <i class="fas fa-unlock me-1"></i>No CAA &mdash; any CA can issue certificates for this domain
+                                {{end}}
+                            </div>
+                            {{if $caaRecords}}
+                            <div class="mb-2">
+                                {{range $caaRecords}}
+                                <div class="code-block font-monospace small mb-1">{{.}}</div>
+                                {{end}}
+                            </div>
+                            {{end}}
+                            <details class="small text-muted">
+                                <summary class="font-monospace">RFC 8659 &mdash; CAA</summary>
+                                <p class="mt-1 mb-0">CAA records specify which Certificate Authorities are authorized to issue certificates. Without CAA, an attacker could obtain a valid cert from any CA.</p>
+                            </details>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+        {{end}}
+
+        <div class="row" id="section-dnssec">
+            <div class="col-12 mb-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0 d-flex align-items-center justify-content-between flex-wrap">
+                            <span><i class="fas fa-bug me-2"></i>DNS Infrastructure</span>
+                            <span class="section-question font-monospace">Can you poison the DNS?</span>
+                        </h5>
+                    </div>
+                    <div class="card-body">
+
+                        <div class="mb-4">
+                            <h6 class="fw-semibold font-monospace"><i class="fas fa-terminal me-1"></i>DNSSEC</h6>
+                            {{$dnssecStatus := mapGetStr "status" $dnssec}}
+                            <div class="alert {{if eq $dnssecStatus "secure"}}alert-success{{else}}alert-danger{{end}} py-2 mb-2 small">
+                                {{if eq $dnssecStatus "secure"}}
+                                <i class="fas fa-lock me-1"></i>DNSSEC validated &mdash; DNS responses are cryptographically signed
+                                {{else}}
+                                <i class="fas fa-skull-crossbones me-1"></i>No DNSSEC &mdash; DNS responses can be spoofed or poisoned
+                                {{end}}
+                            </div>
+                            <details class="small text-muted">
+                                <summary class="font-monospace">RFC 4033&ndash;4035 &mdash; DNSSEC</summary>
+                                <p class="mt-1 mb-0">DNSSEC adds cryptographic signatures to DNS responses, preventing cache poisoning and response forgery. Without DNSSEC, an attacker can forge DNS answers.</p>
+                            </details>
+                        </div>
+
+                        <div class="mb-4">
+                            <h6 class="fw-semibold font-monospace"><i class="fas fa-terminal me-1"></i>NS Delegation</h6>
+                            {{$nsCount := mapGetFloat "ns_count" $ns}}
+                            {{$nameservers := mapGetSlice "nameservers" $ns}}
+                            <div class="alert alert-info py-2 mb-2 small">
+                                <i class="fas fa-server me-1"></i>{{formatFloat 0 $nsCount}} nameserver{{if ne $nsCount 1.0}}s{{end}} detected
+                                {{if lt $nsCount 2.0}} &mdash; single point of failure{{end}}
+                            </div>
+                            {{if $nameservers}}
+                            <div class="mb-2">
+                                {{range $nameservers}}
+                                <code class="d-block small font-monospace mb-1">{{.}}</code>
+                                {{end}}
+                            </div>
+                            {{end}}
+                        </div>
+
+                        {{if $dns_infra}}
+                        {{$dnsProvider := mapGetStr "provider" $dns_infra}}
+                        {{if $dnsProvider}}
+                        <div class="mb-2">
+                            <h6 class="fw-semibold font-monospace"><i class="fas fa-terminal me-1"></i>DNS Provider</h6>
+                            <div class="d-flex align-items-center gap-2">
+                                <span class="badge bg-info">{{$dnsProvider}}</span>
+                            </div>
+                        </div>
+                        {{end}}
+                        {{end}}
+
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row" id="section-infra">
+            <div class="col-12 mb-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="fas fa-crosshairs me-2"></i>Attack Surface Discovery
+                        </h5>
+                    </div>
+                    <div class="card-body">
+
+                        {{if $ct}}
+                        <div class="mb-4">
+                            <h6 class="fw-semibold font-monospace"><i class="fas fa-terminal me-1"></i>Subdomain Discovery (Certificate Transparency)</h6>
+                            {{$ctCount := mapGetFloat "count" $ct}}
+                            {{$subdomains := mapGetSlice "subdomains" $ct}}
+                            <div class="alert alert-info py-2 mb-2 small">
+                                <i class="fas fa-sitemap me-1"></i>{{formatFloat 0 $ctCount}} subdomain{{if ne $ctCount 1.0}}s{{end}} discovered via Certificate Transparency logs
+                            </div>
+                            {{if $subdomains}}
+                            <div class="table-responsive">
+                                <table class="table table-sm table-striped mb-0 font-monospace small" aria-label="Discovered subdomains">
+                                    <thead>
+                                        <tr><th>Subdomain</th></tr>
+                                    </thead>
+                                    <tbody id="subdomainTbody">
+                                        {{range $i, $sub := $subdomains}}
+                                        {{if lt $i 20}}
+                                        <tr><td><code>{{$sub}}</code></td></tr>
+                                        {{end}}
+                                        {{end}}
+                                    </tbody>
+                                </table>
+                            </div>
+                            {{if gt $ctCount 20.0}}
+                            <div class="small text-muted mt-2 font-monospace">
+                                <i class="fas fa-ellipsis-h me-1"></i>Showing 20 of {{formatFloat 0 $ctCount}} discovered subdomains
+                            </div>
+                            {{end}}
+                            {{end}}
+                        </div>
+                        {{end}}
+
+                        {{if $dangling_dns}}
+                        {{if mapGetBool "found" $dangling_dns}}
+                        <div class="mb-4">
+                            <div class="alert alert-danger py-2 mb-2 small border-danger">
+                                <i class="fas fa-skull-crossbones me-1"></i><strong>CRITICAL:</strong> Dangling DNS records detected &mdash; subdomain takeover may be possible
+                            </div>
+                        </div>
+                        {{end}}
+                        {{end}}
+
+                        {{if $saas_txt}}
+                        <div class="mb-4">
+                            <h6 class="fw-semibold font-monospace"><i class="fas fa-terminal me-1"></i>SaaS Services (TXT Record Discovery)</h6>
+                            {{$svcCount := mapGetFloat "service_count" $saas_txt}}
+                            {{$services := mapGetSlice "services" $saas_txt}}
+                            {{if gt $svcCount 0}}
+                            <div class="alert alert-info py-2 mb-2 small">
+                                <i class="fas fa-puzzle-piece me-1"></i>{{formatFloat 0 $svcCount}} SaaS service{{if ne $svcCount 1.0}}s{{end}} detected via DNS TXT verification records
+                            </div>
+                            {{if $services}}
+                            <div class="d-flex flex-wrap gap-1 mb-2">
+                                {{range $services}}
+                                {{$svc := toMap .}}
+                                {{if $svc}}
+                                <span class="badge bg-secondary font-monospace">{{mapGetStr "name" $svc}}</span>
+                                {{end}}
+                                {{end}}
+                            </div>
+                            {{end}}
+                            {{else}}
+                            <div class="small text-muted">No SaaS verification records found</div>
+                            {{end}}
+                        </div>
+                        {{end}}
+
+                        {{if $edge_cdn}}
+                        {{$cdnProvider := mapGetStr "provider" $edge_cdn}}
+                        {{if $cdnProvider}}
+                        <div class="mb-4">
+                            <h6 class="fw-semibold font-monospace"><i class="fas fa-terminal me-1"></i>CDN / Edge Provider</h6>
+                            <span class="badge bg-info">{{$cdnProvider}}</span>
+                        </div>
+                        {{end}}
+                        {{end}}
+
+                        {{if $secret_exposure}}
+                        <div class="mb-4">
+                            <h6 class="fw-semibold font-monospace"><i class="fas fa-terminal me-1"></i>Secret Exposure</h6>
+                            {{$secretFound := mapGetBool "found" $secret_exposure}}
+                            <div class="alert {{if $secretFound}}alert-danger{{else}}alert-success{{end}} py-2 mb-2 small">
+                                {{if $secretFound}}
+                                <i class="fas fa-skull-crossbones me-1"></i>Exposed secrets detected &mdash; credentials or keys may be publicly accessible
+                                {{else}}
+                                <i class="fas fa-check me-1"></i>No exposed secrets detected in common paths
+                                {{end}}
+                            </div>
+                        </div>
+                        {{end}}
+
+                        {{if $web_exposure}}
+                        <div class="mb-2">
+                            <h6 class="fw-semibold font-monospace"><i class="fas fa-terminal me-1"></i>Web Exposure</h6>
+                            {{$webFound := mapGetBool "found" $web_exposure}}
+                            <div class="alert {{if $webFound}}alert-warning{{else}}alert-success{{end}} py-2 mb-2 small">
+                                {{if $webFound}}
+                                <i class="fas fa-exclamation-triangle me-1"></i>Web exposure findings detected &mdash; review for information disclosure
+                                {{else}}
+                                <i class="fas fa-check me-1"></i>No significant web exposure detected
+                                {{end}}
+                            </div>
+                        </div>
+                        {{end}}
+
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row" id="report-integrity">
+            <div class="col-12 mb-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="fas fa-fingerprint me-2"></i>Intelligence Metadata
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-3 mb-3">
+                            {{if .IntegrityHash}}
+                            <div class="col-12">
+                                <div class="small text-muted text-uppercase mb-1 font-monospace">SHA-3-512 Integrity Hash</div>
+                                <div class="d-flex align-items-center gap-2">
+                                    <code class="small font-monospace" style="word-break: break-all;">{{.IntegrityHash}}</code>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary" id="copyIntegrityHash" data-hash="{{.IntegrityHash}}" title="Copy hash" aria-label="Copy integrity hash">
+                                        <i class="fas fa-copy"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            {{end}}
+                            <div class="col-6 col-md-3">
+                                <div class="small text-muted text-uppercase mb-1 font-monospace">RFC References</div>
+                                <span class="fw-semibold">{{.RFCCount}}</span>
+                            </div>
+                            {{if .ToolVersion}}
+                            <div class="col-6 col-md-3">
+                                <div class="small text-muted text-uppercase mb-1 font-monospace">Tool Version</div>
+                                <span class="fw-semibold font-monospace">v{{.ToolVersion}}</span>
+                            </div>
+                            {{end}}
+                            {{if .PostureHash}}
+                            <div class="col-6 col-md-3">
+                                <div class="small text-muted text-uppercase mb-1 font-monospace">Posture Hash</div>
+                                <code class="small">{{substr 0 16 .PostureHash}}&hellip;</code>
+                            </div>
+                            {{end}}
+                        </div>
+
+                        {{if .VerificationCommands}}
+                        <details>
+                            <summary class="fw-semibold font-monospace small"><i class="fas fa-terminal me-1"></i>Verification Commands &mdash; Independently verify every finding</summary>
+                            <div class="mt-2">
+                                {{range .VerificationCommands}}
+                                <div class="mb-2">
+                                    <div class="d-flex align-items-center justify-content-between mb-1">
+                                        <span class="small fw-semibold">{{.Label}}</span>
+                                        <button type="button" class="btn btn-sm btn-outline-secondary copy-cmd-btn" data-cmd="{{.Command}}" title="Copy command" aria-label="Copy verification command">
+                                            <i class="fas fa-copy"></i>
+                                        </button>
+                                    </div>
+                                    <div class="code-block font-monospace small">{{.Command}}</div>
+                                </div>
+                                {{end}}
+                            </div>
+                        </details>
+                        {{end}}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {{end}}
+
+    </main>
+
+    <div id="loadingOverlay" class="loading-overlay" role="status" aria-live="polite" aria-busy="true" aria-label="Running recon scan">
+        <div class="loading-content">
+            <div class="loading-spinner">
+                <i class="fas fa-crosshairs fa-spin covert-show" aria-hidden="true"></i>
+                <i class="fas fa-globe fa-spin covert-hide" aria-hidden="true"></i>
+            </div>
+            <p class="mt-4 mb-2 h4 covert-show" role="status">Running Target Reconnaissance</p>
+            <p class="mt-4 mb-2 h4 covert-hide" role="status">Running Multi-Source Intelligence Audit</p>
+            <p class="text-muted mb-0" id="loadingDomain">{{.Domain}}</p>
+            <div class="loading-elapsed mt-2">
+                <span class="text-muted small" id="loadingTimer">0s</span>
+            </div>
+            <div class="loading-dots mt-2" aria-hidden="true">
+                <span></span><span></span><span></span>
+            </div>
+            <div class="scan-checklist mt-3" id="scanChecklist">
+                <div class="scan-phase" data-delay="0">
+                    <i class="fas fa-circle-notch fa-spin scan-icon scan-pending"></i>
+                    <span>DNS records &mdash; Cloudflare, Google, Quad9, OpenDNS, DNS4EU</span>
+                </div>
+                <div class="scan-phase" data-delay="1200">
+                    <i class="fas fa-circle-notch fa-spin scan-icon scan-pending"></i>
+                    <span>Email auth &mdash; SPF, DMARC, DKIM selectors</span>
+                </div>
+                <div class="scan-phase" data-delay="2500">
+                    <i class="fas fa-circle-notch fa-spin scan-icon scan-pending"></i>
+                    <span>DNSSEC chain of trust &amp; DANE/TLSA</span>
+                </div>
+                <div class="scan-phase" data-delay="3500">
+                    <i class="fas fa-circle-notch fa-spin scan-icon scan-pending"></i>
+                    <span>Certificate Transparency &amp; subdomain discovery</span>
+                </div>
+                <div class="scan-phase" data-delay="5000">
+                    <i class="fas fa-circle-notch fa-spin scan-icon scan-pending"></i>
+                    <span>SMTP transport &amp; STARTTLS verification</span>
+                </div>
+                <div class="scan-phase" data-delay="7000">
+                    <i class="fas fa-circle-notch fa-spin scan-icon scan-pending"></i>
+                    <span>MTA-STS, TLS-RPT, BIMI, CAA</span>
+                </div>
+                <div class="scan-phase" data-delay="9000">
+                    <i class="fas fa-circle-notch fa-spin scan-icon scan-pending"></i>
+                    <span>Infrastructure &amp; attack surface mapping</span>
+                </div>
+                <div class="scan-phase" data-delay="12000">
+                    <i class="fas fa-circle-notch fa-spin scan-icon scan-pending"></i>
+                    <span>Classification &amp; threat assessment</span>
+                </div>
+            </div>
+            <p class="text-muted small mt-3 mb-0 u-maxw-440-fadein font-monospace" id="loadingNote">
+                Every result includes terminal commands for independent verification. No proprietary magic. No black boxes.
+            </p>
+        </div>
+    </div>
+
+    {{template "scripts" .}}
+    <script nonce="{{.CspNonce}}">
+    function setupCopyCommandButtons() {
+        document.querySelectorAll('.copy-cmd-btn').forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                var cmd = this.dataset.cmd;
+                if (navigator.clipboard) {
+                    navigator.clipboard.writeText(cmd).then(function() {
+                        btn.innerHTML = '<i class="fas fa-check"></i>';
+                        setTimeout(function() { btn.innerHTML = '<i class="fas fa-copy"></i>'; }, 1500);
+                    });
+                }
+            });
+        });
+    }
+
+    function setupIntegrityHashCopy() {
+        var btn = document.getElementById('copyIntegrityHash');
+        if (btn) {
+            btn.addEventListener('click', function() {
+                var hash = this.dataset.hash;
+                if (navigator.clipboard) {
+                    navigator.clipboard.writeText(hash).then(function() {
+                        btn.innerHTML = '<i class="fas fa-check"></i>';
+                        setTimeout(function() { btn.innerHTML = '<i class="fas fa-copy"></i>'; }, 1500);
+                    });
+                }
+            });
+        }
+    }
+
+    (function() {
+        document.addEventListener('DOMContentLoaded', function() {
+            setupCopyCommandButtons();
+            setupIntegrityHashCopy();
+
+            var tooltipTriggerList = Array.from(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+            tooltipTriggerList.map(function(el) {
+                return new bootstrap.Tooltip(el);
+            });
+
+            var reanalyzeBtn = document.getElementById('reanalyzeBtn');
+            if (reanalyzeBtn) {
+                var waitSeconds = Number.parseInt(reanalyzeBtn.dataset.waitSeconds) || 0;
+                var countdownInterval = null;
+
+                function startCountdown(seconds) {
+                    reanalyzeBtn.classList.add('disabled');
+                    reanalyzeBtn.classList.remove('btn-analyze');
+                    reanalyzeBtn.classList.add('btn-secondary');
+
+                    function updateButton() {
+                        if (seconds <= 0) {
+                            clearInterval(countdownInterval);
+                            reanalyzeBtn.innerHTML = '<i class="fas fa-sync-alt me-2"></i>Re-scan';
+                            reanalyzeBtn.classList.remove('disabled', 'btn-secondary');
+                            reanalyzeBtn.classList.add('btn-analyze');
+                        } else {
+                            reanalyzeBtn.innerHTML = '<i class="fas fa-clock me-2"></i>Ready in ' + seconds + 's';
+                            seconds--;
+                            countdownInterval = setTimeout(updateButton, 1000);
+                        }
+                    }
+                    updateButton();
+                }
+
+                if (waitSeconds > 0) {
+                    startCountdown(waitSeconds);
+                }
+
+                reanalyzeBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    if (this.classList.contains('disabled')) return;
+
+                    var domain = this.dataset.domain;
+                    var overlay = document.getElementById('loadingOverlay');
+
+                    this.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Scanning...';
+                    this.classList.add('disabled');
+                    document.body.classList.add('loading');
+
+                    if (overlay) {
+                        if (typeof showOverlay === 'function') {
+                            showOverlay(overlay);
+                        } else {
+                            overlay.classList.add('is-active');
+                        }
+                        if (typeof startStatusCycle === 'function') {
+                            startStatusCycle(overlay);
+                        }
+                    }
+
+                    var url = '/analyze?domain=' + encodeURIComponent(domain) + '&covert=1&refresh=' + Date.now();
+                    fetch(url, {
+                        headers: { 'X-Requested-With': 'fetch' },
+                        redirect: 'follow'
+                    }).then(function(resp) {
+                        return resp.text().then(function(html) {
+                            document.open();
+                            document.write(html);
+                            document.close();
+                            globalThis.scrollTo(0, 0);
+                            if (resp.url && resp.url !== globalThis.location.href) {
+                                globalThis.history.replaceState(null, '', resp.url);
+                            }
+                        });
+                    }).catch(function() {
+                        globalThis.location.href = url;
+                    });
+                });
+            }
+        });
+    })();
+    </script>
+
+    {{template "footer" .}}
+</body>
+</html>

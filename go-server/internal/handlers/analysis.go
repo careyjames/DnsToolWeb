@@ -99,6 +99,7 @@ func (h *AnalysisHandler) ViewAnalysisStatic(c *gin.Context) {
 
         waitSeconds, _ := strconv.Atoi(c.Query("wait_seconds"))
         waitReason := c.Query("wait_reason")
+        covertMode := c.Query("covert") == "1"
 
         timestamp := formatTimestamp(analysis.CreatedAt)
         if analysis.UpdatedAt.Valid {
@@ -179,9 +180,14 @@ func (h *AnalysisHandler) ViewAnalysisStatic(c *gin.Context) {
         if icaeMetrics := icae.LoadReportMetrics(ctx, h.DB.Queries); icaeMetrics != nil {
                 viewData["ICAEMetrics"] = icaeMetrics
         }
+        viewData["CovertMode"] = covertMode
 
         mergeAuthData(c, h.Config, viewData)
-        c.HTML(http.StatusOK, "results.html", viewData)
+        if covertMode {
+                c.HTML(http.StatusOK, "results_covert.html", viewData)
+        } else {
+                c.HTML(http.StatusOK, "results.html", viewData)
+        }
 }
 
 func (h *AnalysisHandler) ViewAnalysis(c *gin.Context) {
@@ -441,8 +447,15 @@ func (h *AnalysisHandler) Analyze(c *gin.Context) {
                 c.Header("X-Persistence", "/dev/null")
         }
 
+        covertMode := c.PostForm("covert") == "1" || c.Query("covert") == "1"
+        analyzeData["CovertMode"] = covertMode
+
         mergeAuthData(c, h.Config, analyzeData)
-        c.HTML(http.StatusOK, "results.html", analyzeData)
+        if covertMode {
+                c.HTML(http.StatusOK, "results_covert.html", analyzeData)
+        } else {
+                c.HTML(http.StatusOK, "results.html", analyzeData)
+        }
 }
 
 type driftInfo struct {

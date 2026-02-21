@@ -2325,6 +2325,144 @@ body.covert-mode code {
 body.covert-mode .changelog-badge {
     opacity: 0.7;
 }
+.covert-show {
+    display: none !important;
+}
+body.covert-mode .covert-show {
+    display: block !important;
+}
+body.covert-mode .covert-hide {
+    display: none !important;
+}
+body.covert-mode .covert-show-inline {
+    display: none !important;
+}
+body.covert-mode .covert-show-inline {
+    display: inline !important;
+}
+body.covert-mode .loading-overlay .loading-spinner i.covert-show {
+    display: inline-block !important;
+    color: #c43c3c;
+}
+body.covert-mode .loading-overlay .loading-spinner i.covert-hide {
+    display: none !important;
+}
+body.covert-mode .loading-overlay .h4.covert-show {
+    color: #c43c3c;
+}
+.u-badge-recon-btn {
+    border-color: rgba(100, 100, 100, 0.3) !important;
+    color: rgba(180, 180, 180, 0.5) !important;
+    font-size: 0.78rem;
+}
+.u-badge-recon-btn:hover {
+    border-color: #c43c3c !important;
+    color: #c43c3c !important;
+    background-color: rgba(140, 40, 40, 0.1) !important;
+}
+.covert-report-banner {
+    background: linear-gradient(135deg, rgba(140, 40, 40, 0.15), rgba(140, 40, 40, 0.05));
+    border: 1px solid rgba(196, 60, 60, 0.3);
+    border-radius: 0.5rem;
+    padding: 0.75rem 1rem;
+    margin-bottom: 1rem;
+}
+.covert-report-banner .covert-banner-title {
+    color: #c43c3c;
+    font-weight: 600;
+    font-size: 0.85rem;
+    letter-spacing: 0.05em;
+}
+.covert-report-banner .covert-banner-subtitle {
+    color: rgba(200, 170, 170, 0.6);
+    font-size: 0.75rem;
+}
+.covert-section-card {
+    background-color: #111318 !important;
+    border: 1px solid rgba(140, 40, 40, 0.2) !important;
+    border-radius: 0.5rem;
+}
+.covert-section-card .card-header {
+    background-color: rgba(140, 40, 40, 0.08) !important;
+    border-bottom: 1px solid rgba(140, 40, 40, 0.15) !important;
+}
+.covert-section-card .card-header h5 {
+    color: #c43c3c;
+}
+.covert-section-card .card-header .section-question {
+    color: rgba(200, 170, 170, 0.7);
+}
+.covert-recon-box {
+    background-color: rgba(140, 40, 40, 0.08);
+    border-left: 3px solid #c43c3c;
+    padding: 0.75rem 1rem;
+    border-radius: 0 0.25rem 0.25rem 0;
+    margin-bottom: 1rem;
+    font-size: 0.85rem;
+}
+.covert-recon-box .recon-label {
+    color: #c43c3c;
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 0.7rem;
+    letter-spacing: 0.08em;
+    margin-bottom: 0.25rem;
+}
+.covert-recon-box .recon-assessment {
+    color: rgba(200, 180, 180, 0.85);
+}
+.covert-protocol-row {
+    border-bottom: 1px solid rgba(140, 40, 40, 0.1);
+    padding: 0.75rem 0;
+}
+.covert-protocol-row:last-child {
+    border-bottom: none;
+}
+.covert-protocol-label {
+    color: #d35d5d;
+    font-weight: 600;
+    font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+    font-size: 0.85rem;
+}
+.covert-protocol-status {
+    color: rgba(200, 180, 180, 0.8);
+    font-size: 0.85rem;
+}
+.covert-details-rfc {
+    margin-top: 0.5rem;
+    font-size: 0.75rem;
+}
+.covert-details-rfc summary {
+    color: rgba(180, 160, 160, 0.5);
+    cursor: pointer;
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+.covert-details-rfc summary:hover {
+    color: #c43c3c;
+}
+.covert-target-badge {
+    font-size: 0.85rem;
+    padding: 0.35rem 1rem;
+    font-weight: 600;
+    letter-spacing: 0.03em;
+}
+.covert-target-hardened {
+    background-color: rgba(25, 135, 84, 0.15) !important;
+    color: #198754 !important;
+    border: 1px solid rgba(25, 135, 84, 0.3);
+}
+.covert-target-moderate {
+    background-color: rgba(255, 193, 7, 0.1) !important;
+    color: #ffc107 !important;
+    border: 1px solid rgba(255, 193, 7, 0.2);
+}
+.covert-target-soft {
+    background-color: rgba(220, 53, 69, 0.1) !important;
+    color: #dc3545 !important;
+    border: 1px solid rgba(220, 53, 69, 0.25);
+}
 
 /* ============================================
    PRINT STYLES — Executive Intelligence Report

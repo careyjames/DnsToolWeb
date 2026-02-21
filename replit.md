@@ -53,7 +53,7 @@ No "build fast, clean up later." Research the best-practices path first (cite RF
 - Discoverable content for security researchers. All signals carry RFC 1392 legal disclaimers.
 - **INTENTIONAL design elements**: Some UI elements use reduced opacity or subtle placement by design. These are deliberate community signals — do NOT alter their visibility or "fix" them.
 
-## Covert Mode — Tactical Red-Light Theme (v26.22.0)
+## Covert Mode — Tactical Red-Light Theme (v26.22.0, Recon Report v26.22.4)
 - **Toggle**: fa-biohazard icon in navbar (between version badge and hamburger menu). Click to toggle.
 - **Persistence**: localStorage key `covertMode` (`1` = active, `0` = inactive). Early IIFE in main.js applies `body.covert-mode` before DOMContentLoaded to prevent flash.
 - **CSS**: `body.covert-mode` overrides in custom.css — deeper backgrounds (#0a0c10, #0e1015, #111318), crimson/oxblood accents (#c43c3c, #d35d5d, #e87070). Buttons, links, forms, cards, tables, accordions all themed.
@@ -61,6 +61,11 @@ No "build fast, clean up later." Research the best-practices path first (cite RF
 - **Accessibility**: aria-label, focus-visible outline, @media (hover: hover) for touch safety.
 - **CSP**: No inline handlers. All logic in main.js (nonce'd external script).
 - **Print**: Covert mode has no effect on print styles.
+- **Recon Report** (`results_covert.html`): Separate template activated by `?covert=1` query param. Same data bindings as `results.html`, completely reframed from red team/adversarial perspective. Go handler in `analysis.go` routes to covert template when param present.
+- **Recon Report flow**: localStorage `covertMode` → hidden form field `covert` → Go handler → `results_covert.html`. Existing reports viewable in covert mode via `/analysis/:id?covert=1`.
+- **View switching**: "Recon View" button in standard report header links to `?covert=1`. Covert report banner has "Exit Covert Mode" link back to standard view. Recon badges (DANE, resolver consensus, subdomain discovery) are clickable links to covert view with section anchors.
+- **Covert overlay**: Scan loading overlay shows crosshairs icon + "Initiating Recon Sweep" messaging when covert mode active. Uses `covert-show`/`covert-hide` CSS toggle classes.
+- **CSS classes**: `covert-report-banner`, `covert-section-card`, `covert-recon-box`, `covert-protocol-*`, `covert-target-*` (hardened/moderate/soft), `covert-details-rfc`, `u-badge-recon-btn`.
 
 ## Content-Usage Directive Detection (v26.21.9, updated v26.21.38)
 - **IETF AI Preferences working group**: Detects `Content-Usage:` directives in robots.txt. Active IETF draft (draft-ietf-aipref-attach), NOT a ratified standard.

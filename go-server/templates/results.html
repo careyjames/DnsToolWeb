@@ -256,6 +256,9 @@
                         <li><span class="dropdown-item-text small text-muted pe-3" data-bs-toggle="tooltip" title="FIRST TLP v2.0 standard">TLP (Traffic Light Protocol) governs dissemination of this intelligence product. Default: AMBER per FIRST/CISA standards for security posture reports. Full hierarchy: RED (recipient only) → AMBER+STRICT (organisation only) → AMBER (organisation and clients) → GREEN (community) → CLEAR (public). Per FIRST TLP v2.0.</span></li>
                     </ul>
                 </div>
+                <a href="/analysis/{{.AnalysisID}}?covert=1" class="btn btn-outline-secondary me-2 u-badge-recon-btn no-print" title="Switch to Recon View — red team perspective" aria-label="Switch to Recon View">
+                    <i class="fas fa-crosshairs me-1"></i><span class="d-none d-lg-inline">Recon</span>
+                </a>
                 <a href="/snapshot/{{.AsciiDomain}}" class="btn btn-outline-info me-2" title="Download Observed Records Snapshot">
                     <i class="fas fa-file-lines me-1"></i>Snapshot
                 </a>
@@ -1885,7 +1888,7 @@
                         <h5 class="mb-0 d-flex align-items-center justify-content-between flex-wrap">
                             <span><i class="fas fa-certificate me-2"></i>DANE / TLSA</span>
                             {{if .ICAEMetrics}}{{with index .ICAEMetrics.ByKey "dane"}}<a href="/confidence" class="badge icae-maturity-badge-deep icae-maturity-deep-{{.EffectiveLevel}} icae-results-badge ms-1 no-print" data-bs-toggle="tooltip" title="ICAE: {{.EffectiveDisplay}}">{{.EffectiveDisplay}}</a>{{end}}{{end}}
-                            <span class="badge u-badge-recon ms-2 no-print" data-bs-toggle="tooltip" title="Recon Advantage — DANE/TLSA certificate pinning analysis. A protocol most DNS tools skip entirely."><i class="fas fa-terminal me-1"></i>Recon</span>
+                            <a href="/analysis/{{.AnalysisID}}?covert=1#section-dane" class="badge u-badge-recon ms-2 no-print text-decoration-none" data-bs-toggle="tooltip" title="Recon Advantage — DANE/TLSA certificate pinning analysis. A protocol most DNS tools skip entirely. Click for Recon View."><i class="fas fa-terminal me-1"></i>Recon</a>
                             {{if and .SectionTuning (index .SectionTuning "dane")}}{{with index .SectionTuning "dane"}}<span class="badge {{sectionStatusCSS .}} ms-2"><i class="fas {{sectionStatusIcon .}} me-1"></i>{{.}}</span>{{end}}{{end}}
                             <span class="section-question">{{if .IsPublicSuffix}}Does this zone publish DANE / TLSA records?{{else}}Can mail servers establish identity without a public CA?{{end}}
                                 {{$daneStatus := mapGetStr "status" $dane}}
@@ -3570,7 +3573,7 @@
                                     <i class="fas fa-check-double me-2 text-{{if $consensusReached}}success{{else}}warning{{end}}"></i>
                                     <span class="text-muted">
                                         <strong>Multi-Resolver Verification</strong>
-                                        <span class="badge u-badge-recon ms-1 no-print" data-bs-toggle="tooltip" title="Recon Advantage — Five independent resolvers (Cloudflare, Google, Quad9, OpenDNS, DNS4EU) with majority-agreement consensus. Typical DNS tools rely on a single resolver without cross-validation."><i class="fas fa-terminal me-1"></i>Recon</span>:
+                                        <a href="/analysis/{{.AnalysisID}}?covert=1#section-dnssec" class="badge u-badge-recon ms-1 no-print text-decoration-none" data-bs-toggle="tooltip" title="Recon Advantage — Five independent resolvers with majority-agreement consensus. Click for Recon View."><i class="fas fa-terminal me-1"></i>Recon</a>:
                                         {{if $consensusReached}}
                                             <span class="text-success">Consensus reached</span> - 
                                             {{mapGetStr "resolvers_queried" $resolver_consensus}} resolvers (Cloudflare, Google, Quad9, OpenDNS, DNS4EU) agree on DNS records
@@ -3894,7 +3897,7 @@
                         <span>
                             <i class="fas fa-sitemap me-2"></i>Subdomain Discovery
                             <a href="https://datatracker.ietf.org/doc/html/rfc6962" target="_blank" rel="noopener" class="badge bg-dark bg-opacity-25 text-muted text-decoration-none fw-normal ms-2 u-fs-060rem" title="Certificate Transparency">RFC 6962</a>
-                            <span class="badge u-badge-recon ms-2 no-print" data-bs-toggle="tooltip" title="Recon Advantage — Multi-layer discovery using CT logs, DNS probing, and CNAME chain traversal. Most tools use a single source."><i class="fas fa-terminal me-1"></i>Recon</span>
+                            <a href="/analysis/{{.AnalysisID}}?covert=1#section-infra" class="badge u-badge-recon ms-2 no-print text-decoration-none" data-bs-toggle="tooltip" title="Recon Advantage — Multi-layer discovery using CT logs, DNS probing, and CNAME chain traversal. Click for Recon View."><i class="fas fa-terminal me-1"></i>Recon</a>
                             {{$ctFreshness := mapGetMap "ct_subdomains" $data_freshness}}
                         {{if or (eq (mapGetStr "status" $ct) "error") (eq (mapGetStr "status" $ct) "timeout")}}<span class="badge bg-warning bg-opacity-25 border border-warning border-opacity-25 text-warning ms-1 u-fs-055rem" data-bs-toggle="tooltip" title="Certificate Transparency lookup encountered an issue">UNAVAILABLE</span>{{else if and $ctFreshness (eq (mapGetStr "source" $ctFreshness) "cache")}}<span class="badge bg-secondary bg-opacity-50 border border-secondary border-opacity-25 ms-1 u-fs-055rem" data-bs-toggle="tooltip" title="CT log data cached for 1 hour — certificate records change infrequently">CACHED</span>{{else}}<span class="badge bg-success bg-opacity-25 border border-success border-opacity-25 ms-1 u-fs-055rem" data-bs-toggle="tooltip" title="Live Certificate Transparency query">LIVE</span>{{end}}
                         </span>

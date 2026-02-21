@@ -250,6 +250,7 @@
                     <div class="search-card">
                         <form method="POST" action="/analyze" id="domainForm" role="search">
                             <input type="hidden" name="csrf_token" value="{{.CsrfToken}}">
+                            <input type="hidden" name="covert" id="covertField" value="">
                             <label for="domain" class="form-label search-label">
                                 <i class="fas fa-search me-2"></i>Domain Name
                             </label>
@@ -837,9 +838,11 @@
     <div id="loadingOverlay" class="loading-overlay" role="status" aria-live="polite" aria-busy="true" aria-label="Running domain analysis">
         <div class="loading-content">
             <div class="loading-spinner" aria-hidden="true">
-                <i class="fas fa-globe fa-spin" aria-hidden="true"></i>
+                <i class="fas fa-globe fa-spin covert-hide" aria-hidden="true"></i>
+                <i class="fas fa-crosshairs fa-spin covert-show" aria-hidden="true"></i>
             </div>
-            <p class="mt-4 mb-2 h4" role="status">Running Multi-Source Intelligence Audit</p>
+            <p class="mt-4 mb-2 h4 covert-hide" role="status">Running Multi-Source Intelligence Audit</p>
+            <p class="mt-4 mb-2 h4 covert-show" role="status">Initiating Recon Sweep</p>
             <p class="text-muted mb-0" id="loadingDomain"></p>
             <div class="loading-elapsed mt-2">
                 <span class="text-muted small" id="loadingTimer">0s</span>
@@ -881,8 +884,11 @@
                     <span>Classifying &amp; Interpreting Intelligence</span>
                 </div>
             </div>
-            <p class="text-muted small mt-3 mb-0 u-maxw-440-fadein" id="loadingNote">
+            <p class="text-muted small mt-3 mb-0 u-maxw-440-fadein covert-hide" id="loadingNote">
                 Every result includes terminal commands you can run to independently verify the underlying data. No proprietary magic.
+            </p>
+            <p class="small mt-3 mb-0 u-maxw-440-fadein covert-show" id="loadingNoteCovert" style="color: rgba(196,60,60,0.6);">
+                Optimized for low-light tactical environments. Easy on the eyes for all-night recon.
             </p>
         </div>
     </div>
