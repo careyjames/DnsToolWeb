@@ -792,7 +792,26 @@ func (h *AnalysisHandler) APIAnalysisChecksum(c *gin.Context) {
         if format == "sha3" {
                 sha3Filename := fmt.Sprintf("dns-intelligence-%s.json.sha3", analysis.AsciiDomain)
                 c.Header("Content-Disposition", fmt.Sprintf(`attachment; filename="%s"`, sha3Filename))
-                c.Data(http.StatusOK, "text/plain; charset=utf-8", []byte(fmt.Sprintf("%s  %s\n", fileHash, filename)))
+                var sb strings.Builder
+                sb.WriteString("# DNS Tool — SHA-3-512 Integrity Checksum\n")
+                sb.WriteString("#\n")
+                sb.WriteString("# Cause I'm a hacker, baby, I'm gonna pwn you good,\n")
+                sb.WriteString("# Diff your zone to the spec like you knew I would.\n")
+                sb.WriteString("# Cite those RFCs, baby, so my argument stood,\n")
+                sb.WriteString("# Standards over swagger — that's understood.\n")
+                sb.WriteString("#\n")
+                sb.WriteString("# — DNS Tool / If it's not in RFC 1034, it ain't understood.\n")
+                sb.WriteString("#\n")
+                sb.WriteString("# 'Hacker' per RFC 1392 (IETF Internet Users' Glossary, 1993):\n")
+                sb.WriteString("# 'A person who delights in having an intimate understanding of the\n")
+                sb.WriteString("#  internal workings of a system, computers and computer networks\n")
+                sb.WriteString("#  in particular.' That's us. That's always been us.\n")
+                sb.WriteString("#\n")
+                sb.WriteString("# Algorithm: SHA-3-512 (Keccak, NIST FIPS 202)\n")
+                sb.WriteString("# Verify:   openssl dgst -sha3-512 " + filename + "\n")
+                sb.WriteString("#\n")
+                sb.WriteString(fmt.Sprintf("%s  %s\n", fileHash, filename))
+                c.Data(http.StatusOK, "text/plain; charset=utf-8", []byte(sb.String()))
                 return
         }
 

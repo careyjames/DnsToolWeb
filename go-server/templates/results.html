@@ -368,10 +368,15 @@
                     </tbody>
                 </table>
             </div>
+            {{else}}
+            <div class="mt-2 pt-2 border-top border-warning border-opacity-50">
+                <p class="small mb-0 text-muted"><i class="fas fa-info-circle me-1"></i>The posture hash changed due to differences in DNS record values, ordering, or TTLs &mdash; the high-level protocol statuses (SPF, DMARC, DKIM, etc.) remain the same. Compare reports side by side for full detail.</p>
+            </div>
             {{end}}
-            <div class="font-monospace small u-opacity-70 mt-2">
-                <span class="me-3">Previous: {{if .DriftPrevID}}<a href="/analysis/{{.DriftPrevID}}/view" class="text-warning text-decoration-none"><code>{{substr 0 16 .DriftPrevHash}}&hellip;</code></a>{{else}}<code>{{substr 0 16 .DriftPrevHash}}&hellip;</code>{{end}}</span>
-                <span>Current: <code>{{substr 0 16 .PostureHash}}&hellip;</code></span>
+            <div class="mt-2 small u-opacity-70">
+                <span class="me-1 text-muted">Posture Hash:</span>
+                <span class="font-monospace me-3">Previous: {{if .DriftPrevID}}<a href="/analysis/{{.DriftPrevID}}/view" class="text-warning text-decoration-none"><code>{{substr 0 16 .DriftPrevHash}}&hellip;</code></a>{{else}}<code>{{substr 0 16 .DriftPrevHash}}&hellip;</code>{{end}}</span>
+                <span class="font-monospace">Current: <code>{{substr 0 16 .PostureHash}}&hellip;</code></span>
             </div>
         </div>
         {{end}}
@@ -4542,7 +4547,7 @@
         {{end}}
         
         <!-- Test Send Recommendation -->
-        {{if .DomainExists}}
+        {{if and .DomainExists (not .IsPublicSuffix)}}
         <div class="card border-secondary mt-4">
             <div class="card-body">
                 <div class="d-flex align-items-center">
@@ -4642,15 +4647,19 @@
 
         {{if .AnalysisID}}
         <div class="card border-danger border-opacity-50 mt-4 screen-only u-bg-secondary" id="download-verification">
-            <div class="card-header d-flex align-items-center justify-content-between u-row-clickable" role="button" tabindex="0" data-bs-toggle="collapse" data-bs-target="#downloadVerificationBody" aria-expanded="false" aria-controls="downloadVerificationBody">
-                <h5 class="mb-0 u-color-text-bright">
-                    <i class="fas fa-shield-halved me-2 text-danger"></i>Download Verification
-                    <span class="badge ms-2 u-badge-danger-outline">SHA-3-512</span>
-                </h5>
-                <div class="d-flex align-items-center gap-2">
-                    <a href="/api/analysis/{{.AnalysisID}}?download=1" class="btn btn-sm btn-outline-danger no-print" title="Download all collected intelligence data (JSON)"><i class="fas fa-download me-1"></i><span class="d-none d-md-inline">Download Raw Intelligence</span></a>
-                    <a href="/api/analysis/{{.AnalysisID}}/checksum?format=sha3" class="btn btn-sm btn-outline-info no-print" title="Download SHA-3-512 checksum file"><i class="fas fa-fingerprint me-1"></i><span class="d-none d-md-inline">Checksum</span></a>
+            <div class="card-header u-row-clickable" role="button" tabindex="0" data-bs-toggle="collapse" data-bs-target="#downloadVerificationBody" aria-expanded="false" aria-controls="downloadVerificationBody">
+                <div class="d-flex align-items-center justify-content-between">
+                    <h5 class="mb-0 u-color-text-bright">
+                        <i class="fas fa-shield-halved me-2 text-danger"></i>Download &amp; Verify Intelligence
+                        <span class="badge ms-2 u-badge-danger-outline">SHA-3-512</span>
+                    </h5>
                     <i class="fas fa-chevron-down u-text-muted-md"></i>
+                </div>
+            </div>
+            <div class="card-body border-bottom border-secondary border-opacity-50 py-2">
+                <div class="d-flex align-items-center gap-2 flex-wrap">
+                    <a href="/api/analysis/{{.AnalysisID}}?download=1" class="btn btn-sm btn-outline-danger no-print" title="Download all collected intelligence data (JSON)"><i class="fas fa-download me-1"></i>Download Raw Intelligence</a>
+                    <a href="/api/analysis/{{.AnalysisID}}/checksum?format=sha3" class="btn btn-sm btn-outline-info no-print" title="Download SHA-3-512 checksum file"><i class="fas fa-fingerprint me-1"></i>Download Checksum (.sha3)</a>
                 </div>
             </div>
             <div class="collapse" id="downloadVerificationBody">
