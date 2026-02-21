@@ -343,6 +343,18 @@ code {
     box-shadow: 0 0 14px rgba(232, 213, 163, 0.25);
 }
 
+.icae-hero-status { text-align: center; display: flex; align-items: center; justify-content: center; gap: 0.6rem; flex-wrap: wrap; }
+.icae-confidence-label {
+    font-size: 0.82rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: rgba(230, 237, 243, 0.65);
+    text-decoration: none;
+    transition: color 0.2s;
+}
+.icae-confidence-label:hover { color: rgba(230, 237, 243, 0.9); text-decoration: none; }
+.icae-confidence-label .fas { font-size: 0.7rem; opacity: 0.55; }
 .icae-hero-label { text-align: center; display: flex; align-items: center; justify-content: center; gap: 0.5rem; flex-wrap: wrap; }
 .icae-hero-maturity-badge {
     display: inline-flex;

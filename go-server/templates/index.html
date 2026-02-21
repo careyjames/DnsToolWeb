@@ -223,15 +223,15 @@
                     Producing <span class="text-info">Engineer's DNS Intelligence Reports</span> and <span class="text-info">Executive's DNS Intelligence Briefs</span> with <span class="text-info">posture&nbsp;scoring</span>
                 </p>
                 {{if .ICAEMetrics}}
-                <div class="hero-protocols mb-4" aria-label="Intelligence Confidence Audit Engine — per-protocol confidence levels">
-                    <div class="d-flex flex-wrap justify-content-center gap-1 icae-hero-badges">
+                <div class="hero-protocols mb-4" aria-label="Intelligence Confidence Level — per-protocol confidence">
+                    <div class="icae-hero-status">
+                        <a href="/confidence" class="icae-confidence-label" title="Intelligence Confidence Level — {{.ICAEMetrics.EvaluatedCount}}/{{.ICAEMetrics.TotalProtocols}} protocols under audit"><i class="fas fa-satellite-dish me-2"></i>Intelligence Confidence Level</a>
+                        <a href="/confidence" class="icae-hero-maturity-badge icae-level-{{if eq .ICAEMetrics.OverallMaturity "gold_master"}}gold-master{{else if eq .ICAEMetrics.OverallMaturity "development"}}dev{{else}}{{.ICAEMetrics.OverallMaturity}}{{end}}" title="ICAE system maturity: {{.ICAEMetrics.OverallMaturityDisplay}} — {{.ICAEMetrics.EvaluatedCount}}/{{.ICAEMetrics.TotalProtocols}} protocols evaluated">{{.ICAEMetrics.OverallMaturityDisplay}}</a>
+                    </div>
+                    <div class="d-flex flex-wrap justify-content-center gap-1 icae-hero-badges mt-2">
                         {{range .ICAEMetrics.Protocols}}
                         <a href="/confidence" class="icae-badge icae-badge-{{.EffectiveLevel}}" title="{{.DisplayName}} — Intelligence Confidence: {{.EffectiveDisplay}}{{if .HasRuns}} ({{.AnalysisRuns}} audit runs){{end}}">{{.DisplayName}} <span class="icae-dot"></span></a>
                         {{end}}
-                    </div>
-                    <div class="icae-hero-label mt-2">
-                        <span class="text-muted u-fs-075em"><i class="fas fa-flask me-1"></i>Intelligence Confidence Audit Engine</span>
-                        <a href="/confidence" class="icae-hero-maturity-badge icae-level-{{if eq .ICAEMetrics.OverallMaturity "gold_master"}}gold-master{{else if eq .ICAEMetrics.OverallMaturity "development"}}dev{{else}}{{.ICAEMetrics.OverallMaturity}}{{end}}" title="ICAE system maturity: {{.ICAEMetrics.OverallMaturityDisplay}} — {{.ICAEMetrics.EvaluatedCount}}/{{.ICAEMetrics.TotalProtocols}} protocols evaluated">{{.ICAEMetrics.OverallMaturityDisplay}}</a>
                     </div>
                 </div>
                 {{else}}
