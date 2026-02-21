@@ -252,7 +252,9 @@ func (h *AuthHandler) Callback(c *gin.Context) {
         c.SetCookie(oauthCVCookie, "", -1, "/", "", true, true)
 
         slog.Info("User authenticated", "email", email, "role", user.Role, "user_id", user.ID)
-        c.Redirect(http.StatusFound, "/")
+
+        welcomeMsg := url.QueryEscape("Signed in as " + name + ". No mailing lists, no newsletters, no spam \u2014 ever. Your email is used for authentication only.")
+        c.Redirect(http.StatusFound, "/?flash="+welcomeMsg+"&flash_cat=success")
 }
 
 func (h *AuthHandler) Logout(c *gin.Context) {
