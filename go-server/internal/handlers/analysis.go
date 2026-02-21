@@ -4,10 +4,12 @@ package handlers
 
 import (
         "context"
+        "encoding/hex"
         "encoding/json"
         "fmt"
         "log/slog"
         "net/http"
+        "sort"
         "strconv"
         "strings"
         "time"
@@ -21,6 +23,7 @@ import (
         "dnstool/go-server/internal/scanner"
 
         "github.com/gin-gonic/gin"
+        "golang.org/x/crypto/sha3"
 )
 
 const (
@@ -665,19 +668,83 @@ func csvEscape(s string) string {
         return s
 }
 
-func (h *AnalysisHandler) APIAnalysis(c *gin.Context) {
+func (h *AnalysisHandler) buildAnalysisJSON(analysis dbq.DomainAnalysis) ([]byte, string) {
+        var fullResults interface{}
+        if len(analysis.FullResults) > 0 {
+                json.Unmarshal(analysis.FullResults, &fullResults)
+        }
+        var ctSubdomains interface{}
+        if len(analysis.CtSubdomains) > 0 {
+                json.Unmarshal(analysis.CtSubdomains, &ctSubdomains)
+        }
+
+        payload := map[string]interface{}{
+                "analysis_duration": analysis.AnalysisDuration,
+                "analysis_success":  analysis.AnalysisSuccess,
+                "ascii_domain":      analysis.AsciiDomain,
+                "country_code":      analysis.CountryCode,
+                "country_name":      analysis.CountryName,
+                "created_at":        formatTimestampISO(analysis.CreatedAt),
+                "ct_subdomains":     ctSubdomains,
+                "dkim_status":       analysis.DkimStatus,
+                "dmarc_policy":      analysis.DmarcPolicy,
+                "dmarc_status":      analysis.DmarcStatus,
+                "domain":            analysis.Domain,
+                "error_message":     analysis.ErrorMessage,
+                "full_results":      fullResults,
+                "id":                analysis.ID,
+                "registrar_name":    analysis.RegistrarName,
+                "registrar_source":  analysis.RegistrarSource,
+                "spf_status":        analysis.SpfStatus,
+                "updated_at":        formatTimestampISO(analysis.UpdatedAt),
+        }
+
+        keys := make([]string, 0, len(payload))
+        for k := range payload {
+                keys = append(keys, k)
+        }
+        sort.Strings(keys)
+
+        orderedPayload := make([]struct {
+                Key   string
+                Value interface{}
+        }, len(keys))
+        for i, k := range keys {
+                orderedPayload[i].Key = k
+                orderedPayload[i].Value = payload[k]
+        }
+
+        buf := []byte("{")
+        for i, kv := range orderedPayload {
+                if i > 0 {
+                        buf = append(buf, ',')
+                }
+                keyBytes, _ := json.Marshal(kv.Key)
+                valBytes, _ := json.Marshal(kv.Value)
+                buf = append(buf, keyBytes...)
+                buf = append(buf, ':')
+                buf = append(buf, valBytes...)
+        }
+        buf = append(buf, '}')
+        buf = append(buf, '\n')
+
+        hash := sha3.Sum512(buf)
+        return buf, hex.EncodeToString(hash[:])
+}
+
+func (h *AnalysisHandler) loadAnalysisForAPI(c *gin.Context) (dbq.DomainAnalysis, bool) {
         idStr := c.Param("id")
         analysisID, err := strconv.ParseInt(idStr, 10, 32)
         if err != nil {
                 c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid analysis ID"})
-                return
+                return dbq.DomainAnalysis{}, false
         }
 
         ctx := c.Request.Context()
         analysis, err := h.DB.Queries.GetAnalysisByID(ctx, int32(analysisID))
         if err != nil {
                 c.JSON(http.StatusNotFound, gin.H{"error": "Analysis not found"})
-                return
+                return dbq.DomainAnalysis{}, false
         }
 
         if !h.checkPrivateAccess(c, analysis.ID, analysis.Private) {
@@ -690,42 +757,55 @@ func (h *AnalysisHandler) APIAnalysis(c *gin.Context) {
                 } else {
                         c.JSON(http.StatusNotFound, gin.H{"error": "Analysis not found"})
                 }
+                return dbq.DomainAnalysis{}, false
+        }
+
+        return analysis, true
+}
+
+func (h *AnalysisHandler) APIAnalysis(c *gin.Context) {
+        analysis, ok := h.loadAnalysisForAPI(c)
+        if !ok {
                 return
         }
 
-        var fullResults interface{}
-        if len(analysis.FullResults) > 0 {
-                json.Unmarshal(analysis.FullResults, &fullResults)
-        }
-        var ctSubdomains interface{}
-        if len(analysis.CtSubdomains) > 0 {
-                json.Unmarshal(analysis.CtSubdomains, &ctSubdomains)
-        }
+        jsonBytes, fileHash := h.buildAnalysisJSON(analysis)
+        filename := fmt.Sprintf("dns-intelligence-%s.json", analysis.AsciiDomain)
 
         if c.Query("download") == "1" || c.Request.Header.Get("Accept") == "application/octet-stream" {
-                filename := fmt.Sprintf("dns-intelligence-%s.json", analysis.AsciiDomain)
                 c.Header("Content-Disposition", fmt.Sprintf(`attachment; filename="%s"`, filename))
+        }
+        c.Header("X-SHA3-512", fileHash)
+        c.Data(http.StatusOK, "application/json; charset=utf-8", jsonBytes)
+}
+
+func (h *AnalysisHandler) APIAnalysisChecksum(c *gin.Context) {
+        analysis, ok := h.loadAnalysisForAPI(c)
+        if !ok {
+                return
+        }
+
+        _, fileHash := h.buildAnalysisJSON(analysis)
+        filename := fmt.Sprintf("dns-intelligence-%s.json", analysis.AsciiDomain)
+
+        format := c.Query("format")
+        if format == "sha3" {
+                sha3Filename := fmt.Sprintf("dns-intelligence-%s.json.sha3", analysis.AsciiDomain)
+                c.Header("Content-Disposition", fmt.Sprintf(`attachment; filename="%s"`, sha3Filename))
+                c.Data(http.StatusOK, "text/plain; charset=utf-8", []byte(fmt.Sprintf("%s  %s\n", fileHash, filename)))
+                return
         }
 
         c.JSON(http.StatusOK, gin.H{
-                "id":                analysis.ID,
-                "domain":            analysis.Domain,
-                "ascii_domain":      analysis.AsciiDomain,
-                "spf_status":        analysis.SpfStatus,
-                "dmarc_status":      analysis.DmarcStatus,
-                "dmarc_policy":      analysis.DmarcPolicy,
-                "dkim_status":       analysis.DkimStatus,
-                "registrar_name":    analysis.RegistrarName,
-                "registrar_source":  analysis.RegistrarSource,
-                "analysis_success":  analysis.AnalysisSuccess,
-                "error_message":     analysis.ErrorMessage,
-                "analysis_duration": analysis.AnalysisDuration,
-                "created_at":        formatTimestampISO(analysis.CreatedAt),
-                "updated_at":        formatTimestampISO(analysis.UpdatedAt),
-                "country_code":      analysis.CountryCode,
-                "country_name":      analysis.CountryName,
-                "full_results":      fullResults,
-                "ct_subdomains":     ctSubdomains,
+                "algorithm": "SHA-3-512",
+                "standard":  "NIST FIPS 202 (Keccak)",
+                "hash":      fileHash,
+                "filename":  filename,
+                "verify_commands": map[string]string{
+                        "openssl": fmt.Sprintf("openssl dgst -sha3-512 %s", filename),
+                        "python":  fmt.Sprintf("python3 -c \"import hashlib; print(hashlib.sha3_512(open('%s','rb').read()).hexdigest())\"", filename),
+                        "sha3sum": fmt.Sprintf("sha3sum -a 512 %s", filename),
+                },
         })
 }
 

@@ -4640,6 +4640,54 @@
         </div>
         {{end}}
 
+        {{if .AnalysisID}}
+        <div class="card border-danger border-opacity-50 mt-4 screen-only u-bg-secondary" id="download-verification">
+            <div class="card-header d-flex align-items-center justify-content-between u-row-clickable" role="button" tabindex="0" data-bs-toggle="collapse" data-bs-target="#downloadVerificationBody" aria-expanded="false" aria-controls="downloadVerificationBody">
+                <h5 class="mb-0 u-color-text-bright">
+                    <i class="fas fa-shield-halved me-2 text-danger"></i>Download Verification
+                    <span class="badge ms-2 u-badge-danger-outline">SHA-3-512</span>
+                </h5>
+                <div class="d-flex align-items-center gap-2">
+                    <a href="/api/analysis/{{.AnalysisID}}?download=1" class="btn btn-sm btn-outline-danger no-print" title="Download all collected intelligence data (JSON)"><i class="fas fa-download me-1"></i><span class="d-none d-md-inline">Download Raw Intelligence</span></a>
+                    <a href="/api/analysis/{{.AnalysisID}}/checksum?format=sha3" class="btn btn-sm btn-outline-info no-print" title="Download SHA-3-512 checksum file"><i class="fas fa-fingerprint me-1"></i><span class="d-none d-md-inline">Checksum</span></a>
+                    <i class="fas fa-chevron-down u-text-muted-md"></i>
+                </div>
+            </div>
+            <div class="collapse" id="downloadVerificationBody">
+                <div class="card-body">
+                    <p class="small mb-3 u-color-text">
+                        Download the intelligence dump and verify its integrity, like you would a Kali ISO or any critical artifact. The SHA-3-512 checksum covers every byte of the download &mdash; deterministic serialization ensures identical hashes across downloads.
+                    </p>
+                    <p class="small mb-2 u-color-text-muted"><i class="fas fa-terminal me-1 text-danger opacity-50"></i>After downloading, verify with any of these commands:</p>
+                    <div class="mb-2">
+                        <div class="d-flex align-items-center justify-content-between mb-1">
+                            <span class="small u-color-text"><i class="fas fa-terminal me-1 text-danger opacity-50"></i>OpenSSL (macOS, Linux, WSL)</span>
+                            <button class="btn btn-sm btn-outline-danger border-0 copy-cmd-btn u-badge-compact" data-cmd="openssl dgst -sha3-512 dns-intelligence-{{.AsciiDomain}}.json" title="Copy command"><i class="fas fa-copy"></i></button>
+                        </div>
+                        <pre class="p-2 rounded small mb-0 u-code-block"><code>openssl dgst -sha3-512 dns-intelligence-{{.AsciiDomain}}.json</code></pre>
+                    </div>
+                    <div class="mb-2">
+                        <div class="d-flex align-items-center justify-content-between mb-1">
+                            <span class="small u-color-text"><i class="fas fa-terminal me-1 text-danger opacity-50"></i>Python 3 (cross-platform)</span>
+                            <button class="btn btn-sm btn-outline-danger border-0 copy-cmd-btn u-badge-compact" data-cmd="python3 -c &quot;import hashlib; print(hashlib.sha3_512(open('dns-intelligence-{{.AsciiDomain}}.json','rb').read()).hexdigest())&quot;" title="Copy command"><i class="fas fa-copy"></i></button>
+                        </div>
+                        <pre class="p-2 rounded small mb-0 u-code-block"><code>python3 -c "import hashlib; print(hashlib.sha3_512(open('dns-intelligence-{{.AsciiDomain}}.json','rb').read()).hexdigest())"</code></pre>
+                    </div>
+                    <div class="mb-2">
+                        <div class="d-flex align-items-center justify-content-between mb-1">
+                            <span class="small u-color-text"><i class="fas fa-terminal me-1 text-danger opacity-50"></i>sha3sum (coreutils 9+)</span>
+                            <button class="btn btn-sm btn-outline-danger border-0 copy-cmd-btn u-badge-compact" data-cmd="sha3sum -a 512 dns-intelligence-{{.AsciiDomain}}.json" title="Copy command"><i class="fas fa-copy"></i></button>
+                        </div>
+                        <pre class="p-2 rounded small mb-0 u-code-block"><code>sha3sum -a 512 dns-intelligence-{{.AsciiDomain}}.json</code></pre>
+                    </div>
+                    <div class="small u-color-muted mt-2">
+                        <i class="fas fa-info-circle me-1"></i>Compare the output against the <code class="u-color-link">.sha3</code> file or the checksum API at <code class="u-color-link">/api/analysis/{{.AnalysisID}}/checksum</code>. Hash algorithm: SHA-3-512 (Keccak, NIST FIPS 202).
+                    </div>
+                </div>
+            </div>
+        </div>
+        {{end}}
+
         {{if .VerificationCommands}}
         <div class="card border-danger border-opacity-50 mt-4 screen-only u-bg-secondary" id="verify-commands">
             <div class="card-header d-flex align-items-center justify-content-between u-row-clickable" role="button" tabindex="0" data-bs-toggle="collapse" data-bs-target="#verifyCommandsBody" aria-expanded="false" aria-controls="verifyCommandsBody">
@@ -4649,7 +4697,6 @@
                     <span class="badge ms-2 u-badge-danger-outline">Source-Verifiable</span>
                 </h5>
                 <div class="d-flex align-items-center gap-2">
-                    {{if .AnalysisID}}<a href="/api/analysis/{{.AnalysisID}}?download=1" class="btn btn-sm btn-outline-danger no-print" title="Download all collected intelligence data (JSON)"><i class="fas fa-download me-1"></i><span class="d-none d-md-inline">Download Raw Intelligence</span></a>{{end}}
                     <i class="fas fa-chevron-down u-text-muted-md"></i>
                 </div>
             </div>

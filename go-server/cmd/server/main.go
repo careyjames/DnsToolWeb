@@ -162,6 +162,7 @@ func main() {
         router.GET("/export/subdomains", analysisHandler.ExportSubdomainsCSV)
 
         router.GET("/api/analysis/:id", analysisHandler.APIAnalysis)
+        router.GET("/api/analysis/:id/checksum", analysisHandler.APIAnalysisChecksum)
         router.GET("/api/subdomains/*domain", analysisHandler.APISubdomains)
         router.GET("/api/dns-history", analysisHandler.APIDNSHistory)
         router.GET("/api/health", healthHandler.HealthCheck)
