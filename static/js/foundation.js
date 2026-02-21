@@ -113,9 +113,13 @@
         tooltipEl = document.createElement('div');
         tooltipEl.className = 'tooltip-popup';
         tooltipEl.setAttribute('role', 'tooltip');
+        var isCovert = document.body.classList.contains('covert-mode');
+        var fg = isCovert ? '#cc2828' : '#e6edf3';
+        var bg = isCovert ? '#0c0a0a' : '#30363d';
+        var border = isCovert ? '1px solid rgba(180,30,30,0.45)' : 'none';
         tooltipEl.style.cssText = 'position:fixed;z-index:9999;max-width:300px;padding:6px 12px;' +
-            'font-size:0.8125rem;line-height:1.4;color:#e6edf3;background:#30363d;' +
-            'border-radius:6px;pointer-events:none;opacity:0;transition:opacity 0.15s;white-space:normal;';
+            'font-size:0.8125rem;line-height:1.4;color:' + fg + ';background:' + bg + ';' +
+            'border:' + border + ';border-radius:6px;pointer-events:none;opacity:0;transition:opacity 0.15s;white-space:normal;';
         document.body.appendChild(tooltipEl);
         return tooltipEl;
     }
@@ -128,6 +132,12 @@
             trigger.removeAttribute('title');
         }
         var tip = createTooltipEl();
+        var isCovert = document.body.classList.contains('covert-mode');
+        tip.style.color = isCovert ? '#cc2828' : '#e6edf3';
+        tip.style.background = isCovert ? '#0c0a0a' : '#30363d';
+        tip.style.border = isCovert ? '1px solid rgba(180,30,30,0.45)' : 'none';
+        if (isCovert) tip.style.textShadow = '0 0 6px rgba(180,20,20,0.25)';
+        else tip.style.textShadow = 'none';
         var useHtml = trigger.getAttribute('data-bs-html') === 'true';
         if (useHtml) {
             tip.innerHTML = title;
