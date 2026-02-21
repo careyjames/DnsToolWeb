@@ -1,6 +1,6 @@
 # DNS Tool — Feature Overview
 
-**Last Updated:** February 21, 2026 (v26.23.46)
+**Last Updated:** February 21, 2026 (v26.23.47)
 **Implementation:** Go/Gin
 
 ---
@@ -74,6 +74,7 @@ The tool performs RFC-compliant parsing and validation of these protocols:
 - Changelog page
 - Security policy page
 - Sources and methodology reference
+- Origin story page (/about) with verified timeline: Memphis 1980, Nashville IT, Raspberry Pi, PhreakNIC ~2006, Hak5 offensive security, 2015-2024 defensive security (Objective-See, CISA RPT Jan 2022, Hak5 Payload Award Sept 2023), Python CLI (Snap Store Nov 2023), Go platform Feb 2025
 
 ## Security and Infrastructure
 

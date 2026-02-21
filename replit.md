@@ -62,7 +62,8 @@ The application features a Go/Gin backend for high performance and a Bootstrap d
     - **ICAE (Intelligence Confidence Audit Engine)**: Tracks accuracy with 114 deterministic test cases across 9 protocols (SPF 18, DMARC 18, DNSSEC 24, DKIM 8, DANE 12, MTA-STS 11, TLS-RPT 5, BIMI 9, CAA 9). Five-tier maturity model: Development → Verified → Consistent → Gold → Gold Master.
 - **Code Structure**: Utilizes Go build tags (`intel` for private features, `!intel` for public OSS stubs) and a repository mirroring strategy.
 - **CI/CD**: SonarCloud for code quality, GitHub Actions for Codeberg mirroring, and Forgejo Actions for redundancy.
-- **Origin Story Page**: /about page with authentic timeline (Memphis 1980 → Nashville IT → Raspberry Pi → PhreakNIC → Hak5 → Python CLI → Go platform). Includes acknowledgments with verifiable linked references.
+- **Origin Story Page**: /about page with verified timeline (Memphis 1980 → Nashville IT → Raspberry Pi → PhreakNIC ~2006 → Hak5 offensive security → 2015-2024 defensive security with Objective-See/CISA RPT Jan 2022/Hak5 Payload Award Sept 2023 → Python CLI/Snap Store Nov 2023 → Go platform Feb 2025). Includes acknowledgments with verifiable linked references. CISA RPT results: 34 payloads tested, zero executed, LuLu named in Noted System Strengths.
+- **Favicon**: SVG + PNG favicons with cache-busting version query params. Dedicated `/favicon.ico` route serving 48x48 PNG for browser compatibility (GET+HEAD).
 - **Homepage ASCII Hero**: Unicode block-character art title on desktop with automatic mobile text fallback below 768px.
 
 ## External Dependencies
