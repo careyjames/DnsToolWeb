@@ -2171,6 +2171,97 @@ body.covert-mode ::selection {
     background: rgba(196, 60, 60, 0.35);
     color: #f0d0d0;
 }
+body.covert-mode .badge.bg-warning,
+html body.covert-mode .bg-warning {
+    background-color: rgba(140, 40, 40, 0.2) !important;
+    color: rgba(196, 60, 60, 0.45) !important;
+    border: 1px solid rgba(140, 40, 40, 0.25);
+    font-weight: 500;
+}
+body.covert-mode .badge.bg-success,
+html body.covert-mode .bg-success {
+    background-color: rgba(25, 135, 84, 0.12) !important;
+    color: rgba(25, 135, 84, 0.55) !important;
+}
+body.covert-mode .badge.bg-danger,
+html body.covert-mode .bg-danger {
+    background-color: rgba(220, 53, 69, 0.1) !important;
+    color: rgba(220, 53, 69, 0.5) !important;
+}
+body.covert-mode .badge.bg-info,
+html body.covert-mode .bg-info {
+    background-color: rgba(140, 40, 40, 0.1) !important;
+    color: rgba(196, 60, 60, 0.5) !important;
+}
+body.covert-mode .btn-outline-primary,
+html body.covert-mode .btn-outline-primary {
+    border-color: rgba(140, 40, 40, 0.35) !important;
+    color: rgba(196, 60, 60, 0.55) !important;
+    background: transparent !important;
+}
+body.covert-mode .btn-outline-primary:hover {
+    background-color: rgba(140, 40, 40, 0.15) !important;
+    border-color: rgba(196, 60, 60, 0.55) !important;
+    color: #c43c3c !important;
+}
+body.covert-mode .btn-outline-success,
+html body.covert-mode .btn-outline-success {
+    border-color: rgba(25, 135, 84, 0.25) !important;
+    color: rgba(25, 135, 84, 0.45) !important;
+    background: transparent !important;
+}
+body.covert-mode .btn-outline-success:hover {
+    background-color: rgba(25, 135, 84, 0.1) !important;
+    border-color: rgba(25, 135, 84, 0.45) !important;
+    color: rgba(25, 135, 84, 0.7) !important;
+}
+body.covert-mode .btn-outline-warning,
+html body.covert-mode .btn-outline-warning {
+    border-color: rgba(140, 40, 40, 0.3) !important;
+    color: rgba(196, 60, 60, 0.45) !important;
+    background: transparent !important;
+}
+body.covert-mode .btn-outline-warning:hover {
+    background-color: rgba(140, 40, 40, 0.12) !important;
+    border-color: rgba(196, 60, 60, 0.5) !important;
+    color: #c43c3c !important;
+}
+html body.covert-mode .text-primary {
+    color: rgba(196, 60, 60, 0.5) !important;
+}
+body.covert-mode .input-group-text,
+html body.covert-mode .input-group-text {
+    background-color: #0a0c10 !important;
+    border-color: rgba(140, 40, 40, 0.3) !important;
+    color: rgba(200, 170, 170, 0.4) !important;
+}
+html body.covert-mode .border-secondary {
+    border-color: rgba(140, 40, 40, 0.25) !important;
+}
+html body.covert-mode .page-link {
+    background-color: #0e1015 !important;
+    border-color: rgba(140, 40, 40, 0.2) !important;
+    color: rgba(200, 170, 170, 0.5) !important;
+}
+html body.covert-mode .page-item.active .page-link {
+    background-color: rgba(140, 40, 40, 0.2) !important;
+    border-color: rgba(196, 60, 60, 0.4) !important;
+    color: #c43c3c !important;
+}
+body.covert-mode h1,
+body.covert-mode .h3 {
+    color: rgba(200, 180, 180, 0.8);
+}
+body.covert-mode .history-table th {
+    color: rgba(200, 170, 170, 0.45);
+    border-color: rgba(140, 40, 40, 0.15) !important;
+}
+body.covert-mode .history-table td {
+    border-color: rgba(140, 40, 40, 0.1) !important;
+}
+body.covert-mode .table-hover tbody tr:hover {
+    background-color: rgba(140, 40, 40, 0.06) !important;
+}
 body.covert-mode .hero-section {
     background: linear-gradient(170deg, #0c0508 0%, #0a0c10 35%, #0e0a0a 70%, #0a0c10 100%) !important;
     border-bottom-color: rgba(140, 40, 40, 0.12) !important;
@@ -2199,6 +2290,10 @@ body.covert-mode .btn-analyze {
     --bs-btn-active-bg: rgba(196, 60, 60, 0.35);
     --bs-btn-active-border-color: #c43c3c;
     --bs-btn-active-color: #f0d0d0;
+}
+body.covert-mode .search-input:focus {
+    border-color: rgba(196, 60, 60, 0.55) !important;
+    outline: 2px solid rgba(196, 60, 60, 0.45) !important;
 }
 body.covert-mode .u-color-blue-soft {
     color: #c43c3c !important;
