@@ -13,7 +13,10 @@
 //   2. Use (or create) a named date constant below.
 //   3. Reference the constant — never inline a date string.
 //
-// Canonical date mapping (verified Feb 19, 2026):
+// Canonical date mapping (verified Feb 21, 2026):
+//   dateFeb21 — Misplaced DMARC Record Detection, Covert Mode Recon Report UI,
+//               High-DPI PWA Icon Regeneration, Origin Story Page,
+//               ASCII Art Homepage Hero
 //   dateFeb19 — Architecture Diagrams, miekg/dns v2 Migration, CT Resilience,
 //               History Table Cleanup, Brand Verdict Overhaul, DKIM Selector Expansion,
 //               Privacy-Preserving Analytics, Admin Analytics Dashboard,
@@ -34,6 +37,7 @@
 package handlers
 
 const (
+        dateFeb21 = "Feb 21, 2026"
         dateFeb19 = "Feb 19, 2026"
         dateFeb18 = "Feb 18, 2026"
         dateFeb17 = "Feb 17, 2026"
@@ -72,6 +76,46 @@ func GetRecentChangelog(n int) []ChangelogEntry {
 
 func GetChangelog() []ChangelogEntry {
         return []ChangelogEntry{
+                {
+                        Version:     "26.22.25",
+                        Date:        dateFeb21,
+                        Category:    "Intelligence",
+                        Title:       "Misplaced DMARC Record Detection",
+                        Description: "New post-analysis enrichment detects DMARC records incorrectly published at the root domain instead of the required _dmarc subdomain (RFC 7489 §6.1). DetectMisplacedDMARC scans root TXT records for v=DMARC1 patterns with case-insensitive matching, extracts the policy, and surfaces the misconfiguration in the report with specific remediation guidance. Four deterministic golden test cases validate detection accuracy.",
+                        Icon:        "fas fa-crosshairs",
+                },
+                {
+                        Version:     "26.22.25",
+                        Date:        dateFeb21,
+                        Category:    "UX",
+                        Title:       "Covert Mode Recon Report UI",
+                        Description: "Fixed Recon Report buttons in Covert Mode to use proper red-themed styling consistent with the tactical red-light aesthetic. Buttons now use the covert accent palette instead of default blue, maintaining the adversarial perspective throughout the report view.",
+                        Icon:        "fas fa-user-secret",
+                },
+                {
+                        Version:     "26.22.25",
+                        Date:        dateFeb21,
+                        Category:    "PWA",
+                        Title:       "High-DPI PWA Icon Regeneration",
+                        Description: "Regenerated all Progressive Web App icons at proper high-DPI resolution with maskable variants for Android adaptive icons. Icons now render crisply on high-resolution displays and correctly fill the safe zone on devices that apply circular or shaped masks.",
+                        Icon:        "fas fa-mobile-alt",
+                },
+                {
+                        Version:     "26.22.25",
+                        Date:        dateFeb21,
+                        Category:    "Brand",
+                        Title:       "Origin Story Page",
+                        Description: "New /about page documenting the authentic origin story: Memphis 1980 Radio Shack build, Nashville IT career, Raspberry Pi breakthrough, PhreakNIC Hackintosh demo, Hak5 offensive security era, Python CLI field tool, and the February 2025 Go platform launch. Includes acknowledgments section crediting early collaborators and linked verifiable references (Nmap 7.94 changelog, Hak5 Payload Award, Raspberry Pi forum post).",
+                        Icon:        "fas fa-book-open",
+                },
+                {
+                        Version:     "26.22.25",
+                        Date:        dateFeb21,
+                        Category:    "UX",
+                        Title:       "ASCII Art Homepage Hero",
+                        Description: "Desktop homepage hero title rendered as a Unicode block-character ASCII art banner for visual impact. Responsive design with automatic mobile text fallback below 768px width. The art uses CSS monospace rendering with careful line-height tuning for consistent cross-browser display.",
+                        Icon:        "fas fa-terminal",
+                },
                 {
                         Version:     "26.20.88",
                         Date:        dateFeb19,

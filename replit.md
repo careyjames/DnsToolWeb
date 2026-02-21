@@ -54,11 +54,14 @@ The application features a Go/Gin backend for high performance and a Bootstrap d
 - **Ephemeral Scan**: A `/dev/null Scan` option allows full analysis without persistence, skipping all data recording and analytics.
 - **Content-Usage Directive Detection**: Implements a parser for `Content-Usage:` directives in `robots.txt`, aligned with an active IETF draft for AI governance signals.
 - **SMTP Probe Infrastructure**: Supports both local and remote SMTP probing. Remote probing uses a dedicated external API with shared-secret authentication and rate limiting, providing multi-port probing and banner capture.
+- **Misplaced DMARC Detection**: Post-analysis enrichment scans root TXT records for v=DMARC1 patterns incorrectly published at the domain apex instead of the _dmarc subdomain (RFC 7489 §6.1). Surfaces misconfiguration with remediation guidance. Four deterministic golden test cases.
 - **Engines**:
-    - **ICIE (Intelligence Classification & Interpretation Engine)**: Handles analysis logic.
-    - **ICAE (Intelligence Confidence Audit Engine)**: Tracks accuracy, with a maturity model (development to gold_master) and deterministic test cases.
+    - **ICIE (Intelligence Classification & Interpretation Engine)**: Handles analysis logic, including post-analysis enrichment (misplaced DMARC detection).
+    - **ICAE (Intelligence Confidence Audit Engine)**: Tracks accuracy with 114 deterministic test cases across 9 protocols (SPF 18, DMARC 18, DNSSEC 24, DKIM 8, DANE 12, MTA-STS 11, TLS-RPT 5, BIMI 9, CAA 9). Five-tier maturity model: Development → Verified → Consistent → Gold → Gold Master.
 - **Code Structure**: Utilizes Go build tags (`intel` for private features, `!intel` for public OSS stubs) and a repository mirroring strategy.
 - **CI/CD**: SonarCloud for code quality, GitHub Actions for Codeberg mirroring, and Forgejo Actions for redundancy.
+- **Origin Story Page**: /about page with authentic timeline (Memphis 1980 → Nashville IT → Raspberry Pi → PhreakNIC → Hak5 → Python CLI → Go platform). Includes acknowledgments with verifiable linked references.
+- **Homepage ASCII Hero**: Unicode block-character art title on desktop with automatic mobile text fallback below 768px.
 
 ## External Dependencies
 - **Google OAuth 2.0**: For user authentication.
