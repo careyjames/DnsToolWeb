@@ -1,3 +1,9 @@
+(function() {
+    var saved = null;
+    try { saved = localStorage.getItem('covertMode'); } catch(e) {}
+    if (saved === '1') document.body.classList.add('covert-mode');
+})();
+
 if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('/sw.js').catch(function() {}); // NOSONAR
 }
@@ -184,6 +190,15 @@ function createCopyHandler(codeBlock, btn) {
 }
 
 document.addEventListener('DOMContentLoaded', function() {
+    var covertBtn = document.getElementById('covertToggle');
+    if (covertBtn) {
+        covertBtn.addEventListener('click', function() {
+            document.body.classList.toggle('covert-mode');
+            var active = document.body.classList.contains('covert-mode') ? '1' : '0';
+            try { localStorage.setItem('covertMode', active); } catch(e) {}
+        });
+    }
+
     const domainForm = document.getElementById('domainForm');
     const domainInput = document.getElementById('domain');
     const analyzeBtn = document.getElementById('analyzeBtn');

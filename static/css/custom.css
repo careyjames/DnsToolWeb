@@ -1905,6 +1905,198 @@ main.container {
 }
 
 /* ============================================
+   COVERT MODE — Tactical Red-Light Theme
+   Military red-light discipline for field ops.
+   Deeper backgrounds + crimson/oxblood accents.
+   Status/severity badge colors are immutable.
+   ============================================ */
+.u-covert-toggle {
+    font-size: 0.85rem;
+    color: rgba(200, 60, 60, 0.35);
+    border: none;
+    background: none;
+    line-height: 1;
+    vertical-align: middle;
+    transition: color 0.3s, text-shadow 0.3s;
+    cursor: pointer;
+    order: 3;
+}
+@media (hover: hover) {
+    .u-covert-toggle:hover {
+        color: rgba(200, 60, 60, 0.75);
+        text-shadow: 0 0 6px rgba(200, 60, 60, 0.4);
+    }
+}
+.u-covert-toggle:focus-visible {
+    outline: 2px solid rgba(200, 60, 60, 0.6);
+    outline-offset: 2px;
+    border-radius: 3px;
+}
+body.covert-mode .u-covert-toggle {
+    color: #c43c3c;
+    text-shadow: 0 0 8px rgba(196, 60, 60, 0.6);
+}
+
+body.covert-mode {
+    background-color: #0a0c10 !important;
+    color: #c8b8b8;
+}
+body.covert-mode .navbar.bg-dark {
+    background-color: #0e1015 !important;
+    border-bottom: 1px solid rgba(140, 40, 40, 0.2);
+}
+body.covert-mode .navbar-brand {
+    color: #d35d5d !important;
+}
+body.covert-mode .navbar-brand .badge.bg-info {
+    background-color: rgba(140, 40, 40, 0.3) !important;
+    color: #c43c3c !important;
+    border: 1px solid rgba(140, 40, 40, 0.4);
+}
+body.covert-mode .nav-link {
+    color: rgba(200, 170, 170, 0.6) !important;
+}
+body.covert-mode .nav-link:hover,
+body.covert-mode .nav-link.active {
+    color: #d35d5d !important;
+}
+body.covert-mode .container {
+    color: #c8b8b8;
+}
+body.covert-mode .card,
+body.covert-mode .u-card-dark {
+    background-color: #111318 !important;
+    border-color: rgba(140, 40, 40, 0.15) !important;
+}
+body.covert-mode .card:hover,
+body.covert-mode .u-card-dark:hover {
+    border-color: rgba(140, 40, 40, 0.3) !important;
+}
+body.covert-mode a:not(.btn):not(.nav-link):not(.navbar-brand):not(.icae-hero-statement):not(.icae-badge) {
+    color: #d35d5d;
+}
+body.covert-mode a:not(.btn):not(.nav-link):not(.navbar-brand):hover {
+    color: #e87070;
+}
+body.covert-mode .btn-outline-info {
+    --bs-btn-color: #c43c3c;
+    --bs-btn-border-color: rgba(140, 40, 40, 0.5);
+    --bs-btn-hover-bg: rgba(140, 40, 40, 0.15);
+    --bs-btn-hover-color: #e87070;
+    --bs-btn-hover-border-color: #c43c3c;
+    --bs-btn-active-bg: rgba(140, 40, 40, 0.25);
+    --bs-btn-active-color: #e87070;
+    --bs-btn-active-border-color: #c43c3c;
+}
+body.covert-mode .btn-outline-secondary {
+    --bs-btn-color: rgba(200, 170, 170, 0.6);
+    --bs-btn-border-color: rgba(140, 40, 40, 0.3);
+    --bs-btn-hover-bg: rgba(140, 40, 40, 0.1);
+    --bs-btn-hover-color: #d35d5d;
+    --bs-btn-hover-border-color: rgba(140, 40, 40, 0.5);
+}
+body.covert-mode .btn-primary,
+body.covert-mode .btn-info {
+    background-color: rgba(140, 40, 40, 0.25) !important;
+    border-color: rgba(196, 60, 60, 0.5) !important;
+    color: #e87070 !important;
+}
+body.covert-mode .btn-primary:hover,
+body.covert-mode .btn-info:hover {
+    background-color: rgba(140, 40, 40, 0.4) !important;
+    border-color: #c43c3c !important;
+}
+body.covert-mode .form-control,
+body.covert-mode .form-select {
+    background-color: #0e1015 !important;
+    border-color: rgba(140, 40, 40, 0.25) !important;
+    color: #c8b8b8 !important;
+}
+body.covert-mode .form-control:focus,
+body.covert-mode .form-select:focus {
+    border-color: rgba(196, 60, 60, 0.5) !important;
+    box-shadow: 0 0 0 0.2rem rgba(196, 60, 60, 0.15) !important;
+}
+body.covert-mode .form-control::placeholder {
+    color: rgba(200, 170, 170, 0.3) !important;
+}
+body.covert-mode .table {
+    --bs-table-bg: transparent;
+    --bs-table-striped-bg: rgba(140, 40, 40, 0.05);
+    --bs-table-hover-bg: rgba(140, 40, 40, 0.08);
+    color: #c8b8b8;
+    border-color: rgba(140, 40, 40, 0.12);
+}
+body.covert-mode .text-info {
+    color: #c43c3c !important;
+}
+body.covert-mode .text-muted {
+    color: rgba(200, 170, 170, 0.45) !important;
+}
+body.covert-mode .bg-dark {
+    background-color: #0e1015 !important;
+}
+body.covert-mode hr {
+    border-color: rgba(140, 40, 40, 0.15);
+}
+body.covert-mode .icae-hero-card {
+    background: rgba(14, 8, 8, 0.6);
+    border-color: rgba(140, 40, 40, 0.15);
+}
+body.covert-mode .icae-hero-card:hover {
+    border-color: rgba(140, 40, 40, 0.3);
+    background: rgba(14, 8, 8, 0.75);
+}
+body.covert-mode .icae-hero-statement {
+    color: rgba(200, 170, 170, 0.5);
+}
+body.covert-mode .icae-hero-protocols {
+    border-top-color: rgba(140, 40, 40, 0.12);
+}
+body.covert-mode .icae-badge {
+    background: rgba(14, 8, 8, 0.8) !important;
+    border-color: rgba(140, 40, 40, 0.2) !important;
+    color: rgba(200, 170, 170, 0.5) !important;
+}
+body.covert-mode .dropdown-menu-dark {
+    background-color: #111318 !important;
+    border-color: rgba(140, 40, 40, 0.2) !important;
+}
+body.covert-mode .dropdown-item {
+    color: rgba(200, 170, 170, 0.7) !important;
+}
+body.covert-mode .dropdown-item:hover {
+    background-color: rgba(140, 40, 40, 0.15) !important;
+    color: #d35d5d !important;
+}
+body.covert-mode footer {
+    background-color: #0a0c10 !important;
+    border-top-color: rgba(140, 40, 40, 0.12) !important;
+}
+body.covert-mode .u-maintenance-tag {
+    background: rgba(140, 40, 40, 0.13) !important;
+    color: #c43c3c !important;
+    border-color: rgba(196, 60, 60, 0.45) !important;
+}
+body.covert-mode .accordion-button {
+    background-color: #111318 !important;
+    color: #c8b8b8 !important;
+    border-color: rgba(140, 40, 40, 0.12) !important;
+}
+body.covert-mode .accordion-button:not(.collapsed) {
+    background-color: rgba(140, 40, 40, 0.1) !important;
+    color: #d35d5d !important;
+}
+body.covert-mode .accordion-body {
+    background-color: #0e1015 !important;
+    border-color: rgba(140, 40, 40, 0.12) !important;
+}
+body.covert-mode ::selection {
+    background: rgba(196, 60, 60, 0.35);
+    color: #f0d0d0;
+}
+
+/* ============================================
    PRINT STYLES — Executive Intelligence Report
    Professional, colorful yet B&W laser-safe
    Colors chosen for distinct grayscale mapping

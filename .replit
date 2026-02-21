@@ -46,5 +46,8 @@ SONAR_PROJECT = "careyjames_DnsToolWeb"
 MAINTENANCE_NOTE = ""
 SMTP_PROBE_MODE = "remote"
 
+[userenv.development]
+MAINTENANCE_NOTE = "Scheduled: Mar 5–6"
+
 [agent]
 integrations = ["github:1.0.0"]

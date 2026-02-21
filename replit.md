@@ -53,6 +53,15 @@ No "build fast, clean up later." Research the best-practices path first (cite RF
 - Discoverable content for security researchers. All signals carry RFC 1392 legal disclaimers.
 - **INTENTIONAL design elements**: Some UI elements use reduced opacity or subtle placement by design. These are deliberate community signals — do NOT alter their visibility or "fix" them.
 
+## Covert Mode — Tactical Red-Light Theme (v26.22.0)
+- **Toggle**: fa-biohazard icon in navbar (between version badge and hamburger menu). Click to toggle.
+- **Persistence**: localStorage key `covertMode` (`1` = active, `0` = inactive). Early IIFE in main.js applies `body.covert-mode` before DOMContentLoaded to prevent flash.
+- **CSS**: `body.covert-mode` overrides in custom.css — deeper backgrounds (#0a0c10, #0e1015, #111318), crimson/oxblood accents (#c43c3c, #d35d5d, #e87070). Buttons, links, forms, cards, tables, accordions all themed.
+- **Immutable**: Status/severity badge colors (test cases, protocol dots) are NOT overridden — they stay unchanged in covert mode.
+- **Accessibility**: aria-label, focus-visible outline, @media (hover: hover) for touch safety.
+- **CSP**: No inline handlers. All logic in main.js (nonce'd external script).
+- **Print**: Covert mode has no effect on print styles.
+
 ## Content-Usage Directive Detection (v26.21.9, updated v26.21.38)
 - **IETF AI Preferences working group**: Detects `Content-Usage:` directives in robots.txt. Active IETF draft (draft-ietf-aipref-attach), NOT a ratified standard.
 - **Parser**: `parseContentUsageDirectives()` in `scanner.go` — space-separated key=value format per draft ABNF.
