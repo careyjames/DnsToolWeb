@@ -2114,6 +2114,11 @@ body.covert-mode .icae-hero-card:hover {
 body.covert-mode .icae-hero-statement {
     color: rgba(200, 170, 170, 0.5);
 }
+body.covert-mode .icae-hero-maturity {
+    background: rgba(14, 8, 8, 0.8);
+    border-color: rgba(140, 40, 40, 0.2);
+    color: rgba(200, 170, 170, 0.5);
+}
 body.covert-mode .icae-hero-protocols {
     border-top-color: rgba(140, 40, 40, 0.12);
 }
