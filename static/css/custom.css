@@ -1989,7 +1989,28 @@ body.covert-mode .hero-badge {
     color: #c43c3c !important;
 }
 body.covert-mode .hero-title {
-    color: rgba(200, 180, 180, 0.9);
+    color: #8c2828;
+    -webkit-text-stroke: 0.4px rgba(196, 60, 60, 0.55);
+    paint-order: stroke fill;
+    animation: covert-title-pulse 4s ease-in-out infinite;
+    text-shadow:
+        0 0 2px rgba(196, 60, 60, 0.08),
+        0 0 20px rgba(140, 40, 40, 0.06);
+}
+@keyframes covert-title-pulse {
+    0%, 100% {
+        text-shadow:
+            0 0 2px rgba(196, 60, 60, 0.08),
+            0 0 20px rgba(140, 40, 40, 0.06);
+        -webkit-text-stroke-color: rgba(196, 60, 60, 0.55);
+    }
+    50% {
+        text-shadow:
+            0 0 4px rgba(196, 60, 60, 0.2),
+            0 0 30px rgba(140, 40, 40, 0.12),
+            0 0 60px rgba(140, 40, 40, 0.04);
+        -webkit-text-stroke-color: rgba(196, 60, 60, 0.75);
+    }
 }
 body.covert-mode .u-hero-tagline {
     color: rgba(200, 180, 180, 0.65);
