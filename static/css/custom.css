@@ -185,21 +185,23 @@ code {
 }
 
 .hero-protocols {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 0.45rem;
     font-size: 0.85rem;
     color: #8b949e;
     font-weight: 500;
     letter-spacing: 0.08em;
+}
+.icae-hero-card {
+    text-align: center;
     background: rgba(22, 27, 34, 0.55);
     border: 1px solid rgba(125, 142, 168, 0.12);
     border-radius: 0.75rem;
-    padding: 1rem 1.5rem 0.85rem;
+    padding: 0.85rem 1.5rem 0.75rem;
     max-width: 38rem;
     margin-left: auto;
     margin-right: auto;
+}
+.icae-hero-heading {
+    margin-bottom: 0.35rem;
 }
 
 .icae-hero-badges { gap: 0.5rem !important; }
