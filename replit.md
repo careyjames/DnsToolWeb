@@ -50,7 +50,9 @@ The application features a Go/Gin backend for high performance and a Bootstrap d
 **Technical Implementations & Design Choices:**
 - **Backend**: Go/Gin for API and server-side logic.
 - **Database**: PostgreSQL.
-- **Authentication**: Google OAuth 2.0 with PKCE, implemented using pure standard library, supporting Advanced Protection. Admin bootstrapping is a one-time process.
+- **Authentication**: Google OAuth 2.0 with PKCE (S256), implemented using pure standard library, supporting Advanced Protection. Security hardening includes OIDC nonce for replay protection, `iat` validation with 5-minute clock skew tolerance, 10-second HTTP client timeouts on token/userinfo requests, and SameSite=Lax on all auth cookies. Admin bootstrapping is a one-time process.
+- **Admin Panel**: Session management dashboard with per-user session counts (active/total), purge expired sessions, per-user session reset, and user deletion (admin deletion blocked). All admin actions protected with CSRF tokens.
+- **Site Analytics**: Privacy-preserving analytics middleware using IP+User-Agent fingerprinting with daily-rotating SHA-256 salt (no cookies, no PII). Incremental flush every 60 seconds with additive SQL merge for accurate counts across server restarts.
 - **Ephemeral Scan**: A `/dev/null Scan` option allows full analysis without persistence, skipping all data recording and analytics.
 - **Content-Usage Directive Detection**: Implements a parser for `Content-Usage:` directives in `robots.txt`, aligned with an active IETF draft for AI governance signals.
 - **SMTP Probe Infrastructure**: Supports both local and remote SMTP probing. Remote probing uses a dedicated external API with shared-secret authentication and rate limiting, providing multi-port probing and banner capture.

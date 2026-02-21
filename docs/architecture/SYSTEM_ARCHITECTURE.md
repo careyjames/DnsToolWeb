@@ -428,6 +428,7 @@ sequenceDiagram
         ICIE->>DNS: Query Google 8.8.8.8
         ICIE->>DNS: Query Quad9 9.9.9.9
         ICIE->>DNS: Query OpenDNS 208.67.222.222
+        ICIE->>DNS: Query DNS4EU 194.242.2.2
     end
     
     DNS-->>ICIE: Merged DNS Results
@@ -505,5 +506,5 @@ graph TB
 
 ---
 
-*Generated for DNS Tool v26.22.25 — February 21, 2026*
+*Generated for DNS Tool v26.23.44 — February 21, 2026*
 *Diagrams render natively on GitHub, GitLab, Codeberg, and VS Code with Mermaid plugins.*
