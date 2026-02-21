@@ -1911,20 +1911,19 @@ main.container {
    Status/severity badge colors are immutable.
    ============================================ */
 .u-covert-toggle {
-    font-size: 0.85rem;
-    color: rgba(200, 60, 60, 0.35);
+    font-size: 1.1rem;
+    color: rgba(200, 60, 60, 0.5);
     border: none;
     background: none;
     line-height: 1;
     vertical-align: middle;
     transition: color 0.3s, text-shadow 0.3s;
     cursor: pointer;
-    order: 3;
 }
 @media (hover: hover) {
     .u-covert-toggle:hover {
-        color: rgba(200, 60, 60, 0.75);
-        text-shadow: 0 0 6px rgba(200, 60, 60, 0.4);
+        color: rgba(200, 60, 60, 0.85);
+        text-shadow: 0 0 8px rgba(200, 60, 60, 0.5);
     }
 }
 .u-covert-toggle:focus-visible {
@@ -1934,7 +1933,7 @@ main.container {
 }
 body.covert-mode .u-covert-toggle {
     color: #c43c3c;
-    text-shadow: 0 0 8px rgba(196, 60, 60, 0.6);
+    text-shadow: 0 0 10px rgba(196, 60, 60, 0.7);
 }
 
 body.covert-mode {
@@ -1953,6 +1952,22 @@ body.covert-mode .navbar-brand .badge.bg-info {
     color: #c43c3c !important;
     border: 1px solid rgba(140, 40, 40, 0.4);
 }
+body.covert-mode .navbar-brand svg rect {
+    fill: #0a0c10;
+}
+body.covert-mode .navbar-brand svg path {
+    fill: #8a1f1f;
+    opacity: 0.9;
+}
+body.covert-mode .navbar-brand svg circle:first-of-type {
+    fill: rgba(200, 60, 60, 0.3);
+}
+body.covert-mode .navbar-brand svg circle:last-of-type {
+    fill: #0a0c10;
+}
+body.covert-mode .navbar-brand svg rect[rx="1"] {
+    fill: #c43c3c;
+}
 body.covert-mode .nav-link {
     color: rgba(200, 170, 170, 0.6) !important;
 }
@@ -1962,6 +1977,26 @@ body.covert-mode .nav-link.active {
 }
 body.covert-mode .container {
     color: #c8b8b8;
+}
+body.covert-mode .hero-badge {
+    background: rgba(140, 40, 40, 0.15) !important;
+    border-color: rgba(196, 60, 60, 0.25) !important;
+    color: #c43c3c !important;
+}
+body.covert-mode .hero-title {
+    color: rgba(200, 180, 180, 0.9);
+}
+body.covert-mode .u-hero-tagline {
+    color: rgba(200, 180, 180, 0.65);
+}
+body.covert-mode .u-hero-tagline .text-info {
+    color: #c43c3c !important;
+}
+body.covert-mode .hero-subtitle {
+    color: rgba(200, 170, 170, 0.5);
+}
+body.covert-mode .hero-subtitle .text-info {
+    color: #d35d5d !important;
 }
 body.covert-mode .card,
 body.covert-mode .u-card-dark {
@@ -1997,28 +2032,32 @@ body.covert-mode .btn-outline-secondary {
 }
 body.covert-mode .btn-primary,
 body.covert-mode .btn-info {
-    background-color: rgba(140, 40, 40, 0.25) !important;
+    background-color: rgba(140, 40, 40, 0.3) !important;
     border-color: rgba(196, 60, 60, 0.5) !important;
     color: #e87070 !important;
 }
 body.covert-mode .btn-primary:hover,
 body.covert-mode .btn-info:hover {
-    background-color: rgba(140, 40, 40, 0.4) !important;
+    background-color: rgba(196, 60, 60, 0.35) !important;
     border-color: #c43c3c !important;
+    color: #f0d0d0 !important;
 }
 body.covert-mode .form-control,
 body.covert-mode .form-select {
-    background-color: #0e1015 !important;
-    border-color: rgba(140, 40, 40, 0.25) !important;
-    color: #c8b8b8 !important;
+    background-color: #0a0c10 !important;
+    border-color: rgba(140, 40, 40, 0.3) !important;
+    color: #d0c8c8 !important;
 }
 body.covert-mode .form-control:focus,
 body.covert-mode .form-select:focus {
-    border-color: rgba(196, 60, 60, 0.5) !important;
+    border-color: rgba(196, 60, 60, 0.55) !important;
     box-shadow: 0 0 0 0.2rem rgba(196, 60, 60, 0.15) !important;
 }
 body.covert-mode .form-control::placeholder {
     color: rgba(200, 170, 170, 0.3) !important;
+}
+body.covert-mode .form-text {
+    color: rgba(196, 120, 120, 0.55) !important;
 }
 body.covert-mode .table {
     --bs-table-bg: transparent;
@@ -2073,6 +2112,12 @@ body.covert-mode footer {
     background-color: #0a0c10 !important;
     border-top-color: rgba(140, 40, 40, 0.12) !important;
 }
+body.covert-mode footer a {
+    color: rgba(196, 120, 120, 0.5) !important;
+}
+body.covert-mode footer a:hover {
+    color: #d35d5d !important;
+}
 body.covert-mode .u-maintenance-tag {
     background: rgba(140, 40, 40, 0.13) !important;
     color: #c43c3c !important;
@@ -2091,9 +2136,23 @@ body.covert-mode .accordion-body {
     background-color: #0e1015 !important;
     border-color: rgba(140, 40, 40, 0.12) !important;
 }
+body.covert-mode .accordion-button::after {
+    filter: hue-rotate(160deg) brightness(0.7);
+}
 body.covert-mode ::selection {
     background: rgba(196, 60, 60, 0.35);
     color: #f0d0d0;
+}
+body.covert-mode .hero-section {
+    background: linear-gradient(170deg, #0c0508 0%, #0a0c10 35%, #0e0a0a 70%, #0a0c10 100%) !important;
+    border-bottom-color: rgba(140, 40, 40, 0.12) !important;
+}
+body.covert-mode .hero-section::before {
+    background: radial-gradient(ellipse at 30% 20%, rgba(140, 40, 40, 0.06) 0%, transparent 50%),
+                radial-gradient(ellipse at 70% 80%, rgba(100, 30, 30, 0.04) 0%, transparent 50%) !important;
+}
+body.covert-mode footer .u-rounded-circle {
+    filter: saturate(0.3) brightness(0.8);
 }
 
 /* ============================================
