@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+{{htmlComment " Every tool has a story. This one started in a closet with Radio Shack parts. "}}
+<html lang="en" data-bs-theme="dark">
+<head>
+    {{template "head" .}}
+    {{template "head_css" .}}
+    <title>Origin Story - DNS Tool</title>
+    <meta name="robots" content="index, follow">
+    <meta name="description" content="The story behind DNS Tool — from a Radio Shack computer build in the early 1980s to a DEF CON-caliber domain security intelligence platform.">
+    <meta property="og:url" content="https://dnstool.it-help.tech/about">
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="Origin Story - DNS Tool">
+    <meta property="og:description" content="The story behind DNS Tool — from Radio Shack parts to domain security intelligence.">
+    <meta property="og:image" content="https://dnstool.it-help.tech/static/images/og-image.png">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta property="twitter:domain" content="dnstool.it-help.tech">
+    <meta property="twitter:url" content="https://dnstool.it-help.tech/about">
+    <meta name="twitter:title" content="Origin Story - DNS Tool">
+    <meta name="twitter:description" content="The story behind DNS Tool — from Radio Shack parts to domain security intelligence.">
+    <meta name="twitter:image" content="https://dnstool.it-help.tech/static/images/og-image.png">
+    <link rel="canonical" href="https://dnstool.it-help.tech/about">
+    <style nonce="{{.CspNonce}}">
+        .about-timeline-item {
+            position: relative;
+            padding-left: 2.5rem;
+            margin-bottom: 2rem;
+        }
+        .about-timeline-item::before {
+            content: '';
+            position: absolute;
+            left: 0.75rem;
+            top: 0;
+            bottom: -2rem;
+            width: 2px;
+            background: linear-gradient(180deg, rgba(88,166,255,0.4), rgba(88,166,255,0.1));
+        }
+        .about-timeline-item:last-child::before {
+            bottom: 0;
+        }
+        .about-timeline-dot {
+            position: absolute;
+            left: 0.25rem;
+            top: 0.25rem;
+            width: 1.1rem;
+            height: 1.1rem;
+            border-radius: 50%;
+            background: #0d1117;
+            border: 2px solid #58a6ff;
+            z-index: 1;
+        }
+        .about-timeline-item:first-child .about-timeline-dot {
+            border-color: #3fb950;
+            box-shadow: 0 0 8px rgba(63,185,80,0.3);
+        }
+        .about-era {
+            font-size: 0.78rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: #58a6ff;
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+        }
+        .about-card {
+            background: linear-gradient(145deg, #0c1018 0%, #111720 50%, #0e141c 100%);
+            border: 1px solid rgba(88,166,255,0.15);
+            border-radius: 12px;
+        }
+        .about-acknowledgment {
+            background: linear-gradient(145deg, #0c1018, #101820);
+            border: 1px solid rgba(88,166,255,0.12);
+            border-radius: 10px;
+        }
+        .about-quote {
+            border-left: 3px solid rgba(88,166,255,0.3);
+            padding-left: 1rem;
+            font-style: italic;
+            color: rgba(255,255,255,0.7);
+        }
+        body.covert-mode .about-timeline-item::before {
+            background: linear-gradient(180deg, rgba(196,60,60,0.4), rgba(196,60,60,0.1));
+        }
+        body.covert-mode .about-timeline-dot {
+            border-color: #c43c3c;
+        }
+        body.covert-mode .about-timeline-item:first-child .about-timeline-dot {
+            border-color: #e87070;
+            box-shadow: 0 0 8px rgba(196,60,60,0.3);
+        }
+        body.covert-mode .about-era {
+            color: #c43c3c;
+        }
+        body.covert-mode .about-card {
+            border-color: rgba(140,40,40,0.2);
+        }
+        body.covert-mode .about-acknowledgment {
+            border-color: rgba(140,40,40,0.15);
+        }
+        body.covert-mode .about-quote {
+            border-left-color: rgba(196,60,60,0.3);
+        }
+    </style>
+</head>
+<body>
+    {{template "nav" .}}
+    <main id="main-content" class="container mt-4 mb-5">
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+
+                <div class="text-center mb-4">
+                    <h1 class="h2"><i class="fas fa-route me-2 text-info"></i>Origin Story</h1>
+                    <p class="text-muted lead">How a closet computer build and a stack of RFCs became a domain security intelligence platform.</p>
+                </div>
+
+                <div class="about-card p-4 mb-4">
+                    <p class="mb-2">DNS Tool exists because of a simple frustration: having to pull up RFCs to prove things to people.</p>
+                    <p class="mb-0 text-muted">Clients would question a DNS configuration. Peers would push back on a security recommendation. Every time, the answer was the same &mdash; open the RFC, find the section, show the specification. After doing that hundreds of times across 25+ years in IT and security, the obvious question became: <em>why isn&rsquo;t there a tool that just does this automatically?</em></p>
+                </div>
+
+                <h2 class="h5 mb-3 text-info"><i class="fas fa-clock-rotate-left me-2"></i>The Long Road Here</h2>
+
+                <div class="about-timeline-item">
+                    <div class="about-timeline-dot"></div>
+                    <div class="about-era">Circa 1980 &middot; Where It Started</div>
+                    <p class="mb-0 text-muted">A father and son bought parts at Radio Shack and built a computer in a closet. That was the first time the builder behind this tool touched a keyboard. The fascination never stopped.</p>
+                </div>
+
+                <div class="about-timeline-item">
+                    <div class="about-timeline-dot"></div>
+                    <div class="about-era">The Next Two Decades &middot; Going Deep</div>
+                    <p class="mb-0 text-muted">Years of IT work &mdash; networks, servers, clients, and the slow accumulation of knowledge that only comes from being the person who gets called when things break. DNS was always there, quietly underpinning everything, same protocol since 1983.</p>
+                </div>
+
+                <div class="about-timeline-item">
+                    <div class="about-timeline-dot"></div>
+                    <div class="about-era">The Raspberry Pi Breakthrough</div>
+                    <p class="mb-1 text-muted">The Linux and command-line breakthrough came from an unexpected place: <a href="https://www.raspberrypi.org/" target="_blank" rel="noopener" class="text-info">Raspberry Pi</a>. Not just the hardware &mdash; the community. They didn&rsquo;t punish bad questions. They didn&rsquo;t gatekeep. They taught. That culture of patience and genuine knowledge-sharing made the difference between dabbling and real competence.</p>
+                </div>
+
+                <div class="about-timeline-item">
+                    <div class="about-timeline-dot"></div>
+                    <div class="about-era">The Offensive Security Era</div>
+                    <p class="mb-1 text-muted"><a href="https://hak5.org/" target="_blank" rel="noopener" class="text-info">Hak5</a> was the next catalyst. OMG cables, Bash Bunnies, and the hands-on offensive security work that teaches you to think like an adversary. Understanding attack vectors changes how you evaluate defenses &mdash; you stop accepting &ldquo;it&rsquo;s probably fine&rdquo; and start demanding proof.</p>
+                    <p class="mb-0 text-muted small">That work led to a <a href="https://payloadhub.com/blogs/payloads/mac_exfil?_pos=1&_sid=53d35434c&_ss=r" target="_blank" rel="noopener" class="text-info">Hak5 Payload Award</a> for an exfiltration payload (mac_exfil). A different discipline entirely, but part of the same path &mdash; understanding how systems actually work, not how they&rsquo;re supposed to work.</p>
+                </div>
+
+                <div class="about-timeline-item">
+                    <div class="about-timeline-dot"></div>
+                    <div class="about-era">The Python Era &middot; Early DNS Tool</div>
+                    <p class="mb-0 text-muted">The earliest version of this tool was a Python CLI &mdash; a terminal app that pulled back limited DNS results. It was rough, but it was the seed. The idea was already clear: automate the RFC lookups, query the records, tell people what they actually have instead of what they think they have.</p>
+                </div>
+
+                <div class="about-timeline-item">
+                    <div class="about-timeline-dot"></div>
+                    <div class="about-era">Today &middot; San Diego</div>
+                    <p class="mb-0 text-muted">That CLI became what you see now &mdash; a Go-powered intelligence platform that queries five independent DNS resolvers for consensus, cryptographically hashes every analysis with SHA-3-512, cites the RFC for every finding, and produces reports that would hold up at a DEF CON presentation or a board meeting. The reports are the r&eacute;sum&eacute;.</p>
+                </div>
+
+                <div class="about-card p-4 mb-4 mt-4">
+                    <h2 class="h5 mb-3"><i class="fas fa-flask me-2 text-info"></i>Q in the Lab</h2>
+                    <p class="mb-0 text-muted">Every intelligence operation needs someone in the lab &mdash; the one who builds the tools, not the one who carries them into the field. This platform is 25 years of field experience distilled into code. Every analysis, every RFC citation, every confidence score is the product of having done it manually, for years, and knowing exactly what matters and what doesn&rsquo;t.</p>
+                </div>
+
+                <div class="about-acknowledgment p-4 mb-4">
+                    <h2 class="h5 mb-3"><i class="fas fa-handshake me-2 text-info"></i>Acknowledgments</h2>
+
+                    <div class="mb-3">
+                        <strong class="text-info">corydon76</strong> <span class="text-muted small">&middot; Nashville 2600</span>
+                        <p class="mb-0 text-muted mt-1">In the early Python days, <strong>corydon76</strong> helped suss out a lot of the core DNS logic. A Linux admin, hacker, and friend from the <a href="https://www.2600.com/" target="_blank" rel="noopener" class="text-info">Nashville 2600 Club</a> who contributed time and knowledge when the project was still a terminal script. The tool has evolved enormously since then &mdash; rewritten from scratch in Go, expanded into a full intelligence platform &mdash; but the early collaboration mattered and deserves recognition.</p>
+                    </div>
+
+                    <div class="mb-3">
+                        <strong class="text-info">Raspberry Pi Foundation</strong>
+                        <p class="mb-0 text-muted mt-1">For building a community that proves you can teach technical skills without being hostile about it. The <a href="https://www.raspberrypi.org/" target="_blank" rel="noopener" class="text-info">Raspberry Pi community</a> is proof that intellectual generosity produces better engineers than gatekeeping ever will.</p>
+                    </div>
+
+                    <div>
+                        <strong class="text-info">Hak5</strong>
+                        <p class="mb-0 text-muted mt-1">For the hardware, the community, and the mindset. <a href="https://hak5.org/" target="_blank" rel="noopener" class="text-info">Hak5</a> tools teach you to think like an adversary, which is exactly the perspective that makes a defensive tool worth using.</p>
+                    </div>
+                </div>
+
+                <div class="text-center mt-4 mb-2">
+                    <a href="/sources" class="btn btn-outline-info btn-sm me-2"><i class="fas fa-diagram-project me-1"></i>Intelligence Sources</a>
+                    <a href="/architecture" class="btn btn-outline-info btn-sm me-2"><i class="fas fa-microchip me-1"></i>Architecture</a>
+                    <a href="/confidence" class="btn btn-outline-info btn-sm"><i class="fas fa-bullseye me-1"></i>Confidence</a>
+                </div>
+
+            </div>
+        </div>
+    </main>
+    {{template "footer" .}}
+    {{template "scripts" .}}
+</body>
+</html>

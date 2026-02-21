@@ -196,6 +196,9 @@ func main() {
         securityPolicyHandler := handlers.NewSecurityPolicyHandler(cfg)
         router.GET("/security-policy", securityPolicyHandler.SecurityPolicy)
 
+        aboutHandler := handlers.NewAboutHandler(cfg)
+        router.GET("/about", aboutHandler.About)
+
         brandColorsHandler := handlers.NewBrandColorsHandler(cfg)
         router.GET("/brand-colors", brandColorsHandler.BrandColors)
 
