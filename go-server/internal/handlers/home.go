@@ -43,7 +43,9 @@ func (h *HomeHandler) Index(c *gin.Context) {
                 }
         }
 
-        if flash := c.Query("flash"); flash != "" {
+        if welcome := c.Query("welcome"); welcome != "" {
+                data["WelcomeName"] = welcome
+        } else if flash := c.Query("flash"); flash != "" {
                 cat := c.DefaultQuery("flash_cat", "warning")
                 if cat != "success" && cat != "danger" {
                         cat = "warning"

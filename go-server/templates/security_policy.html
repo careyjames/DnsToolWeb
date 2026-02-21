@@ -28,7 +28,7 @@
                 <div class="text-center mb-4">
                     <h1 class="h2"><i class="fas fa-shield-halved me-2 text-info"></i>Security Policy</h1>
                     <p class="text-muted lead">If you believe you found a security issue in systems operated by IT Help San Diego Inc., please report it responsibly.</p>
-                    <p class="text-muted small">Last updated: February 14, 2026</p>
+                    <p class="text-muted small">Last updated: February 21, 2026</p>
                 </div>
 
                 <div class="card bg-dark border-info mb-4">
@@ -194,13 +194,31 @@
                     </div>
                 </div>
 
+                <div class="card bg-dark border-secondary mb-4" id="privacy-pledge">
+                    <div class="card-body">
+                        <h5 class="card-title"><i class="fas fa-envelope-open-text me-2 text-success"></i>Privacy Pledge</h5>
+                        <div class="alert alert-success bg-transparent border-success small mb-3">
+                            <i class="fas fa-shield-halved me-1"></i>
+                            <strong>We don&rsquo;t sell, rent, or share your personal data.</strong> Your email is used for authentication only.
+                        </div>
+                        <ul class="small">
+                            <li><strong>No marketing email</strong> &mdash; we don&rsquo;t send newsletters, promotions, or drip campaigns. Not now, not by default, not ever.</li>
+                            <li><strong>No mailing lists</strong> &mdash; signing in does not subscribe you to anything.</li>
+                            <li><strong>Service-critical notices only</strong> &mdash; if we ever need to contact you (security advisory, breaking change, or account issue), it will be rare, justified, and directly relevant to your use of the tool.</li>
+                            <li><strong>Opt-in only</strong> &mdash; if we add product update notifications in the future, they will require your explicit consent and can be disabled at any time.</li>
+                            <li><strong>No third-party data sharing</strong> &mdash; your information stays here. We don&rsquo;t feed it to analytics platforms, ad networks, or data brokers.</li>
+                        </ul>
+                        <p class="text-muted small mb-0"><i class="fas fa-info-circle me-1"></i>This pledge reflects our current practices. If our business model evolves, any changes to communication practices will require your explicit opt-in consent.</p>
+                    </div>
+                </div>
+
                 <div class="card bg-dark border-secondary mb-4">
                     <div class="card-body">
                         <h5 class="card-title"><i class="fas fa-shield me-2 text-info"></i>Security Practices</h5>
                         <p>DNS Tool is built with security as a core principle:</p>
                         <ul class="small">
-                            <li><strong>No user accounts or passwords</strong> &mdash; no authentication data to compromise</li>
-                            <li><strong>No cookies or tracking</strong> &mdash; minimal data collection reduces attack surface</li>
+                            <li><strong>Google OAuth 2.0 with PKCE</strong> &mdash; no passwords stored, no credentials to compromise</li>
+                            <li><strong>No tracking cookies</strong> &mdash; minimal data collection reduces attack surface</li>
                             <li><strong>Content Security Policy (CSP)</strong> with per-request nonces on all pages</li>
                             <li><strong>CSRF protection</strong> on all state-changing operations</li>
                             <li><strong>Rate limiting</strong> to prevent abuse</li>

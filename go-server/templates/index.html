@@ -254,6 +254,23 @@
 
             {{template "flash_messages" .}}
 
+            {{if .WelcomeName}}
+            <div class="row justify-content-center mb-3">
+                <div class="col-lg-8">
+                    <div class="alert alert-success alert-dismissible fade show" role="alert">
+                        <div class="d-flex align-items-start">
+                            <img src="{{staticVersionURL "images/owl-of-athena.png" .AppVersion}}" alt="" width="40" height="40" class="me-3 mt-1 u-rounded-circle flex-shrink-0">
+                            <div>
+                                <strong>Welcome, {{.WelcomeName}}.</strong> No marketing email, no mailing lists, no spam. Your email is for sign-in and critical security notices only.
+                                <a href="/security-policy#privacy-pledge" class="alert-link">Read the Privacy Pledge</a>.
+                            </div>
+                        </div>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                </div>
+            </div>
+            {{end}}
+
             <!-- Main form -->
             <div class="row justify-content-center">
                 <div class="col-lg-7 col-xl-6">
