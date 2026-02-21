@@ -1984,9 +1984,11 @@ body.covert-mode .navbar-brand {
     color: #d35d5d !important;
 }
 body.covert-mode .navbar-brand .badge.bg-info {
-    background-color: rgba(140, 40, 40, 0.3) !important;
+    background-color: rgba(140, 40, 40, 0.15) !important;
     color: #c43c3c !important;
-    border: 1px solid rgba(140, 40, 40, 0.4);
+    border: 1px solid rgba(196, 60, 60, 0.25);
+    text-shadow: 0 0 4px rgba(196, 60, 60, 0.15);
+    letter-spacing: 0.03em;
 }
 body.covert-mode .navbar-brand svg rect {
     fill: #0a0c10;
@@ -2005,11 +2007,15 @@ body.covert-mode .navbar-brand svg rect[rx="1"] {
     fill: #c43c3c;
 }
 body.covert-mode .nav-link {
-    color: rgba(200, 170, 170, 0.6) !important;
+    color: rgba(180, 150, 150, 0.45) !important;
 }
-body.covert-mode .nav-link:hover,
+body.covert-mode .nav-link:hover {
+    color: #c43c3c !important;
+    text-shadow: 0 0 6px rgba(196, 60, 60, 0.15);
+}
 body.covert-mode .nav-link.active {
     color: #d35d5d !important;
+    text-shadow: 0 0 6px rgba(196, 60, 60, 0.2);
 }
 body.covert-mode .container {
     color: #c8b8b8;
@@ -2063,6 +2069,7 @@ body.covert-mode .u-card-dark {
 body.covert-mode .card:hover,
 body.covert-mode .u-card-dark:hover {
     border-color: rgba(140, 40, 40, 0.3) !important;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(140, 40, 40, 0.08) !important;
 }
 body.covert-mode a:not(.btn):not(.nav-link):not(.navbar-brand):not(.icae-hero-statement):not(.icae-badge) {
     color: #d35d5d;
@@ -2079,8 +2086,19 @@ body.covert-mode .btn-outline-info {
     --bs-btn-active-bg: rgba(140, 40, 40, 0.25);
     --bs-btn-active-color: #e87070;
     --bs-btn-active-border-color: #c43c3c;
+    --bs-btn-focus-shadow-rgb: 140, 40, 40;
     color: #c43c3c !important;
     border-color: rgba(140, 40, 40, 0.5) !important;
+}
+body.covert-mode .btn-outline-info:hover {
+    background-color: rgba(140, 40, 40, 0.15) !important;
+    border-color: #c43c3c !important;
+    color: #e87070 !important;
+    box-shadow: 0 0 8px rgba(140, 40, 40, 0.2) !important;
+}
+body.covert-mode .btn-outline-info:focus,
+body.covert-mode .btn-outline-info:focus-visible {
+    box-shadow: 0 0 0 0.25rem rgba(140, 40, 40, 0.25) !important;
 }
 body.covert-mode .btn-outline-secondary {
     --bs-btn-color: rgba(200, 170, 170, 0.6);
@@ -2447,6 +2465,11 @@ body.covert-mode .btn-outline-warning:hover {
     background-color: rgba(140, 40, 40, 0.12) !important;
     border-color: rgba(196, 60, 60, 0.5) !important;
     color: #c43c3c !important;
+    box-shadow: 0 0 8px rgba(140, 40, 40, 0.2) !important;
+}
+body.covert-mode .btn-outline-warning:focus,
+body.covert-mode .btn-outline-warning:focus-visible {
+    box-shadow: 0 0 0 0.25rem rgba(140, 40, 40, 0.25) !important;
 }
 html body.covert-mode .text-primary {
     color: rgba(196, 60, 60, 0.5) !important;
