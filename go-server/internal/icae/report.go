@@ -149,9 +149,14 @@ func LoadReportMetrics(ctx context.Context, queries DBTX) *ReportMetrics {
                 }
         }
 
-        passRate := "0.0"
+        passRate := "0"
         if totalRuns > 0 {
-                passRate = fmt.Sprintf("%.1f", float64(totalPasses)/float64(totalRuns)*100)
+                pct := float64(totalPasses) / float64(totalRuns) * 100
+                if pct == float64(int(pct)) {
+                        passRate = fmt.Sprintf("%d", int(pct))
+                } else {
+                        passRate = fmt.Sprintf("%.1f", pct)
+                }
         }
 
         overall := OverallMaturity(protocols)

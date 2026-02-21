@@ -4079,6 +4079,12 @@ footer a.text-muted:hover { text-decoration-color: rgba(173, 181, 189, 0.8); }
     text-align: right;
     white-space: nowrap;
 }
+.icae-cal-layer-label-collection {
+    color: #4dd0e1;
+}
+.icae-cal-layer-label-analysis {
+    color: #ce93d8;
+}
 .icae-cal-layer-runs {
     font-size: 0.6rem;
     color: #6c757d;
@@ -4133,6 +4139,8 @@ footer a.text-muted:hover { text-decoration-color: rgba(173, 181, 189, 0.8); }
 .icae-cal-fill-consistent { background: linear-gradient(90deg, rgba(74, 85, 104, 0.25), rgba(107, 181, 255, 0.4), rgba(86, 211, 100, 0.6)); }
 .icae-cal-fill-gold { background: linear-gradient(90deg, rgba(74, 85, 104, 0.2), rgba(107, 181, 255, 0.3), rgba(86, 211, 100, 0.4), rgba(224, 184, 92, 0.6)); }
 .icae-cal-fill-gold_master { background: linear-gradient(90deg, rgba(74, 85, 104, 0.2), rgba(107, 181, 255, 0.25), rgba(86, 211, 100, 0.3), rgba(224, 184, 92, 0.4), rgba(240, 221, 179, 0.6)); }
+.icae-bar-collection .icae-cal-fill { border-top: 2px solid rgba(77, 208, 225, 0.6); }
+.icae-bar-analysis .icae-cal-fill { border-top: 2px solid rgba(206, 147, 216, 0.6); }
 
 .icae-cal-needle {
     position: absolute;
@@ -4237,9 +4245,15 @@ footer a.text-muted:hover { text-decoration-color: rgba(173, 181, 189, 0.8); }
     padding-left: 34px;
 }
 .icae-cal-progress-label {
-    color: #8ab4f8;
     font-weight: 600;
     white-space: nowrap;
+    color: #8ab4f8;
+}
+.icae-cal-progress-label-collection {
+    color: #4dd0e1;
+}
+.icae-cal-progress-label-analysis {
+    color: #ce93d8;
 }
 .icae-cal-progress-item {
     white-space: nowrap;
