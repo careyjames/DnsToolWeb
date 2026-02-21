@@ -223,7 +223,7 @@
                     Producing <span class="text-info">Engineer's DNS Intelligence Reports</span> and <span class="text-info">Executive's DNS Intelligence Briefs</span> with <span class="text-info">posture&nbsp;scoring</span>
                 </p>
                 {{if .ICAEMetrics}}
-                <div class="hero-protocols mb-4" aria-label="Intelligence Confidence Level — per-protocol confidence">
+                <div class="hero-protocols mb-3" aria-label="Intelligence Confidence Level — per-protocol confidence">
                     <div class="icae-hero-status">
                         <a href="/confidence" class="icae-confidence-label" title="Intelligence Confidence Level — {{.ICAEMetrics.EvaluatedCount}}/{{.ICAEMetrics.TotalProtocols}} protocols under audit"><i class="fas fa-satellite-dish me-2"></i>Intelligence Confidence Level</a>
                         <span class="icae-confidence-separator">:</span>
@@ -237,7 +237,7 @@
                     </div>
                 </div>
                 {{else}}
-                <p class="hero-protocols mb-4">
+                <p class="hero-protocols mb-3">
                     SPF &middot; DKIM &middot; DMARC &middot; DANE/TLSA &middot; DNSSEC &middot; BIMI &middot; MTA-STS &middot; TLS-RPT &middot; CAA
                 </p>
                 {{end}}

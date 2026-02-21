@@ -133,7 +133,7 @@ code {
    ============================================ */
 .hero-section {
     background: linear-gradient(170deg, #0a1628 0%, #0d1117 35%, var(--accent-deep) 70%, #0d1117 100%);
-    padding: 3.5rem 0 3rem;
+    padding: 3.5rem 0 2.5rem;
     position: relative;
     overflow: hidden;
     border-bottom: 1px solid rgba(125, 142, 168, 0.12);
@@ -957,11 +957,15 @@ main.container {
     }
     
     .hero-section {
-        padding: 2rem 0 2rem;
+        padding: 2rem 0 1.5rem;
     }
     
     .hero-title {
         font-size: 2.25rem;
+    }
+
+    .u-hero-tagline {
+        font-size: 1.25rem;
     }
     
     .hero-subtitle {
@@ -3774,10 +3778,20 @@ footer a.text-muted:hover { text-decoration-color: rgba(173, 181, 189, 0.8); }
     border: 2px solid var(--bs-btn-border-color);
     color: var(--bs-btn-color);
     transition: all 0.2s ease;
+    -webkit-tap-highlight-color: transparent;
 }
 
-.btn-analyze:hover,
-.btn-analyze:focus {
+@media (hover: hover) {
+    .btn-analyze:hover,
+    .btn-analyze:focus {
+        background-color: var(--bs-btn-hover-bg);
+        border-color: var(--bs-btn-hover-border-color);
+        color: var(--bs-btn-hover-color);
+        box-shadow: 0 0 12px rgba(108, 92, 231, 0.3);
+    }
+}
+
+.btn-analyze:focus-visible {
     background-color: var(--bs-btn-hover-bg);
     border-color: var(--bs-btn-hover-border-color);
     color: var(--bs-btn-hover-color);
