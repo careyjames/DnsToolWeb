@@ -187,3 +187,21 @@ WHERE posture_hash IS NOT NULL
   AND analysis_success = TRUE
 ORDER BY created_at DESC
 LIMIT $1;
+
+-- name: ListHashedAnalyses :many
+SELECT id, domain, posture_hash, created_at FROM domain_analyses
+WHERE posture_hash IS NOT NULL
+  AND posture_hash != ''
+  AND analysis_success = TRUE
+  AND private = FALSE
+  AND scan_flag = FALSE
+ORDER BY created_at DESC
+LIMIT $1 OFFSET $2;
+
+-- name: CountHashedAnalyses :one
+SELECT COUNT(*) FROM domain_analyses
+WHERE posture_hash IS NOT NULL
+  AND posture_hash != ''
+  AND analysis_success = TRUE
+  AND private = FALSE
+  AND scan_flag = FALSE;

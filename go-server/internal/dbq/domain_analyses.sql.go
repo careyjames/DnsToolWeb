@@ -42,6 +42,22 @@ func (q *Queries) CountAllAnalyses(ctx context.Context) (int64, error) {
 	return count, err
 }
 
+const countHashedAnalyses = `-- name: CountHashedAnalyses :one
+SELECT COUNT(*) FROM domain_analyses
+WHERE posture_hash IS NOT NULL
+  AND posture_hash != ''
+  AND analysis_success = TRUE
+  AND private = FALSE
+  AND scan_flag = FALSE
+`
+
+func (q *Queries) CountHashedAnalyses(ctx context.Context) (int64, error) {
+	row := q.db.QueryRow(ctx, countHashedAnalyses)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
 const countScannerAlerts = `-- name: CountScannerAlerts :one
 SELECT COUNT(*) FROM domain_analyses WHERE scan_flag = TRUE
 `
@@ -607,6 +623,54 @@ func (q *Queries) ListCountryDistribution(ctx context.Context, limit int32) ([]L
 	for rows.Next() {
 		var i ListCountryDistributionRow
 		if err := rows.Scan(&i.CountryCode, &i.CountryName, &i.Count); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listHashedAnalyses = `-- name: ListHashedAnalyses :many
+SELECT id, domain, posture_hash, created_at FROM domain_analyses
+WHERE posture_hash IS NOT NULL
+  AND posture_hash != ''
+  AND analysis_success = TRUE
+  AND private = FALSE
+  AND scan_flag = FALSE
+ORDER BY created_at DESC
+LIMIT $1 OFFSET $2
+`
+
+type ListHashedAnalysesParams struct {
+	Limit  int32 `db:"limit" json:"limit"`
+	Offset int32 `db:"offset" json:"offset"`
+}
+
+type ListHashedAnalysesRow struct {
+	ID          int32            `db:"id" json:"id"`
+	Domain      string           `db:"domain" json:"domain"`
+	PostureHash *string          `db:"posture_hash" json:"posture_hash"`
+	CreatedAt   pgtype.Timestamp `db:"created_at" json:"created_at"`
+}
+
+func (q *Queries) ListHashedAnalyses(ctx context.Context, arg ListHashedAnalysesParams) ([]ListHashedAnalysesRow, error) {
+	rows, err := q.db.Query(ctx, listHashedAnalyses, arg.Limit, arg.Offset)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []ListHashedAnalysesRow{}
+	for rows.Next() {
+		var i ListHashedAnalysesRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.Domain,
+			&i.PostureHash,
+			&i.CreatedAt,
+		); err != nil {
 			return nil, err
 		}
 		items = append(items, i)

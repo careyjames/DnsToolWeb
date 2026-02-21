@@ -190,6 +190,7 @@ func main() {
 
         confidenceHandler := handlers.NewConfidenceHandler(cfg, database)
         router.GET("/confidence", confidenceHandler.Confidence)
+        router.GET("/confidence/audit-log", confidenceHandler.AuditLog)
 
         securityPolicyHandler := handlers.NewSecurityPolicyHandler(cfg)
         router.GET("/security-policy", securityPolicyHandler.SecurityPolicy)
