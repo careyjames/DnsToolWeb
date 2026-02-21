@@ -177,6 +177,31 @@ code {
     color: #e6edf3;
 }
 
+.hero-ascii-pre {
+    font-family: 'Courier New', 'Lucida Console', monospace;
+    font-size: 0.7rem;
+    font-weight: 700;
+    line-height: 1.15;
+    letter-spacing: 0.04em;
+    color: #e6edf3;
+    background: none;
+    border: none;
+    margin: 0 auto;
+    padding: 0;
+    display: inline-block;
+    text-align: left;
+    white-space: pre;
+    overflow: hidden;
+}
+
+body.covert-mode .hero-ascii-pre {
+    color: #8c2828;
+    text-shadow:
+        0 0 6px rgba(196, 60, 60, 0.3),
+        0 0 20px rgba(140, 40, 40, 0.15);
+    animation: covert-title-pulse 4s ease-in-out infinite;
+}
+
 .hero-subtitle {
     font-size: 1.1rem;
     color: var(--text-secondary);
