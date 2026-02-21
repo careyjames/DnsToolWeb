@@ -2958,6 +2958,261 @@ body.covert-mode .icae-tier-meter {
 body.covert-mode .icae-tier-meter-label {
     color: rgba(160, 130, 130, 0.5) !important;
 }
+body.covert-mode .icae-dot-color-development {
+    background: #5c3030 !important;
+    box-shadow: none !important;
+}
+body.covert-mode .icae-dot-color-verified {
+    background: #8c3030 !important;
+    box-shadow: 0 0 1px 1px rgba(140, 48, 48, 0.6), 0 0 5px rgba(140, 48, 48, 0.5) !important;
+}
+body.covert-mode .icae-dot-color-consistent {
+    background: #b04040 !important;
+    box-shadow: 0 0 1px 1px rgba(176, 64, 64, 0.6), 0 0 5px rgba(176, 64, 64, 0.5) !important;
+}
+body.covert-mode .icae-dot-color-gold {
+    background: #cc5030 !important;
+    box-shadow: 0 0 1px 1px rgba(204, 80, 48, 0.6), 0 0 5px rgba(204, 80, 48, 0.5) !important;
+}
+body.covert-mode .icae-dot-color-gold_master {
+    background: #dd6650 !important;
+    box-shadow: 0 0 1px 1px rgba(221, 102, 80, 0.7), 0 0 6px rgba(221, 102, 80, 0.5) !important;
+}
+body.covert-mode .icae-maturity-development {
+    background: rgba(92, 48, 48, 0.20) !important;
+    color: #8c6060 !important;
+}
+body.covert-mode .icae-maturity-verified {
+    background: rgba(140, 48, 48, 0.15) !important;
+    color: #8c3030 !important;
+}
+body.covert-mode .icae-maturity-consistent {
+    background: rgba(176, 64, 64, 0.15) !important;
+    color: #b04040 !important;
+}
+body.covert-mode .icae-maturity-gold {
+    background: rgba(204, 80, 48, 0.15) !important;
+    color: #cc5030 !important;
+}
+body.covert-mode .icae-maturity-gold_master {
+    background: rgba(221, 102, 80, 0.15) !important;
+    color: #dd6650 !important;
+}
+body.covert-mode .icae-maturity-deep-development {
+    background: linear-gradient(135deg, #4a2828 0%, #3a2020 100%) !important;
+    color: #a07070 !important;
+    border: 1px solid rgba(92, 48, 48, 0.5) !important;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4) !important;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 2px 6px rgba(0, 0, 0, 0.35) !important;
+}
+body.covert-mode .icae-maturity-deep-verified {
+    background: linear-gradient(135deg, #7c2828 0%, #5c2020 100%) !important;
+    color: #d0a0a0 !important;
+    border: 1px solid rgba(140, 48, 48, 0.5) !important;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4) !important;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 2px 6px rgba(0, 0, 0, 0.35) !important;
+}
+body.covert-mode .icae-maturity-deep-consistent {
+    background: linear-gradient(135deg, #983030 0%, #782828 100%) !important;
+    color: #e0b0b0 !important;
+    border: 1px solid rgba(176, 64, 64, 0.5) !important;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4) !important;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.10), 0 2px 6px rgba(0, 0, 0, 0.35) !important;
+}
+body.covert-mode .icae-maturity-deep-gold {
+    background: linear-gradient(135deg, #b04028 0%, #903020 100%) !important;
+    color: #f0c8b0 !important;
+    border: 1px solid rgba(204, 80, 48, 0.55) !important;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4) !important;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.10), 0 2px 6px rgba(0, 0, 0, 0.35) !important;
+}
+body.covert-mode .icae-maturity-deep-gold_master {
+    background: linear-gradient(135deg, #c05038 0%, #dd6650 50%, #c05038 100%) !important;
+    color: #2a1810 !important;
+    border: 1px solid rgba(221, 102, 80, 0.7) !important;
+    text-shadow: 0 1px 0 rgba(255, 200, 180, 0.3) !important;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.20), 0 2px 8px rgba(221, 102, 80, 0.3) !important;
+}
+body.covert-mode .icae-overall-badge-development {
+    background: linear-gradient(135deg, #4a2828 0%, #3a2020 100%) !important;
+    color: #a07070 !important;
+    border: 1px solid rgba(92, 48, 48, 0.5) !important;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4) !important;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 4px 12px rgba(0, 0, 0, 0.4) !important;
+}
+body.covert-mode .icae-overall-badge-verified {
+    background: linear-gradient(135deg, #7c2828 0%, #5c2020 100%) !important;
+    color: #d0a0a0 !important;
+    border: 1px solid rgba(140, 48, 48, 0.5) !important;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4) !important;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 4px 12px rgba(0, 0, 0, 0.4) !important;
+}
+body.covert-mode .icae-overall-badge-consistent {
+    background: linear-gradient(135deg, #983030 0%, #782828 100%) !important;
+    color: #e0b0b0 !important;
+    border: 1px solid rgba(176, 64, 64, 0.5) !important;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4) !important;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.10), 0 4px 12px rgba(0, 0, 0, 0.4) !important;
+}
+body.covert-mode .icae-overall-badge-gold {
+    background: linear-gradient(135deg, #b04028 0%, #903020 100%) !important;
+    color: #f0c8b0 !important;
+    border: 1px solid rgba(204, 80, 48, 0.55) !important;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4) !important;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.10), 0 4px 12px rgba(0, 0, 0, 0.4) !important;
+}
+body.covert-mode .icae-overall-badge-gold_master {
+    background: linear-gradient(135deg, #c05038 0%, #dd6650 50%, #c05038 100%) !important;
+    color: #2a1810 !important;
+    border: 1px solid rgba(221, 102, 80, 0.7) !important;
+    text-shadow: 0 1px 0 rgba(255, 200, 180, 0.3) !important;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.20), 0 4px 14px rgba(221, 102, 80, 0.35) !important;
+}
+body.covert-mode .icae-cal-band-dev {
+    background: rgba(92, 48, 48, 0.10) !important;
+    color: #5c3030 !important;
+}
+body.covert-mode .icae-cal-band-verified {
+    background: rgba(140, 48, 48, 0.10) !important;
+    color: #8c3030 !important;
+}
+body.covert-mode .icae-cal-band-consistent {
+    background: rgba(176, 64, 64, 0.10) !important;
+    color: #b04040 !important;
+}
+body.covert-mode .icae-cal-band-gold {
+    background: rgba(204, 80, 48, 0.10) !important;
+    color: #cc5030 !important;
+}
+body.covert-mode .icae-cal-band-gm {
+    background: rgba(221, 102, 80, 0.10) !important;
+    color: #dd6650 !important;
+}
+body.covert-mode .icae-cal-seg-dev {
+    background: rgba(92, 48, 48, 0.08) !important;
+}
+body.covert-mode .icae-cal-seg-ver {
+    background: rgba(140, 48, 48, 0.08) !important;
+}
+body.covert-mode .icae-cal-seg-con {
+    background: rgba(176, 64, 64, 0.08) !important;
+}
+body.covert-mode .icae-cal-seg-gold {
+    background: rgba(204, 80, 48, 0.08) !important;
+}
+body.covert-mode .icae-cal-seg-gm {
+    background: rgba(221, 102, 80, 0.08) !important;
+}
+body.covert-mode .icae-cal-fill-development {
+    background: linear-gradient(90deg, rgba(92, 48, 48, 0.25), rgba(92, 48, 48, 0.5)) !important;
+}
+body.covert-mode .icae-cal-fill-verified {
+    background: linear-gradient(90deg, rgba(92, 48, 48, 0.3), rgba(140, 48, 48, 0.6)) !important;
+}
+body.covert-mode .icae-cal-fill-consistent {
+    background: linear-gradient(90deg, rgba(92, 48, 48, 0.25), rgba(140, 48, 48, 0.4), rgba(176, 64, 64, 0.6)) !important;
+}
+body.covert-mode .icae-cal-fill-gold {
+    background: linear-gradient(90deg, rgba(92, 48, 48, 0.2), rgba(140, 48, 48, 0.3), rgba(176, 64, 64, 0.4), rgba(204, 80, 48, 0.6)) !important;
+}
+body.covert-mode .icae-cal-fill-gold_master {
+    background: linear-gradient(90deg, rgba(92, 48, 48, 0.2), rgba(140, 48, 48, 0.25), rgba(176, 64, 64, 0.3), rgba(204, 80, 48, 0.4), rgba(221, 102, 80, 0.6)) !important;
+}
+body.covert-mode .icae-bar-collection .icae-cal-fill-development {
+    background: linear-gradient(90deg, rgba(160, 48, 70, 0.15), rgba(160, 48, 70, 0.35)) !important;
+}
+body.covert-mode .icae-bar-collection .icae-cal-fill-verified {
+    background: linear-gradient(90deg, rgba(160, 48, 70, 0.2), rgba(160, 48, 70, 0.55)) !important;
+}
+body.covert-mode .icae-bar-collection .icae-cal-fill-consistent {
+    background: linear-gradient(90deg, rgba(160, 48, 70, 0.2), rgba(160, 48, 70, 0.45), rgba(176, 64, 64, 0.5)) !important;
+}
+body.covert-mode .icae-bar-collection .icae-cal-fill-gold {
+    background: linear-gradient(90deg, rgba(160, 48, 70, 0.15), rgba(160, 48, 70, 0.3), rgba(176, 64, 64, 0.35), rgba(204, 80, 48, 0.5)) !important;
+}
+body.covert-mode .icae-bar-collection .icae-cal-fill-gold_master {
+    background: linear-gradient(90deg, rgba(160, 48, 70, 0.15), rgba(160, 48, 70, 0.25), rgba(176, 64, 64, 0.3), rgba(204, 80, 48, 0.35), rgba(221, 102, 80, 0.5)) !important;
+}
+body.covert-mode .icae-bar-analysis .icae-cal-fill-development {
+    background: linear-gradient(90deg, rgba(200, 60, 40, 0.15), rgba(200, 60, 40, 0.35)) !important;
+}
+body.covert-mode .icae-bar-analysis .icae-cal-fill-verified {
+    background: linear-gradient(90deg, rgba(200, 60, 40, 0.2), rgba(200, 60, 40, 0.55)) !important;
+}
+body.covert-mode .icae-bar-analysis .icae-cal-fill-consistent {
+    background: linear-gradient(90deg, rgba(200, 60, 40, 0.2), rgba(200, 60, 40, 0.45), rgba(176, 64, 64, 0.5)) !important;
+}
+body.covert-mode .icae-bar-analysis .icae-cal-fill-gold {
+    background: linear-gradient(90deg, rgba(200, 60, 40, 0.15), rgba(200, 60, 40, 0.3), rgba(176, 64, 64, 0.35), rgba(204, 80, 48, 0.5)) !important;
+}
+body.covert-mode .icae-bar-analysis .icae-cal-fill-gold_master {
+    background: linear-gradient(90deg, rgba(200, 60, 40, 0.15), rgba(200, 60, 40, 0.25), rgba(176, 64, 64, 0.3), rgba(204, 80, 48, 0.35), rgba(221, 102, 80, 0.5)) !important;
+}
+body.covert-mode .icae-bar-collection .icae-cal-fill {
+    border-top: 2px solid rgba(160, 48, 70, 0.7) !important;
+}
+body.covert-mode .icae-bar-analysis .icae-cal-fill {
+    border-top: 2px solid rgba(200, 60, 40, 0.7) !important;
+}
+body.covert-mode .icae-bar-collection .icae-cal-track {
+    background: rgba(160, 48, 70, 0.06) !important;
+    border: 1px solid rgba(160, 48, 70, 0.12) !important;
+}
+body.covert-mode .icae-bar-analysis .icae-cal-track {
+    background: rgba(200, 60, 40, 0.06) !important;
+    border: 1px solid rgba(200, 60, 40, 0.12) !important;
+}
+body.covert-mode .icae-cal-layer-label-collection {
+    color: rgba(180, 60, 80, 0.7) !important;
+}
+body.covert-mode .icae-cal-layer-label-analysis {
+    color: rgba(200, 60, 40, 0.7) !important;
+}
+body.covert-mode .icae-bar-collection .icae-cal-layer-runs {
+    color: rgba(160, 48, 70, 0.45) !important;
+}
+body.covert-mode .icae-bar-analysis .icae-cal-layer-runs {
+    color: rgba(200, 60, 40, 0.45) !important;
+}
+body.covert-mode .icae-cal-leg-dev {
+    background: #5c3030 !important;
+}
+body.covert-mode .icae-cal-leg-ver {
+    background: #8c3030 !important;
+}
+body.covert-mode .icae-cal-leg-con {
+    background: #b04040 !important;
+}
+body.covert-mode .icae-cal-leg-gold {
+    background: #cc5030 !important;
+}
+body.covert-mode .icae-cal-leg-gm {
+    background: #dd6650 !important;
+}
+body.covert-mode .icae-tier-meter-fill {
+    background: linear-gradient(90deg, #8c3030, #cc5030) !important;
+}
+body.covert-mode .icae-cal-needle {
+    background: rgba(220, 180, 180, 0.9) !important;
+    box-shadow: 0 0 3px rgba(220, 180, 180, 0.8) !important;
+}
+body.covert-mode .icae-bar-collection .icae-cal-needle {
+    background: rgba(180, 60, 80, 0.9) !important;
+    box-shadow: 0 0 4px rgba(180, 60, 80, 0.9) !important;
+}
+body.covert-mode .icae-bar-analysis .icae-cal-needle {
+    background: rgba(200, 60, 40, 0.9) !important;
+    box-shadow: 0 0 4px rgba(200, 60, 40, 0.9) !important;
+}
+body.covert-mode .u-max-w-900 .text-success {
+    color: rgba(86, 211, 100, 0.4) !important;
+}
+body.covert-mode .u-max-w-900 .text-warning {
+    color: rgba(224, 184, 92, 0.4) !important;
+}
+body.covert-mode .u-max-w-900 .text-danger {
+    color: rgba(220, 53, 69, 0.6) !important;
+}
 body.covert-mode .fa-layer-group.text-info,
 body.covert-mode .fa-check-double.text-info,
 body.covert-mode .fa-shield-halved.text-info {
