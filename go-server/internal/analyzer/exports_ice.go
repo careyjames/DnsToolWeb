@@ -130,6 +130,23 @@ func ExportIsBIMICapableProvider(domain string) bool {
         return isBIMICapableProvider(domain)
 }
 
+func ExportClassifyDMARCRecords(records []string) ([]string, []string) {
+        return classifyDMARCRecords(records)
+}
+
+func ExportParseDMARCPolicy(record string) (policy string, pct int, hasRUA bool) {
+        tags := parseDMARCTags(record)
+        p := ""
+        if tags.policy != nil {
+                p = *tags.policy
+        }
+        return p, tags.pct, tags.rua != nil
+}
+
+func ExportExtractTLSRPTURIs(record string) []string {
+        return extractTLSRPTURIs(record)
+}
+
 func ExportBuildBrandVerdict(dmarcMissing bool, dmarcPolicy string, bimiOK, caaOK bool) map[string]any {
         ps := protocolState{
                 dmarcMissing: dmarcMissing,

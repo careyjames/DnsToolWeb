@@ -15,6 +15,8 @@ func CollectionTestCases() []TestCase {
         cases = append(cases, mxExtractionCases()...)
         cases = append(cases, recordFilteringCases()...)
         cases = append(cases, recordParsingCases()...)
+        cases = append(cases, dmarcCollectionCases()...)
+        cases = append(cases, tlsrptCollectionCases()...)
         return cases
 }
 
@@ -370,6 +372,85 @@ func recordParsingCases() []TestCase {
                         RunFn: func() (string, bool) {
                                 domain := analyzer.ExportRegistrableDomain("sub.example.com")
                                 return domain, domain == "example.com"
+                        },
+                },
+        }
+}
+
+func dmarcCollectionCases() []TestCase {
+        return []TestCase{
+                {
+                        CaseID:     "dmarc-collection-001",
+                        CaseName:   "DMARC record filtering accepts v=DMARC1",
+                        Protocol:   "dmarc",
+                        Layer:      LayerCollection,
+                        RFCSection: "RFC 7489 §6.1",
+                        Expected:   "1 valid, 0 dmarc-like",
+                        RunFn: func() (string, bool) {
+                                valid, dmarcLike := analyzer.ExportClassifyDMARCRecords([]string{
+                                        "v=DMARC1; p=reject; rua=mailto:dmarc@example.com",
+                                        "v=spf1 include:google.com ~all",
+                                        "some-random-txt-record",
+                                })
+                                actual := fmt.Sprintf("%d valid, %d dmarc-like", len(valid), len(dmarcLike))
+                                return actual, len(valid) == 1 && len(dmarcLike) == 0
+                        },
+                },
+                {
+                        CaseID:     "dmarc-collection-002",
+                        CaseName:   "DMARC policy tag extraction from record",
+                        Protocol:   "dmarc",
+                        Layer:      LayerCollection,
+                        RFCSection: "RFC 7489 §6.3",
+                        Expected:   "policy=reject, pct=100, hasRUA=true",
+                        RunFn: func() (string, bool) {
+                                policy, pct, hasRUA := analyzer.ExportParseDMARCPolicy("v=DMARC1; p=reject; pct=100; rua=mailto:dmarc@example.com")
+                                actual := fmt.Sprintf("policy=%s, pct=%d, hasRUA=%t", policy, pct, hasRUA)
+                                return actual, policy == "reject" && pct == 100 && hasRUA
+                        },
+                },
+                {
+                        CaseID:     "dmarc-collection-003",
+                        CaseName:   "Empty TXT records yield zero DMARC records",
+                        Protocol:   "dmarc",
+                        Layer:      LayerCollection,
+                        RFCSection: "RFC 7489 §6.1",
+                        Expected:   "0 valid, 0 dmarc-like",
+                        RunFn: func() (string, bool) {
+                                valid, dmarcLike := analyzer.ExportClassifyDMARCRecords(nil)
+                                actual := fmt.Sprintf("%d valid, %d dmarc-like", len(valid), len(dmarcLike))
+                                return actual, len(valid) == 0 && len(dmarcLike) == 0
+                        },
+                },
+        }
+}
+
+func tlsrptCollectionCases() []TestCase {
+        return []TestCase{
+                {
+                        CaseID:     "tlsrpt-collection-001",
+                        CaseName:   "TLS-RPT URI extraction from rua field",
+                        Protocol:   "tlsrpt",
+                        Layer:      LayerCollection,
+                        RFCSection: "RFC 8460 §3",
+                        Expected:   "2 URIs extracted",
+                        RunFn: func() (string, bool) {
+                                uris := analyzer.ExportExtractTLSRPTURIs("v=TLSRPTv1; rua=mailto:tls@example.com,https://report.example.com/tls")
+                                actual := fmt.Sprintf("%d URIs: %v", len(uris), uris)
+                                return actual, len(uris) == 2 && strings.Contains(uris[0], "mailto:") && strings.Contains(uris[1], "https://")
+                        },
+                },
+                {
+                        CaseID:     "tlsrpt-collection-002",
+                        CaseName:   "TLS-RPT record without rua yields zero URIs",
+                        Protocol:   "tlsrpt",
+                        Layer:      LayerCollection,
+                        RFCSection: "RFC 8460 §3",
+                        Expected:   "0 URIs",
+                        RunFn: func() (string, bool) {
+                                uris := analyzer.ExportExtractTLSRPTURIs("v=TLSRPTv1")
+                                actual := fmt.Sprintf("%d URIs", len(uris))
+                                return actual, len(uris) == 0
                         },
                 },
         }

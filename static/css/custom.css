@@ -355,6 +355,8 @@ code {
 }
 .icae-confidence-label:hover { color: rgba(230, 237, 243, 0.9); text-decoration: none; }
 .icae-confidence-label .fas { font-size: 0.7rem; opacity: 0.55; }
+.icae-confidence-separator { color: rgba(230, 237, 243, 0.35); font-size: 0.82rem; font-weight: 300; margin: 0 -0.15rem; }
+.icae-hero-divider { width: 12rem; max-width: 60%; height: 1px; margin: 0.5rem auto 0.45rem; background: linear-gradient(90deg, transparent, rgba(125, 142, 168, 0.25) 20%, rgba(125, 142, 168, 0.25) 80%, transparent); }
 .icae-hero-label { text-align: center; display: flex; align-items: center; justify-content: center; gap: 0.5rem; flex-wrap: wrap; }
 .icae-hero-maturity-badge {
     display: inline-flex;
