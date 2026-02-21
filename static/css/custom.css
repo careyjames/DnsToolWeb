@@ -2524,7 +2524,7 @@ body.covert-mode .hero-section::before {
                 radial-gradient(ellipse at 70% 80%, rgba(100, 30, 30, 0.04) 0%, transparent 50%) !important;
 }
 body.covert-mode footer .u-rounded-circle {
-    filter: saturate(0.3) brightness(0.8);
+    filter: grayscale(1) brightness(0.4) sepia(1) hue-rotate(330deg) saturate(3) contrast(1.1);
 }
 body.covert-mode footer .u-text-footer {
     color: rgba(204, 40, 40, 0.6);
@@ -2996,7 +2996,7 @@ body.covert-mode .loading-overlay .h4.covert-show {
     color: #cc2020;
 }
 body.covert-mode img[src*="owl-of-athena"] {
-    filter: sepia(1) saturate(4) hue-rotate(330deg) brightness(0.55) contrast(1.2);
+    filter: grayscale(1) brightness(0.4) sepia(1) hue-rotate(330deg) saturate(3) contrast(1.1);
 }
 body.covert-mode .proto-spf.bg-success {
     background-color: #1a2540 !important;

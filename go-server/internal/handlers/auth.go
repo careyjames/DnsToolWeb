@@ -253,8 +253,14 @@ func (h *AuthHandler) Callback(c *gin.Context) {
 
         slog.Info("User authenticated", "email", email, "role", user.Role, "user_id", user.ID)
 
-        welcomeMsg := url.QueryEscape("Signed in as " + name + ". No mailing lists, no newsletters, no spam \u2014 ever. Your email is used for authentication only.")
-        c.Redirect(http.StatusFound, "/?flash="+welcomeMsg+"&flash_cat=success")
+        firstLogin := user.CreatedAt.Valid && user.LastLoginAt.Valid &&
+                user.LastLoginAt.Time.Sub(user.CreatedAt.Time).Abs() < 5*time.Second
+        if firstLogin {
+                welcomeMsg := url.QueryEscape("Welcome, " + name + ". No mailing lists, no newsletters, no spam \u2014 ever. Your email is used for authentication only.")
+                c.Redirect(http.StatusFound, "/?flash="+welcomeMsg+"&flash_cat=success")
+        } else {
+                c.Redirect(http.StatusFound, "/")
+        }
 }
 
 func (h *AuthHandler) Logout(c *gin.Context) {
