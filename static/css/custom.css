@@ -198,7 +198,7 @@ code {
     background: rgba(22, 27, 34, 0.45);
     border: 1px solid rgba(125, 142, 168, 0.1);
     border-radius: 0.5rem;
-    padding: 0.6rem 1.25rem;
+    padding: 0.65rem 1.25rem 0.6rem;
     max-width: 34rem;
     margin-left: auto;
     margin-right: auto;
@@ -210,29 +210,33 @@ code {
     text-decoration: none;
     color: #8b949e;
 }
+.icae-hero-statement {
+    display: block;
+    margin-bottom: 0.45rem;
+}
 .icae-hero-title {
-    font-size: 0.7rem;
+    font-size: 0.72rem;
     font-weight: 600;
-    letter-spacing: 0.07em;
+    letter-spacing: 0.06em;
     text-transform: uppercase;
-    color: rgba(230, 237, 243, 0.4);
+    color: rgba(230, 237, 243, 0.45);
 }
 .icae-hero-title .fas {
     font-size: 0.6rem;
-    opacity: 0.5;
+    opacity: 0.45;
 }
 .icae-hero-maturity {
     display: inline-block;
-    font-size: 0.68rem;
+    font-size: 0.72rem;
     font-weight: 600;
     letter-spacing: 0.03em;
-    padding: 0.1rem 0.5rem;
+    padding: 0.1rem 0.55rem;
     border-radius: 999px;
-    margin-left: 0.4rem;
+    margin-left: 0.25rem;
     color: #e6edf3;
     background: rgba(22, 27, 34, 0.85);
     border: 1px solid rgba(125, 142, 168, 0.3);
-    vertical-align: middle;
+    vertical-align: baseline;
 }
 .icae-hero-maturity::before {
     content: '';
@@ -255,12 +259,13 @@ code {
 .icae-hero-maturity.icae-level-gold-master::before { background: linear-gradient(135deg, #f0ddb3, #faf3e3); box-shadow: 0 0 4px rgba(240, 221, 179, 0.5); }
 .icae-hero-protocols {
     display: block;
-    margin-top: 0.4rem;
     font-size: 0.78rem;
     font-weight: 500;
     letter-spacing: 0.02em;
     color: rgba(230, 237, 243, 0.5);
-    line-height: 1.8;
+    line-height: 1.7;
+    padding-top: 0.4rem;
+    border-top: 1px solid rgba(125, 142, 168, 0.1);
 }
 .icae-proto { white-space: nowrap; }
 .icae-proto .icae-dot {
