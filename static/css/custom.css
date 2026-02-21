@@ -177,13 +177,17 @@ code {
     color: #e6edf3;
 }
 
+.hero-ascii-covert {
+    display: none !important;
+}
+
 .hero-ascii-pre {
     font-family: 'Courier New', 'Lucida Console', monospace;
-    font-size: 0.7rem;
+    font-size: 0.55rem;
     font-weight: 700;
     line-height: 1.15;
     letter-spacing: 0.04em;
-    color: #e6edf3;
+    color: #8c2828;
     background: none;
     border: none;
     margin: 0 auto;
@@ -192,14 +196,19 @@ code {
     text-align: left;
     white-space: pre;
     overflow: hidden;
-}
-
-body.covert-mode .hero-ascii-pre {
-    color: #8c2828;
     text-shadow:
         0 0 6px rgba(196, 60, 60, 0.3),
         0 0 20px rgba(140, 40, 40, 0.15);
     animation: covert-title-pulse 4s ease-in-out infinite;
+}
+
+@media (min-width: 768px) {
+    body.covert-mode .hero-ascii-covert {
+        display: block !important;
+    }
+    body.covert-mode .hero-text-standard {
+        display: none !important;
+    }
 }
 
 .hero-subtitle {
