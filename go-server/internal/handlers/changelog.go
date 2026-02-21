@@ -105,7 +105,7 @@ func GetChangelog() []ChangelogEntry {
                         Date:        dateFeb21,
                         Category:    "Brand",
                         Title:       "Origin Story Page",
-                        Description: "New /about page documenting the authentic origin story: Memphis 1980 Radio Shack build, Nashville IT career, Raspberry Pi breakthrough, PhreakNIC Hackintosh demo, Hak5 offensive security era, Python CLI field tool, and the February 2025 Go platform launch. Includes acknowledgments section crediting early collaborators and linked verifiable references (Nmap 7.94 changelog, Hak5 Payload Award, Raspberry Pi forum post).",
+                        Description: "New /about page documenting the authentic origin story: Memphis 1980 Radio Shack build, Nashville IT career, Raspberry Pi breakthrough, PhreakNIC Hackintosh demo, Hak5 offensive security era, 2015-2024 defensive security pivot with Objective-See and CISA red team validation, Python CLI field tool with Snap Store publication (Nov 2023), and the February 2025 Go platform launch. Includes acknowledgments section crediting early collaborators and linked verifiable references (Nmap 7.94 changelog, Hak5 Payload Award, Raspberry Pi forum post).",
                         Icon:        "fas fa-book-open",
                 },
                 {
