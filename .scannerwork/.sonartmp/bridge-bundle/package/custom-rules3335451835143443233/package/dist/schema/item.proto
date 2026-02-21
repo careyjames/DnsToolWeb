@@ -1,0 +1,86 @@
+syntax = "proto3";
+option java_package = "com.sonarsource.architecture.udg.protobuf";
+option csharp_namespace = "SonarAnalyzer.Udg.Protobuf";
+option java_multiple_files = true;
+option optimize_for = SPEED;
+
+import "property.proto";
+import "location.proto";
+
+message Items {
+    /**
+     * Map: Items by item ID.
+     */
+    map<string, Item> item = 1;
+}
+
+/**
+ * Represents a source code entity such as a class, type, function, or field.
+ * Unlike _Containers_, they are usually associated with a single file and contain code.
+ * They are the building blocks of a project, not purely structural elements.
+ */
+message Item {
+
+    /**
+     * ID of this item.
+     */
+    string id = 1;
+
+    /**
+     * String ID: Fully qualified name of this item, such as a function name or class name.
+     */
+    string name_aid = 2;
+
+    /**
+     * String ID: Kind of this item, such as class, type, function, field or something else.
+     *
+     * The concrete possible values are defined by the generator for the respective language.
+     */
+    string kind_aid = 3;
+
+    /**
+     * Indicates whether this item was scanned by the language frontend (`true`),
+     * i.e., whether it is part of the source code of the project,
+     * or whether it is just a dependency that was referenced from the project source code (`false`).
+     *
+     * If declared inside the project, the item has an associated location of declaration
+     * and was discovered during the analysis of the source file.
+     * Otherwise, the item was constructed from its occurrence in a `Dependency` object without an available declaration.
+     * Language front ends may still assign a location to such items, e.g., the "import" or "require" directive
+     * that made it available in the project.
+     */
+    bool scanned = 4;
+
+    /**
+     * Location of the declaration of this item.
+     * Can be `null` if this item is part of a dependency of the project, e.g., a third party library.
+     * See also `scanned`.
+     */
+    optional Location location = 5; // optional Location as perhaps this is an external, non-parsed Type
+
+    /**
+     * ID of the item in which this item is declared, such as the outer type/class enclosing an inner type/class (this item),
+     * or the class type/class containing a function (this item).
+     *
+     * Note: This is not a parent/child relationship in the object oriented hierarchical sense, i.e., one class being the parent class of another.
+     * Also, do not confuse with the declaring container (see `contained_by_id` property).
+     */
+    optional string parent_item_id = 6; // set if an inner type
+
+    /**
+     * IDs of the containers in which this item is declared, such as the package or module a type/class belongs to.
+     * Since different kinds of containers, or different views on the project structure, can coexist in a language
+     * (e.g., packages and modules in Java), an item can be part of multiple containers at the same time.
+     */
+    repeated string contained_by_id = 7;
+
+    /**
+     * Additional properties attached by the generator.
+     */
+    optional Properties properties = 8;
+
+    /**
+     * Metrics properties attached by the generator.
+     */
+    optional Properties measures = 9;
+}

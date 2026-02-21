@@ -1,0 +1,73 @@
+syntax = "proto3";
+option java_package = "com.sonarsource.architecture.udg.protobuf";
+option csharp_namespace = "SonarAnalyzer.Udg.Protobuf";
+option java_multiple_files = true;
+option optimize_for = SPEED;
+
+import "location.proto";
+import "property.proto";
+
+message Dependencies {
+    repeated Dependency dependency = 1;
+}
+
+/**
+ * Represents a reference from a source node to a sink in a UDG.
+ * A dependency can be a file, item or container dependency:
+ *
+ * - _File Dependency_: a dependency from files; e.g., a `.cpp` that "includes" a `.h`
+ * - _Item Dependency_: a dependency from items; e.g., one type using another type or member.
+ * - _Container Dependency_: a dependency from containers; e.g., a module that "requires" a module.
+ *
+ * Note that mixed references, such as from a file to an item, or from an item to a container, are possible (see `UDG`).
+ *
+ * By default, each reference in the source code is represented as an individual `Dependency` object.
+ * Multiple references between the same source and sink are rolled-up only in the high-level data model (Hi-Graph).
+ * However, generators may also chose to roll up dependencies.
+ * See the `weight` and `location` properties for details.
+ */
+message Dependency {
+
+    /**
+     * ID of the source node.
+     * This can be a file ID, item ID or container ID, depending on whether this
+     * dependency is a file dependency, item dependency or container dependency.
+     */
+    string from_id = 1;
+
+    /**
+     * ID of the sink node.
+     * This can be a file ID, item ID or container ID, depending on whether this
+     * dependency is a file dependency, item dependency or container dependency.
+     */
+    string to_id = 2;
+
+    /**
+     * String ID: Kind of reference represented by this dependency, such as a function call, an import/include directive,
+     * a variable assignment, a parameter/return type of a function or something else.
+     *
+     * The concrete possible values are defined by the generator for the respective language.
+     */
+    string kind_aid = 3;
+
+    /**
+     * Weight of this dependency, if any.
+     *
+     * By default, each reference in the source code is represented as an individual `Dependency` object.
+     * This implies an associated `location` and a weight of 1.
+     * However, generators may also chose to roll up dependencies such that multiple references between
+     * the same source and sink are represented by just one `Dependency` object.
+     * In that case, `weight` represents the number of individual references between that source and sink.
+     */
+    optional int32 weight = 4;
+
+    /**
+     * Source code location associated with this dependency.
+     */
+    optional Location location = 5;
+
+    /**
+     * Additional properties attached by the generator.
+     */
+    optional Properties properties = 6;
+}

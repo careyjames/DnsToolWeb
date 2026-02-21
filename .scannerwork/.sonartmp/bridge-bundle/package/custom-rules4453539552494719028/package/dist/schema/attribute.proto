@@ -1,0 +1,18 @@
+syntax = "proto3";
+option java_package = "com.sonarsource.architecture.udg.protobuf";
+option csharp_namespace = "SonarAnalyzer.Udg.Protobuf";
+option java_multiple_files = true;
+option optimize_for = SPEED;
+
+/**
+ * A lookup table for string compression: string to string ID.
+ * This is used in the UDG data so that strings that appear multiple times, such as qualifiers, identifiers and file names,
+ * are stored in the data just once an then referenced by ID.
+ */
+message Attributes {
+    /**
+     * Map: String to string ID.
+     */
+    map<string, string> attribute = 1;
+}
+

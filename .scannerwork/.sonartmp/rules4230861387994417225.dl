@@ -1,0 +1,1793 @@
+.comp S8242 {
+
+// Helper: Find all imports of "context" package and track their names (aliases or default)
+.decl context_import_name(file_id: number, name: symbol)
+context_import_name(file_id, name) :-
+  import_spec(spec),
+  import_spec_path_f(spec, path),
+  node_text(path, path_text),
+  contains("context", path_text),
+  file_id(spec, file_id),
+  (
+    // Case 1: Aliased import (e.g., ctx "context")
+    (import_spec_name_f(spec, alias_node),
+     package_identifier(alias_node),
+     node_text(alias_node, name))
+    ;
+    // Case 2: Default import (no alias, use "context")
+    (!import_spec_name_f(spec, _),
+     name = "context")
+  ).
+
+// Helper: Check if a qualified type refers to context.Context
+.decl is_context_type(type_node: Node)
+is_context_type(type_node) :-
+  qualified_type(type_node),
+  qualified_type_package_f(type_node, pkg_node),
+  qualified_type_name_f(type_node, name_node),
+  node_text(name_node, "Context"),
+  package_identifier(pkg_node),
+  node_text(pkg_node, pkg_name),
+  file_id(type_node, file_id),
+  context_import_name(file_id, pkg_name).
+
+// Helper: Check if a type is context.Context or *context.Context
+.decl is_context_or_pointer_to_context(type_node: Node)
+is_context_or_pointer_to_context(type_node) :-
+  is_context_type(type_node).
+is_context_or_pointer_to_context(type_node) :-
+  pointer_type(type_node),
+  pointer_type__type_c(type_node, inner_type),
+  is_context_type(inner_type).
+
+// Main detection: Find field declarations with context.Context type
+.decl context_field(field: Node, field_type: Node)
+context_field(field, field_type) :-
+  struct_type(struct_node),
+  struct_type_field_declaration_list_c(struct_node, field_list),
+  field_declaration_list_field_declaration_c(field_list, field),
+  field_declaration_type_f(field, field_type),
+  is_context_or_pointer_to_context(field_type).
+
+}
+
+.init s8242 = S8242
+
+// Generate violations for named fields
+rule_violation("S8242", file_name, start_row, start_column, end_row, end_column,
+              "Remove this 'context.Context' field and pass context as a parameter to methods that need it.") :-
+  s8242.context_field(field, _),
+  field_declaration_name_f(field, name_node),
+  location(name_node, _, start_row, start_column, end_row, end_column),
+  file_id(name_node, file_id),
+  file(file_id, file_name).
+
+// Generate violations for embedded fields (no name)
+rule_violation("S8242", file_name, start_row, start_column, end_row, end_column,
+              "Remove this 'context.Context' field and pass context as a parameter to methods that need it.") :-
+  s8242.context_field(field, field_type),
+  !field_declaration_name_f(field, _),
+  location(field_type, _, start_row, start_column, end_row, end_column),
+  file_id(field_type, file_id),
+  file(file_id, file_name).
+
+.comp S8197 {
+
+  // Helper: Identify bytes.Compare calls
+  .decl is_bytes_compare_call(call: Node)
+  is_bytes_compare_call(call) :-
+    call_expression(call),
+    call_expression_function_f(call, func),
+    selector_expression(func),
+    selector_expression_operand_f(func, pkg),
+    identifier(pkg),
+    node_text(pkg, "bytes"),
+    selector_expression_field_f(func, method),
+    field_identifier(method),
+    node_text(method, "Compare").
+
+  // Helper: Check if call has exactly 2 arguments
+  .decl has_two_arguments(call: Node)
+  has_two_arguments(call) :-
+    call_expression_arguments_f(call, args),
+    2 = count : { argument_list__expression_c(args, _) }.
+
+  // Helper: Check if node is int literal with value "0"
+  .decl is_zero_literal(node: Node)
+  is_zero_literal(node) :-
+    int_literal(node),
+    node_text(node, "0").
+
+  // Main detection: bytes.Compare(a, b) == 0 or != 0
+  .decl violation(bin_expr: Node, operator: symbol)
+  violation(bin_expr, op_text) :-
+    binary_expression(bin_expr),
+    binary_expression_operator_f(bin_expr, op),
+    node_text(op, op_text),
+    (op_text = "==" ; op_text = "!="),
+    // Check left operand is bytes.Compare call and right is 0
+    (
+      (binary_expression_left_f(bin_expr, left),
+       is_bytes_compare_call(left),
+       has_two_arguments(left),
+       binary_expression_right_f(bin_expr, right),
+       is_zero_literal(right))
+      ;
+      // Or check right operand is bytes.Compare call and left is 0
+      (binary_expression_right_f(bin_expr, right),
+       is_bytes_compare_call(right),
+       has_two_arguments(right),
+       binary_expression_left_f(bin_expr, left),
+       is_zero_literal(left))
+    ).
+
+  // Generate appropriate message based on operator
+  .decl issue_message(operator: symbol, message: symbol)
+  issue_message("==", "Replace 'bytes.Compare(a, b) == 0' with 'bytes.Equal(a, b)'").
+  issue_message("!=", "Replace 'bytes.Compare(a, b) != 0' with '!bytes.Equal(a, b)'").
+
+}
+
+.init s8197 = S8197
+
+rule_violation("S8197", file_name, start_row, start_column, end_row, end_column, message) :-
+  s8197.violation(bin_expr, operator),
+  s8197.issue_message(operator, message),
+  location(bin_expr, file_name, start_row, start_column, end_row, end_column).
+.comp S8174 {
+    // Find all semicolon nodes
+    .decl semicolon_node(x: Node)
+    semicolon_node(x) :-
+        node(x, 134, 0, _, _, _, _, _, _). // kind = 134 is ";"
+    
+    // Find semicolons that are descendants of for_clause (these are required)
+    .decl required_for_clause_semicolon(x: Node)
+    required_for_clause_semicolon(x) :-
+        semicolon_node(x),
+        for_clause(parent),
+        child(parent, x).
+    
+    // Find semicolons followed by another node on the same line (these are required)
+    .decl required_same_line_semicolon(x: Node)
+    required_same_line_semicolon(x) :-
+        semicolon_node(x),
+        next_sibling(x, next),
+        !comment(next),
+        location(x, file, _, _, end_row, _),
+        location(next, file, next_row, _, _, _),
+        end_row = next_row.
+}
+
+.init s8174 = S8174
+
+rule_violation("S8174", file_name, start_row, start_column, end_row, end_column, "Remove this unnecessary semicolon.") :-
+    s8174.semicolon_node(node),
+    !s8174.required_for_clause_semicolon(node),
+    !s8174.required_same_line_semicolon(node),
+    location(node, file_name, start_row, start_column, end_row, end_column).
+
+.comp S8196 {
+    // Find single-method interfaces
+    .decl single_method_interface(spec: Node)
+    single_method_interface(spec) :-
+        type_spec(spec),
+        type_spec_type_f(spec, iface),
+        interface_type(iface),
+        1 = count : { interface_type_method_elem_c(iface, _) },
+        !interface_type_type_elem_c(iface, _).
+    
+    .decl violating_name(spec: Node, name_node: Node)
+    violating_name(spec, name_node) :-
+        type_spec_name_f(spec, name_node),
+        node_text(name_node, name),
+        !match(".*er$", name),
+        !match(".*or$", name).
+}
+
+.init s8196 = S8196
+
+rule_violation("S8196", file_name, start_row, start_column, end_row, end_column, 
+    "Rename this interface to follow Go naming conventions for single-method interfaces.") :-
+    s8196.single_method_interface(spec),
+    s8196.violating_name(spec, name_node),
+    location(name_node, file_name, start_row, start_column, end_row, end_column).
+
+.comp S8184 {
+  // Find all blank import specifications
+  .decl blank_import_spec(
+    spec: Node,
+    file_name: symbol,
+    start_row: number,
+    start_column: number,
+    end_row: number,
+    end_column: number
+  )
+  
+  blank_import_spec(spec, file_name, start_row, start_column, end_row, end_column) :-
+    import_spec(spec),
+    import_spec_name_f(spec, name),
+    blank_identifier(name),
+    location(spec, file_name, start_row, start_column, end_row, end_column).
+  
+  // Find all comment nodes in the source file
+  .decl comment_node(
+    c: Node,
+    file_name: symbol,
+    start_row: number,
+    end_row: number
+  )
+  
+  comment_node(c, file_name, start_row, end_row) :-
+    comment(c),
+    location(c, file_name, start_row, _, end_row, _).
+
+  // A blank import is documented if it has any type of comment
+  .decl is_documented(spec: Node)
+  
+  is_documented(spec) :-
+    blank_import_spec(spec, file_name, start_row, _, _, _),
+    comment_node(_, file_name, _, comment_end),
+    comment_end = start_row - 1.
+  
+  is_documented(spec) :-
+    blank_import_spec(spec, file_name, start_row, _, _, _),
+    comment_node(_, file_name, _, comment_end),
+    comment_end = start_row.
+
+  .decl inherit_previous_sibling_comment(
+    spec: Node
+  )
+
+  // Base case: if the previous sibling is documented, then the current spec is documented
+  inherit_previous_sibling_comment(spec) :-
+    blank_import_spec(spec, _, _, _, _, _),
+    previous_sibling(spec, sibling),
+    is_documented(sibling).
+
+  // Recursive case: check the previous sibling of the previous sibling
+  inherit_previous_sibling_comment(spec) :-
+    blank_import_spec(spec, _, _, _, _, _),
+    previous_sibling(spec, sibling),
+    inherit_previous_sibling_comment(sibling).
+
+  // Find undocumented blank imports
+  .decl undocumented_blank_import(
+    spec: Node,
+    file_name: symbol,
+    start_row: number,
+    start_column: number,
+    end_row: number,
+    end_column: number
+  )
+  
+  undocumented_blank_import(spec, file_name, start_row, start_column, end_row, end_column) :-
+    blank_import_spec(spec, file_name, start_row, start_column, end_row, end_column),
+    !is_documented(spec),
+    !inherit_previous_sibling_comment(spec).
+}
+
+.init s8184 = S8184
+
+rule_violation("S8184", file_name, start_row, start_column, end_row, end_column, "Add a comment explaining why this blank import is needed.") :-
+  s8184.undocumented_blank_import(_, file_name, start_row, start_column, end_row, end_column).
+
+.comp S8261 {
+  // Identifies os.Stat or os.Lstat calls and extracts the path argument
+  .decl stat_call(call: Node, path_arg: Node)
+  stat_call(call, path_arg) :-
+    call_expression_function_f(call, func),
+    selector_expression_operand_f(func, pkg),
+    identifier(pkg),
+    node_text(pkg, "os"),
+    selector_expression_field_f(func, method),
+    field_identifier(method),
+    node_text(method, method_name),
+    (method_name = "Stat" ; method_name = "Lstat"),
+    call_expression_arguments_f(call, args),
+    nth_child(args, 0, path_arg).
+
+  // Identifies os.IsNotExist calls
+  .decl isnotexist_call(call: Node)
+  isnotexist_call(call) :-
+    call_expression_function_f(call, func),
+    selector_expression_operand_f(func, pkg),
+    identifier(pkg),
+    node_text(pkg, "os"),
+    selector_expression_field_f(func, method),
+    field_identifier(method),
+    node_text(method, "IsNotExist").
+
+  // Checks if a condition contains os.IsNotExist call (handles binary expressions)
+  .decl condition_has_isnotexist(condition: Node)
+  condition_has_isnotexist(condition) :-
+    isnotexist_call(condition).
+  condition_has_isnotexist(condition) :-
+    binary_expression(condition),
+    (binary_expression_left_f(condition, call); binary_expression_right_f(condition, call)),
+    isnotexist_call(call).
+
+  // Identifies a specific flag selector (e.g., os.O_CREATE, os.O_EXCL)
+  .decl is_flag_selector(flag: Node, flag_name: symbol)
+  is_flag_selector(flag, flag_name) :-
+    selector_expression_operand_f(flag, pkg),
+    identifier(pkg),
+    node_text(pkg, "os"),
+    selector_expression_field_f(flag, field_node),
+    field_identifier(field_node),
+    node_text(field_node, flag_name).
+
+  // Recursively checks if an expression contains a specific flag
+  .decl contains_flag(expr: Node, flag_name: symbol)
+  contains_flag(expr, flag_name) :-
+    is_flag_selector(expr, flag_name).
+  contains_flag(expr, flag_name) :-
+    binary_expression_left_f(expr, left),
+    contains_flag(left, flag_name).
+  contains_flag(expr, flag_name) :-
+    binary_expression_right_f(expr, right),
+    contains_flag(right, flag_name).
+
+  // Identifies os.Create calls
+  .decl create_call(call: Node, path_arg: Node)
+  create_call(call, path_arg) :-
+    call_expression_function_f(call, func),
+    selector_expression_operand_f(func, pkg),
+    identifier(pkg),
+    node_text(pkg, "os"),
+    selector_expression_field_f(func, method),
+    field_identifier(method),
+    node_text(method, "Create"),
+    call_expression_arguments_f(call, args),
+    nth_child(args, 0, path_arg).
+
+  // Identifies unsafe os.OpenFile calls (with O_CREATE but without O_EXCL)
+  .decl unsafe_openfile_call(call: Node, path_arg: Node)
+  unsafe_openfile_call(call, path_arg) :-
+    call_expression_function_f(call, func),
+    selector_expression_operand_f(func, pkg),
+    identifier(pkg),
+    node_text(pkg, "os"),
+    selector_expression_field_f(func, method),
+    field_identifier(method),
+    node_text(method, "OpenFile"),
+    call_expression_arguments_f(call, args),
+    nth_child(args, 0, path_arg),
+    nth_child(args, 3, flags),
+    contains_flag(flags, "O_CREATE"),
+    !contains_flag(flags, "O_EXCL").
+
+  // Combined file creation call detection
+  .decl file_creation_call(call: Node, path_arg: Node)
+  file_creation_call(call, path_arg) :- create_call(call, path_arg).
+  file_creation_call(call, path_arg) :- unsafe_openfile_call(call, path_arg).
+
+  // Pattern A: if statement with initializer
+  .decl pattern_a_violation(create_call: Node)
+  pattern_a_violation(create_call) :-
+    if_statement_initializer_f(if_stmt, init),
+    short_var_declaration_right_f(init, right_list),
+    expression_list__expression_c(right_list, stat_call),
+    stat_call(stat_call, stat_path),
+    if_statement_condition_f(if_stmt, condition),
+    condition_has_isnotexist(condition),
+    if_statement_consequence_f(if_stmt, body),
+    scope(scope_body, _, body, 47), // 47 = block
+    (
+        scope_descendant(scope_body, descendant_scope, _, _), scope_child_node(descendant_scope, create_call) ;
+        scope_child_node(scope_body, create_call)
+    ),
+    call_expression(create_call),
+    file_creation_call(create_call, create_path),
+    node_text(stat_path, path_text),
+    node_text(create_path, path_text).
+
+  // Pattern B: separate stat call before if statement
+  .decl pattern_b_violation(create_call: Node)
+  pattern_b_violation(create_call) :-
+    scope_child_node(scope, stat_stmt),
+    stat_statement(stat_stmt, stat_path),
+    scope_child_node(scope, if_stmt),
+    if_statement(if_stmt),
+    if_statement_condition_f(if_stmt, condition),
+    condition_has_isnotexist(condition),
+    if_statement_consequence_f(if_stmt, body),
+    scope(scope_body, _, body, 47), // 47 = block
+    (
+        scope_descendant(scope_body, descendant_scope, _, _), scope_child_node(descendant_scope, create_call) ;
+        scope_child_node(scope_body, create_call)
+    ),
+    call_expression(create_call),
+    file_creation_call(create_call, create_path),
+    node_text(stat_path, path_text),
+    node_text(create_path, path_text),
+    location(stat_stmt, file1, line1, _, _, _),
+    location(if_stmt, file2, line2, _, _, _),
+    file1 = file2,
+    line1 < line2.
+
+  .decl stat_statement(stmt: Node, stat_path: Node)
+  stat_statement(stmt, stat_path) :-
+    short_var_declaration_right_f(stmt, right_list),
+    expression_list__expression_c(right_list, stat_call),
+    stat_call(stat_call, stat_path).
+  stat_statement(stmt, stat_path) :-
+    assignment_statement_right_f(stmt, right_list),
+    expression_list__expression_c(right_list, stat_call),
+    stat_call(stat_call, stat_path).
+
+  // Main violation detection
+  .decl violation(create_call: Node, file_name: symbol, start_row: number, start_column: number, end_row: number, end_column: number)
+  violation(create_call, file_name, start_row, start_column, end_row, end_column) :-
+    (pattern_a_violation(create_call) ; pattern_b_violation(create_call)),
+    location(create_call, file_name, start_row, start_column, end_row, end_column).
+}
+
+.init s8261 = S8261
+
+rule_violation("S8261", file_name, start_row, start_column, end_row, end_column, "Replace this file creation with `os.OpenFile` using `os.O_CREATE|os.O_EXCL` flags to atomically create the file and eliminate the race condition.") :-
+  s8261.violation(_, file_name, start_row, start_column, end_row, end_column).
+
+.comp RedundantImports {
+    // Extract all import specs with their package paths
+    .decl import_with_path(spec: ImportSpec, path: symbol, file_id: number)
+    import_with_path(spec, path, file_id) :-
+        import_spec(spec),
+        import_spec_path_f(spec, path_node),
+        node_text(path_node, path_with_quotes),
+        path = substr(path_with_quotes, 1, strlen(path_with_quotes) - 2),
+        file_id(spec, file_id).
+    
+    // Classify imports by type
+    .decl blank_import(spec: ImportSpec)
+    blank_import(spec) :-
+        import_spec(spec),
+        import_spec_name_f(spec, name),
+        blank_identifier(name).
+    
+    .decl aliased_import(spec: ImportSpec, alias: symbol)
+    aliased_import(spec, alias) :-
+        import_spec(spec),
+        import_spec_name_f(spec, name),
+        package_identifier(name),
+        node_text(name, alias).
+    
+    .decl non_aliased_import(spec: ImportSpec)
+    non_aliased_import(spec) :-
+        import_spec(spec),
+        !import_spec_name_f(spec, _).
+    
+    .decl dot_import(spec: ImportSpec)
+    dot_import(spec) :-
+        import_spec(spec),
+        import_spec_name_f(spec, name),
+        dot(name).
+    
+    // Get position of each import
+    .decl import_position(spec: ImportSpec, row: number, col: number)
+    import_position(spec, row, col) :-
+        import_spec(spec),
+        node(spec, _, _, _, row, col, _, _, _).
+    
+    // Find the earliest aliased import for each package path in each file
+    .decl earliest_aliased_position(path: symbol, file_id: number, min_row: number, min_col: number)
+    earliest_aliased_position(path, file_id, min_row, min_col) :-
+        import_with_path(spec, path, file_id),
+        aliased_import(spec, _),
+        !blank_import(spec),
+        min_row = min row : { import_with_path(s, path, file_id),
+                              aliased_import(s, _),
+                              !blank_import(s),
+                              import_position(s, row, _) },
+        min_col = min col : { import_with_path(s, path, file_id),
+                              aliased_import(s, _),
+                              !blank_import(s),
+                              import_position(s, min_row, col) }.
+    
+    .decl first_aliased_import(spec: ImportSpec, path: symbol, file_id: number)
+    first_aliased_import(spec, path, file_id) :-
+        import_with_path(spec, path, file_id),
+        aliased_import(spec, _),
+        !blank_import(spec),
+        import_position(spec, row, col),
+        earliest_aliased_position(path, file_id, row, col).
+    
+    // Find the earliest non-aliased import (only if no aliased import exists)
+    .decl earliest_non_aliased_position(path: symbol, file_id: number, min_row: number, min_col: number)
+    earliest_non_aliased_position(path, file_id, min_row, min_col) :-
+        import_with_path(spec, path, file_id),
+        non_aliased_import(spec),
+        !blank_import(spec),
+        !dot_import(spec),
+        !earliest_aliased_position(path, file_id, _, _),
+        min_row = min row : { import_with_path(s, path, file_id),
+                              non_aliased_import(s),
+                              !blank_import(s),
+                              !dot_import(s),
+                              import_position(s, row, _) },
+        min_col = min col : { import_with_path(s, path, file_id),
+                              non_aliased_import(s),
+                              !blank_import(s),
+                              !dot_import(s),
+                              import_position(s, min_row, col) }.
+    
+    .decl first_non_aliased_import(spec: ImportSpec, path: symbol, file_id: number)
+    first_non_aliased_import(spec, path, file_id) :-
+        import_with_path(spec, path, file_id),
+        non_aliased_import(spec),
+        !blank_import(spec),
+        !dot_import(spec),
+        import_position(spec, row, col),
+        earliest_non_aliased_position(path, file_id, row, col).
+    
+    // All other imports are redundant
+    .decl redundant_import(spec: ImportSpec, path: symbol, file_id: number)
+    redundant_import(spec, path, file_id) :-
+        import_with_path(spec, path, file_id),
+        !blank_import(spec),
+        !first_aliased_import(spec, path, file_id),
+        !first_non_aliased_import(spec, path, file_id).
+    
+    // Helper to generate positions for string scanning
+    .decl position_range(n: number)
+    position_range(0).
+    position_range(n + 1) :- position_range(n), n < 200.
+    
+    // Find all slash positions in a path
+    .decl slash_position(path: symbol, pos: number)
+    slash_position(path, pos) :-
+        import_with_path(_, path, _),
+        position_range(pos),
+        pos < strlen(path),
+        substr(path, pos, 1) = "/".
+    
+    // Find the last slash position
+    .decl last_slash_position(path: symbol, pos: number)
+    last_slash_position(path, pos) :-
+        slash_position(path, pos),
+        pos = max p : { slash_position(path, p) }.
+    
+    // Extract package name from path
+    .decl package_name_from_path(path: symbol, name: symbol)
+    package_name_from_path(path, name) :-
+        last_slash_position(path, pos),
+        name = substr(path, pos + 1, strlen(path) - pos - 1).
+    
+    package_name_from_path(path, path) :-
+        import_with_path(_, path, _),
+        !slash_position(path, _).
+    
+    // Generate violation messages - prefer aliased import's alias
+    .decl violation(spec: ImportSpec, message: symbol)
+    violation(spec, cat("Remove this import; the package is already imported with alias '", cat(alias, "'"))) :-
+        redundant_import(spec, path, file_id),
+        first_aliased_import(preferred, path, file_id),
+        aliased_import(preferred, alias).
+    
+    // For non-aliased preferred imports, use the package name
+    violation(spec, cat("Remove this import; the package is already imported with alias '", cat(pkg_name, "'"))) :-
+        redundant_import(spec, path, file_id),
+        first_non_aliased_import(_, path, file_id),
+        !first_aliased_import(_, path, file_id),
+        package_name_from_path(path, pkg_name).
+}
+
+.init redundant_imports = RedundantImports
+
+rule_violation("S8213", file_name, start_row, start_column, end_row, end_column, message) :-
+    redundant_imports.violation(spec, message),
+    location(spec, file_name, start_row, start_column, end_row, end_column).
+.comp TransactionRollbackCheck {
+  // Find transaction variable assignments from Begin() or BeginTx()
+  .decl transaction_assignment(decl: Node, tx_var_name: symbol, method_name: symbol, db_var_name: symbol)
+  transaction_assignment(decl, tx_var_name, method_name, db_var_name) :-
+    short_var_declaration(decl),
+    short_var_declaration_left_f(decl, left_list),
+    nth_child(left_list, 0, tx_var),
+    identifier(tx_var),
+    node_text(tx_var, tx_var_name),
+    short_var_declaration_right_f(decl, right_list),
+    nth_child(right_list, 0, begin_call),
+    call_expression(begin_call),
+    call_expression_function_f(begin_call, func),
+    selector_expression(func),
+    selector_expression_field_f(func, method),
+    field_identifier(method),
+    node_text(method, method_name),
+    (method_name = "Begin" ; method_name = "BeginTx"),
+    selector_expression_operand_f(func, db_var),
+    node_text(db_var, db_var_name).
+
+  // Find the function that contains a given node
+  .decl containing_function(node: Node, func: Node)
+  containing_function(node, func) :-
+    scope(scope, _, func, 77), // 77 = function_declaration
+    (
+      scope_descendant(scope, descendant_scope, _, _), scope_child_node(descendant_scope, node) ;
+      scope_child_node(scope, node)
+    ).
+
+  // Find direct rollback calls: tx.Rollback()
+  .decl direct_defer_rollback(tx_var_name: symbol, func: Node)
+  direct_defer_rollback(tx_var_name, func) :-
+    call_expression(call),
+    call_expression_function_f(call, call_func),
+    selector_expression(call_func),
+    selector_expression_field_f(call_func, method),
+    field_identifier(method),
+    node_text(method, "Rollback"),
+    selector_expression_operand_f(call_func, tx_var),
+    identifier(tx_var),
+    node_text(tx_var, tx_var_name),
+    containing_function(call, func).
+
+  // Find function literal that contains rollback
+  .decl defer_func_with_rollback(tx_var_name: symbol, func: Node)
+  defer_func_with_rollback(tx_var_name, func) :-
+    call_expression_function_f(call, func_lit),
+    scope(func_lit_scope, _, func_lit, 10), // 10 = func_literal
+    (
+      scope_descendant(func_lit_scope, descendant_scope, _, _), scope_child_node(descendant_scope, rollback_call) ;
+      scope_child_node(func_lit_scope, rollback_call)
+    ),
+    call_expression_function_f(rollback_call, call_func),
+    selector_expression_field_f(call_func, method),
+    field_identifier(method),
+    node_text(method, "Rollback"),
+    selector_expression_operand_f(call_func, tx_var),
+    identifier(tx_var),
+    node_text(tx_var, tx_var_name),
+    containing_function(call, func).
+
+  // Combined: any form of defer rollback
+  .decl has_defer_rollback(tx_var_name: symbol, func: Node)
+  has_defer_rollback(tx_var_name, func) :- direct_defer_rollback(tx_var_name, func).
+  has_defer_rollback(tx_var_name, func) :- defer_func_with_rollback(tx_var_name, func).
+
+  // Find violations: transaction assignments without defer rollback in the same function
+  .decl violation(decl: Node, tx_var_name: symbol, method_name: symbol, db_var_name: symbol)
+  violation(decl, tx_var_name, method_name, db_var_name) :-
+    transaction_assignment(decl, tx_var_name, method_name, db_var_name),
+    containing_function(decl, func),
+    !has_defer_rollback(tx_var_name, func).
+
+  // Output rule violations
+  .decl output_violation(rule_key: symbol, file_name: symbol, start_row: number, start_column: number, end_row: number, end_column: number, message: symbol)
+  output_violation("S8168", file_name, start_row, start_column, end_row, end_column, message) :-
+    violation(decl, tx_var_name, method_name, db_var_name),
+    location(decl, file_name, start_row, start_column, end_row, end_column),
+    message = cat("Add 'defer ", tx_var_name, ".Rollback()' after checking the error from '", db_var_name, ".", method_name, "()' to ensure the transaction is rolled back on failure.").
+}
+
+.init transaction_rollback_check = TransactionRollbackCheck
+
+rule_violation(rule_key, file_name, start_row, start_column, end_row, end_column, message) :-
+  transaction_rollback_check.output_violation(rule_key, file_name, start_row, start_column, end_row, end_column, message).
+
+.comp S8166 {
+    // Find calls to forbidden methods within goroutines
+    .decl forbidden_call_in_goroutine(selector_node: Node, method_name: symbol, receiver_name: symbol)
+    forbidden_call_in_goroutine(selector_node, method_name, receiver_name) :-
+        // Find go statements
+        go_statement(go_stmt),
+        location(go_stmt, file_name, _, _, _, _),
+        match(".*_test.go$", file_name),
+        // Get the expression being launched
+        go_statement__expression_c(go_stmt, go_expr),
+        // Handle case where expr is a call_expression calling a func_literal
+        call_expression(go_expr),
+        call_expression_function_f(go_expr, func_lit),
+        func_literal(func_lit),
+        // Find call expressions within the body
+        scope(func_scope, _, func_lit, 10), // 10 = func_literal
+        scope_descendant(func_scope, descendant_scope, _, _),
+        scope_child_node(descendant_scope, inner_call),
+        call_expression(inner_call),
+        // The call should be a method call
+        call_expression_function_f(inner_call, selector_node),
+        selector_expression(selector_node),
+        // Get the method name
+        selector_expression_field_f(selector_node, method_field),
+        node_text(method_field, method_name),
+        // Get the receiver name
+        selector_expression_operand_f(selector_node, receiver_node),
+        node_text(receiver_node, receiver_name),
+        // Check if it's one of the forbidden methods
+        (method_name = "Fatal" ; method_name = "Fatalf" ; method_name = "FailNow" ; 
+         method_name = "Skip" ; method_name = "Skipf" ; method_name = "SkipNow").
+}
+
+.init s8166 = S8166
+
+rule_violation("S8166", file_name, start_row, start_column, end_row, end_column, 
+               cat("Replace ", receiver_name, ".", method_name, " with ", receiver_name, ".Error or ", receiver_name, ".Errorf when called from a goroutine")) :-
+    s8166.forbidden_call_in_goroutine(selector, method_name, receiver_name),
+    location(selector, file_name, start_row, start_column, end_row, end_column).
+
+
+.comp S8188 {
+    // Detect context creation function names
+    .decl context_creation_func(name: symbol)
+    context_creation_func("WithCancel").
+    context_creation_func("WithTimeout").
+    context_creation_func("WithDeadline").
+    context_creation_func("WithCancelCause").
+    context_creation_func("WithTimeoutCause").
+    context_creation_func("WithDeadlineCause").
+
+    // Find context creation calls - selector expression like context.WithCancel(...)
+    .decl context_creation_call(call: CallExpression, func_name: symbol)
+    context_creation_call(call, func_name) :-
+        call_expression(call),
+        call_expression_function_f(call, func),
+        selector_expression(func),
+        selector_expression_field_f(func, field),
+        node_text(field, func_name),
+        context_creation_func(func_name).
+
+    // Get the second expression from an expression list (the cancel variable)
+    // In expression_list, expressions are at even indices (0, 2, 4, ...) with commas at odd indices
+    .decl second_expr_in_list(list: ExpressionList, expr: Node)
+    second_expr_in_list(list, expr) :-
+        expression_list(list),
+        nth_child(list, 2, expr).
+
+    // Find short_var_declaration with context creation on the right
+    .decl context_creation_short_var(decl: ShortVarDeclaration, call: CallExpression, cancel_var: Node, cancel_name: symbol)
+    context_creation_short_var(decl, call, cancel_var, cancel_name) :-
+        short_var_declaration(decl),
+        short_var_declaration_right_f(decl, right_list),
+        expression_list__expression_c(right_list, call),
+        context_creation_call(call, _),
+        short_var_declaration_left_f(decl, left_list),
+        second_expr_in_list(left_list, cancel_var),
+        identifier(cancel_var),
+        node_text(cancel_var, cancel_name),
+        cancel_name != "_".
+
+    // Find assignment_statement with context creation on the right
+    .decl context_creation_assignment(stmt: AssignmentStatement, call: CallExpression, cancel_var: Node, cancel_name: symbol)
+    context_creation_assignment(stmt, call, cancel_var, cancel_name) :-
+        assignment_statement(stmt),
+        assignment_statement_right_f(stmt, right_list),
+        expression_list__expression_c(right_list, call),
+        context_creation_call(call, _),
+        assignment_statement_left_f(stmt, left_list),
+        second_expr_in_list(left_list, cancel_var),
+        identifier(cancel_var),
+        node_text(cancel_var, cancel_name),
+        cancel_name != "_".
+
+    // Combined: all context creations with cancel variable
+    .decl context_creation_with_cancel(stmt: Node, call: CallExpression, cancel_var: Node, cancel_name: symbol)
+    context_creation_with_cancel(stmt, call, cancel_var, cancel_name) :-
+        context_creation_short_var(stmt, call, cancel_var, cancel_name).
+    context_creation_with_cancel(stmt, call, cancel_var, cancel_name) :-
+        context_creation_assignment(stmt, call, cancel_var, cancel_name).
+
+    // Find defer statements that call the cancel function
+    .decl defer_calls_cancel(defer_stmt: DeferStatement, cancel_name: symbol)
+    defer_calls_cancel(defer_stmt, cancel_name) :-
+        defer_statement(defer_stmt),
+        defer_statement__expression_c(defer_stmt, call),
+        call_expression(call),
+        call_expression_function_f(call, func),
+        identifier(func),
+        node_text(func, cancel_name).
+
+    // Find the scope of a node
+    .decl node_scope(node: Node, scope: Scope)
+    node_scope(node, scope) :- scope_child_node(scope, node).
+
+    // Find the enclosing function scope for a node
+    .decl enclosing_function_scope(node: Node, func_scope: Scope)
+    enclosing_function_scope(node, func_scope) :-
+        node_scope(node, scope),
+        scope(scope, _, _, kind),
+        kind_name(kind, "function_declaration"),
+        func_scope = scope.
+    enclosing_function_scope(node, func_scope) :-
+        node_scope(node, scope),
+        scope(scope, _, _, kind),
+        kind_name(kind, "method_declaration"),
+        func_scope = scope.
+    enclosing_function_scope(node, func_scope) :-
+        node_scope(node, scope),
+        scope(scope, _, _, kind),
+        kind_name(kind, "func_literal"),
+        func_scope = scope.
+    enclosing_function_scope(node, func_scope) :-
+        node_scope(node, scope),
+        scope_ancestor(scope, func_scope, _, "function_declaration").
+    enclosing_function_scope(node, func_scope) :-
+        node_scope(node, scope),
+        scope_ancestor(scope, func_scope, _, "method_declaration").
+    enclosing_function_scope(node, func_scope) :-
+        node_scope(node, scope),
+        scope_ancestor(scope, func_scope, _, "func_literal").
+
+    // Check if cancel is deferred in the same scope or an ancestor scope (within the same function)
+    .decl cancel_is_deferred(stmt: Node, cancel_name: symbol)
+    cancel_is_deferred(stmt, cancel_name) :-
+        context_creation_with_cancel(stmt, _, _, cancel_name),
+        node_scope(stmt, stmt_scope),
+        enclosing_function_scope(stmt, func_scope),
+        defer_calls_cancel(defer_stmt, cancel_name),
+        node_scope(defer_stmt, defer_scope),
+        enclosing_function_scope(defer_stmt, func_scope),
+        (stmt_scope = defer_scope ; scope_ancestor(stmt_scope, defer_scope, _, _)).
+
+    // Check if cancel is called directly (not deferred) in the same function
+    .decl cancel_is_called_directly(stmt: Node, cancel_name: symbol)
+    cancel_is_called_directly(stmt, cancel_name) :-
+        context_creation_with_cancel(stmt, _, _, cancel_name),
+        node_scope(stmt, stmt_scope),
+        enclosing_function_scope(stmt, func_scope),
+        call_expression(call),
+        call_expression_function_f(call, func),
+        identifier(func),
+        node_text(func, cancel_name),
+        node_scope(call, call_scope),
+        enclosing_function_scope(call, func_scope),
+        (stmt_scope = call_scope ; scope_ancestor(stmt_scope, call_scope, _, _)),
+        !defer_statement__expression_c(_, call).
+
+    // Check if cancel is returned from function
+    .decl cancel_is_returned(stmt: Node, cancel_name: symbol)
+    cancel_is_returned(stmt, cancel_name) :-
+        context_creation_with_cancel(stmt, _, _, cancel_name),
+        enclosing_function_scope(stmt, func_scope),
+        return_statement(ret),
+        enclosing_function_scope(ret, func_scope),
+        return_statement_expression_list_c(ret, ret_list),
+        expression_list__expression_c(ret_list, expr),
+        identifier(expr),
+        node_text(expr, cancel_name).
+
+    // Check if cancel is passed to another function
+    .decl cancel_is_passed_to_function(stmt: Node, cancel_name: symbol)
+    cancel_is_passed_to_function(stmt, cancel_name) :-
+        context_creation_with_cancel(stmt, call, _, cancel_name),
+        enclosing_function_scope(stmt, func_scope),
+        call_expression(other_call),
+        other_call != call,
+        enclosing_function_scope(other_call, func_scope),
+        call_expression_arguments_f(other_call, args),
+        argument_list__expression_c(args, arg),
+        identifier(arg),
+        node_text(arg, cancel_name).
+
+    // Check if cancel is assigned to another variable (short var declaration)
+    .decl cancel_is_assigned_to_another_var(stmt: Node, cancel_name: symbol)
+    cancel_is_assigned_to_another_var(stmt, cancel_name) :-
+        context_creation_with_cancel(stmt, _, _, cancel_name),
+        enclosing_function_scope(stmt, func_scope),
+        short_var_declaration(other_decl),
+        other_decl != stmt,
+        enclosing_function_scope(other_decl, func_scope),
+        short_var_declaration_right_f(other_decl, right_list),
+        expression_list__expression_c(right_list, expr),
+        identifier(expr),
+        node_text(expr, cancel_name).
+
+    // Check if cancel is assigned to another variable (assignment statement)
+    .decl cancel_is_assigned_to_another_var2(stmt: Node, cancel_name: symbol)
+    cancel_is_assigned_to_another_var2(stmt, cancel_name) :-
+        context_creation_with_cancel(stmt, _, _, cancel_name),
+        enclosing_function_scope(stmt, func_scope),
+        assignment_statement(other_stmt),
+        other_stmt != stmt,
+        enclosing_function_scope(other_stmt, func_scope),
+        assignment_statement_right_f(other_stmt, right_list),
+        expression_list__expression_c(right_list, expr),
+        identifier(expr),
+        node_text(expr, cancel_name).
+
+    // Check if cancel is stored in a struct field (via assignment)
+    .decl cancel_is_stored_in_struct(stmt: Node, cancel_name: symbol)
+    cancel_is_stored_in_struct(stmt, cancel_name) :-
+        context_creation_with_cancel(stmt, _, _, cancel_name),
+        enclosing_function_scope(stmt, func_scope),
+        assignment_statement(assign),
+        enclosing_function_scope(assign, func_scope),
+        assignment_statement_left_f(assign, left_list),
+        expression_list__expression_c(left_list, left_expr),
+        selector_expression(left_expr),
+        assignment_statement_right_f(assign, right_list),
+        expression_list__expression_c(right_list, right_expr),
+        identifier(right_expr),
+        node_text(right_expr, cancel_name).
+
+    // Check if cancel is stored in a struct field (via composite literal keyed element)
+    .decl cancel_is_stored_in_composite_literal(stmt: Node, cancel_name: symbol)
+    cancel_is_stored_in_composite_literal(stmt, cancel_name) :-
+        context_creation_with_cancel(stmt, _, _, cancel_name),
+        enclosing_function_scope(stmt, func_scope),
+        keyed_element(elem),
+        keyed_element_value_f(elem, value_elem),
+        literal_element__expression_c(value_elem, expr),
+        identifier(expr),
+        node_text(expr, cancel_name),
+        enclosing_function_scope(elem, func_scope).
+
+    // Violations: context creation without proper cancel handling
+    .decl violation(cancel_var: Node, cancel_name: symbol)
+    violation(cancel_var, cancel_name) :-
+        context_creation_with_cancel(stmt, _, cancel_var, cancel_name),
+        !cancel_is_deferred(stmt, cancel_name),
+        !cancel_is_called_directly(stmt, cancel_name),
+        !cancel_is_returned(stmt, cancel_name),
+        !cancel_is_passed_to_function(stmt, cancel_name),
+        !cancel_is_assigned_to_another_var(stmt, cancel_name),
+        !cancel_is_assigned_to_another_var2(stmt, cancel_name),
+        !cancel_is_stored_in_struct(stmt, cancel_name),
+        !cancel_is_stored_in_composite_literal(stmt, cancel_name).
+}
+
+.init s8188 = S8188
+
+rule_violation("S8188", file_name, start_row, start_column, end_row, end_column, message) :-
+    s8188.violation(cancel_var, cancel_name),
+    location(cancel_var, file_name, start_row, start_column, end_row, end_column),
+    message = cat("Defer the cancel function '", cancel_name, "' after this context creation to prevent resource leaks.").
+.comp S8210 {
+
+    // Find all variable declarations in short var declarations
+    .decl var_declared_short(var_name: symbol, var_node: Node, func: Node, file_id: number)
+    var_declared_short(name, var_node, func, file_id) :-
+        function_declaration(func),
+        scope(func_scope, _, func, 77), // 77 = function_declaration
+        scope_descendant(func_scope, descendant_scope, _, _),
+        scope_child_node(descendant_scope, short_decl),
+        short_var_declaration(short_decl),
+        short_var_declaration_left_f(short_decl, left_list),
+        expression_list__expression_c(left_list, var_node),
+        identifier(var_node),
+        node_text(var_node, name),
+        name != "_",
+        file_id(var_node, file_id).
+
+    // Find all variable declarations in var statements
+    .decl var_declared_var(var_name: symbol, var_node: Node, func: Node, file_id: number)
+    var_declared_var(name, var_node, func, file_id) :-
+        function_declaration(func),
+        scope(func_scope, _, func, 77), // 77 = function_declaration
+        scope_descendant(func_scope, descendant_scope, _, _),
+        scope_child_node(descendant_scope, var_decl),
+        var_declaration(var_decl),
+        var_declaration_var_spec_c(var_decl, spec),
+        var_spec_name_f(spec, var_node),
+        identifier(var_node),
+        node_text(var_node, name),
+        name != "_",
+        file_id(var_node, file_id).
+
+    // Find range loop variables
+    .decl var_declared_range(var_name: symbol, var_node: Node, func: Node, file_id: number)
+    var_declared_range(name, var_node, func, file_id) :-
+        scope(func_scope, _, func, 77), // 77 = function_declaration
+        scope_descendant(func_scope, descendant_scope, _, _),
+        scope_child_node(descendant_scope, for_stmt),
+        for_statement(for_stmt),
+        for_statement_range_clause_c(for_stmt, range_clause),
+        range_clause_left_f(range_clause, left_list),
+        expression_list__expression_c(left_list, var_node),
+        identifier(var_node),
+        node_text(var_node, name),
+        name != "_",
+        file_id(var_node, file_id).
+
+    // Combine all variable declarations
+    .decl var_declared(var_name: symbol, var_node: Node, func: Node, file_id: number)
+    var_declared(name, var_node, func, file_id) :-
+        (var_declared_short(name, var_node, func, file_id) ; 
+        var_declared_var(name, var_node, func, file_id) ;
+        var_declared_range(name, var_node, func, file_id)).
+
+    // Find all identifier references in the function (excluding the declaration itself)
+    .decl var_referenced(var_name: symbol, ref_node: Node, func: Node)
+    var_referenced(name, ref_node, func) :-
+        var_declared(name, decl_node, func, file_id),
+        scope(func_scope, _, func, 77), // 77 = function_declaration
+        scope_descendant(func_scope, descendant_scope, _, _),
+        scope_child_node(descendant_scope, ref_node),
+        (identifier(ref_node); package_identifier(ref_node); type_identifier(ref_node)),
+        node_text(ref_node, name),
+        ref_node != decl_node,
+        file_id(ref_node, file_id).
+
+    // Variables that are never referenced
+    .decl unused_variable(var_name: symbol, var_node: Node)
+    unused_variable(name, var_node) :-
+        var_declared(name, var_node, func, _),
+        !var_referenced(name, _, func).
+
+}
+
+.init s8210 = S8210
+
+rule_violation("S8210", file_name, start_row, start_col, end_row, end_col, cat("Remove this unused '", cat(name, "' local variable."))) :-
+    s8210.unused_variable(name, var_node),
+    location(var_node, file_name, start_row, start_col, end_row, end_col).
+
+.comp S8193 {
+    // Find if statements with short var declarations
+    .decl if_with_short_decl(if_stmt: Node, short_decl: Node)
+    if_with_short_decl(if_stmt, short_decl) :-
+        if_statement(if_stmt),
+        if_statement_initializer_f(if_stmt, short_decl),
+        short_var_declaration(short_decl).
+    
+    // Extract declared variable names (excluding blank identifier)
+    .decl declared_var(if_stmt: Node, var_node: Node, var_name: symbol)
+    declared_var(if_stmt, var_node, var_name) :-
+        if_with_short_decl(if_stmt, short_decl),
+        short_var_declaration_left_f(short_decl, left_list),
+        expression_list__expression_c(left_list, var_node),
+        1 = count : expression_list__expression_c(left_list, _),
+        identifier(var_node),
+        node_text(var_node, var_name),
+        var_name != "_".
+    
+    // Count references to a variable in the condition
+    .decl condition_ref_count(if_stmt: Node, var_name: symbol, ref_count: number)
+    // Pattern `if x:= value(), x`
+    condition_ref_count(if_stmt, var_name, ref_count) :-
+        declared_var(if_stmt, _, var_name),
+        if_statement_condition_f(if_stmt, condition),
+        identifier(condition),
+        node_text(condition, var_name),
+        ref_count = 1.
+    // Pattern `if x:= value(), !x`
+    condition_ref_count(if_stmt, var_name, ref_count) :-
+        declared_var(if_stmt, _, var_name),
+        if_statement_condition_f(if_stmt, condition),
+        unary_expression(condition),
+        unary_expression_operand_f(condition, operand),
+        identifier(operand),
+        node_text(operand, var_name),
+        ref_count = 1.
+    // Pattern `if x:= value(), x ==`
+    condition_ref_count(if_stmt, var_name, ref_count) :-
+        declared_var(if_stmt, _, var_name),
+        if_statement_condition_f(if_stmt, condition),
+        binary_expression(condition),
+        (
+            binary_expression_left_f(condition, left), identifier(left), node_text(left, var_name);
+            binary_expression_right_f(condition, right), identifier(right), node_text(right, var_name)
+        ),
+        ref_count = 1.
+
+    // Check if a variable is referenced in the body
+    .decl var_in_body(if_stmt: Node, var_name: symbol)
+    var_in_body(if_stmt, var_name) :-
+        declared_var(if_stmt, _, var_name),
+        if_statement_consequence_f(if_stmt, body),
+        scope(body_scope, _, body, 47), // 47 = block
+        (
+            scope_descendant(body_scope, descendant_scope, _, _), scope_child_node(descendant_scope, id);
+            scope_child_node(body_scope, id)
+        ),
+        identifier(id),
+        node_text(id, var_name).
+    
+    // Check if a variable is referenced in the else branch
+    .decl var_in_else(if_stmt: Node, var_name: symbol)
+    var_in_else(if_stmt, var_name) :-
+        declared_var(if_stmt, _, var_name),
+        if_statement_alternative_f(if_stmt, else_branch),
+        scope(else_scope, _, else_branch, _),
+        (
+            scope_descendant(else_scope, descendant_scope, _, _), scope_child_node(descendant_scope, id);
+            scope_child_node(else_scope, id)
+        ),
+        identifier(id),
+        node_text(id, var_name).
+    
+    // Check if ANY declared variable is used in body or else
+    .decl any_var_in_body_or_else(if_stmt: Node)
+    any_var_in_body_or_else(if_stmt) :-
+        declared_var(if_stmt, _, var_name),
+        (var_in_body(if_stmt, var_name) ; var_in_else(if_stmt, var_name)).
+    
+    // Find violations: at least one variable appears exactly once in condition,
+    // and no variables are used in body or else
+    .decl violation(if_stmt: Node, var_node: Node, short_decl: Node)
+    violation(if_stmt, var_node, short_decl) :-
+        if_with_short_decl(if_stmt, short_decl),
+        declared_var(if_stmt, var_node, var_name),
+        condition_ref_count(if_stmt, var_name, 1),
+        !any_var_in_body_or_else(if_stmt).
+}
+
+.init s8193 = S8193
+
+rule_violation("S8193", file_name, start_row, start_column, end_row, end_column, 
+               "Remove this unnecessary variable declaration and use the expression directly in the condition.") :-
+    s8193.violation(_, var_node, _),
+    location(var_node, file_name, start_row, start_column, end_row, end_column).
+
+rule_violation("S1116", file_name, start_row, start_column, end_row, end_column, "Remove this empty statement.") :-
+    empty_statement(stmt),
+    location(stmt, file_name, start_row, start_column, end_row, end_column).
+
+.comp S8206 {
+    // Identify imports of the reflect package
+    .decl reflect_import(file_name: symbol, import_node: Node)
+    reflect_import(file_name, import_node) :-
+        import_spec(import_node),
+        import_spec_path_f(import_node, path),
+        node_text(path, "\"reflect\""),
+        location(import_node, file_name, _, _, _, _).
+
+    // Find calls to InterfaceData method in files that import reflect
+    .decl interface_data_call(file_name: symbol, start_row: number, start_column: number, end_row: number, end_column: number)
+    interface_data_call(file_name, start_row, start_column, end_row, end_column) :-
+        call_expression(call),
+        call_expression_function_f(call, func),
+        selector_expression(func),
+        selector_expression_field_f(func, field),
+        node_text(field, "InterfaceData"),
+        location(field, file_name, start_row, start_column, end_row, end_column),
+        reflect_import(file_name, _).
+}
+
+.init s8206 = S8206
+
+// Report rule violations
+rule_violation("S8206", file_name, start_row, start_column, end_row, end_column, 
+    "Replace this call to the deprecated 'InterfaceData()' method with 'Interface()'.") :-
+    s8206.interface_data_call(file_name, start_row, start_column, end_row, end_column).
+
+.comp S8239 {
+  // Helper: Identify context.Background() calls
+  .decl is_context_background_call(call: Node)
+  is_context_background_call(call) :-
+    call_expression(call),
+    call_expression_function_f(call, selector),
+    selector_expression(selector),
+    selector_expression_operand_f(selector, operand),
+    identifier(operand),
+    node_text(operand, "context"),
+    selector_expression_field_f(selector, field),
+    field_identifier(field),
+    node_text(field, "Background").
+
+  // Helper: Check if a type is context.Context
+  .decl is_context_type(type_node: Node)
+  is_context_type(type_node) :-
+    qualified_type(type_node),
+    qualified_type_package_f(type_node, pkg),
+    package_identifier(pkg),
+    node_text(pkg, "context"),
+    qualified_type_name_f(type_node, name),
+    type_identifier(name),
+    node_text(name, "Context").
+
+  // Helper: Find functions with context parameters
+  .decl has_context_parameter(func: Node, param_name: symbol)
+  
+  // For function_declaration
+  has_context_parameter(func, param_name) :-
+    function_declaration(func),
+    function_declaration_parameters_f(func, params),
+    parameter_list_parameter_declaration_c(params, param),
+    parameter_declaration_type_f(param, type_node),
+    is_context_type(type_node),
+    parameter_declaration_name_f(param, name_node),
+    identifier(name_node),
+    node_text(name_node, param_name).
+
+  // For method_declaration
+  has_context_parameter(method, param_name) :-
+    method_declaration(method),
+    method_declaration_parameters_f(method, params),
+    parameter_list_parameter_declaration_c(params, param),
+    parameter_declaration_type_f(param, type_node),
+    is_context_type(type_node),
+    parameter_declaration_name_f(param, name_node),
+    identifier(name_node),
+    node_text(name_node, param_name).
+
+  // For func_literal
+  has_context_parameter(func_lit, param_name) :-
+    func_literal(func_lit),
+    func_literal_parameters_f(func_lit, params),
+    parameter_list_parameter_declaration_c(params, param),
+    parameter_declaration_type_f(param, type_node),
+    is_context_type(type_node),
+    parameter_declaration_name_f(param, name_node),
+    identifier(name_node),
+    node_text(name_node, param_name).
+
+  // Helper: Check if a call returns context.Context
+  .decl is_context_returning_call(call_expr: Node)
+  is_context_returning_call(call_expr) :-
+    call_expression(call_expr),
+    call_expression_function_f(call_expr, func),
+    selector_expression(func),
+    selector_expression_operand_f(func, pkg),
+    identifier(pkg),
+    node_text(pkg, "context"),
+    selector_expression_field_f(func, method),
+    field_identifier(method),
+    node_text(method, method_name),
+    (method_name = "WithTimeout" ; method_name = "WithCancel" ; method_name = "WithDeadline" ; method_name = "WithValue").
+
+  // Helper: Find local context variables in scope
+  .decl has_local_context_var(scope: Node, var_name: symbol, var_decl: Node)
+  has_local_context_var(scope, var_name, decl) :-
+    (function_declaration(scope) ; method_declaration(scope) ; func_literal(scope)),
+    scope(scope_id, _, scope, _),
+    scope_child_node(scope_id, decl),
+    short_var_declaration(decl),
+    short_var_declaration_left_f(decl, left),
+    short_var_declaration_right_f(decl, right),
+    expression_list__expression_c(right, init_expr),
+    is_context_returning_call(init_expr),
+    expression_list__expression_c(left, var),
+    identifier(var),
+    node_text(var, var_name),
+    nth_child(left, 0, var).
+
+  // Helper: Check if a local context var is available before a call
+  .decl context_var_available_at(call: Node, var_name: symbol)
+  context_var_available_at(call, var_name) :-
+    is_context_background_call(call),
+    scope_child_node(scope_id, call),
+    scope(scope_id, _, scope, _),
+    (function_declaration(scope) ; method_declaration(scope) ; func_literal(scope)),
+    has_local_context_var(scope, var_name, var_decl),
+    location(var_decl, file, decl_line, _, _, _),
+    location(call, file, call_line, _, _, _),
+    decl_line < call_line.
+
+  // Helper: Find the enclosing function for a node
+  .decl enclosing_function(node: Node, func: Node) inline
+  enclosing_function(node, func) :-
+    scope_child_node(scope_id, node),
+    (scope_ancestor(scope_id, _, func, "function_declaration") ; scope_ancestor(scope_id, _, func, "method_declaration") ; scope_ancestor(scope_id, _, func, "func_literal")).
+
+  // Helper: Check if call is in a nil check pattern
+  .decl is_in_nil_check(call: Node)
+  is_in_nil_check(call) :-
+    is_context_background_call(call),
+    scope_child_node(scope_id, call),
+    scope_ancestor(scope_id, _, if_stmt, "if_statement"),
+    if_statement_condition_f(if_stmt, condition),
+    binary_expression(condition),
+    binary_expression_operator_f(condition, op),
+    node_text(op, "=="),
+    binary_expression_left_f(condition, left),
+    binary_expression_right_f(condition, right),
+    ((ast_nil(left)) ; (ast_nil(right))).
+
+  // Helper: Get the best available context name
+  .decl best_context_name(call: Node, ctx_name: symbol)
+  best_context_name(call, param_name) :-
+    is_context_background_call(call),
+    enclosing_function(call, func),
+    has_context_parameter(func, param_name).
+  
+  best_context_name(call, var_name) :-
+    is_context_background_call(call),
+    context_var_available_at(call, var_name),
+    enclosing_function(call, func),
+    !has_context_parameter(func, _).
+
+  // Main violation detection
+  .decl violation(call: Node, ctx_name: symbol, file: symbol, start_row: number, start_col: number, end_row: number, end_col: number)
+  violation(call, ctx_name, file, start_row, start_col, end_row, end_col) :-
+    is_context_background_call(call),
+    best_context_name(call, ctx_name),
+    !is_in_nil_check(call),
+    location(call, file, start_row, start_col, end_row, end_col).
+}
+
+.init s8239 = S8239
+
+rule_violation("S8239", file_name, start_row, start_column, end_row, end_column, message) :-
+  s8239.violation(_, ctx_name, file_name, start_row, start_column, end_row, end_column),
+  message = cat("Use the available context parameter '", cat(ctx_name, "' instead of creating a new background context.")).
+
+.comp S8205 {
+    // Helper: Check if a type node is an anonymous struct (directly or via pointer)
+    .decl is_anonymous_struct(type_node: Node, struct_node: Node)
+    is_anonymous_struct(type_node, type_node) :- struct_type(type_node).
+    is_anonymous_struct(ptr_node, struct_node) :-
+        struct_pointer_type(ptr_node, struct_node).
+
+    // Helper: Find struct pointer types (including nested pointers)
+    .decl struct_pointer_type(type_node: Node, struct_node: Node)
+    struct_pointer_type(type_node, struct_node) :-
+        pointer_type(type_node),
+        pointer_type__type_c(type_node, struct_node),
+        struct_type(struct_node).
+    struct_pointer_type(type_node, struct_node) :-
+        pointer_type(type_node),
+        pointer_type__type_c(type_node, inner_type),
+        pointer_type(inner_type),
+        struct_pointer_type(inner_type, struct_node).
+
+    // Find fields that use anonymous struct types
+    .decl field_uses_anonymous_struct(field: Node, type_node: Node, struct_node: Node)
+    field_uses_anonymous_struct(field, type_node, struct_node) :-
+        field_declaration(field),
+        field_declaration_type_f(field, type_node),
+        is_anonymous_struct(type_node, struct_node).
+    
+    // Find nested anonymous structs: anonymous structs containing fields with anonymous struct types
+    .decl has_nested_anonymous_struct(outer_struct: Node, nested_struct: Node)
+    has_nested_anonymous_struct(outer_struct, nested_struct) :-
+        field_uses_anonymous_struct(_, _, outer_struct),
+        struct_type_field_declaration_list_c(outer_struct, field_list),
+        field_declaration_list_field_declaration_c(field_list, inner_field),
+        field_declaration_type_f(inner_field, inner_type),
+        is_anonymous_struct(inner_type, nested_struct).
+    
+    // Violations: report on the nested struct
+    .decl violation(file_name: symbol, start_row: number, start_column: number, end_row: number, end_column: number)
+    violation(file_name, start_row, start_column, end_row, end_column) :-
+        has_nested_anonymous_struct(_, nested_struct),
+        child(nested_struct, struct_keyword),
+        node_text(struct_keyword, "struct"),
+        location(struct_keyword, file_name, start_row, start_column, end_row, end_column).
+}
+
+.init s8205 = S8205
+
+rule_violation("S8205", file_name, start_row, start_column, end_row, end_column, "Extract this nested anonymous struct into a named type for better readability and reusability.") :-
+    s8205.violation(file_name, start_row, start_column, end_row, end_column).
+
+.comp S8259 {
+
+// Helper: Identify for loops with simple conditions (not for-clause or range-clause)
+.decl simple_for_loop(loop: Node, condition: Node)
+simple_for_loop(loop, condition) :-
+    for_statement(loop),
+    for_statement__expression_c(loop, condition),
+    !for_statement_for_clause_c(loop, _),
+    !for_statement_range_clause_c(loop, _).
+
+// Helper: Extract variable from negated condition (for !var {})
+.decl negated_condition_var(condition: Node, var_node: Node, var_name: symbol)
+negated_condition_var(condition, var_node, var_name) :-
+    unary_expression(condition),
+    unary_expression_operator_f(condition, op),
+    node_text(op, "!"),
+    unary_expression_operand_f(condition, var_node),
+    identifier(var_node),
+    node_text(var_node, var_name).
+
+// Helper: Extract variable from direct condition (for var {})
+.decl direct_condition_var(condition: Node, var_node: Node, var_name: symbol)
+direct_condition_var(condition, var_node, var_name) :-
+    identifier(condition),
+    node_text(condition, var_name),
+    var_node = condition.
+
+// Helper: Extract variable from comparison condition (for var == literal {} or var != literal {})
+.decl comparison_condition_var(condition: Node, var_node: Node, var_name: symbol)
+comparison_condition_var(condition, var_node, var_name) :-
+    binary_expression(condition),
+    binary_expression_operator_f(condition, op),
+    node_text(op, op_text),
+    (op_text = "==" ; op_text = "!="),
+    binary_expression_left_f(condition, var_node),
+    identifier(var_node),
+    node_text(var_node, var_name).
+
+// Union of all condition patterns
+.decl loop_condition_var(loop: Node, condition: Node, var_node: Node, var_name: symbol)
+loop_condition_var(loop, condition, var_node, var_name) :-
+    simple_for_loop(loop, condition),
+    (negated_condition_var(condition, var_node, var_name) ;
+     direct_condition_var(condition, var_node, var_name) ;
+     comparison_condition_var(condition, var_node, var_name)).
+
+// Helper: Identify allowed statements in loop body
+.decl allowed_statement(stmt: Node)
+allowed_statement(stmt) :- empty_statement(stmt).
+allowed_statement(stmt) :- continue_statement(stmt).
+allowed_statement(stmt) :-
+    expression_statement(stmt),
+    expression_statement__expression_c(stmt, call),
+    call_expression(call),
+    call_expression_function_f(call, func),
+    selector_expression(func),
+    selector_expression_operand_f(func, pkg),
+    identifier(pkg),
+    node_text(pkg, "runtime"),
+    selector_expression_field_f(func, method),
+    node_text(method, "Gosched").
+
+// Helper: Identify disallowed statements (statements that are not allowed)
+.decl has_disallowed_statement(loop: Node)
+has_disallowed_statement(loop) :-
+    for_statement_body_f(loop, body),
+    block_statement_list_c(body, stmt_list),
+    statement_list__statement_c(stmt_list, stmt),
+    !allowed_statement(stmt).
+
+// Helper: Check if loop body is empty or contains only allowed statements
+.decl empty_or_gosched_body(loop: Node)
+empty_or_gosched_body(loop) :-
+    for_statement_body_f(loop, body),
+    block(body),
+    !block_statement_list_c(body, _).
+
+empty_or_gosched_body(loop) :-
+    for_statement_body_f(loop, body),
+    block(body),
+    block_statement_list_c(body, _stmt_list),
+    !has_disallowed_statement(loop).
+
+// Helper: Check if there's a goroutine in the same file
+.decl has_goroutine_in_file(loop: Node)
+has_goroutine_in_file(loop) :-
+    file_id(loop, file),
+    go_statement(go_stmt),
+    file_id(go_stmt, file).
+
+// Helper: Check if loop contains synchronization operations
+.decl contains_sync_operations(loop: Node)
+contains_sync_operations(loop) :-
+    for_statement_body_f(loop, body),
+    scope(body_scope, _, body, 47), // 47 = block
+    scope_descendant(body_scope, descendant_scope, stmt, _),
+    scope_child_node(descendant_scope, stmt),
+    (send_statement(stmt) ; receive_statement(stmt) ; select_statement(stmt)).
+
+contains_sync_operations(loop) :-
+    for_statement_body_f(loop, body),
+    scope(body_scope, _, body, 47), // 47 = block
+    scope_descendant(body_scope, descendant_scope, call, _),
+    scope_child_node(descendant_scope, call),
+    call_expression(call),
+    call_expression_function_f(call, func),
+    selector_expression(func),
+    selector_expression_field_f(func, method),
+    node_text(method, method_name),
+    (method_name = "Lock" ; method_name = "Unlock" ; 
+     method_name = "RLock" ; method_name = "RUnlock" ;
+     method_name = "Wait" ; method_name = "Add" ; method_name = "Done").
+
+// Main detection relation
+.decl busy_wait_violation(loop: Node, var_name: symbol)
+busy_wait_violation(loop, var_name) :-
+    loop_condition_var(loop, _condition, _var_node, var_name),
+    empty_or_gosched_body(loop),
+    has_goroutine_in_file(loop),
+    !contains_sync_operations(loop).
+
+}
+
+.init s8259 = S8259
+
+rule_violation("S8259", file_name, start_row, start_column, start_row, start_column + 3, message) :-
+    s8259.busy_wait_violation(loop, var_name),
+    location(loop, file_name, start_row, start_column, _, _),
+    message = cat("Replace this busy-wait loop on '", cat(var_name, "' with a channel receive or other synchronization primitive.")).
+
+.comp S8159 {
+    // Identify separate (non-factored) import declarations
+    .decl separate_import(import_decl: Node, file_id: number)
+    separate_import(import_decl, file_id) :-
+        import_declaration(import_decl),
+        import_declaration_import_spec_c(import_decl, _),
+        !import_declaration_import_spec_list_c(import_decl, _),
+        file_id(import_decl, file_id).
+    
+    // Find separate imports with their row numbers
+    .decl separate_import_at_row(import_decl: Node, file_id: number, row: number)
+    separate_import_at_row(import_decl, file_id, row) :-
+        separate_import(import_decl, file_id),
+        node(import_decl, _, _, _, row, _, _, _, _).
+    
+    // Find the next separate import after this one (by row)
+    .decl next_separate_import(import_decl: Node, next_import: Node)
+    next_separate_import(import_decl, next_import) :-
+        separate_import_at_row(import_decl, file_id, row),
+        separate_import_at_row(next_import, file_id, next_row),
+        next_row > row,
+        next_row = min other_row : {
+            separate_import_at_row(_, file_id, other_row),
+            other_row > row
+        }.
+    
+    // Check if there's any non-import declaration between two specific imports
+    .decl has_non_import_between(first: Node, second: Node)
+    has_non_import_between(first, second) :-
+        separate_import_at_row(first, file_id, row1),
+        separate_import_at_row(second, file_id, row2),
+        row2 > row1,
+        source_file(src),
+        file_id(src, file_id),
+        child(src, decl),
+        !import_declaration(decl),
+        node(decl, _, _, _, decl_row, _, _, _, _),
+        row1 < decl_row,
+        decl_row < row2.
+    
+    // Two imports are consecutive if there's no non-import between them
+    .decl consecutive_imports(first: Node, second: Node)
+    consecutive_imports(first, second) :-
+        next_separate_import(first, second),
+        !has_non_import_between(first, second).
+    
+    // Find imports that are last in a consecutive sequence
+    .decl is_last_in_sequence(import_decl: Node)
+    is_last_in_sequence(import_decl) :-
+        consecutive_imports(_, import_decl),
+        !consecutive_imports(import_decl, _).
+    
+    // Find the 'import' keyword child node for accurate location reporting
+    .decl import_keyword_node(import_decl: Node, keyword: Node)
+    import_keyword_node(import_decl, keyword) :-
+        import_declaration(import_decl),
+        child(import_decl, keyword),
+        node(keyword, 170, 0, _, _, _, _, _, _).
+}
+
+.init s8159 = S8159
+
+rule_violation("S8159", file_name, start_row, start_column, end_row, end_column, 
+    "Group all import statements into a single factored import block using parentheses.") :-
+    s8159.is_last_in_sequence(import_decl),
+    s8159.import_keyword_node(import_decl, keyword),
+    location(keyword, file_name, start_row, start_column, end_row, end_column).
+
+.comp S8209 {
+
+    // Check if a node is a function-like node
+    .decl function(node: Node)
+    function(node) :-
+        function_declaration(node);
+        method_declaration(node);
+        func_literal(node);
+        method_elem(node).
+
+    // Get the parameter list of a function-like node
+    .decl function_parameters(node: Node, param_list: Node)
+    function_parameters(node, param_list) :-
+        function_declaration(node),
+        function_declaration_parameters_f(node, param_list).
+    function_parameters(node, param_list) :-
+        method_declaration(node),
+        method_declaration_parameters_f(node, param_list).
+    function_parameters(node, param_list) :-
+        func_literal(node),
+        func_literal_parameters_f(node, param_list).
+    function_parameters(node, param_list) :-
+        method_elem(node),
+        method_elem_parameters_f(node, param_list).
+
+    .decl parameter_type_text(param: Node, type_text: symbol)
+    parameter_type_text(param, type_text) :-
+        parameter_declaration(param),
+        parameter_declaration_type_f(param, type_node),
+        type_text(type_node, type_text).
+
+    // Get the textual representation of a type
+    // Ignores certain complex types:
+    // - interface{} type
+    // - struct{} type
+    // - function types
+    // - channel types
+    .decl type_text(type: Node, type_text: symbol)
+    // Handle identifier types
+    type_text(type, type_text) :-
+        type_identifier(type),
+        node_text(type, type_text).
+    // Handle pointer types
+    type_text(type, type_text) :-
+        pointer_type(type),
+        pointer_type__type_c(type, base_type),
+        type_text(base_type, base_type_text),
+        type_text = cat("*", base_type_text).
+    // Handle array types
+    type_text(type, type_text) :-
+        array_type(type),
+        array_type_length_f(type, length_node),
+        array_type_element_f(type, element_type),
+        type_text(element_type, element_type_text),
+        node_text(length_node, length_text),
+        type_text = cat("[", length_text, "]", element_type_text).
+    // Handle slice types
+    type_text(type, type_text) :-
+        slice_type(type),
+        slice_type_element_f(type, element_type),
+        type_text(element_type, element_type_text),
+        type_text = cat("[]", element_type_text).
+    // Handle map types
+    type_text(type, type_text) :-
+        map_type(type),
+        map_type_key_f(type, key_type),
+        type_text(key_type, key_type_text),
+        map_type_value_f(type, value_type),
+        type_text(value_type, value_type_text),
+        type_text = cat("map[", key_type_text, "]", value_type_text).
+    // Handle qualified types
+    type_text(type, type_text) :-
+        qualified_type(type),
+        qualified_type_package_f(type, package_node),
+        node_text(package_node, package_text),
+        qualified_type_name_f(type, name_node),
+        type_text(name_node, name_text),
+        type_text = cat(package_text, ".", name_text).
+    // Handle parenthesized types
+    type_text(type, type_text) :-
+        parenthesized_type(type),
+        parenthesized_type__type_c(type, inner_type),
+        type_text(inner_type, type_text).
+
+    // Check if a function has parameters with same type
+    .decl function_has_parameters_with_same_type(func: Node)
+    function_has_parameters_with_same_type(func) :-
+        function(func),
+        function_parameters(func, param_list),
+        parameter_list_parameter_declaration_c(param_list, param),
+        parameter_type_text(param, param_type),
+        param_count = count : { parameter_list_parameter_declaration_c(param_list, _) },
+        param_same_type_count = count : { 
+            parameter_list_parameter_declaration_c(param_list, paramX),
+            parameter_declaration(paramX),
+            parameter_type_text(paramX, param_type)
+        },
+        param_same_type_count = param_count.
+
+    // Check if a function has multiple parameters
+    .decl function_has_multiple_params(func: Node)
+    function_has_multiple_params(func) :-
+        function(func),
+        function_parameters(func, param_list),
+        param_count = count : parameter_list_parameter_declaration_c(param_list, _),
+        param_count > 1.
+
+    // Check if a function has variadic parameters
+    .decl function_has_variadic_param(func: Node)
+    function_has_variadic_param(func) :-
+        function(func),
+        function_parameters(func, param_list),
+        parameter_list_variadic_parameter_declaration_c(param_list, _).
+
+    // Check if a function has parameters declared using shortcut syntax (e.g., a, b int)
+    .decl function_has_param_shortcut(func: Node)
+    function_has_param_shortcut(func) :-
+        function(func),
+        function_parameters(func, param_list),
+        parameter_list_parameter_declaration_c(param_list, param),
+        parameter_declaration(param),
+        id_count = count : parameter_declaration_name_f(param, _),
+        id_count > 1.
+
+    // Check if a function has parameters without identifiers (e.g., func f(int, int))
+    .decl function_has_anonymous_parameter(func: Node)
+    function_has_anonymous_parameter(func) :-
+        function(func),
+        function_parameters(func, param_list),
+        n = count : {
+            parameter_list_parameter_declaration_c(param_list, param),
+            anonymous_parameter(param)
+        },
+        n > 0.
+
+    // Identify parameter declarations without identifiers
+    .decl anonymous_parameter(param: Node)
+    anonymous_parameter(param) :-
+        parameter_declaration(param),
+        !parameter_declaration_name_f(param, _).
+
+    // Find functions with multiple parameters of the same type
+    .decl ungrouped_same_type_params(func_node: Node)
+    ungrouped_same_type_params(func_node) :-
+        function(func_node),
+        function_has_multiple_params(func_node),
+        !function_has_variadic_param(func_node),
+        !function_has_param_shortcut(func_node),
+        !function_has_anonymous_parameter(func_node),
+        function_has_parameters_with_same_type(func_node).
+}
+
+.init s8209 = S8209
+
+// Rule violation relation
+// Note: The rule implementation only considers functions whose parameters have all the same types, e.g. `func f (a int, b int, c int) {}`.
+//       However, it ignores cases like `func f (a int, b int, c float, d float) {}`.
+rule_violation("S8209", file_name, start_row, start_column, end_row, end_column, 
+               "Group together these consecutive parameters of the same type.") :-
+    s8209.ungrouped_same_type_params(func_node),
+    s8209.function_parameters(func_node, param_list),
+    location(param_list, file_name, start_row, start_column, end_row, end_column).
+
+.comp S8208 {
+
+  // Helper: Check if a call is an HTTP client method
+  .decl is_http_client_call(call: Node)
+  is_http_client_call(call) :-
+    call_expression(call),
+    call_expression_function_f(call, func),
+    selector_expression(func),
+    selector_expression_operand_f(func, operand),
+    node_text(operand, "http"),
+    selector_expression_field_f(func, method),
+    node_text(method, method_name),
+    (method_name = "Get" ; method_name = "Post" ; method_name = "Head" ; method_name = "PostForm").
+
+  // Helper: Extract response variable name from short var declaration
+  .decl response_var_from_declaration(decl: Node, resp_var: Node, resp_var_name: symbol)
+  response_var_from_declaration(decl, resp_var, resp_var_name) :-
+    short_var_declaration(decl),
+    short_var_declaration_left_f(decl, left),
+    // Get the first variable (response variable)
+    nth_child(left, 0, resp_var),
+    identifier(resp_var),
+    node_text(resp_var, resp_var_name).
+
+  // Helper: Find function declaration containing a node
+  .decl enclosing_function(node: Node, func: Node)
+  enclosing_function(node, func) :-
+    scope(func_scope, _, func, 77), // 77 = function_declaration
+    scope_descendant(func_scope, descendant_scope, _, _),
+    scope_child_node(descendant_scope, node).
+  enclosing_function(node, func) :-
+    scope(func_scope, _, func, 85), // 85 = method_declaration
+    scope_descendant(func_scope, descendant_scope, _, _),
+    scope_child_node(descendant_scope, node).
+  enclosing_function(node, func) :-
+    scope(func_scope, _, func, 10), // 10 = func_literal
+    scope_descendant(func_scope, descendant_scope, _, _),
+    scope_child_node(descendant_scope, node).
+
+  // Helper: Check if response body is closed
+  // Pattern: resp.Body.Close()
+  .decl has_close(resp_var_name: symbol, func: Node)
+  has_close(resp_var_name, func) :-
+    call_expression(call),
+    enclosing_function(call, func),
+    call_expression_function_f(call, close_func),
+    // The call is to Close() method
+    selector_expression(close_func),
+    selector_expression_field_f(close_func, close_method),
+    node_text(close_method, "Close"),
+    // The Close() is called on something (should be resp.Body)
+    selector_expression_operand_f(close_func, body_selector),
+    // That something is a selector expression (resp.Body)
+    selector_expression(body_selector),
+    selector_expression_field_f(body_selector, body_field),
+    node_text(body_field, "Body"),
+    // Body is accessed on the response variable
+    selector_expression_operand_f(body_selector, resp_var),
+    identifier(resp_var),
+    node_text(resp_var, resp_var_name).
+
+  // Helper: Check if response is returned (ownership transfer)
+  .decl response_is_returned(resp_var_name: symbol, func: Node)
+  response_is_returned(resp_var_name, func) :-
+    return_statement(ret),
+    enclosing_function(ret, func),
+    return_statement_expression_list_c(ret, expr_list),
+    expression_list__expression_c(expr_list, ret_expr),
+    identifier(ret_expr),
+    node_text(ret_expr, resp_var_name).
+
+  // Main relation: HTTP response assignments without proper close
+  .decl http_response_not_closed(decl: Node, resp_var_id: Node, resp_var_name: symbol)
+  http_response_not_closed(decl, resp_var_id, resp_var_name) :-
+    short_var_declaration(decl),
+    short_var_declaration_right_f(decl, right),
+    expression_list__expression_c(right, call),
+    is_http_client_call(call),
+    response_var_from_declaration(decl, resp_var_id, resp_var_name),
+    enclosing_function(decl, func),
+    !has_close(resp_var_name, func),
+    !response_is_returned(resp_var_name, func).
+
+}
+
+.init s8208 = S8208
+
+rule_violation("S8208", file_name, start_row, start_column, end_row, end_column,
+               cat("Close this HTTP response body after checking for errors with 'defer ",
+                   cat(resp_var_name, ".Body.Close()'."))) :-
+  s8208.http_response_not_closed(_, resp_var_id, resp_var_name),
+  location(resp_var_id, file_name, start_row, start_column, end_row, end_column).

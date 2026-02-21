@@ -1,0 +1,36 @@
+syntax = "proto3";
+option java_package = "com.sonarsource.architecture.udg.protobuf";
+option csharp_namespace = "SonarAnalyzer.Udg.Protobuf";
+option java_multiple_files = true;
+option optimize_for = SPEED;
+
+/**
+ * Represents a location in the source code.
+ */
+message Location {
+
+    /**
+     * File ID of the associated source code file.
+     */
+    string file_id = 1;
+
+    /**
+     * First line that belongs to the location (starts with 1).
+     */
+    int32 start_line = 2;
+
+    /**
+     * First character in the first line that belongs to the location (starts with 1).
+     */
+    int32 start_line_offset = 3;
+
+    /**
+     * Last line that belongs to the location (starts with 1).
+     */
+    optional int32 end_line = 4;
+
+    /**
+     * Last character in the last line that belongs to the location (starts with 1).
+     */
+    optional int32 end_line_offset = 5;
+}

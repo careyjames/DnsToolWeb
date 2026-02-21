@@ -1,0 +1,42 @@
+syntax = "proto3";
+option java_package = "com.sonarsource.architecture.udg.protobuf";
+option csharp_namespace = "SonarAnalyzer.Udg.Protobuf";
+option java_multiple_files = true;
+option optimize_for = SPEED;
+
+message Properties {
+    repeated Property property = 1;
+}
+
+/**
+ * An additional property attached by the generator to UDG data.
+ * The concrete possible property names and values are defined by the generator for the respective language.
+ */
+message Property {
+    /**
+     * String ID: property name.
+     */
+    string name_aid = 1;
+
+    /**
+     * Property value.
+     */
+    repeated Value value = 2;
+}
+
+/**
+ * A property value.
+ */
+message Value {
+    /**
+     * String ID: type of the value, such as `bool` or `number`.
+     * Indicates how the value string is parsed to the target type.
+     * The concrete possible types are defined by the generator for the respective language.
+     */
+    string value_aid = 1;
+
+    /**
+     * String ID: value string.
+     */
+    optional string value_type_aid = 2;
+}
