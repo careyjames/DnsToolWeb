@@ -2923,14 +2923,14 @@ body.covert-mode .loading-overlay .h4.covert-show {
     color: #c43c3c;
 }
 .u-badge-recon-btn {
-    border-color: rgba(100, 100, 100, 0.3) !important;
-    color: rgba(180, 180, 180, 0.5) !important;
+    border-color: rgba(196, 60, 60, 0.4) !important;
+    color: #c43c3c !important;
     font-size: 0.78rem;
 }
 .u-badge-recon-btn:hover {
     border-color: #c43c3c !important;
-    color: #c43c3c !important;
-    background-color: rgba(140, 40, 40, 0.1) !important;
+    color: #e87070 !important;
+    background-color: rgba(140, 40, 40, 0.15) !important;
 }
 .covert-report-banner {
     background: linear-gradient(135deg, rgba(140, 40, 40, 0.15), rgba(140, 40, 40, 0.05));

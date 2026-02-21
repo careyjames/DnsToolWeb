@@ -118,11 +118,11 @@
             </div>
             <div class="results-header-actions">
                 {{if .AnalysisID}}
-                <a href="/analysis/{{.AnalysisID}}/view" class="btn btn-outline-info me-2 u-covert-muted-btn" title="View the full Engineer's DNS Intelligence Report">
-                    <i class="fas fa-file-alt me-1"></i>Engineer Report
+                <a href="/analysis/{{.AnalysisID}}/view" class="btn btn-outline-info me-2" title="View the full Engineer's DNS Intelligence Report">
+                    <i class="fas fa-file-alt me-1"></i>Engineer's
                 </a>
                 {{end}}
-                <button type="button" class="btn btn-outline-info me-2 u-covert-muted-btn" id="printReportBtn" title="Print this Recon Report">
+                <button type="button" class="btn btn-outline-info me-2" id="printReportBtn" title="Print this Recon Report">
                     <i class="fas fa-print me-1"></i>Print
                 </button>
                 <a href="/analyze?domain={{.AsciiDomain}}" id="reanalyzeBtn" class="btn btn-analyze" data-domain="{{.AsciiDomain}}"
