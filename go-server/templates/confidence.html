@@ -494,6 +494,47 @@
             </div>
         </div>
 
+        <div class="card bg-dark border-secondary mb-4">
+            <div class="card-body">
+                <h2 class="h5 fw-bold mb-3"><i class="fas fa-handshake me-2 text-info"></i>Scanning Philosophy</h2>
+                <p class="text-muted small mb-3">DNS Tool is designed to be a responsible participant in every system it touches. Our approach: gather the intelligence we need while leaving the smallest possible footprint.</p>
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <div class="card bg-dark border-secondary h-100">
+                            <div class="card-body py-2 px-3">
+                                <h3 class="h6 fw-bold mb-1"><i class="fas fa-compress-arrows-alt me-1 text-info"></i> Minimal Footprint</h3>
+                                <p class="text-muted small mb-0">Analysis uses standard DNS protocol queries and lightweight HTTP HEAD/GET requests with per-section timeout budgets. No brute-force enumeration, no credential stuffing, no port scanning beyond mail transport (25/465/587). Exposure checks use 200ms inter-request delays to avoid overwhelming target infrastructure.</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card bg-dark border-secondary h-100">
+                            <div class="card-body py-2 px-3">
+                                <h3 class="h6 fw-bold mb-1"><i class="fas fa-tachometer-alt me-1 text-success"></i> Adaptive Rate Awareness</h3>
+                                <p class="text-muted small mb-0">Third-party services (certificate transparency logs, RDAP registries) are monitored with telemetry-based exponential backoff &mdash; automatic cooldown from 5 seconds to 5 minutes when services signal degradation. When a source is unavailable or rate-limited, DNS Tool says so honestly rather than hiding the gap.</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card bg-dark border-secondary h-100">
+                            <div class="card-body py-2 px-3">
+                                <h3 class="h6 fw-bold mb-1"><i class="fas fa-balance-scale me-1 text-warning"></i> Symbiotic Interfacing</h3>
+                                <p class="text-muted small mb-0">Every external data source is documented on the <a href="/sources" class="text-info">Sources</a> page with its rate limits, methodology, and verification commands. SecurityTrails is user-key-only and never called automatically. Community services like Team Cymru are queried via standard DNS protocol with no API keys required.</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card bg-dark border-secondary h-100">
+                            <div class="card-body py-2 px-3">
+                                <h3 class="h6 fw-bold mb-1"><i class="fas fa-bullhorn me-1 text-info"></i> Honest Reporting</h3>
+                                <p class="text-muted small mb-0">When a section times out, gets rate-limited, or encounters an error, the report says exactly that &mdash; never &ldquo;no issues found&rdquo; when the data simply could not be checked. Four clear states: success, rate-limited, error, and partial. Transparency is non-negotiable.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <div class="card bg-dark border-secondary">
             <div class="card-body">
                 <h2 class="h5 fw-bold mb-3"><i class="fas fa-shield-alt me-2 text-info"></i>Why This Matters</h2>
