@@ -232,3 +232,77 @@ func (h *AdminHandler) fetchScannerAlerts(ctx context.Context) []AdminScannerAle
         }
         return alerts
 }
+
+func (h *AdminHandler) DeleteUser(c *gin.Context) {
+        idStr := c.Param("id")
+        var userID int32
+        if _, err := fmt.Sscanf(idStr, "%d", &userID); err != nil {
+                c.String(http.StatusBadRequest, "Invalid user ID")
+                return
+        }
+
+        var role string
+        err := h.DB.Pool.QueryRow(c.Request.Context(), `SELECT role FROM users WHERE id = $1`, userID).Scan(&role)
+        if err != nil {
+                c.String(http.StatusNotFound, "User not found")
+                return
+        }
+        if role == "admin" {
+                c.String(http.StatusForbidden, "Cannot delete admin users from the dashboard")
+                return
+        }
+
+        ctx := c.Request.Context()
+        tx, err := h.DB.Pool.Begin(ctx)
+        if err != nil {
+                slog.Error("Admin: failed to begin transaction", "error", err)
+                c.String(http.StatusInternalServerError, "Database error")
+                return
+        }
+        defer tx.Rollback(ctx)
+
+        tx.Exec(ctx, `DELETE FROM sessions WHERE user_id = $1`, userID)
+        tx.Exec(ctx, `DELETE FROM user_analyses WHERE user_id = $1`, userID)
+        tx.Exec(ctx, `DELETE FROM zone_imports WHERE user_id = $1`, userID)
+        _, err = tx.Exec(ctx, `DELETE FROM users WHERE id = $1`, userID)
+        if err != nil {
+                slog.Error("Admin: failed to delete user", "error", err, "user_id", userID)
+                c.String(http.StatusInternalServerError, "Failed to delete user")
+                return
+        }
+
+        if err := tx.Commit(ctx); err != nil {
+                slog.Error("Admin: failed to commit user deletion", "error", err)
+                c.String(http.StatusInternalServerError, "Failed to commit")
+                return
+        }
+
+        slog.Info("Admin: user deleted", "user_id", userID)
+        c.Redirect(http.StatusSeeOther, "/ops")
+}
+
+func (h *AdminHandler) ResetUserSessions(c *gin.Context) {
+        idStr := c.Param("id")
+        var userID int32
+        if _, err := fmt.Sscanf(idStr, "%d", &userID); err != nil {
+                c.String(http.StatusBadRequest, "Invalid user ID")
+                return
+        }
+
+        var exists bool
+        err := h.DB.Pool.QueryRow(c.Request.Context(), `SELECT EXISTS(SELECT 1 FROM users WHERE id = $1)`, userID).Scan(&exists)
+        if err != nil || !exists {
+                c.String(http.StatusNotFound, "User not found")
+                return
+        }
+
+        _, err = h.DB.Pool.Exec(c.Request.Context(), `DELETE FROM sessions WHERE user_id = $1`, userID)
+        if err != nil {
+                slog.Error("Admin: failed to reset sessions", "error", err, "user_id", userID)
+                c.String(http.StatusInternalServerError, "Failed to reset sessions")
+                return
+        }
+
+        slog.Info("Admin: sessions reset for user", "user_id", userID)
+        c.Redirect(http.StatusSeeOther, "/ops")
+}

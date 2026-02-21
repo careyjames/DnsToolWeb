@@ -152,6 +152,8 @@ func main() {
 
         adminHandler := handlers.NewAdminHandler(database, cfg)
         router.GET("/ops", middleware.RequireAdmin(), adminHandler.Dashboard)
+        router.POST("/ops/user/:id/delete", middleware.RequireAdmin(), adminHandler.DeleteUser)
+        router.POST("/ops/user/:id/reset-sessions", middleware.RequireAdmin(), adminHandler.ResetUserSessions)
 
         analyticsHandler := handlers.NewAnalyticsHandler(database, cfg)
         router.GET("/ops/analytics", middleware.RequireAdmin(), analyticsHandler.Dashboard)

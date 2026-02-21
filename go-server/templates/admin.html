@@ -105,6 +105,7 @@
                                         <th>User</th>
                                         <th>Role</th>
                                         <th>Last Login</th>
+                                        <th>Actions</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -122,6 +123,22 @@
                                             {{end}}
                                         </td>
                                         <td><small>{{.LastLoginAt}}</small></td>
+                                        <td>
+                                            <form method="POST" action="/ops/user/{{.ID}}/reset-sessions" class="d-inline">
+                                                <input type="hidden" name="csrf_token" value="{{$.CsrfToken}}">
+                                                <button type="submit" class="btn btn-outline-warning btn-sm me-1" title="Clear all sessions for this user">
+                                                    <i class="fas fa-sign-out-alt"></i>
+                                                </button>
+                                            </form>
+                                            {{if ne .Role "admin"}}
+                                            <form method="POST" action="/ops/user/{{.ID}}/delete" class="d-inline" data-confirm-delete="{{.Name}}">
+                                                <input type="hidden" name="csrf_token" value="{{$.CsrfToken}}">
+                                                <button type="submit" class="btn btn-outline-danger btn-sm" title="Delete user and all associated data">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            </form>
+                                            {{end}}
+                                        </td>
                                     </tr>
                                     {{end}}
                                 </tbody>
@@ -287,5 +304,15 @@
 
     {{template "footer" .}}
     {{template "scripts" .}}
+    <script nonce="{{.CspNonce}}">
+    document.querySelectorAll('form[data-confirm-delete]').forEach(function(form) {
+        form.addEventListener('submit', function(e) {
+            var name = form.getAttribute('data-confirm-delete');
+            if (!confirm('Delete user "' + name + '" and all their data? This cannot be undone.')) {
+                e.preventDefault();
+            }
+        });
+    });
+    </script>
 </body>
 </html>
