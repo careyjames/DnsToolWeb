@@ -4668,6 +4668,7 @@
                         Download the intelligence dump and verify its integrity, like you would a Kali ISO or any critical artifact. The SHA-3-512 checksum covers every byte of the download &mdash; deterministic serialization ensures identical hashes across downloads.
                     </p>
                     <p class="small mb-2 u-color-text-muted"><i class="fas fa-terminal me-1 text-danger opacity-50"></i>After downloading, verify with any of these commands:</p>
+                    <p class="small mb-3 text-muted fst-italic"><i class="fas fa-folder-open me-1"></i>Tip: <code class="u-color-link">cd ~/Downloads</code> first (or wherever you saved the files).</p>
                     <div class="mb-2">
                         <div class="d-flex align-items-center justify-content-between mb-1">
                             <span class="small u-color-text"><i class="fas fa-terminal me-1 text-danger opacity-50"></i>OpenSSL (macOS, Linux, WSL)</span>
@@ -4701,7 +4702,7 @@
         <div class="card border-danger border-opacity-50 mt-4 screen-only u-bg-secondary" id="verify-commands">
             <div class="card-header d-flex align-items-center justify-content-between u-row-clickable" role="button" tabindex="0" data-bs-toggle="collapse" data-bs-target="#verifyCommandsBody" aria-expanded="false" aria-controls="verifyCommandsBody">
                 <h5 class="mb-0 u-color-text-bright">
-                    <i class="fas fa-terminal me-2 text-danger"></i>Verify It Yourself
+                    <i class="fas fa-terminal me-2 text-danger"></i>Reproduce the Evidence
                     <span class="badge ms-2 u-badge-info-outline">Transparency</span>
                     <span class="badge ms-2 u-badge-danger-outline">Source-Verifiable</span>
                 </h5>
@@ -4712,7 +4713,7 @@
             <div class="collapse" id="verifyCommandsBody">
                 <div class="card-body">
                     <p class="small mb-3 u-color-text">
-                        The core DNS queries behind this report can be independently reproduced using standard command-line tools. Our analysis adds multi-resolver consensus, RFC-based evaluation, and cross-referencing &mdash; but the underlying data is always verifiable. We are intelligence analysts, not gatekeepers.
+                        Every finding in this report is backed by DNS queries you can run yourself. These vetted one-liners reproduce the exact checks used to build this report for <strong>{{.Domain}}</strong>. Our analysis adds multi-resolver consensus, RFC-based evaluation, and cross-referencing &mdash; but the underlying data is always independently verifiable. We are intelligence analysts, not gatekeepers.
                     </p>
                     {{$currentSection := ""}}
                     {{range .VerificationCommands}}
