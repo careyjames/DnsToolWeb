@@ -1,4 +1,38 @@
 :root {
+    /* ══════════════════════════════════════════════════════════════
+       COLOR ARCHITECTURE — Three-Layer System
+       ══════════════════════════════════════════════════════════════
+       Layer 1: STATUS (--status-*)
+         RFC/CVSS-aligned protocol assessment colors. Used in report
+         badges, status indicators, pass/fail verdicts. Do NOT change
+         without reviewing CVSS severity mapping.
+
+       Layer 2: SEVERITY (#ff2b2b, #ffc000, #33a532)
+         CVSS-aligned spoofability/risk badges in results pages.
+         Intentionally MORE vivid than status colors — these are
+         designed for "hair on fire" visual urgency. Used in
+         spoofability grades, severity dots, and print report colors.
+
+       Layer 3: ICAE MATURITY (#e8d5a3, #6bb5ff, #56d364, #d4af37, #ffc000)
+         Five-tier maturity progression colors for the ICAE engine.
+         Each tier has its own shade — these are NOT the same as
+         status colors even when similar hues. The progression is:
+           Development (#e8d5a3 amber-gold)
+           Verified    (#6bb5ff light blue)
+           Consistent  (#56d364 bright green)
+           Gold        (#d4af37 metallic gold)
+           Gold Master (#ffc000 vivid gold)
+
+       Layer 4: ACCENTS (--accent-*)
+         Brand and UI colors. Not semantic — purely aesthetic.
+         Cyan (--accent-cyan) for UI headings/subsections.
+         Steel/Deep/Violet for authority and premium feel.
+
+       Layer 5: PRINT (@media print)
+         High-contrast variants for paper output. Different values
+         are intentional — dark backgrounds become white.
+       ══════════════════════════════════════════════════════════════ */
+
     /* Professional Dark Mode Palette - Following UX Best Practices */
     /* Backgrounds: Avoid pure black, use dark grays for depth/elevation */
     --bg-primary: #0d1117;      /* Main background - GitHub dark */
@@ -15,8 +49,7 @@
     --code-border: #30363d;
     --code-color: #f0a8c8;
     
-    /* Status Colors: Desaturated for professionalism (20% less saturation) */
-    /* RFC/CVSS-aligned — do NOT change these */
+    /* Layer 1: Status Colors — RFC/CVSS-aligned protocol assessment */
     --status-success: #3fb950;     /* Muted green - safe/verified */
     --status-success-bg: rgba(63, 185, 80, 0.15);
     --status-warning: #e3b341;     /* Brighter amber for better contrast */
@@ -27,11 +60,12 @@
     --status-info-bg: rgba(88, 166, 255, 0.15);
     --status-neutral: #8b949e;     /* Gray - inactive/secondary */
 
-    /* Sophistication Accents — non-status, brand-authority colors */
+    /* Layer 4: Sophistication Accents — non-status, brand-authority colors */
     --accent-steel: #7d8ea8;       /* Steel blue — premium, intelligence, composure */
     --accent-deep: #1e3a5f;        /* Deep navy — authority, depth, classified */
     --accent-violet: #6c5ce7;      /* Authority violet — primary action, NIST-aligned */
     --accent-violet-hover: #7b6ef0;
+    --accent-cyan: #0dcaf0;        /* Bootstrap info cyan — UI accents, subsection headers */
     
     /* Borders */
     --border-default: #30363d;
@@ -3021,7 +3055,7 @@ main.container {
     font-size: 0.875rem;
 }
 .api-keys-info .api-keys-icon {
-    color: #0dcaf0;
+    color: var(--accent-cyan);
 }
 .api-keys-info strong {
     color: #e8eaed !important;
@@ -3086,9 +3120,9 @@ main.container {
 /* --------------------------------------------
    COLORS
    -------------------------------------------- */
-.u-color-info-mb { color: #0dcaf0; margin-bottom: 0.5rem; }
+.u-color-info-mb { color: var(--accent-cyan); margin-bottom: 0.5rem; }
 .u-subsection-header {
-    color: #0dcaf0;
+    color: var(--accent-cyan);
     margin-top: 0.5rem;
     margin-bottom: 0.25rem;
     font-size: 0.8rem;
@@ -3380,7 +3414,7 @@ footer a.text-muted:hover { text-decoration-color: rgba(173, 181, 189, 0.8); }
 }
 .u-transport-mta {
     background: rgba(255, 255, 255, 0.03);
-    border-left: 3px solid #0dcaf0;
+    border-left: 3px solid var(--accent-cyan);
 }
 .u-transport-neutral {
     background: rgba(255, 255, 255, 0.03);
@@ -3575,12 +3609,12 @@ footer a.text-muted:hover { text-decoration-color: rgba(173, 181, 189, 0.8); }
     text-decoration-style: solid;
 }
 .u-integrity-link-info {
-    color: #0dcaf0;
+    color: var(--accent-cyan);
     text-decoration-color: rgba(13, 202, 240, 0.5);
 }
 .u-integrity-link-info:hover {
-    color: #0dcaf0;
-    text-decoration-color: #0dcaf0;
+    color: var(--accent-cyan);
+    text-decoration-color: var(--accent-cyan);
 }
 .u-integrity-link-warning {
     color: #ffc107;
