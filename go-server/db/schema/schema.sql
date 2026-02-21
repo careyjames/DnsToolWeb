@@ -22,7 +22,7 @@ CREATE TABLE domain_analyses (
     country_name VARCHAR(100),
     ct_subdomains JSON,
     full_results JSON NOT NULL,
-    posture_hash VARCHAR(64),
+    posture_hash VARCHAR(128),
     private BOOLEAN NOT NULL DEFAULT FALSE,
     has_user_selectors BOOLEAN NOT NULL DEFAULT FALSE,
     scan_flag BOOLEAN NOT NULL DEFAULT FALSE,

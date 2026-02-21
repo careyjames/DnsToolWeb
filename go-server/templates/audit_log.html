@@ -4,7 +4,7 @@
     {{template "head" .}}
     <title>Accountability Log - DNS Tool</title>
     <meta name="robots" content="index, follow">
-    <meta name="description" content="Cryptographic accountability log — every analysis result's SHA-256 posture hash, timestamped and retained for tamper-evident verification.">
+    <meta name="description" content="Cryptographic accountability log — every analysis result's SHA-3-512 posture hash, timestamped and retained for tamper-evident verification.">
     <link rel="canonical" href="https://dnstool.it-help.tech/confidence/audit-log">
     {{template "critical_css" .}}
     {{template "head_css" .}}
@@ -21,7 +21,7 @@
         <div class="mb-5">
             <h1 class="fw-bold mb-2">Accountability Log</h1>
             <p class="text-muted mb-0">
-                Every analysis result is SHA-256 hashed at creation using canonical, deterministic serialization of all protocol findings.
+                Every analysis result is SHA-3-512 (Keccak) hashed at creation using canonical, deterministic serialization of all protocol findings.
                 This log records each hash alongside its timestamp for independent verification. No entries are redacted or removed.
             </p>
         </div>
@@ -38,7 +38,7 @@
                         <th class="text-muted" style="width: 3rem;">#</th>
                         <th class="text-muted">Domain</th>
                         <th class="text-muted">Timestamp (UTC)</th>
-                        <th class="text-muted">SHA-256 Posture Hash</th>
+                        <th class="text-muted">SHA-3-512 Posture Hash</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -81,7 +81,7 @@
         <div class="mt-5 pt-3 border-top border-secondary">
             <p class="text-muted small mb-0">
                 <i class="fas fa-lock me-1"></i>
-                Hashes are computed using SHA-256 over a canonical JSON serialization of all protocol findings at analysis time.
+                Hashes are computed using SHA-3-512 (Keccak, NIST FIPS 202) over a canonical JSON serialization of all protocol findings at analysis time.
                 The serialization is deterministic &mdash; identical inputs always produce identical hashes. Any post-analysis modification
                 to stored results would produce a different hash, detectable by the <a href="/confidence" class="text-info">Hash Integrity Audit</a>.
             </p>
