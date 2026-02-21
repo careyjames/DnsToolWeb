@@ -297,6 +297,19 @@ code {
 .icae-hero-maturity.icae-level-gold::before { background: #e0b85c; box-shadow: 0 0 4px rgba(224, 184, 92, 0.5); }
 .icae-hero-maturity.icae-level-gold-master { border-color: rgba(232, 213, 163, 0.4); }
 .icae-hero-maturity.icae-level-gold-master::before { background: linear-gradient(135deg, #f0ddb3, #faf3e3); box-shadow: 0 0 4px rgba(240, 221, 179, 0.5); }
+.nav-version-badge {
+    display: inline-block;
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    padding: 0.15rem 0.55rem;
+    border-radius: 999px;
+    color: #a5d6ff;
+    background: rgba(22, 27, 34, 0.85);
+    border: 1px solid rgba(88, 166, 255, 0.3);
+    vertical-align: middle;
+    white-space: nowrap;
+}
 .icae-hero-protocols {
     display: block;
     font-size: 0.78rem;
@@ -1983,12 +1996,11 @@ body.covert-mode .navbar.bg-dark {
 body.covert-mode .navbar-brand {
     color: #cc2828 !important;
 }
-body.covert-mode .navbar-brand .badge.bg-info {
-    background-color: rgba(140, 20, 20, 0.2) !important;
-    color: #cc2020 !important;
-    border: 1px solid rgba(180, 30, 30, 0.3);
+body.covert-mode .navbar-brand .nav-version-badge {
+    background: rgba(140, 20, 20, 0.2);
+    color: #cc2020;
+    border-color: rgba(180, 30, 30, 0.3);
     text-shadow: 0 0 4px rgba(180, 20, 20, 0.2);
-    letter-spacing: 0.03em;
 }
 body.covert-mode .navbar-brand svg rect {
     fill: #0a0c10;
