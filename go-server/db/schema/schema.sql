@@ -24,7 +24,10 @@ CREATE TABLE domain_analyses (
     full_results JSON NOT NULL,
     posture_hash VARCHAR(64),
     private BOOLEAN NOT NULL DEFAULT FALSE,
-    has_user_selectors BOOLEAN NOT NULL DEFAULT FALSE
+    has_user_selectors BOOLEAN NOT NULL DEFAULT FALSE,
+    scan_flag BOOLEAN NOT NULL DEFAULT FALSE,
+    scan_source VARCHAR(100),
+    scan_ip VARCHAR(45)
 );
 
 CREATE INDEX ix_domain_analyses_domain ON domain_analyses (domain);

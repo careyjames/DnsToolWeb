@@ -193,6 +193,42 @@
             </div>
         </div>
 
+        {{if .ICAEMetrics.HashAudit}}
+        <div class="card bg-dark border-secondary mb-4">
+            <div class="card-body">
+                <h2 class="h5 fw-bold mb-3"><i class="fas fa-fingerprint me-2 text-info"></i>Hash Integrity Audit</h2>
+                <p class="text-muted small mb-3">Every analysis result is SHA-256 hashed at creation using a canonical, deterministic serialization of all protocol findings. This audit recomputes hashes from stored results and compares against the retained posture hash to verify no data has been altered post-analysis.</p>
+                <div class="d-flex flex-wrap gap-3 mb-2">
+                    <div class="icae-hash-stat">
+                        <span class="icae-hash-stat-value">{{.ICAEMetrics.HashAudit.TotalAudited}}</span>
+                        <span class="icae-hash-stat-label">Audited</span>
+                    </div>
+                    <div class="icae-hash-stat">
+                        <span class="icae-hash-stat-value text-success">{{.ICAEMetrics.HashAudit.TotalVerified}}</span>
+                        <span class="icae-hash-stat-label">Verified</span>
+                    </div>
+                    <div class="icae-hash-stat">
+                        {{if gt .ICAEMetrics.HashAudit.TotalFailed 0}}
+                        <span class="icae-hash-stat-value text-danger">{{.ICAEMetrics.HashAudit.TotalFailed}}</span>
+                        {{else}}
+                        <span class="icae-hash-stat-value text-success">{{.ICAEMetrics.HashAudit.TotalFailed}}</span>
+                        {{end}}
+                        <span class="icae-hash-stat-label">Mismatched</span>
+                    </div>
+                    <div class="icae-hash-stat">
+                        <span class="icae-hash-stat-value">{{.ICAEMetrics.HashAudit.IntegrityPct}}%</span>
+                        <span class="icae-hash-stat-label">Integrity</span>
+                    </div>
+                </div>
+                {{if and (eq .ICAEMetrics.HashAudit.TotalFailed 0) (gt .ICAEMetrics.HashAudit.TotalVerified 0)}}
+                <p class="text-success small mb-0"><i class="fas fa-check-circle me-1"></i>All {{.ICAEMetrics.HashAudit.TotalVerified}} audited results verified &mdash; no posture hash mismatches detected. Tamper-evident audit trail intact.</p>
+                {{else if gt .ICAEMetrics.HashAudit.TotalFailed 0}}
+                <p class="text-danger small mb-0"><i class="fas fa-exclamation-triangle me-1"></i>{{.ICAEMetrics.HashAudit.TotalFailed}} hash mismatch(es) detected. Investigate immediately.</p>
+                {{end}}
+            </div>
+        </div>
+        {{end}}
+
         {{if .ICAEMetrics.Regressions}}
         <div class="card bg-dark border-secondary mb-4">
             <div class="card-body">

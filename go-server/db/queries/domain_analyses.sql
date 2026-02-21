@@ -178,3 +178,12 @@ SELECT EXISTS(
     SELECT 1 FROM user_analyses
     WHERE analysis_id = $1 AND user_id = $2
 ) AS is_owner;
+
+-- name: GetRecentHashedAnalyses :many
+SELECT id, domain, posture_hash, full_results, created_at FROM domain_analyses
+WHERE posture_hash IS NOT NULL
+  AND posture_hash != ''
+  AND full_results IS NOT NULL
+  AND analysis_success = TRUE
+ORDER BY created_at DESC
+LIMIT $1;

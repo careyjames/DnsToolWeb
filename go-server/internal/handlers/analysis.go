@@ -799,7 +799,7 @@ func (h *AnalysisHandler) saveAnalysis(ctx context.Context, domain, asciiDomain 
                 HasUserSelectors:     hasUserSelectors,
                 ScanFlag:             scanClass.IsScan,
                 ScanSource:           scanSource,
-                ScanIP:               scanIP,
+                ScanIp:               scanIP,
         }
 
         row, err := h.DB.Queries.InsertAnalysis(ctx, params)

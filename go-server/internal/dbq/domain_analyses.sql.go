@@ -6,10 +6,10 @@
 package dbq
 
 import (
-        "context"
-        "encoding/json"
+	"context"
+	"encoding/json"
 
-        "github.com/jackc/pgx/v5/pgtype"
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 const checkAnalysisOwnership = `-- name: CheckAnalysisOwnership :one
@@ -20,15 +20,15 @@ SELECT EXISTS(
 `
 
 type CheckAnalysisOwnershipParams struct {
-        AnalysisID int32 `db:"analysis_id" json:"analysis_id"`
-        UserID     int32 `db:"user_id" json:"user_id"`
+	AnalysisID int32 `db:"analysis_id" json:"analysis_id"`
+	UserID     int32 `db:"user_id" json:"user_id"`
 }
 
 func (q *Queries) CheckAnalysisOwnership(ctx context.Context, arg CheckAnalysisOwnershipParams) (bool, error) {
-        row := q.db.QueryRow(ctx, checkAnalysisOwnership, arg.AnalysisID, arg.UserID)
-        var is_owner bool
-        err := row.Scan(&is_owner)
-        return is_owner, err
+	row := q.db.QueryRow(ctx, checkAnalysisOwnership, arg.AnalysisID, arg.UserID)
+	var is_owner bool
+	err := row.Scan(&is_owner)
+	return is_owner, err
 }
 
 const countAllAnalyses = `-- name: CountAllAnalyses :one
@@ -36,10 +36,21 @@ SELECT COUNT(*) FROM domain_analyses
 `
 
 func (q *Queries) CountAllAnalyses(ctx context.Context) (int64, error) {
-        row := q.db.QueryRow(ctx, countAllAnalyses)
-        var count int64
-        err := row.Scan(&count)
-        return count, err
+	row := q.db.QueryRow(ctx, countAllAnalyses)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
+const countScannerAlerts = `-- name: CountScannerAlerts :one
+SELECT COUNT(*) FROM domain_analyses WHERE scan_flag = TRUE
+`
+
+func (q *Queries) CountScannerAlerts(ctx context.Context) (int64, error) {
+	row := q.db.QueryRow(ctx, countScannerAlerts)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
 }
 
 const countSearchSuccessfulAnalyses = `-- name: CountSearchSuccessfulAnalyses :one
@@ -52,10 +63,10 @@ WHERE full_results IS NOT NULL
 `
 
 func (q *Queries) CountSearchSuccessfulAnalyses(ctx context.Context, domain string) (int64, error) {
-        row := q.db.QueryRow(ctx, countSearchSuccessfulAnalyses, domain)
-        var count int64
-        err := row.Scan(&count)
-        return count, err
+	row := q.db.QueryRow(ctx, countSearchSuccessfulAnalyses, domain)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
 }
 
 const countSuccessfulAnalyses = `-- name: CountSuccessfulAnalyses :one
@@ -64,10 +75,10 @@ WHERE full_results IS NOT NULL AND analysis_success = TRUE AND private = FALSE A
 `
 
 func (q *Queries) CountSuccessfulAnalyses(ctx context.Context) (int64, error) {
-        row := q.db.QueryRow(ctx, countSuccessfulAnalyses)
-        var count int64
-        err := row.Scan(&count)
-        return count, err
+	row := q.db.QueryRow(ctx, countSuccessfulAnalyses)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
 }
 
 const countSuccessfulAnalysesTotal = `-- name: CountSuccessfulAnalysesTotal :one
@@ -75,10 +86,10 @@ SELECT COUNT(*) FROM domain_analyses WHERE analysis_success = TRUE
 `
 
 func (q *Queries) CountSuccessfulAnalysesTotal(ctx context.Context) (int64, error) {
-        row := q.db.QueryRow(ctx, countSuccessfulAnalysesTotal)
-        var count int64
-        err := row.Scan(&count)
-        return count, err
+	row := q.db.QueryRow(ctx, countSuccessfulAnalysesTotal)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
 }
 
 const countUniqueDomainsTotal = `-- name: CountUniqueDomainsTotal :one
@@ -86,10 +97,10 @@ SELECT COUNT(DISTINCT domain) FROM domain_analyses
 `
 
 func (q *Queries) CountUniqueDomainsTotal(ctx context.Context) (int64, error) {
-        row := q.db.QueryRow(ctx, countUniqueDomainsTotal)
-        var count int64
-        err := row.Scan(&count)
-        return count, err
+	row := q.db.QueryRow(ctx, countUniqueDomainsTotal)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
 }
 
 const exportSuccessfulAnalyses = `-- name: ExportSuccessfulAnalyses :many
@@ -102,50 +113,50 @@ LIMIT $1 OFFSET $2
 `
 
 type ExportSuccessfulAnalysesParams struct {
-        Limit  int32 `db:"limit" json:"limit"`
-        Offset int32 `db:"offset" json:"offset"`
+	Limit  int32 `db:"limit" json:"limit"`
+	Offset int32 `db:"offset" json:"offset"`
 }
 
 type ExportSuccessfulAnalysesRow struct {
-        ID               int32            `db:"id" json:"id"`
-        Domain           string           `db:"domain" json:"domain"`
-        AsciiDomain      string           `db:"ascii_domain" json:"ascii_domain"`
-        CreatedAt        pgtype.Timestamp `db:"created_at" json:"created_at"`
-        UpdatedAt        pgtype.Timestamp `db:"updated_at" json:"updated_at"`
-        AnalysisDuration *float64         `db:"analysis_duration" json:"analysis_duration"`
-        CountryCode      *string          `db:"country_code" json:"country_code"`
-        CountryName      *string          `db:"country_name" json:"country_name"`
-        FullResults      json.RawMessage  `db:"full_results" json:"full_results"`
+	ID               int32            `db:"id" json:"id"`
+	Domain           string           `db:"domain" json:"domain"`
+	AsciiDomain      string           `db:"ascii_domain" json:"ascii_domain"`
+	CreatedAt        pgtype.Timestamp `db:"created_at" json:"created_at"`
+	UpdatedAt        pgtype.Timestamp `db:"updated_at" json:"updated_at"`
+	AnalysisDuration *float64         `db:"analysis_duration" json:"analysis_duration"`
+	CountryCode      *string          `db:"country_code" json:"country_code"`
+	CountryName      *string          `db:"country_name" json:"country_name"`
+	FullResults      json.RawMessage  `db:"full_results" json:"full_results"`
 }
 
 func (q *Queries) ExportSuccessfulAnalyses(ctx context.Context, arg ExportSuccessfulAnalysesParams) ([]ExportSuccessfulAnalysesRow, error) {
-        rows, err := q.db.Query(ctx, exportSuccessfulAnalyses, arg.Limit, arg.Offset)
-        if err != nil {
-                return nil, err
-        }
-        defer rows.Close()
-        items := []ExportSuccessfulAnalysesRow{}
-        for rows.Next() {
-                var i ExportSuccessfulAnalysesRow
-                if err := rows.Scan(
-                        &i.ID,
-                        &i.Domain,
-                        &i.AsciiDomain,
-                        &i.CreatedAt,
-                        &i.UpdatedAt,
-                        &i.AnalysisDuration,
-                        &i.CountryCode,
-                        &i.CountryName,
-                        &i.FullResults,
-                ); err != nil {
-                        return nil, err
-                }
-                items = append(items, i)
-        }
-        if err := rows.Err(); err != nil {
-                return nil, err
-        }
-        return items, nil
+	rows, err := q.db.Query(ctx, exportSuccessfulAnalyses, arg.Limit, arg.Offset)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []ExportSuccessfulAnalysesRow{}
+	for rows.Next() {
+		var i ExportSuccessfulAnalysesRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.Domain,
+			&i.AsciiDomain,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.AnalysisDuration,
+			&i.CountryCode,
+			&i.CountryName,
+			&i.FullResults,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const getAnalysisByID = `-- name: GetAnalysisByID :one
@@ -153,40 +164,40 @@ SELECT id, domain, ascii_domain, basic_records, authoritative_records, spf_statu
 `
 
 func (q *Queries) GetAnalysisByID(ctx context.Context, id int32) (DomainAnalysis, error) {
-        row := q.db.QueryRow(ctx, getAnalysisByID, id)
-        var i DomainAnalysis
-        err := row.Scan(
-                &i.ID,
-                &i.Domain,
-                &i.AsciiDomain,
-                &i.BasicRecords,
-                &i.AuthoritativeRecords,
-                &i.SpfStatus,
-                &i.SpfRecords,
-                &i.DmarcStatus,
-                &i.DmarcPolicy,
-                &i.DmarcRecords,
-                &i.DkimStatus,
-                &i.DkimSelectors,
-                &i.RegistrarName,
-                &i.RegistrarSource,
-                &i.AnalysisSuccess,
-                &i.ErrorMessage,
-                &i.AnalysisDuration,
-                &i.CreatedAt,
-                &i.UpdatedAt,
-                &i.CountryCode,
-                &i.CountryName,
-                &i.CtSubdomains,
-                &i.FullResults,
-                &i.PostureHash,
-                &i.Private,
-                &i.HasUserSelectors,
-                &i.ScanFlag,
-                &i.ScanSource,
-                &i.ScanIP,
-        )
-        return i, err
+	row := q.db.QueryRow(ctx, getAnalysisByID, id)
+	var i DomainAnalysis
+	err := row.Scan(
+		&i.ID,
+		&i.Domain,
+		&i.AsciiDomain,
+		&i.BasicRecords,
+		&i.AuthoritativeRecords,
+		&i.SpfStatus,
+		&i.SpfRecords,
+		&i.DmarcStatus,
+		&i.DmarcPolicy,
+		&i.DmarcRecords,
+		&i.DkimStatus,
+		&i.DkimSelectors,
+		&i.RegistrarName,
+		&i.RegistrarSource,
+		&i.AnalysisSuccess,
+		&i.ErrorMessage,
+		&i.AnalysisDuration,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.CountryCode,
+		&i.CountryName,
+		&i.CtSubdomains,
+		&i.FullResults,
+		&i.PostureHash,
+		&i.Private,
+		&i.HasUserSelectors,
+		&i.ScanFlag,
+		&i.ScanSource,
+		&i.ScanIp,
+	)
+	return i, err
 }
 
 const getNewerAnalysisForDomain = `-- name: GetNewerAnalysisForDomain :one
@@ -200,20 +211,20 @@ LIMIT 1
 `
 
 type GetNewerAnalysisForDomainParams struct {
-        AsciiDomain string `db:"ascii_domain" json:"ascii_domain"`
-        ID          int32  `db:"id" json:"id"`
+	AsciiDomain string `db:"ascii_domain" json:"ascii_domain"`
+	ID          int32  `db:"id" json:"id"`
 }
 
 type GetNewerAnalysisForDomainRow struct {
-        ID        int32            `db:"id" json:"id"`
-        CreatedAt pgtype.Timestamp `db:"created_at" json:"created_at"`
+	ID        int32            `db:"id" json:"id"`
+	CreatedAt pgtype.Timestamp `db:"created_at" json:"created_at"`
 }
 
 func (q *Queries) GetNewerAnalysisForDomain(ctx context.Context, arg GetNewerAnalysisForDomainParams) (GetNewerAnalysisForDomainRow, error) {
-        row := q.db.QueryRow(ctx, getNewerAnalysisForDomain, arg.AsciiDomain, arg.ID)
-        var i GetNewerAnalysisForDomainRow
-        err := row.Scan(&i.ID, &i.CreatedAt)
-        return i, err
+	row := q.db.QueryRow(ctx, getNewerAnalysisForDomain, arg.AsciiDomain, arg.ID)
+	var i GetNewerAnalysisForDomainRow
+	err := row.Scan(&i.ID, &i.CreatedAt)
+	return i, err
 }
 
 const getPostureHashBefore = `-- name: GetPostureHashBefore :one
@@ -228,20 +239,20 @@ LIMIT 1
 `
 
 type GetPostureHashBeforeParams struct {
-        Domain string `db:"domain" json:"domain"`
-        ID     int32  `db:"id" json:"id"`
+	Domain string `db:"domain" json:"domain"`
+	ID     int32  `db:"id" json:"id"`
 }
 
 type GetPostureHashBeforeRow struct {
-        PostureHash *string          `db:"posture_hash" json:"posture_hash"`
-        CreatedAt   pgtype.Timestamp `db:"created_at" json:"created_at"`
+	PostureHash *string          `db:"posture_hash" json:"posture_hash"`
+	CreatedAt   pgtype.Timestamp `db:"created_at" json:"created_at"`
 }
 
 func (q *Queries) GetPostureHashBefore(ctx context.Context, arg GetPostureHashBeforeParams) (GetPostureHashBeforeRow, error) {
-        row := q.db.QueryRow(ctx, getPostureHashBefore, arg.Domain, arg.ID)
-        var i GetPostureHashBeforeRow
-        err := row.Scan(&i.PostureHash, &i.CreatedAt)
-        return i, err
+	row := q.db.QueryRow(ctx, getPostureHashBefore, arg.Domain, arg.ID)
+	var i GetPostureHashBeforeRow
+	err := row.Scan(&i.PostureHash, &i.CreatedAt)
+	return i, err
 }
 
 const getPreviousAnalysisForDrift = `-- name: GetPreviousAnalysisForDrift :one
@@ -256,22 +267,22 @@ LIMIT 1
 `
 
 type GetPreviousAnalysisForDriftRow struct {
-        ID          int32            `db:"id" json:"id"`
-        PostureHash *string          `db:"posture_hash" json:"posture_hash"`
-        FullResults json.RawMessage  `db:"full_results" json:"full_results"`
-        CreatedAt   pgtype.Timestamp `db:"created_at" json:"created_at"`
+	ID          int32            `db:"id" json:"id"`
+	PostureHash *string          `db:"posture_hash" json:"posture_hash"`
+	FullResults json.RawMessage  `db:"full_results" json:"full_results"`
+	CreatedAt   pgtype.Timestamp `db:"created_at" json:"created_at"`
 }
 
 func (q *Queries) GetPreviousAnalysisForDrift(ctx context.Context, domain string) (GetPreviousAnalysisForDriftRow, error) {
-        row := q.db.QueryRow(ctx, getPreviousAnalysisForDrift, domain)
-        var i GetPreviousAnalysisForDriftRow
-        err := row.Scan(
-                &i.ID,
-                &i.PostureHash,
-                &i.FullResults,
-                &i.CreatedAt,
-        )
-        return i, err
+	row := q.db.QueryRow(ctx, getPreviousAnalysisForDrift, domain)
+	var i GetPreviousAnalysisForDriftRow
+	err := row.Scan(
+		&i.ID,
+		&i.PostureHash,
+		&i.FullResults,
+		&i.CreatedAt,
+	)
+	return i, err
 }
 
 const getPreviousAnalysisForDriftBefore = `-- name: GetPreviousAnalysisForDriftBefore :one
@@ -287,27 +298,27 @@ LIMIT 1
 `
 
 type GetPreviousAnalysisForDriftBeforeParams struct {
-        Domain string `db:"domain" json:"domain"`
-        ID     int32  `db:"id" json:"id"`
+	Domain string `db:"domain" json:"domain"`
+	ID     int32  `db:"id" json:"id"`
 }
 
 type GetPreviousAnalysisForDriftBeforeRow struct {
-        ID          int32            `db:"id" json:"id"`
-        PostureHash *string          `db:"posture_hash" json:"posture_hash"`
-        FullResults json.RawMessage  `db:"full_results" json:"full_results"`
-        CreatedAt   pgtype.Timestamp `db:"created_at" json:"created_at"`
+	ID          int32            `db:"id" json:"id"`
+	PostureHash *string          `db:"posture_hash" json:"posture_hash"`
+	FullResults json.RawMessage  `db:"full_results" json:"full_results"`
+	CreatedAt   pgtype.Timestamp `db:"created_at" json:"created_at"`
 }
 
 func (q *Queries) GetPreviousAnalysisForDriftBefore(ctx context.Context, arg GetPreviousAnalysisForDriftBeforeParams) (GetPreviousAnalysisForDriftBeforeRow, error) {
-        row := q.db.QueryRow(ctx, getPreviousAnalysisForDriftBefore, arg.Domain, arg.ID)
-        var i GetPreviousAnalysisForDriftBeforeRow
-        err := row.Scan(
-                &i.ID,
-                &i.PostureHash,
-                &i.FullResults,
-                &i.CreatedAt,
-        )
-        return i, err
+	row := q.db.QueryRow(ctx, getPreviousAnalysisForDriftBefore, arg.Domain, arg.ID)
+	var i GetPreviousAnalysisForDriftBeforeRow
+	err := row.Scan(
+		&i.ID,
+		&i.PostureHash,
+		&i.FullResults,
+		&i.CreatedAt,
+	)
+	return i, err
 }
 
 const getPreviousPostureHash = `-- name: GetPreviousPostureHash :one
@@ -321,15 +332,15 @@ LIMIT 1
 `
 
 type GetPreviousPostureHashRow struct {
-        PostureHash *string          `db:"posture_hash" json:"posture_hash"`
-        CreatedAt   pgtype.Timestamp `db:"created_at" json:"created_at"`
+	PostureHash *string          `db:"posture_hash" json:"posture_hash"`
+	CreatedAt   pgtype.Timestamp `db:"created_at" json:"created_at"`
 }
 
 func (q *Queries) GetPreviousPostureHash(ctx context.Context, domain string) (GetPreviousPostureHashRow, error) {
-        row := q.db.QueryRow(ctx, getPreviousPostureHash, domain)
-        var i GetPreviousPostureHashRow
-        err := row.Scan(&i.PostureHash, &i.CreatedAt)
-        return i, err
+	row := q.db.QueryRow(ctx, getPreviousPostureHash, domain)
+	var i GetPreviousPostureHashRow
+	err := row.Scan(&i.PostureHash, &i.CreatedAt)
+	return i, err
 }
 
 const getRecentAnalysisByDomain = `-- name: GetRecentAnalysisByDomain :one
@@ -340,40 +351,84 @@ LIMIT 1
 `
 
 func (q *Queries) GetRecentAnalysisByDomain(ctx context.Context, domain string) (DomainAnalysis, error) {
-        row := q.db.QueryRow(ctx, getRecentAnalysisByDomain, domain)
-        var i DomainAnalysis
-        err := row.Scan(
-                &i.ID,
-                &i.Domain,
-                &i.AsciiDomain,
-                &i.BasicRecords,
-                &i.AuthoritativeRecords,
-                &i.SpfStatus,
-                &i.SpfRecords,
-                &i.DmarcStatus,
-                &i.DmarcPolicy,
-                &i.DmarcRecords,
-                &i.DkimStatus,
-                &i.DkimSelectors,
-                &i.RegistrarName,
-                &i.RegistrarSource,
-                &i.AnalysisSuccess,
-                &i.ErrorMessage,
-                &i.AnalysisDuration,
-                &i.CreatedAt,
-                &i.UpdatedAt,
-                &i.CountryCode,
-                &i.CountryName,
-                &i.CtSubdomains,
-                &i.FullResults,
-                &i.PostureHash,
-                &i.Private,
-                &i.HasUserSelectors,
-                &i.ScanFlag,
-                &i.ScanSource,
-                &i.ScanIP,
-        )
-        return i, err
+	row := q.db.QueryRow(ctx, getRecentAnalysisByDomain, domain)
+	var i DomainAnalysis
+	err := row.Scan(
+		&i.ID,
+		&i.Domain,
+		&i.AsciiDomain,
+		&i.BasicRecords,
+		&i.AuthoritativeRecords,
+		&i.SpfStatus,
+		&i.SpfRecords,
+		&i.DmarcStatus,
+		&i.DmarcPolicy,
+		&i.DmarcRecords,
+		&i.DkimStatus,
+		&i.DkimSelectors,
+		&i.RegistrarName,
+		&i.RegistrarSource,
+		&i.AnalysisSuccess,
+		&i.ErrorMessage,
+		&i.AnalysisDuration,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.CountryCode,
+		&i.CountryName,
+		&i.CtSubdomains,
+		&i.FullResults,
+		&i.PostureHash,
+		&i.Private,
+		&i.HasUserSelectors,
+		&i.ScanFlag,
+		&i.ScanSource,
+		&i.ScanIp,
+	)
+	return i, err
+}
+
+const getRecentHashedAnalyses = `-- name: GetRecentHashedAnalyses :many
+SELECT id, domain, posture_hash, full_results, created_at FROM domain_analyses
+WHERE posture_hash IS NOT NULL
+  AND posture_hash != ''
+  AND full_results IS NOT NULL
+  AND analysis_success = TRUE
+ORDER BY created_at DESC
+LIMIT $1
+`
+
+type GetRecentHashedAnalysesRow struct {
+	ID          int32            `db:"id" json:"id"`
+	Domain      string           `db:"domain" json:"domain"`
+	PostureHash *string          `db:"posture_hash" json:"posture_hash"`
+	FullResults json.RawMessage  `db:"full_results" json:"full_results"`
+	CreatedAt   pgtype.Timestamp `db:"created_at" json:"created_at"`
+}
+
+func (q *Queries) GetRecentHashedAnalyses(ctx context.Context, limit int32) ([]GetRecentHashedAnalysesRow, error) {
+	rows, err := q.db.Query(ctx, getRecentHashedAnalyses, limit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []GetRecentHashedAnalysesRow{}
+	for rows.Next() {
+		var i GetRecentHashedAnalysesRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.Domain,
+			&i.PostureHash,
+			&i.FullResults,
+			&i.CreatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const insertAnalysis = `-- name: InsertAnalysis :one
@@ -396,71 +451,71 @@ INSERT INTO domain_analyses (
 `
 
 type InsertAnalysisParams struct {
-        Domain               string          `db:"domain" json:"domain"`
-        AsciiDomain          string          `db:"ascii_domain" json:"ascii_domain"`
-        BasicRecords         json.RawMessage `db:"basic_records" json:"basic_records"`
-        AuthoritativeRecords json.RawMessage `db:"authoritative_records" json:"authoritative_records"`
-        SpfStatus            *string         `db:"spf_status" json:"spf_status"`
-        SpfRecords           json.RawMessage `db:"spf_records" json:"spf_records"`
-        DmarcStatus          *string         `db:"dmarc_status" json:"dmarc_status"`
-        DmarcPolicy          *string         `db:"dmarc_policy" json:"dmarc_policy"`
-        DmarcRecords         json.RawMessage `db:"dmarc_records" json:"dmarc_records"`
-        DkimStatus           *string         `db:"dkim_status" json:"dkim_status"`
-        DkimSelectors        json.RawMessage `db:"dkim_selectors" json:"dkim_selectors"`
-        RegistrarName        *string         `db:"registrar_name" json:"registrar_name"`
-        RegistrarSource      *string         `db:"registrar_source" json:"registrar_source"`
-        CtSubdomains         json.RawMessage `db:"ct_subdomains" json:"ct_subdomains"`
-        FullResults          json.RawMessage `db:"full_results" json:"full_results"`
-        CountryCode          *string         `db:"country_code" json:"country_code"`
-        CountryName          *string         `db:"country_name" json:"country_name"`
-        AnalysisSuccess      *bool           `db:"analysis_success" json:"analysis_success"`
-        ErrorMessage         *string         `db:"error_message" json:"error_message"`
-        AnalysisDuration     *float64        `db:"analysis_duration" json:"analysis_duration"`
-        PostureHash          *string         `db:"posture_hash" json:"posture_hash"`
-        Private              bool            `db:"private" json:"private"`
-        HasUserSelectors     bool            `db:"has_user_selectors" json:"has_user_selectors"`
-        ScanFlag             bool            `db:"scan_flag" json:"scan_flag"`
-        ScanSource           *string         `db:"scan_source" json:"scan_source"`
-        ScanIP               *string         `db:"scan_ip" json:"scan_ip"`
+	Domain               string          `db:"domain" json:"domain"`
+	AsciiDomain          string          `db:"ascii_domain" json:"ascii_domain"`
+	BasicRecords         json.RawMessage `db:"basic_records" json:"basic_records"`
+	AuthoritativeRecords json.RawMessage `db:"authoritative_records" json:"authoritative_records"`
+	SpfStatus            *string         `db:"spf_status" json:"spf_status"`
+	SpfRecords           json.RawMessage `db:"spf_records" json:"spf_records"`
+	DmarcStatus          *string         `db:"dmarc_status" json:"dmarc_status"`
+	DmarcPolicy          *string         `db:"dmarc_policy" json:"dmarc_policy"`
+	DmarcRecords         json.RawMessage `db:"dmarc_records" json:"dmarc_records"`
+	DkimStatus           *string         `db:"dkim_status" json:"dkim_status"`
+	DkimSelectors        json.RawMessage `db:"dkim_selectors" json:"dkim_selectors"`
+	RegistrarName        *string         `db:"registrar_name" json:"registrar_name"`
+	RegistrarSource      *string         `db:"registrar_source" json:"registrar_source"`
+	CtSubdomains         json.RawMessage `db:"ct_subdomains" json:"ct_subdomains"`
+	FullResults          json.RawMessage `db:"full_results" json:"full_results"`
+	CountryCode          *string         `db:"country_code" json:"country_code"`
+	CountryName          *string         `db:"country_name" json:"country_name"`
+	AnalysisSuccess      *bool           `db:"analysis_success" json:"analysis_success"`
+	ErrorMessage         *string         `db:"error_message" json:"error_message"`
+	AnalysisDuration     *float64        `db:"analysis_duration" json:"analysis_duration"`
+	PostureHash          *string         `db:"posture_hash" json:"posture_hash"`
+	Private              bool            `db:"private" json:"private"`
+	HasUserSelectors     bool            `db:"has_user_selectors" json:"has_user_selectors"`
+	ScanFlag             bool            `db:"scan_flag" json:"scan_flag"`
+	ScanSource           *string         `db:"scan_source" json:"scan_source"`
+	ScanIp               *string         `db:"scan_ip" json:"scan_ip"`
 }
 
 type InsertAnalysisRow struct {
-        ID        int32            `db:"id" json:"id"`
-        CreatedAt pgtype.Timestamp `db:"created_at" json:"created_at"`
+	ID        int32            `db:"id" json:"id"`
+	CreatedAt pgtype.Timestamp `db:"created_at" json:"created_at"`
 }
 
 func (q *Queries) InsertAnalysis(ctx context.Context, arg InsertAnalysisParams) (InsertAnalysisRow, error) {
-        row := q.db.QueryRow(ctx, insertAnalysis,
-                arg.Domain,
-                arg.AsciiDomain,
-                arg.BasicRecords,
-                arg.AuthoritativeRecords,
-                arg.SpfStatus,
-                arg.SpfRecords,
-                arg.DmarcStatus,
-                arg.DmarcPolicy,
-                arg.DmarcRecords,
-                arg.DkimStatus,
-                arg.DkimSelectors,
-                arg.RegistrarName,
-                arg.RegistrarSource,
-                arg.CtSubdomains,
-                arg.FullResults,
-                arg.CountryCode,
-                arg.CountryName,
-                arg.AnalysisSuccess,
-                arg.ErrorMessage,
-                arg.AnalysisDuration,
-                arg.PostureHash,
-                arg.Private,
-                arg.HasUserSelectors,
-                arg.ScanFlag,
-                arg.ScanSource,
-                arg.ScanIP,
-        )
-        var i InsertAnalysisRow
-        err := row.Scan(&i.ID, &i.CreatedAt)
-        return i, err
+	row := q.db.QueryRow(ctx, insertAnalysis,
+		arg.Domain,
+		arg.AsciiDomain,
+		arg.BasicRecords,
+		arg.AuthoritativeRecords,
+		arg.SpfStatus,
+		arg.SpfRecords,
+		arg.DmarcStatus,
+		arg.DmarcPolicy,
+		arg.DmarcRecords,
+		arg.DkimStatus,
+		arg.DkimSelectors,
+		arg.RegistrarName,
+		arg.RegistrarSource,
+		arg.CtSubdomains,
+		arg.FullResults,
+		arg.CountryCode,
+		arg.CountryName,
+		arg.AnalysisSuccess,
+		arg.ErrorMessage,
+		arg.AnalysisDuration,
+		arg.PostureHash,
+		arg.Private,
+		arg.HasUserSelectors,
+		arg.ScanFlag,
+		arg.ScanSource,
+		arg.ScanIp,
+	)
+	var i InsertAnalysisRow
+	err := row.Scan(&i.ID, &i.CreatedAt)
+	return i, err
 }
 
 const listAnalysesByDomain = `-- name: ListAnalysesByDomain :many
@@ -473,58 +528,58 @@ LIMIT $2
 `
 
 type ListAnalysesByDomainParams struct {
-        Domain string `db:"domain" json:"domain"`
-        Limit  int32  `db:"limit" json:"limit"`
+	Domain string `db:"domain" json:"domain"`
+	Limit  int32  `db:"limit" json:"limit"`
 }
 
 func (q *Queries) ListAnalysesByDomain(ctx context.Context, arg ListAnalysesByDomainParams) ([]DomainAnalysis, error) {
-        rows, err := q.db.Query(ctx, listAnalysesByDomain, arg.Domain, arg.Limit)
-        if err != nil {
-                return nil, err
-        }
-        defer rows.Close()
-        items := []DomainAnalysis{}
-        for rows.Next() {
-                var i DomainAnalysis
-                if err := rows.Scan(
-                        &i.ID,
-                        &i.Domain,
-                        &i.AsciiDomain,
-                        &i.BasicRecords,
-                        &i.AuthoritativeRecords,
-                        &i.SpfStatus,
-                        &i.SpfRecords,
-                        &i.DmarcStatus,
-                        &i.DmarcPolicy,
-                        &i.DmarcRecords,
-                        &i.DkimStatus,
-                        &i.DkimSelectors,
-                        &i.RegistrarName,
-                        &i.RegistrarSource,
-                        &i.AnalysisSuccess,
-                        &i.ErrorMessage,
-                        &i.AnalysisDuration,
-                        &i.CreatedAt,
-                        &i.UpdatedAt,
-                        &i.CountryCode,
-                        &i.CountryName,
-                        &i.CtSubdomains,
-                        &i.FullResults,
-                        &i.PostureHash,
-                        &i.Private,
-                        &i.HasUserSelectors,
-                        &i.ScanFlag,
-                        &i.ScanSource,
-                        &i.ScanIP,
-                ); err != nil {
-                        return nil, err
-                }
-                items = append(items, i)
-        }
-        if err := rows.Err(); err != nil {
-                return nil, err
-        }
-        return items, nil
+	rows, err := q.db.Query(ctx, listAnalysesByDomain, arg.Domain, arg.Limit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []DomainAnalysis{}
+	for rows.Next() {
+		var i DomainAnalysis
+		if err := rows.Scan(
+			&i.ID,
+			&i.Domain,
+			&i.AsciiDomain,
+			&i.BasicRecords,
+			&i.AuthoritativeRecords,
+			&i.SpfStatus,
+			&i.SpfRecords,
+			&i.DmarcStatus,
+			&i.DmarcPolicy,
+			&i.DmarcRecords,
+			&i.DkimStatus,
+			&i.DkimSelectors,
+			&i.RegistrarName,
+			&i.RegistrarSource,
+			&i.AnalysisSuccess,
+			&i.ErrorMessage,
+			&i.AnalysisDuration,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.CountryCode,
+			&i.CountryName,
+			&i.CtSubdomains,
+			&i.FullResults,
+			&i.PostureHash,
+			&i.Private,
+			&i.HasUserSelectors,
+			&i.ScanFlag,
+			&i.ScanSource,
+			&i.ScanIp,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const listCountryDistribution = `-- name: ListCountryDistribution :many
@@ -537,29 +592,29 @@ LIMIT $1
 `
 
 type ListCountryDistributionRow struct {
-        CountryCode *string `db:"country_code" json:"country_code"`
-        CountryName *string `db:"country_name" json:"country_name"`
-        Count       int64   `db:"count" json:"count"`
+	CountryCode *string `db:"country_code" json:"country_code"`
+	CountryName *string `db:"country_name" json:"country_name"`
+	Count       int64   `db:"count" json:"count"`
 }
 
 func (q *Queries) ListCountryDistribution(ctx context.Context, limit int32) ([]ListCountryDistributionRow, error) {
-        rows, err := q.db.Query(ctx, listCountryDistribution, limit)
-        if err != nil {
-                return nil, err
-        }
-        defer rows.Close()
-        items := []ListCountryDistributionRow{}
-        for rows.Next() {
-                var i ListCountryDistributionRow
-                if err := rows.Scan(&i.CountryCode, &i.CountryName, &i.Count); err != nil {
-                        return nil, err
-                }
-                items = append(items, i)
-        }
-        if err := rows.Err(); err != nil {
-                return nil, err
-        }
-        return items, nil
+	rows, err := q.db.Query(ctx, listCountryDistribution, limit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []ListCountryDistributionRow{}
+	for rows.Next() {
+		var i ListCountryDistributionRow
+		if err := rows.Scan(&i.CountryCode, &i.CountryName, &i.Count); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const listPopularDomains = `-- name: ListPopularDomains :many
@@ -571,28 +626,72 @@ LIMIT $1
 `
 
 type ListPopularDomainsRow struct {
-        Domain string `db:"domain" json:"domain"`
-        Count  int64  `db:"count" json:"count"`
+	Domain string `db:"domain" json:"domain"`
+	Count  int64  `db:"count" json:"count"`
 }
 
 func (q *Queries) ListPopularDomains(ctx context.Context, limit int32) ([]ListPopularDomainsRow, error) {
-        rows, err := q.db.Query(ctx, listPopularDomains, limit)
-        if err != nil {
-                return nil, err
-        }
-        defer rows.Close()
-        items := []ListPopularDomainsRow{}
-        for rows.Next() {
-                var i ListPopularDomainsRow
-                if err := rows.Scan(&i.Domain, &i.Count); err != nil {
-                        return nil, err
-                }
-                items = append(items, i)
-        }
-        if err := rows.Err(); err != nil {
-                return nil, err
-        }
-        return items, nil
+	rows, err := q.db.Query(ctx, listPopularDomains, limit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []ListPopularDomainsRow{}
+	for rows.Next() {
+		var i ListPopularDomainsRow
+		if err := rows.Scan(&i.Domain, &i.Count); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listScannerAlerts = `-- name: ListScannerAlerts :many
+SELECT id, domain, scan_source, scan_ip, analysis_success, created_at
+FROM domain_analyses
+WHERE scan_flag = TRUE
+ORDER BY created_at DESC
+LIMIT $1
+`
+
+type ListScannerAlertsRow struct {
+	ID              int32            `db:"id" json:"id"`
+	Domain          string           `db:"domain" json:"domain"`
+	ScanSource      *string          `db:"scan_source" json:"scan_source"`
+	ScanIp          *string          `db:"scan_ip" json:"scan_ip"`
+	AnalysisSuccess *bool            `db:"analysis_success" json:"analysis_success"`
+	CreatedAt       pgtype.Timestamp `db:"created_at" json:"created_at"`
+}
+
+func (q *Queries) ListScannerAlerts(ctx context.Context, limit int32) ([]ListScannerAlertsRow, error) {
+	rows, err := q.db.Query(ctx, listScannerAlerts, limit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []ListScannerAlertsRow{}
+	for rows.Next() {
+		var i ListScannerAlertsRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.Domain,
+			&i.ScanSource,
+			&i.ScanIp,
+			&i.AnalysisSuccess,
+			&i.CreatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const listSuccessfulAnalyses = `-- name: ListSuccessfulAnalyses :many
@@ -603,58 +702,58 @@ LIMIT $1 OFFSET $2
 `
 
 type ListSuccessfulAnalysesParams struct {
-        Limit  int32 `db:"limit" json:"limit"`
-        Offset int32 `db:"offset" json:"offset"`
+	Limit  int32 `db:"limit" json:"limit"`
+	Offset int32 `db:"offset" json:"offset"`
 }
 
 func (q *Queries) ListSuccessfulAnalyses(ctx context.Context, arg ListSuccessfulAnalysesParams) ([]DomainAnalysis, error) {
-        rows, err := q.db.Query(ctx, listSuccessfulAnalyses, arg.Limit, arg.Offset)
-        if err != nil {
-                return nil, err
-        }
-        defer rows.Close()
-        items := []DomainAnalysis{}
-        for rows.Next() {
-                var i DomainAnalysis
-                if err := rows.Scan(
-                        &i.ID,
-                        &i.Domain,
-                        &i.AsciiDomain,
-                        &i.BasicRecords,
-                        &i.AuthoritativeRecords,
-                        &i.SpfStatus,
-                        &i.SpfRecords,
-                        &i.DmarcStatus,
-                        &i.DmarcPolicy,
-                        &i.DmarcRecords,
-                        &i.DkimStatus,
-                        &i.DkimSelectors,
-                        &i.RegistrarName,
-                        &i.RegistrarSource,
-                        &i.AnalysisSuccess,
-                        &i.ErrorMessage,
-                        &i.AnalysisDuration,
-                        &i.CreatedAt,
-                        &i.UpdatedAt,
-                        &i.CountryCode,
-                        &i.CountryName,
-                        &i.CtSubdomains,
-                        &i.FullResults,
-                        &i.PostureHash,
-                        &i.Private,
-                        &i.HasUserSelectors,
-                        &i.ScanFlag,
-                        &i.ScanSource,
-                        &i.ScanIP,
-                ); err != nil {
-                        return nil, err
-                }
-                items = append(items, i)
-        }
-        if err := rows.Err(); err != nil {
-                return nil, err
-        }
-        return items, nil
+	rows, err := q.db.Query(ctx, listSuccessfulAnalyses, arg.Limit, arg.Offset)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []DomainAnalysis{}
+	for rows.Next() {
+		var i DomainAnalysis
+		if err := rows.Scan(
+			&i.ID,
+			&i.Domain,
+			&i.AsciiDomain,
+			&i.BasicRecords,
+			&i.AuthoritativeRecords,
+			&i.SpfStatus,
+			&i.SpfRecords,
+			&i.DmarcStatus,
+			&i.DmarcPolicy,
+			&i.DmarcRecords,
+			&i.DkimStatus,
+			&i.DkimSelectors,
+			&i.RegistrarName,
+			&i.RegistrarSource,
+			&i.AnalysisSuccess,
+			&i.ErrorMessage,
+			&i.AnalysisDuration,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.CountryCode,
+			&i.CountryName,
+			&i.CtSubdomains,
+			&i.FullResults,
+			&i.PostureHash,
+			&i.Private,
+			&i.HasUserSelectors,
+			&i.ScanFlag,
+			&i.ScanSource,
+			&i.ScanIp,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const searchSuccessfulAnalyses = `-- name: SearchSuccessfulAnalyses :many
@@ -669,59 +768,59 @@ LIMIT $2 OFFSET $3
 `
 
 type SearchSuccessfulAnalysesParams struct {
-        Domain string `db:"domain" json:"domain"`
-        Limit  int32  `db:"limit" json:"limit"`
-        Offset int32  `db:"offset" json:"offset"`
+	Domain string `db:"domain" json:"domain"`
+	Limit  int32  `db:"limit" json:"limit"`
+	Offset int32  `db:"offset" json:"offset"`
 }
 
 func (q *Queries) SearchSuccessfulAnalyses(ctx context.Context, arg SearchSuccessfulAnalysesParams) ([]DomainAnalysis, error) {
-        rows, err := q.db.Query(ctx, searchSuccessfulAnalyses, arg.Domain, arg.Limit, arg.Offset)
-        if err != nil {
-                return nil, err
-        }
-        defer rows.Close()
-        items := []DomainAnalysis{}
-        for rows.Next() {
-                var i DomainAnalysis
-                if err := rows.Scan(
-                        &i.ID,
-                        &i.Domain,
-                        &i.AsciiDomain,
-                        &i.BasicRecords,
-                        &i.AuthoritativeRecords,
-                        &i.SpfStatus,
-                        &i.SpfRecords,
-                        &i.DmarcStatus,
-                        &i.DmarcPolicy,
-                        &i.DmarcRecords,
-                        &i.DkimStatus,
-                        &i.DkimSelectors,
-                        &i.RegistrarName,
-                        &i.RegistrarSource,
-                        &i.AnalysisSuccess,
-                        &i.ErrorMessage,
-                        &i.AnalysisDuration,
-                        &i.CreatedAt,
-                        &i.UpdatedAt,
-                        &i.CountryCode,
-                        &i.CountryName,
-                        &i.CtSubdomains,
-                        &i.FullResults,
-                        &i.PostureHash,
-                        &i.Private,
-                        &i.HasUserSelectors,
-                        &i.ScanFlag,
-                        &i.ScanSource,
-                        &i.ScanIP,
-                ); err != nil {
-                        return nil, err
-                }
-                items = append(items, i)
-        }
-        if err := rows.Err(); err != nil {
-                return nil, err
-        }
-        return items, nil
+	rows, err := q.db.Query(ctx, searchSuccessfulAnalyses, arg.Domain, arg.Limit, arg.Offset)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []DomainAnalysis{}
+	for rows.Next() {
+		var i DomainAnalysis
+		if err := rows.Scan(
+			&i.ID,
+			&i.Domain,
+			&i.AsciiDomain,
+			&i.BasicRecords,
+			&i.AuthoritativeRecords,
+			&i.SpfStatus,
+			&i.SpfRecords,
+			&i.DmarcStatus,
+			&i.DmarcPolicy,
+			&i.DmarcRecords,
+			&i.DkimStatus,
+			&i.DkimSelectors,
+			&i.RegistrarName,
+			&i.RegistrarSource,
+			&i.AnalysisSuccess,
+			&i.ErrorMessage,
+			&i.AnalysisDuration,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.CountryCode,
+			&i.CountryName,
+			&i.CtSubdomains,
+			&i.FullResults,
+			&i.PostureHash,
+			&i.Private,
+			&i.HasUserSelectors,
+			&i.ScanFlag,
+			&i.ScanSource,
+			&i.ScanIp,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const updateAnalysis = `-- name: UpdateAnalysis :exec
@@ -747,92 +846,44 @@ WHERE id = $1
 `
 
 type UpdateAnalysisParams struct {
-        ID                   int32           `db:"id" json:"id"`
-        BasicRecords         json.RawMessage `db:"basic_records" json:"basic_records"`
-        AuthoritativeRecords json.RawMessage `db:"authoritative_records" json:"authoritative_records"`
-        SpfStatus            *string         `db:"spf_status" json:"spf_status"`
-        SpfRecords           json.RawMessage `db:"spf_records" json:"spf_records"`
-        DmarcStatus          *string         `db:"dmarc_status" json:"dmarc_status"`
-        DmarcPolicy          *string         `db:"dmarc_policy" json:"dmarc_policy"`
-        DmarcRecords         json.RawMessage `db:"dmarc_records" json:"dmarc_records"`
-        DkimStatus           *string         `db:"dkim_status" json:"dkim_status"`
-        DkimSelectors        json.RawMessage `db:"dkim_selectors" json:"dkim_selectors"`
-        RegistrarName        *string         `db:"registrar_name" json:"registrar_name"`
-        RegistrarSource      *string         `db:"registrar_source" json:"registrar_source"`
-        CtSubdomains         json.RawMessage `db:"ct_subdomains" json:"ct_subdomains"`
-        FullResults          json.RawMessage `db:"full_results" json:"full_results"`
-        CountryCode          *string         `db:"country_code" json:"country_code"`
-        CountryName          *string         `db:"country_name" json:"country_name"`
-        AnalysisDuration     *float64        `db:"analysis_duration" json:"analysis_duration"`
+	ID                   int32           `db:"id" json:"id"`
+	BasicRecords         json.RawMessage `db:"basic_records" json:"basic_records"`
+	AuthoritativeRecords json.RawMessage `db:"authoritative_records" json:"authoritative_records"`
+	SpfStatus            *string         `db:"spf_status" json:"spf_status"`
+	SpfRecords           json.RawMessage `db:"spf_records" json:"spf_records"`
+	DmarcStatus          *string         `db:"dmarc_status" json:"dmarc_status"`
+	DmarcPolicy          *string         `db:"dmarc_policy" json:"dmarc_policy"`
+	DmarcRecords         json.RawMessage `db:"dmarc_records" json:"dmarc_records"`
+	DkimStatus           *string         `db:"dkim_status" json:"dkim_status"`
+	DkimSelectors        json.RawMessage `db:"dkim_selectors" json:"dkim_selectors"`
+	RegistrarName        *string         `db:"registrar_name" json:"registrar_name"`
+	RegistrarSource      *string         `db:"registrar_source" json:"registrar_source"`
+	CtSubdomains         json.RawMessage `db:"ct_subdomains" json:"ct_subdomains"`
+	FullResults          json.RawMessage `db:"full_results" json:"full_results"`
+	CountryCode          *string         `db:"country_code" json:"country_code"`
+	CountryName          *string         `db:"country_name" json:"country_name"`
+	AnalysisDuration     *float64        `db:"analysis_duration" json:"analysis_duration"`
 }
 
 func (q *Queries) UpdateAnalysis(ctx context.Context, arg UpdateAnalysisParams) error {
-        _, err := q.db.Exec(ctx, updateAnalysis,
-                arg.ID,
-                arg.BasicRecords,
-                arg.AuthoritativeRecords,
-                arg.SpfStatus,
-                arg.SpfRecords,
-                arg.DmarcStatus,
-                arg.DmarcPolicy,
-                arg.DmarcRecords,
-                arg.DkimStatus,
-                arg.DkimSelectors,
-                arg.RegistrarName,
-                arg.RegistrarSource,
-                arg.CtSubdomains,
-                arg.FullResults,
-                arg.CountryCode,
-                arg.CountryName,
-                arg.AnalysisDuration,
-        )
-        return err
-}
-
-const listScannerAlerts = `-- name: ListScannerAlerts :many
-SELECT id, domain, scan_source, scan_ip, analysis_success, created_at
-FROM domain_analyses
-WHERE scan_flag = TRUE
-ORDER BY created_at DESC
-LIMIT $1
-`
-
-type ListScannerAlertsRow struct {
-        ID              int32            `db:"id" json:"id"`
-        Domain          string           `db:"domain" json:"domain"`
-        ScanSource      *string          `db:"scan_source" json:"scan_source"`
-        ScanIP          *string          `db:"scan_ip" json:"scan_ip"`
-        AnalysisSuccess *bool            `db:"analysis_success" json:"analysis_success"`
-        CreatedAt       pgtype.Timestamp `db:"created_at" json:"created_at"`
-}
-
-func (q *Queries) ListScannerAlerts(ctx context.Context, limit int32) ([]ListScannerAlertsRow, error) {
-        rows, err := q.db.Query(ctx, listScannerAlerts, limit)
-        if err != nil {
-                return nil, err
-        }
-        defer rows.Close()
-        items := []ListScannerAlertsRow{}
-        for rows.Next() {
-                var i ListScannerAlertsRow
-                if err := rows.Scan(&i.ID, &i.Domain, &i.ScanSource, &i.ScanIP, &i.AnalysisSuccess, &i.CreatedAt); err != nil {
-                        return nil, err
-                }
-                items = append(items, i)
-        }
-        if err := rows.Err(); err != nil {
-                return nil, err
-        }
-        return items, nil
-}
-
-const countScannerAlerts = `-- name: CountScannerAlerts :one
-SELECT COUNT(*) FROM domain_analyses WHERE scan_flag = TRUE
-`
-
-func (q *Queries) CountScannerAlerts(ctx context.Context) (int64, error) {
-        row := q.db.QueryRow(ctx, countScannerAlerts)
-        var count int64
-        err := row.Scan(&count)
-        return count, err
+	_, err := q.db.Exec(ctx, updateAnalysis,
+		arg.ID,
+		arg.BasicRecords,
+		arg.AuthoritativeRecords,
+		arg.SpfStatus,
+		arg.SpfRecords,
+		arg.DmarcStatus,
+		arg.DmarcPolicy,
+		arg.DmarcRecords,
+		arg.DkimStatus,
+		arg.DkimSelectors,
+		arg.RegistrarName,
+		arg.RegistrarSource,
+		arg.CtSubdomains,
+		arg.FullResults,
+		arg.CountryCode,
+		arg.CountryName,
+		arg.AnalysisDuration,
+	)
+	return err
 }

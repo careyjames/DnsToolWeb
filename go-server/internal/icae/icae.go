@@ -125,6 +125,7 @@ type ReportMetrics struct {
         TotalCollectionCases   int
         TotalAnalysisCases     int
         TotalAllCases          int
+        HashAudit              *HashAuditResult
 }
 
 type RegressionEvent struct {

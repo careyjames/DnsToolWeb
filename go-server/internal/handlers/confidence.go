@@ -36,6 +36,7 @@ func (h *ConfidenceHandler) Confidence(c *gin.Context) {
 
         if h.DB != nil {
                 if metrics := icae.LoadReportMetrics(c.Request.Context(), h.DB.Queries); metrics != nil {
+                        metrics.HashAudit = icae.AuditHashIntegrity(c.Request.Context(), h.DB.Queries, 50)
                         data["ICAEMetrics"] = metrics
                 }
         }
