@@ -129,8 +129,8 @@
                                     <span class="icae-cal-seg icae-cal-seg-gold"></span>
                                     <span class="icae-cal-seg icae-cal-seg-gm"></span>
                                 </div>
-                                <div class="icae-cal-fill icae-cal-fill-{{.CollectionLevel}}" style="width:{{.CollectionBarPct}}%"></div>
-                                {{if gt .CollectionBarPct 0}}<div class="icae-cal-needle" style="left:{{.CollectionBarPct}}%"></div>{{end}}
+                                <div class="icae-cal-fill icae-cal-fill-{{.CollectionLevel}}" data-pct="{{.CollectionBarPct}}"></div>
+                                {{if gt .CollectionBarPct 0}}<div class="icae-cal-needle" data-pct="{{.CollectionBarPct}}"></div>{{end}}
                             </div>
                             <span class="badge icae-maturity-badge-deep icae-maturity-deep-{{.CollectionLevel}} icae-cal-layer-badge">{{.CollectionDisplay}}</span>
                             <span class="icae-cal-layer-runs">{{.CollectionRuns}} runs</span>
@@ -145,8 +145,8 @@
                                     <span class="icae-cal-seg icae-cal-seg-gold"></span>
                                     <span class="icae-cal-seg icae-cal-seg-gm"></span>
                                 </div>
-                                <div class="icae-cal-fill icae-cal-fill-{{.AnalysisLevel}}" style="width:{{.AnalysisBarPct}}%"></div>
-                                {{if gt .AnalysisBarPct 0}}<div class="icae-cal-needle" style="left:{{.AnalysisBarPct}}%"></div>{{end}}
+                                <div class="icae-cal-fill icae-cal-fill-{{.AnalysisLevel}}" data-pct="{{.AnalysisBarPct}}"></div>
+                                {{if gt .AnalysisBarPct 0}}<div class="icae-cal-needle" data-pct="{{.AnalysisBarPct}}"></div>{{end}}
                             </div>
                             <span class="badge icae-maturity-badge-deep icae-maturity-deep-{{.AnalysisLevel}} icae-cal-layer-badge">{{.AnalysisDisplay}}</span>
                             <span class="icae-cal-layer-runs">{{.AnalysisRuns}} runs</span>
@@ -164,7 +164,7 @@
                         <span class="icae-cal-progress-label"><i class="fas fa-arrow-up me-1"></i><span class="icae-cal-progress-label-analysis">Analysis</span> → <span class="icae-stat-{{.NextTierKey}}">{{.NextTierName}}</span></span>
                         <span class="icae-cal-progress-item {{if .PassesMet}}icae-cal-met{{else}}icae-cal-unmet{{end}}">{{if .PassesMet}}<i class="fas fa-check-circle me-1"></i>{{else}}<i class="fas fa-clock me-1"></i>{{end}}{{.AnalysisPasses}}/{{.NextTierPasses}} passes</span>
                         {{if gt .NextTierDays 0}}<span class="icae-cal-progress-item {{if .DaysMet}}icae-cal-met{{else}}icae-cal-unmet{{end}}">{{if .DaysMet}}<i class="fas fa-check-circle me-1"></i>{{else}}<i class="fas fa-clock me-1"></i>{{end}}{{.DaysElapsed}}/{{.NextTierDays}} days</span>{{end}}
-                        <span class="icae-tier-meter"><span class="icae-tier-meter-fill" style="width:{{.NextTierPct}}%"></span><span class="icae-tier-meter-label">{{.NextTierPct}}%</span></span>
+                        <span class="icae-tier-meter"><span class="icae-tier-meter-fill" data-pct="{{.NextTierPct}}"></span><span class="icae-tier-meter-label">{{.NextTierPct}}%</span></span>
                     </div>
                     {{end}}
                     {{if and .HasCollection (not .ColAtMaxTier)}}
@@ -172,7 +172,7 @@
                         <span class="icae-cal-progress-label"><i class="fas fa-arrow-up me-1"></i><span class="icae-cal-progress-label-collection">Collection</span> → <span class="icae-stat-{{.ColNextTierKey}}">{{.ColNextTierName}}</span></span>
                         <span class="icae-cal-progress-item {{if .ColPassesMet}}icae-cal-met{{else}}icae-cal-unmet{{end}}">{{if .ColPassesMet}}<i class="fas fa-check-circle me-1"></i>{{else}}<i class="fas fa-clock me-1"></i>{{end}}{{.CollectionPasses}}/{{.ColNextTierPasses}} passes</span>
                         {{if gt .ColNextTierDays 0}}<span class="icae-cal-progress-item {{if .ColDaysMet}}icae-cal-met{{else}}icae-cal-unmet{{end}}">{{if .ColDaysMet}}<i class="fas fa-check-circle me-1"></i>{{else}}<i class="fas fa-clock me-1"></i>{{end}}{{.ColDaysElapsed}}/{{.ColNextTierDays}} days</span>{{end}}
-                        <span class="icae-tier-meter"><span class="icae-tier-meter-fill" style="width:{{.ColNextTierPct}}%"></span><span class="icae-tier-meter-label">{{.ColNextTierPct}}%</span></span>
+                        <span class="icae-tier-meter"><span class="icae-tier-meter-fill" data-pct="{{.ColNextTierPct}}"></span><span class="icae-tier-meter-label">{{.ColNextTierPct}}%</span></span>
                     </div>
                     {{end}}
                 </div>
@@ -553,5 +553,10 @@
 
     {{template "footer" .}}
     {{template "scripts" .}}
+    <script nonce="{{.CspNonce}}">
+    document.querySelectorAll('.icae-cal-fill[data-pct]').forEach(function(el){el.style.width=el.dataset.pct+'%';});
+    document.querySelectorAll('.icae-cal-needle[data-pct]').forEach(function(el){el.style.left=el.dataset.pct+'%';});
+    document.querySelectorAll('.icae-tier-meter-fill[data-pct]').forEach(function(el){el.style.width=el.dataset.pct+'%';});
+    </script>
 </body>
 </html>

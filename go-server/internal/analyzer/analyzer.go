@@ -6,6 +6,7 @@ import (
         "context"
         "log/slog"
         "sync"
+        "sync/atomic"
         "time"
 
         "dnstool/go-server/internal/dnsclient"
@@ -31,6 +32,8 @@ type Analyzer struct {
         SMTPProbeMode string
         ProbeAPIURL   string
         ProbeAPIKey   string
+
+        backpressureRejections atomic.Int64
 }
 
 type ctCacheEntry struct {
@@ -107,6 +110,10 @@ func (a *Analyzer) fetchIANARDAPData() {
                 }
         }
         slog.Info("Loaded IANA RDAP map", "tld_count", len(a.IANARDAPMap))
+}
+
+func (a *Analyzer) BackpressureRejections() int64 {
+        return a.backpressureRejections.Load()
 }
 
 func (a *Analyzer) getCTCache(domain string) ([]map[string]any, bool) {

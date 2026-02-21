@@ -32,11 +32,11 @@ func (a *Analyzer) AnalyzeDomain(ctx context.Context, domain string, customDKIMS
         if len(opts) > 0 {
                 options = opts[0]
         }
-        _ = options
         select {
         case a.semaphore <- struct{}{}:
                 defer func() { <-a.semaphore }()
         case <-time.After(10 * time.Second):
+                a.backpressureRejections.Add(1)
                 slog.Warn("Backpressure: rejected analysis", "domain", domain)
                 return map[string]any{
                         "domain":           domain,

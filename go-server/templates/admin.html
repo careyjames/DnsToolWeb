@@ -92,6 +92,17 @@
         </div>
         {{end}}
 
+        {{if gt .BackpressureRejections 0}}
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="alert alert-danger d-flex align-items-center mb-0 py-2" role="alert">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    <span><strong>{{.BackpressureRejections}}</strong> analysis request{{if gt .BackpressureRejections 1}}s{{end}} rejected due to system capacity limits (since last restart)</span>
+                </div>
+            </div>
+        </div>
+        {{end}}
+
         <div class="row">
             <div class="col-lg-5 mb-4">
                 <div class="card">

@@ -156,7 +156,7 @@ func main() {
 
         router.GET("/compare", compareHandler.Compare)
 
-        adminHandler := handlers.NewAdminHandler(database, cfg)
+        adminHandler := handlers.NewAdminHandler(database, cfg, dnsAnalyzer.BackpressureRejections)
         router.GET("/ops", middleware.RequireAdmin(), adminHandler.Dashboard)
         router.POST("/ops/user/:id/delete", middleware.RequireAdmin(), adminHandler.DeleteUser)
         router.POST("/ops/user/:id/reset-sessions", middleware.RequireAdmin(), adminHandler.ResetUserSessions)

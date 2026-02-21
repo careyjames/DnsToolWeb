@@ -198,7 +198,7 @@ func (a *Analyzer) DiscoverSubdomains(ctx context.Context, domain string) map[st
                 processCTEntries(ctEntries, domain, subdomainSet)
         }
 
-        dnsProbed := a.probeCommonSubdomains(ctx, domain, subdomainSet)
+        a.probeCommonSubdomains(ctx, domain, subdomainSet)
 
         if ctAvailable && len(dedupedEntries) > 0 {
                 enrichDNSWithCTData(dedupedEntries, domain, subdomainSet)
@@ -251,8 +251,6 @@ func (a *Analyzer) DiscoverSubdomains(ctx context.Context, domain string) map[st
         if !ctAvailable {
                 result["ct_failure_reason"] = ctFailureReason
         }
-        _ = dnsProbed
-
         applySubdomainDisplayCap(result, subdomains, currentCount)
 
         return result

@@ -17,12 +17,13 @@ import (
 )
 
 type AdminHandler struct {
-        DB     *db.Database
-        Config *config.Config
+        DB                    *db.Database
+        Config                *config.Config
+        BackpressureCountFunc func() int64
 }
 
-func NewAdminHandler(database *db.Database, cfg *config.Config) *AdminHandler {
-        return &AdminHandler{DB: database, Config: cfg}
+func NewAdminHandler(database *db.Database, cfg *config.Config, bpFunc func() int64) *AdminHandler {
+        return &AdminHandler{DB: database, Config: cfg, BackpressureCountFunc: bpFunc}
 }
 
 type AdminUser struct {
@@ -91,18 +92,24 @@ func (h *AdminHandler) Dashboard(c *gin.Context) {
 
         icaeMetrics := icae.LoadReportMetrics(ctx, h.DB.Queries)
 
+        var bpCount int64
+        if h.BackpressureCountFunc != nil {
+                bpCount = h.BackpressureCountFunc()
+        }
+
         data := gin.H{
-                "AppVersion":      h.Config.AppVersion,
-                "MaintenanceNote": h.Config.MaintenanceNote,
-                "CspNonce":        nonce,
-                "CsrfToken":       csrfToken,
-                "ActivePage":      "admin",
-                "Users":           users,
-                "RecentAnalyses":  recentAnalyses,
-                "Stats":           stats,
-                "ICAERuns":        icaeRuns,
-                "ScannerAlerts":   scannerAlerts,
-                "ICAEMetrics":     icaeMetrics,
+                "AppVersion":              h.Config.AppVersion,
+                "MaintenanceNote":         h.Config.MaintenanceNote,
+                "CspNonce":                nonce,
+                "CsrfToken":              csrfToken,
+                "ActivePage":             "admin",
+                "Users":                  users,
+                "RecentAnalyses":         recentAnalyses,
+                "Stats":                  stats,
+                "ICAERuns":               icaeRuns,
+                "ScannerAlerts":          scannerAlerts,
+                "ICAEMetrics":            icaeMetrics,
+                "BackpressureRejections": bpCount,
         }
         mergeAuthData(c, h.Config, data)
         c.HTML(http.StatusOK, "admin.html", data)
@@ -132,6 +139,7 @@ func (h *AdminHandler) fetchUsers(ctx context.Context) []AdminUser {
                 var createdAt, lastLoginAt time.Time
                 if err := rows.Scan(&u.ID, &u.Email, &u.Name, &u.Role, &createdAt, &lastLoginAt,
                         &u.SessionCount, &u.ActiveSessions); err != nil {
+                        slog.Error("Admin: failed to scan user row", "error", err)
                         continue
                 }
                 u.CreatedAt = createdAt.Format("2006-01-02 15:04")
@@ -162,6 +170,7 @@ func (h *AdminHandler) fetchRecentAnalyses(ctx context.Context) []AdminAnalysis 
                 var createdAt time.Time
                 if err := rows.Scan(&a.ID, &a.Domain, &success, &duration, &createdAt,
                         &a.CountryCode, &a.Private, &a.HasUserSelectors, &a.ScanFlag, &a.ScanSource); err != nil {
+                        slog.Error("Admin: failed to scan analysis row", "error", err)
                         continue
                 }
                 if success != nil {
@@ -180,13 +189,23 @@ func (h *AdminHandler) fetchRecentAnalyses(ctx context.Context) []AdminAnalysis 
 
 func (h *AdminHandler) fetchStats(ctx context.Context) AdminStats {
         var s AdminStats
-        _ = h.DB.Pool.QueryRow(ctx, `SELECT COUNT(*) FROM users`).Scan(&s.TotalUsers)
-        _ = h.DB.Pool.QueryRow(ctx, `SELECT COUNT(*) FROM domain_analyses`).Scan(&s.TotalAnalyses)
-        _ = h.DB.Pool.QueryRow(ctx, `SELECT COUNT(DISTINCT domain) FROM domain_analyses`).Scan(&s.UniqueDomainsCount)
-        _ = h.DB.Pool.QueryRow(ctx, `SELECT COUNT(*) FROM domain_analyses WHERE private = TRUE`).Scan(&s.PrivateAnalyses)
-        _ = h.DB.Pool.QueryRow(ctx, `SELECT COUNT(*) FROM sessions`).Scan(&s.TotalSessions)
-        _ = h.DB.Pool.QueryRow(ctx, `SELECT COUNT(*) FROM sessions WHERE expires_at > NOW()`).Scan(&s.ActiveSessions)
-        _ = h.DB.Pool.QueryRow(ctx, `SELECT COUNT(*) FROM domain_analyses WHERE scan_flag = TRUE`).Scan(&s.ScannerAlerts)
+        queries := []struct {
+                sql  string
+                dest *int64
+        }{
+                {`SELECT COUNT(*) FROM users`, &s.TotalUsers},
+                {`SELECT COUNT(*) FROM domain_analyses`, &s.TotalAnalyses},
+                {`SELECT COUNT(DISTINCT domain) FROM domain_analyses`, &s.UniqueDomainsCount},
+                {`SELECT COUNT(*) FROM domain_analyses WHERE private = TRUE`, &s.PrivateAnalyses},
+                {`SELECT COUNT(*) FROM sessions`, &s.TotalSessions},
+                {`SELECT COUNT(*) FROM sessions WHERE expires_at > NOW()`, &s.ActiveSessions},
+                {`SELECT COUNT(*) FROM domain_analyses WHERE scan_flag = TRUE`, &s.ScannerAlerts},
+        }
+        for _, q := range queries {
+                if err := h.DB.Pool.QueryRow(ctx, q.sql).Scan(q.dest); err != nil {
+                        slog.Error("Admin: stat query failed", "query", q.sql, "error", err)
+                }
+        }
         return s
 }
 
@@ -206,6 +225,7 @@ func (h *AdminHandler) fetchICAERuns(ctx context.Context) []AdminICAERun {
                 var createdAt time.Time
                 if err := rows.Scan(&r.ID, &r.AppVersion, &r.TotalCases, &r.TotalPassed,
                         &r.TotalFailed, &r.DurationMs, &createdAt); err != nil {
+                        slog.Error("Admin: failed to scan ICAE run row", "error", err)
                         continue
                 }
                 r.CreatedAt = createdAt.Format("2006-01-02 15:04")
@@ -233,6 +253,7 @@ func (h *AdminHandler) fetchScannerAlerts(ctx context.Context) []AdminScannerAle
                 var success *bool
                 var createdAt time.Time
                 if err := rows.Scan(&a.ID, &a.Domain, &a.Source, &a.IP, &success, &createdAt); err != nil {
+                        slog.Error("Admin: failed to scan scanner alert row", "error", err)
                         continue
                 }
                 if success != nil {

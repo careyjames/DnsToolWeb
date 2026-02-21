@@ -280,13 +280,9 @@ func parseAuthenticationResults(fields []headerField, result *EmailHeaderAnalysi
 
 func scanRawForAuthResults(result *EmailHeaderAnalysis) {
         raw := result.RawHeaders
-        lower := strings.ToLower(raw)
-
         spfRe := regexp.MustCompile(`(?i)\bspf=(pass|fail|softfail|neutral|none|temperror|permerror)\b`)
         dkimRe := regexp.MustCompile(`(?i)\bdkim=(pass|fail|none|neutral|temperror|permerror)\b`)
         dmarcRe := regexp.MustCompile(`(?i)\bdmarc=(pass|fail|none|temperror|permerror)\b`)
-
-        _ = lower
 
         if result.SPFResult.Result == "" {
                 if m := spfRe.FindStringSubmatch(raw); m != nil {

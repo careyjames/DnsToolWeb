@@ -32,10 +32,10 @@
         </div>
 
         <div class="table-responsive">
-            <table class="table table-dark table-sm table-bordered mb-4" style="font-size: 0.82rem;">
+            <table class="table table-dark table-sm table-bordered mb-4 u-fs-082">
                 <thead>
                     <tr>
-                        <th class="text-muted" style="width: 3rem;">#</th>
+                        <th class="text-muted u-w-3rem">#</th>
                         <th class="text-muted">Domain</th>
                         <th class="text-muted">Timestamp (UTC)</th>
                         <th class="text-muted">SHA-3-512 Posture Hash</th>
@@ -47,7 +47,7 @@
                         <td class="text-muted">{{.ID}}</td>
                         <td>{{.Domain}}</td>
                         <td class="text-nowrap">{{.Timestamp}}</td>
-                        <td><code class="text-info" style="font-size: 0.75rem; word-break: break-all;">{{.Hash}}</code></td>
+                        <td><code class="text-info u-fs-075 u-break-all">{{.Hash}}</code></td>
                     </tr>
                     {{end}}
                     {{if not .AuditLog.Entries}}

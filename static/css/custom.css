@@ -6023,3 +6023,13 @@ footer a.text-muted:hover { text-decoration-color: rgba(173, 181, 189, 0.8); }
     font-weight: 600;
     margin-top: 0.15rem;
 }
+
+.u-w-40pct { width: 40%; }
+.u-w-22pct { width: 22%; }
+.u-w-23pct { width: 23%; }
+.u-w-15pct { width: 15%; }
+.u-w-3rem  { width: 3rem; }
+.u-fs-082  { font-size: 0.82rem; }
+.u-fs-075  { font-size: 0.75rem; }
+.u-break-all { word-break: break-all; }
+.u-color-covert-loading { color: rgba(196,60,60,0.6); }
