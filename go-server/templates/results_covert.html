@@ -832,6 +832,14 @@
                                     </div>
                                 </div>
                                 <div class="mb-2">
+                                    <span class="small fw-semibold font-monospace">NS delegation</span>
+                                    <div class="code-block font-monospace small d-flex align-items-center justify-content-between">
+                                        <span>dig +noall +answer {{.Domain}} NS</span>
+                                        <button type="button" class="btn btn-sm btn-outline-secondary copy-cmd-btn" data-cmd="dig +noall +answer {{.Domain}} NS" title="Copy" aria-label="Copy command"><i class="fas fa-copy"></i></button>
+                                    </div>
+                                </div>
+                                {{if not .IsTLD}}
+                                <div class="mb-2">
                                     <span class="small fw-semibold font-monospace">Reverse DNS</span>
                                     {{if $basic}}{{$aList := mapGetSlice "a_records" $basic}}{{if $aList}}
                                     <div class="code-block font-monospace small d-flex align-items-center justify-content-between">
@@ -854,6 +862,7 @@
                                         <button type="button" class="btn btn-sm btn-outline-secondary copy-cmd-btn" data-cmd="openssl s_client -connect {{.Domain}}:443 -servername {{.Domain}} 2>/dev/null | openssl x509 -noout -subject -issuer -dates" title="Copy" aria-label="Copy command"><i class="fas fa-copy"></i></button>
                                     </div>
                                 </div>
+                                {{end}}
                                 <div class="mb-2">
                                     <span class="small fw-semibold font-monospace">WHOIS lookup</span>
                                     <div class="code-block font-monospace small d-flex align-items-center justify-content-between">
@@ -861,11 +870,93 @@
                                         <button type="button" class="btn btn-sm btn-outline-secondary copy-cmd-btn" data-cmd="whois {{.Domain}}" title="Copy" aria-label="Copy command"><i class="fas fa-copy"></i></button>
                                     </div>
                                 </div>
+                                {{if not .IsTLD}}
                                 <div class="mb-2">
                                     <span class="small fw-semibold font-monospace">HTTP headers</span>
                                     <div class="code-block font-monospace small d-flex align-items-center justify-content-between">
                                         <span>curl -sI https://{{.Domain}} | head -20</span>
                                         <button type="button" class="btn btn-sm btn-outline-secondary copy-cmd-btn" data-cmd="curl -sI https://{{.Domain}} | head -20" title="Copy" aria-label="Copy command"><i class="fas fa-copy"></i></button>
+                                    </div>
+                                </div>
+                                {{end}}
+                            </div>
+                        </details>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {{if .AnalysisID}}
+        <div class="row" id="section-data-exfil">
+            <div class="col-12 mb-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="fas fa-share-square me-2"></i>Data Exfil
+                        </h5>
+                    </div>
+                    <div class="card-body">
+
+                        <div class="d-flex flex-wrap gap-2 mb-3">
+                            <a href="/api/analysis/{{.AnalysisID}}?download=1" class="btn btn-sm btn-outline-secondary" download>
+                                <i class="fas fa-file me-1"></i>JSON
+                            </a>
+                            <a href="/api/analysis/{{.AnalysisID}}/checksum?format=sha3" class="btn btn-sm btn-outline-secondary" download>
+                                <i class="fas fa-fingerprint me-1"></i>SHA-3 Checksum
+                            </a>
+                        </div>
+
+                        <details>
+                            <summary class="fw-semibold font-monospace small"><i class="fas fa-terminal me-1"></i>CLI &amp; Pipeline Commands</summary>
+                            <div class="mt-2">
+                                <div class="mb-2">
+                                    <span class="small fw-semibold font-monospace">Download JSON</span>
+                                    <div class="code-block font-monospace small d-flex align-items-center justify-content-between">
+                                        <span>curl -sO 'https://dnstool.it-help.tech/api/analysis/{{.AnalysisID}}?download=1'</span>
+                                        <button type="button" class="btn btn-sm btn-outline-secondary copy-cmd-btn" data-cmd="curl -sO 'https://dnstool.it-help.tech/api/analysis/{{.AnalysisID}}?download=1'" title="Copy" aria-label="Copy command"><i class="fas fa-copy"></i></button>
+                                    </div>
+                                </div>
+                                <div class="mb-2">
+                                    <span class="small fw-semibold font-monospace">Verify integrity (SHA-3-512)</span>
+                                    <div class="code-block font-monospace small d-flex align-items-center justify-content-between">
+                                        <span>curl -sI 'https://dnstool.it-help.tech/api/analysis/{{.AnalysisID}}' | grep X-SHA3-512</span>
+                                        <button type="button" class="btn btn-sm btn-outline-secondary copy-cmd-btn" data-cmd="curl -sI 'https://dnstool.it-help.tech/api/analysis/{{.AnalysisID}}' | grep X-SHA3-512" title="Copy" aria-label="Copy command"><i class="fas fa-copy"></i></button>
+                                    </div>
+                                </div>
+                                <div class="mb-2">
+                                    <span class="small fw-semibold font-monospace">Extract all IPs (jq)</span>
+                                    <div class="code-block font-monospace small d-flex align-items-center justify-content-between">
+                                        <span>curl -s 'https://dnstool.it-help.tech/api/analysis/{{.AnalysisID}}' | jq -r '.full_results.basic_records | (.A // [])[], (.AAAA // [])[]'</span>
+                                        <button type="button" class="btn btn-sm btn-outline-secondary copy-cmd-btn" data-cmd="curl -s 'https://dnstool.it-help.tech/api/analysis/{{.AnalysisID}}' | jq -r '.full_results.basic_records | (.A // [])[], (.AAAA // [])[]'" title="Copy" aria-label="Copy command"><i class="fas fa-copy"></i></button>
+                                    </div>
+                                </div>
+                                <div class="mb-2">
+                                    <span class="small fw-semibold font-monospace">Extract MX hosts (jq)</span>
+                                    <div class="code-block font-monospace small d-flex align-items-center justify-content-between">
+                                        <span>curl -s 'https://dnstool.it-help.tech/api/analysis/{{.AnalysisID}}' | jq -r '.full_results.basic_records.MX[]'</span>
+                                        <button type="button" class="btn btn-sm btn-outline-secondary copy-cmd-btn" data-cmd="curl -s 'https://dnstool.it-help.tech/api/analysis/{{.AnalysisID}}' | jq -r '.full_results.basic_records.MX[]'" title="Copy" aria-label="Copy command"><i class="fas fa-copy"></i></button>
+                                    </div>
+                                </div>
+                                <div class="mb-2">
+                                    <span class="small fw-semibold font-monospace">Extract nameservers (jq)</span>
+                                    <div class="code-block font-monospace small d-flex align-items-center justify-content-between">
+                                        <span>curl -s 'https://dnstool.it-help.tech/api/analysis/{{.AnalysisID}}' | jq -r '.full_results.basic_records.NS[]'</span>
+                                        <button type="button" class="btn btn-sm btn-outline-secondary copy-cmd-btn" data-cmd="curl -s 'https://dnstool.it-help.tech/api/analysis/{{.AnalysisID}}' | jq -r '.full_results.basic_records.NS[]'" title="Copy" aria-label="Copy command"><i class="fas fa-copy"></i></button>
+                                    </div>
+                                </div>
+                                <div class="mb-2">
+                                    <span class="small fw-semibold font-monospace">Subdomains from CT logs (jq)</span>
+                                    <div class="code-block font-monospace small d-flex align-items-center justify-content-between">
+                                        <span>curl -s 'https://dnstool.it-help.tech/api/analysis/{{.AnalysisID}}' | jq -r '.full_results.subdomains.discovered[]?' 2>/dev/null | sort -u</span>
+                                        <button type="button" class="btn btn-sm btn-outline-secondary copy-cmd-btn" data-cmd="curl -s 'https://dnstool.it-help.tech/api/analysis/{{.AnalysisID}}' | jq -r '.full_results.subdomains.discovered[]?' 2>/dev/null | sort -u" title="Copy" aria-label="Copy command"><i class="fas fa-copy"></i></button>
+                                    </div>
+                                </div>
+                                <div class="mb-2">
+                                    <span class="small fw-semibold font-monospace">Pipe to file (full report)</span>
+                                    <div class="code-block font-monospace small d-flex align-items-center justify-content-between">
+                                        <span>curl -s 'https://dnstool.it-help.tech/api/analysis/{{.AnalysisID}}' | jq . > {{.AsciiDomain}}-intel.json</span>
+                                        <button type="button" class="btn btn-sm btn-outline-secondary copy-cmd-btn" data-cmd="curl -s 'https://dnstool.it-help.tech/api/analysis/{{.AnalysisID}}' | jq . > {{.AsciiDomain}}-intel.json" title="Copy" aria-label="Copy command"><i class="fas fa-copy"></i></button>
                                     </div>
                                 </div>
                             </div>
@@ -875,7 +966,9 @@
                 </div>
             </div>
         </div>
+        {{end}}
 
+        <!-- grep -o 'u-recon-sigint-link" title="[^"]*"' | sed 's/.*title="//;s/".*//' -->
         <div class="row">
             <div class="col-12 mb-4">
                 <div class="text-center small font-monospace u-recon-sigint">

@@ -6,6 +6,8 @@ import (
         "fmt"
         "sort"
         "strings"
+
+        "dnstool/go-server/internal/dnsclient"
 )
 
 const (
@@ -40,25 +42,39 @@ type VerifyCommand struct {
 }
 
 func GenerateVerificationCommands(domain string, results map[string]any) []VerifyCommand {
+        isTLD := dnsclient.IsTLDInput(domain)
+
         var cmds []VerifyCommand
         cmds = append(cmds, generateDNSRecordCommands(domain)...)
-        cmds = append(cmds, generateSPFCommands(domain)...)
-        cmds = append(cmds, generateDMARCCommands(domain)...)
-        cmds = append(cmds, generateDKIMCommands(domain, results)...)
+
+        if !isTLD {
+                cmds = append(cmds, generateSPFCommands(domain)...)
+                cmds = append(cmds, generateDMARCCommands(domain)...)
+                cmds = append(cmds, generateDKIMCommands(domain, results)...)
+        }
+
         cmds = append(cmds, generateDNSSECCommands(domain)...)
-        cmds = append(cmds, generateDANECommands(domain, results)...)
-        cmds = append(cmds, generateMTASTSCommands(domain)...)
-        cmds = append(cmds, generateTLSRPTCommands(domain)...)
-        cmds = append(cmds, generateBIMICommands(domain)...)
+
+        if !isTLD {
+                cmds = append(cmds, generateDANECommands(domain, results)...)
+                cmds = append(cmds, generateMTASTSCommands(domain)...)
+                cmds = append(cmds, generateTLSRPTCommands(domain)...)
+                cmds = append(cmds, generateBIMICommands(domain)...)
+        }
+
         cmds = append(cmds, generateCAACommands(domain)...)
         cmds = append(cmds, generateHTTPSSVCBCommands(domain)...)
         cmds = append(cmds, generateCDSCommands(domain)...)
         cmds = append(cmds, generateRegistrarCommands(domain)...)
-        cmds = append(cmds, generateSMTPCommands(domain, results)...)
-        cmds = append(cmds, generateCTCommands(domain)...)
-        cmds = append(cmds, generateDMARCReportAuthCommands(domain, results)...)
-        cmds = append(cmds, generateSecurityTxtCommands(domain)...)
-        cmds = append(cmds, generateAISurfaceCommands(domain)...)
+
+        if !isTLD {
+                cmds = append(cmds, generateSMTPCommands(domain, results)...)
+                cmds = append(cmds, generateCTCommands(domain)...)
+                cmds = append(cmds, generateDMARCReportAuthCommands(domain, results)...)
+                cmds = append(cmds, generateSecurityTxtCommands(domain)...)
+                cmds = append(cmds, generateAISurfaceCommands(domain)...)
+        }
+
         cmds = append(cmds, generateASNCommands(results)...)
         return cmds
 }

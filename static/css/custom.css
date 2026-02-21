@@ -2435,7 +2435,7 @@ html body.covert-mode .page-item.active .page-link {
 }
 body.covert-mode h1,
 body.covert-mode .h3 {
-    color: rgba(200, 180, 180, 0.8);
+    color: rgba(200, 170, 170, 0.55);
 }
 body.covert-mode .history-table th {
     color: rgba(200, 170, 170, 0.45);
@@ -2443,6 +2443,14 @@ body.covert-mode .history-table th {
 }
 body.covert-mode .history-table td {
     border-color: rgba(140, 40, 40, 0.1) !important;
+}
+body.covert-mode .history-table .fw-medium,
+body.covert-mode .history-mobile-card .fw-medium {
+    color: rgba(200, 170, 170, 0.55);
+    font-weight: 400 !important;
+}
+body.covert-mode .history-mobile-card {
+    border-color: rgba(140, 40, 40, 0.12) !important;
 }
 body.covert-mode .table-hover tbody tr:hover {
     background-color: rgba(140, 40, 40, 0.06) !important;

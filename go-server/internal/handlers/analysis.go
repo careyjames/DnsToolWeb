@@ -175,6 +175,7 @@ func (h *AnalysisHandler) ViewAnalysisStatic(c *gin.Context) {
                 "DriftPrevID":          drift.PrevID,
                 "DriftFields":          drift.Fields,
                 "IsPublicSuffix":       isPublicSuffixDomain(analysis.AsciiDomain),
+                "IsTLD":                dnsclient.IsTLDInput(analysis.AsciiDomain),
                 "SubdomainEmailScope":  emailScope,
         }
         if icaeMetrics := icae.LoadReportMetrics(ctx, h.DB.Queries); icaeMetrics != nil {
@@ -436,6 +437,7 @@ func (h *AnalysisHandler) Analyze(c *gin.Context) {
                 "DevNull":              devNull,
                 "IsPrivateReport":      isPrivate,
                 "IsPublicSuffix":       isPublicSuffix,
+                "IsTLD":                dnsclient.IsTLDInput(asciiDomain),
                 "SubdomainEmailScope":  emailScope,
         }
         if icaeMetrics := icae.LoadReportMetrics(ctx, h.DB.Queries); icaeMetrics != nil {
