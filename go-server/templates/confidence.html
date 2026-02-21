@@ -118,9 +118,9 @@
                 {{range .ICAEMetrics.Protocols}}
                 <div class="icae-cal-strip mb-2">
                     <div class="d-flex align-items-center mb-1">
-                        <span class="icae-dot icae-dot-inline icae-dot-color-{{.AnalysisLevel}} me-2"></span>
+                        <span class="icae-dot icae-dot-inline icae-dot-color-{{.EffectiveLevel}} me-2"></span>
                         <span class="icae-cal-proto-name">{{.DisplayName}}</span>
-                        <span class="badge icae-maturity-badge-deep icae-maturity-deep-{{.AnalysisLevel}} ms-2">{{.AnalysisDisplay}}</span>
+                        <span class="badge icae-maturity-badge-deep icae-maturity-deep-{{.EffectiveLevel}} ms-2">{{.EffectiveDisplay}}</span>
                         {{if .HasAnalysis}}<span class="icae-cal-runs ms-auto">{{.AnalysisPasses}} passes &middot; {{.AnalysisRuns}} runs</span>{{else if .HasCollection}}<span class="icae-cal-runs ms-auto">{{.CollectionPasses}} passes &middot; {{.CollectionRuns}} runs</span>{{end}}
                     </div>
                     <div class="icae-cal-dual-bars">
@@ -190,6 +190,11 @@
                     <span class="icae-cal-legend-item"><span class="icae-cal-leg-swatch icae-cal-leg-con"></span>Consistent 500+ &amp; 30d</span>
                     <span class="icae-cal-legend-item"><span class="icae-cal-leg-swatch icae-cal-leg-gold"></span>Gold 1K+ &amp; 90d</span>
                     <span class="icae-cal-legend-item"><span class="icae-cal-leg-swatch icae-cal-leg-gm"></span>Gold Master 5K+ &amp; 180d</span>
+                </div>
+                <div class="text-muted small mt-2 pt-2 border-top border-secondary">
+                    <i class="fas fa-info-circle me-1"></i><strong>Effective Maturity</strong> = min(Analysis, Collection).
+                    A protocol&rsquo;s headline badge reflects the lower of its two layers &mdash; both collection and analysis
+                    must independently earn each maturity level. No layer is exempted.
                 </div>
             </div>
         </div>

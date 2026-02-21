@@ -104,6 +104,8 @@ func LoadReportMetrics(ctx context.Context, queries DBTX) *ReportMetrics {
                 }
 
                 pr.HasRuns = pr.HasCollection || pr.HasAnalysis
+                pr.EffectiveLevel = CombinedMaturity(pr.AnalysisLevel, pr.CollectionLevel)
+                pr.EffectiveDisplay = MaturityDisplayNames[pr.EffectiveLevel]
 
                 protocols = append(protocols, pr)
         }
@@ -118,7 +120,7 @@ func LoadReportMetrics(ctx context.Context, queries DBTX) *ReportMetrics {
         var regressions []RegressionEvent
 
         for _, p := range protocols {
-                if p.HasAnalysis {
+                if p.HasRuns {
                         evaluatedCount++
                 }
                 totalPasses += p.AnalysisPasses

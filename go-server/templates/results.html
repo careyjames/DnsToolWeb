@@ -1154,7 +1154,7 @@
                                 <p class="d-flex align-items-center mb-1">
                                     <i class="fas fa-envelope me-2"></i>SPF Record
                                     <a href="https://datatracker.ietf.org/doc/html/rfc7208#section-4" target="_blank" rel="noopener" class="ms-2 text-muted rfc-link" data-bs-toggle="tooltip" data-bs-html="true" title="<strong>Sender Policy Framework</strong><br>Specifies which mail servers can send email for your domain. §4 defines SPF record syntax." aria-label="Learn about SPF - RFC 7208 §4"><i class="fas fa-info-circle"></i><span class="rfc-label">RFC 7208 §4</span></a>
-                                    {{if .ICAEMetrics}}{{with index .ICAEMetrics.ByKey "spf"}}<a href="/confidence" class="badge icae-maturity-badge-deep icae-maturity-deep-{{.AnalysisLevel}} icae-results-badge ms-1 no-print" data-bs-toggle="tooltip" title="ICAE: {{.AnalysisDisplay}}">{{.AnalysisDisplay}}</a>{{end}}{{end}}
+                                    {{if .ICAEMetrics}}{{with index .ICAEMetrics.ByKey "spf"}}<a href="/confidence" class="badge icae-maturity-badge-deep icae-maturity-deep-{{.EffectiveLevel}} icae-results-badge ms-1 no-print" data-bs-toggle="tooltip" title="ICAE: {{.EffectiveDisplay}}">{{.EffectiveDisplay}}</a>{{end}}{{end}}
                                 </p>
                                 {{$spfStatus := mapGetStr "status" $spf}}
                                 <div class="protocol-question mb-2">
@@ -1322,7 +1322,7 @@
                                 <p class="d-flex align-items-center mb-1">
                                     <i class="fas fa-lock me-2"></i>DMARC Policy
                                     <a href="https://datatracker.ietf.org/doc/html/rfc7489#section-6.3" target="_blank" rel="noopener" class="ms-2 text-muted rfc-link" data-bs-toggle="tooltip" data-bs-html="true" title="<strong>Domain-based Message Authentication</strong><br>Tells receivers how to handle SPF/DKIM failures and where to send reports. §6.3 covers policy enforcement." aria-label="Learn about DMARC - RFC 7489 §6.3"><i class="fas fa-info-circle"></i><span class="rfc-label">RFC 7489 §6.3</span></a>
-                                    {{if .ICAEMetrics}}{{with index .ICAEMetrics.ByKey "dmarc"}}<a href="/confidence" class="badge icae-maturity-badge-deep icae-maturity-deep-{{.AnalysisLevel}} icae-results-badge ms-1 no-print" data-bs-toggle="tooltip" title="ICAE: {{.AnalysisDisplay}}">{{.AnalysisDisplay}}</a>{{end}}{{end}}
+                                    {{if .ICAEMetrics}}{{with index .ICAEMetrics.ByKey "dmarc"}}<a href="/confidence" class="badge icae-maturity-badge-deep icae-maturity-deep-{{.EffectiveLevel}} icae-results-badge ms-1 no-print" data-bs-toggle="tooltip" title="ICAE: {{.EffectiveDisplay}}">{{.EffectiveDisplay}}</a>{{end}}{{end}}
                                 </p>
                                 {{$dmarcStatus := mapGetStr "status" $dmarc}}
                                 {{$dmarcPolicy := mapGetStr "policy" $dmarc}}
@@ -1493,7 +1493,7 @@
                                 <p class="d-flex align-items-center mb-1">
                                     <i class="fas fa-key me-2"></i>DKIM Records
                                     <a href="https://datatracker.ietf.org/doc/html/rfc6376#section-3.6" target="_blank" rel="noopener" class="ms-2 text-muted rfc-link" data-bs-toggle="tooltip" data-bs-html="true" title="<strong>DomainKeys Identified Mail</strong><br>Cryptographic signatures that verify email hasn't been altered in transit. §3.6 covers key records." aria-label="Learn about DKIM - RFC 6376 §3.6"><i class="fas fa-info-circle"></i><span class="rfc-label">RFC 6376 §3.6</span></a>
-                                    {{if .ICAEMetrics}}{{with index .ICAEMetrics.ByKey "dkim"}}<a href="/confidence" class="badge icae-maturity-badge-deep icae-maturity-deep-{{.AnalysisLevel}} icae-results-badge ms-1 no-print" data-bs-toggle="tooltip" title="ICAE: {{.AnalysisDisplay}}">{{.AnalysisDisplay}}</a>{{end}}{{end}}
+                                    {{if .ICAEMetrics}}{{with index .ICAEMetrics.ByKey "dkim"}}<a href="/confidence" class="badge icae-maturity-badge-deep icae-maturity-deep-{{.EffectiveLevel}} icae-results-badge ms-1 no-print" data-bs-toggle="tooltip" title="ICAE: {{.EffectiveDisplay}}">{{.EffectiveDisplay}}</a>{{end}}{{end}}
                                 </p>
                                 {{$dkimStatus := mapGetStr "status" $dkim}}
                                 {{$dkimPrimaryProvider := mapGetStr "primary_provider" $dkim}}
@@ -1627,7 +1627,7 @@
                                 <p class="d-flex align-items-center flex-wrap">
                                     <i class="fas fa-shield-alt me-2"></i>MTA-STS
                                     <a href="https://datatracker.ietf.org/doc/html/rfc8461#section-3" target="_blank" rel="noopener" class="ms-2 text-muted rfc-link" data-bs-toggle="tooltip" data-bs-html="true" title="<strong>SMTP MTA Strict Transport Security</strong><br>Forces TLS encryption between mail servers to prevent downgrade attacks. §3 covers the DNS record." aria-label="Learn about MTA-STS - RFC 8461 §3"><i class="fas fa-info-circle"></i><span class="rfc-label">RFC 8461 §3</span></a>
-                                    {{if .ICAEMetrics}}{{with index .ICAEMetrics.ByKey "mta_sts"}}<a href="/confidence" class="badge icae-maturity-badge-deep icae-maturity-deep-{{.AnalysisLevel}} icae-results-badge ms-1 no-print" data-bs-toggle="tooltip" title="ICAE: {{.AnalysisDisplay}}">{{.AnalysisDisplay}}</a>{{end}}{{end}}
+                                    {{if .ICAEMetrics}}{{with index .ICAEMetrics.ByKey "mta_sts"}}<a href="/confidence" class="badge icae-maturity-badge-deep icae-maturity-deep-{{.EffectiveLevel}} icae-results-badge ms-1 no-print" data-bs-toggle="tooltip" title="ICAE: {{.EffectiveDisplay}}">{{.EffectiveDisplay}}</a>{{end}}{{end}}
                                     {{$mtaStsStatus := mapGetStr "status" $mta_sts}}
                                 </p>
                                 {{$mtaStsMode := mapGetStr "mode" $mta_sts}}
@@ -1704,7 +1704,7 @@
                                 <p class="d-flex align-items-center">
                                     <i class="fas fa-file-alt me-2"></i>TLS-RPT
                                     <a href="https://datatracker.ietf.org/doc/html/rfc8460#section-3" target="_blank" rel="noopener" class="ms-2 text-muted rfc-link" data-bs-toggle="tooltip" data-bs-html="true" title="<strong>TLS Reporting</strong><br>Sends reports about TLS connection failures to help diagnose delivery issues. §3 covers the reporting record." aria-label="Learn about TLS-RPT - RFC 8460 §3"><i class="fas fa-info-circle"></i><span class="rfc-label">RFC 8460 §3</span></a>
-                                    {{if .ICAEMetrics}}{{with index .ICAEMetrics.ByKey "tlsrpt"}}<a href="/confidence" class="badge icae-maturity-badge-deep icae-maturity-deep-{{.AnalysisLevel}} icae-results-badge ms-1 no-print" data-bs-toggle="tooltip" title="ICAE: {{.AnalysisDisplay}}">{{.AnalysisDisplay}}</a>{{end}}{{end}}
+                                    {{if .ICAEMetrics}}{{with index .ICAEMetrics.ByKey "tlsrpt"}}<a href="/confidence" class="badge icae-maturity-badge-deep icae-maturity-deep-{{.EffectiveLevel}} icae-results-badge ms-1 no-print" data-bs-toggle="tooltip" title="ICAE: {{.EffectiveDisplay}}">{{.EffectiveDisplay}}</a>{{end}}{{end}}
                                 </p>
                                 {{$tlsrptStatus := mapGetStr "status" $tlsrpt}}
                                 <div class="protocol-question mb-2">
@@ -1879,7 +1879,7 @@
                     <div class="card-header">
                         <h5 class="mb-0 d-flex align-items-center justify-content-between flex-wrap">
                             <span><i class="fas fa-certificate me-2"></i>DANE / TLSA</span>
-                            {{if .ICAEMetrics}}{{with index .ICAEMetrics.ByKey "dane"}}<a href="/confidence" class="badge icae-maturity-badge-deep icae-maturity-deep-{{.AnalysisLevel}} icae-results-badge ms-1 no-print" data-bs-toggle="tooltip" title="ICAE: {{.AnalysisDisplay}}">{{.AnalysisDisplay}}</a>{{end}}{{end}}
+                            {{if .ICAEMetrics}}{{with index .ICAEMetrics.ByKey "dane"}}<a href="/confidence" class="badge icae-maturity-badge-deep icae-maturity-deep-{{.EffectiveLevel}} icae-results-badge ms-1 no-print" data-bs-toggle="tooltip" title="ICAE: {{.EffectiveDisplay}}">{{.EffectiveDisplay}}</a>{{end}}{{end}}
                             <span class="badge u-badge-recon ms-2 no-print" data-bs-toggle="tooltip" title="Recon Advantage — DANE/TLSA certificate pinning analysis. A protocol most DNS tools skip entirely."><i class="fas fa-terminal me-1"></i>Recon</span>
                             {{if and .SectionTuning (index .SectionTuning "dane")}}{{with index .SectionTuning "dane"}}<span class="badge {{sectionStatusCSS .}} ms-2"><i class="fas {{sectionStatusIcon .}} me-1"></i>{{.}}</span>{{end}}{{end}}
                             <span class="section-question">{{if .IsPublicSuffix}}Does this zone publish DANE / TLSA records?{{else}}Can mail servers prove identity without a public CA?{{end}}
@@ -2095,7 +2095,7 @@
                                 <p class="d-flex align-items-center">
                                     <i class="fas fa-image me-2"></i>BIMI
                                     <a href="https://bimigroup.org/implementation-guide/" target="_blank" rel="noopener" class="ms-2 text-muted rfc-link" data-bs-toggle="tooltip" data-bs-html="true" title="<strong>Brand Indicators for Message Identification</strong><br>Displays your brand logo next to emails in recipients' inboxes." aria-label="Learn about BIMI - BIMI Group Specification"><i class="fas fa-info-circle"></i><span class="rfc-label">BIMI Spec</span></a>
-                                    {{if .ICAEMetrics}}{{with index .ICAEMetrics.ByKey "bimi"}}<a href="/confidence" class="badge icae-maturity-badge-deep icae-maturity-deep-{{.AnalysisLevel}} icae-results-badge ms-1 no-print" data-bs-toggle="tooltip" title="ICAE: {{.AnalysisDisplay}}">{{.AnalysisDisplay}}</a>{{end}}{{end}}
+                                    {{if .ICAEMetrics}}{{with index .ICAEMetrics.ByKey "bimi"}}<a href="/confidence" class="badge icae-maturity-badge-deep icae-maturity-deep-{{.EffectiveLevel}} icae-results-badge ms-1 no-print" data-bs-toggle="tooltip" title="ICAE: {{.EffectiveDisplay}}">{{.EffectiveDisplay}}</a>{{end}}{{end}}
                                     <span class="badge bg-{{if eq $bimiStatus "success"}}success{{else if eq $bimiStatus "error"}}danger{{else}}warning{{end}} ms-2">
                                         {{title $bimiStatus}}
                                     </span>
@@ -2175,7 +2175,7 @@
                                 <p class="d-flex align-items-center">
                                     <i class="fas fa-lock me-2"></i>CAA
                                     <a href="https://datatracker.ietf.org/doc/html/rfc8659#section-4" target="_blank" rel="noopener" class="ms-2 text-muted rfc-link" data-bs-toggle="tooltip" data-bs-html="true" title="<strong>Certificate Authority Authorization</strong><br>Controls which CAs can issue SSL certificates for your domain. §4 covers record processing." aria-label="Learn about CAA - RFC 8659 §4"><i class="fas fa-info-circle"></i><span class="rfc-label">RFC 8659 §4</span></a>
-                                    {{if .ICAEMetrics}}{{with index .ICAEMetrics.ByKey "caa"}}<a href="/confidence" class="badge icae-maturity-badge-deep icae-maturity-deep-{{.AnalysisLevel}} icae-results-badge ms-1 no-print" data-bs-toggle="tooltip" title="ICAE: {{.AnalysisDisplay}}">{{.AnalysisDisplay}}</a>{{end}}{{end}}
+                                    {{if .ICAEMetrics}}{{with index .ICAEMetrics.ByKey "caa"}}<a href="/confidence" class="badge icae-maturity-badge-deep icae-maturity-deep-{{.EffectiveLevel}} icae-results-badge ms-1 no-print" data-bs-toggle="tooltip" title="ICAE: {{.EffectiveDisplay}}">{{.EffectiveDisplay}}</a>{{end}}{{end}}
                                     <span class="badge bg-{{if eq $caaStatus "success"}}success{{else}}warning{{end}} ms-2">
                                         {{title $caaStatus}}
                                     </span>
@@ -3358,7 +3358,7 @@
                                 <p class="d-flex align-items-center flex-wrap">
                                     <i class="fas fa-key me-2"></i>DNSSEC
                                     <a href="https://datatracker.ietf.org/doc/html/rfc4033#section-2" target="_blank" rel="noopener" class="ms-2 text-muted rfc-link" data-bs-toggle="tooltip" data-bs-html="true" title="<strong>DNS Security Extensions</strong><br>Cryptographic signatures that prove DNS responses are authentic and untampered. §2 covers DNSSEC concepts." aria-label="Learn about DNSSEC - RFC 4033 §2"><i class="fas fa-info-circle"></i><span class="rfc-label">RFC 4033 §2</span></a>
-                                    {{if .ICAEMetrics}}{{with index .ICAEMetrics.ByKey "dnssec"}}<a href="/confidence" class="badge icae-maturity-badge-deep icae-maturity-deep-{{.AnalysisLevel}} icae-results-badge ms-1 no-print" data-bs-toggle="tooltip" title="ICAE: {{.AnalysisDisplay}}">{{.AnalysisDisplay}}</a>{{end}}{{end}}
+                                    {{if .ICAEMetrics}}{{with index .ICAEMetrics.ByKey "dnssec"}}<a href="/confidence" class="badge icae-maturity-badge-deep icae-maturity-deep-{{.EffectiveLevel}} icae-results-badge ms-1 no-print" data-bs-toggle="tooltip" title="ICAE: {{.EffectiveDisplay}}">{{.EffectiveDisplay}}</a>{{end}}{{end}}
                                     <span class="badge bg-{{if eq $dnssecStatus "success"}}success{{else}}warning{{end}} ms-2">
                                         {{if and (eq $dnssecStatus "success") (eq $chainOfTrust "inherited")}}Inherited{{else if eq $dnssecStatus "success"}}Signed{{else}}Unsigned{{end}}
                                     </span>
@@ -4705,17 +4705,17 @@
                             <div class="d-flex align-items-center justify-content-between mb-1">
                                 <span class="icae-proto-name">{{.DisplayName}}</span>
                                 {{if .HasRuns}}
-                                <span class="icae-maturity-dot {{if eq .AnalysisLevel "gold_master"}}icae-dot-gold-master{{else if eq .AnalysisLevel "gold"}}icae-dot-gold{{else if eq .AnalysisLevel "consistent"}}icae-dot-consistent{{else if eq .AnalysisLevel "verified"}}icae-dot-verified{{else}}icae-dot-dev{{end}}" data-bs-toggle="tooltip" title="Analysis: {{.AnalysisDisplay}} · Collection: {{.CollectionDisplay}}"></span>
+                                <span class="icae-maturity-dot {{if eq .EffectiveLevel "gold_master"}}icae-dot-gold-master{{else if eq .EffectiveLevel "gold"}}icae-dot-gold{{else if eq .EffectiveLevel "consistent"}}icae-dot-consistent{{else if eq .EffectiveLevel "verified"}}icae-dot-verified{{else}}icae-dot-dev{{end}}" data-bs-toggle="tooltip" title="Analysis: {{.AnalysisDisplay}} · Collection: {{.CollectionDisplay}}"></span>
                                 {{else}}
                                 <span class="icae-maturity-dot icae-dot-pending" data-bs-toggle="tooltip" title="Awaiting test coverage"></span>
                                 {{end}}
                             </div>
                             {{if .HasRuns}}
                             <div class="icae-progress-track">
-                                <div class="icae-progress-fill {{if eq .AnalysisLevel "gold_master"}}icae-fill-gold-master icae-w-100{{else if eq .AnalysisLevel "gold"}}icae-fill-gold icae-w-80{{else if eq .AnalysisLevel "consistent"}}icae-fill-consistent icae-w-60{{else if eq .AnalysisLevel "verified"}}icae-fill-verified icae-w-40{{else}}icae-fill-dev icae-w-20{{end}}"></div>
+                                <div class="icae-progress-fill {{if eq .EffectiveLevel "gold_master"}}icae-fill-gold-master icae-w-100{{else if eq .EffectiveLevel "gold"}}icae-fill-gold icae-w-80{{else if eq .EffectiveLevel "consistent"}}icae-fill-consistent icae-w-60{{else if eq .EffectiveLevel "verified"}}icae-fill-verified icae-w-40{{else}}icae-fill-dev icae-w-20{{end}}"></div>
                             </div>
                             <div class="d-flex justify-content-between mt-1">
-                                <span class="icae-stat {{if eq .AnalysisLevel "gold_master"}}icae-stat-gold-master{{else if eq .AnalysisLevel "gold"}}icae-stat-gold{{else if eq .AnalysisLevel "consistent"}}icae-stat-consistent{{else if eq .AnalysisLevel "verified"}}icae-stat-verified{{else}}icae-stat-dev{{end}}">{{.AnalysisDisplay}}</span>
+                                <span class="icae-stat {{if eq .EffectiveLevel "gold_master"}}icae-stat-gold-master{{else if eq .EffectiveLevel "gold"}}icae-stat-gold{{else if eq .EffectiveLevel "consistent"}}icae-stat-consistent{{else if eq .EffectiveLevel "verified"}}icae-stat-verified{{else}}icae-stat-dev{{end}}">{{.EffectiveDisplay}}</span>
                                 <span class="icae-runs">{{.AnalysisRuns}} runs</span>
                             </div>
                             {{else}}

@@ -162,6 +162,8 @@ func NextTierPct(currentLevel string, consecutivePasses int, daysSinceFirst int)
 type ProtocolReport struct {
         Protocol          string
         DisplayName       string
+        EffectiveLevel    string
+        EffectiveDisplay  string
         CollectionLevel   string
         CollectionDisplay string
         CollectionRuns    int
@@ -300,26 +302,35 @@ func ComputeMaturity(consecutivePasses int, firstPassAt *time.Time, lastRegressi
         return MaturityDevelopment
 }
 
+func CombinedMaturity(analysisLevel, collectionLevel string) string {
+        aOrder := MaturityOrder[analysisLevel]
+        cOrder := MaturityOrder[collectionLevel]
+        if cOrder < aOrder {
+                return collectionLevel
+        }
+        return analysisLevel
+}
+
 func OverallMaturity(protocols []ProtocolReport) string {
         lowest := MaturityGoldMaster
         lowestOrder := MaturityOrder[lowest]
-        hasAnyAnalysis := false
+        hasAny := false
 
         for _, p := range protocols {
-                if p.HasAnalysis {
-                        hasAnyAnalysis = true
-                        order, ok := MaturityOrder[p.AnalysisLevel]
+                if p.HasRuns {
+                        hasAny = true
+                        order, ok := MaturityOrder[p.EffectiveLevel]
                         if !ok {
                                 return MaturityDevelopment
                         }
                         if order < lowestOrder {
                                 lowestOrder = order
-                                lowest = p.AnalysisLevel
+                                lowest = p.EffectiveLevel
                         }
                 }
         }
 
-        if !hasAnyAnalysis {
+        if !hasAny {
                 return MaturityDevelopment
         }
 

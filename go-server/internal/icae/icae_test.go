@@ -96,11 +96,44 @@ func TestComputeMaturity(t *testing.T) {
         }
 }
 
+func makeProto(colLevel string, hasCol bool, analLevel string, hasAnal bool) ProtocolReport {
+        pr := ProtocolReport{
+                CollectionLevel: colLevel, HasCollection: hasCol,
+                AnalysisLevel: analLevel, HasAnalysis: hasAnal,
+        }
+        pr.HasRuns = hasCol || hasAnal
+        pr.EffectiveLevel = CombinedMaturity(analLevel, colLevel)
+        pr.EffectiveDisplay = MaturityDisplayNames[pr.EffectiveLevel]
+        return pr
+}
+
+func TestCombinedMaturity(t *testing.T) {
+        tests := []struct {
+                name     string
+                analysis string
+                collect  string
+                want     string
+        }{
+                {"both gold", MaturityGold, MaturityGold, MaturityGold},
+                {"analysis higher", MaturityGold, MaturityDevelopment, MaturityDevelopment},
+                {"collection higher", MaturityDevelopment, MaturityGold, MaturityDevelopment},
+                {"equal verified", MaturityVerified, MaturityVerified, MaturityVerified},
+        }
+        for _, tt := range tests {
+                t.Run(tt.name, func(t *testing.T) {
+                        got := CombinedMaturity(tt.analysis, tt.collect)
+                        if got != tt.want {
+                                t.Errorf("CombinedMaturity(%q, %q) = %q, want %q", tt.analysis, tt.collect, got, tt.want)
+                        }
+                })
+        }
+}
+
 func TestOverallMaturity(t *testing.T) {
         t.Run("both layers present", func(t *testing.T) {
                 protocols := []ProtocolReport{
-                        {CollectionLevel: MaturityGold, HasCollection: true, AnalysisLevel: MaturityGold, HasAnalysis: true},
-                        {CollectionLevel: MaturityGold, HasCollection: true, AnalysisLevel: MaturityVerified, HasAnalysis: true},
+                        makeProto(MaturityGold, true, MaturityGold, true),
+                        makeProto(MaturityGold, true, MaturityVerified, true),
                 }
                 got := OverallMaturity(protocols)
                 if got != MaturityVerified {
@@ -110,18 +143,18 @@ func TestOverallMaturity(t *testing.T) {
 
         t.Run("analysis only no collection", func(t *testing.T) {
                 protocols := []ProtocolReport{
-                        {CollectionLevel: MaturityDevelopment, HasCollection: false, AnalysisLevel: MaturityVerified, HasAnalysis: true},
-                        {CollectionLevel: MaturityDevelopment, HasCollection: false, AnalysisLevel: MaturityVerified, HasAnalysis: true},
+                        makeProto(MaturityDevelopment, false, MaturityVerified, true),
+                        makeProto(MaturityDevelopment, false, MaturityVerified, true),
                 }
                 got := OverallMaturity(protocols)
-                if got != MaturityVerified {
-                        t.Errorf("expected %q, got %q (collection without data should not drag overall down)", MaturityVerified, got)
+                if got != MaturityDevelopment {
+                        t.Errorf("expected %q, got %q (effective = min(verified, development) = development)", MaturityDevelopment, got)
                 }
         })
 
         t.Run("no data at all", func(t *testing.T) {
                 protocols := []ProtocolReport{
-                        {CollectionLevel: MaturityDevelopment, HasCollection: false, AnalysisLevel: MaturityDevelopment, HasAnalysis: false},
+                        makeProto(MaturityDevelopment, false, MaturityDevelopment, false),
                 }
                 got := OverallMaturity(protocols)
                 if got != MaturityDevelopment {
@@ -131,8 +164,19 @@ func TestOverallMaturity(t *testing.T) {
 
         t.Run("mixed layers one protocol has collection", func(t *testing.T) {
                 protocols := []ProtocolReport{
-                        {CollectionLevel: MaturityConsistent, HasCollection: true, AnalysisLevel: MaturityGold, HasAnalysis: true},
-                        {CollectionLevel: MaturityDevelopment, HasCollection: false, AnalysisLevel: MaturityVerified, HasAnalysis: true},
+                        makeProto(MaturityConsistent, true, MaturityGold, true),
+                        makeProto(MaturityDevelopment, false, MaturityVerified, true),
+                }
+                got := OverallMaturity(protocols)
+                if got != MaturityDevelopment {
+                        t.Errorf("expected %q, got %q (second protocol effective = min(verified, dev) = dev)", MaturityDevelopment, got)
+                }
+        })
+
+        t.Run("all layers at same level", func(t *testing.T) {
+                protocols := []ProtocolReport{
+                        makeProto(MaturityVerified, true, MaturityVerified, true),
+                        makeProto(MaturityVerified, true, MaturityVerified, true),
                 }
                 got := OverallMaturity(protocols)
                 if got != MaturityVerified {
