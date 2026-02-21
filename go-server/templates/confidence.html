@@ -31,19 +31,12 @@
                 <i class="fas fa-flask me-1"></i> Intelligence Confidence Audit Engine (ICAE)
             </p>
             <p class="text-muted mt-2 mx-auto u-max-w-640">
-                Every protocol DNS Tool analyzes is continuously audited for accuracy.
-                The ICAE tracks how reliably each protocol's collection and analysis performs
-                across thousands of real-world domains — no self-grading, no marketing claims.
+                Operational confidence posture for every DNS intelligence protocol.
+                Each badge is earned through consecutive deterministic passes plus time-in-service &mdash;
+                no manual overrides, no self-grading, no marketing claims.
             </p>
         </div>
 
-        {{if .IsDev}}
-        <div class="alert alert-info border-info mb-4 py-2 small">
-            <i class="fas fa-info-circle me-2"></i><strong>Development Environment</strong> &mdash;
-            This database has accumulated fewer ICAE runs than production. Maturity levels shown here reflect development data only.
-            Production confidence data is available at <a href="https://dnstool.it-help.tech/confidence" class="text-info fw-semibold" target="_blank" rel="noopener">dnstool.it-help.tech/confidence</a>.
-        </div>
-        {{end}}
 
         {{if .ICAEMetrics}}
 
@@ -58,7 +51,7 @@
             </div>
             <div class="icae-summary-item">
                 <span class="icae-summary-value">{{.ICAEMetrics.PassRate}}%</span>
-                <span class="icae-summary-label">Pass Rate</span>
+                <span class="icae-summary-label">Audit Pass Rate</span>
             </div>
             <div class="icae-summary-item">
                 <span class="icae-summary-value">{{.ICAEMetrics.EvaluatedCount}}/{{.ICAEMetrics.TotalProtocols}}</span>
@@ -66,11 +59,11 @@
             </div>
             <div class="icae-summary-item">
                 <span class="icae-summary-value">{{.ICAEMetrics.DaysRunning}}d</span>
-                <span class="icae-summary-label">Running</span>
+                <span class="icae-summary-label">Days Running</span>
             </div>
             <div class="icae-summary-item">
                 <span class="icae-summary-value">{{.ICAEMetrics.TotalAllCases}}</span>
-                <span class="icae-summary-label">Total Cases</span>
+                <span class="icae-summary-label">Audit Cases</span>
             </div>
             <div class="icae-summary-item">
                 <span class="icae-summary-value">{{len .ICAEMetrics.Regressions}}</span>
@@ -81,7 +74,7 @@
         <div class="card bg-dark border-secondary mb-4">
             <div class="card-body pb-2">
                 <div class="d-flex flex-wrap align-items-center justify-content-between mb-3">
-                    <h2 class="h5 fw-bold mb-0"><i class="fas fa-tachometer-alt me-2 text-info"></i>Calibration Status Panel</h2>
+                    <h2 class="h5 fw-bold mb-0"><i class="fas fa-th me-2 text-info"></i>Intelligence Confidence Matrix</h2>
                     <span class="icae-overall-badge icae-overall-badge-{{.ICAEMetrics.OverallMaturity}}">
                         <span class="icae-dot icae-dot-inline icae-dot-color-{{.ICAEMetrics.OverallMaturity}}"></span>
                         {{.ICAEMetrics.OverallMaturityDisplay}}
@@ -202,8 +195,8 @@
         {{if .ICAEMetrics.Regressions}}
         <div class="card bg-dark border-secondary mb-4">
             <div class="card-body">
-                <h2 class="h5 fw-bold mb-3"><i class="fas fa-exclamation-triangle me-2 text-warning"></i>Regression Event Log</h2>
-                <p class="text-muted small mb-3">Regressions occur when a previously passing test case fails, resetting the consecutive pass counter. Each event is recorded with the protocol affected and recovery progress.</p>
+                <h2 class="h5 fw-bold mb-3"><i class="fas fa-exclamation-triangle me-2 text-warning"></i>Confidence Degradation Log</h2>
+                <p class="text-muted small mb-3">Degradation events occur when a previously passing test case fails, resetting the consecutive pass counter. Each event is recorded with the protocol affected and recovery progress.</p>
                 <div class="table-responsive">
                     <table class="table table-dark table-sm mb-0">
                         <thead>
@@ -231,15 +224,15 @@
         {{else}}
         <div class="card bg-dark border-secondary mb-4">
             <div class="card-body py-3">
-                <h2 class="h5 fw-bold mb-2"><i class="fas fa-shield-alt me-2 text-success"></i>Regression Event Log</h2>
-                <p class="text-muted small mb-0"><i class="fas fa-check-circle me-1 text-success"></i>No regressions recorded. All protocols have maintained continuous passing status since first evaluation.</p>
+                <h2 class="h5 fw-bold mb-2"><i class="fas fa-shield-alt me-2 text-success"></i>Confidence Degradation Log</h2>
+                <p class="text-muted small mb-0"><i class="fas fa-check-circle me-1 text-success"></i>No degradation events recorded. All protocols have maintained continuous passing status since first evaluation.</p>
             </div>
         </div>
         {{end}}
 
         <div class="card bg-dark border-secondary mb-5">
             <div class="card-body">
-                <h2 class="h5 fw-bold mb-3"><i class="fas fa-flask me-2 text-info"></i>Per-Protocol Test Intelligence</h2>
+                <h2 class="h5 fw-bold mb-3"><i class="fas fa-flask me-2 text-info"></i>Protocol Test Dossier</h2>
                 <p class="text-muted small mb-3">Each protocol is audited against deterministic test cases grounded in specific RFC sections. Below is what ICAE tests for each protocol &mdash; the signals, the standards, and the methodology.</p>
 
                 <div class="row g-3">
