@@ -4080,10 +4080,10 @@ footer a.text-muted:hover { text-decoration-color: rgba(173, 181, 189, 0.8); }
     white-space: nowrap;
 }
 .icae-cal-layer-label-collection {
-    color: #4dd0e1;
+    color: #4dd0e1 !important;
 }
 .icae-cal-layer-label-analysis {
-    color: #ce93d8;
+    color: #ce93d8 !important;
 }
 .icae-cal-layer-runs {
     font-size: 0.6rem;
@@ -4282,10 +4282,10 @@ footer a.text-muted:hover { text-decoration-color: rgba(173, 181, 189, 0.8); }
     color: #8ab4f8;
 }
 .icae-cal-progress-label-collection {
-    color: #4dd0e1;
+    color: #4dd0e1 !important;
 }
 .icae-cal-progress-label-analysis {
-    color: #ce93d8;
+    color: #ce93d8 !important;
 }
 .icae-cal-progress-item {
     white-space: nowrap;
