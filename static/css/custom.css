@@ -557,8 +557,8 @@ body.covert-mode .hero-ascii-pre {
 
 /* Search Card */
 .search-card {
-    background: var(--bg-secondary);
-    border: 1px solid rgba(125, 142, 168, 0.2);
+    background: linear-gradient(145deg, #0c1018 0%, #111720 50%, #0e141c 100%);
+    border: 1px solid rgba(125, 142, 168, 0.15);
     border-radius: 0.75rem;
     padding: 1.5rem;
     position: relative;
