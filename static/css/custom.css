@@ -2995,6 +2995,9 @@ body.covert-mode .loading-overlay .loading-spinner i.covert-hide {
 body.covert-mode .loading-overlay .h4.covert-show {
     color: #cc2020;
 }
+body.covert-mode img[src*="owl-of-athena"] {
+    filter: sepia(1) saturate(4) hue-rotate(330deg) brightness(0.55) contrast(1.2);
+}
 body.covert-mode .proto-spf.bg-success {
     background-color: #1a2540 !important;
     color: #5580bb !important;
