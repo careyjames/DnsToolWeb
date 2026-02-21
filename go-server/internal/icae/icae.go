@@ -116,6 +116,8 @@ type ReportMetrics struct {
         OverallMaturityDisplay string
         TotalPasses            int
         TotalRuns              int
+        CollectionPasses       int
+        CollectionRuns         int
         PassRate               string
         FirstPassAt            string
         DaysRunning            int

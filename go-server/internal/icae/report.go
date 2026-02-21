@@ -101,6 +101,8 @@ func LoadReportMetrics(ctx context.Context, queries DBTX) *ReportMetrics {
         evaluatedCount := 0
         totalPasses := 0
         totalRuns := 0
+        collectionPasses := 0
+        collectionRuns := 0
         var earliestFirstPass string
         var maxDays int
         var regressions []RegressionEvent
@@ -111,6 +113,8 @@ func LoadReportMetrics(ctx context.Context, queries DBTX) *ReportMetrics {
                 }
                 totalPasses += p.AnalysisPasses
                 totalRuns += p.AnalysisRuns
+                collectionPasses += p.CollectionPasses
+                collectionRuns += p.CollectionRuns
                 if p.FirstPassAt != "" {
                         if earliestFirstPass == "" || p.FirstPassAt < earliestFirstPass {
                                 earliestFirstPass = p.FirstPassAt
@@ -157,6 +161,8 @@ func LoadReportMetrics(ctx context.Context, queries DBTX) *ReportMetrics {
                 OverallMaturityDisplay: MaturityDisplayNames[overall],
                 TotalPasses:            totalPasses,
                 TotalRuns:              totalRuns,
+                CollectionPasses:       collectionPasses,
+                CollectionRuns:         collectionRuns,
                 PassRate:               passRate,
                 FirstPassAt:            earliestFirstPass,
                 DaysRunning:            maxDays,

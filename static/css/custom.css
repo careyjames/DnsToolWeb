@@ -4079,6 +4079,15 @@ footer a.text-muted:hover { text-decoration-color: rgba(173, 181, 189, 0.8); }
     text-align: right;
     white-space: nowrap;
 }
+.icae-cal-layer-runs {
+    font-size: 0.6rem;
+    color: #6c757d;
+    white-space: nowrap;
+    flex-shrink: 0;
+    min-width: 48px;
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+}
 .icae-cal-layer-badge {
     font-size: 0.6rem !important;
     padding: 0.15em 0.4em !important;
