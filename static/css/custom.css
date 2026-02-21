@@ -213,15 +213,19 @@ code {
 .icae-hero-statement {
     display: block;
     margin-bottom: 0.45rem;
-}
-.icae-hero-title {
     font-size: 0.72rem;
     font-weight: 600;
     letter-spacing: 0.06em;
     text-transform: uppercase;
     color: rgba(230, 237, 243, 0.45);
+    text-decoration: none;
+    transition: color 0.2s;
 }
-.icae-hero-title .fas {
+.icae-hero-statement:hover {
+    color: rgba(230, 237, 243, 0.7);
+    text-decoration: none;
+}
+.icae-hero-statement .fas {
     font-size: 0.6rem;
     opacity: 0.45;
 }
