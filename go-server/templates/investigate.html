@@ -735,7 +735,7 @@
         </div>
     </div>
 
-    <script src="{{staticVersionURL "js/foundation.min.js" .AppVersion}}"></script>
+    {{template "scripts" .}}
     <script nonce="{{.CspNonce}}">
     (function() {
         var form = document.getElementById('investigateForm');

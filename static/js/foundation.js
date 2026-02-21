@@ -1,6 +1,12 @@
 (function() {
     'use strict';
 
+    /* ── Covert Mode Transfer ── */
+    if (document.documentElement.classList.contains('covert-mode') &&
+        !document.body.classList.contains('covert-mode')) {
+        document.body.classList.add('covert-mode');
+    }
+
     /* ── Collapse ── */
     function toggleCollapse(target) {
         if (!target) return;

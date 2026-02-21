@@ -103,6 +103,7 @@
         {{template "footer" .}}
     </main>
 
+    {{template "scripts" .}}
     <script nonce="{{.CspNonce}}">
     (function() {
         var baseURL = '{{.BaseURL}}';
