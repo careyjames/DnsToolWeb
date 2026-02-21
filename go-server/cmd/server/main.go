@@ -199,6 +199,10 @@ func main() {
         brandColorsHandler := handlers.NewBrandColorsHandler(cfg)
         router.GET("/brand-colors", brandColorsHandler.BrandColors)
 
+        badgeHandler := handlers.NewBadgeHandler(database, cfg)
+        router.GET("/badge", badgeHandler.Badge)
+        router.GET("/badge/embed", badgeHandler.BadgeEmbed)
+
         zoneHandler := handlers.NewZoneHandler(database, cfg)
         router.GET("/zone", middleware.RequireAuth(), zoneHandler.UploadForm)
         router.POST("/zone/upload", middleware.RequireAuth(), zoneHandler.ProcessUpload)

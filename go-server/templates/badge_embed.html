@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="dark">
+<head>
+    {{template "head" .}}
+    <title>Security Badge - DNS Tool</title>
+    <meta name="description" content="Embed a DNS security posture badge for your domain. Show your security score on your website, README, or profile.">
+    <link rel="canonical" href="https://dnstool.it-help.tech/badge/embed">
+    {{template "critical_css" .}}
+    {{template "head_css" .}}
+</head>
+<body>
+    {{template "nav" .}}
+
+    <main id="main-content" class="container my-4">
+        {{template "flash_messages" .}}
+
+        <h1 class="h3 mb-1">Security Badge</h1>
+        <p class="text-muted mb-4">Scan your domain, then embed the badge anywhere &mdash; GitHub README, blog, personal site, Hacker News profile.</p>
+
+        <div class="row g-4">
+            <div class="col-lg-6">
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="fas fa-search me-2"></i>Generate Badge</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label for="badgeDomain" class="form-label small fw-semibold">Domain</label>
+                            <input type="text" class="form-control" id="badgeDomain" placeholder="example.com" autocomplete="off" spellcheck="false">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label small fw-semibold">Style</label>
+                            <div class="d-flex gap-2">
+                                <button type="button" class="btn btn-sm btn-outline-primary active" id="btnStyleFlat" data-style="flat">Standard</button>
+                                <button type="button" class="btn btn-sm btn-outline-danger" id="btnStyleCovert" data-style="covert">Covert</button>
+                            </div>
+                        </div>
+                        <button type="button" class="btn btn-primary" id="btnGenerateBadge">
+                            <i class="fas fa-terminal me-1"></i>Generate
+                        </button>
+                    </div>
+                </div>
+
+                <div class="card mb-4 d-none" id="badgePreviewCard">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="fas fa-eye me-2"></i>Preview</h5>
+                    </div>
+                    <div class="card-body text-center py-4" id="badgePreview">
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-6">
+                <div class="card mb-4 d-none" id="badgeEmbedCard">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="fas fa-code me-2"></i>Embed Code</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label class="form-label small fw-semibold font-monospace">HTML</label>
+                            <div class="input-group">
+                                <textarea class="form-control font-monospace small" id="embedHTML" rows="3" readonly></textarea>
+                                <button type="button" class="btn btn-outline-secondary" id="copyHTML" title="Copy HTML"><i class="fas fa-copy"></i></button>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label small fw-semibold font-monospace">Markdown</label>
+                            <div class="input-group">
+                                <textarea class="form-control font-monospace small" id="embedMarkdown" rows="2" readonly></textarea>
+                                <button type="button" class="btn btn-outline-secondary" id="copyMarkdown" title="Copy Markdown"><i class="fas fa-copy"></i></button>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label small fw-semibold font-monospace">Image URL</label>
+                            <div class="input-group">
+                                <input type="text" class="form-control font-monospace small" id="embedURL" readonly>
+                                <button type="button" class="btn btn-outline-secondary" id="copyURL" title="Copy URL"><i class="fas fa-copy"></i></button>
+                            </div>
+                        </div>
+                        <div class="mb-0">
+                            <label class="form-label small fw-semibold font-monospace">curl</label>
+                            <div class="input-group">
+                                <input type="text" class="form-control font-monospace small" id="embedCurl" readonly>
+                                <button type="button" class="btn btn-outline-secondary" id="copyCurl" title="Copy curl"><i class="fas fa-copy"></i></button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="fas fa-info-circle me-2"></i>How It Works</h5>
+                    </div>
+                    <div class="card-body small text-muted">
+                        <p>The badge reflects the most recent public scan of your domain. It shows the risk level from the DNS Security &amp; Trust Posture analysis.</p>
+                        <p>Badge data is cached for 1 hour. Private scans are not shown.</p>
+                        <p class="mb-0"><strong>Requirement:</strong> Your domain must have been scanned at least once on DNS Tool. <a href="/analyze">Run a scan</a> first if needed.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {{template "footer" .}}
+    </main>
+
+    <script nonce="{{.CspNonce}}">
+    (function() {
+        var baseURL = '{{.BaseURL}}';
+        var domain = document.getElementById('badgeDomain');
+        var style = 'flat';
+        var previewCard = document.getElementById('badgePreviewCard');
+        var embedCard = document.getElementById('badgeEmbedCard');
+        var preview = document.getElementById('badgePreview');
+
+        document.getElementById('btnStyleFlat').addEventListener('click', function() {
+            style = 'flat';
+            this.classList.add('active');
+            document.getElementById('btnStyleCovert').classList.remove('active');
+        });
+        document.getElementById('btnStyleCovert').addEventListener('click', function() {
+            style = 'covert';
+            this.classList.add('active');
+            document.getElementById('btnStyleFlat').classList.remove('active');
+        });
+
+        document.getElementById('btnGenerateBadge').addEventListener('click', function() {
+            var d = domain.value.trim();
+            if (!d) return;
+
+            var badgeURL = baseURL + '/badge?domain=' + encodeURIComponent(d) + (style !== 'flat' ? '&style=' + style : '');
+            var reportURL = baseURL + '/analyze?domain=' + encodeURIComponent(d);
+
+            preview.innerHTML = '<a href="' + reportURL + '"><img src="' + badgeURL + '" alt="DNS Tool Security Badge for ' + d + '"></a>';
+            previewCard.classList.remove('d-none');
+            embedCard.classList.remove('d-none');
+
+            document.getElementById('embedHTML').value = '<a href="' + reportURL + '"><img src="' + badgeURL + '" alt="DNS Security: ' + d + '"></a>';
+            document.getElementById('embedMarkdown').value = '[![DNS Security: ' + d + '](' + badgeURL + ')](' + reportURL + ')';
+            document.getElementById('embedURL').value = badgeURL;
+            document.getElementById('embedCurl').value = "curl -s '" + badgeURL + "' > dns-badge.svg";
+        });
+
+        function copyField(btnId, fieldId) {
+            document.getElementById(btnId).addEventListener('click', function() {
+                var el = document.getElementById(fieldId);
+                navigator.clipboard.writeText(el.value).then(function() {
+                    var btn = document.getElementById(btnId);
+                    var icon = btn.querySelector('i');
+                    icon.className = 'fas fa-check';
+                    setTimeout(function() { icon.className = 'fas fa-copy'; }, 1500);
+                });
+            });
+        }
+        copyField('copyHTML', 'embedHTML');
+        copyField('copyMarkdown', 'embedMarkdown');
+        copyField('copyURL', 'embedURL');
+        copyField('copyCurl', 'embedCurl');
+
+        domain.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') document.getElementById('btnGenerateBadge').click();
+        });
+
+        var params = new URLSearchParams(window.location.search);
+        if (params.get('domain')) {
+            domain.value = params.get('domain');
+            document.getElementById('btnGenerateBadge').click();
+        }
+    })();
+    </script>
+</body>
+</html>

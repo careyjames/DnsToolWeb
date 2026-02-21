@@ -2279,6 +2279,9 @@ body.covert-mode .scan-phase.active-phase span {
 body.covert-mode .scan-phase:not(.visible):not(.done) span {
     color: rgba(140, 100, 100, 0.35) !important;
 }
+body.covert-mode .loading-dots span {
+    background: rgba(196, 60, 60, 0.5) !important;
+}
 body.covert-mode .bg-dark {
     background-color: #0e1015 !important;
 }

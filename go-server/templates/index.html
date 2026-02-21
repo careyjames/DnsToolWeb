@@ -853,35 +853,43 @@
             <div class="scan-checklist mt-3" id="scanChecklist" aria-hidden="true">
                 <div class="scan-phase" data-delay="0">
                     <i class="fas fa-circle-notch fa-spin scan-icon scan-pending" aria-hidden="true"></i>
-                    <span>DNS records &mdash; Cloudflare, Google, Quad9, OpenDNS, DNS4EU</span>
+                    <span class="covert-hide">DNS records &mdash; Cloudflare, Google, Quad9, OpenDNS, DNS4EU</span>
+                    <span class="covert-show">Enumerating DNS across 5 resolvers&hellip;</span>
                 </div>
                 <div class="scan-phase" data-delay="1200">
                     <i class="fas fa-circle-notch fa-spin scan-icon scan-pending" aria-hidden="true"></i>
-                    <span>Email auth &mdash; SPF, DMARC, DKIM selectors</span>
+                    <span class="covert-hide">Email auth &mdash; SPF, DMARC, DKIM selectors</span>
+                    <span class="covert-show">Probing email spoofability &mdash; SPF, DMARC, DKIM</span>
                 </div>
                 <div class="scan-phase" data-delay="2500">
                     <i class="fas fa-circle-notch fa-spin scan-icon scan-pending" aria-hidden="true"></i>
-                    <span>DNSSEC chain of trust &amp; DANE/TLSA</span>
+                    <span class="covert-hide">DNSSEC chain of trust &amp; DANE/TLSA</span>
+                    <span class="covert-show">Testing DNS poison resistance &mdash; DNSSEC, DANE</span>
                 </div>
                 <div class="scan-phase" data-delay="3500">
                     <i class="fas fa-circle-notch fa-spin scan-icon scan-pending" aria-hidden="true"></i>
-                    <span>Certificate Transparency &amp; subdomain discovery</span>
+                    <span class="covert-hide">Certificate Transparency &amp; subdomain discovery</span>
+                    <span class="covert-show">Harvesting subdomains from CT logs&hellip;</span>
                 </div>
                 <div class="scan-phase" data-delay="5000">
                     <i class="fas fa-circle-notch fa-spin scan-icon scan-pending" aria-hidden="true"></i>
-                    <span>SMTP transport &amp; STARTTLS verification</span>
+                    <span class="covert-hide">SMTP transport &amp; STARTTLS verification</span>
+                    <span class="covert-show">Fingerprinting SMTP &amp; checking downgrade paths</span>
                 </div>
                 <div class="scan-phase" data-delay="7000">
                     <i class="fas fa-circle-notch fa-spin scan-icon scan-pending" aria-hidden="true"></i>
-                    <span>MTA-STS, TLS-RPT, BIMI, CAA</span>
+                    <span class="covert-hide">MTA-STS, TLS-RPT, BIMI, CAA</span>
+                    <span class="covert-show">Checking policy enforcement &mdash; MTA-STS, CAA, BIMI</span>
                 </div>
                 <div class="scan-phase" data-delay="9000">
                     <i class="fas fa-circle-notch fa-spin scan-icon scan-pending" aria-hidden="true"></i>
-                    <span>Registrar &amp; infrastructure analysis</span>
+                    <span class="covert-hide">Registrar &amp; infrastructure analysis</span>
+                    <span class="covert-show">Mapping registrar &amp; infrastructure footprint</span>
                 </div>
                 <div class="scan-phase" data-delay="12000">
                     <i class="fas fa-circle-notch fa-spin scan-icon scan-pending" aria-hidden="true"></i>
-                    <span>Classifying &amp; Interpreting Intelligence</span>
+                    <span class="covert-hide">Classifying &amp; Interpreting Intelligence</span>
+                    <span class="covert-show">Correlating attack surface&hellip;</span>
                 </div>
             </div>
             <p class="text-muted small mt-3 mb-0 u-maxw-440-fadein covert-hide" id="loadingNote">

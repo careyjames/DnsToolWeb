@@ -24,7 +24,7 @@
                     <i class="fas fa-biohazard me-2 mt-1 u-covert-active-label"></i>
                     <div>
                         <strong class="u-covert-active-label">COVERT MODE ACTIVE</strong>
-                        <span class="text-muted ms-1">&mdash; Recon perspective. All data is identical to the standard report.</span>
+                        <span class="text-muted ms-1">&mdash; Same intelligence, adversarial lens. Every finding reframed for offensive awareness.</span>
                         <div class="small text-muted mt-1"><i class="fas fa-moon me-1"></i>Optimized for low-light tactical environments</div>
                     </div>
                 </div>
@@ -433,11 +433,11 @@
                             <h6 class="fw-semibold font-monospace"><i class="fas fa-terminal me-1"></i>CAA &mdash; Certificate Authority Authorization</h6>
                             {{$caaStatus := mapGetStr "status" $caa}}
                             {{$caaRecords := mapGetSlice "records" $caa}}
-                            <div class="alert {{if eq $caaStatus "success"}}alert-success{{else}}alert-warning{{end}} py-2 mb-2 small">
+                            <div class="alert {{if eq $caaStatus "success"}}alert-success{{else}}alert-danger{{end}} py-2 mb-2 small">
                                 {{if eq $caaStatus "success"}}
-                                <i class="fas fa-lock me-1"></i>CAA restricts certificate issuance to authorized CAs
+                                <i class="fas fa-lock me-1"></i>CAA restricts certificate issuance to authorized CAs. Attacker must compromise an approved CA or exploit issuance delay windows.
                                 {{else}}
-                                <i class="fas fa-unlock me-1"></i>No CAA &mdash; any CA can issue certificates for this domain
+                                <i class="fas fa-skull-crossbones me-1"></i>No CAA &mdash; any CA on earth can issue a valid certificate for this domain. An attacker can obtain a trusted cert from the cheapest, fastest CA and stand up a convincing HTTPS phishing clone or MitM proxy.
                                 {{end}}
                             </div>
                             {{if $caaRecords}}
@@ -525,8 +525,9 @@
             <div class="col-12 mb-4">
                 <div class="card">
                     <div class="card-header">
-                        <h5 class="mb-0">
-                            <i class="fas fa-crosshairs me-2"></i>Attack Surface Discovery
+                        <h5 class="mb-0 d-flex align-items-center justify-content-between flex-wrap">
+                            <span><i class="fas fa-crosshairs me-2"></i>Attack Surface Discovery</span>
+                            <span class="section-question font-monospace">What can you find from the outside?</span>
                         </h5>
                     </div>
                     <div class="card-body">
@@ -645,8 +646,9 @@
             <div class="col-12 mb-4">
                 <div class="card">
                     <div class="card-header">
-                        <h5 class="mb-0">
-                            <i class="fas fa-fingerprint me-2"></i>Intelligence Metadata
+                        <h5 class="mb-0 d-flex align-items-center justify-content-between flex-wrap">
+                            <span><i class="fas fa-fingerprint me-2"></i>Intelligence Metadata</span>
+                            <span class="section-question font-monospace">Can you verify this independently?</span>
                         </h5>
                     </div>
                     <div class="card-body">
@@ -707,8 +709,9 @@
             <div class="col-12 mb-4">
                 <div class="card">
                     <div class="card-header">
-                        <h5 class="mb-0">
-                            <i class="fas fa-satellite-dish me-2"></i>Operational Intelligence
+                        <h5 class="mb-0 d-flex align-items-center justify-content-between flex-wrap">
+                            <span><i class="fas fa-satellite-dish me-2"></i>Operational Intelligence</span>
+                            <span class="section-question font-monospace">What do the raw records reveal?</span>
                         </h5>
                     </div>
                     <div class="card-body">
@@ -892,8 +895,9 @@
             <div class="col-12 mb-4">
                 <div class="card">
                     <div class="card-header">
-                        <h5 class="mb-0">
-                            <i class="fas fa-share-square me-2"></i>Data Exfil
+                        <h5 class="mb-0 d-flex align-items-center justify-content-between flex-wrap">
+                            <span><i class="fas fa-share-square me-2"></i>Data Exfil</span>
+                            <span class="section-question font-monospace">How fast can you extract and pivot?</span>
                         </h5>
                     </div>
                     <div class="card-body">
@@ -904,6 +908,9 @@
                             </a>
                             <a href="/api/analysis/{{.AnalysisID}}/checksum?format=sha3" class="btn btn-sm btn-outline-secondary" download>
                                 <i class="fas fa-fingerprint me-1"></i>SHA-3 Checksum
+                            </a>
+                            <a href="/badge/embed?domain={{.AsciiDomain}}" class="btn btn-sm btn-outline-danger">
+                                <i class="fas fa-certificate me-1"></i>Security Badge
                             </a>
                         </div>
 
