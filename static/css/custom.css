@@ -2537,6 +2537,118 @@ body.covert-mode .btn-outline-warning {
     color: #c43c3c !important;
     border-color: rgba(140, 40, 40, 0.5) !important;
 }
+body.covert-mode .text-dark {
+    color: rgba(200, 170, 170, 0.55) !important;
+}
+body.covert-mode .badge.bg-warning.text-dark,
+body.covert-mode .badge.bg-info.text-dark {
+    color: rgba(196, 60, 60, 0.5) !important;
+}
+body.covert-mode .text-info-emphasis {
+    color: rgba(196, 100, 100, 0.55) !important;
+}
+body.covert-mode .text-warning-emphasis {
+    color: rgba(196, 100, 60, 0.5) !important;
+}
+body.covert-mode .text-white-50 {
+    color: rgba(200, 170, 170, 0.35) !important;
+}
+body.covert-mode .text-body {
+    color: rgba(200, 170, 170, 0.55) !important;
+}
+body.covert-mode .alert-link {
+    color: rgba(196, 60, 60, 0.55) !important;
+}
+body.covert-mode .tech-fp-label {
+    color: rgba(200, 170, 170, 0.4) !important;
+}
+body.covert-mode .tech-fp-badge {
+    background: rgba(14, 8, 8, 0.6) !important;
+    border-color: rgba(140, 40, 40, 0.2) !important;
+    color: rgba(200, 170, 170, 0.45) !important;
+}
+body.covert-mode .tech-fp-badge:hover {
+    background: rgba(140, 40, 40, 0.12) !important;
+    border-color: rgba(140, 40, 40, 0.3) !important;
+    color: rgba(196, 60, 60, 0.6) !important;
+}
+body.covert-mode .btn-tlp-amber,
+body.covert-mode .btn-tlp-amber.dropdown-toggle {
+    background-color: rgba(140, 80, 40, 0.12) !important;
+    border-color: rgba(140, 80, 40, 0.3) !important;
+    color: rgba(196, 100, 60, 0.5) !important;
+}
+body.covert-mode .btn-tlp-red {
+    background-color: rgba(140, 30, 30, 0.12) !important;
+    border-color: rgba(140, 30, 30, 0.3) !important;
+    color: rgba(196, 60, 60, 0.5) !important;
+}
+body.covert-mode .btn-tlp-amber-strict {
+    background-color: rgba(140, 60, 30, 0.12) !important;
+    border-color: rgba(140, 60, 30, 0.3) !important;
+    color: rgba(196, 80, 60, 0.5) !important;
+}
+body.covert-mode .btn-tlp-green {
+    background-color: rgba(100, 40, 40, 0.12) !important;
+    border-color: rgba(100, 40, 40, 0.3) !important;
+    color: rgba(196, 60, 60, 0.45) !important;
+}
+body.covert-mode .btn-tlp-clear {
+    background-color: rgba(60, 50, 50, 0.12) !important;
+    border-color: rgba(80, 60, 60, 0.3) !important;
+    color: rgba(200, 170, 170, 0.45) !important;
+}
+body.covert-mode .btn-outline-executive {
+    border-color: rgba(140, 40, 40, 0.3) !important;
+    color: rgba(200, 170, 170, 0.45) !important;
+}
+body.covert-mode .btn-outline-executive:hover {
+    background-color: rgba(140, 40, 40, 0.1) !important;
+    border-color: rgba(140, 40, 40, 0.5) !important;
+    color: rgba(196, 60, 60, 0.6) !important;
+}
+body.covert-mode .u-badge-recon-btn {
+    border-color: rgba(140, 40, 40, 0.35) !important;
+    color: rgba(196, 60, 60, 0.5) !important;
+}
+body.covert-mode .u-badge-recon-btn:hover {
+    background-color: rgba(140, 40, 40, 0.12) !important;
+    color: rgba(196, 60, 60, 0.7) !important;
+}
+body.covert-mode .bg-info-subtle {
+    background-color: rgba(140, 40, 40, 0.08) !important;
+}
+body.covert-mode .u-integrity-link-info {
+    color: rgba(196, 60, 60, 0.5) !important;
+}
+body.covert-mode .u-integrity-preview {
+    color: rgba(200, 170, 170, 0.5) !important;
+}
+body.covert-mode .u-bg-info-15 {
+    background-color: rgba(140, 40, 40, 0.08) !important;
+}
+body.covert-mode .u-bg-warn-soft {
+    background-color: rgba(140, 80, 40, 0.08) !important;
+}
+body.covert-mode .u-bg-info-soft {
+    background-color: rgba(140, 40, 40, 0.08) !important;
+}
+body.covert-mode .dropdown-header {
+    color: rgba(200, 170, 170, 0.35) !important;
+}
+body.covert-mode .dropdown-item-text {
+    color: rgba(200, 170, 170, 0.35) !important;
+}
+body.covert-mode .tlp-badge-red,
+body.covert-mode .tlp-badge-amber,
+body.covert-mode .tlp-badge-amber-strict,
+body.covert-mode .tlp-badge-green,
+body.covert-mode .tlp-badge-clear {
+    opacity: 0.5;
+}
+body.covert-mode .btn-close-white {
+    filter: brightness(0.4) hue-rotate(160deg);
+}
 body.covert-mode .section-heading {
     color: rgba(200, 180, 180, 0.55);
     border-bottom-color: rgba(140, 40, 40, 0.12);

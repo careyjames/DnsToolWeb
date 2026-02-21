@@ -427,24 +427,34 @@
             b.setAttribute('aria-disabled','true');
         });
     }
+    function isCovertActive(){
+        return document.body.classList.contains('covert-mode');
+    }
+    function covertUrl(url){
+        if(!isCovertActive()) return url;
+        var sep=url.indexOf('?')===-1?'?':'&';
+        return url+sep+'covert=1';
+    }
     document.addEventListener('DOMContentLoaded',function(){
         document.querySelectorAll('.history-view-btn').forEach(function(btn){
-            btn.addEventListener('click',function(){
-                const name=getDomain(btn);
-                const overlay=document.getElementById('historyViewOverlay');
-                const txt=document.getElementById('historyViewText');
-                if(txt&&name)txt.textContent='Loading results for '+name+'...';
+            btn.addEventListener('click',function(e){
+                e.preventDefault();
+                var name=getDomain(btn);
+                var overlay=document.getElementById('historyViewOverlay');
+                var txt=document.getElementById('historyViewText');
+                if(txt&&name)txt.textContent='Loading '+(isCovertActive()?'recon':'results')+' for '+name+'...';
                 if(overlay){if(typeof showOverlay==='function'){showOverlay(overlay);}else{overlay.classList.add('is-active');}}
                 disableAllActions();
                 btn.innerHTML='<i class="fas fa-spinner fa-spin"></i>';
+                globalThis.location.href=covertUrl(btn.href);
             });
         });
         document.querySelectorAll('.history-reanalyze-btn').forEach(function(btn){
             btn.addEventListener('click',function(e){
                 e.preventDefault();
-                const name=getDomain(btn);
-                const overlay=document.getElementById('historyAnalyzeOverlay');
-                const domainEl=document.getElementById('historyAnalyzeDomain');
+                var name=getDomain(btn);
+                var overlay=document.getElementById('historyAnalyzeOverlay');
+                var domainEl=document.getElementById('historyAnalyzeDomain');
                 if(domainEl)domainEl.textContent=name;
                 if(overlay){
                     if(typeof showOverlay==='function'){showOverlay(overlay);}else{overlay.classList.add('is-active');}
@@ -456,7 +466,7 @@
                 }
                 disableAllActions();
                 btn.innerHTML='<i class="fas fa-spinner fa-spin"></i>';
-                const href=btn.href;
+                var href=covertUrl(btn.href);
                 fetch(href,{headers:{'X-Requested-With':'fetch'},redirect:'follow'}).then(function(resp){
                     return resp.text().then(function(html){
                         document.open();document.write(html);document.close();globalThis.scrollTo(0,0);
