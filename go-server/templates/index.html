@@ -224,11 +224,8 @@
                 </p>
                 {{if .ICAEMetrics}}
                 <div class="hero-protocols mb-3" aria-label="Intelligence Confidence Level — per-protocol confidence">
-                    <div class="icae-hero-status">
-                        <a href="/confidence" class="icae-confidence-label" title="Intelligence Confidence Level — {{.ICAEMetrics.EvaluatedCount}}/{{.ICAEMetrics.TotalProtocols}} protocols under audit"><i class="fas fa-satellite-dish me-2"></i>Intelligence Confidence Level</a>
-                        <span class="icae-confidence-separator">:</span>
-                        <a href="/confidence" class="icae-hero-maturity-badge icae-level-{{if eq .ICAEMetrics.OverallMaturity "gold_master"}}gold-master{{else if eq .ICAEMetrics.OverallMaturity "development"}}dev{{else}}{{.ICAEMetrics.OverallMaturity}}{{end}}" title="ICAE system maturity: {{.ICAEMetrics.OverallMaturityDisplay}} — {{.ICAEMetrics.EvaluatedCount}}/{{.ICAEMetrics.TotalProtocols}} protocols evaluated">{{.ICAEMetrics.OverallMaturityDisplay}}</a>
-                    </div>
+                    <a href="/confidence" class="icae-confidence-label" title="Intelligence Confidence Level — {{.ICAEMetrics.EvaluatedCount}}/{{.ICAEMetrics.TotalProtocols}} protocols under audit"><i class="fas fa-satellite-dish me-2"></i>Intelligence Confidence Level</a>
+                    <a href="/confidence" class="icae-hero-maturity-badge icae-level-{{if eq .ICAEMetrics.OverallMaturity "gold_master"}}gold-master{{else if eq .ICAEMetrics.OverallMaturity "development"}}dev{{else}}{{.ICAEMetrics.OverallMaturity}}{{end}}" title="ICAE system maturity: {{.ICAEMetrics.OverallMaturityDisplay}} — {{.ICAEMetrics.EvaluatedCount}}/{{.ICAEMetrics.TotalProtocols}} protocols evaluated">{{.ICAEMetrics.OverallMaturityDisplay}}</a>
                     <div class="icae-hero-divider"></div>
                     <div class="d-flex flex-wrap justify-content-center gap-1 icae-hero-badges">
                         {{range .ICAEMetrics.Protocols}}

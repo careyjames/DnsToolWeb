@@ -185,6 +185,10 @@ code {
 }
 
 .hero-protocols {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.45rem;
     font-size: 0.85rem;
     color: #8b949e;
     font-weight: 500;
@@ -192,7 +196,7 @@ code {
     background: rgba(22, 27, 34, 0.55);
     border: 1px solid rgba(125, 142, 168, 0.12);
     border-radius: 0.75rem;
-    padding: 1rem 1.25rem 0.85rem;
+    padding: 1rem 1.5rem 0.85rem;
     max-width: 38rem;
     margin-left: auto;
     margin-right: auto;
@@ -384,20 +388,18 @@ code {
     box-shadow: 0 0 14px rgba(232, 213, 163, 0.25);
 }
 
-.icae-hero-status { text-align: center; display: flex; align-items: center; justify-content: center; gap: 0.6rem; flex-wrap: wrap; }
 .icae-confidence-label {
-    font-size: 0.82rem;
+    font-size: 0.78rem;
     font-weight: 600;
     letter-spacing: 0.06em;
     text-transform: uppercase;
-    color: rgba(230, 237, 243, 0.65);
+    color: rgba(230, 237, 243, 0.55);
     text-decoration: none;
     transition: color 0.2s;
 }
-.icae-confidence-label:hover { color: rgba(230, 237, 243, 0.9); text-decoration: none; }
-.icae-confidence-label .fas { font-size: 0.7rem; opacity: 0.55; }
-.icae-confidence-separator { color: rgba(230, 237, 243, 0.35); font-size: 0.82rem; font-weight: 300; margin: 0 -0.15rem; }
-.icae-hero-divider { width: 12rem; max-width: 60%; height: 1px; margin: 0.5rem auto 0.45rem; background: linear-gradient(90deg, transparent, rgba(125, 142, 168, 0.25) 20%, rgba(125, 142, 168, 0.25) 80%, transparent); }
+.icae-confidence-label:hover { color: rgba(230, 237, 243, 0.85); text-decoration: none; }
+.icae-confidence-label .fas { font-size: 0.65rem; opacity: 0.45; }
+.icae-hero-divider { width: 100%; height: 1px; margin: 0.2rem 0 0.35rem; background: linear-gradient(90deg, transparent, rgba(125, 142, 168, 0.18) 15%, rgba(125, 142, 168, 0.18) 85%, transparent); }
 .icae-hero-label { text-align: center; display: flex; align-items: center; justify-content: center; gap: 0.5rem; flex-wrap: wrap; }
 .icae-hero-maturity-badge {
     display: inline-flex;
