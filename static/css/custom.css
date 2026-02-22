@@ -6046,3 +6046,10 @@ footer a.text-muted:hover { text-decoration-color: rgba(173, 181, 189, 0.8); }
 .u-fs-075  { font-size: 0.75rem; }
 .u-break-all { word-break: break-all; }
 .u-color-covert-loading { color: rgba(196,60,60,0.6); }
+.u-hero-protocols-divider { border-top: 1px solid rgba(255,255,255,0.08); padding-top: 0.5rem; }
+.u-tier-excellent { background: rgba(25,135,84,0.15); border: 1px solid rgba(25,135,84,0.3); }
+.u-tier-good { background: rgba(25,135,84,0.10); border: 1px solid rgba(25,135,84,0.2); }
+.u-tier-adequate { background: rgba(13,202,240,0.15); border: 1px solid rgba(13,202,240,0.3); }
+.u-tier-degraded { background: rgba(255,193,7,0.15); border: 1px solid rgba(255,193,7,0.3); }
+.u-tier-stale { background: rgba(220,53,69,0.15); border: 1px solid rgba(220,53,69,0.3); }
+.u-w-30pct { width: 30%; }
