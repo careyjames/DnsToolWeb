@@ -56,7 +56,7 @@ SONAR_ORG = "careyjames"
 SONAR_PROJECT = "careyjames_DnsToolWeb"
 MAINTENANCE_NOTE = "Maintenance"
 SMTP_PROBE_MODE = "remote"
-APP_VERSION = "26.24.01"
+APP_VERSION = "26.24.02"
 
 [userenv.development]
 
