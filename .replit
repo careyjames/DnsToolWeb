@@ -9,7 +9,32 @@ modules = [
 
 [nix]
 channel = "stable-24_05"
-packages = ["cacert", "chromium", "dnsutils", "freetype", "imagemagick", "lcms2", "libimagequant", "libjpeg", "libtiff", "libwebp", "libxcrypt", "nmap", "nmap-formatter", "openjpeg", "openssl", "postgresql", "potrace", "python312Packages.nmapthon2", "sqlc", "tcl", "tk", "unzip", "whois", "zlib"]
+packages = [
+  "cacert",
+  "chromium",
+  "dnsutils",
+  "freetype",
+  "imagemagick",
+  "lcms2",
+  "libimagequant",
+  "libjpeg",
+  "libtiff",
+  "libwebp",
+  "libxcrypt",
+  "nmap",
+  "nmap-formatter",
+  "openjpeg",
+  "openssl",
+  "postgresql",
+  "potrace",
+  "python312Packages.nmapthon2",
+  "sqlc",
+  "tcl",
+  "tk",
+  "unzip",
+  "whois",
+  "zlib",
+]
 
 [deployment]
 deploymentTarget = "autoscale"
@@ -38,7 +63,7 @@ author = "agent"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "gunicorn --bind 0.0.0.0:5000 --reuse-port --reload main:app"
+args = "python3 -m gunicorn --bind 0.0.0.0:5000 --reuse-port --reload main:app"
 waitForPort = 5000
 
 [[ports]]
@@ -54,7 +79,7 @@ externalPort = 3000
 [userenv.shared]
 SONAR_ORG = "careyjames"
 SONAR_PROJECT = "careyjames_DnsToolWeb"
-MAINTENANCE_NOTE = "Maintenance"
+MAINTENANCE_NOTE = ""
 SMTP_PROBE_MODE = "remote"
 
 [userenv.development]
