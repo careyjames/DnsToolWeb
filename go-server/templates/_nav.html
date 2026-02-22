@@ -48,9 +48,9 @@
                 <li class="nav-item ms-lg-2">
                     {{if .Authenticated}}
                     <div class="dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        <button class="nav-link dropdown-toggle btn btn-link" type="button" data-bs-toggle="dropdown" aria-expanded="false">
                             <i class="fas fa-user-shield me-1" aria-hidden="true"></i>{{.UserName}}
-                        </a>
+                        </button>
                         <ul class="dropdown-menu dropdown-menu-end dropdown-menu-dark">
                             {{if eq .UserRole "admin"}}
                             <li><span class="dropdown-item-text text-info small"><i class="fas fa-shield me-1" aria-hidden="true"></i>Administrator</span></li>

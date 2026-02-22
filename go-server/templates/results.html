@@ -4669,21 +4669,23 @@
 
         {{if .AnalysisID}}
         <div class="card border-danger border-opacity-50 mt-4 screen-only u-bg-secondary" id="download-verification">
-            <div class="card-header u-row-clickable" role="button" tabindex="0" data-bs-toggle="collapse" data-bs-target="#downloadVerificationBody" aria-expanded="false" aria-controls="downloadVerificationBody">
-                <div class="d-flex align-items-center justify-content-between">
-                    <h5 class="mb-0 u-color-text-bright">
-                        <i class="fas fa-shield-halved me-2 text-danger"></i>Download &amp; Verify Intelligence
-                        <span class="badge ms-2 u-badge-danger-outline">SHA-3-512</span>
-                    </h5>
-                    <i class="fas fa-chevron-down u-text-muted-md"></i>
-                </div>
+            <div class="card-header u-row-clickable">
+                <button type="button" class="btn btn-link w-100 text-start text-decoration-none p-0 border-0" data-bs-toggle="collapse" data-bs-target="#downloadVerificationBody" aria-expanded="false" aria-controls="downloadVerificationBody">
+                    <div class="d-flex align-items-center justify-content-between">
+                        <h5 class="mb-0 u-color-text-bright">
+                            <i class="fas fa-shield-halved me-2 text-danger"></i>Download &amp; Verify Intelligence
+                            <span class="badge ms-2 u-badge-danger-outline">SHA-3-512</span>
+                        </h5>
+                        <i class="fas fa-chevron-down u-text-muted-md"></i>
+                    </div>
+                </button>
             </div>
             <div class="card-body border-bottom border-secondary border-opacity-50 py-2">
                 <div class="d-flex align-items-center gap-2 flex-wrap">
                     <a href="/api/analysis/{{.AnalysisID}}?download=1" class="btn btn-sm btn-outline-danger no-print" title="Download all collected intelligence data (JSON)"><i class="fas fa-download me-1"></i>Download Raw Intelligence</a>
                     <a href="/api/analysis/{{.AnalysisID}}/checksum?format=sha3" class="btn btn-sm btn-outline-info no-print" title="Download SHA-3-512 checksum file"><i class="fas fa-fingerprint me-1"></i>Download Checksum (.sha3)</a>
                 </div>
-                <p class="small mt-2 mb-0 text-muted u-row-clickable" role="button" data-bs-toggle="collapse" data-bs-target="#downloadVerificationBody"><i class="fas fa-terminal me-1 text-danger opacity-75"></i>Show verification commands <i class="fas fa-chevron-down ms-1 small"></i></p>
+                <button type="button" class="small mt-2 mb-0 text-muted u-row-clickable btn btn-link p-0 border-0 text-start" data-bs-toggle="collapse" data-bs-target="#downloadVerificationBody"><i class="fas fa-terminal me-1 text-danger opacity-75"></i>Show verification commands <i class="fas fa-chevron-down ms-1 small"></i></button>
             </div>
             <div class="collapse" id="downloadVerificationBody">
                 <div class="card-body">
@@ -4723,13 +4725,15 @@
 
         {{if .VerificationCommands}}
         <div class="card border-danger border-opacity-50 mt-4 screen-only u-bg-secondary" id="verify-commands">
-            <div class="card-header d-flex align-items-center justify-content-between u-row-clickable" role="button" tabindex="0" data-bs-toggle="collapse" data-bs-target="#verifyCommandsBody" aria-expanded="false" aria-controls="verifyCommandsBody">
-                <h5 class="mb-0 u-color-text-bright">
-                    <i class="fas fa-terminal me-2 text-danger"></i>Reproduce the Evidence
-                    <span class="badge ms-2 u-badge-info-outline">Transparency</span>
-                    <span class="badge ms-2 u-badge-danger-outline">Source-Verifiable</span>
-                </h5>
-                <i class="fas fa-chevron-down u-text-muted-md"></i>
+            <div class="card-header u-row-clickable">
+                <button type="button" class="btn btn-link w-100 text-start text-decoration-none p-0 border-0 d-flex align-items-center justify-content-between" data-bs-toggle="collapse" data-bs-target="#verifyCommandsBody" aria-expanded="false" aria-controls="verifyCommandsBody">
+                    <h5 class="mb-0 u-color-text-bright">
+                        <i class="fas fa-terminal me-2 text-danger"></i>Reproduce the Evidence
+                        <span class="badge ms-2 u-badge-info-outline">Transparency</span>
+                        <span class="badge ms-2 u-badge-danger-outline">Source-Verifiable</span>
+                    </h5>
+                    <i class="fas fa-chevron-down u-text-muted-md"></i>
+                </button>
             </div>
             <div class="collapse" id="verifyCommandsBody">
                 <div class="card-body">

@@ -931,7 +931,7 @@
     (function() {
         document.addEventListener('DOMContentLoaded', function() {
             var ttList = Array.from(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
-            ttList.forEach(function(el) { new bootstrap.Tooltip(el); });
+            ttList.forEach(function(el) { el._bsTooltip = new bootstrap.Tooltip(el); });
             if (new URLSearchParams(window.location.search).has('dkim')) {
                 var sel1 = document.querySelector('input[name="dkim_selector1"]');
                 if (sel1) { sel1.focus(); }

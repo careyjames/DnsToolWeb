@@ -23,5 +23,8 @@ docs/legacy/migrations/
 #   git rm --cached .drift/manifest.json
 .drift/
 
+# SonarCloud scanner work directory (temp artifacts, binaries)
+.scannerwork/
+
 # Private repo staging — never push to public
 dnstool-intel-staging/

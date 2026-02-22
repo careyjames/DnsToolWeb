@@ -32,6 +32,24 @@
   - NCATS Cyber Hygiene IP list — https://rules.ncats.cyber.dhs.gov/all.txt (daily refresh for scanner detection)
 - **Used for**: Compliance context in reports, scanner classification, TLP alignment
 
+### FBI Cyber Division
+- **What**: US federal law enforcement cyber threat intelligence and operations
+- **URL**: https://www.fbi.gov/investigate/cyber
+- **We track**:
+  - IC3 (Internet Crime Complaint Center) threat alerts
+  - Joint Cybersecurity Advisories (co-authored with CISA/NSA)
+  - Operation notifications (e.g., Operation Winter Shield)
+- **Used for**: Threat landscape awareness, DNS infrastructure abuse patterns, phishing domain intelligence context
+
+### NSA Cybersecurity Directorate
+- **What**: US signals intelligence agency's public cybersecurity mission
+- **URL**: https://www.nsa.gov/Cybersecurity/
+- **We track**:
+  - Cybersecurity advisories and technical guidance documents
+  - Joint Cybersecurity Advisories (co-authored with CISA/FBI)
+  - Cryptographic algorithm transition guidance
+- **Used for**: Cryptographic strength validation context, infrastructure hardening guidance, adversary TTP awareness
+
 ### FIRST (Forum of Incident Response and Security Teams)
 - **What**: Global incident response coordination body
 - **URL**: https://www.first.org

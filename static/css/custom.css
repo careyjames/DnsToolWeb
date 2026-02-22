@@ -2211,15 +2211,14 @@ body.covert-mode .alert-info {
 }
 body.covert-mode .alert-success {
     background-color: rgba(140, 40, 40, 0.08) !important;
-    border-left-color: rgba(196, 60, 60, 0.4) !important;
     border-color: rgba(140, 40, 40, 0.15) !important;
     border-left: 4px solid rgba(196, 60, 60, 0.4) !important;
     color: rgba(170, 178, 188, 0.6) !important;
 }
 body.covert-mode .alert-danger {
     background-color: rgba(140, 30, 30, 0.1) !important;
-    border-left: 4px solid rgba(196, 60, 60, 0.35) !important;
     border-color: rgba(140, 30, 30, 0.15) !important;
+    border-left: 4px solid rgba(196, 60, 60, 0.35) !important;
     color: rgba(170, 178, 188, 0.6) !important;
 }
 body.covert-mode .alert-warning {

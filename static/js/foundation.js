@@ -13,7 +13,7 @@
         var isShown = target.classList.contains('show');
         if (isShown) {
             target.style.height = target.scrollHeight + 'px';
-            target.offsetHeight;
+            void target.offsetHeight;
             target.style.height = '0';
             target.classList.add('collapsing');
             target.classList.remove('collapse', 'show');
@@ -26,7 +26,7 @@
             target.classList.remove('collapse');
             target.classList.add('collapsing');
             target.style.height = '0';
-            target.offsetHeight;
+            void target.offsetHeight;
             target.style.height = target.scrollHeight + 'px';
             setTimeout(function() {
                 target.classList.remove('collapsing');

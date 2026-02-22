@@ -99,15 +99,15 @@
                     <div class="col-md-6">
                         <table class="table table-dark table-sm mb-0">
                             <tr>
-                                <td class="text-muted u-w-40pct">Filename</td>
+                                <th scope="row" class="text-muted u-w-40pct">Filename</th>
                                 <td>{{.Filename}}</td>
                             </tr>
                             <tr>
-                                <td class="text-muted">Domain</td>
+                                <th scope="row" class="text-muted">Domain</th>
                                 <td><strong class="text-info">{{.ParseResult.Domain}}</strong></td>
                             </tr>
                             <tr>
-                                <td class="text-muted">Records Parsed</td>
+                                <th scope="row" class="text-muted">Records Parsed</th>
                                 <td>{{.ParseResult.RecordCount}}</td>
                             </tr>
                         </table>
@@ -115,15 +115,15 @@
                     <div class="col-md-6">
                         <table class="table table-dark table-sm mb-0">
                             <tr>
-                                <td class="text-muted u-w-40pct">File Size</td>
+                                <th scope="row" class="text-muted u-w-40pct">File Size</th>
                                 <td>{{.FileSize}} bytes</td>
                             </tr>
                             <tr>
-                                <td class="text-muted">SHA-256</td>
+                                <th scope="row" class="text-muted">SHA-256</th>
                                 <td><code class="small">{{slice .ParseResult.SHA256 0 16}}…</code></td>
                             </tr>
                             <tr>
-                                <td class="text-muted">Retained</td>
+                                <th scope="row" class="text-muted">Retained</th>
                                 <td>{{if .Retained}}<span class="text-success"><i class="fas fa-check me-1"></i>Yes</span>{{else}}<span class="text-muted">No</span>{{end}}</td>
                             </tr>
                         </table>
