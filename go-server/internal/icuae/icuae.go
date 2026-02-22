@@ -89,6 +89,41 @@ type CurrencyReport struct {
         Guidance      string          `json:"guidance"`
 }
 
+func (r CurrencyReport) BootstrapClass() string {
+        if c, ok := GradeBootstrapClass[r.OverallGrade]; ok {
+                return c
+        }
+        return "secondary"
+}
+
+func (r CurrencyReport) OverallGradeDisplay() string {
+        if d, ok := GradeDisplayNames[r.OverallGrade]; ok {
+                return d
+        }
+        return "Unknown"
+}
+
+func (d DimensionScore) BootstrapClass() string {
+        if c, ok := GradeBootstrapClass[d.Grade]; ok {
+                return c
+        }
+        return "secondary"
+}
+
+func (d DimensionScore) GradeDisplay() string {
+        if g, ok := GradeDisplayNames[d.Grade]; ok {
+                return g
+        }
+        return "Unknown"
+}
+
+func (d DimensionScore) DisplayName() string {
+        if n, ok := DimensionDisplayNames[d.Dimension]; ok {
+                return n
+        }
+        return d.Dimension
+}
+
 type RecordCurrency struct {
         RecordType  string  `json:"record_type"`
         ObservedTTL uint32  `json:"observed_ttl"`
@@ -128,6 +163,13 @@ var expectedRecordTypes = []string{
         "A", "AAAA", "MX", "TXT", "NS", "SOA",
         "SPF", "DMARC", "DKIM", "MTA-STS", "TLS-RPT",
         "BIMI", "TLSA", "DNSSEC", "CAA",
+}
+
+func TypicalTTLFor(recordType string) uint32 {
+        if ttl, ok := typicalTTLs[recordType]; ok {
+                return ttl
+        }
+        return 300
 }
 
 func scoreToGrade(score float64) string {

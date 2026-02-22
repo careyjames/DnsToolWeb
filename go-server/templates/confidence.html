@@ -549,6 +549,180 @@
             </div>
         </div>
 
+        <div class="text-center mt-5 mb-4">
+            <h2 class="fw-bold mb-3">Intelligence Currency Levels</h2>
+            <p class="text-muted mb-0">
+                <i class="fas fa-clock me-1"></i> Intelligence Currency Audit Engine (ICuAE)
+            </p>
+            <p class="text-muted mt-2 mx-auto u-max-w-640">
+                Companion to ICAE. While ICAE measures <em>correctness</em> (did we interpret the data right?),
+                ICuAE measures <em>currency</em> (is the data still valid?). Five standards-grounded dimensions
+                evaluate data freshness, TTL compliance, completeness, source credibility, and TTL relevance
+                for every scan.
+            </p>
+        </div>
+
+        <div class="card bg-dark border-secondary mb-4">
+            <div class="card-body">
+                <h2 class="h5 fw-bold mb-3"><i class="fas fa-book me-2 text-info"></i>Standards Foundation</h2>
+                <p class="text-muted small mb-3">ICuAE is grounded in five authoritative standards from the intelligence community, information quality, and journalism ethics.</p>
+                <div class="row g-3">
+                    <div class="col-md-6 col-lg-4">
+                        <div class="card bg-dark border-secondary h-100">
+                            <div class="card-body py-2 px-3">
+                                <h3 class="h6 fw-bold mb-1"><span class="badge bg-info text-dark me-1">ICD 203</span> CIA Timeliness</h3>
+                                <p class="text-muted small mb-0">Intelligence Community Directive 203 identifies timeliness as one of five core analytic standards. Data that was accurate yesterday may be misleading today.</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 col-lg-4">
+                        <div class="card bg-dark border-secondary h-100">
+                            <div class="card-body py-2 px-3">
+                                <h3 class="h6 fw-bold mb-1"><span class="badge bg-success me-1">NIST</span> SP 800-53 SI-18</h3>
+                                <p class="text-muted small mb-0">NIST defines four data quality dimensions: Accuracy, Relevance, Timeliness, and Completeness. ICuAE operationalizes Timeliness and Completeness.</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 col-lg-4">
+                        <div class="card bg-dark border-secondary h-100">
+                            <div class="card-body py-2 px-3">
+                                <h3 class="h6 fw-bold mb-1"><span class="badge bg-warning text-dark me-1">ISO</span> 25012 Currentness</h3>
+                                <p class="text-muted small mb-0">ISO/IEC 25012 defines &ldquo;Currentness&rdquo; &mdash; data of the right age for its context. DNS records have inherent validity windows defined by TTL values.</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 col-lg-4">
+                        <div class="card bg-dark border-secondary h-100">
+                            <div class="card-body py-2 px-3">
+                                <h3 class="h6 fw-bold mb-1"><span class="badge bg-secondary me-1">RFC</span> 8767 TTL</h3>
+                                <p class="text-muted small mb-0">RFC 8767 defines TTL-based cache expiration and serve-stale behavior. ICuAE detects when resolver TTLs exceed authoritative values &mdash; a sign of caching violations.</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 col-lg-4">
+                        <div class="card bg-dark border-secondary h-100">
+                            <div class="card-body py-2 px-3">
+                                <h3 class="h6 fw-bold mb-1"><span class="badge bg-danger me-1">SPJ</span> Source Ethics</h3>
+                                <p class="text-muted small mb-0">SPJ Code of Ethics requires multiple independent sources for verification. ICuAE measures multi-resolver agreement as a credibility indicator.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card bg-dark border-secondary mb-4">
+            <div class="card-body">
+                <h2 class="h5 fw-bold mb-3"><i class="fas fa-ruler-combined me-2 text-info"></i>Five Measurement Dimensions</h2>
+                <div class="table-responsive">
+                    <table class="table table-sm table-dark mb-0">
+                        <thead>
+                            <tr>
+                                <th>Dimension</th>
+                                <th>Standard</th>
+                                <th>What It Measures</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>Currentness</strong></td>
+                                <td><span class="badge bg-warning text-dark">ISO/IEC 25012</span></td>
+                                <td class="text-muted">Data age relative to its TTL-derived validity window. Are the DNS records still within their expected freshness period?</td>
+                            </tr>
+                            <tr>
+                                <td><strong>TTL Compliance</strong></td>
+                                <td><span class="badge bg-secondary">RFC 8767</span></td>
+                                <td class="text-muted">Whether resolver TTLs respect authoritative limits. Violations may indicate caching misconfigurations or stale data.</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Completeness</strong></td>
+                                <td><span class="badge bg-success">NIST SI-18</span></td>
+                                <td class="text-muted">Percentage of expected record types with authoritative TTL data. Gaps reduce overall intelligence quality.</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Source Credibility</strong></td>
+                                <td><span class="badge bg-danger">ISO + SPJ</span></td>
+                                <td class="text-muted">Multi-resolver agreement scoring. When all five resolvers return identical data, source credibility is highest.</td>
+                            </tr>
+                            <tr>
+                                <td><strong>TTL Relevance</strong></td>
+                                <td><span class="badge bg-success">NIST SI-18</span></td>
+                                <td class="text-muted">Observed TTL versus typical range for each record type. Extreme deviations may indicate misconfiguration.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="card bg-dark border-secondary mb-4">
+            <div class="card-body">
+                <h2 class="h5 fw-bold mb-3"><i class="fas fa-star-half-alt me-2 text-info"></i>Currency Grading Scale</h2>
+                <p class="text-muted small mb-3">Each dimension is scored 0&ndash;100 independently. The overall currency grade is the average of all five dimensions.</p>
+                <div class="row g-2">
+                    <div class="col">
+                        <div class="text-center p-2 rounded" style="background:rgba(25,135,84,0.15);border:1px solid rgba(25,135,84,0.3)">
+                            <div class="fw-bold text-success">Excellent</div>
+                            <small class="text-muted">&ge; 90</small>
+                        </div>
+                    </div>
+                    <div class="col">
+                        <div class="text-center p-2 rounded" style="background:rgba(25,135,84,0.10);border:1px solid rgba(25,135,84,0.2)">
+                            <div class="fw-bold text-success">Good</div>
+                            <small class="text-muted">&ge; 75</small>
+                        </div>
+                    </div>
+                    <div class="col">
+                        <div class="text-center p-2 rounded" style="background:rgba(13,202,240,0.15);border:1px solid rgba(13,202,240,0.3)">
+                            <div class="fw-bold text-info">Adequate</div>
+                            <small class="text-muted">&ge; 50</small>
+                        </div>
+                    </div>
+                    <div class="col">
+                        <div class="text-center p-2 rounded" style="background:rgba(255,193,7,0.15);border:1px solid rgba(255,193,7,0.3)">
+                            <div class="fw-bold text-warning">Degraded</div>
+                            <small class="text-muted">&ge; 25</small>
+                        </div>
+                    </div>
+                    <div class="col">
+                        <div class="text-center p-2 rounded" style="background:rgba(220,53,69,0.15);border:1px solid rgba(220,53,69,0.3)">
+                            <div class="fw-bold text-danger">Stale</div>
+                            <small class="text-muted">&lt; 25</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card bg-dark border-secondary">
+            <div class="card-body">
+                <h2 class="h5 fw-bold mb-3"><i class="fas fa-shield-alt me-2 text-info"></i>Dual Engine Architecture</h2>
+                <p class="text-muted mb-2">
+                    DNS Tool employs two companion engines that measure scientifically distinct properties of intelligence quality.
+                    ICAE (correctness) and ICuAE (currency) are never conflated &mdash; accuracy and timeliness are independent dimensions
+                    per ICD 203 and NIST SP 800-53.
+                </p>
+                <div class="row g-3 mt-1">
+                    <div class="col-md-6">
+                        <div class="card bg-dark border-info h-100">
+                            <div class="card-body py-2 px-3">
+                                <h3 class="h6 fw-bold mb-1"><i class="fas fa-flask me-1 text-info"></i> ICAE &mdash; Correctness</h3>
+                                <p class="text-muted small mb-0">&ldquo;Did we interpret the DNS data correctly?&rdquo; Deterministic golden-rule tests with per-protocol maturity tracking and cryptographic hash integrity.</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card bg-dark border-warning h-100">
+                            <div class="card-body py-2 px-3">
+                                <h3 class="h6 fw-bold mb-1"><i class="fas fa-clock me-1 text-warning"></i> ICuAE &mdash; Currency</h3>
+                                <p class="text-muted small mb-0">&ldquo;Is the DNS data still valid/current?&rdquo; Five standards-grounded dimensions evaluated per-scan with TTL-aware validity windows and multi-resolver credibility.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
     </main>
 
     {{template "footer" .}}

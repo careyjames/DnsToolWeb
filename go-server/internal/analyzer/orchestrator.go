@@ -9,6 +9,8 @@ import (
         "strings"
         "sync"
         "time"
+
+        "dnstool/go-server/internal/icuae"
 )
 
 const (
@@ -188,6 +190,8 @@ func (a *Analyzer) AnalyzeDomain(ctx context.Context, domain string, customDKIMS
         }
         results["freshness_matrix"] = BuildCurrencyMatrix(resolverTTLMap, authTTLMap)
 
+        results["currency_report"] = buildICuAEReport(resolverTTLMap, authTTLMap, results)
+
         totalElapsed := time.Since(analysisStart).Seconds()
         slog.Info("Analysis complete", "domain", domain, "total_s", fmt.Sprintf("%.2f", totalElapsed), "parallel_s", fmt.Sprintf("%.2f", parallelElapsed))
 
@@ -265,6 +269,58 @@ func (a *Analyzer) runParallelAnalyses(ctx context.Context, domain string, custo
                 slog.Info(logTaskCompleted, "task", nr.key, "domain", domain, "elapsed_ms", fmt.Sprintf("%.0f", float64(nr.elapsed.Milliseconds())))
         }
         return resultsMap
+}
+
+func buildICuAEReport(resolverTTLMap, authTTLMap map[string]uint32, results map[string]any) icuae.CurrencyReport {
+        var records []icuae.RecordCurrency
+        for rt, ttl := range resolverTTLMap {
+                records = append(records, icuae.RecordCurrency{
+                        RecordType:  rt,
+                        ObservedTTL: ttl,
+                        TypicalTTL:  icuae.TypicalTTLFor(rt),
+                        DataAgeS:    0,
+                        TTLRatio:    0,
+                })
+        }
+
+        observedTypes := make(map[string]bool)
+        for rt := range authTTLMap {
+                observedTypes[rt] = true
+        }
+        for rt := range resolverTTLMap {
+                observedTypes[rt] = true
+        }
+
+        var agreements []icuae.ResolverAgreement
+        resolverCount := 5
+        if consensus, ok := results["resolver_consensus"].(map[string]any); ok {
+                if rq, ok := consensus["resolvers_queried"].(int); ok {
+                        resolverCount = rq
+                }
+                if perRecord, ok := consensus["per_record_consensus"].(map[string]any); ok {
+                        for rt, data := range perRecord {
+                                if rd, ok := data.(map[string]any); ok {
+                                        isConsensus, _ := rd["consensus"].(bool)
+                                        rc, _ := rd["resolver_count"].(int)
+                                        agreeCount := rc
+                                        if !isConsensus {
+                                                agreeCount = rc - 1
+                                                if agreeCount < 0 {
+                                                        agreeCount = 0
+                                                }
+                                        }
+                                        agreements = append(agreements, icuae.ResolverAgreement{
+                                                RecordType:     rt,
+                                                AgreeCount:     agreeCount,
+                                                TotalResolvers: rc,
+                                                Unanimous:      isConsensus,
+                                        })
+                                }
+                        }
+                }
+        }
+
+        return icuae.BuildCurrencyReport(records, resolverTTLMap, authTTLMap, observedTypes, agreements, resolverCount)
 }
 
 func adjustHostingSummary(results map[string]any) {

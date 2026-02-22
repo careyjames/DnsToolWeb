@@ -42,5 +42,11 @@ generated-icon.png
 .agents/
 .local/skills/
 
+# Internal project documentation — development context, never public
+# NOTE: If these show in git status after adding here, untrack from Shell:
+#   git rm --cached EVOLUTION.md PROJECT_CONTEXT.md
+EVOLUTION.md
+PROJECT_CONTEXT.md
+
 # Private repo staging — never push to public
 dnstool-intel-staging/

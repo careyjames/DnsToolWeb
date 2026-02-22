@@ -181,6 +181,9 @@ func (h *AnalysisHandler) ViewAnalysisStatic(c *gin.Context) {
         if icaeMetrics := icae.LoadReportMetrics(ctx, h.DB.Queries); icaeMetrics != nil {
                 viewData["ICAEMetrics"] = icaeMetrics
         }
+        if cr, ok := results["currency_report"]; ok {
+                viewData["CurrencyReport"] = cr
+        }
         viewData["CovertMode"] = covertMode
 
         mergeAuthData(c, h.Config, viewData)
@@ -442,6 +445,9 @@ func (h *AnalysisHandler) Analyze(c *gin.Context) {
         }
         if icaeMetrics := icae.LoadReportMetrics(ctx, h.DB.Queries); icaeMetrics != nil {
                 analyzeData["ICAEMetrics"] = icaeMetrics
+        }
+        if cr, ok := results["currency_report"]; ok {
+                analyzeData["CurrencyReport"] = cr
         }
 
         if devNull {
