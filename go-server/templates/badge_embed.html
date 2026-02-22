@@ -87,6 +87,30 @@
                     </div>
                 </div>
 
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="fas fa-shield-halved me-2"></i>GitHub &amp; Shields.io</h5>
+                    </div>
+                    <div class="card-body small">
+                        <p class="text-muted">Use the <strong>Shields.io endpoint</strong> for dynamic badges in your GitHub README, CI dashboards, or documentation.</p>
+                        <div class="mb-3">
+                            <label class="form-label small fw-semibold font-monospace">Shields.io Endpoint URL</label>
+                            <div class="input-group">
+                                <input type="text" class="form-control font-monospace small" id="embedShieldsURL" readonly placeholder="Generate a badge first">
+                                <button type="button" class="btn btn-outline-secondary" id="copyShieldsURL" title="Copy Shields.io URL"><i class="fas fa-copy"></i></button>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label small fw-semibold font-monospace">Shields.io Markdown</label>
+                            <div class="input-group">
+                                <textarea class="form-control font-monospace small" id="embedShieldsMarkdown" rows="2" readonly placeholder="Generate a badge first"></textarea>
+                                <button type="button" class="btn btn-outline-secondary" id="copyShieldsMarkdown" title="Copy Shields.io Markdown"><i class="fas fa-copy"></i></button>
+                            </div>
+                        </div>
+                        <p class="text-muted mb-0"><i class="fas fa-lock me-1"></i>Private scans are excluded. Only public domain posture data is exposed. Badge data cached for 1 hour.</p>
+                    </div>
+                </div>
+
                 <div class="card">
                     <div class="card-header">
                         <h5 class="mb-0"><i class="fas fa-info-circle me-2"></i>How It Works</h5>
@@ -139,6 +163,11 @@
             document.getElementById('embedMarkdown').value = '[![DNS Security: ' + d + '](' + badgeURL + ')](' + reportURL + ')';
             document.getElementById('embedURL').value = badgeURL;
             document.getElementById('embedCurl').value = "curl -s '" + badgeURL + "' > dns-badge.svg";
+
+            var shieldsEndpoint = baseURL + '/badge/shields?domain=' + encodeURIComponent(d);
+            var shieldsURL = 'https://img.shields.io/endpoint?url=' + encodeURIComponent(shieldsEndpoint);
+            document.getElementById('embedShieldsURL').value = shieldsURL;
+            document.getElementById('embedShieldsMarkdown').value = '[![DNS Tool Security](' + shieldsURL + ')](' + reportURL + ')';
         });
 
         function copyField(btnId, fieldId) {
@@ -156,6 +185,8 @@
         copyField('copyMarkdown', 'embedMarkdown');
         copyField('copyURL', 'embedURL');
         copyField('copyCurl', 'embedCurl');
+        copyField('copyShieldsURL', 'embedShieldsURL');
+        copyField('copyShieldsMarkdown', 'embedShieldsMarkdown');
 
         domain.addEventListener('keydown', function(e) {
             if (e.key === 'Enter') document.getElementById('btnGenerateBadge').click();

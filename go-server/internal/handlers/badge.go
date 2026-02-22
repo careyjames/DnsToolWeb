@@ -145,6 +145,105 @@ func badgeSVG(label, value, color string) []byte {
         return []byte(svg)
 }
 
+func (h *BadgeHandler) BadgeShieldsIO(c *gin.Context) {
+        domain := strings.TrimSpace(c.Query("domain"))
+        if domain == "" {
+                c.JSON(http.StatusOK, gin.H{
+                        "schemaVersion": 1,
+                        "label":         "DNS Tool",
+                        "message":       "missing domain",
+                        "color":         "lightgrey",
+                        "isError":       true,
+                })
+                return
+        }
+
+        ascii, err := dnsclient.DomainToASCII(domain)
+        if err != nil || !dnsclient.ValidateDomain(ascii) {
+                c.JSON(http.StatusOK, gin.H{
+                        "schemaVersion": 1,
+                        "label":         "DNS Tool",
+                        "message":       "invalid domain",
+                        "color":         "lightgrey",
+                        "isError":       true,
+                })
+                return
+        }
+
+        ctx := c.Request.Context()
+        analysis, err := h.DB.Queries.GetRecentAnalysisByDomain(ctx, ascii)
+        if err != nil {
+                c.JSON(http.StatusOK, gin.H{
+                        "schemaVersion": 1,
+                        "label":         "DNS Tool",
+                        "message":       "not scanned",
+                        "color":         "lightgrey",
+                })
+                return
+        }
+
+        if analysis.Private {
+                c.JSON(http.StatusOK, gin.H{
+                        "schemaVersion": 1,
+                        "label":         "DNS Tool",
+                        "message":       "private",
+                        "color":         "lightgrey",
+                })
+                return
+        }
+
+        var results map[string]any
+        if len(analysis.FullResults) > 0 {
+                _ = json.Unmarshal(analysis.FullResults, &results)
+        }
+
+        riskLabel := "Unknown"
+        shieldsColor := "lightgrey"
+
+        if postureRaw, ok := results["posture"]; ok {
+                if posture, ok := postureRaw.(map[string]any); ok {
+                        if rl, ok := posture["label"].(string); ok && rl != "" {
+                                riskLabel = rl
+                        } else if rl, ok := posture["grade"].(string); ok && rl != "" {
+                                riskLabel = rl
+                        }
+                        if rc, ok := posture["color"].(string); ok {
+                                shieldsColor = riskColorToShields(rc)
+                        }
+                }
+        }
+
+        c.Header("Cache-Control", "public, max-age=3600, s-maxage=3600")
+        c.Header("Expires", time.Now().Add(1*time.Hour).UTC().Format(http.TimeFormat))
+
+        resp := gin.H{
+                "schemaVersion": 1,
+                "label":         "DNS Tool",
+                "message":       riskLabel,
+                "color":         shieldsColor,
+                "namedLogo":     "shield",
+        }
+
+        if c.Query("domain") != "" {
+                resp["cacheSeconds"] = 3600
+        }
+
+        c.JSON(http.StatusOK, resp)
+}
+
+func riskColorToShields(color string) string {
+        switch color {
+        case "success":
+                return "brightgreen"
+        case "warning":
+                return "yellow"
+        case "danger":
+                return "red"
+        default:
+                return "lightgrey"
+        }
+}
+
 func badgeSVGCovert(domain, riskLabel, color string) []byte {
         label := "DNS Tool // " + domain
         labelWidth := len(label)*6 + 14

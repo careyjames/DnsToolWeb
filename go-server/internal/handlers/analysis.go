@@ -699,6 +699,48 @@ func (h *AnalysisHandler) buildAnalysisJSON(analysis dbq.DomainAnalysis) ([]byte
                 json.Unmarshal(analysis.CtSubdomains, &ctSubdomains)
         }
 
+        var currencyReport interface{}
+        if frMap, ok := fullResults.(map[string]interface{}); ok {
+                if cr, exists := frMap["currency_report"]; exists {
+                        currencyReport = cr
+                }
+        }
+
+        provenance := map[string]interface{}{
+                "tool_version":       h.Config.AppVersion,
+                "hash_algorithm":     "SHA-3-512",
+                "hash_standard":      "NIST FIPS 202 (Keccak)",
+                "export_timestamp":   time.Now().UTC().Format(time.RFC3339),
+                "analysis_timestamp": formatTimestampISO(analysis.CreatedAt),
+                "engines": map[string]interface{}{
+                        "icae": map[string]string{
+                                "name":     "Intelligence Confidence Audit Engine",
+                                "purpose":  "Correctness verification via deterministic test cases",
+                                "standard": "ICD 203 Analytic Standards",
+                        },
+                        "icuae": map[string]string{
+                                "name":     "Intelligence Currency Audit Engine",
+                                "purpose":  "Data timeliness and validity measurement",
+                                "standard": "ICD 203, NIST SP 800-53 SI-18, ISO/IEC 25012, RFC 8767",
+                        },
+                },
+        }
+        if currencyReport != nil {
+                provenance["currency_report"] = currencyReport
+        }
+        ctx := context.Background()
+        if icaeMetrics := icae.LoadReportMetrics(ctx, h.DB.Queries); icaeMetrics != nil {
+                provenance["icae_summary"] = map[string]interface{}{
+                        "maturity":        icaeMetrics.OverallMaturity,
+                        "pass_rate":       icaeMetrics.PassRate,
+                        "total_cases":     icaeMetrics.TotalAllCases,
+                        "total_passes":    icaeMetrics.TotalPasses,
+                        "total_runs":      icaeMetrics.TotalRuns,
+                        "days_running":    icaeMetrics.DaysRunning,
+                        "protocols_count": icaeMetrics.TotalProtocols,
+                }
+        }
+
         payload := map[string]interface{}{
                 "analysis_duration": analysis.AnalysisDuration,
                 "analysis_success":  analysis.AnalysisSuccess,
@@ -714,6 +756,7 @@ func (h *AnalysisHandler) buildAnalysisJSON(analysis dbq.DomainAnalysis) ([]byte
                 "error_message":     analysis.ErrorMessage,
                 "full_results":      fullResults,
                 "id":                analysis.ID,
+                "provenance":        provenance,
                 "registrar_name":    analysis.RegistrarName,
                 "registrar_source":  analysis.RegistrarSource,
                 "spf_status":        analysis.SpfStatus,
@@ -831,22 +874,35 @@ func (h *AnalysisHandler) APIAnalysisChecksum(c *gin.Context) {
                 sb.WriteString("# Algorithm: SHA-3-512 (Keccak, NIST FIPS 202)\n")
                 sb.WriteString("# Verify:   openssl dgst -sha3-512 " + filename + "\n")
                 sb.WriteString("#\n")
+                sb.WriteString("# Provenance:\n")
+                sb.WriteString(fmt.Sprintf("#   Tool Version: %s\n", h.Config.AppVersion))
+                sb.WriteString(fmt.Sprintf("#   Export Time:   %s\n", time.Now().UTC().Format(time.RFC3339)))
+                sb.WriteString("#   Engines:       ICAE (Confidence) + ICuAE (Currency)\n")
+                sb.WriteString("#   Standards:      ICD 203, NIST SP 800-53 SI-18, ISO/IEC 25012\n")
+                sb.WriteString("#\n")
                 sb.WriteString(fmt.Sprintf("%s  %s\n", fileHash, filename))
                 c.Data(http.StatusOK, "text/plain; charset=utf-8", []byte(sb.String()))
                 return
         }
 
-        c.JSON(http.StatusOK, gin.H{
+        checksumResponse := gin.H{
                 "algorithm": "SHA-3-512",
                 "standard":  "NIST FIPS 202 (Keccak)",
                 "hash":      fileHash,
                 "filename":  filename,
+                "provenance": gin.H{
+                        "tool_version":     h.Config.AppVersion,
+                        "export_timestamp": time.Now().UTC().Format(time.RFC3339),
+                        "engines":          []string{"ICAE (Confidence)", "ICuAE (Currency)"},
+                        "standards":        []string{"ICD 203", "NIST SP 800-53 SI-18", "ISO/IEC 25012", "RFC 8767"},
+                },
                 "verify_commands": map[string]string{
                         "openssl": fmt.Sprintf("openssl dgst -sha3-512 %s", filename),
                         "python":  fmt.Sprintf("python3 -c \"import hashlib; print(hashlib.sha3_512(open('%s','rb').read()).hexdigest())\"", filename),
                         "sha3sum": fmt.Sprintf("sha3sum -a 512 %s", filename),
                 },
-        })
+        }
+        c.JSON(http.StatusOK, checksumResponse)
 }
 
 func (h *AnalysisHandler) saveAnalysis(ctx context.Context, domain, asciiDomain string, results map[string]any, duration float64, countryCode, countryName string, private, hasUserSelectors bool, scanClass scanner.Classification) (int32, string) {

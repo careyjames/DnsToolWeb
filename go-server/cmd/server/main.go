@@ -213,6 +213,7 @@ func main() {
 
         badgeHandler := handlers.NewBadgeHandler(database, cfg)
         router.GET("/badge", badgeHandler.Badge)
+        router.GET("/badge/shields", badgeHandler.BadgeShieldsIO)
         router.GET("/badge/embed", badgeHandler.BadgeEmbed)
 
         zoneHandler := handlers.NewZoneHandler(database, cfg)
