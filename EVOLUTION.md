@@ -2691,3 +2691,65 @@ Previously called "Session Sentinel." Renamed for identity and potential distrib
 - Key entries: BSL 1.1 migration, boundary integrity tests, Google OAuth 2.0, security redaction, DKIM expansion, brand verdict overhaul, CT resilience, architecture diagrams.
 - Updated PROJECT_CONTEXT.md: stub file count 11→12, architecture page mention.
 - Updated replit.md: version, architecture page, DNS library reference.
+
+---
+
+## Session: February 22, 2026 — ICuAE Design & File Naming Cleanup
+
+### File Naming Cleanup: freshness.go → currency.go
+- **Renamed**: `go-server/internal/analyzer/freshness.go` → `currency.go`
+- **Renamed**: `go-server/internal/analyzer/freshness_test.go` → `currency_test.go`
+- **Symbol renames**: `FreshnessEntry` → `CurrencyEntry`, `BuildFreshnessMatrix` → `BuildCurrencyMatrix`, `freshnessFloorSeconds` → `currencyFloorSeconds`, `freshnessCeilingSeconds` → `currencyCeilingSeconds`
+- **Template map key preserved**: `results["freshness_matrix"]` stays unchanged (backward compatible with all templates)
+- **Separate concept**: `_data_freshness` (LIVE/CACHED source provenance badges) is NOT renamed — it's a different concept from intelligence currency
+- **All 12 Go test packages pass after rename**
+
+### ICuAE — Intelligence Currency Audit Engine (New Package)
+
+#### Design Rationale
+ICAE answers "Did we interpret the DNS data correctly?" ICuAE answers "Is the DNS data still valid/current?" These are companion confidence dimensions that must never be conflated — correctness and currency are scientifically distinct properties.
+
+#### Standards Foundation
+1. **ICD 203** (CIA): Timeliness is 1 of 5 core analytic standards
+2. **NIST SP 800-53 SI-18**: Four quality dimensions — Accuracy, Relevance, Timeliness, Completeness
+3. **ISO/IEC 25012**: "Currentness" — data of the right age for its context
+4. **RFC 8767**: TTL-based cache expiration and serve-stale behavior
+5. **SPJ Code of Ethics**: Multiple independent sources, "neither speed nor format excuses inaccuracy"
+
+#### Five Measurable Dimensions
+1. **Currentness** (ISO 25012): Data age vs TTL-derived validity window
+2. **TTL Compliance** (RFC 8767): Resolver TTL violation detection
+3. **Completeness** (NIST SI-18): % of expected record types with authoritative TTLs
+4. **Source Credibility** (ISO 25012/SPJ): Multi-resolver agreement scoring
+5. **TTL Relevance** (NIST SI-18): Observed TTL vs typical range for record type
+
+#### Grading Model
+Five-tier scale: Excellent (≥90) → Good (≥75) → Adequate (≥50) → Degraded (≥25) → Stale (<25). Each dimension scored independently, overall grade is average of all five.
+
+#### New Files
+- `go-server/internal/icuae/icuae.go` — Core types, constants, all five evaluation functions, `BuildCurrencyReport()` aggregator
+- `go-server/internal/icuae/icuae_test.go` — 29 deterministic test cases covering all dimensions, edge cases, nil inputs, boundary values
+
+#### Test Coverage: 29 Cases
+- Score-to-grade boundary tests (11 values)
+- Currentness: fresh, stale, mixed, empty, zero-TTL fallback, both-TTLs-zero (6 cases)
+- TTL Compliance: all compliant, one violation, no auth data, equal TTL, nil maps (5 cases)
+- Completeness: all present, none, partial, nil map (4 cases)
+- Source Credibility: unanimous, partial agreement, empty (3 cases)
+- TTL Relevance: normal, slightly off, very low, extreme, empty, unknown type (6 cases)
+- Integration: full report with real inputs, nil inputs (2 cases)
+- Constants: grade maps, dimension maps (2 cases)
+
+### SKILL.md Updates
+- Added session startup steps 10-11 (Intel repo access verification)
+- Added "Confidence Engines — Dual Architecture" section (ICAE + ICuAE)
+- Added Math Operations Audit results
+- Added Easter Egg Inventory table (8 locations)
+
+### Math Audit Results
+- Only `math.Ceil` (currency.go) and `math.Round` (template funcs) — appropriate usage
+- Integer arithmetic optimization possible but unnecessary at TTL-scale values
+- No external math libraries needed
+
+### Easter Egg Inventory (8 Locations)
+Hacker poem variants in: index.html comment, results.html comment, results.html console.log, analysis.go SHA-3 sidecar. Plus: ASCII art hero, covert mode variant, covert mode toggle, SHA-3 sidecar download endpoint.

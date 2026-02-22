@@ -21,7 +21,7 @@ The DNS Tool is built on the conviction that **accuracy is the prerequisite for 
 This principle is reflected throughout the codebase:
 - **Collection discipline**: Every DNS record is validated against its RFC spec before interpretation. No shortcuts.
 - **Honest reporting**: Observation-based language ("observed," "detected," "no record found") rather than definitive claims. If we didn't see it, we don't say it.
-- **Confidence tracking**: The ICAE engine scores each finding's reliability, so users know what to trust and what needs further investigation.
+- **Confidence tracking**: The ICAE engine scores each finding's correctness, and the ICuAE engine scores data currency/timeliness — companion dimensions that are never conflated.
 - **Custody and integrity**: Zone file imports carry SHA-256 hashes. Snapshots include integrity footers. The chain of evidence is always preserved.
 - **Test-driven boundaries**: 45+ deterministic golden-rule tests enforce that accuracy invariants hold before any code ships.
 
