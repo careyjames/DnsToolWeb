@@ -1,643 +1,0 @@
-
-W
-"bullhorn"str
-3"angle-right"str
-“"user-shield"str
-ª61531int
-‘"clipboard-list"str
-ğ61444int
-ˆ"laptop-code"str
-"fa-solid-900.woff2"str
-—61613int
-ä"gears"str
-¶61664int
-§62992int
-ğ"stopwatch"str
-z"chevron-left"str
-F61534int
-ê	"spinner"str
-„63449int
-ï"heart"str
-—"clock-rotate-left"str
-¬
-"database"str
-”"list"str
-"code-compare"str
-Z
-"calendar"str
-©"minus"str
- "fa-xs"str
-&"fa-2xl"str
-Ç"eye"str
-f61568int
-Â61553int
-*"fa-bounce"str
-‹"lightbulb"str
-Ë61552int
-E"ban"str
-á"signature"str
-×61746int
-€"circle-check"str
-´"percentage"str
-"times-circle"str
-¦"copy"str
-ô"house"str
-æ"globe"str
-""fa-sm"str
-,	"fa-fade"str
-^61555int
-¾61487int
-¯63231int
-`"calendar-days"str
-ò	"history"str
-Ş"shield-virus"str
-ñ62194int
-ƒ61530int
-‚"circle-info"str
-Ü"shield-halved"str
-–"wrench"str
-é"globe-americas"str
-Ü62840int
-’61735int
- "cogs"str
-Ù61616int
-t"check-square"str
-"circle-xmark"str
-È62788int
-£"microchip"str
-‰62972int
-¦"microscope"str
-˜61475int
-è61918int
-Å62301int
-"fa-5x"str
-"users"str
-ö62193int
-h"chart-line"str
-‚
-"landmark"str
-K"bolt"str
-$"fa-xl"str
-b"certificate"str
-ı"info-circle"str
-È61550int
-©"crosshairs"str
-…"circle-minus"str
-¤62171int
-Ø"filter"str
-
-"fa-pulse"str
-ú"image"str
-Ó"file-code"str
-u61770int
-ˆ"trophy"str
-¯¥"Font Awesome Icon Subset Audit Tool.
-
-Scans all Go templates for fa-* icon usage, cross-references against
-the WOFF2 font subset and CSS, reports any missing glyphs.
-
-Usage:
-    python3 go-server/scripts/audit_icons.py
-
-Exit code 0 = all icons present, 1 = missing icons found.
-
-Root Cause Context:
-    Icons keep disappearing because the project uses a WOFF2 font SUBSET
-    (not the full Font Awesome). When templates add new fa-* classes,
-    the glyph must exist in BOTH:
-      1. static/css/fontawesome-subset.min.css  (CSS :before rule)
-      2. static/webfonts/fa-solid-900.woff2     (actual glyph in font)
-    If either is missing, the icon renders as a blank space.
-"str
-ù61483int
-Í"file"str
-ş"times"str
-¸43int
-†61867int
-€61572int
-"static"str
-â62903int
-?
-"asterisk"str
-‘61632int
-"templates"str
-•61498int
-Ş"flask"str
-"fa-3x"str
-Å"question-circle"str
-ß57452int
-6	"archive"str
-R61617int
-Ô62003int
-ÿ"key"str
-š"cloud"str
-·"plus"str
-Q"briefcase"str
-»61525int
-õ61461int
-"fa-4x"str
-Ã61742int
- †"triangle-exclamation"str
-¡61573int
-ç61612int
-á"gavel"str
-<"arrows-rotate"str
-.	"fa-flip"str
-§
-"__main__"str
-û
-"terminal"str
-C62030int
-û61502int
-ç"sliders-h"str
-".."str
-B"balance-scale"str
-ß61635int
-c61603int
-I63360int
-³62955int
-0
-"fa-shake"str
-§61637int
-Œ61529int
-ƒ63087int
-H"biohazard"str
-%
-"fontawesome-subset.min.css"str
-61447int
-£"compress-arrows-alt"str
-	"fa-spin"str
-61633int
-461701int
-L61671int
-l61452int
-]"calendar-alt"str
-e"chart-bar"str
-U61869int
-Â"puzzle-piece"str
-¡62070int
-k"check"str
-Ö"shield"str
-ê62845int
-•61463int
-»"exchange-alt"str
-9"arrow-right"str
- 	"map-pin"str
-x61560int
-T
-"building"str
-"fa-2x"str
-Ö"file-lines"str
-w"chevron-down"str
-Ğ"search-plus"str
-i61953int
-61527int
-	"css"str
-‹"unlink"str
-(	"fa-beat"str
-[61747int
-±"paper-plane"str
-n"check-circle"str
-õ
-"sync-alt"str
-Í"search"str
-o61528int
-62405int
-­61888int
-½"print"str
-Ê"eye-slash"str
-î61640int
-¸"equals"str
-X61601int
-µ37int
-†61526int
-”"clock"str
-ø"tag"str
-ø62146int
-Ó"server"str
-¹61int
-¤63372int
-Ä"external-link-alt"str
-²61912int
-ª61544int
-’62573int
-—"lock"str
-ü61728int
-Û"fish"str
-"map-marker-alt"str
-›61634int
-761831int
-ˆ"circle-notch"str
-Ê"route"str
-r62816int
-â61667int
-@42int
-í62133int
-Ñ61788int
-÷	"id-card"str
-Ô61897int
-q"check-double"str
-"fa-lg"str
-Ë62679int
-¿61546int
-"link"str
-~61524int
-‘"link-slash"str
-57658int
-°62786int
-‹"circle-question"str
-¬"minus-circle"str
-=61473int
-í"square"str
-Ç"robot"str
-Î61787int
-ä	"sitemap"str
-ó"sync"str
-N"book"str
-ƒ"tools"str
-¾"exclamation-circle"str
-{61523int
-Ğ
-"file-alt"str
-µ
-"envelope"str
-›62219int
-ì"handshake"str
-Œ61675int
-¯"diagram-project"str
-˜61914int
-®"network-wired"str
-…
-"language"str
-À"project-diagram"str
-:61537int
- š"long-arrow-alt-right"str
-”62725int
-NoneNoneType
-ÿ61453int
-‰61902int
-
-"webfonts"str
-å61672int
-}"chevron-right"str
-¼62306int
-Ù"shield-alt"str
- Á"exclamation-triangle"str
-‰61585int
-"user"str
-Î61442int
-Ñ61454int
-"fa-fw"str
-O61482int
-º"plus-circle"str
-²"directions"str
-Ú62445int
-ë61712int"ñ0!
-
-- (5"#unknown-value#%
-#
- (6"
-os.pathabspath:1
-/
- (7
-SCRIPT_DIR"
-os.pathdirname:2
-0
- (:TEMPLATE_DIR"
-os.pathjoin:1
-/
- (^CSS_FILE"
-os.pathjoin:	
-2
-0
- (\	FONT_FILE"
-os.pathjoin:5
-3
-  (NMODIFIER_CLASSES"#new-object#Bset&
-$
-  (N"#array-add-last#:&
-$
-  (N"#array-add-last#:&
-$
-  (N"#array-add-last#:&
-$
-  (N"#array-add-last#:&
-$
-  (N"#array-add-last#:&
-$
-  (N"#array-add-last#:&
-$
-  (N"#array-add-last#:&
-$
-  (N"#array-add-last#:&
-$
-  (N!"#array-add-last#: &
-$
-  (N#"#array-add-last#:"&
-$
-  (N%"#array-add-last#:$&
-$
-  (N'"#array-add-last#:&&
-$
-  (N)"#array-add-last#:(&
-$
-  (N+"#array-add-last#:*&
-$
-  (N-"#array-add-last#:,&
-$
-  (N/"#array-add-last#:.&
-$
-  (N1"#array-add-last#:04
-2
-" N(2FA6_CODEPOINTS"#new-object#Bdict 
-
-# #(5"	#map-set#:234 
-
-# #(,8"	#map-set#:267 
-
-#. #(C;"	#map-set#:29: 
-
-$ $(>"	#map-set#:2<= 
-
-$ $(-A"	#map-set#:2?@ 
-
-$/ $(FD"	#map-set#:2BC 
-
-% %(G"	#map-set#:2EF 
-
-% %(&J"	#map-set#:2HI 
-
-%( %(6M"	#map-set#:2KL 
-
-%8 %(FP"	#map-set#:2NO 
-
-& &(S"	#map-set#:2QR 
-
-& &(+V"	#map-set#:2TU 
-
-&- &(?Y"	#map-set#:2WX 
-
-' '(\"	#map-set#:2Z[ 
-
-' '(._"	#map-set#:2]^ 
-
-'0 '(Ga"	#map-set#:2`^ 
-
-( ((d"	#map-set#:2bc 
-
-( ((.g"	#map-set#:2ef 
-
-(0 ((Dj"	#map-set#:2hi 
-
-) )(m"	#map-set#:2kl 
-
-) )(+p"	#map-set#:2no 
-
-)- )(Cs"	#map-set#:2qr 
-
-* *(v"	#map-set#:2tu 
-
-* *(2y"	#map-set#:2wx 
-
-*4 *(J|"	#map-set#:2z{ 
-
-+ +("	#map-set#:2}~"
- 
-+ +(3"	#map-set#:2€o#
-!
-+5 +(J„"	#map-set#:2‚ƒ#
-!
-, ,(‡"	#map-set#:2…†#
-!
-, ,(2Š"	#map-set#:2ˆ‰#
-!
-,4 ,(M"	#map-set#:2‹Œ#
-!
-- -("	#map-set#:2#
-!
-- -(4“"	#map-set#:2‘’#
-!
--6 -(E–"	#map-set#:2”•#
-!
-. .(™"	#map-set#:2—˜#
-!
-.! .(0œ"	#map-set#:2š›#
-!
-.2 .(HŸ"	#map-set#:2#
-!
-/ /(¢"	#map-set#:2 ¡#
-!
-/ /(1¥"	#map-set#:2£¤#
-!
-/3 /(A¨"	#map-set#:2¦§#
-!
-0 0(«"	#map-set#:2©ª#
-!
-0 0(,®"	#map-set#:2¬­#
-!
-0. 0(G±"	#map-set#:2¯°#
-!
-1 1(´"	#map-set#:2²³#
-!
-1 1(,·"	#map-set#:2µ¶#
-!
-1. 1(<º"	#map-set#:2¸¹#
-!
-2 2(½"	#map-set#:2»¼#
-!
-2 2(8À"	#map-set#:2¾¿#
-!
-3 3("Ã"	#map-set#:2ÁÂ#
-!
-3$ 3(?Æ"	#map-set#:2ÄÅ#
-!
-4 4(É"	#map-set#:2ÇÈ#
-!
-4 4(&Ì"	#map-set#:2ÊË#
-!
-4( 4(6Ï"	#map-set#:2ÍÎ#
-!
-5 5(Ò"	#map-set#:2ĞÑ#
-!
-5 5(+Õ"	#map-set#:2ÓÔ#
-!
-5- 5(A×"	#map-set#:2ÖÑ#
-!
-6 6(Ú"	#map-set#:2ØÙ#
-!
-6 6($İ"	#map-set#:2ÛÜ#
-!
-6& 6(5à"	#map-set#:2Şß#
-!
-67 6(Fã"	#map-set#:2áâ#
-!
-7 7(å"	#map-set#:2ä¡#
-!
-7 7($è"	#map-set#:2æç#
-!
-7& 7(>ë"	#map-set#:2éê#
-!
-8 8(î"	#map-set#:2ìí#
-!
-8 8((ñ"	#map-set#:2ïğ#
-!
-8* 8(;ó"	#map-set#:2ò˜#
-!
-9 9(ö"	#map-set#:2ôõ#
-!
-9 9(&ù"	#map-set#:2÷ø#
-!
-9( 9(7ü"	#map-set#:2úû#
-!
-: :(ş"	#map-set#:2ıƒ#
-!
-: :(("	#map-set#:2ÿ€#
-!
-:* :(<„"	#map-set#:2‚ƒ#
-!
-; ;(‡"	#map-set#:2…†#
-!
-; ;(-Š"	#map-set#:2ˆ‰#
-!
-;/ ;(B"	#map-set#:2‹Œ#
-!
-< <("	#map-set#:2#
-!
-< <((“"	#map-set#:2‘’#
-!
-<* <(8–"	#map-set#:2”•#
-!
-= =(™"	#map-set#:2—˜#
-!
-= =(2œ"	#map-set#:2š›#
-!
-> >(Ÿ"	#map-set#:2#
-!
-> >(/¢"	#map-set#:2 ¡#
-!
->1 >(D¥"	#map-set#:2£¤#
-!
-? ?(¨"	#map-set#:2¦§#
-!
-? ?()«"	#map-set#:2©ª#
-!
-?+ ?(A­"	#map-set#:2¬†#
-!
-@ @(°"	#map-set#:2®¯#
-!
-@ @(2³"	#map-set#:2±²#
-!
-@4 @(F¶"	#map-set#:2´µ#
-!
-A A(¹"	#map-set#:2·¸#
-!
-A A('¼"	#map-set#:2º»#
-!
-A) A(8¿"	#map-set#:2½¾#
-!
-B B(Á"	#map-set#:2À°#
-!
-B B(5Ä"	#map-set#:2ÂÃ#
-!
-C C(Æ"	#map-set#:2ÅŒ#
-!
-C C(.É"	#map-set#:2ÇÈ#
-!
-C0 C(?Ì"	#map-set#:2ÊË#
-!
-D D(Ï"	#map-set#:2ÍÎ#
-!
-D D(+Ò"	#map-set#:2ĞÑ#
-!
-D- D(=Õ"	#map-set#:2ÓÔ#
-!
-E E(Ø"	#map-set#:2Ö×#
-!
-E E(*Û"	#map-set#:2ÙÚ#
-!
-E, E(Cİ"	#map-set#:2ÜÚ#
-!
-F F(à"	#map-set#:2Şß#
-!
-F F(/ã"	#map-set#:2áâ#
-!
-F1 F(Bæ"	#map-set#:2äå#
-!
-G G(é"	#map-set#:2çè#
-!
-G G(*ì"	#map-set#:2êë#
-!
-G, G(<ï"	#map-set#:2íî#
-!
-H H(ò"	#map-set#:2ğñ"
- 
-H H('ô"	#map-set#:2ó=#
-!
-H) H(;÷"	#map-set#:2õö#
-!
-I I(ú"	#map-set#:2øù#
-!
-I I(%ı"	#map-set#:2ûü#
-!
-I' I(6€"	#map-set#:2şÿ#
-!
-J J(‚"	#map-set#:2#
-!
-J J(+…"	#map-set#:2ƒ„#
-!
-K K("‡"	#map-set#:2†Â#
-!
-K$ K(4Š"	#map-set#:2ˆ‰#
-!
-K6 K(FŒ"	#map-set#:2‹’#
-!
-L L("	#map-set#:2#
-!
-L L(#’"	#map-set#:2‘#
-!
-L% L(:•"	#map-set#:2“”#
-!
-M M(˜"	#map-set#:2–—%
-#
-Q _™%closure"#new-object#,
-*
-Q _š"#set-field# TEMPLATE_DIR:™0
-.
-Q _›"#set-field# MODIFIER_CLASSES:™)
-'
-Q _œ"?python-partial-apply?:™%
-#
-_ e%closure"#new-object#(
-&
-_ e"#set-field# CSS_FILE:)
-'
-_ eŸ"?python-partial-apply?:%
-#
-e o %closure"#new-object#)
-'
-e o¡"#set-field# FONT_FILE: )
-'
-e o¢"?python-partial-apply?: &
-$
-o ¥£%closure"#new-object#/
--
-o ¥¤"#set-field# FA6_CODEPOINTS:£2*
-(
-o ¥¥"?python-partial-apply?:£$
-"
-
-¥ ¥(¦"#unknown-value#/
--
-
-¥ ¥(¨"
-#binop ==#2==:¦§Bbool"
-
-¥ ¥(¨ *¥ ¥("T&
-$
-
-¦ ¦(©"
-audit_iconsmain"
- 
-
-¦ ¦(ª"
-sysexit:©" *7/home/runner/workspace/go-server/scripts/audit_icons.py
