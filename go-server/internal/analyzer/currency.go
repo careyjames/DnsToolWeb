@@ -7,7 +7,7 @@ import (
 	"math"
 )
 
-type FreshnessEntry struct {
+type CurrencyEntry struct {
 	RecordType      string `json:"record_type"`
 	ObservedTTL     uint32 `json:"observed_ttl_seconds"`
 	TypicalTTL      uint32 `json:"typical_ttl_seconds"`
@@ -57,12 +57,12 @@ var propagationNotes = map[string]string{
 }
 
 const (
-	freshnessFloorSeconds   = 30
-	freshnessCeilingSeconds = 86400
+	currencyFloorSeconds   = 30
+	currencyCeilingSeconds = 86400
 )
 
-func BuildFreshnessMatrix(resolverTTL, authTTL map[string]uint32) map[string]any {
-	entries := []FreshnessEntry{}
+func BuildCurrencyMatrix(resolverTTL, authTTL map[string]uint32) map[string]any {
+	entries := []CurrencyEntry{}
 
 	allTypes := []string{"A", "AAAA", "MX", "TXT", "NS", "CNAME", "CAA", "SOA"}
 
@@ -70,9 +70,9 @@ func BuildFreshnessMatrix(resolverTTL, authTTL map[string]uint32) map[string]any
 	allTypes = append(allTypes, protocolTypes...)
 
 	for _, rt := range allTypes {
-		entry := FreshnessEntry{
-			RecordType:  rt,
-			TypicalTTL:  typicalTTLs[rt],
+		entry := CurrencyEntry{
+			RecordType: rt,
+			TypicalTTL: typicalTTLs[rt],
 		}
 
 		if ttl, ok := resolverTTL[rt]; ok {
@@ -92,11 +92,11 @@ func BuildFreshnessMatrix(resolverTTL, authTTL map[string]uint32) map[string]any
 	}
 
 	matrix := map[string]any{
-		"entries":       entries,
-		"entry_count":   len(entries),
-		"min_rescan":    freshnessFloorSeconds,
-		"max_rescan":    freshnessCeilingSeconds,
-		"guidance":      "Re-scan times are based on observed TTL values from authoritative and resolver responses. After making DNS changes, wait at least the recommended interval before re-scanning for updated results.",
+		"entries":     entries,
+		"entry_count": len(entries),
+		"min_rescan":  currencyFloorSeconds,
+		"max_rescan":  currencyCeilingSeconds,
+		"guidance":    "Re-scan times are based on observed TTL values from authoritative and resolver responses. After making DNS changes, wait at least the recommended interval before re-scanning for updated results.",
 	}
 
 	return matrix
@@ -113,11 +113,11 @@ func computeRescanInterval(observed, typical uint32) uint32 {
 
 	rescan := uint32(math.Ceil(float64(ttl) * 1.1))
 
-	if rescan < freshnessFloorSeconds {
-		rescan = freshnessFloorSeconds
+	if rescan < currencyFloorSeconds {
+		rescan = currencyFloorSeconds
 	}
-	if rescan > freshnessCeilingSeconds {
-		rescan = freshnessCeilingSeconds
+	if rescan > currencyCeilingSeconds {
+		rescan = currencyCeilingSeconds
 	}
 
 	return rescan

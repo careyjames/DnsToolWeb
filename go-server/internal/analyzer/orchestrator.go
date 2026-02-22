@@ -186,7 +186,7 @@ func (a *Analyzer) AnalyzeDomain(ctx context.Context, domain string, customDKIMS
         if authTTLMap == nil {
                 authTTLMap = map[string]uint32{}
         }
-        results["freshness_matrix"] = BuildFreshnessMatrix(resolverTTLMap, authTTLMap)
+        results["freshness_matrix"] = BuildCurrencyMatrix(resolverTTLMap, authTTLMap)
 
         totalElapsed := time.Since(analysisStart).Seconds()
         slog.Info("Analysis complete", "domain", domain, "total_s", fmt.Sprintf("%.2f", totalElapsed), "parallel_s", fmt.Sprintf("%.2f", parallelElapsed))
