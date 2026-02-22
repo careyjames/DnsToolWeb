@@ -9,7 +9,7 @@ import (
 )
 
 var (
-        Version   = "26.23.53"
+        Version   = "26.23.54"
         GitCommit = "dev"
         BuildTime = "unknown"
 )
@@ -74,6 +74,11 @@ func Load() (*Config, error) {
         }
 
         maintenanceNote := os.Getenv("MAINTENANCE_NOTE")
+
+        versionOverride := os.Getenv("APP_VERSION")
+        if versionOverride != "" {
+                Version = versionOverride
+        }
 
         tuning := make(map[string]string)
         for k, v := range sectionTuningMap {
