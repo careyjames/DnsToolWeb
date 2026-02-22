@@ -209,25 +209,22 @@ func runNmapScript(ctx context.Context, target, script, args string, timeout tim
         cmdCtx, cancel := context.WithTimeout(ctx, timeout)
         defer cancel()
 
-        cmdArgs := []string{"-sn", "-Pn", "-p", "53", "--script", script, target}
+        cmdArgs := []string{"-sn", "-Pn", "-p", "53", "--script", script}
         if args != "" {
-                cmdArgs = append(cmdArgs[:len(cmdArgs)-1], "--script-args", args, target)
-                cmdArgs = cmdArgs[:len(cmdArgs)]
+                cmdArgs = append(cmdArgs, "--script-args", args)
         }
+        cmdArgs = append(cmdArgs, target)
 
-        finalArgs := []string{"-sn", "-Pn", "-p", "53", "--script", script}
-        if args != "" {
-                finalArgs = append(finalArgs, "--script-args", args)
-        }
-        finalArgs = append(finalArgs, target)
-
-        cmd := exec.CommandContext(cmdCtx, "nmap", finalArgs...)
+        cmd := exec.CommandContext(cmdCtx, "nmap", cmdArgs...)
         out, err := cmd.CombinedOutput()
         if err != nil {
                 if cmdCtx.Err() == context.DeadlineExceeded {
                         return "", fmt.Errorf("nmap script %s timed out after %v", script, timeout)
                 }
-                return string(out), nil
+                if len(out) > 0 {
+                        return string(out), nil
+                }
+                return "", fmt.Errorf("nmap script %s failed: %w", script, err)
         }
 
         return string(out), nil
