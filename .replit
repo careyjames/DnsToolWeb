@@ -2,7 +2,7 @@ modules = ["python-3.11", "nodejs-20", "go-1.23", "postgresql-16", "bun-1.2", "g
 
 [nix]
 channel = "stable-24_05"
-packages = ["cacert", "chromium", "dnsutils", "freetype", "imagemagick", "lcms2", "libimagequant", "libjpeg", "libtiff", "libwebp", "libxcrypt", "openjpeg", "openssl", "postgresql", "potrace", "sqlc", "tcl", "tk", "unzip", "whois", "zlib", "nmap", "nmap-formatter", "python312Packages.nmapthon2"]
+packages = ["cacert", "chromium", "dnsutils", "freetype", "imagemagick", "lcms2", "libimagequant", "libjpeg", "libtiff", "libwebp", "libxcrypt", "nmap", "nmap-formatter", "openjpeg", "openssl", "postgresql", "potrace", "python312Packages.nmapthon2", "sqlc", "tcl", "tk", "unzip", "whois", "zlib"]
 
 [deployment]
 deploymentTarget = "autoscale"
