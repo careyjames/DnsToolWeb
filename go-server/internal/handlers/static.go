@@ -26,23 +26,28 @@ func NewStaticHandler(staticDir, appVersion string) *StaticHandler {
 
 func (h *StaticHandler) SecurityTxt(c *gin.Context) {
         c.Header(headerContentType, "text/plain; charset=utf-8")
+        c.Header("Cache-Control", "public, max-age=86400")
         c.File(filepath.Join(h.StaticDir, ".well-known", "security.txt"))
 }
 
 func (h *StaticHandler) RobotsTxt(c *gin.Context) {
+        c.Header("Cache-Control", "public, max-age=86400")
         c.File(filepath.Join(h.StaticDir, "robots.txt"))
 }
 
 func (h *StaticHandler) LLMsTxt(c *gin.Context) {
+        c.Header("Cache-Control", "public, max-age=86400")
         c.File(filepath.Join(h.StaticDir, "llms.txt"))
 }
 
 func (h *StaticHandler) LLMsFullTxt(c *gin.Context) {
+        c.Header("Cache-Control", "public, max-age=86400")
         c.File(filepath.Join(h.StaticDir, "llms-full.txt"))
 }
 
 func (h *StaticHandler) ManifestJSON(c *gin.Context) {
         c.Header(headerContentType, "application/manifest+json")
+        c.Header("Cache-Control", "public, max-age=86400")
         c.File(filepath.Join(h.StaticDir, "manifest.json"))
 }
 
@@ -91,5 +96,6 @@ func (h *StaticHandler) SitemapXML(c *gin.Context) {
         }
         xml += "</urlset>\n"
 
+        c.Header("Cache-Control", "public, max-age=3600")
         c.Data(http.StatusOK, "application/xml", []byte(xml))
 }
