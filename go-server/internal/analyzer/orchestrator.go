@@ -178,6 +178,16 @@ func (a *Analyzer) AnalyzeDomain(ctx context.Context, domain string, customDKIMS
         results["remediation"] = a.GenerateRemediation(results)
         results["mail_posture"] = buildMailPosture(results)
 
+        resolverTTLMap, _ := results["resolver_ttl"].(map[string]uint32)
+        authTTLMap, _ := results["auth_ttl"].(map[string]uint32)
+        if resolverTTLMap == nil {
+                resolverTTLMap = map[string]uint32{}
+        }
+        if authTTLMap == nil {
+                authTTLMap = map[string]uint32{}
+        }
+        results["freshness_matrix"] = BuildFreshnessMatrix(resolverTTLMap, authTTLMap)
+
         totalElapsed := time.Since(analysisStart).Seconds()
         slog.Info("Analysis complete", "domain", domain, "total_s", fmt.Sprintf("%.2f", totalElapsed), "parallel_s", fmt.Sprintf("%.2f", parallelElapsed))
 
