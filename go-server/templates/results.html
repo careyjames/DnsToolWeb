@@ -177,6 +177,7 @@
         {{$ai_surface := mapGetMap "ai_surface" $results}}
         {{$secret_exposure := mapGetMap "secret_exposure" $results}}
         {{$web_exposure := mapGetMap "web_exposure" $results}}
+        {{$nmap_dns := mapGetMap "nmap_dns" $results}}
         {{$dns_history := mapGetMap "dns_history" $results}}
         {{$dns_history_available := and $dns_history (mapGetBool "has_changes" $dns_history)}}
 
@@ -2807,6 +2808,95 @@
                                 </div>
                             </details>
                         </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {{end}}
+
+        <!-- Nmap DNS Server Security Section -->
+        {{if $nmap_dns}}
+        <div class="row section-nmap-dns" id="section-nmap-dns">
+            <div class="col-12 mb-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0 d-flex align-items-center justify-content-between flex-wrap">
+                            <span><i class="fas fa-server me-2"></i>DNS Server Security</span>
+                            {{$nmapStatus := mapGetStr "status" $nmap_dns}}
+                            {{$nmapIssues := mapGetSlice "issues" $nmap_dns}}
+                            <span class="badge bg-{{if eq $nmapStatus "warning"}}warning text-dark{{else if eq $nmapStatus "good"}}success{{else}}secondary{{end}}">
+                                {{if eq $nmapStatus "warning"}}{{len $nmapIssues}} Issue{{if ne (len $nmapIssues) 1}}s{{end}}{{else if eq $nmapStatus "good"}}Hardened{{else}}Not Checked{{end}}
+                            </span>
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <p class="text-muted mb-3 small">{{mapGetStr "message" $nmap_dns}} <span class="text-muted">&mdash; Nmap NSE probes for zone transfer (AXFR), open recursion (RFC 5358), nameserver identity disclosure, and DNS cache snooping.</span></p>
+
+                        {{if $nmapIssues}}
+                        {{if gt (len $nmapIssues) 0}}
+                        <div class="alert alert-warning py-2 mb-3">
+                            <i class="fas fa-exclamation-triangle me-1"></i>
+                            <strong>Findings:</strong>
+                            <ul class="mb-0 mt-1">
+                                {{range $nmapIssues}}
+                                <li>{{.}}</li>
+                                {{end}}
+                            </ul>
+                        </div>
+                        {{end}}
+                        {{end}}
+
+                        {{$zt := mapGetMap "zone_transfer" $nmap_dns}}
+                        {{$rec := mapGetMap "recursion" $nmap_dns}}
+                        {{$nsid := mapGetMap "nsid" $nmap_dns}}
+                        {{$cs := mapGetMap "cache_snoop" $nmap_dns}}
+
+                        <div class="table-responsive">
+                            <table class="table table-sm table-dark mb-0">
+                                <thead>
+                                    <tr>
+                                        <th style="width:30%">Check</th>
+                                        <th style="width:15%">Result</th>
+                                        <th>Detail</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {{if $zt}}
+                                    <tr>
+                                        <td><i class="fas fa-exchange-alt me-1"></i>Zone Transfer (AXFR)</td>
+                                        <td><span class="badge bg-{{if mapGetBool "vulnerable" $zt}}danger{{else}}success{{end}}">{{if mapGetBool "vulnerable" $zt}}Vulnerable{{else}}Denied{{end}}</span></td>
+                                        <td class="small">{{mapGetStr "message" $zt}}</td>
+                                    </tr>
+                                    {{end}}
+                                    {{if $rec}}
+                                    <tr>
+                                        <td><i class="fas fa-redo me-1"></i>Open Recursion</td>
+                                        <td><span class="badge bg-{{if mapGetBool "open" $rec}}warning text-dark{{else}}success{{end}}">{{if mapGetBool "open" $rec}}Open{{else}}Disabled{{end}}</span></td>
+                                        <td class="small">{{mapGetStr "message" $rec}}</td>
+                                    </tr>
+                                    {{end}}
+                                    {{if $nsid}}
+                                    <tr>
+                                        <td><i class="fas fa-id-badge me-1"></i>Nameserver Identity</td>
+                                        <td><span class="badge bg-{{if mapGetBool "found" $nsid}}info{{else}}success{{end}}">{{if mapGetBool "found" $nsid}}Disclosed{{else}}Hidden{{end}}</span></td>
+                                        <td class="small">{{mapGetStr "message" $nsid}}{{if mapGetStr "version" $nsid}} — <code>{{mapGetStr "version" $nsid}}</code>{{end}}</td>
+                                    </tr>
+                                    {{end}}
+                                    {{if $cs}}
+                                    <tr>
+                                        <td><i class="fas fa-eye me-1"></i>Cache Snooping</td>
+                                        <td><span class="badge bg-{{if mapGetBool "vulnerable" $cs}}warning text-dark{{else}}success{{end}}">{{if mapGetBool "vulnerable" $cs}}Vulnerable{{else}}Protected{{end}}</span></td>
+                                        <td class="small">{{mapGetStr "message" $cs}}</td>
+                                    </tr>
+                                    {{end}}
+                                </tbody>
+                            </table>
+                        </div>
+
+                        {{$nmapNS := mapGetSlice "nameservers" $nmap_dns}}
+                        {{if $nmapNS}}
+                        <p class="text-muted small mt-2 mb-0"><i class="fas fa-info-circle me-1"></i>Tested nameserver{{if gt (len $nmapNS) 1}}s{{end}}: {{range $i, $ns := $nmapNS}}{{if $i}}, {{end}}<code>{{$ns}}</code>{{end}}</p>
+                        {{end}}
                     </div>
                 </div>
             </div>

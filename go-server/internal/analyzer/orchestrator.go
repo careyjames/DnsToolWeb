@@ -153,6 +153,7 @@ func (a *Analyzer) AnalyzeDomain(ctx context.Context, domain string, customDKIMS
         results["security_txt"] = getOrDefault(resultsMap, "security_txt", map[string]any{"status": "info", "found": false, "message": "Not checked", "contacts": []string{}, "issues": []string{}})
         results["ai_surface"] = getOrDefault(resultsMap, "ai_surface", map[string]any{"status": "info", "message": "Not checked"})
         results["secret_exposure"] = getOrDefault(resultsMap, "secret_exposure", map[string]any{"status": "clear", "message": "Not checked", "finding_count": 0, "findings": []map[string]any{}, "scanned_urls": []string{}})
+        results["nmap_dns"] = getOrDefault(resultsMap, "nmap_dns", map[string]any{"status": "info", "message": "Not checked", "issues": []string{}})
 
         if options.ExposureChecks {
                 exposureStart := time.Now()
@@ -232,6 +233,7 @@ func (a *Analyzer) runParallelAnalyses(ctx context.Context, domain string, custo
                 timedTask(resultsCh, "security_txt", func() any { return a.AnalyzeSecurityTxt(ctx, domain) }),
                 timedTask(resultsCh, "ai_surface", func() any { return a.AnalyzeAISurface(ctx, domain) }),
                 timedTask(resultsCh, "secret_exposure", func() any { return a.ScanSecretExposure(ctx, domain) }),
+                timedTask(resultsCh, "nmap_dns", func() any { return a.AnalyzeNmapDNS(ctx, domain) }),
         }
 
         for _, fn := range tasks {
