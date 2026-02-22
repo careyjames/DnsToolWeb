@@ -1,4 +1,4 @@
-modules = ["python-3.11", "nodejs-20", "go-1.23", "postgresql-16", "bun-1.2", "gcloud", "nodejs-24", "postgresql-17", "python-3.9", "swift-5.8", "web", "docker", "swift-5.6", "bash"]
+modules = ["python-3.11", "nodejs-20", "go-1.23", "postgresql-16", "bun-1.2", "gcloud", "nodejs-24", "postgresql-17", "swift-5.8", "web", "docker", "swift-5.6", "bash"]
 
 [nix]
 channel = "stable-24_05"
@@ -43,11 +43,10 @@ externalPort = 3000
 [userenv.shared]
 SONAR_ORG = "careyjames"
 SONAR_PROJECT = "careyjames_DnsToolWeb"
-MAINTENANCE_NOTE = ""
+MAINTENANCE_NOTE = "Maintenance"
 SMTP_PROBE_MODE = "remote"
 
 [userenv.development]
-MAINTENANCE_NOTE = "Maintenance"
 
 [agent]
 integrations = ["github:1.0.0"]
