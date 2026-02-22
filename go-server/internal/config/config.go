@@ -75,11 +75,6 @@ func Load() (*Config, error) {
 
         maintenanceNote := os.Getenv("MAINTENANCE_NOTE")
 
-        versionOverride := os.Getenv("APP_VERSION")
-        if versionOverride != "" {
-                Version = versionOverride
-        }
-
         tuning := make(map[string]string)
         for k, v := range sectionTuningMap {
                 tuning[k] = v
