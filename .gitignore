@@ -26,5 +26,9 @@ docs/legacy/migrations/
 # SonarCloud scanner work directory (temp artifacts, binaries)
 .scannerwork/
 
+# Agent skills and internal docs — local only, never public
+.agents/
+.local/skills/
+
 # Private repo staging — never push to public
 dnstool-intel-staging/
