@@ -1061,17 +1061,31 @@ main.container {
     }
 
     .navbar-brand {
-        max-width: calc(100vw - 80px);
+        max-width: calc(100vw - 110px);
         overflow: hidden;
         text-overflow: ellipsis;
         white-space: nowrap;
-        font-size: 1.1rem;
+        font-size: 1rem;
     }
 
     .u-maintenance-tag {
-        font-size: 0.5rem;
-        padding: 0.1em 0.35em;
+        font-size: 0.45rem;
+        padding: 0.1em 0.3em;
         white-space: nowrap;
+        max-width: 6rem;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        display: inline-block;
+        vertical-align: middle;
+        line-height: 1.4;
+    }
+
+    .u-maintenance-tag .fas {
+        display: none;
+    }
+
+    .u-covert-toggle {
+        font-size: 0.9rem;
     }
     
     .code-block {

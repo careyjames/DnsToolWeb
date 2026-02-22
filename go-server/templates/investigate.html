@@ -60,6 +60,8 @@
                                        placeholder="example.com"
                                        required
                                        autocomplete="off"
+                                       autocapitalize="none"
+                                       spellcheck="false"
                                        aria-label="Domain to investigate against"
                                        value="{{.FormDomain}}">
                             </div>
@@ -74,6 +76,8 @@
                                        placeholder="203.0.113.50 or 2001:db8::1"
                                        required
                                        autocomplete="off"
+                                       autocapitalize="none"
+                                       spellcheck="false"
                                        aria-label="IP address to investigate"
                                        value="{{.FormIP}}">
                                 <button class="btn btn-primary search-btn" type="submit" id="investigateBtn" aria-label="Analyze IP">

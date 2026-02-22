@@ -299,6 +299,8 @@
                                        name="domain" 
                                        placeholder="example.com or com" 
                                        autocomplete="off"
+                                       autocapitalize="none"
+                                       spellcheck="false"
                                        autofocus
                                        aria-label="Domain to analyze"
                                        value="{{if .PrefillDomain}}{{.PrefillDomain}}{{else}}{{.WaitDomain}}{{end}}">
